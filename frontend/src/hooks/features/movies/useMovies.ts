@@ -74,7 +74,7 @@ export const useMovies = () => {
     }, []);
 
     const search = useCallback(async (query?: string) => {
-        return searchMoviesApiRef.current.execute(() => movieApi.admin.search(query));
+        return searchMoviesApiRef.current.execute(() => movieApi.public.search(query));
     }, []);
 
     const create = useCallback(async (request: MovieCreateRequest) => {

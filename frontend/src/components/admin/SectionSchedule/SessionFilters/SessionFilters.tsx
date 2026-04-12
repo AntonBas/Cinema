@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { Input } from '@/components/ui/Input/Input';
 import { Select } from '@/components/ui/Select/Select';
 import { Button } from '@/components/ui/Button/Button';
+import { useMovies } from '@/hooks/features/movies/useMovies';
 import type { CinemaSessionStatus } from '@/types/session';
 import type { CinemaHallListResponse } from '@/types/cinemaHall';
+import type { MovieSessionSearchResponse } from '@/types/movie';
 import type { SelectOption } from '@/components/ui/Select/Select';
 import styles from './SessionFilters.module.css';
 
@@ -45,27 +47,75 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
     halls = [],
 }) => {
     const [movieInput, setMovieInput] = useState(filters.movieTitle || '');
+    const [showMovieResults, setShowMovieResults] = useState(false);
+    const [filteredMovies, setFilteredMovies] = useState<MovieSessionSearchResponse[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
     const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const movieSearchRef = useRef<HTMLDivElement>(null);
+
+    const { search } = useMovies();
 
     useEffect(() => {
         setMovieInput(filters.movieTitle || '');
     }, [filters.movieTitle]);
 
-    const handleMovieChange = useCallback((value: string) => {
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (movieSearchRef.current && !movieSearchRef.current.contains(event.target as Node)) {
+                setShowMovieResults(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleMovieSearch = useCallback(async (query: string) => {
+        setIsSearching(true);
+        try {
+            const results = await search(query);
+            setFilteredMovies(results || []);
+        } catch {
+            setFilteredMovies([]);
+        } finally {
+            setIsSearching(false);
+        }
+    }, [search]);
+
+    const handleMovieInputChange = useCallback((value: string) => {
         setMovieInput(value);
+        setShowMovieResults(true);
 
         if (debounceTimerRef.current) {
             clearTimeout(debounceTimerRef.current);
         }
 
         debounceTimerRef.current = setTimeout(() => {
-            onMovieTitleChange(value || undefined);
+            if (value.trim()) {
+                handleMovieSearch(value);
+            } else {
+                setFilteredMovies([]);
+            }
         }, DEBOUNCE_DELAY);
+    }, [handleMovieSearch]);
+
+    const handleMovieInputClick = useCallback(() => {
+        if (movieInput.trim()) {
+            handleMovieSearch(movieInput);
+        }
+        setShowMovieResults(true);
+    }, [movieInput, handleMovieSearch]);
+
+    const handleMovieSelect = useCallback((movieTitle: string) => {
+        onMovieTitleChange(movieTitle);
+        setMovieInput(movieTitle);
+        setShowMovieResults(false);
     }, [onMovieTitleChange]);
 
     const handleClearMovie = useCallback(() => {
         setMovieInput('');
         onMovieTitleChange(undefined);
+        setShowMovieResults(false);
+        setFilteredMovies([]);
     }, [onMovieTitleChange]);
 
     const hallOptions: SelectOption[] = useMemo(() => [
@@ -134,36 +184,67 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
                 </div>
             </div>
 
-            <div className={styles.filterGroup}>
-                <label htmlFor="movieTitle" className={styles.label}>Movie Title</label>
-                <div className={styles.movieInputWrapper}>
-                    <Input
-                        id="movieTitle"
-                        type="text"
-                        value={movieInput}
-                        onChange={handleMovieChange}
-                        placeholder="Search by movie title..."
-                    />
-                    {movieInput && (
-                        <Button
-                            variant="error"
-                            size="small"
-                            onClick={handleClearMovie}
-                            className={styles.clearButton}
-                        >
-                            ×
-                        </Button>
-                    )}
+            <div className={styles.movieFilterRow}>
+                <div className={styles.movieFilterGroup}>
+                    <label htmlFor="movieTitle" className={styles.label}>Movie Title</label>
+                    <div className={styles.movieSearch} ref={movieSearchRef}>
+                        <div className={styles.movieInputWrapper}>
+                            <Input
+                                id="movieTitle"
+                                type="text"
+                                value={movieInput}
+                                onChange={handleMovieInputChange}
+                                onClick={handleMovieInputClick}
+                                placeholder="Search by movie title..."
+                                className={styles.movieInput}
+                            />
+                            {movieInput && (
+                                <Button
+                                    variant="error"
+                                    size="small"
+                                    onClick={handleClearMovie}
+                                    className={styles.clearMovieButton}
+                                >
+                                    ×
+                                </Button>
+                            )}
+                        </div>
+
+                        {showMovieResults && (
+                            <div className={styles.movieResults}>
+                                {isSearching ? (
+                                    <div className={styles.loadingResults}>Loading movies...</div>
+                                ) : filteredMovies.length > 0 ? (
+                                    filteredMovies.map(movie => (
+                                        <div
+                                            key={movie.id}
+                                            className={`${styles.movieOption} ${filters.movieTitle === movie.title ? styles.selected : ''}`}
+                                            onClick={() => handleMovieSelect(movie.title)}
+                                        >
+                                            <div className={styles.movieTitle}>{movie.title}</div>
+                                            <div className={styles.movieDetails}>{movie.durationMinutes} min</div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className={styles.noResults}>
+                                        {movieInput.trim() ? `No movies found for "${movieInput}"` : 'Type to search movies'}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
             {hasActiveFilters && (
                 <div className={styles.clearFiltersContainer}>
-                    <span className={styles.countBadge}>{activeFilterCount}</span>
-                    active filter{activeFilterCount !== 1 ? 's' : ''}
-                    <Button variant="error" size="small" onClick={onClearFilters}>
-                        Clear All
-                    </Button>
+                    <div className={styles.filterInfo}>
+                        <span className={styles.countBadge}>{activeFilterCount}</span>
+                        active filter{activeFilterCount !== 1 ? 's' : ''}
+                        <Button variant="error" size="small" onClick={onClearFilters} className={styles.clearButton}>
+                            Clear All
+                        </Button>
+                    </div>
                 </div>
             )}
         </div>
