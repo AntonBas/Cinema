@@ -18,7 +18,7 @@ export const BookingSummaryPage: React.FC = () => {
         if (bookingId) {
             getById(parseInt(bookingId));
         }
-    }, [bookingId]);
+    }, [bookingId, getById]);
 
     const handleCancelBooking = async () => {
         if (!bookingId) return;
@@ -30,7 +30,27 @@ export const BookingSummaryPage: React.FC = () => {
 
     const handleProceedToPayment = () => {
         if (!booking) return;
-        navigate(`/booking/payment/${booking.id}`);
+
+        const bookingData = {
+            id: booking.id,
+            bookingNumber: booking.bookingNumber,
+            movieTitle: booking.movieTitle,
+            hallName: booking.hallName,
+            sessionTime: booking.sessionTime,
+            totalPrice: booking.totalPrice,
+            finalPrice: booking.finalPrice,
+            bonusPointsUsed: booking.bonusPointsUsed,
+            bookedSeats: booking.seatReservations.map(seat => ({
+                seatNumber: String(seat.seatNumber),
+                seatRow: seat.row,
+                ticketType: seat.ticketTypeName,
+                seatPrice: seat.seatPrice
+            }))
+        };
+
+        navigate(`/booking/payment/${booking.id}`, {
+            state: { booking: bookingData }
+        });
     };
 
     if (loading) {

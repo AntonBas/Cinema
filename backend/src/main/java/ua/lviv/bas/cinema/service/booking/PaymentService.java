@@ -70,8 +70,9 @@ public class PaymentService {
 
 		Optional<Payment> existingPayment = paymentRepository.findByBookingId(booking.getId());
 		if (existingPayment.isPresent() && existingPayment.get().getStatus().isActive()) {
-			log.warn("Payment already in progress for booking {}", booking.getId());
-			throw PaymentProcessingException.paymentInProgress();
+			log.info("Returning existing active payment {} for booking {}", existingPayment.get().getId(),
+					booking.getId());
+			return buildPaymentResponse(existingPayment.get());
 		}
 
 		var payment = Payment.builder().booking(booking).amount(booking.getFinalPrice()).status(PaymentStatus.PENDING)
