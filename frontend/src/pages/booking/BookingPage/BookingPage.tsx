@@ -8,8 +8,7 @@ import { BookingSidebar } from '@/components/booking/BookingSidebar/BookingSideb
 import { ProgressStepper } from '@/components/booking/ProgressStepper/ProgressStepper';
 import { BOOKING_STEPS } from '@/components/booking/ProgressStepper/bookingSteps';
 import { Layout } from '@/components/layout/Layout/Layout';
-import { useNotification } from '@/hooks/common/useNotification';
-import { Notification } from '@/components/ui/Notification/Notification';
+import { useNotification } from '@/context/NotificationContext';
 import type { SeatInfo } from '@/types/seatReservation';
 import styles from './BookingPage.module.css';
 
@@ -18,7 +17,7 @@ export const BookingPage: React.FC = () => {
     const navigate = useNavigate();
     const sessionIdNum = parseInt(sessionId || '0');
 
-    const { notifications, showNotification, hideNotification } = useNotification();
+    const { showNotification } = useNotification();
 
     const {
         data: seatData,
@@ -100,17 +99,6 @@ export const BookingPage: React.FC = () => {
     return (
         <Layout>
             <div className={styles.bookingPage}>
-                {notifications.map(notification => (
-                    <Notification
-                        key={notification.id}
-                        id={notification.id}
-                        message={notification.message}
-                        type={notification.type}
-                        isVisible={notification.isVisible}
-                        onClose={hideNotification}
-                    />
-                ))}
-
                 <ProgressStepper steps={BOOKING_STEPS} currentStep={1} className={styles.stepper} />
 
                 <div className={styles.header}>

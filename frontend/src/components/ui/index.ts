@@ -6,6 +6,7 @@ export * from './Input/Input';
 export * from './LoadingSpinner/LoadingSpinner';
 export * from './Modal/Modal';
 export * from './Notification/Notification';
+export * from './NotificationContainer/NotificationContainer';
 export * from './Pagination/Pagination';
 export * from './SearchInput/SearchInput';
 export * from './Select/Select';

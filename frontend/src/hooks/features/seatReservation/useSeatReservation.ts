@@ -3,7 +3,7 @@ import { seatReservationApi } from '@/api/seatReservationApi';
 import type { SeatReservationResponse, SeatInfo, TicketPriceInfo } from '@/types/seatReservation';
 import { useApi } from '@/hooks/common/useApi';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
-import { useNotification } from '@/hooks/common/useNotification';
+import { useNotification } from '@/context/NotificationContext';
 
 export interface SelectedSeat {
     seat: SeatInfo;

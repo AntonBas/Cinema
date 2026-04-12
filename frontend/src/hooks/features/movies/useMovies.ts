@@ -80,7 +80,10 @@ export const useMovies = () => {
     const create = useCallback(async (request: MovieCreateRequest) => {
         return mutationApiRef.current.execute(
             () => movieApi.admin.create(request),
-            { successMessage: `Movie "${request.title}" created successfully` }
+            {
+                successMessage: `Movie "${request.title}" created successfully`,
+                showErrorNotification: true
+            }
         );
     }, []);
 
@@ -89,7 +92,10 @@ export const useMovies = () => {
         const title = movie?.title || request.title;
         return mutationApiRef.current.execute(
             () => movieApi.admin.update(id, request),
-            { successMessage: `Movie "${title}" updated successfully` }
+            {
+                successMessage: `Movie "${title}" updated successfully`,
+                showErrorNotification: true
+            }
         );
     }, [adminMoviesApi.data]);
 
@@ -97,7 +103,10 @@ export const useMovies = () => {
         const movie = adminMoviesApi.data?.content?.find(m => m.id === id);
         return mutationApiRef.current.execute(
             () => movieApi.admin.delete(id),
-            { successMessage: `Movie "${movie?.title || id}" deleted successfully` }
+            {
+                successMessage: `Movie "${movie?.title || id}" deleted successfully`,
+                showErrorNotification: true
+            }
         );
     }, [adminMoviesApi.data]);
 

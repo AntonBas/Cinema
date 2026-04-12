@@ -4,7 +4,7 @@ import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
 import { useSession } from '@/hooks/features/sessions/useSession';
 import { useAdminUsers } from '@/hooks/features/admin/useAdminUsers';
 import { usePromotion } from '@/hooks/features/promotion/usePromotion';
-import { useNotification } from '@/hooks/common/useNotification';
+import { useNotification } from '@/context/NotificationContext';
 
 export interface DashboardStats {
     totalMovies: number;
@@ -71,7 +71,7 @@ export const useDashboardStats = () => {
 
     useEffect(() => {
         loadDashboardData();
-    }, [loadDashboardData]);
+    }, []);
 
     return {
         stats,

@@ -5,8 +5,6 @@ import { BOOKING_STEPS } from '@/components/booking/ProgressStepper/bookingSteps
 import { Layout } from '@/components/layout/Layout/Layout';
 import { ConfirmModal } from '@/components/ui/ConfirmModal/ConfirmModal';
 import { useBooking } from '@/hooks/features/booking/useBooking';
-import { useNotification } from '@/hooks/common/useNotification';
-import { Notification } from '@/components/ui/Notification/Notification';
 import styles from './BookingSummaryPage.module.css';
 
 export const BookingSummaryPage: React.FC = () => {
@@ -14,14 +12,13 @@ export const BookingSummaryPage: React.FC = () => {
     const navigate = useNavigate();
     const [showCancelModal, setShowCancelModal] = useState(false);
 
-    const { notifications, hideNotification } = useNotification();
     const { booking, loading, getById, cancel } = useBooking();
 
     useEffect(() => {
         if (bookingId) {
             getById(parseInt(bookingId));
         }
-    }, [bookingId, getById]);
+    }, [bookingId]);
 
     const handleCancelBooking = async () => {
         if (!bookingId) return;
@@ -60,17 +57,6 @@ export const BookingSummaryPage: React.FC = () => {
 
     return (
         <Layout>
-            {notifications.map(notification => (
-                <Notification
-                    key={notification.id}
-                    id={notification.id}
-                    message={notification.message}
-                    type={notification.type}
-                    isVisible={notification.isVisible}
-                    onClose={hideNotification}
-                />
-            ))}
-
             <ConfirmModal
                 isOpen={showCancelModal}
                 onConfirm={handleCancelBooking}
