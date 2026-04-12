@@ -1,63 +1,41 @@
 .table {
+    width: 100%;
     background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
     border-radius: var(--radius-xl);
     border: 1px solid #334155;
     overflow: hidden;
     box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
     animation: fadeIn var(--transition-normal);
+    border-collapse: collapse;
 }
 
-.tableHeader {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1.5fr;
-    gap: var(--space-4);
-    padding: var(--space-6) var(--space-8);
+.table thead {
     background: #1e293b;
+    border-bottom: 1px solid #334155;
+}
+
+.table th {
+    padding: var(--space-6) var(--space-8);
     font-weight: 600;
     color: #f1f5f9;
-    border-bottom: 1px solid #334155;
     font-size: var(--font-size-sm);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    text-align: left;
 }
 
-.headerCell {
-    display: flex;
-    align-items: center;
-}
-
-.tableBody {
-    background: transparent;
-}
-
-.tableRow {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1.5fr;
-    gap: var(--space-4);
+.table td {
     padding: var(--space-6) var(--space-8);
     border-bottom: 1px solid #334155;
-    align-items: center;
-    transition: background-color var(--transition-fast);
     background: rgba(30, 41, 59, 0.3);
 }
 
-.tableRow:nth-child(even) {
-    background: rgba(30, 41, 59, 0.6);
-}
-
-.tableRow:last-child {
+.table tr:last-child td {
     border-bottom: none;
 }
 
-.tableRow:hover {
+.table tr:hover td {
     background: rgba(253, 95, 0, 0.15);
-}
-
-.nameCell,
-.countCell,
-.actionsCell {
-    display: flex;
-    align-items: center;
 }
 
 .name {
@@ -70,31 +48,6 @@
     display: flex;
     gap: var(--space-2);
     flex-wrap: wrap;
-}
-
-.editButton,
-.deleteButton {
-    min-width: 80px;
-    padding: var(--space-2) var(--space-4);
-    font-size: var(--font-size-sm);
-    font-weight: 500;
-    border-radius: var(--radius-md);
-    transition: all var(--transition-fast);
-}
-
-.loading {
-    text-align: center;
-    padding: var(--space-12) var(--space-8);
-    color: var(--color-text-secondary);
-    background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
-    border-radius: var(--radius-xl);
-    border: 1px solid #334155;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 200px;
-    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
 }
 
 .empty {
@@ -114,18 +67,6 @@
     display: block;
     animation: float 3s ease-in-out infinite;
     color: var(--color-text-secondary);
-}
-
-@keyframes float {
-
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(-8px);
-    }
 }
 
 .empty h3 {
@@ -157,78 +98,26 @@
     }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@keyframes float {
 
-    .table,
-    .tableRow,
-    .emptyIcon {
-        animation: none;
-        transition: none;
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-8px);
     }
 }
 
 @media (max-width: 768px) {
-    .tableHeader {
-        grid-template-columns: 1fr;
-        gap: var(--space-2);
+
+    .table th,
+    .table td {
         padding: var(--space-4);
-        text-align: center;
     }
 
-    .tableRow {
-        grid-template-columns: 1fr;
-        gap: var(--space-3);
-        padding: var(--space-6) var(--space-4);
-        text-align: center;
-    }
-
-    .nameCell,
-    .countCell,
-    .actionsCell {
-        justify-content: center;
-    }
-
-    .actions {
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-
-    .editButton,
-    .deleteButton {
-        padding: var(--space-2) var(--space-4);
-        font-size: var(--font-size-sm);
-    }
-
-    .loading,
-    .empty {
-        padding: var(--space-8) var(--space-4);
-        min-height: 150px;
-    }
-
-    .emptyIcon {
-        font-size: 2.5rem;
-        margin-bottom: var(--space-4);
-    }
-}
-
-@media (max-width: 480px) {
     .actions {
         flex-direction: column;
-        align-items: center;
-        width: 100%;
-    }
-
-    .editButton,
-    .deleteButton {
-        width: 100%;
-        max-width: 200px;
-    }
-
-    .empty h3 {
-        font-size: var(--font-size-lg);
-    }
-
-    .empty p {
-        font-size: var(--font-size-sm);
     }
 }
