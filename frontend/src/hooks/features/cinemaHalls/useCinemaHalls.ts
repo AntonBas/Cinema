@@ -57,14 +57,14 @@ export const useCinemaHalls = () => {
     const updateHall = useCallback(async (id: number, request: CinemaHallRequest) => {
         return mutationApiRef.current.execute(
             () => cinemaHallApi.update(id, request),
-            { successMessage: `Cinema hall "${getHallName(id)}" updated successfully` }
+            { successMessage: `Cinema hall "${request.name}" updated successfully` }
         );
     }, [getHallName]);
 
     const deleteHall = useCallback(async (id: number) => {
         return mutationApiRef.current.execute(
             () => cinemaHallApi.delete(id),
-            { successMessage: `Cinema hall "${getHallName(id)}" deleted successfully` }
+            { successMessage: `Cinema hall deleted successfully` }
         );
     }, [getHallName]);
 
