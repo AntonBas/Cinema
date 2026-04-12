@@ -1,6 +1,6 @@
 .transactions {
     width: 100%;
-    background: var(--color-bg-primary);
+    background: linear-gradient(135deg, var(--color-bg-tertiary) 0%, var(--color-bg-quaternary) 100%);
     border-radius: var(--radius-lg);
     padding: var(--space-8);
     box-shadow: var(--shadow-md);

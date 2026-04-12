@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useUser } from '@/hooks/features/user/useUser';
-import { Input, Button } from '@/components/ui';
+import { Input, Button, Tooltip } from '@/components/ui';
 import styles from './EmailChangeForm.module.css';
 
 export const EmailChangeForm: React.FC = () => {
@@ -40,6 +40,8 @@ export const EmailChangeForm: React.FC = () => {
         setFormData({ newEmail: '', password: '' });
     };
 
+    const tooltipContent = `Important:\n• You will receive a confirmation email at your new address\n• You must click the confirmation link to complete the change\n• Your login email will be updated after confirmation`;
+
     return (
         <div className={styles.emailForm}>
             <h1 className={styles.title}>Change Email Address</h1>
@@ -74,19 +76,12 @@ export const EmailChangeForm: React.FC = () => {
                     </div>
                 </div>
 
-                <div className={styles.infoBox}>
-                    <p><strong>Important:</strong></p>
-                    <ul>
-                        <li>You will receive a confirmation email at your new address</li>
-                        <li>You must click the confirmation link to complete the change</li>
-                        <li>Your login email will be updated after confirmation</li>
-                    </ul>
-                </div>
-
                 <div className={styles.buttonWrapper}>
-                    <Button type="submit" variant="primary" loading={loading} disabled={loading}>
-                        Change Email Address
-                    </Button>
+                    <Tooltip content={tooltipContent} position="top">
+                        <Button type="submit" variant="primary" loading={loading} disabled={loading}>
+                            Change Email Address
+                        </Button>
+                    </Tooltip>
                 </div>
             </form>
         </div>

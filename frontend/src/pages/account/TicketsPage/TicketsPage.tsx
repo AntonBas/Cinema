@@ -93,14 +93,14 @@ export const TicketsPage: React.FC = () => {
                                     onClick={() => setViewMode('grid')}
                                     size="small"
                                 >
-                                    📱 Grid
+                                    Grid
                                 </Button>
                                 <Button
                                     variant={viewMode === 'list' ? 'primary' : 'secondary'}
                                     onClick={() => setViewMode('list')}
                                     size="small"
                                 >
-                                    📋 List
+                                    List
                                 </Button>
                             </div>
                         </div>

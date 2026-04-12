@@ -79,9 +79,6 @@
 
 .tabsSection {
     margin-bottom: var(--space-8);
-}
-
-.filterTabs {
     display: flex;
     gap: var(--space-2);
     flex-wrap: wrap;
@@ -192,7 +189,7 @@
         justify-content: space-between;
     }
 
-    .filterTabs {
+    .tabsSection {
         justify-content: center;
     }
 
@@ -203,7 +200,7 @@
 }
 
 @media (max-width: 480px) {
-    .filterTabs {
+    .tabsSection {
         justify-content: center;
     }
 
