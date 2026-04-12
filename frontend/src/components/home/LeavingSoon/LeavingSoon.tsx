@@ -66,9 +66,6 @@ export const LeavingSoon: React.FC<LeavingSoonProps> = ({ movies, loading }) => 
             <div className={styles.container}>
                 <div className={styles.sectionHeader}>
                     <h2 className={styles.sectionTitle}>Last Chance</h2>
-                    <Button variant="outline" size="small" onClick={() => navigate('/movies/currently-showing')}>
-                        View All
-                    </Button>
                 </div>
 
                 <div className={styles.carouselContainer}>

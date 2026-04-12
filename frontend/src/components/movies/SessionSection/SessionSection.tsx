@@ -17,18 +17,12 @@ const getDayInfo = (dateString: string) => {
     const date = new Date(dateString);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
     const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
     if (dateOnly.getTime() === today.getTime()) {
-        return { label: 'Today', shortLabel: 'Today' };
-    }
-    if (dateOnly.getTime() === tomorrow.getTime()) {
-        return { label: 'Tomorrow', shortLabel: 'Tomorrow' };
+        return { shortLabel: 'Today' };
     }
     return {
-        label: date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }),
         shortLabel: date.toLocaleDateString('en-US', { weekday: 'short' })
     };
 };
