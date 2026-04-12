@@ -36,9 +36,9 @@ export const movieApi = {
     getPoster: (id: number) =>
       api.get<ArrayBuffer>(`${BASE_URL}/${id}/poster`, { responseType: 'arraybuffer' }),
 
-    search: (query?: string) =>
+    search: (query?: string, date?: string) =>
       api.get<MovieSessionSearchResponse[]>(`${BASE_URL}/search`, {
-        params: query ? { query } : undefined
+        params: { query, date }
       }),
   },
 

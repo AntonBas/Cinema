@@ -73,8 +73,8 @@ export const useMovies = () => {
         return adminMovieApiRef.current.execute(() => movieApi.admin.getById(id));
     }, []);
 
-    const search = useCallback(async (query?: string) => {
-        return searchMoviesApiRef.current.execute(() => movieApi.public.search(query));
+    const search = useCallback(async (query?: string, date?: string) => {
+        return searchMoviesApiRef.current.execute(() => movieApi.public.search(query, date));
     }, []);
 
     const create = useCallback(async (request: MovieCreateRequest) => {

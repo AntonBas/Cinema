@@ -52,6 +52,7 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
     const [movieSearchTerm, setMovieSearchTerm] = useState(initialData?.movieTitle || '');
     const [isSearching, setIsSearching] = useState(false);
     const movieSearchRef = useRef<HTMLDivElement>(null);
+    const hasLoadedRef = useRef(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -65,6 +66,7 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
             setSelectedMovie(null);
             setErrors({});
             setShowMovieResults(false);
+            hasLoadedRef.current = false;
         }
     }, [isOpen, initialData]);
 
@@ -78,12 +80,28 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    const handleStartTimeChange = useCallback((value: string) => {
+        setFormData(prev => ({ ...prev, startTime: value }));
+        setSelectedMovie(null);
+        setFormData(prev => ({ ...prev, movieId: '' }));
+        setMovieSearchTerm('');
+        setMovieResults([]);
+        setShowMovieResults(false);
+        hasLoadedRef.current = false;
+        setErrors(prev => ({ ...prev, movieId: '' }));
+    }, []);
+
     const handleMovieSearch = useCallback(async (query?: string) => {
-        if (!formData.startTime) return;
+        if (!formData.startTime) {
+            setMovieResults([]);
+            setShowMovieResults(true);
+            return;
+        }
 
         setIsSearching(true);
         try {
-            const results = await search(query);
+            const date = formData.startTime.split('T')[0];
+            const results = await search(query || '', date);
             setMovieResults(results || []);
             setShowMovieResults(true);
         } catch {
@@ -92,6 +110,17 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
             setIsSearching(false);
         }
     }, [formData.startTime, search]);
+
+    const handleMovieClick = useCallback(async () => {
+        if (!formData.startTime) return;
+
+        setShowMovieResults(true);
+
+        if (!hasLoadedRef.current) {
+            await handleMovieSearch('');
+            hasLoadedRef.current = true;
+        }
+    }, [formData.startTime, handleMovieSearch]);
 
     const handleMovieSelect = useCallback((movie: MovieSessionSearchResponse) => {
         setSelectedMovie(movie);
@@ -156,7 +185,7 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
                         <Input
                             type="datetime-local"
                             value={formData.startTime}
-                            onChange={(value) => setFormData(prev => ({ ...prev, startTime: value }))}
+                            onChange={handleStartTimeChange}
                             error={errors.startTime}
                             min={minDateTime}
                         />
@@ -185,8 +214,9 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
                             onChange={(value) => {
                                 setMovieSearchTerm(value);
                                 handleMovieSearch(value);
+                                hasLoadedRef.current = true;
                             }}
-                            onClick={() => formData.startTime && handleMovieSearch()}
+                            onClick={handleMovieClick}
                             placeholder={formData.startTime ? "Search movie..." : "Select start time first"}
                             disabled={!formData.startTime}
                             error={errors.movieId}
@@ -208,7 +238,13 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
                                         </div>
                                     ))
                                 ) : (
-                                    <div className={styles.noResults}>No movies available</div>
+                                    <div className={styles.noResults}>
+                                        {!formData.startTime
+                                            ? 'Select start time first'
+                                            : movieSearchTerm
+                                                ? `No movies found for "${movieSearchTerm}"`
+                                                : 'No movies available for this date'}
+                                    </div>
                                 )}
                             </div>
                         )}

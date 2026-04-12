@@ -21,14 +21,14 @@ const getStatusText = (status: string): string => {
     return statusMap[status] || status;
 };
 
-const getStatusBadgeVariant = (status: string): 'success' | 'error' | 'warning' | 'secondary' => {
-    const variantMap: Record<string, 'success' | 'error' | 'warning' | 'secondary'> = {
-        SCHEDULED: 'secondary',
-        ONGOING: 'success',
-        COMPLETED: 'secondary',
-        CANCELLED: 'error'
+const getStatusClass = (status: string): string => {
+    const classMap: Record<string, string> = {
+        SCHEDULED: styles.statusScheduled,
+        ONGOING: styles.statusOngoing,
+        COMPLETED: styles.statusCompleted,
+        CANCELLED: styles.statusCancelled
     };
-    return variantMap[status] || 'secondary';
+    return classMap[status] || '';
 };
 
 const canEdit = (status: string): boolean => status === 'SCHEDULED';
@@ -132,7 +132,7 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                         </div>
 
                         <div className={styles.status}>
-                            <Badge variant={getStatusBadgeVariant(session.status)}>
+                            <Badge className={getStatusClass(session.status)}>
                                 {getStatusText(session.status)}
                             </Badge>
                         </div>
