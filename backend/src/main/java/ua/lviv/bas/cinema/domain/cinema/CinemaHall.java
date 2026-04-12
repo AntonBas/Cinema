@@ -56,4 +56,15 @@ public class CinemaHall extends AuditableEntity {
 	@OneToMany(mappedBy = "hall", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	@Builder.Default
 	private List<Seat> seats = new ArrayList<>();
+
+	public void setSeats(List<Seat> seats) {
+		if (this.seats == null) {
+			this.seats = new ArrayList<>();
+		} else {
+			this.seats.clear();
+		}
+		if (seats != null) {
+			this.seats.addAll(seats);
+		}
+	}
 }

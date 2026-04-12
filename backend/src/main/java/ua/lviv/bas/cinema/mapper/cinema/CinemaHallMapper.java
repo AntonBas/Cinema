@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
 import ua.lviv.bas.cinema.domain.cinema.Seat;
+import ua.lviv.bas.cinema.domain.cinema.enums.SeatType;
 import ua.lviv.bas.cinema.dto.hall.request.CinemaHallRequest;
 import ua.lviv.bas.cinema.dto.hall.response.CinemaHallListResponse;
 import ua.lviv.bas.cinema.dto.hall.response.CinemaHallResponse;
@@ -46,6 +47,24 @@ public abstract class CinemaHallMapper {
 				.stream().mapToInt(Long::intValue).max().orElse(0);
 	}
 
+	@Named("calculateDefaultSeatType")
+	protected SeatType calculateDefaultSeatType(CinemaHall hall) {
+		if (hall.getSeats() == null || hall.getSeats().isEmpty()) {
+			return null;
+		}
+		return hall.getSeats().stream().filter(s -> s.getSeatType() != SeatType.COUPLE).findFirst()
+				.map(Seat::getSeatType).orElse(null);
+	}
+
+	@Named("calculateCoupleRows")
+	protected List<Integer> calculateCoupleRows(CinemaHall hall) {
+		if (hall.getSeats() == null || hall.getSeats().isEmpty()) {
+			return List.of();
+		}
+		return hall.getSeats().stream().filter(s -> s.getSeatType() == SeatType.COUPLE).map(Seat::getRow).distinct()
+				.sorted().toList();
+	}
+
 	@Mapping(target = "capacity", source = "hall", qualifiedByName = "calculateCapacity")
 	public abstract CinemaHallListResponse toCinemaHallListResponse(CinemaHall hall);
 
@@ -54,10 +73,10 @@ public abstract class CinemaHallMapper {
 	@Mapping(target = "capacity", source = "seatsCount")
 	public abstract CinemaHallListResponse toCinemaHallListResponse(CinemaHallListProjection projection);
 
-	@Mapping(target = "rows", ignore = true)
-	@Mapping(target = "seatsPerRow", ignore = true)
-	@Mapping(target = "defaultSeatType", ignore = true)
-	@Mapping(target = "coupleRows", ignore = true)
+	@Mapping(target = "rows", source = "hall", qualifiedByName = "calculateTotalRows")
+	@Mapping(target = "seatsPerRow", source = "hall", qualifiedByName = "calculateMaxSeatsPerRow")
+	@Mapping(target = "defaultSeatType", source = "hall", qualifiedByName = "calculateDefaultSeatType")
+	@Mapping(target = "coupleRows", source = "hall", qualifiedByName = "calculateCoupleRows")
 	@Mapping(target = "capacity", source = "hall", qualifiedByName = "calculateCapacity")
 	public abstract CinemaHallResponse toCinemaHallResponse(CinemaHall hall);
 

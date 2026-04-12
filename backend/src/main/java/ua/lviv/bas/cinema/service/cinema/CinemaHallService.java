@@ -112,9 +112,10 @@ public class CinemaHallService {
 
 		if (isLayoutChanged(hall, request)) {
 			validateHallHasNoTickets(id);
-			seatRepository.deleteByHallId(id);
+			hall.getSeats().clear();
+			hallRepository.flush();
 			var newSeats = generateSeatLayout(hall, request);
-			hall.setSeats(newSeats);
+			hall.getSeats().addAll(newSeats);
 		}
 
 		var updated = hallRepository.save(hall);
