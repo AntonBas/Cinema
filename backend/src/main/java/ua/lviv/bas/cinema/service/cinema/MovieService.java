@@ -57,6 +57,10 @@ public class MovieService {
 	public MovieAdminResponse createMovie(MovieCreateRequest request) {
 		log.info("Creating movie: {}", request.getTitle());
 
+		if (movieRepository.existsByTitle(request.getTitle())) {
+			throw new DuplicateEntityException("Movie", "title '" + request.getTitle() + "'");
+		}
+
 		var movie = movieMapper.toMovie(request);
 		movie.setSlug(generateUniqueSlug(request.getTitle(), null));
 		movie.setStatus(movieScheduler.calculateMovieStatus(movie, LocalDate.now()));
