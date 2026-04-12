@@ -75,6 +75,11 @@ public class PromotionService {
 				.map(promotionMapper::toPromotionListResponse);
 	}
 
+	public PromotionResponse getPromotion(Long id) {
+		return promotionRepository.findById(id).map(promotionMapper::toPromotionResponse)
+				.orElseThrow(() -> new PromotionNotFoundException(id));
+	}
+
 	public List<PromotionResponse> getAvailablePromotions(User user) {
 		log.debug("Getting available promotions for user: {}", user != null ? user.getEmail() : "anonymous");
 		return promotionRepository.findAllActivePromotions().stream().map(promotionMapper::toPromotionResponse)

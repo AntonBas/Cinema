@@ -47,6 +47,13 @@ public class AdminPromotionController {
 		return promotionService.createPromotion(request);
 	}
 
+	@GetMapping("/{id}")
+	@Operation(summary = "Get promotion by ID")
+	public PromotionResponse getPromotion(@PathVariable Long id) {
+		log.info("GET /api/admin/promotions/{}", id);
+		return promotionService.getPromotion(id);
+	}
+
 	@GetMapping
 	@Operation(summary = "Get all promotions")
 	public PageResponse<PromotionListResponse> getPromotions(@RequestParam(required = false) String query,
