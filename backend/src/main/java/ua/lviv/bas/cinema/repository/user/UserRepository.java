@@ -82,7 +82,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 			  AND (:verificationStatus IS NULL OR u.verification_status = CAST(:verificationStatus AS text))
 			  AND (:enabled IS NULL OR u.enabled = :enabled)
 			""", nativeQuery = true)
-	Page<AdminUserProjection> findProjectionsByFilters(@Param("search") String search, @Param("role") String role,
+	Page<AdminUserProjection> findProjectionsByFilters(@Param("search") String query, @Param("role") String role,
 			@Param("verificationStatus") String verificationStatus, @Param("enabled") Boolean enabled,
 			Pageable pageable);
 }

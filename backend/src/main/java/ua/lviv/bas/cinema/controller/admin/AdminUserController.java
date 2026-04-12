@@ -43,15 +43,15 @@ public class AdminUserController {
 	@GetMapping
 	@Operation(summary = "Get users with filters")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Users retrieved successfully") })
-	public PageResponse<AdminUserListResponse> getUsers(@RequestParam(required = false) String search,
+	public PageResponse<AdminUserListResponse> getUsers(@RequestParam(required = false) String query,
 			@RequestParam(required = false) UserRole role,
 			@RequestParam(required = false) VerificationStatus verificationStatus,
 			@RequestParam(required = false) Boolean enabled,
 			@PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
 
-		log.info("GET /api/admin/users - search: {}, role: {}, verificationStatus: {}, enabled: {}", search, role,
+		log.info("GET /api/admin/users - search: {}, role: {}, verificationStatus: {}, enabled: {}", query, role,
 				verificationStatus, enabled);
-		return PageResponse.from(adminUserService.getUsers(search, role, verificationStatus, enabled, pageable));
+		return PageResponse.from(adminUserService.getUsers(query, role, verificationStatus, enabled, pageable));
 	}
 
 	@PatchMapping("/{userId}/role")

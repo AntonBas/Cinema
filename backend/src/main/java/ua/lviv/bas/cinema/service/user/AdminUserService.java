@@ -92,15 +92,15 @@ public class AdminUserService {
 	}
 
 	@Cacheable(value = "users", key = "'list-' + #search + '-' + #role + '-' + #verificationStatus + '-' + #enabled + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
-	public Page<AdminUserListResponse> getUsers(String search, UserRole role, VerificationStatus verificationStatus,
+	public Page<AdminUserListResponse> getUsers(String query, UserRole role, VerificationStatus verificationStatus,
 			Boolean enabled, Pageable pageable) {
-		log.info("Getting users: search={}, role={}, verificationStatus={}, enabled={}, page={}, size={}", search, role,
+		log.info("Getting users: search={}, role={}, verificationStatus={}, enabled={}, page={}, size={}", query, role,
 				verificationStatus, enabled, pageable.getPageNumber(), pageable.getPageSize());
 
 		String roleStr = role != null ? role.name() : null;
 		String verificationStatusStr = verificationStatus != null ? verificationStatus.name() : null;
 
-		Page<AdminUserProjection> page = userRepository.findProjectionsByFilters(search, roleStr, verificationStatusStr,
+		Page<AdminUserProjection> page = userRepository.findProjectionsByFilters(query, roleStr, verificationStatusStr,
 				enabled, pageable);
 
 		return page.map(userMapper::toAdminUserListResponse);
