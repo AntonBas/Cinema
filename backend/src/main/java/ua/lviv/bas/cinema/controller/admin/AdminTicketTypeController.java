@@ -56,10 +56,10 @@ public class AdminTicketTypeController {
 	@Operation(summary = "Get all ticket types")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Ticket types retrieved successfully") })
 	public PageResponse<TicketTypeResponse> getTicketTypes(@RequestParam(required = false) Boolean active,
-			@RequestParam(required = false) TicketTypeCategory category, @RequestParam(required = false) String search,
+			@RequestParam(required = false) TicketTypeCategory category, @RequestParam(required = false) String query,
 			@PageableDefault(size = 10) Pageable pageable) {
-		log.info("GET /api/admin/ticket-types - active: {}, category: {}, search: {}", active, category, search);
-		return PageResponse.from(ticketTypeService.getTicketTypes(active, category, search, pageable));
+		log.info("GET /api/admin/ticket-types - active: {}, category: {}, query: {}", active, category, query);
+		return PageResponse.from(ticketTypeService.getTicketTypes(active, category, query, pageable));
 	}
 
 	@PutMapping("/{id}")

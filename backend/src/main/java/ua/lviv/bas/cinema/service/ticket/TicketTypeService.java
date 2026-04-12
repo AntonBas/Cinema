@@ -56,12 +56,12 @@ public class TicketTypeService {
 		return ticketTypeMapper.toTicketTypeResponse(saved);
 	}
 
-	@Cacheable(value = "ticketTypes", key = "'list-' + #active + '-' + #category + '-' + #search + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
-	public Page<TicketTypeResponse> getTicketTypes(Boolean active, TicketTypeCategory category, String search,
+	@Cacheable(value = "ticketTypes", key = "'list-' + #active + '-' + #category + '-' + #query + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	public Page<TicketTypeResponse> getTicketTypes(Boolean active, TicketTypeCategory category, String query,
 			Pageable pageable) {
-		log.info("Getting ticket types: active={}, category={}, search={}, page={}, size={}", active, category, search,
+		log.info("Getting ticket types: active={}, category={}, query={}, page={}, size={}", active, category, query,
 				pageable.getPageNumber(), pageable.getPageSize());
-		var page = ticketTypeRepository.findProjectionsByFilters(active, category, search, pageable);
+		var page = ticketTypeRepository.findProjectionsByFilters(active, category, query, pageable);
 		return page.map(ticketTypeMapper::toTicketTypeResponse);
 	}
 
