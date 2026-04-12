@@ -151,10 +151,8 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 	@EntityGraph(attributePaths = { "genres", "actors", "directors", "screenwriters", "sessions", "sessions.hall" })
 	@Query("""
 			SELECT DISTINCT m FROM Movie m
-			LEFT JOIN FETCH m.sessions s
 			WHERE m.slug = :slug
 			AND m.status != 'ARCHIVED'
-			AND (s IS NULL OR s.startTime > CURRENT_TIMESTAMP)
 			""")
 	Optional<Movie> findBySlugWithFutureSessions(@Param("slug") String slug);
 }

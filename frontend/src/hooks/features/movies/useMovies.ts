@@ -15,29 +15,36 @@ import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
 export const useMovies = () => {
     const adminMoviesApi = useApi<PageResponse<MovieCardResponse>>();
-    const homeMoviesApi = useApi<MovieCardResponse[]>();
+    const currentMoviesHomeApi = useApi<MovieCardResponse[]>();
+    const upcomingMoviesHomeApi = useApi<MovieCardResponse[]>();
+    const leavingSoonHomeApi = useApi<MovieCardResponse[]>();
     const movieDetailApi = useApi<MovieDetailResponse>();
     const adminMovieApi = useApi<MovieAdminResponse>();
     const searchMoviesApi = useApi<MovieSessionSearchResponse[]>();
     const mutationApi = useApi<MovieAdminResponse | void>();
 
     const adminMoviesApiRef = useRef(adminMoviesApi);
-    const homeMoviesApiRef = useRef(homeMoviesApi);
+    const currentMoviesHomeApiRef = useRef(currentMoviesHomeApi);
+    const upcomingMoviesHomeApiRef = useRef(upcomingMoviesHomeApi);
+    const leavingSoonHomeApiRef = useRef(leavingSoonHomeApi);
     const movieDetailApiRef = useRef(movieDetailApi);
     const adminMovieApiRef = useRef(adminMovieApi);
     const searchMoviesApiRef = useRef(searchMoviesApi);
     const mutationApiRef = useRef(mutationApi);
 
     adminMoviesApiRef.current = adminMoviesApi;
-    homeMoviesApiRef.current = homeMoviesApi;
+    currentMoviesHomeApiRef.current = currentMoviesHomeApi;
+    upcomingMoviesHomeApiRef.current = upcomingMoviesHomeApi;
+    leavingSoonHomeApiRef.current = leavingSoonHomeApi;
     movieDetailApiRef.current = movieDetailApi;
     adminMovieApiRef.current = adminMovieApi;
     searchMoviesApiRef.current = searchMoviesApi;
     mutationApiRef.current = mutationApi;
 
     const loading = useDelayedLoading(
-        adminMoviesApi.loading || homeMoviesApi.loading || movieDetailApi.loading ||
-        adminMovieApi.loading || searchMoviesApi.loading || mutationApi.loading,
+        adminMoviesApi.loading || currentMoviesHomeApi.loading || upcomingMoviesHomeApi.loading ||
+        leavingSoonHomeApi.loading || movieDetailApi.loading || adminMovieApi.loading ||
+        searchMoviesApi.loading || mutationApi.loading,
         { delay: 150, minDisplayTime: 300 }
     );
 
@@ -46,15 +53,15 @@ export const useMovies = () => {
     }, []);
 
     const getCurrentMoviesForHome = useCallback(async () => {
-        return homeMoviesApiRef.current.execute(() => movieApi.public.getCurrentMoviesForHome());
+        return currentMoviesHomeApiRef.current.execute(() => movieApi.public.getCurrentMoviesForHome());
     }, []);
 
     const getUpcomingMoviesForHome = useCallback(async () => {
-        return homeMoviesApiRef.current.execute(() => movieApi.public.getUpcomingMoviesForHome());
+        return upcomingMoviesHomeApiRef.current.execute(() => movieApi.public.getUpcomingMoviesForHome());
     }, []);
 
     const getLeavingSoonForHome = useCallback(async () => {
-        return homeMoviesApiRef.current.execute(() => movieApi.public.getLeavingSoonForHome());
+        return leavingSoonHomeApiRef.current.execute(() => movieApi.public.getLeavingSoonForHome());
     }, []);
 
     const getCurrentlyShowing = useCallback(async (params?: SearchParams) => {
@@ -113,15 +120,15 @@ export const useMovies = () => {
     return {
         adminMovies: adminMoviesApi.data?.content || [],
         adminPagination: adminMoviesApi.data,
-        currentMoviesHome: homeMoviesApi.data || [],
-        upcomingMoviesHome: homeMoviesApi.data || [],
-        leavingSoonHome: homeMoviesApi.data || [],
+        currentMoviesHome: currentMoviesHomeApi.data || [],
+        upcomingMoviesHome: upcomingMoviesHomeApi.data || [],
+        leavingSoonHome: leavingSoonHomeApi.data || [],
         movieDetail: movieDetailApi.data,
         adminMovie: adminMovieApi.data,
         searchResults: searchMoviesApi.data || [],
         loading,
         adminError: adminMoviesApi.error,
-        homeError: homeMoviesApi.error,
+        homeError: currentMoviesHomeApi.error || upcomingMoviesHomeApi.error || leavingSoonHomeApi.error,
         detailError: movieDetailApi.error,
         mutationError: mutationApi.error,
         getAdminMovies,

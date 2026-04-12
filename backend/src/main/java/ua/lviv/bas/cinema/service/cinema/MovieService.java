@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.service.cinema;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.HashSet;
 import java.util.List;
@@ -91,9 +92,13 @@ public class MovieService {
 	}
 
 	public MovieDetailResponse getMovieBySlug(String slug) {
-		return movieRepository.findBySlugWithFutureSessions(slug)
-				.filter(movie -> movie.getStatus() != MovieStatus.ARCHIVED).map(movieMapper::toMovieDetailResponse)
+		Movie movie = movieRepository.findBySlugWithFutureSessions(slug)
 				.orElseThrow(() -> new MovieNotFoundException(slug));
+
+		LocalDateTime now = LocalDateTime.now();
+		movie.getSessions().removeIf(session -> session.getStartTime() == null || !session.getStartTime().isAfter(now));
+
+		return movieMapper.toMovieDetailResponse(movie);
 	}
 
 	@Cacheable(value = "movies", key = "'list-' + #query + '-' + #status + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
