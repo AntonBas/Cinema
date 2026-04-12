@@ -26,7 +26,12 @@ export const promotionApi = {
         create: (request: PromotionRequest) =>
             api.post<PromotionResponse>(ADMIN_BASE_URL, request),
 
-        getAll: (params?: { page?: number; size?: number; sort?: string[] }) =>
+        getAll: (params?: {
+            query?: string;
+            page?: number;
+            size?: number;
+            sort?: string[]
+        }) =>
             api.get<PageResponse<PromotionListResponse>>(ADMIN_BASE_URL, { params }),
 
         update: (id: number, request: PromotionRequest) =>

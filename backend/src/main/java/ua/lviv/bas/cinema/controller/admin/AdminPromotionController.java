@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -48,10 +49,10 @@ public class AdminPromotionController {
 
 	@GetMapping
 	@Operation(summary = "Get all promotions")
-	public PageResponse<PromotionListResponse> getPromotions(
+	public PageResponse<PromotionListResponse> getPromotions(@RequestParam(required = false) String query,
 			@PageableDefault(size = 10, sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable) {
-		log.info("GET /api/admin/promotions");
-		return PageResponse.from(promotionService.getPromotions(pageable));
+		log.info("GET /api/admin/promotions - query: '{}'", query);
+		return PageResponse.from(promotionService.getPromotions(query, pageable));
 	}
 
 	@PutMapping("/{id}")

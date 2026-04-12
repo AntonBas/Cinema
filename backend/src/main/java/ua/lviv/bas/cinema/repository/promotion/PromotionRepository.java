@@ -40,8 +40,11 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
 			    p.startDate as startDate,
 			    p.endDate as endDate
 			FROM Promotion p
+			WHERE (:query IS NULL OR
+			       LOWER(p.title) LIKE LOWER(CONCAT('%', CAST(:query AS text), '%')) OR
+			       LOWER(p.description) LIKE LOWER(CONCAT('%', CAST(:query AS text), '%')))
 			""")
-	Page<PromotionListProjection> findAllAdminProjections(Pageable pageable);
+	Page<PromotionListProjection> findAllAdminProjections(@Param("query") String query, Pageable pageable);
 
 	@Query("""
 			SELECT

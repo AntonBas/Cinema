@@ -15,6 +15,7 @@ import EditPromotionModal from './PromotionModal/EditPromotionModal';
 import styles from './SectionPromotion.module.css';
 
 const SectionPromotion: React.FC = () => {
+    const [searchQuery, setSearchQuery] = useState<string>('');
     const [statusFilter, setStatusFilter] = useState<string>('');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editingPromotion, setEditingPromotion] = useState<PromotionResponse | null>(null);
@@ -27,19 +28,46 @@ const SectionPromotion: React.FC = () => {
     const currentPage = params.page ?? 0;
     const pageSize = params.size ?? 10;
 
+    const loadPromotions = useCallback((page: number = currentPage) => {
+        getAll({
+            query: searchQuery || undefined,
+            page: page,
+            size: pageSize
+        });
+    }, [searchQuery, pageSize, getAll]);
+
     useEffect(() => {
-        getAll({ page: currentPage, size: pageSize });
-    }, [currentPage, pageSize]);
+        loadPromotions(0);
+    }, []);
+
+    const handleSearch = useCallback((query: string) => {
+        setSearchQuery(query);
+        setPage(0);
+        getAll({
+            query: query || undefined,
+            page: 0,
+            size: pageSize
+        });
+    }, [pageSize, getAll, setPage]);
+
+    const handlePageChange = useCallback((page: number) => {
+        setPage(page);
+        getAll({
+            query: searchQuery || undefined,
+            page: page,
+            size: pageSize
+        });
+    }, [searchQuery, pageSize, getAll, setPage]);
 
     const handleCreateSuccess = useCallback(() => {
         setShowCreateModal(false);
-        getAll({ page: currentPage, size: pageSize });
-    }, [currentPage, pageSize]);
+        loadPromotions(currentPage);
+    }, [currentPage, loadPromotions]);
 
     const handleUpdateSuccess = useCallback(() => {
         setEditingPromotion(null);
-        getAll({ page: currentPage, size: pageSize });
-    }, [currentPage, pageSize]);
+        loadPromotions(currentPage);
+    }, [currentPage, loadPromotions]);
 
     const handleDeleteConfirm = async () => {
         if (!deletingPromotion) return;
@@ -49,8 +77,13 @@ const SectionPromotion: React.FC = () => {
 
         if (adminPromotions.length === 1 && currentPage > 0) {
             setPage(currentPage - 1);
+            getAll({
+                query: searchQuery || undefined,
+                page: currentPage - 1,
+                size: pageSize
+            });
         } else {
-            getAll({ page: currentPage, size: pageSize });
+            loadPromotions(currentPage);
         }
     };
 
@@ -83,9 +116,16 @@ const SectionPromotion: React.FC = () => {
 
             <div className={styles.filtersContainer}>
                 <div className={styles.searchWrapper}>
-                    <SearchInput onSearch={() => { }} placeholder="Search promotions..." />
+                    <SearchInput
+                        onSearch={handleSearch}
+                        placeholder="Search promotions..."
+                        delay={300}
+                    />
                 </div>
-                <PromotionFilters selectedStatus={statusFilter} onStatusChange={setStatusFilter} />
+                <PromotionFilters
+                    selectedStatus={statusFilter}
+                    onStatusChange={setStatusFilter}
+                />
             </div>
 
             {pagination && pagination.totalElements > 0 && (
@@ -93,6 +133,7 @@ const SectionPromotion: React.FC = () => {
                     Showing {pagination.number * pagination.size + 1}-
                     {Math.min((pagination.number + 1) * pagination.size, pagination.totalElements)} of{' '}
                     {pagination.totalElements} promotions
+                    {searchQuery && ` for "${searchQuery}"`}
                 </div>
             )}
 
@@ -111,7 +152,7 @@ const SectionPromotion: React.FC = () => {
                         totalPages={pagination.totalPages}
                         totalElements={pagination.totalElements}
                         pageSize={pagination.size}
-                        onPageChange={setPage}
+                        onPageChange={handlePageChange}
                         variant="pages"
                         showInfo={false}
                     />
