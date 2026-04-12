@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,6 +26,7 @@ import ua.lviv.bas.cinema.domain.cinema.status.MovieStatus;
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
+import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.service.cinema.MovieService;
 
@@ -119,5 +121,12 @@ public class MovieController {
 	public ResponseEntity<byte[]> getPoster(@PathVariable Long id) {
 		log.info("GET /api/movies/{}/poster - Getting movie poster", id);
 		return movieService.getPoster(id);
+	}
+
+	@RateLimit(value = 20, duration = 1, key = "ip")
+	@GetMapping("/search")
+	public List<MovieSessionSearchResponse> searchMovies(@RequestParam(required = false) String query) {
+		log.info("GET /api/movies/search - query: '{}'", query);
+		return movieService.searchMovies(query);
 	}
 }

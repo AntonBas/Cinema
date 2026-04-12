@@ -1,7 +1,5 @@
 package ua.lviv.bas.cinema.controller.admin;
 
-import java.util.List;
-
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -35,7 +33,6 @@ import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
 import ua.lviv.bas.cinema.dto.movie.response.MovieAdminResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
-import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.service.cinema.MovieService;
 
 @Slf4j
@@ -79,14 +76,6 @@ public class AdminMovieController {
 			@PageableDefault(size = 12, sort = "title", direction = Sort.Direction.ASC) Pageable pageable) {
 		log.info("GET /api/admin/movies - query: '{}', status: {}", query, status);
 		return PageResponse.from(movieService.getMovies(query, status, pageable));
-	}
-
-	@GetMapping("/search")
-	@Operation(summary = "Search movies")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Movies retrieved successfully") })
-	public List<MovieSessionSearchResponse> searchMovies(@RequestParam(required = false) String query) {
-		log.info("GET /api/admin/movies/search - query: '{}'", query);
-		return movieService.searchMovies(query);
 	}
 
 	@PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
