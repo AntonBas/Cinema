@@ -119,8 +119,15 @@ public class MovieService {
 		return movieRepository.findLeavingSoonMovies(pageable).map(movieMapper::toMovieCardResponse).getContent();
 	}
 
-	public List<MovieSessionSearchResponse> searchMovies(String query) {
-		log.info("Searching movies with query: {}", query);
+	public List<MovieSessionSearchResponse> searchMovies(String query, LocalDate date) {
+		log.info("Searching movies with query: '{}', date: {}", query, date);
+
+		if (date != null) {
+			var projections = (query != null && !query.isBlank())
+					? movieRepository.findMoviesByDateAndTitle(date, query)
+					: movieRepository.findMoviesByDate(date);
+			return projections.stream().map(movieMapper::toMovieSessionSearchResponse).toList();
+		}
 
 		if (query == null || query.isBlank()) {
 			return List.of();

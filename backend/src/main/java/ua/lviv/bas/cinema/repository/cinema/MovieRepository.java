@@ -1,5 +1,6 @@
 package ua.lviv.bas.cinema.repository.cinema;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -116,6 +117,25 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
 			  AND m.endShowingDate BETWEEN CURRENT_DATE AND CURRENT_DATE + 7 DAY
 			""")
 	Page<MovieCardProjection> findLeavingSoonMovies(Pageable pageable);
+
+	@Query("""
+			SELECT m.id as id,
+			       m.slug as slug,
+			       m.title as title,
+			       m.posterFileName as posterFileName,
+			       m.durationMinutes as durationMinutes,
+			       m.ageRating as ageRating,
+			       m.status as status,
+			       m.releaseDate as releaseDate,
+			       m.endShowingDate as endShowingDate
+			FROM Movie m
+			WHERE m.status IN ('CURRENT', 'UPCOMING')
+			  AND m.endShowingDate >= CURRENT_DATE
+			  AND :date BETWEEN m.releaseDate AND m.endShowingDate
+			  AND LOWER(m.title) LIKE LOWER(CONCAT('%', :title, '%'))
+			ORDER BY m.title
+			""")
+	List<MovieCardProjection> findMoviesByDateAndTitle(@Param("date") LocalDate date, @Param("title") String title);
 
 	@Query("SELECT m.posterFileName FROM Movie m WHERE m.id = :id")
 	Optional<String> findPosterFileNameById(@Param("id") Long id);
