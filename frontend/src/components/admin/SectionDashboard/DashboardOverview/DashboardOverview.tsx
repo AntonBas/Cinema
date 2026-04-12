@@ -4,14 +4,13 @@ import styles from './DashboardOverview.module.css';
 
 interface DashboardOverviewProps {
     stats: DashboardStats;
-    formatCurrency: (amount: number) => string;
 }
 
-export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ stats, formatCurrency }) => {
+export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ stats }) => {
     return (
         <div className={styles.overviewCard}>
             <div className={styles.overviewHeader}>
-                <span className={styles.overviewTitle}>Today's Overview</span>
+                <span className={styles.overviewTitle}>Overview</span>
                 <span className={styles.overviewDate}>
                     {new Date().toLocaleDateString('en-US', {
                         weekday: 'long',
@@ -23,20 +22,24 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ stats, for
             </div>
             <div className={styles.overviewStats}>
                 <div className={styles.overviewStat}>
-                    <span className={styles.overviewLabel}>Active Movies</span>
-                    <span className={styles.overviewValue}>{stats.todaysStats.activeMovies}</span>
+                    <span className={styles.overviewLabel}>Total Movies</span>
+                    <span className={styles.overviewValue}>{stats.totalMovies}</span>
                 </div>
                 <div className={styles.overviewStat}>
-                    <span className={styles.overviewLabel}>Tickets Sold</span>
-                    <span className={styles.overviewValue}>{stats.todaysStats.ticketsSold}</span>
+                    <span className={styles.overviewLabel}>Total Halls</span>
+                    <span className={styles.overviewValue}>{stats.totalHalls}</span>
                 </div>
                 <div className={styles.overviewStat}>
-                    <span className={styles.overviewLabel}>Revenue</span>
-                    <span className={styles.overviewValue}>{formatCurrency(stats.todaysStats.revenue)}</span>
+                    <span className={styles.overviewLabel}>Total Sessions</span>
+                    <span className={styles.overviewValue}>{stats.totalSessions}</span>
                 </div>
                 <div className={styles.overviewStat}>
-                    <span className={styles.overviewLabel}>Active Users</span>
-                    <span className={styles.overviewValue}>{stats.todaysStats.activeUsers}</span>
+                    <span className={styles.overviewLabel}>Total Users</span>
+                    <span className={styles.overviewValue}>{stats.totalUsers}</span>
+                </div>
+                <div className={styles.overviewStat}>
+                    <span className={styles.overviewLabel}>Active Promotions</span>
+                    <span className={styles.overviewValue}>{stats.activePromotions}</span>
                 </div>
             </div>
         </div>
