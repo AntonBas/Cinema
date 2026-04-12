@@ -14,20 +14,23 @@ export const usePromotion = () => {
     const availableApi = useApi<PromotionResponse[]>();
     const claimedApi = useApi<PromotionResponse[]>();
     const adminApi = useApi<PageResponse<PromotionListResponse>>();
+    const promotionApiHook = useApi<PromotionResponse>();
     const mutationApi = useApi<PromotionResponse | void>();
 
     const availableApiRef = useRef(availableApi);
     const claimedApiRef = useRef(claimedApi);
     const adminApiRef = useRef(adminApi);
+    const promotionApiRef = useRef(promotionApiHook);
     const mutationApiRef = useRef(mutationApi);
 
     availableApiRef.current = availableApi;
     claimedApiRef.current = claimedApi;
     adminApiRef.current = adminApi;
+    promotionApiRef.current = promotionApiHook;
     mutationApiRef.current = mutationApi;
 
     const loading = useDelayedLoading(
-        availableApi.loading || claimedApi.loading || adminApi.loading || mutationApi.loading,
+        availableApi.loading || claimedApi.loading || adminApi.loading || promotionApiHook.loading || mutationApi.loading,
         { delay: 150, minDisplayTime: 300 }
     );
 
@@ -52,6 +55,10 @@ export const usePromotion = () => {
             { successMessage: `Promotion "${getPromotionTitle(request.promotionId)}" claimed successfully` }
         );
     }, [getPromotionTitle]);
+
+    const getById = useCallback(async (id: number) => {
+        return promotionApiRef.current.execute(() => promotionApi.admin.getById(id));
+    }, []);
 
     const getAll = useCallback(async (params?: {
         query?: string;
@@ -87,15 +94,18 @@ export const usePromotion = () => {
         availablePromotions: availableApi.data || [],
         claimedPromotions: claimedApi.data || [],
         adminPromotions: adminApi.data?.content || [],
+        promotion: promotionApiHook.data,
         pagination: adminApi.data,
         loading,
         availableError: availableApi.error,
         claimedError: claimedApi.error,
         adminError: adminApi.error,
+        promotionError: promotionApiHook.error,
         mutationError: mutationApi.error,
         getAvailable,
         getClaimed,
         claim,
+        getById,
         getAll,
         create,
         update,

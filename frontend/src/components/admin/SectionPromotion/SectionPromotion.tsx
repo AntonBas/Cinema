@@ -22,7 +22,7 @@ const SectionPromotion: React.FC = () => {
     const [deletingPromotion, setDeletingPromotion] = useState<{ id: number; title: string } | null>(null);
 
     const { params, setPage } = usePagination({ size: 10 });
-    const { adminPromotions, pagination, getAll, remove, loading } = usePromotion();
+    const { adminPromotions, pagination, getById, getAll, remove, loading } = usePromotion();
     const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
     const currentPage = params.page ?? 0;
@@ -87,10 +87,10 @@ const SectionPromotion: React.FC = () => {
         }
     };
 
-    const handleEdit = (id: number) => {
-        const promotion = adminPromotions.find(p => p.id === id);
+    const handleEdit = async (id: number) => {
+        const promotion = await getById(id);
         if (promotion) {
-            setEditingPromotion(promotion as PromotionResponse);
+            setEditingPromotion(promotion);
         }
     };
 
