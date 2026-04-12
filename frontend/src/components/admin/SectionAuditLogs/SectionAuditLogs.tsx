@@ -37,7 +37,7 @@ export const SectionAuditLogs: React.FC = () => {
         clearFilters();
     };
 
-    const entityTypes = ['User', 'BonusRules', 'Promotion', 'TicketType', 'Movie', 'Session'];
+    const entityTypes = ['User', 'Bonus', 'Promotion', 'TicketType', 'Movie', 'Session'];
     const actions = ['CREATED', 'UPDATED', 'DELETED', 'TOGGLE', 'CLAIMED', 'REFUNDED'];
 
     const hasActiveFilters = !!(filters.entityType || filters.action || filters.changedBy);
