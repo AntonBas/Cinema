@@ -71,7 +71,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
 
     useEffect(() => {
         getAllGenres({});
-    }, [getAllGenres]);
+    }, []);
 
     useEffect(() => {
         if (movie) {
@@ -200,6 +200,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                             <div className={styles.uploadPlaceholder}>
                                 <span>📷</span>
                                 <p>Click to upload poster</p>
+                                <small>Recommended: 800x1200px, JPG/PNG/WebP</small>
                             </div>
                         )}
                     </div>
@@ -213,9 +214,13 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                         onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
                         required
                         className={styles.input}
+                        placeholder="Enter movie title"
                         maxLength={TITLE_MAX_LENGTH}
+                        autoFocus={!movie}
                     />
-                    <div className={styles.charCount}>{titleRemaining} characters remaining</div>
+                    <div className={`${styles.charCount} ${titleRemaining < 10 ? styles.warning : ''}`}>
+                        {titleRemaining} characters remaining
+                    </div>
                 </div>
 
                 <div className={styles.formGroup}>
@@ -226,6 +231,8 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                         onChange={e => setFormData(prev => ({ ...prev, trailerUrl: e.target.value }))}
                         required
                         className={styles.input}
+                        placeholder="https://www.youtube.com/watch?v=..."
+                        pattern="https://.*"
                     />
                 </div>
 
@@ -238,8 +245,11 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                         rows={4}
                         className={styles.textarea}
                         maxLength={DESCRIPTION_MAX_LENGTH}
+                        placeholder="Describe the movie plot, characters, and key elements"
                     />
-                    <div className={styles.charCount}>{descriptionRemaining} characters remaining</div>
+                    <div className={`${styles.charCount} ${descriptionRemaining < 100 ? styles.warning : ''}`}>
+                        {descriptionRemaining} characters remaining
+                    </div>
                 </div>
 
                 <div className={styles.formRow}>
@@ -251,7 +261,9 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                             onChange={e => setFormData(prev => ({ ...prev, durationMinutes: parseInt(e.target.value) || 0 }))}
                             required
                             min="1"
+                            max="300"
                             className={styles.input}
+                            placeholder="e.g., 120"
                         />
                     </div>
                     <div className={styles.formGroup}>
@@ -278,6 +290,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                             onChange={e => setFormData(prev => ({ ...prev, releaseDate: e.target.value ? new Date(e.target.value) : null }))}
                             required
                             className={styles.input}
+                            min={new Date().toISOString().split('T')[0]}
                         />
                     </div>
                     <div className={styles.formGroup}>
@@ -288,6 +301,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                             onChange={e => setFormData(prev => ({ ...prev, endShowingDate: e.target.value ? new Date(e.target.value) : null }))}
                             required
                             className={styles.input}
+                            min={formatDateForInput(formData.releaseDate) || undefined}
                         />
                     </div>
                 </div>
@@ -308,6 +322,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                         selectedPersons={selectedActors}
                         onChange={handleActorsChange}
                         role="ACTOR"
+                        placeholder="Search actors or add new..."
                     />
                 </div>
 
@@ -318,6 +333,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                         selectedPersons={selectedDirectors}
                         onChange={handleDirectorsChange}
                         role="DIRECTOR"
+                        placeholder="Search directors or add new..."
                     />
                 </div>
 
@@ -328,15 +344,16 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                         selectedPersons={selectedScreenwriters}
                         onChange={handleScreenwritersChange}
                         role="SCREENWRITER"
+                        placeholder="Search screenwriters or add new..."
                     />
                 </div>
 
                 <div className={styles.actions}>
-                    <Button type="submit" variant="primary" loading={loading} disabled={loading}>
-                        {movie ? 'Update Movie' : 'Create Movie'}
-                    </Button>
                     <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
                         Cancel
+                    </Button>
+                    <Button type="submit" variant="primary" loading={loading} disabled={loading}>
+                        {movie ? 'Update Movie' : 'Create Movie'}
                     </Button>
                 </div>
             </form>
