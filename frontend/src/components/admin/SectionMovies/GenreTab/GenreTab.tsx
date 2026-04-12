@@ -36,7 +36,7 @@ export const GenreTab: React.FC = () => {
 
   const handleSearch = useCallback((query: string) => {
     setSearch(query);
-    getAll({ search: query });
+    getAll({ query: query });
   }, [setSearch]);
 
   const handleSubmit = useCallback(async (name: string) => {

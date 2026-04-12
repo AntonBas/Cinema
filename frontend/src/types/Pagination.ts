@@ -23,6 +23,6 @@ export interface SearchParams {
     page?: number;
     size?: number;
     sort?: string;
-    search?: string;
+    query?: string;
     [key: string]: any;
 }

@@ -5,7 +5,7 @@ import type { PageResponse, SearchParams } from '@/types/pagination';
 const BASE_URL = '/api/admin/genres';
 
 export const genreApi = {
-  getAll: (params?: SearchParams & { search?: string }) =>
+  getAll: (params?: SearchParams & { query?: string }) =>
     api.get<PageResponse<GenreListResponse>>(BASE_URL, { params }),
 
   create: (request: GenreRequest) =>

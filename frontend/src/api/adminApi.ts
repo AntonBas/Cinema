@@ -13,6 +13,7 @@ const ADMIN_API_URL = '/api/admin/users';
 
 export const adminApi = {
     getUsers: (params: SearchParams & {
+        query?: string;
         role?: UserRole;
         verificationStatus?: VerificationStatus;
         enabled?: boolean;

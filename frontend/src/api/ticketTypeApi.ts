@@ -12,7 +12,13 @@ export const ticketTypeApi = {
         create: (request: TicketTypeRequest) =>
             api.post<TicketTypeResponse>(BASE_URL, request),
 
-        getAll: (params?: { active?: boolean; category?: string; search?: string; page?: number; size?: number }) =>
+        getAll: (params?: {
+            active?: boolean;
+            category?: string;
+            query?: string;
+            page?: number;
+            size?: number
+        }) =>
             api.get<PageResponse<TicketTypeResponse>>(BASE_URL, { params }),
 
         update: (id: number, request: TicketTypeRequest) =>

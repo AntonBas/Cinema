@@ -12,7 +12,7 @@ import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 interface TicketTypeParams {
     active?: boolean;
     category?: TicketTypeCategory;
-    search?: string;
+    query?: string;
     page?: number;
     size?: number;
 }

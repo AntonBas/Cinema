@@ -53,7 +53,12 @@ export const usePromotion = () => {
         );
     }, [getPromotionTitle]);
 
-    const getAll = useCallback(async (params?: { page?: number; size?: number; sort?: string[] }) => {
+    const getAll = useCallback(async (params?: {
+        query?: string;
+        page?: number;
+        size?: number;
+        sort?: string[]
+    }) => {
         return adminApiRef.current.execute(() => promotionApi.admin.getAll(params));
     }, []);
 

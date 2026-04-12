@@ -13,6 +13,7 @@ import { useApi } from '@/hooks/common/useApi';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
 interface AdminUsersParams extends SearchParams {
+    query?: string;
     role?: UserRole;
     verificationStatus?: VerificationStatus;
     enabled?: boolean;

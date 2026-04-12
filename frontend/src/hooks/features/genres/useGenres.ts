@@ -25,7 +25,7 @@ export const useGenres = () => {
         return genre?.name || String(id);
     }, [genresApi.data]);
 
-    const getAll = useCallback(async (params?: { search?: string }) => {
+    const getAll = useCallback(async (params?: { query?: string }) => {
         return genresApiRef.current.execute(() => genreApi.getAll(params));
     }, []);
 

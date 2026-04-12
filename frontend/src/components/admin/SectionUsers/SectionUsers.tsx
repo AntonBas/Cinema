@@ -22,40 +22,86 @@ export const SectionUsers: React.FC = () => {
     const currentPage = params.page ?? 0;
     const pageSize = params.size ?? 10;
 
-    const loadUsers = useCallback(() => {
+    const loadUsers = useCallback((page: number = currentPage) => {
         getUsers({
-            search: searchQuery || undefined,
+            query: searchQuery || undefined,
             role: roleFilter || undefined,
             verificationStatus: verificationStatusFilter || undefined,
             enabled: enabledFilter === '' ? undefined : enabledFilter === 'true',
-            page: currentPage,
+            page: page,
             size: pageSize
         });
-    }, [searchQuery, roleFilter, verificationStatusFilter, enabledFilter, currentPage, pageSize]);
+    }, [searchQuery, roleFilter, verificationStatusFilter, enabledFilter, pageSize, getUsers]);
 
     useEffect(() => {
-        loadUsers();
+        loadUsers(0);
     }, []);
 
     const handleSearch = useCallback((query: string) => {
         setSearchQuery(query);
         setPage(0);
-    }, [setPage]);
+        getUsers({
+            query: query || undefined,
+            role: roleFilter || undefined,
+            verificationStatus: verificationStatusFilter || undefined,
+            enabled: enabledFilter === '' ? undefined : enabledFilter === 'true',
+            page: 0,
+            size: pageSize
+        });
+    }, [roleFilter, verificationStatusFilter, enabledFilter, pageSize, getUsers, setPage]);
 
     const handleRoleFilterChange = useCallback((value: string) => {
-        setRoleFilter(value as UserRole | '');
+        const newRole = value as UserRole | '';
+        setRoleFilter(newRole);
         setPage(0);
-    }, [setPage]);
+        getUsers({
+            query: searchQuery || undefined,
+            role: newRole || undefined,
+            verificationStatus: verificationStatusFilter || undefined,
+            enabled: enabledFilter === '' ? undefined : enabledFilter === 'true',
+            page: 0,
+            size: pageSize
+        });
+    }, [searchQuery, verificationStatusFilter, enabledFilter, pageSize, getUsers, setPage]);
 
     const handleVerificationStatusChange = useCallback((value: string) => {
-        setVerificationStatusFilter(value as VerificationStatus | '');
+        const newStatus = value as VerificationStatus | '';
+        setVerificationStatusFilter(newStatus);
         setPage(0);
-    }, [setPage]);
+        getUsers({
+            query: searchQuery || undefined,
+            role: roleFilter || undefined,
+            verificationStatus: newStatus || undefined,
+            enabled: enabledFilter === '' ? undefined : enabledFilter === 'true',
+            page: 0,
+            size: pageSize
+        });
+    }, [searchQuery, roleFilter, enabledFilter, pageSize, getUsers, setPage]);
 
     const handleEnabledFilterChange = useCallback((value: string) => {
         setEnabledFilter(value);
         setPage(0);
-    }, [setPage]);
+        getUsers({
+            query: searchQuery || undefined,
+            role: roleFilter || undefined,
+            verificationStatus: verificationStatusFilter || undefined,
+            enabled: value === '' ? undefined : value === 'true',
+            page: 0,
+            size: pageSize
+        });
+    }, [searchQuery, roleFilter, verificationStatusFilter, pageSize, getUsers, setPage]);
+
+    const handlePageChange = useCallback((page: number) => {
+        setPage(page);
+        getUsers({
+            query: searchQuery || undefined,
+            role: roleFilter || undefined,
+            verificationStatus: verificationStatusFilter || undefined,
+            enabled: enabledFilter === '' ? undefined : enabledFilter === 'true',
+            page: page,
+            size: pageSize
+        });
+    }, [searchQuery, roleFilter, verificationStatusFilter, enabledFilter, pageSize, getUsers, setPage]);
 
     if (showDelayedLoading && !users.length) {
         return (
@@ -93,7 +139,7 @@ export const SectionUsers: React.FC = () => {
             )}
 
             <div className={styles.content}>
-                <UserTable users={users} onRefresh={loadUsers} />
+                <UserTable users={users} onRefresh={() => loadUsers(currentPage)} />
             </div>
 
             {pagination && pagination.totalPages > 1 && (
@@ -103,7 +149,7 @@ export const SectionUsers: React.FC = () => {
                         totalPages={pagination.totalPages}
                         totalElements={pagination.totalElements}
                         pageSize={pageSize}
-                        onPageChange={setPage}
+                        onPageChange={handlePageChange}
                         variant="pages"
                         showInfo={false}
                     />
