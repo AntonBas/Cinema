@@ -42,12 +42,12 @@ export const createSearchParams = (params: SearchParams, context?: string): URLS
         searchParams.append('sort', params.sort);
     }
 
-    if (params.search) {
-        searchParams.append('search', params.search);
+    if (params.query) {
+        searchParams.append('query', params.query);
     }
 
     Object.keys(params).forEach(key => {
-        if (!['page', 'size', 'sort', 'search'].includes(key)) {
+        if (!['page', 'size', 'sort', 'query'].includes(key)) {
             const value = params[key];
             if (value !== undefined && value !== null && value !== '') {
                 if (Array.isArray(value)) {

@@ -23,7 +23,7 @@ export const usePagination = (
         page: initialParams.page ?? 0,
         size: initialParams.size ?? defaultPageSize,
         sort: initialParams.sort,
-        search: initialParams.search,
+        query: initialParams.query,
         ...initialParams
     }));
 
@@ -45,7 +45,7 @@ export const usePagination = (
     const setSearch = useCallback((search: string) => {
         setParams(prev => ({
             ...prev,
-            search: search.trim() || undefined,
+            query: search.trim() || undefined,
             page: 0
         }));
     }, []);
@@ -102,7 +102,7 @@ export const usePagination = (
         params.page,
         params.size,
         params.sort,
-        params.search
+        params.query
     ]);
 
     return {
