@@ -44,7 +44,7 @@ public class PersonService {
 		return personMapper.toPersonResponse(saved);
 	}
 
-	@Cacheable(value = "persons", key = "'list-' + #query + '-' + #role + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+	@Cacheable(value = "persons", key = "{ 'list', #query, #role?.name(), #pageable.pageNumber, #pageable.pageSize, #pageable.sort.toString() }")
 	public Page<PersonListResponse> getPersons(String query, PersonRole role, Pageable pageable) {
 		log.info("Getting persons: query='{}', role={}, page={}, size={}", query, role, pageable.getPageNumber(),
 				pageable.getPageSize());

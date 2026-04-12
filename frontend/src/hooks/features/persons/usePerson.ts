@@ -1,9 +1,14 @@
 import { useCallback, useRef } from 'react';
 import { personApi } from '@/api/personApi';
 import type { PersonResponse, PersonRequest, PersonListResponse, PersonRole } from '@/types/person';
-import type { PageResponse } from '@/types/pagination';
+import type { PageResponse, SearchParams } from '@/types/pagination';
 import { useApi } from '@/hooks/common/useApi';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
+
+interface PersonParams extends SearchParams {
+    query?: string;
+    role?: PersonRole;
+}
 
 export const usePerson = () => {
     const personsApi = useApi<PageResponse<PersonListResponse>>();
@@ -25,7 +30,7 @@ export const usePerson = () => {
         return person?.name || String(id);
     }, [personsApi.data]);
 
-    const getAll = useCallback(async (params?: { query?: string; role?: PersonRole }) => {
+    const getAll = useCallback(async (params?: PersonParams) => {
         return personsApiRef.current.execute(() => personApi.admin.getAll(params));
     }, []);
 

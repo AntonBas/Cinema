@@ -1,13 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { PersonTabs } from './PersonTabs/PersonTabs';
 import { PersonList } from './PersonList/PersonList';
 import { PersonForm } from './PersonForm/PersonForm';
 import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal/DeleteConfirmModal';
 import { Button } from '@/components/ui/Button/Button';
+import { Pagination } from '@/components/ui/Pagination/Pagination';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import { SearchInput } from '@/components/ui/SearchInput/SearchInput';
 import { usePerson } from '@/hooks/features/persons/usePerson';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
+import { usePagination } from '@/hooks/common/usePagination';
 import type { PersonRequest, PersonRole, PersonListResponse } from '@/types/person';
 import styles from './PersonTab.module.css';
 
@@ -17,33 +19,59 @@ export const PersonTab: React.FC = () => {
   const [editingPerson, setEditingPerson] = useState<PersonListResponse | null>(null);
   const [personToDelete, setPersonToDelete] = useState<PersonListResponse | null>(null);
   const [activeTab, setActiveTab] = useState<PersonRole | 'ALL'>('ALL');
-  const [search, setSearch] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const {
-    persons,
-    loading,
-    getAll,
-    create,
-    update,
-    remove,
-  } = usePerson();
-
+  const { params, setPage } = usePagination({ size: 12 });
+  const { persons, pagination, loading, getAll, create, update, remove } = usePerson();
   const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
-  useEffect(() => {
+  const currentPage = params.page ?? 0;
+  const pageSize = params.size ?? 12;
+
+  const loadPersons = useCallback((page: number = currentPage) => {
     getAll({
-      query: search || undefined,
+      query: searchQuery || undefined,
       role: activeTab === 'ALL' ? undefined : activeTab,
+      page: page,
+      size: pageSize
     });
-  }, [search, activeTab]);
+  }, [searchQuery, activeTab, pageSize, getAll]);
+
+  useEffect(() => {
+    loadPersons(0);
+  }, []);
 
   const handleSearch = useCallback((query: string) => {
-    setSearch(query);
-  }, []);
+    setSearchQuery(query);
+    setPage(0);
+    getAll({
+      query: query || undefined,
+      role: activeTab === 'ALL' ? undefined : activeTab,
+      page: 0,
+      size: pageSize
+    });
+  }, [activeTab, pageSize, getAll, setPage]);
 
   const handleTabChange = useCallback((tab: PersonRole | 'ALL') => {
     setActiveTab(tab);
-  }, []);
+    setPage(0);
+    getAll({
+      query: searchQuery || undefined,
+      role: tab === 'ALL' ? undefined : tab,
+      page: 0,
+      size: pageSize
+    });
+  }, [searchQuery, pageSize, getAll, setPage]);
+
+  const handlePageChange = useCallback((page: number) => {
+    setPage(page);
+    getAll({
+      query: searchQuery || undefined,
+      role: activeTab === 'ALL' ? undefined : activeTab,
+      page: page,
+      size: pageSize
+    });
+  }, [searchQuery, activeTab, pageSize, getAll, setPage]);
 
   const handleSubmit = useCallback(async (data: PersonRequest) => {
     if (editingPerson) {
@@ -53,25 +81,28 @@ export const PersonTab: React.FC = () => {
     }
     setIsModalOpen(false);
     setEditingPerson(null);
-    getAll({
-      query: search || undefined,
-      role: activeTab === 'ALL' ? undefined : activeTab,
-    });
-  }, [editingPerson, search, activeTab]);
+    loadPersons(currentPage);
+  }, [editingPerson, create, update, loadPersons, currentPage]);
 
   const handleDelete = useCallback(async () => {
     if (!personToDelete) return;
-
     await remove(personToDelete.id);
     setIsDeleteModalOpen(false);
     setPersonToDelete(null);
-    getAll({
-      query: search || undefined,
-      role: activeTab === 'ALL' ? undefined : activeTab,
-    });
-  }, [personToDelete, search, activeTab]);
+    if (persons.length === 1 && currentPage > 0) {
+      setPage(currentPage - 1);
+      getAll({
+        query: searchQuery || undefined,
+        role: activeTab === 'ALL' ? undefined : activeTab,
+        page: currentPage - 1,
+        size: pageSize
+      });
+    } else {
+      loadPersons(currentPage);
+    }
+  }, [personToDelete, remove, persons.length, currentPage, searchQuery, activeTab, pageSize, getAll, setPage, loadPersons]);
 
-  if (showDelayedLoading && !persons.length && !search) {
+  if (showDelayedLoading && !persons.length && !searchQuery) {
     return (
       <div className={styles.loading}>
         <LoadingSpinner text="Loading persons" />
@@ -92,6 +123,15 @@ export const PersonTab: React.FC = () => {
         <SearchInput onSearch={handleSearch} placeholder="Search people by name..." delay={300} />
       </div>
 
+      {pagination && pagination.totalElements > 0 && (
+        <div className={styles.resultsInfo}>
+          Showing {pagination.number * pagination.size + 1}-
+          {Math.min((pagination.number + 1) * pagination.size, pagination.totalElements)} of{' '}
+          {pagination.totalElements} people
+          {searchQuery && ` for "${searchQuery}"`}
+        </div>
+      )}
+
       <PersonTabs activeTab={activeTab} onTabChange={handleTabChange} />
 
       <PersonList
@@ -107,6 +147,20 @@ export const PersonTab: React.FC = () => {
         }}
         onAddPerson={() => setIsModalOpen(true)}
       />
+
+      {pagination && pagination.totalPages > 1 && (
+        <div className={styles.paginationContainer}>
+          <Pagination
+            currentPage={pagination.number}
+            totalPages={pagination.totalPages}
+            totalElements={pagination.totalElements}
+            pageSize={pagination.size}
+            onPageChange={handlePageChange}
+            variant="pages"
+            showInfo={false}
+          />
+        </div>
+      )}
 
       {isModalOpen && (
         <PersonForm
