@@ -59,6 +59,11 @@
     border-radius: var(--radius-md);
     cursor: pointer;
     transition: all 0.2s ease;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
 }
 
 .dateDisplay:hover {
@@ -66,16 +71,10 @@
     background: var(--color-bg-secondary);
 }
 
-.dateInfo {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    width: 100%;
-}
-
 .calendarIcon {
     font-size: 1.125rem;
     color: var(--color-text-secondary);
+    margin-right: 0.75rem;
 }
 
 .currentDate {
@@ -86,11 +85,8 @@
 }
 
 .calendarToggle {
-    background: none;
-    border: none;
     color: var(--color-text-secondary);
     font-size: 0.75rem;
-    cursor: pointer;
     width: 20px;
     height: 20px;
     display: flex;
@@ -99,11 +95,6 @@
     border-radius: var(--radius-sm);
     transition: all 0.2s ease;
     flex-shrink: 0;
-}
-
-.calendarToggle:hover {
-    background: var(--color-bg-tertiary);
-    color: var(--color-text-primary);
 }
 
 .calendarWrapper {

@@ -42,7 +42,7 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({ selectedMovieId, onMov
 
         setLoading(true);
         try {
-            const response = await movieApi.admin.search(query);
+            const response = await movieApi.public.search(query);
             setMovies(response?.data || []);
             setShowDropdown(true);
         } catch {

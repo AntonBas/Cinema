@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { sessionApi } from '@/api/sessionApi';
 import type { SessionScheduleResponse } from '@/types/session';
@@ -12,6 +12,7 @@ import styles from './SessionsPage.module.css';
 const SessionsPage: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const [sessions, setSessions] = useState<SessionScheduleResponse[]>([]);
+    const [allSessionDates, setAllSessionDates] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -21,6 +22,23 @@ const SessionsPage: React.FC = () => {
     const today = new Date().toISOString().split('T')[0];
     const selectedDate = dateParam || today;
     const selectedMovieId = movieIdParam ? parseInt(movieIdParam) : undefined;
+
+    useEffect(() => {
+        const fetchAllDates = async () => {
+            try {
+                const response = await sessionApi.public.getSchedule({});
+                const data = response?.data || [];
+                const dates = data
+                    .map(s => s.startTime.split('T')[0])
+                    .filter((date, i, arr) => arr.indexOf(date) === i)
+                    .sort();
+                setAllSessionDates(dates);
+            } catch {
+                setAllSessionDates([]);
+            }
+        };
+        fetchAllDates();
+    }, []);
 
     useEffect(() => {
         const fetchSessions = async () => {
@@ -64,13 +82,6 @@ const SessionsPage: React.FC = () => {
         setSearchParams(new URLSearchParams());
     };
 
-    const availableDates = useMemo(() => {
-        return sessions
-            .map(s => s.startTime.split('T')[0])
-            .filter((date, i, arr) => arr.indexOf(date) === i)
-            .sort();
-    }, [sessions]);
-
     const hasFilters = selectedMovieId !== undefined || selectedDate !== today;
     const uniqueMoviesCount = new Set(sessions.map(s => s.movieId)).size;
 
@@ -93,7 +104,7 @@ const SessionsPage: React.FC = () => {
                     <DateFilter
                         selectedDate={selectedDate}
                         onDateChange={handleDateChange}
-                        sessionDates={availableDates}
+                        sessionDates={allSessionDates}
                     />
                     <MovieFilter selectedMovieId={selectedMovieId} onMovieChange={handleMovieChange} />
                 </div>

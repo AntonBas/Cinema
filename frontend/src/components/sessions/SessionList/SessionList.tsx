@@ -143,7 +143,7 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
                                         </div>
 
                                         <div className={styles.sessionInfo}>
-                                            <div className={styles.price}>₴{session.basePrice.toFixed(0)}</div>
+                                            <div className={styles.price}>{session.basePrice.toFixed(0)}₴</div>
                                             <div className={styles.seats}>Available: {session.availableSeats}</div>
                                             <div className={styles.sessionStatus}>
                                                 <span className={styles.statusBadge}>
