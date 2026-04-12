@@ -37,7 +37,16 @@ public interface TicketTypeRepository extends JpaRepository<TicketType, Long> {
 			WHERE (:active IS NULL OR t.active = :active)
 			  AND (:category IS NULL OR t.category = :category)
 			  AND (:query IS NULL OR :query = '' OR LOWER(t.displayName) LIKE LOWER(CONCAT('%', :query, '%')))
-			ORDER BY CASE t.category WHEN 'STANDARD' THEN 0 ELSE 1 END, t.displayName ASC
+			ORDER BY CASE t.category
+			    WHEN 'STANDARD' THEN 1
+			    WHEN 'CHILD' THEN 2
+			    WHEN 'STUDENT' THEN 3
+			    WHEN 'DISABLED' THEN 4
+			    WHEN 'MILITARY' THEN 5
+			    WHEN 'SENIOR' THEN 6
+			    WHEN 'SPECIAL' THEN 7
+			    ELSE 8
+			END, t.displayName ASC
 			""")
 	Page<TicketTypeProjection> findProjectionsByFilters(@Param("active") Boolean active,
 			@Param("category") TicketTypeCategory category, @Param("query") String query, Pageable pageable);
