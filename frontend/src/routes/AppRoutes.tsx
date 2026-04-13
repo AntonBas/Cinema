@@ -68,10 +68,19 @@ export const AppRoutes: React.FC = () => {
             } />
 
             <Route path="/verify-email/:token" element={<EmailVerificationPage />} />
-
             <Route path="/confirm-email-change/:token" element={<ConfirmEmailChangePage />} />
-
             <Route path="/oauth2/redirect" element={<OAuth2Redirect />} />
+
+            <Route path="/" element={<HomePage />} />
+
+            <Route path="/movies" element={<MoviesLayout />}>
+                <Route path="current" element={<CurrentMoviesPage />} />
+                <Route path="upcoming" element={<UpcomingMoviesPage />} />
+                <Route index element={<CurrentMoviesPage />} />
+            </Route>
+            <Route path="/movies/:slug" element={<MovieDetailPage />} />
+
+            <Route path="/schedule" element={<SessionsPage />} />
 
             <Route path="/account" element={
                 <ProtectedRoute>
@@ -94,40 +103,6 @@ export const AppRoutes: React.FC = () => {
             <Route path="/account/tickets" element={
                 <ProtectedRoute>
                     <TicketsPage />
-                </ProtectedRoute>
-            } />
-
-            <Route
-                path="/admin/*"
-                element={
-                    <AdminRoute>
-                        <AdminLayout />
-                    </AdminRoute>
-                }
-            >
-                <Route index element={<Navigate to="dashboard" replace />} />
-                <Route path="dashboard" element={<SectionDashboard />} />
-                <Route path="movies" element={<SectionMovies />} />
-                <Route path="halls" element={<SectionHalls />} />
-                <Route path="schedule" element={<SectionSchedule />} />
-                <Route path="users" element={<SectionUsers />} />
-                <Route path="bonus" element={<SectionBonus />} />
-                <Route path="promotion" element={<SectionPromotion />} />
-                <Route path="ticket-type" element={<SectionTicketType />} />
-                <Route path="audit-logs" element={<SectionAuditLogs />} />
-            </Route>
-
-            <Route path="/movies" element={<MoviesLayout />}>
-                <Route path="current" element={<CurrentMoviesPage />} />
-                <Route path="upcoming" element={<UpcomingMoviesPage />} />
-                <Route index element={<CurrentMoviesPage />} />
-            </Route>
-
-            <Route path="/movies/:slug" element={<MovieDetailPage />} />
-
-            <Route path="/schedule" element={
-                <ProtectedRoute>
-                    <SessionsPage />
                 </ProtectedRoute>
             } />
 
@@ -155,11 +130,25 @@ export const AppRoutes: React.FC = () => {
                 </ProtectedRoute>
             } />
 
-            <Route path="/" element={
-                <ProtectedRoute>
-                    <HomePage />
-                </ProtectedRoute>
-            } />
+            <Route
+                path="/admin/*"
+                element={
+                    <AdminRoute>
+                        <AdminLayout />
+                    </AdminRoute>
+                }
+            >
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<SectionDashboard />} />
+                <Route path="movies" element={<SectionMovies />} />
+                <Route path="halls" element={<SectionHalls />} />
+                <Route path="schedule" element={<SectionSchedule />} />
+                <Route path="users" element={<SectionUsers />} />
+                <Route path="bonus" element={<SectionBonus />} />
+                <Route path="promotion" element={<SectionPromotion />} />
+                <Route path="ticket-type" element={<SectionTicketType />} />
+                <Route path="audit-logs" element={<SectionAuditLogs />} />
+            </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

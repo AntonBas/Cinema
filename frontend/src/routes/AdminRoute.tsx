@@ -40,7 +40,9 @@ export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
         );
     }
 
-    if (user.userRole !== 'ROLE_ADMIN') {
+    const isAdmin = user.userRole === 'ROLE_ADMIN' || user.userRole === 'ROLE_CONTENT_MANAGER';
+
+    if (!isAdmin) {
         return <Navigate to="/" replace />;
     }
 
