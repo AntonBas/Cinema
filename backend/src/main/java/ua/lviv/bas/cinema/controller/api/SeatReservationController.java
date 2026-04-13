@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.controller.api;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +47,8 @@ public class SeatReservationController {
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Seat held successfully"),
 			@ApiResponse(responseCode = "404", description = "Session or seat not found"),
 			@ApiResponse(responseCode = "409", description = "Seat is already reserved") })
+	@SecurityRequirement(name = "bearerAuth")
+	@PreAuthorize("isAuthenticated()")
 	public void hold(@PathVariable Long sessionId, @PathVariable Long seatId,
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 		log.info("POST /api/sessions/{}/seats/{}/hold - user: {}", sessionId, seatId, userDetails.getUserId());
@@ -56,6 +60,8 @@ public class SeatReservationController {
 	@Operation(summary = "Cancel hold")
 	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Hold cancelled successfully"),
 			@ApiResponse(responseCode = "404", description = "Hold not found") })
+	@SecurityRequirement(name = "bearerAuth")
+	@PreAuthorize("isAuthenticated()")
 	public void cancel(@PathVariable Long sessionId, @PathVariable Long seatId,
 			@AuthenticationPrincipal CustomUserDetails userDetails) {
 		log.info("DELETE /api/sessions/{}/seats/{}/hold - user: {}", sessionId, seatId, userDetails.getUserId());
