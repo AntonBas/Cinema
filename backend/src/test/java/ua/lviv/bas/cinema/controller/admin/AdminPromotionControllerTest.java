@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import ua.lviv.bas.cinema.dto.PageResponse;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionRequest;
@@ -33,13 +35,13 @@ public class AdminPromotionControllerTest {
 
 	@Mock
 	private PromotionService promotionService;
+
 	@InjectMocks
 	private AdminPromotionController controller;
 
 	private final Long PROMOTION_ID = 1L;
 	private final String TITLE = "Test Promotion";
 	private final Integer BONUS_POINTS = 100;
-	private final Pageable pageable = PageRequest.of(0, 10);
 
 	private PromotionResponse createPromotionResponse() {
 		return new PromotionResponse(PROMOTION_ID, TITLE, "Description", BONUS_POINTS, LocalDate.now().plusDays(1),
@@ -68,33 +70,74 @@ public class AdminPromotionControllerTest {
 	}
 
 	@Test
-	void getPromotionsShouldReturnPage() {
+	void getPromotionShouldReturnPromotion() {
+		PromotionResponse response = createPromotionResponse();
+
+		when(promotionService.getPromotion(PROMOTION_ID)).thenReturn(response);
+
+		PromotionResponse result = controller.getPromotion(PROMOTION_ID);
+
+		assertThat(result).isNotNull();
+		assertThat(result.id()).isEqualTo(PROMOTION_ID);
+		assertThat(result.title()).isEqualTo(TITLE);
+		verify(promotionService).getPromotion(PROMOTION_ID);
+	}
+
+	@Test
+	void getPromotionShouldThrowWhenNotFound() {
+		when(promotionService.getPromotion(999L)).thenThrow(new PromotionNotFoundException(999L));
+
+		assertThatThrownBy(() -> controller.getPromotion(999L)).isInstanceOf(PromotionNotFoundException.class);
+	}
+
+	@Test
+	void getPromotionsWithoutQueryShouldReturnPage() {
+		Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdDate"));
 		PromotionListResponse listResponse = createPromotionListResponse();
 		Page<PromotionListResponse> page = new PageImpl<>(List.of(listResponse), pageable, 1);
 
-		when(promotionService.getPromotions(pageable)).thenReturn(page);
+		when(promotionService.getPromotions(isNull(), eq(pageable))).thenReturn(page);
 
-		PageResponse<PromotionListResponse> result = controller.getPromotions(pageable);
+		PageResponse<PromotionListResponse> result = controller.getPromotions(null, pageable);
 
 		assertThat(result).isNotNull();
 		assertThat(result.content()).hasSize(1);
 		assertThat(result.content().get(0).id()).isEqualTo(PROMOTION_ID);
 		assertThat(result.content().get(0).title()).isEqualTo(TITLE);
-		verify(promotionService).getPromotions(pageable);
+		verify(promotionService).getPromotions(isNull(), eq(pageable));
+	}
+
+	@Test
+	void getPromotionsWithQueryShouldReturnFilteredPage() {
+		String query = "Test";
+		Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdDate"));
+		PromotionListResponse listResponse = createPromotionListResponse();
+		Page<PromotionListResponse> page = new PageImpl<>(List.of(listResponse), pageable, 1);
+
+		when(promotionService.getPromotions(eq(query), eq(pageable))).thenReturn(page);
+
+		PageResponse<PromotionListResponse> result = controller.getPromotions(query, pageable);
+
+		assertThat(result).isNotNull();
+		assertThat(result.content()).hasSize(1);
+		assertThat(result.content().get(0).id()).isEqualTo(PROMOTION_ID);
+		assertThat(result.content().get(0).title()).isEqualTo(TITLE);
+		verify(promotionService).getPromotions(eq(query), eq(pageable));
 	}
 
 	@Test
 	void getPromotionsShouldReturnEmptyPage() {
+		Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdDate"));
 		Page<PromotionListResponse> emptyPage = new PageImpl<>(List.of(), pageable, 0);
 
-		when(promotionService.getPromotions(pageable)).thenReturn(emptyPage);
+		when(promotionService.getPromotions(isNull(), eq(pageable))).thenReturn(emptyPage);
 
-		PageResponse<PromotionListResponse> result = controller.getPromotions(pageable);
+		PageResponse<PromotionListResponse> result = controller.getPromotions(null, pageable);
 
 		assertThat(result).isNotNull();
 		assertThat(result.content()).isEmpty();
 		assertThat(result.totalElements()).isZero();
-		verify(promotionService).getPromotions(pageable);
+		verify(promotionService).getPromotions(isNull(), eq(pageable));
 	}
 
 	@Test

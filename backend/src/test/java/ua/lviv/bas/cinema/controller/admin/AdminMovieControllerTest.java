@@ -34,7 +34,6 @@ import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
 import ua.lviv.bas.cinema.dto.movie.response.MovieAdminResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
-import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.service.cinema.MovieService;
 
@@ -82,24 +81,6 @@ public class AdminMovieControllerTest {
 	}
 
 	@Test
-	void createMovieWithoutPosterShouldCallServiceWithNullPoster() throws Exception {
-		String movieDataJson = "{\"title\":\"New Movie\",\"description\":\"Description\",\"durationMinutes\":120}";
-		MovieAdminResponse responseDto = createMovieAdminResponse(1L, "New Movie");
-
-		MovieCreateRequest request = MovieCreateRequest.builder().title("New Movie").description("Description")
-				.durationMinutes(120).build();
-
-		when(objectMapper.readValue(movieDataJson, MovieCreateRequest.class)).thenReturn(request);
-		when(movieService.createMovie(any(MovieCreateRequest.class))).thenReturn(responseDto);
-
-		MovieAdminResponse response = movieController.createMovie(movieDataJson, null);
-
-		assertThat(response).isNotNull();
-		assertThat(response.title()).isEqualTo("New Movie");
-		verify(movieService).createMovie(any(MovieCreateRequest.class));
-	}
-
-	@Test
 	void createMovieWithInvalidJsonShouldThrowException() throws Exception {
 		String invalidMovieDataJson = "invalid json";
 		MockMultipartFile posterFile = new MockMultipartFile("posterFile", "poster.jpg", "image/jpeg",
@@ -136,7 +117,7 @@ public class AdminMovieControllerTest {
 
 	@Test
 	void getMoviesWithoutFiltersShouldReturnPageOfMovies() {
-		Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "title"));
+		Pageable pageable = PageRequest.of(0, 12, Sort.by(Sort.Direction.ASC, "title"));
 		MovieCardResponse movie1 = createMovieCardDto(1L, "Movie 1");
 		MovieCardResponse movie2 = createMovieCardDto(2L, "Movie 2");
 		Page<MovieCardResponse> page = new PageImpl<>(List.of(movie1, movie2), pageable, 2);
@@ -148,34 +129,34 @@ public class AdminMovieControllerTest {
 		assertThat(response).isNotNull();
 		assertThat(response.content()).hasSize(2);
 		assertThat(response.number()).isZero();
-		assertThat(response.size()).isEqualTo(20);
+		assertThat(response.size()).isEqualTo(12);
 		assertThat(response.totalElements()).isEqualTo(2);
 
 		verify(movieService).getMovies(isNull(), isNull(), eq(pageable));
 	}
 
 	@Test
-	void getMoviesWithTitleFilterShouldReturnFilteredMovies() {
-		String titleFilter = "Movie";
-		Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "title"));
+	void getMoviesWithQueryFilterShouldReturnFilteredMovies() {
+		String queryFilter = "Movie";
+		Pageable pageable = PageRequest.of(0, 12, Sort.by(Sort.Direction.ASC, "title"));
 		MovieCardResponse movie = createMovieCardDto(1L, "Movie 1");
 		Page<MovieCardResponse> page = new PageImpl<>(List.of(movie), pageable, 1);
 
-		when(movieService.getMovies(eq(titleFilter), isNull(), eq(pageable))).thenReturn(page);
+		when(movieService.getMovies(eq(queryFilter), isNull(), eq(pageable))).thenReturn(page);
 
-		PageResponse<MovieCardResponse> response = movieController.getMovies(titleFilter, null, pageable);
+		PageResponse<MovieCardResponse> response = movieController.getMovies(queryFilter, null, pageable);
 
 		assertThat(response).isNotNull();
 		assertThat(response.content()).hasSize(1);
 		assertThat(response.content().get(0).title()).isEqualTo("Movie 1");
 
-		verify(movieService).getMovies(eq(titleFilter), isNull(), eq(pageable));
+		verify(movieService).getMovies(eq(queryFilter), isNull(), eq(pageable));
 	}
 
 	@Test
 	void getMoviesWithStatusFilterShouldReturnFilteredMovies() {
 		MovieStatus statusFilter = MovieStatus.UPCOMING;
-		Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "title"));
+		Pageable pageable = PageRequest.of(0, 12, Sort.by(Sort.Direction.ASC, "title"));
 		MovieCardResponse movie = createMovieCardDto(1L, "Movie 1");
 		Page<MovieCardResponse> page = new PageImpl<>(List.of(movie), pageable, 1);
 
@@ -191,40 +172,23 @@ public class AdminMovieControllerTest {
 	}
 
 	@Test
-	void searchMoviesShouldReturnMovies() {
-		String searchTerm = "movie";
-		List<MovieSessionSearchResponse> movies = List.of(new MovieSessionSearchResponse(1L, "Movie 1", 120),
-				new MovieSessionSearchResponse(2L, "Movie 2", 130));
+	void getMoviesWithBothFiltersShouldReturnFilteredMovies() {
+		String queryFilter = "Movie";
+		MovieStatus statusFilter = MovieStatus.UPCOMING;
+		Pageable pageable = PageRequest.of(0, 12, Sort.by(Sort.Direction.ASC, "title"));
+		MovieCardResponse movie = createMovieCardDto(1L, "Movie 1");
+		Page<MovieCardResponse> page = new PageImpl<>(List.of(movie), pageable, 1);
 
-		when(movieService.searchMovies(searchTerm)).thenReturn(movies);
+		when(movieService.getMovies(eq(queryFilter), eq(statusFilter), eq(pageable))).thenReturn(page);
 
-		List<MovieSessionSearchResponse> response = movieController.searchMovies(searchTerm);
+		PageResponse<MovieCardResponse> response = movieController.getMovies(queryFilter, statusFilter, pageable);
 
-		assertThat(response).hasSize(2);
-		verify(movieService).searchMovies(searchTerm);
-	}
+		assertThat(response).isNotNull();
+		assertThat(response.content()).hasSize(1);
+		assertThat(response.content().get(0).title()).isEqualTo("Movie 1");
+		assertThat(response.content().get(0).status()).isEqualTo(MovieStatus.UPCOMING);
 
-	@Test
-	void searchMoviesWithoutSearchTermShouldReturnAllMovies() {
-		List<MovieSessionSearchResponse> movies = List.of(new MovieSessionSearchResponse(1L, "Movie 1", 120),
-				new MovieSessionSearchResponse(2L, "Movie 2", 130));
-
-		when(movieService.searchMovies(null)).thenReturn(movies);
-
-		List<MovieSessionSearchResponse> response = movieController.searchMovies(null);
-
-		assertThat(response).hasSize(2);
-		verify(movieService).searchMovies(null);
-	}
-
-	@Test
-	void searchMoviesWhenNoResultsShouldReturnEmptyList() {
-		when(movieService.searchMovies("nonexistent")).thenReturn(List.of());
-
-		List<MovieSessionSearchResponse> response = movieController.searchMovies("nonexistent");
-
-		assertThat(response).isEmpty();
-		verify(movieService).searchMovies("nonexistent");
+		verify(movieService).getMovies(eq(queryFilter), eq(statusFilter), eq(pageable));
 	}
 
 	@Test
@@ -263,6 +227,20 @@ public class AdminMovieControllerTest {
 		assertThat(response).isNotNull();
 		assertThat(response.title()).isEqualTo("Updated Movie");
 		verify(movieService).updateMovie(eq(1L), any(MovieUpdateRequest.class));
+	}
+
+	@Test
+	void updateMovieWithInvalidJsonShouldThrowException() throws Exception {
+		String invalidMovieDataJson = "invalid json";
+		MockMultipartFile posterFile = new MockMultipartFile("posterFile", "poster.jpg", "image/jpeg",
+				"content".getBytes());
+
+		when(objectMapper.readValue(invalidMovieDataJson, MovieUpdateRequest.class))
+				.thenThrow(new JsonProcessingException("Invalid JSON") {
+				});
+
+		assertThrows(IllegalArgumentException.class,
+				() -> movieController.updateMovie(1L, invalidMovieDataJson, posterFile));
 	}
 
 	@Test

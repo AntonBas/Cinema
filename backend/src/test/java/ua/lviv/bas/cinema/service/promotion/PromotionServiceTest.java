@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -132,16 +133,34 @@ public class PromotionServiceTest {
 
 	@Test
 	void getPromotionsShouldReturnPage() {
+		String query = "Summer";
 		Pageable pageable = PageRequest.of(0, 10);
 		PromotionListProjection projection = createAdminProjection();
 		Page<PromotionListProjection> page = new PageImpl<>(List.of(projection), pageable, 1);
 		PromotionListResponse listResponse = new PromotionListResponse(PROMOTION_ID, PROMOTION_TITLE, BONUS_POINTS,
 				START_DATE, END_DATE);
 
-		when(promotionRepository.findAllAdminProjections(pageable)).thenReturn(page);
+		when(promotionRepository.findAllAdminProjections(eq(query), eq(pageable))).thenReturn(page);
 		when(promotionMapper.toPromotionListResponse(projection)).thenReturn(listResponse);
 
-		Page<PromotionListResponse> result = promotionService.getPromotions(pageable);
+		Page<PromotionListResponse> result = promotionService.getPromotions(query, pageable);
+
+		assertThat(result.getContent()).hasSize(1);
+		assertThat(result.getContent().get(0).id()).isEqualTo(PROMOTION_ID);
+	}
+
+	@Test
+	void getPromotionsWithNullQueryShouldReturnPage() {
+		Pageable pageable = PageRequest.of(0, 10);
+		PromotionListProjection projection = createAdminProjection();
+		Page<PromotionListProjection> page = new PageImpl<>(List.of(projection), pageable, 1);
+		PromotionListResponse listResponse = new PromotionListResponse(PROMOTION_ID, PROMOTION_TITLE, BONUS_POINTS,
+				START_DATE, END_DATE);
+
+		when(promotionRepository.findAllAdminProjections(eq(null), eq(pageable))).thenReturn(page);
+		when(promotionMapper.toPromotionListResponse(projection)).thenReturn(listResponse);
+
+		Page<PromotionListResponse> result = promotionService.getPromotions(null, pageable);
 
 		assertThat(result.getContent()).hasSize(1);
 		assertThat(result.getContent().get(0).id()).isEqualTo(PROMOTION_ID);

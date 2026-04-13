@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.mapper.cinema;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -28,9 +29,10 @@ public class CinemaHallMapperTest {
 		Seat seat2 = Seat.builder().id(2L).row(1).number(2).build();
 		Seat seat3 = Seat.builder().id(3L).row(2).number(1).build();
 
-		hallWithSeats = CinemaHall.builder().id(1L).name("Hall A").seats(Arrays.asList(seat1, seat2, seat3)).build();
+		hallWithSeats = CinemaHall.builder().id(1L).name("Hall A")
+				.seats(new ArrayList<>(Arrays.asList(seat1, seat2, seat3))).build();
 
-		hallWithoutSeats = CinemaHall.builder().id(2L).name("Hall B").seats(Collections.emptyList()).build();
+		hallWithoutSeats = CinemaHall.builder().id(2L).name("Hall B").seats(new ArrayList<>()).build();
 	}
 
 	@Test
@@ -44,8 +46,9 @@ public class CinemaHallMapperTest {
 
 	@Test
 	void toCinemaHallListResponse_WhenSeatsNull_ReturnsZeroCapacity() {
-		hallWithSeats.setSeats(null);
-		CinemaHallListResponse response = cinemaHallMapper.toCinemaHallListResponse(hallWithSeats);
+		CinemaHall hallWithNullSeats = CinemaHall.builder().id(3L).name("Hall C").seats(null).build();
+
+		CinemaHallListResponse response = cinemaHallMapper.toCinemaHallListResponse(hallWithNullSeats);
 
 		assertThat(response.capacity()).isZero();
 	}

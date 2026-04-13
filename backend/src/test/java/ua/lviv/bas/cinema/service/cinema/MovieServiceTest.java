@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -98,6 +99,7 @@ public class MovieServiceTest {
 		movie.setAgeRating(AgeRating.PEGI_12);
 		movie.setStatus(MovieStatus.UPCOMING);
 		movie.setPosterFileName("poster.jpg");
+		movie.setSessions(new HashSet<>());
 
 		adminResponse = new MovieAdminResponse(MOVIE_ID, MOVIE_TITLE, "trailer.mp4", "Description", 120,
 				LocalDate.now().plusDays(1), LocalDate.now().plusDays(30), AgeRating.PEGI_12, MovieStatus.UPCOMING,
@@ -188,9 +190,8 @@ public class MovieServiceTest {
 	}
 
 	@Test
-	void getMovieBySlugWhenArchivedShouldThrowException() {
-		movie.setStatus(MovieStatus.ARCHIVED);
-		when(movieRepository.findBySlugWithFutureSessions(SLUG)).thenReturn(Optional.of(movie));
+	void getMovieBySlugWhenNotFoundShouldThrowException() {
+		when(movieRepository.findBySlugWithFutureSessions(SLUG)).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> movieService.getMovieBySlug(SLUG)).isInstanceOf(MovieNotFoundException.class);
 	}
@@ -211,6 +212,51 @@ public class MovieServiceTest {
 	}
 
 	@Test
+	void getCurrentMoviesShouldReturnList() {
+		Pageable pageable = PageRequest.of(0, 6);
+		MovieCardProjection projection = createMovieCardProjection();
+		Page<MovieCardProjection> projectionPage = new PageImpl<>(List.of(projection));
+
+		when(movieRepository.findCurrentMovies(pageable)).thenReturn(projectionPage);
+		when(movieMapper.toMovieCardResponse(projection)).thenReturn(cardResponse);
+
+		List<MovieCardResponse> result = movieService.getCurrentMovies(pageable);
+
+		assertThat(result).hasSize(1);
+		assertThat(result.get(0)).isEqualTo(cardResponse);
+	}
+
+	@Test
+	void getUpcomingMoviesShouldReturnList() {
+		Pageable pageable = PageRequest.of(0, 6);
+		MovieCardProjection projection = createMovieCardProjection();
+		Page<MovieCardProjection> projectionPage = new PageImpl<>(List.of(projection));
+
+		when(movieRepository.findUpcomingMovies(pageable)).thenReturn(projectionPage);
+		when(movieMapper.toMovieCardResponse(projection)).thenReturn(cardResponse);
+
+		List<MovieCardResponse> result = movieService.getUpcomingMovies(pageable);
+
+		assertThat(result).hasSize(1);
+		assertThat(result.get(0)).isEqualTo(cardResponse);
+	}
+
+	@Test
+	void getLeavingSoonMoviesShouldReturnList() {
+		Pageable pageable = PageRequest.of(0, 6);
+		MovieCardProjection projection = createMovieCardProjection();
+		Page<MovieCardProjection> projectionPage = new PageImpl<>(List.of(projection));
+
+		when(movieRepository.findLeavingSoonMovies(pageable)).thenReturn(projectionPage);
+		when(movieMapper.toMovieCardResponse(projection)).thenReturn(cardResponse);
+
+		List<MovieCardResponse> result = movieService.getLeavingSoonMovies(pageable);
+
+		assertThat(result).hasSize(1);
+		assertThat(result.get(0)).isEqualTo(cardResponse);
+	}
+
+	@Test
 	void updateMovieShouldSucceed() {
 		Movie existingMovie = new Movie();
 		existingMovie.setId(MOVIE_ID);
@@ -218,6 +264,7 @@ public class MovieServiceTest {
 		existingMovie.setSlug("old-title");
 		existingMovie.setReleaseDate(LocalDate.now().plusDays(1));
 		existingMovie.setEndShowingDate(LocalDate.now().plusDays(30));
+		existingMovie.setSessions(new HashSet<>());
 
 		when(movieRepository.findMovieById(MOVIE_ID)).thenReturn(Optional.of(existingMovie));
 		when(movieRepository.existsByTitle("Updated Title")).thenReturn(false);
@@ -266,6 +313,7 @@ public class MovieServiceTest {
 		existingMovie.setSlug("same-title");
 		existingMovie.setReleaseDate(LocalDate.now().plusDays(1));
 		existingMovie.setEndShowingDate(LocalDate.now().plusDays(30));
+		existingMovie.setSessions(new HashSet<>());
 
 		MovieUpdateRequest sameTitleRequest = MovieUpdateRequest.builder().title("Same Title")
 				.releaseDate(LocalDate.now().plusDays(2)).endShowingDate(LocalDate.now().plusDays(40))
@@ -326,7 +374,7 @@ public class MovieServiceTest {
 		when(movieMapper.toMovieSessionSearchResponse(projection))
 				.thenReturn(new MovieSessionSearchResponse(MOVIE_ID, MOVIE_TITLE, 120));
 
-		List<MovieSessionSearchResponse> result = movieService.searchMovies("test");
+		List<MovieSessionSearchResponse> result = movieService.searchMovies("test", null);
 
 		assertThat(result).hasSize(1);
 		assertThat(result.get(0).id()).isEqualTo(MOVIE_ID);
@@ -342,21 +390,21 @@ public class MovieServiceTest {
 		when(movieMapper.toMovieSessionSearchResponse(projection))
 				.thenReturn(new MovieSessionSearchResponse(MOVIE_ID, MOVIE_TITLE, 120));
 
-		List<MovieSessionSearchResponse> result = movieService.searchMovies(date.toString());
+		List<MovieSessionSearchResponse> result = movieService.searchMovies(null, date);
 
 		assertThat(result).hasSize(1);
 		assertThat(result.get(0).id()).isEqualTo(MOVIE_ID);
 	}
 
 	@Test
-	void searchMoviesWithNullQueryShouldReturnEmptyList() {
-		List<MovieSessionSearchResponse> result = movieService.searchMovies(null);
+	void searchMoviesWithNullQueryAndNullDateShouldReturnEmptyList() {
+		List<MovieSessionSearchResponse> result = movieService.searchMovies(null, null);
 		assertThat(result).isEmpty();
 	}
 
 	@Test
 	void searchMoviesWithBlankQueryShouldReturnEmptyList() {
-		List<MovieSessionSearchResponse> result = movieService.searchMovies("   ");
+		List<MovieSessionSearchResponse> result = movieService.searchMovies("   ", null);
 		assertThat(result).isEmpty();
 	}
 
