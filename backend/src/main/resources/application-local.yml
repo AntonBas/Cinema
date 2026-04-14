@@ -3,9 +3,9 @@ spring:
         activate:
             on-profile: local
     datasource:
-        url: jdbc:postgresql://localhost:5433/cinema_db
-        username: cinema
-        password: 21082001bas
+        url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:cinema_db}
+        username: ${DB_USER:cinema}
+        password: ${DB_PASSWORD:}
     jpa:
         show-sql: true
         properties:
