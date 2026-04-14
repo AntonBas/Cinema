@@ -4,6 +4,8 @@ spring:
             on-profile: local
     datasource:
         url: jdbc:postgresql://localhost:5433/cinema_db
+        username: cinema
+        password: 21082001bas
     jpa:
         show-sql: true
         properties:

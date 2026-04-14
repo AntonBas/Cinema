@@ -3,8 +3,6 @@ spring:
         active: local
     application:
         name: cinema
-    config:
-        import: optional:file:.env.local[.properties]
     cache:
         type: caffeine
         caffeine:
@@ -120,8 +118,8 @@ payment:
         sandbox_mode: ${LIQPAY_SANDBOX_MODE:true}
         currency: ${LIQPAY_CURRENCY:UAH}
         language: ${LIQPAY_LANGUAGE:uk}
-        callback_url: ${PAYMENT_LIQPAY_CALLBACK_URL:https://unethnologically-barytic-lean.ngrok-free.dev/api/liqpay/callback}
-        result_url: ${PAYMENT_LIQPAY_RESULT_URL:http://localhost:5173/booking/success}
+        callback_url: ${PAYMENT_LIQPAY_CALLBACK_URL}
+        result_url: ${PAYMENT_LIQPAY_RESULT_URL}
         api_url: ${LIQPAY_API_URL:https://www.liqpay.ua/api/}
 
 bonus:

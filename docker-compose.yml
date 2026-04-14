@@ -16,7 +16,11 @@ services:
     networks:
       - cinema-net
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-cinema} -d ${POSTGRES_DB:-cinema_db}" ]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_USER:-cinema} -d ${DB_NAME:-cinema_db}",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -40,11 +44,19 @@ services:
       DB_NAME: ${DB_NAME:-cinema_db}
       DB_USER: ${DB_USER:-cinema}
       DB_PASSWORD: ${DB_PASSWORD}
+      SERVER_PORT: 8080
+      SPRING_PROFILES_ACTIVE: docker
       JWT_SECRET: ${JWT_SECRET}
       EMAIL_USERNAME: ${EMAIL_USERNAME}
       EMAIL_PASSWORD: ${EMAIL_PASSWORD}
-      SERVER_PORT: 8080
-      SPRING_PROFILES_ACTIVE: docker
+      LIQPAY_PUBLIC_KEY: ${LIQPAY_PUBLIC_KEY}
+      LIQPAY_PRIVATE_KEY: ${LIQPAY_PRIVATE_KEY}
+      LIQPAY_SANDBOX_MODE: ${LIQPAY_SANDBOX_MODE:-true}
+      PAYMENT_LIQPAY_CALLBACK_URL: ${PAYMENT_LIQPAY_CALLBACK_URL}
+      PAYMENT_LIQPAY_RESULT_URL: ${PAYMENT_LIQPAY_RESULT_URL}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
     ports:
       - "${BACKEND_HOST_PORT:-8080}:8080"
     networks:
@@ -53,7 +65,7 @@ services:
       - ./backend/logs:/app/logs:z
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -83,6 +95,21 @@ services:
       - ./frontend/index.html:/app/index.html:delegated
     stdin_open: true
     tty: true
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: cinema_ngrok
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTH_TOKEN}
+    command: http backend:8080 --log=stdout --log-level=info
+    ports:
+      - "4040:4040"
+    networks:
+      - cinema-net
+    restart: unless-stopped
 
 networks:
   cinema-net:
