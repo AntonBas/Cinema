@@ -290,7 +290,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                             onChange={e => setFormData(prev => ({ ...prev, releaseDate: e.target.value ? new Date(e.target.value) : null }))}
                             required
                             className={styles.input}
-                            min={new Date().toISOString().split('T')[0]}
+                            min={movie ? undefined : new Date().toISOString().split('T')[0]}
                         />
                     </div>
                     <div className={styles.formGroup}>

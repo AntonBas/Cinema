@@ -8,7 +8,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Future;
-import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -48,7 +47,6 @@ public class MovieUpdateRequest {
 
 	@Schema(description = "Release date of the movie", example = "2024-01-15", requiredMode = Schema.RequiredMode.REQUIRED, type = "string", format = "date")
 	@NotNull(message = "Release date is required")
-	@FutureOrPresent(message = "Release date must be today or in the future")
 	private LocalDate releaseDate;
 
 	@Schema(description = "Date when the movie stops showing in cinemas", example = "2024-03-15", requiredMode = Schema.RequiredMode.REQUIRED, type = "string", format = "date")
