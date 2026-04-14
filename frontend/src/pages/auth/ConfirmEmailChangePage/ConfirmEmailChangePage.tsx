@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { api } from '@/services/api';
 import { Button } from '@/components/ui/Button/Button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import styles from './ConfirmEmailChangePage.module.css';
@@ -9,25 +10,39 @@ export const ConfirmEmailChangePage: React.FC = () => {
     const { token } = useParams<{ token: string }>();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, refreshUser } = useAuth();
 
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+    const [errorMessage, setErrorMessage] = useState('');
 
     const confirmationToken = token || searchParams.get('token');
 
     useEffect(() => {
         if (!confirmationToken) {
             setStatus('error');
+            setErrorMessage('Invalid or missing confirmation token.');
             return;
         }
 
-        const timer = setTimeout(() => {
-            setStatus('success');
-            setTimeout(() => navigate(isAuthenticated ? '/' : '/login'), 5000);
-        }, 1500);
+        const confirmEmailChange = async () => {
+            try {
+                await api.post(`/api/tokens/email/change/confirm?token=${confirmationToken}`);
+                setStatus('success');
+                if (isAuthenticated) {
+                    await refreshUser();
+                }
+                setTimeout(() => navigate(isAuthenticated ? '/account' : '/login'), 5000);
+            } catch (error: any) {
+                setStatus('error');
+                setErrorMessage(
+                    error?.response?.data?.message ||
+                    'Failed to confirm email change. The token may be invalid or expired.'
+                );
+            }
+        };
 
-        return () => clearTimeout(timer);
-    }, [confirmationToken, navigate, isAuthenticated]);
+        confirmEmailChange();
+    }, [confirmationToken, navigate, isAuthenticated, refreshUser]);
 
     if (status === 'loading') {
         return (
@@ -43,7 +58,7 @@ export const ConfirmEmailChangePage: React.FC = () => {
                 <div className={`${styles.card} ${styles.error}`}>
                     <div className={styles.icon}>❌</div>
                     <h2>Confirmation Failed</h2>
-                    <p>Invalid or expired confirmation token.</p>
+                    <p>{errorMessage}</p>
                     <Button variant="secondary" onClick={() => navigate('/login')}>
                         Go to Login
                     </Button>
@@ -58,8 +73,9 @@ export const ConfirmEmailChangePage: React.FC = () => {
                 <div className={styles.icon}>✅</div>
                 <h2>Email Changed Successfully!</h2>
                 <p>Your email address has been successfully updated.</p>
-                <Button variant="primary" onClick={() => navigate(isAuthenticated ? '/' : '/login')}>
-                    {isAuthenticated ? 'Go to Home' : 'Go to Login'}
+                <p className={styles.redirectText}>Redirecting in 5 seconds...</p>
+                <Button variant="primary" onClick={() => navigate(isAuthenticated ? '/account' : '/login')}>
+                    {isAuthenticated ? 'Go to Account' : 'Go to Login'}
                 </Button>
             </div>
         </div>
