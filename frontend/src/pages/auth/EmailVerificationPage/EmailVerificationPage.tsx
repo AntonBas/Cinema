@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { api } from '@/services/api';
 import { Button } from '@/components/ui';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import styles from './EmailVerificationPage.module.css';
@@ -9,21 +10,32 @@ export const EmailVerificationPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const verificationToken = token || searchParams.get('token');
 
   useEffect(() => {
     if (!verificationToken) {
       setStatus('error');
+      setErrorMessage('Invalid or missing verification token.');
       return;
     }
 
-    const timer = setTimeout(() => {
-      setStatus('success');
-      setTimeout(() => navigate('/login'), 5000);
-    }, 1500);
+    const verifyEmail = async () => {
+      try {
+        await api.post(`/api/tokens/email/verify?token=${verificationToken}`);
+        setStatus('success');
+        setTimeout(() => navigate('/login'), 5000);
+      } catch (error: any) {
+        setStatus('error');
+        setErrorMessage(
+          error?.response?.data?.message ||
+          'Failed to verify email. The token may be invalid or expired.'
+        );
+      }
+    };
 
-    return () => clearTimeout(timer);
+    verifyEmail();
   }, [verificationToken, navigate]);
 
   if (status === 'loading') {
@@ -40,7 +52,7 @@ export const EmailVerificationPage: React.FC = () => {
         <div className={`${styles.verificationCard} ${styles.error}`}>
           <div className={styles.icon}>❌</div>
           <h2>Verification Failed</h2>
-          <p>Invalid or expired verification token.</p>
+          <p>{errorMessage}</p>
           <Button variant="secondary" onClick={() => navigate('/login')}>
             Go to Login
           </Button>
