@@ -28,11 +28,13 @@ import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.domain.cinema.MovieHasSessionsException;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.mapper.cinema.MovieMapper;
 import ua.lviv.bas.cinema.repository.cinema.GenreRepository;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
+import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
 import ua.lviv.bas.cinema.scheduler.MovieScheduler;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.integration.file.PosterService;
@@ -52,6 +54,7 @@ public class MovieService {
 	private final MovieScheduler movieScheduler;
 	private final PosterService posterService;
 	private final AuditService auditService;
+	private final SessionRepository sessionRepository;
 
 	@CacheEvict(value = "movies", allEntries = true)
 	@Transactional
@@ -186,6 +189,8 @@ public class MovieService {
 
 		var movie = movieRepository.findMovieById(id).orElseThrow(() -> new MovieNotFoundException(id));
 
+		checkMovieUsageInSessions(movie);
+
 		if (movie.getPosterFileName() != null) {
 			posterService.deletePoster(movie.getPosterFileName());
 		}
@@ -241,6 +246,13 @@ public class MovieService {
 			return true;
 		} catch (DateTimeParseException e) {
 			return false;
+		}
+	}
+
+	private void checkMovieUsageInSessions(Movie movie) {
+		long sessionCount = sessionRepository.countByMovieId(movie.getId());
+		if (sessionCount > 0) {
+			throw new MovieHasSessionsException(movie.getId(), movie.getTitle(), sessionCount);
 		}
 	}
 

@@ -39,6 +39,9 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
 			""", nativeQuery = true)
 	List<Session> findSessionsToComplete(@Param("currentTime") LocalDateTime currentTime);
 
+	@Query("SELECT COUNT(s) FROM Session s WHERE s.movie.id = :movieId")
+	long countByMovieId(@Param("movieId") Long movieId);
+
 	@Query("""
 			SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END
 			FROM Session s
