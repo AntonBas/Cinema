@@ -13,23 +13,25 @@
 .header {
     display: flex;
     flex-direction: column;
-    gap: var(--space-2);
+    align-items: flex-start;
+    margin-bottom: var(--space-8);
     padding-bottom: var(--space-6);
     border-bottom: 1px solid var(--color-border-medium);
 }
 
 .title {
-    font-size: var(--font-size-2xl);
-    font-weight: 700;
+    font-size: var(--font-size-3xl);
+    font-weight: 600;
     color: var(--color-text-primary);
-    margin: 0;
+    margin: 0 0 var(--space-2) 0;
+    line-height: 1.2;
 }
 
 .description {
     color: var(--color-text-secondary);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-lg);
     margin: 0;
-    line-height: 1.5;
+    line-height: 1.4;
 }
 
 .tableContainer {
@@ -202,7 +204,11 @@
     }
 
     .title {
-        font-size: var(--font-size-xl);
+        font-size: var(--font-size-2xl);
+    }
+
+    .description {
+        font-size: var(--font-size-md);
     }
 
     .tableContainer {
@@ -228,8 +234,17 @@
     }
 
     .header {
-        text-align: center;
+        margin-bottom: var(--space-6);
         padding-bottom: var(--space-4);
+    }
+
+    .title {
+        font-size: var(--font-size-xl);
+        margin-bottom: var(--space-1);
+    }
+
+    .description {
+        font-size: var(--font-size-sm);
     }
 
     .tableContainer {
@@ -272,6 +287,11 @@
         padding: var(--space-3);
         margin: 0 var(--space-1);
         min-height: 450px;
+    }
+
+    .header {
+        margin-bottom: var(--space-4);
+        padding-bottom: var(--space-3);
     }
 
     .title {

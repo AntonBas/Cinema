@@ -59,6 +59,14 @@
     text-align: left;
 }
 
+.paginationWrapper {
+    margin-top: var(--space-8);
+    padding-top: var(--space-8);
+    border-top: 1px solid var(--color-border-medium);
+    display: flex;
+    justify-content: flex-end;
+}
+
 .loadingContainer {
     display: flex;
     align-items: center;
@@ -101,6 +109,10 @@
     .header p {
         font-size: var(--font-size-md);
     }
+
+    .loadingContainer {
+        min-height: 550px;
+    }
 }
 
 @media (max-width: 768px) {
@@ -137,6 +149,7 @@
         gap: var(--space-4);
         margin-top: var(--space-6);
         padding-top: var(--space-4);
+        justify-content: center;
     }
 
     .resultsInfo {
