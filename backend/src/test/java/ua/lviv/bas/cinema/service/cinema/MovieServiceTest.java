@@ -41,11 +41,13 @@ import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.domain.cinema.MovieHasSessionsException;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.mapper.cinema.MovieMapper;
 import ua.lviv.bas.cinema.repository.cinema.GenreRepository;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
+import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
 import ua.lviv.bas.cinema.repository.cinema.projection.MovieCardProjection;
 import ua.lviv.bas.cinema.scheduler.MovieScheduler;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
@@ -71,6 +73,8 @@ public class MovieServiceTest {
 	private PosterService posterService;
 	@Mock
 	private AuditService auditService;
+	@Mock
+	private SessionRepository sessionRepository;
 
 	@InjectMocks
 	private MovieService movieService;
@@ -339,6 +343,7 @@ public class MovieServiceTest {
 		movie.setPosterFileName("poster.jpg");
 
 		when(movieRepository.findMovieById(MOVIE_ID)).thenReturn(Optional.of(movie));
+		when(sessionRepository.countByMovieId(MOVIE_ID)).thenReturn(0L);
 		doNothing().when(auditService).logChange(anyString(), any(), anyString(), any(), any(), any());
 
 		movieService.deleteMovie(MOVIE_ID);
@@ -352,12 +357,26 @@ public class MovieServiceTest {
 		movie.setPosterFileName(null);
 
 		when(movieRepository.findMovieById(MOVIE_ID)).thenReturn(Optional.of(movie));
+		when(sessionRepository.countByMovieId(MOVIE_ID)).thenReturn(0L);
 		doNothing().when(auditService).logChange(anyString(), any(), anyString(), any(), any(), any());
 
 		movieService.deleteMovie(MOVIE_ID);
 
 		verify(posterService, never()).deletePoster(anyString());
 		verify(movieRepository).delete(movie);
+	}
+
+	@Test
+	void deleteMovieWithSessionsShouldThrowException() {
+		movie.setPosterFileName("poster.jpg");
+
+		when(movieRepository.findMovieById(MOVIE_ID)).thenReturn(Optional.of(movie));
+		when(sessionRepository.countByMovieId(MOVIE_ID)).thenReturn(3L);
+
+		assertThatThrownBy(() -> movieService.deleteMovie(MOVIE_ID)).isInstanceOf(MovieHasSessionsException.class);
+
+		verify(posterService, never()).deletePoster(anyString());
+		verify(movieRepository, never()).delete(any());
 	}
 
 	@Test
