@@ -128,7 +128,10 @@ const SectionTicketType = () => {
     return (
         <div className={styles.section}>
             <div className={styles.header}>
-                <h1 className={styles.title}>Ticket Types</h1>
+                <div>
+                    <h1 className={styles.title}>Ticket Types</h1>
+                    <p className={styles.description}>Configure ticket pricing and categories</p>
+                </div>
                 <Button variant="primary" onClick={() => setShowCreateModal(true)}>
                     Create Ticket Type
                 </Button>
