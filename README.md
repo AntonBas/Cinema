@@ -6,15 +6,194 @@ A full-stack, feature-rich web application for modern cinema operations. The pla
 
 ## ✨ Features
 
-### 👤 **User (Moviegoer)**
+### 👤 User Features
 
-- **Account Management:** Registration with email confirmation, secure login, password reset via email.
-- **Profile Control:** Edit personal information, change password or email.
-- **Movie Discovery:** Browse currently showing and upcoming movies with detailed views.
-- **Booking System:** Select a movie session, choose seats, and purchase tickets with full validation.
-- **Notifications:** Real-time feedback and error messages.
+#### 🔐 Authentication & Security
 
-### ⚙️ **Admin (Cinema Manager)**
+**Registration**
+- Email validation (unique, no duplicate accounts)
+- Password validation (length, complexity)
+- Email confirmation via verification link
+- Account locked until email is verified
+- Welcome bonus automatically awarded after email verification
+- Bonus card automatically created upon email verification
+- Password hashed with BCrypt
+
+**Login**
+- JWT token generation
+- Blocked for unverified accounts
+- OAuth2 login via Google
+
+**Password Recovery**
+- Request reset via email
+- Reset link sent to email
+- New password validation (cannot reuse old password)
+- Blocked for unverified accounts
+
+---
+
+#### 🏠 Homepage
+
+- **Now Showing** — 6 recently released movies currently playing
+- **Coming Soon** — 6 movies releasing in the near future
+- **Last Chance** — 6 movies ending their run within the next 7 days
+- **Special Offers** — active promotions available for claiming
+  - User clicks "Claim" to receive bonus points on their bonus card
+  - Each promotion can only be claimed once per user
+
+---
+
+#### 🎬 Movies
+
+Two sections for movie discovery:
+
+**Now Playing**
+- All movies with `CURRENT` status
+- Click on any movie to view details and session schedule
+
+**Coming Soon**
+- All movies with `UPCOMING` status
+- Click on any movie to view details and session schedule (sessions can be available for advance booking)
+
+**Movie Detail Page**
+- Full movie information: title, description, duration, age rating, genre, cast (actors, directors)
+- Session schedule organized by date
+- Quick access to booking for selected session
+- Advance booking available for upcoming movies
+
+---
+
+#### 📅 Schedule
+
+Complete session listing with powerful filtering:
+
+- All scheduled sessions across all movies and halls
+- **Custom Calendar:**
+  - Visual indicator showing which dates have available sessions
+  - When searching for a specific movie, calendar updates to show only dates with sessions for that movie
+- **Search:** Find sessions by movie title
+- Click on any session to proceed to booking
+
+---
+
+#### 🎟️ Booking Process
+
+Step-by-step ticket booking with seat reservation and secure payment.
+
+**1. Seat Selection**
+- Visual cinema hall layout with color-coded seats:
+  - Available seats
+  - Reserved/Booked seats
+  - Selected seats
+- Seat types visible with different colors/styles (Standard, VIP, Couple)
+- **First-level reservation:** Clicking a seat locks it for **5 minutes** (prevents others from selecting it)
+
+**2. Ticket Type Selection**
+- Choose ticket type for each selected seat
+- Available ticket types with their price multipliers
+- Price updates automatically based on selected types
+
+**3. Bonuses & Discounts**
+- Apply bonus points to reduce total price
+- Bonus usage limited by min/max rules configured by admin
+- Final price calculated with all discounts applied
+
+**4. Booking Confirmation**
+- Click **"Book Now"** to confirm selection
+- **Second-level reservation:** Seats are booked for **30 minutes** (time to complete payment)
+- Redirect to booking summary page
+
+**5. Booking Summary**
+- Complete booking details displayed:
+  - Movie title
+  - Session date and time
+  - Cinema hall
+  - Selected seats
+  - Ticket types per seat
+  - Total price
+  - Bonus points applied (if any)
+- Options:
+  - **Cancel** — release seats and cancel booking
+  - **Proceed to Payment** — continue to payment page
+
+**6. Payment**
+- Select payment method (card via LiqPay)
+- Redirect to LiqPay secure payment page
+- After payment:
+  - **Success** — confirmation page displayed
+  - **Processing** — waiting page if payment status is pending
+- Payment status automatically updates via scheduler
+
+**7. Booking Completion**
+Upon successful payment:
+- Confirmation email sent to user with ticket details
+- Tickets available in **My Tickets** section
+- Each ticket includes QR code for cinema entry
+- Bonus points awarded based on Payment Accrual rule
+
+---
+
+#### 💰 Refund
+
+Ticket refund process available from **My Tickets** section:
+
+**1. Initiate Refund**
+- Navigate to **My Tickets** → **Active** tab
+- Select ticket(s) to refund
+- Click **"Refund"** button
+
+**2. Refund Request**
+- Select refund reason from dropdown
+- System calculates refundable amount based on:
+  - Time until session start (closer to session = lower refund)
+  - Refund rules configured by admin
+- Preview shows refundable amount
+
+**3. Confirm Refund**
+- User confirms refund request
+- Request sent to payment provider (LiqPay)
+- Refund processed back to original payment card
+
+**4. Refund Status**
+- Ticket status changes to `REFUNDED`
+- Refunded tickets moved to **Refunded** tab
+- Bonus points used in booking are deducted from user's balance
+- Refund transaction appears in bonus history (if applicable)
+
+---
+
+#### 👤 My Account
+
+**Profile Information**
+- View personal details: first name, last name, birth date, phone, email, city
+- Edit first name, last name, birth date, phone, city
+- **Birth Date Verification Warning:** If birth date is already verified and user attempts to change it, system warns that verification will be lost and Birthday Bonus eligibility will be removed
+
+**My Tickets**
+- List of all purchased tickets with status tabs:
+  - **All** — all tickets
+  - **Active** — upcoming valid tickets
+  - **Used** — attended sessions
+  - **Refunded** — returned tickets
+- **Ticket Actions:**
+  - View ticket details (movie, session time, hall, seat, ticket type, price)
+  - Open QR code for cinema entry
+  - Request refund (subject to refund rules)
+
+**My Bonus**
+- Bonus card with current point balance
+- Display of min/max points allowed per booking
+- Two tabs:
+  - **Balance** — current bonus overview
+  - **Transactions** — complete history of all bonus transactions (+ earned, - spent)
+
+**Security**
+- **Change Password:** Requires current password, new password (entered twice), validation that new ≠ old
+- **Change Email:** Enter new email + current password, confirmation link sent to new email
+
+---
+
+### ⚙️ Admin Features
 
 #### 📊 Dashboard
 
@@ -27,7 +206,6 @@ Overview of key metrics and recent system activity.
 Three tabs for complete movie content management:
 
 **Movies Tab**
-
 - Full CRUD operations
 - Unique name validation — cannot create duplicate movie names
 - Protected deletion — cannot delete a movie if it is linked to any session
@@ -40,7 +218,6 @@ Three tabs for complete movie content management:
 - Pagination
 
 **Genres Tab**
-
 - Full CRUD operations
 - Unique name validation — cannot create duplicate genre names
 - Protected deletion — cannot delete a genre if it is linked to any movie
@@ -50,7 +227,6 @@ Three tabs for complete movie content management:
 - Pagination
 
 **People Tab**
-
 - Full CRUD operations
 - Role selection: Actor, Director, Screenwriter
 - Unique name validation
@@ -133,13 +309,12 @@ Complete user management interface:
 System-wide bonus program configuration:
 
 - Configure four bonus rules:
-  - **Welcome Bonus** — points awarded to user after successful email verification. Bonus card is created automatically upon verification.
-  - **Birthday Bonus** — points awarded automatically on user's birthday (requires verified birth date). Applied via scheduler.
+  - **Welcome Bonus** — points awarded to user after successful email verification
+  - **Birthday Bonus** — points awarded automatically on user's birthday (requires verified birth date). Applied via scheduler
   - **Booking Spend** — minimum and maximum points a user can redeem per booking
   - **Payment Accrual** — percentage of ticket purchase amount returned as bonus points after successful payment
 - Admin can update any rule value
 - **Reset button** — restores all rules to default values defined in backend
-- Changes persist in database (survive server restart)
 
 ---
 
@@ -149,7 +324,6 @@ Bonus point promotions management:
 
 - Full CRUD operations
 - Unique promotion title validation
-- **Fields:** Title, description, start date, end date, bonus points amount
 - Status automatically updates via scheduler:
   - `UPCOMING` — promotion is scheduled (start date in future)
   - `ACTIVE` — promotion is currently active (current date between start and end)
@@ -196,12 +370,17 @@ Complete history of all administrative actions:
 - **Search:** By admin email (shows all actions performed by specific admin)
 - Pagination
 
-### 🎟️ **Cashier** _(Planned / In Development)_
+---
 
-- **Staff Interface:** Dedicated view for fast ticket booking and reservation management.
+### 🎟️ Cashier _(Planned / In Development)_
 
-### 🔧 **Technical Highlights**
+- **Staff Interface:** Dedicated view for fast ticket booking and reservation management
 
-- **Role-Based Access Control (RBAC):** Secure API endpoints and UI elements for `USER`, `CASHIER`, and `ADMIN`.
-- **RESTful API:** Well-structured backend API built with Spring Boot.
-- **Modern Frontend:** Responsive and interactive UI built with React and TypeScript.
+---
+
+### 🔧 Technical Highlights
+
+- **Role-Based Access Control (RBAC):** Secure API endpoints and UI elements for `USER`, `CASHIER`, and `ADMIN`
+- **Rate Limiting:** API protection against brute-force and DDoS attacks
+- **RESTful API:** Well-structured backend API built with Spring Boot
+- **Modern Frontend:** Responsive and interactive UI built with React and TypeScript
