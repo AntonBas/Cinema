@@ -352,7 +352,6 @@ Bonus point promotions management:
   - `UPCOMING` — promotion is scheduled (start date in future)
   - `ACTIVE` — promotion is currently active (current date between start and end)
   - `EXPIRED` — promotion has ended (end date passed)
-- Only `ACTIVE` promotions are visible to users on homepage
 - Expired promotions can be reactivated by updating dates (useful for recurring events like New Year)
 - Search by promotion title
 - Pagination
@@ -439,7 +438,6 @@ Complete history of all administrative actions:
 | React Router DOM  | 7.8.1   |
 | Axios             | 1.15.0  |
 | Lucide React      | 0.563.0 |
-| React Icons       | 5.6.0   |
 | Styled Components | 6.1.19  |
 | date-fns          | 4.1.0   |
 | clsx              | 2.1.1   |
@@ -452,4 +450,3 @@ Complete history of all administrative actions:
 | Docker Compose | Multi-container orchestration |
 | Flyway         | Database migrations           |
 | Maven          | Build automation              |
-| ESLint         | Code linting                  |
