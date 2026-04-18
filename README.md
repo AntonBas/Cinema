@@ -549,92 +549,92 @@ Interactive API documentation is available via Swagger UI:
 
 ## 📁 Project Structure
 
-### Backend
+### Backend (Spring Boot)
 
-backend/src/main/java/ua/lviv/bas/cinema/
-├── config/
-│ ├── api/
-│ ├── audit/
-│ ├── cache/
-│ ├── jackson/
-│ ├── properties/
-│ ├── ratelimit/
-│ ├── scheduling/
-│ └── security/
-│ ├── jwt/
-│ ├── oauth2/
-│ └── user/
-├── controller/
-│ ├── admin/
-│ └── api/
-├── domain/
-│ ├── audit/
-│ ├── bonus/
-│ ├── booking/
-│ ├── cinema/
-│ ├── promotion/
-│ ├── ticket/
-│ ├── token/
-│ └── user/
-├── dto/
-│ ├── audit/
-│ ├── bonus/
-│ ├── booking/
-│ ├── hall/
-│ ├── movie/
-│ ├── payment/
-│ ├── promotion/
-│ ├── refund/
-│ ├── session/
-│ ├── ticket/
-│ ├── ticketType/
-│ └── user/
-├── exception/
-│ ├── api/
-│ ├── core/
-│ ├── domain/
-│ └── infrastructure/
-├── mapper/
-├── repository/
-├── scheduler/
-└── service/
+    backend/src/main/java/ua/lviv/bas/cinema/
+    ├── config/
+    │   ├── api/
+    │   ├── audit/
+    │   ├── cache/
+    │   ├── jackson/
+    │   ├── properties/
+    │   ├── ratelimit/
+    │   ├── scheduling/
+    │   └── security/
+    │       ├── jwt/
+    │       ├── oauth2/
+    │       └── user/
+    ├── controller/
+    │   ├── admin/
+    │   └── api/
+    ├── domain/
+    │   ├── audit/
+    │   ├── bonus/
+    │   ├── booking/
+    │   ├── cinema/
+    │   ├── promotion/
+    │   ├── ticket/
+    │   ├── token/
+    │   └── user/
+    ├── dto/
+    │   ├── audit/
+    │   ├── bonus/
+    │   ├── booking/
+    │   ├── hall/
+    │   ├── movie/
+    │   ├── payment/
+    │   ├── promotion/
+    │   ├── refund/
+    │   ├── session/
+    │   ├── ticket/
+    │   ├── ticketType/
+    │   └── user/
+    ├── exception/
+    │   ├── api/
+    │   ├── core/
+    │   ├── domain/
+    │   └── infrastructure/
+    ├── mapper/
+    ├── repository/
+    ├── scheduler/
+    └── service/
 
-### Frontend
+### Frontend (React)
 
-frontend/src/
-├── api/ # API service functions
-├── components/
-│ ├── account/ # User account components
-│ ├── admin/ # Admin panel components
-│ │ ├── AdminLayout/
-│ │ ├── SectionAuditLogs/
-│ │ ├── SectionBonus/
-│ │ ├── SectionDashboard/
-│ │ ├── SectionHalls/
-│ │ ├── SectionMovies/
-│ │ ├── SectionPromotion/
-│ │ ├── SectionSchedule/
-│ │ ├── SectionTicketType/
-│ │ └── SectionUsers/
-│ ├── auth/ # Authentication forms
-│ ├── booking/ # Booking flow components
-│ ├── home/ # Homepage sections
-│ ├── layout/ # Header, Footer, Layout
-│ ├── movies/ # Movie cards and lists
-│ ├── sessions/ # Session filters and calendar
-│ └── ui/ # Reusable UI components
-├── context/ # React Context providers
-├── hooks/
-│ ├── common/ # Generic hooks
-│ └── features/ # Feature-specific hooks
-├── pages/
-│ ├── account/ # Profile, Tickets, Bonus, Security
-│ ├── auth/ # Login, Register, Password reset
-│ ├── booking/ # Booking, Payment, Success
-│ ├── home/ # Homepage
-│ ├── movies/ # Current, Upcoming, Detail
-│ └── sessions/ # Schedule page
-├── routes/ # Route guards (Admin, Protected, Public)
-├── services/ # Axios instance with interceptors
-├── types/ # TypeScript type definitions
-└── utils/ # Utility functions
+    frontend/src/
+    ├── api/
+    ├── components/
+    │   ├── account/
+    │   ├── admin/
+    │   │   ├── AdminLayout/
+    │   │   ├── SectionAuditLogs/
+    │   │   ├── SectionBonus/
+    │   │   ├── SectionDashboard/
+    │   │   ├── SectionHalls/
+    │   │   ├── SectionMovies/
+    │   │   ├── SectionPromotion/
+    │   │   ├── SectionSchedule/
+    │   │   ├── SectionTicketType/
+    │   │   └── SectionUsers/
+    │   ├── auth/
+    │   ├── booking/
+    │   ├── home/
+    │   ├── layout/
+    │   ├── movies/
+    │   ├── sessions/
+    │   └── ui/
+    ├── context/
+    ├── hooks/
+    │   ├── common/
+    │   └── features/
+    ├── pages/
+    │   ├── account/
+    │   ├── auth/
+    │   ├── booking/
+    │   ├── home/
+    │   ├── movies/
+    │   └── sessions/
+    ├── routes/
+    ├── services/
+    ├── types/
+    └── utils/
