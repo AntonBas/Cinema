@@ -504,7 +504,7 @@ Copy environment configuration:
 `cp .env.example .env`
 
 Edit `.env` with your local values.
-See [`.env.example`](.env.example) for all available variables.
+See [`backend/.env.example`](backend/.env.example) for all available variables.
 
 Start PostgreSQL via Docker:
 `cd ..`
