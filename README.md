@@ -467,7 +467,7 @@ Complete history of all administrative actions:
 The easiest way to run the entire stack with a single command.
 
 **1. Clone the repository**
-`git clone https://github.com/AntonBas/Cinema`
+`git clone https://github.com/AntonBas/Cinema.git`
 `cd Cinema`
 
 **2. Configure environment variables**
@@ -541,3 +541,100 @@ Flyway migrations run automatically on application startup. Migration files are 
 To reset the database:
 `docker-compose down -v postgres`
 `docker-compose up -d postgres`
+
+## 📚 API Documentation
+
+Interactive API documentation is available via Swagger UI:
+`http://localhost:8080/swagger-ui.html`
+
+## 📁 Project Structure
+
+### Backend
+
+backend/src/main/java/ua/lviv/bas/cinema/
+├── config/
+│ ├── api/
+│ ├── audit/
+│ ├── cache/
+│ ├── jackson/
+│ ├── properties/
+│ ├── ratelimit/
+│ ├── scheduling/
+│ └── security/
+│ ├── jwt/
+│ ├── oauth2/
+│ └── user/
+├── controller/
+│ ├── admin/
+│ └── api/
+├── domain/
+│ ├── audit/
+│ ├── bonus/
+│ ├── booking/
+│ ├── cinema/
+│ ├── promotion/
+│ ├── ticket/
+│ ├── token/
+│ └── user/
+├── dto/
+│ ├── audit/
+│ ├── bonus/
+│ ├── booking/
+│ ├── hall/
+│ ├── movie/
+│ ├── payment/
+│ ├── promotion/
+│ ├── refund/
+│ ├── session/
+│ ├── ticket/
+│ ├── ticketType/
+│ └── user/
+├── exception/
+│ ├── api/
+│ ├── core/
+│ ├── domain/
+│ └── infrastructure/
+├── mapper/
+├── repository/
+├── scheduler/
+└── service/
+
+### Frontend
+
+frontend/src/
+├── api/ # API service functions
+├── components/
+│ ├── account/ # User account components
+│ ├── admin/ # Admin panel components
+│ │ ├── AdminLayout/
+│ │ ├── SectionAuditLogs/
+│ │ ├── SectionBonus/
+│ │ ├── SectionDashboard/
+│ │ ├── SectionHalls/
+│ │ ├── SectionMovies/
+│ │ ├── SectionPromotion/
+│ │ ├── SectionSchedule/
+│ │ ├── SectionTicketType/
+│ │ └── SectionUsers/
+│ ├── auth/ # Authentication forms
+│ ├── booking/ # Booking flow components
+│ ├── home/ # Homepage sections
+│ ├── layout/ # Header, Footer, Layout
+│ ├── movies/ # Movie cards and lists
+│ ├── sessions/ # Session filters and calendar
+│ └── ui/ # Reusable UI components
+├── context/ # React Context providers
+├── hooks/
+│ ├── common/ # Generic hooks
+│ └── features/ # Feature-specific hooks
+├── pages/
+│ ├── account/ # Profile, Tickets, Bonus, Security
+│ ├── auth/ # Login, Register, Password reset
+│ ├── booking/ # Booking, Payment, Success
+│ ├── home/ # Homepage
+│ ├── movies/ # Current, Upcoming, Detail
+│ └── sessions/ # Schedule page
+├── routes/ # Route guards (Admin, Protected, Public)
+├── services/ # Axios instance with interceptors
+├── types/ # TypeScript type definitions
+└── utils/ # Utility functions
