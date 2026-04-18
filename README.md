@@ -450,3 +450,93 @@ Complete history of all administrative actions:
 | Docker Compose | Multi-container orchestration |
 | Flyway         | Database migrations           |
 | Maven          | Build automation              |
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- **Java 17** or higher
+- **Node.js 20+** and npm
+- **Docker** and **Docker Compose** (recommended)
+- **Maven** (for backend builds)
+
+---
+
+### Option 1: Docker Setup (Recommended)
+
+The easiest way to run the entire stack with a single command.
+
+**1. Clone the repository**
+`git clone https://github.com/AntonBas/Cinema`
+`cd Cinema`
+
+**2. Configure environment variables**
+
+Copy `.env.docker.example` to `.env.docker` and fill in the required values.  
+See [`.env.docker.example`](.env.docker.example) for all available variables.
+
+**3. Start all services**
+`docker-compose up -d`
+
+**4. Access the application**
+
+| Service         | URL                                   |
+| :-------------- | :------------------------------------ |
+| Frontend        | http://localhost:5173                 |
+| Backend API     | http://localhost:8080/api             |
+| Swagger UI      | http://localhost:8080/swagger-ui.html |
+| Ngrok Inspector | http://localhost:4040                 |
+
+**5. Stop services**
+`docker-compose down`
+
+---
+
+### Option 2: Local Development Setup
+
+Run backend and frontend separately for faster development.
+
+#### Backend Setup
+
+`cd backend`
+
+Copy environment configuration:
+`cp .env.example .env`
+
+Edit `.env` with your local values.
+
+Start PostgreSQL via Docker:
+`cd ..`
+`docker-compose up -d postgres`
+
+Run backend:
+`cd backend`
+`./mvnw spring-boot:run`
+
+Backend will be available at: http://localhost:8080
+
+#### Frontend Setup
+
+`cd frontend`
+
+Install dependencies:
+`npm install`
+
+Create environment file:
+`echo "VITE_API_URL=http://localhost:8080" > .env`
+
+Start development server:
+`npm run dev`
+
+Frontend will be available at: http://localhost:5173
+
+---
+
+### Database Migrations
+
+Flyway migrations run automatically on application startup. Migration files are located at:
+`backend/src/main/resources/db/migration/`
+
+To reset the database:
+`docker-compose down -v postgres`
+`docker-compose up -d postgres`
