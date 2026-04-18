@@ -11,6 +11,7 @@ A full-stack, feature-rich web application for modern cinema operations. The pla
 #### 🔐 Authentication & Security
 
 **Registration**
+
 - Email validation (unique, no duplicate accounts)
 - Password validation (length, complexity)
 - Email confirmation via verification link
@@ -20,11 +21,13 @@ A full-stack, feature-rich web application for modern cinema operations. The pla
 - Password hashed with BCrypt
 
 **Login**
+
 - JWT token generation
 - Blocked for unverified accounts
 - OAuth2 login via Google
 
 **Password Recovery**
+
 - Request reset via email
 - Reset link sent to email
 - New password validation (cannot reuse old password)
@@ -48,14 +51,17 @@ A full-stack, feature-rich web application for modern cinema operations. The pla
 Two sections for movie discovery:
 
 **Now Playing**
+
 - All movies with `CURRENT` status
 - Click on any movie to view details and session schedule
 
 **Coming Soon**
+
 - All movies with `UPCOMING` status
 - Click on any movie to view details and session schedule (sessions can be available for advance booking)
 
 **Movie Detail Page**
+
 - Full movie information: title, description, duration, age rating, genre, cast (actors, directors)
 - Session schedule organized by date
 - Quick access to booking for selected session
@@ -81,6 +87,7 @@ Complete session listing with powerful filtering:
 Step-by-step ticket booking with seat reservation and secure payment.
 
 **1. Seat Selection**
+
 - Visual cinema hall layout with color-coded seats:
   - Available seats
   - Reserved/Booked seats
@@ -89,21 +96,25 @@ Step-by-step ticket booking with seat reservation and secure payment.
 - **First-level reservation:** Clicking a seat locks it for **5 minutes** (prevents others from selecting it)
 
 **2. Ticket Type Selection**
+
 - Choose ticket type for each selected seat
 - Available ticket types with their price multipliers
 - Price updates automatically based on selected types
 
 **3. Bonuses & Discounts**
+
 - Apply bonus points to reduce total price
 - Bonus usage limited by min/max rules configured by admin
 - Final price calculated with all discounts applied
 
 **4. Booking Confirmation**
+
 - Click **"Book Now"** to confirm selection
 - **Second-level reservation:** Seats are booked for **30 minutes** (time to complete payment)
 - Redirect to booking summary page
 
 **5. Booking Summary**
+
 - Complete booking details displayed:
   - Movie title
   - Session date and time
@@ -117,6 +128,7 @@ Step-by-step ticket booking with seat reservation and secure payment.
   - **Proceed to Payment** — continue to payment page
 
 **6. Payment**
+
 - Select payment method (card via LiqPay)
 - Redirect to LiqPay secure payment page
 - After payment:
@@ -126,6 +138,7 @@ Step-by-step ticket booking with seat reservation and secure payment.
 
 **7. Booking Completion**
 Upon successful payment:
+
 - Confirmation email sent to user with ticket details
 - Tickets available in **My Tickets** section
 - Each ticket includes QR code for cinema entry
@@ -138,11 +151,13 @@ Upon successful payment:
 Ticket refund process available from **My Tickets** section:
 
 **1. Initiate Refund**
+
 - Navigate to **My Tickets** → **Active** tab
 - Select ticket(s) to refund
 - Click **"Refund"** button
 
 **2. Refund Request**
+
 - Select refund reason from dropdown
 - System calculates refundable amount based on:
   - Time until session start (closer to session = lower refund)
@@ -150,11 +165,13 @@ Ticket refund process available from **My Tickets** section:
 - Preview shows refundable amount
 
 **3. Confirm Refund**
+
 - User confirms refund request
 - Request sent to payment provider (LiqPay)
 - Refund processed back to original payment card
 
 **4. Refund Status**
+
 - Ticket status changes to `REFUNDED`
 - Refunded tickets moved to **Refunded** tab
 - Bonus points used in booking are deducted from user's balance
@@ -165,11 +182,13 @@ Ticket refund process available from **My Tickets** section:
 #### 👤 My Account
 
 **Profile Information**
+
 - View personal details: first name, last name, birth date, phone, email, city
 - Edit first name, last name, birth date, phone, city
 - **Birth Date Verification Warning:** If birth date is already verified and user attempts to change it, system warns that verification will be lost and Birthday Bonus eligibility will be removed
 
 **My Tickets**
+
 - List of all purchased tickets with status tabs:
   - **All** — all tickets
   - **Active** — upcoming valid tickets
@@ -181,6 +200,7 @@ Ticket refund process available from **My Tickets** section:
   - Request refund (subject to refund rules)
 
 **My Bonus**
+
 - Bonus card with current point balance
 - Display of min/max points allowed per booking
 - Two tabs:
@@ -188,6 +208,7 @@ Ticket refund process available from **My Tickets** section:
   - **Transactions** — complete history of all bonus transactions (+ earned, - spent)
 
 **Security**
+
 - **Change Password:** Requires current password, new password (entered twice), validation that new ≠ old
 - **Change Email:** Enter new email + current password, confirmation link sent to new email
 
@@ -206,6 +227,7 @@ Overview of key metrics and recent system activity.
 Three tabs for complete movie content management:
 
 **Movies Tab**
+
 - Full CRUD operations
 - Unique name validation — cannot create duplicate movie names
 - Protected deletion — cannot delete a movie if it is linked to any session
@@ -218,6 +240,7 @@ Three tabs for complete movie content management:
 - Pagination
 
 **Genres Tab**
+
 - Full CRUD operations
 - Unique name validation — cannot create duplicate genre names
 - Protected deletion — cannot delete a genre if it is linked to any movie
@@ -227,6 +250,7 @@ Three tabs for complete movie content management:
 - Pagination
 
 **People Tab**
+
 - Full CRUD operations
 - Role selection: Actor, Director, Screenwriter
 - Unique name validation
@@ -372,15 +396,60 @@ Complete history of all administrative actions:
 
 ---
 
-### 🎟️ Cashier _(Planned / In Development)_
-
-- **Staff Interface:** Dedicated view for fast ticket booking and reservation management
-
----
-
 ### 🔧 Technical Highlights
 
 - **Role-Based Access Control (RBAC):** Secure API endpoints and UI elements for `USER`, `CASHIER`, and `ADMIN`
 - **Rate Limiting:** API protection against brute-force and DDoS attacks
 - **RESTful API:** Well-structured backend API built with Spring Boot
 - **Modern Frontend:** Responsive and interactive UI built with React and TypeScript
+
+## 🛠 Tech Stack
+
+### Backend
+
+| Technology           | Version |
+| :------------------- | :------ |
+| Java                 | 17      |
+| Spring Boot          | 3.5.13  |
+| Spring Security      | 6.x     |
+| Spring Data JPA      | 3.x     |
+| Spring OAuth2 Client | 3.x     |
+| Spring Mail          | 3.x     |
+| Spring Cache         | 3.x     |
+| Spring Actuator      | 3.x     |
+| PostgreSQL           | 15+     |
+| Flyway               | 11.5.0  |
+| JWT (jjwt)           | 0.12.6  |
+| MapStruct            | 1.5.5   |
+| Lombok               | 1.18.36 |
+| Bucket4j             | 8.10.1  |
+| Caffeine Cache       | 3.x     |
+| ZXing (QR Code)      | 3.5.3   |
+| Gson                 | 2.x     |
+| SpringDoc OpenAPI    | 2.7.0   |
+| Dotenv               | 4.0.0   |
+
+### Frontend
+
+| Technology        | Version |
+| :---------------- | :------ |
+| React             | 19.1.1  |
+| TypeScript        | 5.8.3   |
+| Vite              | 7.3.2   |
+| React Router DOM  | 7.8.1   |
+| Axios             | 1.15.0  |
+| Lucide React      | 0.563.0 |
+| React Icons       | 5.6.0   |
+| Styled Components | 6.1.19  |
+| date-fns          | 4.1.0   |
+| clsx              | 2.1.1   |
+
+### DevOps & Tools
+
+| Technology     | Description                   |
+| :------------- | :---------------------------- |
+| Docker         | Containerization              |
+| Docker Compose | Multi-container orchestration |
+| Flyway         | Database migrations           |
+| Maven          | Build automation              |
+| ESLint         | Code linting                  |
