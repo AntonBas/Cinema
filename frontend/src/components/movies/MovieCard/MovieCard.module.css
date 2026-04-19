@@ -1,231 +1,231 @@
 .cardWrapper {
-    display: flex;
-    height: 100%;
-    width: 100%;
+  display: flex;
+  height: 100%;
+  width: 100%;
 }
 
 .card {
-    display: flex;
-    flex-direction: column;
-    background: var(--color-bg-secondary);
-    border-radius: 16px;
-    overflow: hidden;
-    transition: all 0.3s ease;
-    border: 1px solid var(--color-border);
-    text-decoration: none;
-    color: inherit;
-    width: 100%;
-    box-shadow: var(--shadow-sm);
-    height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-secondary);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid var(--color-border);
+  text-decoration: none;
+  color: inherit;
+  width: 100%;
+  box-shadow: var(--shadow-sm);
+  height: 100%;
 }
 
 .card:hover {
-    transform: translateY(-6px);
-    box-shadow: var(--shadow-lg);
-    border-color: var(--color-primary);
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-primary);
 }
 
 .card:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .posterContainer {
-    position: relative;
-    aspect-ratio: 2/3;
-    overflow: hidden;
-    background: var(--color-bg-tertiary);
+  position: relative;
+  aspect-ratio: 2/3;
+  overflow: hidden;
+  background: var(--color-bg-tertiary);
 }
 
 .poster {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.4s ease;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
 }
 
 .card:hover .poster {
-    transform: scale(1.08);
+  transform: scale(1.08);
 }
 
 .cornerInfo {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    align-items: flex-end;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
 }
 
 .durationBadge {
-    padding: 6px 10px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 600;
-    min-width: 50px;
-    text-align: center;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    background: var(--color-overlay-dark);
-    color: white;
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 50px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--color-overlay-dark);
+  color: white;
 }
 
 .ageBadge {
-    padding: 6px 10px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 600;
-    min-width: 50px;
-    text-align: center;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 50px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
 }
 
 .ageBadgeGreen {
-    background: var(--color-success);
+  background: var(--color-success);
 }
 
 .ageBadgeBlue {
-    background: var(--color-info);
+  background: var(--color-info);
 }
 
 .ageBadgeYellow {
-    background: #eab308;
-    color: black;
+  background: #eab308;
+  color: black;
 }
 
 .ageBadgeOrange {
-    background: #f97316;
-    color: white;
+  background: #f97316;
+  color: white;
 }
 
 .ageBadgeRed {
-    background: var(--color-error);
+  background: var(--color-error);
 }
 
 .overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--color-overlay-darker);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-overlay-darker);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .card:hover .overlay,
 .card:focus-visible .overlay {
-    opacity: 1;
+  opacity: 1;
 }
 
 .buttonContainer {
-    width: 100%;
-    max-width: 180px;
-    transform: translateY(20px);
-    transition: transform 0.3s ease 0.1s;
+  width: 100%;
+  max-width: 180px;
+  transform: translateY(20px);
+  transition: transform 0.3s ease 0.1s;
 }
 
 .card:hover .buttonContainer,
 .card:focus-visible .buttonContainer {
-    transform: translateY(0);
+  transform: translateY(0);
 }
 
 .buttonContainer button {
-    width: 100%;
-    font-weight: 600;
-    padding: 12px 20px;
-    font-size: 15px;
-    border-radius: 10px;
-    transition: all 0.2s ease;
-    border: none;
-    cursor: pointer;
+  width: 100%;
+  font-weight: 600;
+  padding: 12px 20px;
+  font-size: 15px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
 }
 
 .buttonContainer button:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .content {
-    padding: 20px;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    background: var(--color-bg-secondary);
-    text-align: center;
+  padding: 20px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-secondary);
+  text-align: center;
 }
 
 .title {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--color-text-primary);
-    margin: 0;
-    line-height: 1.4;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    overflow: hidden;
-    min-height: 2.8em;
-    letter-spacing: -0.01em;
-    text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  min-height: 2.8em;
+  letter-spacing: -0.01em;
+  text-align: center;
 }
 
 @media (max-width: 768px) {
-    .cornerInfo {
-        top: 8px;
-        right: 8px;
-        gap: 6px;
-    }
+  .cornerInfo {
+    top: 8px;
+    right: 8px;
+    gap: 6px;
+  }
 
-    .durationBadge,
-    .ageBadge {
-        padding: 5px 8px;
-        font-size: 12px;
-        min-width: 45px;
-    }
+  .durationBadge,
+  .ageBadge {
+    padding: 5px 8px;
+    font-size: 12px;
+    min-width: 45px;
+  }
 
-    .overlay {
-        padding: 16px;
-    }
+  .overlay {
+    padding: 16px;
+  }
 
-    .buttonContainer button {
-        padding: 10px 16px;
-        font-size: 14px;
-    }
+  .buttonContainer button {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
 
-    .content {
-        padding: 16px;
-    }
+  .content {
+    padding: 16px;
+  }
 
-    .title {
-        font-size: 16px;
-        min-height: 2.4em;
-    }
+  .title {
+    font-size: 16px;
+    min-height: 2.4em;
+  }
 }
 
 @media (max-width: 480px) {
-    .card {
-        border-radius: 12px;
-    }
+  .card {
+    border-radius: 12px;
+  }
 
-    .posterContainer {
-        aspect-ratio: 3/4;
-    }
+  .posterContainer {
+    aspect-ratio: 3/4;
+  }
 
-    .buttonContainer {
-        max-width: 160px;
-    }
+  .buttonContainer {
+    max-width: 160px;
+  }
 
-    .title {
-        font-size: 15px;
-    }
+  .title {
+    font-size: 15px;
+  }
 }
