@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { Menu, X } from "lucide-react";
 import styles from "./Header.module.css";
 
 interface NavLink {
@@ -143,12 +144,10 @@ export const Header: React.FC = () => {
         </ul>
 
         <button
-          className={`${styles.mobileMenuBtn} ${isMobileMenuOpen ? styles.open : ""}`}
+          className={styles.mobileMenuBtn}
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
-          <span />
-          <span />
-          <span />
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
 
         <div
@@ -181,8 +180,8 @@ export const Header: React.FC = () => {
                   Profile
                 </Link>
                 {user?.userRole === "ROLE_ADMIN" && (
-                  <Link to="/admin/dashboard" onClick={closeMobileMenu}>
-                    Dashboard
+                  <Link to="/admin/movies" onClick={closeMobileMenu}>
+                    Admin Panel
                   </Link>
                 )}
                 <button
