@@ -12,7 +12,7 @@ import jakarta.validation.constraints.Size;
 public record PromotionRequest(
 		@NotBlank(message = "Title is required") @Size(max = 60, message = "Title must not exceed 60 characters") @Schema(description = "Title of the promotion", example = "Summer Special") String title,
 
-		@Size(max = 500, message = "Description must not exceed 500 characters") @Schema(description = "Promotion description", example = "Get bonus points for your first visit") String description,
+		@Size(max = 150, message = "Description must not exceed 150 characters") @Schema(description = "Promotion description", example = "Get bonus points for your first visit") String description,
 
 		@NotNull(message = "Bonus points are required") @Positive(message = "Bonus points must be positive") @Schema(description = "Number of bonus points awarded", example = "100") Integer bonusPoints,
 

@@ -48,8 +48,8 @@ public class Promotion extends AuditableEntity {
 	@Column(nullable = false, length = 100)
 	private String title;
 
-	@Size(max = 500)
-	@Column(length = 500)
+	@Size(max = 150)
+	@Column(length = 150)
 	private String description;
 
 	@NotNull
