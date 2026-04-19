@@ -1,50 +1,54 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
-import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
+import React from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
+import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 
 interface AdminRouteProps {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }
 
 const centerStyle = {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '100vh',
-    background: 'linear-gradient(135deg, #0c0c0c, #1a1a1a)'
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  height: "100vh",
+  background: "linear-gradient(135deg, #0c0c0c, #1a1a1a)",
 };
 
 export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
-    const { user, loading, isAuthenticated } = useAuth();
-    const showLoading = useDelayedLoading(loading, { delay: 300, minDisplayTime: 500 });
+  const { user, loading, isAuthenticated } = useAuth();
+  const showLoading = useDelayedLoading(loading, {
+    delay: 300,
+    minDisplayTime: 500,
+  });
 
-    if (showLoading) {
-        return (
-            <div style={centerStyle}>
-                <LoadingSpinner text="Verifying admin access..." />
-            </div>
-        );
-    }
+  if (showLoading) {
+    return (
+      <div style={centerStyle}>
+        <LoadingSpinner text="Verifying admin access..." />
+      </div>
+    );
+  }
 
-    if (!isAuthenticated) {
-        return <Navigate to="/login" replace />;
-    }
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
-    if (!user) {
-        return (
-            <div style={centerStyle}>
-                <LoadingSpinner text="Loading user data..." />
-            </div>
-        );
-    }
+  if (!user) {
+    return (
+      <div style={centerStyle}>
+        <LoadingSpinner text="Loading user data..." />
+      </div>
+    );
+  }
 
-    const isAdmin = user.userRole === 'ROLE_ADMIN' || user.userRole === 'ROLE_CONTENT_MANAGER';
+  const isAdmin =
+    user.userRole === "ROLE_ADMIN" || user.userRole === "ROLE_CONTENT_MANAGER";
 
-    if (!isAdmin) {
-        return <Navigate to="/" replace />;
-    }
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
 
-    return <>{children}</>;
+  return <>{children}</>;
 };

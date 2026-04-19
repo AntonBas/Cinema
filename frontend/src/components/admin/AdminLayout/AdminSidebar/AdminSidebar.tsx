@@ -18,7 +18,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     const navigate = useNavigate();
 
     const menuItems = [
-        { path: '/admin/dashboard', label: 'Dashboard', icon: '📊' },
         { path: '/admin/movies', label: 'Movies', icon: '🎬' },
         { path: '/admin/schedule', label: 'Schedule', icon: '⏰' },
         { path: '/admin/halls', label: 'Halls', icon: '🎭' },
