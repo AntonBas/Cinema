@@ -34,6 +34,7 @@ public class UserPasswordResetService {
 	private final EmailTokenRepository tokenRepository;
 	private final AuditService auditService;
 
+	@Transactional
 	public void requestReset(String email) {
 		log.info("Password reset requested for email: {}", email);
 
