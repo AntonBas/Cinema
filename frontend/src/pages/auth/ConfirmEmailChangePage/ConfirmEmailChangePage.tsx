@@ -1,83 +1,112 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import { api } from '@/services/api';
-import { Button } from '@/components/ui/Button/Button';
-import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
-import styles from './ConfirmEmailChangePage.module.css';
+import React, { useState, useEffect } from "react";
+import {
+  useParams,
+  useSearchParams,
+  useNavigate,
+  Link,
+} from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import { api } from "@/services/api";
+import { Button } from "@/components/ui/Button/Button";
+import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import styles from "./ConfirmEmailChangePage.module.css";
 
 export const ConfirmEmailChangePage: React.FC = () => {
-    const { token } = useParams<{ token: string }>();
-    const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
-    const { isAuthenticated, refreshUser } = useAuth();
+  const { token } = useParams<{ token: string }>();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { isAuthenticated, refreshUser } = useAuth();
 
-    const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-    const [errorMessage, setErrorMessage] = useState('');
+  const [status, setStatus] = useState<"loading" | "success" | "error">(
+    "loading",
+  );
+  const [errorMessage, setErrorMessage] = useState("");
 
-    const confirmationToken = token || searchParams.get('token');
+  const confirmationToken = token || searchParams.get("token");
 
-    useEffect(() => {
-        if (!confirmationToken) {
-            setStatus('error');
-            setErrorMessage('Invalid or missing confirmation token.');
-            return;
+  useEffect(() => {
+    if (!confirmationToken) {
+      setStatus("error");
+      setErrorMessage("Invalid or missing confirmation token.");
+      return;
+    }
+
+    const confirmEmailChange = async () => {
+      try {
+        await api.post(
+          `/api/tokens/email/change/confirm?token=${confirmationToken}`,
+        );
+        setStatus("success");
+        if (isAuthenticated) {
+          await refreshUser();
         }
-
-        const confirmEmailChange = async () => {
-            try {
-                await api.post(`/api/tokens/email/change/confirm?token=${confirmationToken}`);
-                setStatus('success');
-                if (isAuthenticated) {
-                    await refreshUser();
-                }
-                setTimeout(() => navigate(isAuthenticated ? '/account' : '/login'), 5000);
-            } catch (error: any) {
-                setStatus('error');
-                setErrorMessage(
-                    error?.response?.data?.message ||
-                    'Failed to confirm email change. The token may be invalid or expired.'
-                );
-            }
-        };
-
-        confirmEmailChange();
-    }, [confirmationToken, navigate, isAuthenticated, refreshUser]);
-
-    if (status === 'loading') {
-        return (
-            <div className={styles.container}>
-                <LoadingSpinner text="Confirming your email change..." />
-            </div>
+      } catch (error: any) {
+        setStatus("error");
+        setErrorMessage(
+          error?.response?.data?.message ||
+            "Failed to confirm email change. The token may be invalid or expired.",
         );
-    }
+      }
+    };
 
-    if (status === 'error') {
-        return (
-            <div className={styles.container}>
-                <div className={`${styles.card} ${styles.error}`}>
-                    <div className={styles.icon}>❌</div>
-                    <h2>Confirmation Failed</h2>
-                    <p>{errorMessage}</p>
-                    <Button variant="secondary" onClick={() => navigate('/login')}>
-                        Go to Login
-                    </Button>
-                </div>
-            </div>
-        );
-    }
+    confirmEmailChange();
+  }, [confirmationToken, isAuthenticated, refreshUser]);
 
+  if (status === "loading") {
     return (
-        <div className={styles.container}>
-            <div className={`${styles.card} ${styles.success}`}>
-                <div className={styles.icon}>✅</div>
-                <h2>Email Changed Successfully!</h2>
-                <p>Your email address has been successfully updated.</p>
-                <p className={styles.redirectText}>Redirecting in 5 seconds...</p>
-                <Button variant="primary" onClick={() => navigate(isAuthenticated ? '/account' : '/login')}>
-                    {isAuthenticated ? 'Go to Account' : 'Go to Login'}
-                </Button>
-            </div>
+      <div className={styles.container}>
+        <div className={styles.card}>
+          <LoadingSpinner text="Confirming your email change..." />
         </div>
+      </div>
     );
+  }
+
+  if (status === "error") {
+    return (
+      <section className={styles.container}>
+        <div className={styles.card}>
+          <h1 className={styles.title}>Confirmation Failed</h1>
+          <div className={styles.icon}>❌</div>
+          <p className={styles.message}>{errorMessage}</p>
+          <div className={styles.actions}>
+            <Button
+              variant="primary"
+              onClick={() => navigate("/login")}
+              style={{ width: "100%" }}
+            >
+              Go to Login
+            </Button>
+          </div>
+          <div className={styles.bottom}>
+            <Link to="/">Back to Home</Link>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className={styles.container}>
+      <div className={styles.card}>
+        <h1 className={styles.title}>Email Changed!</h1>
+        <div className={styles.icon}>✅</div>
+        <p className={styles.message}>
+          Your email address has been successfully updated.
+        </p>
+        <div className={styles.actions}>
+          <Button
+            variant="primary"
+            onClick={() => navigate(isAuthenticated ? "/account" : "/login")}
+            style={{ width: "100%" }}
+          >
+            {isAuthenticated ? "Go to Account" : "Go to Login"}
+          </Button>
+        </div>
+        <div className={styles.bottom}>
+          <Link to="/">Back to Home</Link>
+        </div>
+      </div>
+    </section>
+  );
 };
