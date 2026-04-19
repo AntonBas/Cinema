@@ -11,7 +11,7 @@ interface EditPromotionModalProps {
     onSuccess: () => void;
 }
 
-const DESCRIPTION_LIMIT = 500;
+const DESCRIPTION_LIMIT = 150;
 
 const EditPromotionModal: React.FC<EditPromotionModalProps> = ({ promotion, onClose, onSuccess }) => {
     const { update, loading } = usePromotion();

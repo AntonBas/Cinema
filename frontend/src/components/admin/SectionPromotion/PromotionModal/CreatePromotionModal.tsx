@@ -10,7 +10,7 @@ interface CreatePromotionModalProps {
     onSuccess: () => void;
 }
 
-const DESCRIPTION_LIMIT = 500;
+const DESCRIPTION_LIMIT = 150;
 
 const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({ onClose, onSuccess }) => {
     const { create, loading } = usePromotion();
