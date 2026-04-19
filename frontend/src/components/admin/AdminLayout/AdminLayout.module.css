@@ -1,104 +1,123 @@
 .adminLayout {
-    display: flex;
-    min-height: 100vh;
-    background: var(--color-bg-primary);
+  display: flex;
+  min-height: 100vh;
+  background: var(--color-bg-primary);
+  position: relative;
 }
 
 .mainContent {
-    flex: 1;
-    margin-left: 280px;
-    transition: margin-left var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    width: calc(100% - 280px);
+  flex: 1;
+  margin-left: 280px;
+  transition: margin-left var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: calc(100% - 280px);
 }
 
 .mainContent.fullWidth {
-    margin-left: 0;
-    width: 100%;
+  margin-left: 0;
+  width: 100%;
 }
 
 .content {
-    flex: 1;
-    padding: var(--space-8);
-    overflow-y: auto;
-    background: linear-gradient(135deg, var(--color-bg-secondary) 0%, #2d3447 100%);
-    position: relative;
+  flex: 1;
+  padding: var(--space-8);
+  overflow-y: auto;
+  background: linear-gradient(
+    135deg,
+    var(--color-bg-secondary) 0%,
+    #2d3447 100%
+  );
+  position: relative;
 }
 
 .content::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 280px;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
-    z-index: 0;
-    transition: left var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 280px;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  transition: left var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .mainContent.fullWidth .content::before {
-    left: 0;
+  left: 0;
 }
 
 .adminFooter {
-    padding: var(--space-6) var(--space-8);
-    background: rgba(15, 23, 42, 0.95);
-    backdrop-filter: blur(10px);
-    border-top: 1px solid var(--color-border-light);
-    position: relative;
-    z-index: 10;
+  padding: var(--space-6) var(--space-8);
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--color-border-light);
+  position: relative;
+  z-index: 10;
 }
 
 .footerContent {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    max-width: 1400px;
-    margin: 0 auto;
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-sm);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1400px;
+  margin: 0 auto;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
 }
 
 .websiteLink {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    color: var(--color-primary);
-    text-decoration: none;
-    font-weight: 500;
-    padding: var(--space-2) var(--space-4);
-    border-radius: var(--radius-md);
-    background: rgba(var(--color-primary-rgb), var(--opacity-low));
-    border: 1px solid rgba(var(--color-primary-rgb), var(--opacity-high));
-    transition: all var(--transition-normal);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  background: rgba(var(--color-primary-rgb), var(--opacity-low));
+  border: 1px solid rgba(var(--color-primary-rgb), var(--opacity-high));
+  transition: all var(--transition-normal);
 }
 
 .websiteLink:hover {
-    background: rgba(var(--color-primary-rgb), var(--opacity-medium));
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(var(--color-primary-rgb), 0.2);
+  background: rgba(var(--color-primary-rgb), var(--opacity-medium));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(var(--color-primary-rgb), 0.2);
 }
 
 @media (max-width: 768px) {
-    .mainContent {
-        margin-left: 0 !important;
-        width: 100% !important;
-    }
+  .mainContent {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
 
-    .content {
-        padding: var(--space-4);
-    }
+  .content {
+    padding: var(--space-4);
+  }
 
-    .content::before {
-        left: 0;
-    }
+  .content::before {
+    left: 0;
+  }
 
-    .footerContent {
-        flex-direction: column;
-        gap: var(--space-4);
-        text-align: center;
-    }
+  .adminFooter {
+    padding: var(--space-4);
+  }
+
+  .footerContent {
+    flex-direction: column;
+    gap: var(--space-4);
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .content {
+    padding: var(--space-3);
+  }
+
+  .adminFooter {
+    padding: var(--space-3);
+  }
 }
