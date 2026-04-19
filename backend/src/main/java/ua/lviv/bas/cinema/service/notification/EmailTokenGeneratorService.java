@@ -25,27 +25,26 @@ public class EmailTokenGeneratorService {
 	private final EmailService emailService;
 
 	@Transactional
-	public void generateVerificationToken(String email) {
-		generateAndSendToken(email, TokenType.VERIFICATION, null);
+	public void generateVerificationToken(User user) {
+		generateAndSendTokenForUser(user, TokenType.VERIFICATION, null);
 	}
 
 	@Transactional
 	public void generatePasswordResetToken(String email) {
-		generateAndSendToken(email, TokenType.PASSWORD_RESET, null);
+		User user = userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException(email));
+		generateAndSendTokenForUser(user, TokenType.PASSWORD_RESET, null);
 	}
 
 	@Transactional
-	public void generateEmailChangeToken(String email, String newEmail) {
+	public void generateEmailChangeToken(User user, String newEmail) {
 		if (newEmail == null || newEmail.trim().isEmpty()) {
 			throw new IllegalArgumentException("New email cannot be null or empty");
 		}
-		generateAndSendToken(email, TokenType.EMAIL_CHANGE, newEmail);
+		generateAndSendTokenForUser(user, TokenType.EMAIL_CHANGE, newEmail);
 	}
 
-	private void generateAndSendToken(String email, TokenType tokenType, String newEmail) {
-		log.info("Generating {} token for email: {}", tokenType, email);
-
-		User user = userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException(email));
+	private void generateAndSendTokenForUser(User user, TokenType tokenType, String newEmail) {
+		log.info("Generating {} token for user: {}", tokenType, user.getEmail());
 
 		tokenRepository.deleteByUserAndType(user, tokenType);
 
@@ -53,9 +52,9 @@ public class EmailTokenGeneratorService {
 		EmailToken emailToken = buildEmailToken(token, user, tokenType, newEmail);
 
 		tokenRepository.save(emailToken);
-		log.info("Generated new {} token for user: {}", tokenType, email);
+		log.info("Generated new {} token for user: {}", tokenType, user.getEmail());
 
-		sendEmail(email, token, tokenType, newEmail);
+		sendEmail(user.getEmail(), token, tokenType, newEmail);
 	}
 
 	private EmailToken buildEmailToken(String token, User user, TokenType tokenType, String newEmail) {

@@ -54,7 +54,7 @@ public class UserService {
 
 		var saved = userRepository.save(user);
 		log.info("User registered: {}", request.email());
-		emailTokenGeneratorService.generateVerificationToken(saved.getEmail());
+		emailTokenGeneratorService.generateVerificationToken(saved);
 		auditRegister(saved);
 
 		return userMapper.toUserResponse(saved);
@@ -89,7 +89,7 @@ public class UserService {
 		validateNewEmail(user.getEmail(), newEmail);
 		validateEmailNotExists(newEmail);
 
-		emailTokenGeneratorService.generateEmailChangeToken(user.getEmail(), newEmail);
+		emailTokenGeneratorService.generateEmailChangeToken(user, newEmail);
 		log.info("Email change requested for user {} to {}", userId, newEmail);
 		auditEmailChangeRequested(userId, oldEmail, newEmail);
 	}
