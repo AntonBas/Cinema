@@ -1,23 +1,34 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useAuthActions } from '@/hooks/features/auth/useAuthActions';
-import { Input, Button, Modal } from '@/components/ui';
-import styles from './ResetPasswordForm.module.css';
+import React, { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAuthActions } from "@/hooks/features/auth/useAuthActions";
+import { Input, Button, Modal } from "@/components/ui";
+import styles from "./ResetPasswordForm.module.css";
 
 interface SuccessModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const PasswordResetSuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose }) => (
+const PasswordResetSuccessModal: React.FC<SuccessModalProps> = ({
+  isOpen,
+  onClose,
+}) => (
   <Modal isOpen={isOpen} onClose={onClose} size="small">
     <div className={styles.successContent}>
-      <div className={styles.successIcon}>✅</div>
-      <h3>Password Reset!</h3>
-      <p>Your password has been successfully changed</p>
-      <Button variant="primary" onClick={onClose}>
-        Continue to Login
-      </Button>
+      <div className={styles.successAnimation}>
+        <div className={styles.successIcon}>✅</div>
+      </div>
+      <div className={styles.successText}>
+        <h3 className={styles.successTitle}>Password Reset!</h3>
+        <p className={styles.successMessage}>
+          Your password has been successfully changed.
+        </p>
+      </div>
+      <div className={styles.modalActions}>
+        <Button variant="primary" onClick={onClose} style={{ width: "100%" }}>
+          Continue to Login
+        </Button>
+      </div>
     </div>
   </Modal>
 );
@@ -27,14 +38,17 @@ export const ResetPasswordForm: React.FC = () => {
   const navigate = useNavigate();
   const { loading, error, resetPassword } = useAuthActions();
 
-  const [formData, setFormData] = useState({ newPassword: '', confirmPassword: '' });
+  const [formData, setFormData] = useState({
+    newPassword: "",
+    confirmPassword: "",
+  });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     if (formErrors[field]) {
-      setFormErrors(prev => ({ ...prev, [field]: '' }));
+      setFormErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
@@ -42,15 +56,15 @@ export const ResetPasswordForm: React.FC = () => {
     const errors: Record<string, string> = {};
 
     if (!formData.newPassword) {
-      errors.newPassword = 'New password is required';
+      errors.newPassword = "New password is required";
     } else if (formData.newPassword.length < 8) {
-      errors.newPassword = 'Password must be at least 8 characters';
+      errors.newPassword = "Password must be at least 8 characters";
     }
 
     if (!formData.confirmPassword) {
-      errors.confirmPassword = 'Please confirm your new password';
+      errors.confirmPassword = "Please confirm your new password";
     } else if (formData.newPassword !== formData.confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match';
+      errors.confirmPassword = "Passwords do not match";
     }
 
     setFormErrors(errors);
@@ -61,27 +75,31 @@ export const ResetPasswordForm: React.FC = () => {
     e.preventDefault();
     if (!validateForm() || !token) return;
 
-    const result = await resetPassword(token, formData.newPassword);
-    if (result) {
-      setShowSuccessModal(true);
-    }
+    await resetPassword(token, formData.newPassword);
+    setShowSuccessModal(true);
   };
 
   return (
     <section className={styles.resetPassword}>
       <div className={styles.resetPasswordContainer}>
-        <h1 className={styles.resetPasswordTitle}>Create New Password</h1>
+        <h1 className={styles.resetPasswordTitle}>Create new password</h1>
 
-        {error && (
-          <div className={styles.error}>{error.message}</div>
-        )}
+        <p className={styles.instructionText}>
+          Enter and confirm your new password below.
+        </p>
 
         <form onSubmit={handleSubmit} className={styles.resetPasswordForm}>
+          {error && (
+            <div className={styles.notification} data-type="error">
+              {error.message}
+            </div>
+          )}
+
           <Input
             type="password"
-            placeholder="Enter new password"
+            placeholder="New password"
             value={formData.newPassword}
-            onChange={v => handleChange('newPassword', v)}
+            onChange={(v) => handleChange("newPassword", v)}
             disabled={loading}
             error={formErrors.newPassword}
           />
@@ -90,13 +108,20 @@ export const ResetPasswordForm: React.FC = () => {
             type="password"
             placeholder="Confirm new password"
             value={formData.confirmPassword}
-            onChange={v => handleChange('confirmPassword', v)}
+            onChange={(v) => handleChange("confirmPassword", v)}
             disabled={loading}
             error={formErrors.confirmPassword}
           />
 
-          <Button type="submit" variant="primary" loading={loading} disabled={loading}>
-            Reset Password
+          <Button
+            type="submit"
+            variant="primary"
+            size="large"
+            loading={loading}
+            disabled={loading}
+            className={styles.submitButton}
+          >
+            {loading ? "Resetting..." : "Reset Password"}
           </Button>
         </form>
       </div>
@@ -105,7 +130,7 @@ export const ResetPasswordForm: React.FC = () => {
         isOpen={showSuccessModal}
         onClose={() => {
           setShowSuccessModal(false);
-          navigate('/login');
+          navigate("/login");
         }}
       />
     </section>
