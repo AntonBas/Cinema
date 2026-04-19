@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthActions } from '@/hooks/features/auth/useAuthActions';
 import { Input, Button } from '@/components/ui';
-import { FcGoogle } from 'react-icons/fc';
+import { Chrome } from 'lucide-react';
 import styles from './LoginForm.module.css';
 
 export const LoginForm: React.FC = () => {
@@ -56,7 +56,14 @@ export const LoginForm: React.FC = () => {
             required
           />
 
-          <Button type="submit" variant="primary" size="large" loading={loading} disabled={loading} style={{ width: '100%', marginTop: '1rem' }}>
+          <Button 
+            type="submit" 
+            variant="primary" 
+            size="large" 
+            loading={loading} 
+            disabled={loading} 
+            style={{ width: '100%', marginTop: '1rem' }}
+          >
             {loading ? 'Logging in...' : 'Login'}
           </Button>
         </form>
@@ -73,7 +80,7 @@ export const LoginForm: React.FC = () => {
           disabled={loading}
           style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
         >
-          <FcGoogle size={20} />
+          <Chrome size={20} />
           Continue with Google
         </Button>
 
