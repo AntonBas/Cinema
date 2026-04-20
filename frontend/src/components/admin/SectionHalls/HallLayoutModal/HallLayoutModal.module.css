@@ -1,481 +1,575 @@
 .modalContent {
-    padding: var(--space-8);
+  padding: var(--space-8);
 }
 
 .cinemaHall {
-    text-align: center;
-    position: relative;
+  text-align: center;
+  position: relative;
 }
 
 .headerControls {
-    margin-bottom: 20px;
+  margin-bottom: 20px;
 }
 
 .stats {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-    flex-wrap: wrap;
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .statItem {
-    text-align: center;
-    padding: 10px 20px;
-    background: var(--color-bg-quaternary);
-    border-radius: var(--radius-md);
-    min-width: 80px;
-    border: 1px solid var(--color-border-medium);
+  text-align: center;
+  padding: 10px 20px;
+  background: var(--color-bg-quaternary);
+  border-radius: var(--radius-md);
+  min-width: 80px;
+  border: 1px solid var(--color-border-medium);
 }
 
 .statNumber {
-    display: block;
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--color-primary);
-    margin-bottom: 4px;
-    text-shadow: 0 0 10px rgba(var(--color-primary-rgb), 0.3);
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 4px;
+  text-shadow: 0 0 10px rgba(var(--color-primary-rgb), 0.3);
 }
 
 .statLabel {
-    color: var(--color-text-secondary);
-    font-size: 12px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .screenArea {
-    margin-bottom: 2rem;
-    position: relative;
+  margin-bottom: 2rem;
+  position: relative;
 }
 
 .screen {
-    background: #0a0e17;
-    color: var(--color-primary);
-    padding: 2rem 4rem;
-    margin: 0 auto 1rem auto;
-    border-radius: var(--radius-md);
-    font-weight: 800;
-    font-size: 1.5rem;
-    text-transform: uppercase;
-    letter-spacing: 4px;
-    box-shadow: 0 10px 30px rgba(var(--color-primary-rgb), 0.3), inset 0 0 50px rgba(var(--color-primary-rgb), 0.1);
-    position: relative;
-    max-width: 600px;
-    border: 2px solid rgba(var(--color-primary-rgb), 0.3);
-    text-shadow: 0 0 10px rgba(var(--color-primary-rgb), 0.5);
+  background: #0a0e17;
+  color: var(--color-primary);
+  padding: 2rem 4rem;
+  margin: 0 auto 1rem auto;
+  border-radius: var(--radius-md);
+  font-weight: 800;
+  font-size: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  box-shadow:
+    0 10px 30px rgba(var(--color-primary-rgb), 0.3),
+    inset 0 0 50px rgba(var(--color-primary-rgb), 0.1);
+  position: relative;
+  max-width: 600px;
+  border: 2px solid rgba(var(--color-primary-rgb), 0.3);
+  text-shadow: 0 0 10px rgba(var(--color-primary-rgb), 0.5);
 }
 
 .screenReflection {
-    height: 20px;
-    background: linear-gradient(180deg, rgba(var(--color-primary-rgb), 0.2) 0%, transparent 100%);
-    margin: 0 auto;
-    border-radius: 50%;
-    filter: blur(5px);
-    max-width: 500px;
+  height: 20px;
+  background: linear-gradient(
+    180deg,
+    rgba(var(--color-primary-rgb), 0.2) 0%,
+    transparent 100%
+  );
+  margin: 0 auto;
+  border-radius: 50%;
+  filter: blur(5px);
+  max-width: 500px;
 }
 
 .seatsLayout {
-    background: rgba(42, 48, 65, 0.6);
-    border-radius: var(--radius-lg);
-    padding: 2rem 1rem;
-    border: 1px solid var(--color-border-light);
-    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.3), 0 10px 30px rgba(0, 0, 0, 0.3);
-    position: relative;
-    overflow: hidden;
-    margin-bottom: 2rem;
+  background: rgba(42, 48, 65, 0.6);
+  border-radius: var(--radius-lg);
+  padding: 2rem 1rem;
+  border: 1px solid var(--color-border-light);
+  box-shadow:
+    inset 0 0 50px rgba(0, 0, 0, 0.3),
+    0 10px 30px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 2rem;
 }
 
 .rowsContainer {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-    align-items: center;
-    max-width: 900px;
-    margin: 0 auto;
-    overflow-x: auto;
-    padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  align-items: center;
+  max-width: 900px;
+  margin: 0 auto;
+  overflow-x: auto;
+  padding: var(--space-2);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.rowsContainer::-webkit-scrollbar {
+  height: 6px;
+}
+
+.rowsContainer::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.rowsContainer::-webkit-scrollbar-thumb {
+  background: rgba(var(--color-primary-rgb), 0.5);
+  border-radius: 3px;
 }
 
 .row {
-    display: flex;
-    align-items: center;
-    gap: var(--space-4);
-    width: 100%;
-    justify-content: center;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  justify-content: center;
+  min-width: fit-content;
 }
 
 .rowLabel {
-    min-width: 60px;
-    color: #a0a4b8;
-    font-size: 12px;
-    font-weight: 600;
-    text-align: right;
-    padding-right: 10px;
-    flex-shrink: 0;
+  min-width: 60px;
+  color: #a0a4b8;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: right;
+  padding-right: 10px;
+  flex-shrink: 0;
 }
 
 .seatsRow {
-    display: flex;
-    gap: 4px;
-    justify-content: center;
-    flex-wrap: nowrap;
-    width: fit-content;
-    min-width: 0;
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  flex-wrap: nowrap;
+  width: fit-content;
+  min-width: 0;
 }
 
 .seatButton {
-    position: relative;
-    height: 32px;
-    border-radius: var(--radius-sm);
-    border: 2px solid transparent;
-    background-color: #4CAF50;
-    color: var(--color-text-primary);
-    font-weight: 600;
-    font-size: 12px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all var(--transition-fast);
-    padding: 0;
-    margin: 0 2px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    flex-shrink: 0;
+  position: relative;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 2px solid transparent;
+  background-color: #4caf50;
+  color: var(--color-text-primary);
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  padding: 0;
+  margin: 0 2px;
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
 }
 
 .seatButton.standard,
 .seatButton.vip {
-    width: 32px;
+  width: 32px;
 }
 
 .seatButton.couple {
-    width: 72px;
-    background-color: #e84393;
-    border-color: rgba(232, 67, 147, 0.5);
+  width: 72px;
+  background-color: #e84393;
+  border-color: rgba(232, 67, 147, 0.5);
 }
 
 .seatButton.standard {
-    background-color: #3498db;
-    border-color: rgba(52, 152, 219, 0.5);
+  background-color: #3498db;
+  border-color: rgba(52, 152, 219, 0.5);
 }
 
 .seatButton.vip {
-    background-color: #f39c12;
-    border-color: rgba(243, 156, 18, 0.5);
+  background-color: #f39c12;
+  border-color: rgba(243, 156, 18, 0.5);
 }
 
 .seatButton.inactive {
-    opacity: 0.4;
-    filter: grayscale(0.8);
-    border-color: #666 !important;
+  opacity: 0.4;
+  filter: grayscale(0.8);
+  border-color: #666 !important;
 }
 
 .seatButton:hover:not(:disabled) {
-    transform: scale(1.1);
-    z-index: 2;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+  z-index: 2;
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .seatButton:disabled {
-    cursor: wait;
-    opacity: 0.7;
+  cursor: wait;
+  opacity: 0.7;
 }
 
 .inactiveOverlay {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: rgba(0, 0, 0, 0.3);
-    border-radius: var(--radius-sm);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: var(--radius-sm);
 }
 
 .inactiveIcon {
-    font-size: 14px;
-    color: #888;
-    font-weight: bold;
-    text-shadow: 0 0 2px black;
+  font-size: 14px;
+  color: #888;
+  font-weight: bold;
+  text-shadow: 0 0 2px black;
 }
 
 .loadingSpinner {
-    width: 20px;
-    height: 20px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top: 2px solid var(--color-text-primary);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid var(--color-text-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
 .footer {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-6);
-    align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  align-items: center;
 }
 
 .legend {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: var(--radius-md);
-    padding: var(--space-6) var(--space-8);
-    border: 1px solid var(--color-border-light);
-    width: 100%;
-    max-width: 600px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-md);
+  padding: var(--space-6) var(--space-8);
+  border: 1px solid var(--color-border-light);
+  width: 100%;
+  max-width: 600px;
 }
 
 .legendTitle {
-    color: var(--color-text-primary);
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: var(--space-4);
-    text-align: center;
+  color: var(--color-text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: var(--space-4);
+  text-align: center;
 }
 
 .legendGrid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 10px;
 }
 
 .legendItem {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    color: var(--color-text-secondary);
-    font-size: 0.9rem;
-    font-weight: 500;
-    padding: var(--space-2) var(--space-4);
-    border-radius: var(--radius-md);
-    background: rgba(255, 255, 255, 0.05);
-    transition: all var(--transition-normal);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.05);
+  transition: all var(--transition-normal);
 }
 
 .legendItem:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
 }
 
 .legendColor {
-    width: 20px;
-    height: 20px;
-    border-radius: var(--radius-sm);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
 }
 
 .legendColor.standard {
-    background-color: #3498db;
+  background-color: #3498db;
 }
 
 .legendColor.vip {
-    background-color: #f39c12;
+  background-color: #f39c12;
 }
 
 .legendColor.couple {
-    background-color: #e84393;
+  background-color: #e84393;
 }
 
 .legendColor.inactive {
-    background-color: #666;
+  background-color: #666;
 }
 
 .instructions {
-    display: flex;
-    align-items: center;
-    gap: var(--space-4);
-    background: rgba(var(--color-primary-rgb), 0.1);
-    border: 1px solid rgba(var(--color-primary-rgb), 0.3);
-    border-radius: var(--radius-md);
-    padding: var(--space-4) var(--space-6);
-    text-align: left;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  background: rgba(var(--color-primary-rgb), 0.1);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.3);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-6);
+  text-align: left;
 }
 
 .instructionIcon {
-    font-size: 1.5rem;
-    flex-shrink: 0;
+  font-size: 1.5rem;
+  flex-shrink: 0;
 }
 
 .instructionText {
-    color: var(--color-primary);
-    font-weight: 600;
-    font-size: 0.9rem;
-    margin: 0;
-    text-shadow: 0 0 10px rgba(var(--color-primary-rgb), 0.3);
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin: 0;
+  text-shadow: 0 0 10px rgba(var(--color-primary-rgb), 0.3);
 }
 
 .instructionText p {
-    margin: 4px 0;
-    font-size: 0.9rem;
-    color: #a0a4b8;
+  margin: 4px 0;
+  font-size: 0.9rem;
+  color: #a0a4b8;
 }
 
 .instructionText p strong {
-    color: var(--color-text-primary);
+  color: var(--color-text-primary);
 }
 
 .note {
-    font-size: 12px;
-    color: #888;
-    margin-top: 5px;
-    font-style: italic;
+  font-size: 12px;
+  color: #888;
+  margin-top: 5px;
+  font-style: italic;
 }
 
 .loading {
-    text-align: center;
-    padding: 4rem;
-    color: var(--color-text-secondary);
-    font-size: 1.1rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-6);
+  text-align: center;
+  padding: 4rem;
+  color: var(--color-text-secondary);
+  font-size: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
 }
 
 .noLayout {
-    text-align: center;
-    padding: 4rem 2rem;
-    color: var(--color-text-secondary);
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: var(--radius-md);
-    border: 2px dashed var(--color-border-light);
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--color-text-secondary);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-md);
+  border: 2px dashed var(--color-border-light);
 }
 
 .emptyIcon {
-    font-size: 4rem;
-    margin-bottom: var(--space-4);
-    opacity: 0.5;
-    filter: drop-shadow(0 0 10px rgba(var(--color-primary-rgb), 0.3));
+  font-size: 4rem;
+  margin-bottom: var(--space-4);
+  opacity: 0.5;
+  filter: drop-shadow(0 0 10px rgba(var(--color-primary-rgb), 0.3));
 }
 
 .noLayout h3 {
-    color: var(--color-text-primary);
-    margin: 0 0 var(--space-4) 0;
-    font-size: 1.5rem;
-    font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-4) 0;
+  font-size: 1.5rem;
+  font-weight: 600;
 }
 
 .noLayout p {
-    margin: 0 0 var(--space-6) 0;
-    font-size: 1.1rem;
+  margin: 0 0 var(--space-6) 0;
+  font-size: 1.1rem;
 }
 
 .seatNumber {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--color-text-primary);
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
 }
 
 @keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(360deg);
-    }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 768px) {
-    .modalContent {
-        padding: var(--space-6);
-    }
+  .modalContent {
+    padding: var(--space-4);
+  }
 
-    .screen {
-        padding: var(--space-6) var(--space-8);
-        font-size: 1.2rem;
-        letter-spacing: 2px;
-    }
+  .screen {
+    padding: var(--space-4) var(--space-6);
+    font-size: 1rem;
+    letter-spacing: 2px;
+    max-width: 90%;
+  }
 
-    .legendGrid {
-        grid-template-columns: repeat(2, 1fr);
-    }
+  .screenReflection {
+    max-width: 80%;
+  }
 
-    .legendItem {
-        padding: var(--space-2);
-    }
+  .legend {
+    padding: var(--space-4);
+  }
 
-    .seatsLayout {
-        padding: var(--space-6) var(--space-2);
-    }
+  .legendGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
 
-    .row {
-        gap: var(--space-2);
-    }
+  .legendItem {
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.8rem;
+  }
 
-    .rowLabel {
-        min-width: 50px;
-        font-size: 11px;
-    }
+  .seatsLayout {
+    padding: var(--space-4) var(--space-2);
+  }
 
-    .seatButton.standard,
-    .seatButton.vip {
-        width: 28px;
-        height: 28px;
-    }
+  .rowsContainer {
+    padding: var(--space-1);
+  }
 
-    .seatButton.couple {
-        width: 60px;
-        height: 28px;
-    }
+  .row {
+    gap: var(--space-2);
+  }
 
-    .footer {
-        flex-direction: column;
-        align-items: center;
-    }
+  .rowLabel {
+    min-width: 45px;
+    font-size: 10px;
+  }
+
+  .seatButton.standard,
+  .seatButton.vip {
+    width: 28px;
+    height: 28px;
+  }
+
+  .seatButton.couple {
+    width: 56px;
+    height: 28px;
+  }
+
+  .seatNumber {
+    font-size: 9px;
+  }
+
+  .footer {
+    gap: var(--space-4);
+  }
+
+  .instructions {
+    padding: var(--space-3);
+  }
+
+  .instructionText p {
+    font-size: 0.8rem;
+  }
 }
 
 @media (max-width: 480px) {
-    .modalContent {
-        padding: var(--space-4);
-    }
+  .modalContent {
+    padding: var(--space-3);
+  }
 
-    .screen {
-        padding: var(--space-4) var(--space-6);
-        font-size: 1rem;
-        letter-spacing: 1px;
-    }
+  .screen {
+    padding: var(--space-3) var(--space-4);
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+  }
 
-    .seatButton.standard,
-    .seatButton.vip {
-        width: 26px;
-        height: 26px;
-    }
+  .stats {
+    gap: 8px;
+  }
 
-    .seatButton.couple {
-        width: 56px;
-        height: 26px;
-    }
+  .statItem {
+    padding: 6px 10px;
+    min-width: 60px;
+  }
 
-    .rowLabel {
-        min-width: 45px;
-        font-size: 10px;
-    }
+  .statNumber {
+    font-size: 18px;
+  }
 
-    .legendGrid {
-        grid-template-columns: 1fr;
-    }
+  .statLabel {
+    font-size: 10px;
+  }
 
-    .instructions {
-        flex-direction: column;
-        text-align: center;
-        gap: var(--space-2);
-    }
+  .seatButton.standard,
+  .seatButton.vip {
+    width: 24px;
+    height: 24px;
+  }
 
-    .stats {
-        flex-direction: column;
-        align-items: center;
-    }
+  .seatButton.couple {
+    width: 48px;
+    height: 24px;
+  }
 
-    .statItem {
-        width: 100%;
-        max-width: 200px;
-    }
+  .rowLabel {
+    min-width: 35px;
+    font-size: 9px;
+    padding-right: 5px;
+  }
+
+  .legend {
+    padding: var(--space-3);
+  }
+
+  .legendTitle {
+    font-size: 0.9rem;
+    margin-bottom: var(--space-2);
+  }
+
+  .legendGrid {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .legendItem {
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .legendColor {
+    width: 16px;
+    height: 16px;
+  }
+
+  .instructions {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--space-2);
+    padding: var(--space-2);
+  }
+
+  .instructionIcon {
+    font-size: 1.2rem;
+  }
+
+  .instructionText p {
+    font-size: 0.7rem;
+  }
+
+  .note {
+    font-size: 10px;
+  }
 }
