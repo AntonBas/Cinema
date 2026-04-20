@@ -1,348 +1,344 @@
 .tableWrapper {
-    width: 100%;
-    overflow: hidden;
+  width: 100%;
+  overflow: hidden;
 }
 
 .tableContainer {
-    width: 100%;
-    overflow-x: auto;
-    overflow-y: visible;
-    border-radius: var(--radius-lg);
-    border: 1px solid #334155;
-    background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
-    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  border-radius: var(--radius-lg);
+  border: 1px solid #334155;
+  background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+  box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.tableContainer::-webkit-scrollbar {
+  height: 6px;
+}
+
+.tableContainer::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.tableContainer::-webkit-scrollbar-thumb {
+  background: rgba(var(--color-primary-rgb), 0.5);
+  border-radius: 3px;
 }
 
 .table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    min-width: 1000px;
-    background: transparent;
-    position: relative;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 850px;
+  background: transparent;
+  position: relative;
 }
 
 .table th {
-    font-weight: 600;
-    padding: var(--space-4) var(--space-4);
-    text-align: left;
-    border-bottom: 1px solid #334155;
-    font-size: var(--font-size-sm);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #f1f5f9;
-    background: #1e293b;
-    white-space: nowrap;
+  font-weight: 600;
+  padding: var(--space-4) var(--space-3);
+  text-align: left;
+  border-bottom: 1px solid #334155;
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #f1f5f9;
+  background: #1e293b;
+  white-space: nowrap;
+}
+
+.table th:first-child {
+  padding-left: var(--space-6);
+}
+
+.table th:last-child {
+  padding-right: var(--space-6);
 }
 
 .table td {
-    padding: var(--space-4) var(--space-4);
-    border-bottom: 1px solid #334155;
-    color: var(--color-text-secondary);
-    transition: background-color var(--transition-normal);
-    white-space: nowrap;
+  padding: var(--space-4) var(--space-3);
+  border-bottom: 1px solid #334155;
+  color: var(--color-text-secondary);
+  transition: background-color var(--transition-normal);
+  white-space: nowrap;
+}
+
+.table td:first-child {
+  padding-left: var(--space-6);
+}
+
+.table td:last-child {
+  padding-right: var(--space-6);
 }
 
 .table tbody tr {
-    background: rgba(30, 41, 59, 0.3);
+  background: rgba(30, 41, 59, 0.3);
 }
 
 .table tbody tr:nth-child(even) {
-    background: rgba(30, 41, 59, 0.6);
+  background: rgba(30, 41, 59, 0.6);
 }
 
 .table tbody tr:hover {
-    background: rgba(253, 95, 0, 0.15);
+  background: rgba(253, 95, 0, 0.15);
 }
 
 .table tbody tr:last-child td {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 .table tbody tr:hover td {
-    color: #f1f5f9;
+  color: #f1f5f9;
 }
 
 .nameCell {
-    min-width: 180px;
-    max-width: 220px;
-    white-space: normal;
+  min-width: 160px;
+  max-width: 200px;
+  white-space: normal;
 }
 
 .displayName {
-    color: #f1f5f9;
-    font-weight: 600;
-    font-size: var(--font-size-md);
-    white-space: normal;
-    word-break: break-word;
+  color: #f1f5f9;
+  font-weight: 600;
+  font-size: var(--font-size-md);
+  white-space: normal;
+  word-break: break-word;
 }
 
 .categoryCell {
-    min-width: 120px;
+  min-width: 110px;
 }
 
 .priceCell {
-    min-width: 120px;
+  min-width: 100px;
 }
 
 .price {
-    font-family: 'Monaco', 'Courier New', monospace;
-    font-weight: 600;
-    color: var(--color-success);
-    background: rgba(var(--color-success-rgb), 0.1);
-    padding: var(--space-1) var(--space-3);
-    border-radius: var(--radius-sm);
-    display: inline-block;
-    white-space: nowrap;
+  font-family: "Monaco", "Courier New", monospace;
+  font-weight: 600;
+  color: var(--color-success);
+  background: rgba(var(--color-success-rgb), 0.1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  white-space: nowrap;
 }
 
 .ageCell {
-    min-width: 120px;
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-sm);
-    font-weight: 500;
+  min-width: 110px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
 }
 
 .ageRange {
-    white-space: nowrap;
+  white-space: nowrap;
 }
 
 .documentCell {
-    min-width: 120px;
-    text-align: center;
+  min-width: 110px;
+  text-align: center;
 }
 
 .statusCell {
-    min-width: 100px;
-    text-align: center;
-}
-
-.toggleButton {
-    padding: var(--space-1) var(--space-3);
-    border-radius: var(--radius-full);
-    font-size: var(--font-size-xs);
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
-    transition: var(--transition-fast);
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    min-width: 80px;
-    white-space: nowrap;
-    text-align: center;
-}
-
-.toggleButton:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-sm);
-}
-
-.activeToggle {
-    background: var(--color-success);
-    color: white;
-}
-
-.inactiveToggle {
-    background: var(--color-gray);
-    color: white;
+  min-width: 90px;
+  text-align: center;
 }
 
 .actionsCell {
-    min-width: 140px;
-    padding-right: var(--space-8) !important;
+  min-width: 130px;
 }
 
 .actions {
-    display: flex;
-    gap: var(--space-2);
-    justify-content: flex-end;
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
 }
 
 .actionButton {
-    min-width: 70px;
-    font-size: var(--font-size-xs);
-    padding: var(--space-1) var(--space-3);
-    white-space: nowrap;
+  min-width: 65px;
+  font-size: var(--font-size-xs);
+  padding: var(--space-1) var(--space-2);
+  white-space: nowrap;
 }
 
 .empty {
-    text-align: center;
-    padding: var(--space-12) var(--space-8);
-    color: var(--color-text-secondary);
-    background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
-    border-radius: var(--radius-lg);
-    border: 1px solid #334155;
-    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+  text-align: center;
+  padding: var(--space-12) var(--space-8);
+  color: var(--color-text-secondary);
+  background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+  border-radius: var(--radius-lg);
+  border: 1px solid #334155;
+  box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
 }
 
 .emptyIcon {
-    font-size: 3rem;
-    margin-bottom: var(--space-4);
-    color: var(--color-text-secondary);
+  font-size: 3rem;
+  margin-bottom: var(--space-4);
+  color: var(--color-text-secondary);
 }
 
 .empty h3 {
-    color: #f1f5f9;
-    margin: 0 0 var(--space-2) 0;
-    font-size: var(--font-size-2xl);
-    font-weight: 600;
+  color: #f1f5f9;
+  margin: 0 0 var(--space-2) 0;
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
 }
 
 .empty p {
-    color: var(--color-text-secondary);
-    margin: 0;
-    font-size: var(--font-size-md);
-    line-height: 1.5;
-}
-
-@media (max-width: 1024px) {
-    .tableContainer {
-        border-radius: var(--radius-lg);
-        margin: 0 -1px;
-        width: calc(100% + 2px);
-    }
-
-    .table th,
-    .table td {
-        min-width: 0;
-    }
-
-    .table th:last-child,
-    .table td:last-child {
-        padding-right: var(--space-8);
-    }
-
-    .table th:first-child,
-    .table td:first-child {
-        padding-left: var(--space-8);
-    }
-
-    .nameCell {
-        min-width: 160px;
-        max-width: 200px;
-    }
-
-    .categoryCell {
-        min-width: 110px;
-    }
-
-    .priceCell,
-    .ageCell,
-    .documentCell,
-    .statusCell {
-        min-width: 100px;
-    }
-
-    .actionsCell {
-        min-width: 130px;
-        padding-right: var(--space-6) !important;
-    }
+  color: var(--color-text-secondary);
+  margin: 0;
+  font-size: var(--font-size-md);
+  line-height: 1.5;
 }
 
 @media (max-width: 768px) {
+  .tableContainer {
+    overflow-x: visible;
+    border-radius: var(--radius-md);
+    background: transparent;
+    box-shadow: none;
+    border: none;
+  }
 
-    .table th,
-    .table td {
-        padding: var(--space-3) var(--space-3);
-        font-size: var(--font-size-sm);
-    }
+  .table {
+    min-width: auto;
+    display: block;
+  }
 
-    .tableContainer {
-        border-radius: var(--radius-md);
-        margin: 0 calc(-1 * var(--space-4));
-        width: calc(100% + 2 * var(--space-4));
-    }
+  .table thead {
+    display: none;
+  }
 
-    .table {
-        min-width: 900px;
-    }
+  .table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
 
-    .displayName {
-        font-size: var(--font-size-sm);
-    }
+  .table tbody tr {
+    display: block;
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    border: 1px solid #334155;
+    background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
 
-    .price {
-        font-size: var(--font-size-xs);
-        padding: var(--space-1) var(--space-2);
-    }
+  .table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-2) 0;
+    border-bottom: 1px dashed #334155;
+    white-space: normal;
+  }
 
-    .toggleButton {
-        min-width: 70px;
-        padding: var(--space-1) var(--space-2);
-        font-size: 10px;
-    }
+  .table td:first-child {
+    padding-left: 0;
+    border-bottom: 1px solid #334155;
+    margin-bottom: var(--space-2);
+  }
 
-    .actionButton {
-        min-width: 60px;
-        font-size: var(--font-size-xs);
-        padding: var(--space-1) var(--space-2);
-    }
+  .table td:last-child {
+    padding-right: 0;
+    border-bottom: none;
+    text-align: left;
+  }
 
-    .empty {
-        padding: var(--space-8) var(--space-4);
-    }
+  .table td::before {
+    content: attr(data-label);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    text-transform: uppercase;
+  }
 
-    .empty h3 {
-        font-size: var(--font-size-xl);
-    }
+  .table td:first-child::before {
+    display: none;
+  }
 
-    .emptyIcon {
-        font-size: 2.5rem;
-    }
+  .table td:first-child {
+    justify-content: flex-start;
+  }
 
-    .nameCell {
-        min-width: 140px;
-        max-width: 180px;
-    }
+  .displayName {
+    font-size: var(--font-size-md);
+  }
 
-    .actionsCell {
-        min-width: 120px;
-        padding-right: var(--space-8) !important;
-    }
+  .nameCell {
+    min-width: auto;
+    max-width: none;
+  }
 
-    .actions {
-        flex-direction: column;
-        gap: var(--space-1);
-    }
+  .actions {
+    justify-content: flex-start;
+    margin-top: var(--space-2);
+  }
+
+  .empty {
+    padding: var(--space-8) var(--space-4);
+  }
+
+  .empty h3 {
+    font-size: var(--font-size-xl);
+  }
+
+  .emptyIcon {
+    font-size: 2.5rem;
+  }
 }
 
 @media (max-width: 480px) {
-    .tableContainer {
-        margin: 0 calc(-1 * var(--space-3));
-        width: calc(100% + 2 * var(--space-3));
-        border-radius: var(--radius-sm);
-    }
+  .table tbody {
+    gap: var(--space-3);
+  }
 
-    .table {
-        min-width: 800px;
-    }
+  .table tbody tr {
+    padding: var(--space-3);
+  }
 
-    .nameCell {
-        min-width: 120px;
-        max-width: 160px;
-    }
+  .table td {
+    padding: var(--space-1) 0;
+    font-size: var(--font-size-xs);
+  }
 
-    .actionsCell {
-        min-width: 100px;
-        padding-right: var(--space-6) !important;
-    }
+  .table td::before {
+    font-size: 10px;
+  }
 
-    .actionButton {
-        min-width: 55px;
-        font-size: 10px;
-        padding: var(--space-1);
-    }
+  .displayName {
+    font-size: var(--font-size-sm);
+  }
 
-    .toggleButton {
-        min-width: 65px;
-        font-size: 9px;
-    }
+  .price {
+    font-size: 11px;
+    padding: 2px 6px;
+  }
 
-    .empty {
-        padding: var(--space-6) var(--space-3);
-    }
+  .ageRange {
+    font-size: 11px;
+  }
 
-    .empty h3 {
-        font-size: var(--font-size-lg);
-    }
+  .actions {
+    gap: var(--space-1);
+  }
+
+  .actionButton {
+    min-width: 55px;
+    font-size: 10px;
+    padding: 4px;
+  }
+
+  .empty {
+    padding: var(--space-6) var(--space-3);
+  }
+
+  .empty h3 {
+    font-size: var(--font-size-lg);
+  }
 }
