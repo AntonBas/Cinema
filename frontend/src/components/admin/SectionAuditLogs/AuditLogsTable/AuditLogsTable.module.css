@@ -1,144 +1,322 @@
 .tableWrapper {
-    overflow-x: auto;
-    border-radius: var(--radius-lg);
-    border: 1px solid #334155;
-    background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
-    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  border: 1px solid #334155;
+  background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+  box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.tableWrapper::-webkit-scrollbar {
+  height: 6px;
+}
+
+.tableWrapper::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.tableWrapper::-webkit-scrollbar-thumb {
+  background: rgba(var(--color-primary-rgb), 0.5);
+  border-radius: 3px;
 }
 
 .table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 1200px;
-    background: transparent;
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+  background: transparent;
 }
 
 .tableHead {
-    background: #1e293b;
-    border-bottom: 1px solid #334155;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
 }
 
 .th {
-    padding: 16px 20px;
-    text-align: left;
-    font-size: 13px;
-    font-weight: 600;
-    color: #f1f5f9;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  padding: 16px 12px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: #f1f5f9;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.th:first-child {
+  padding-left: 20px;
+}
+
+.th:last-child {
+  padding-right: 20px;
 }
 
 .tableBody {
-    background: transparent;
+  background: transparent;
 }
 
 .tr {
-    border-bottom: 1px solid #334155;
-    transition: background-color 0.2s ease;
-    background: rgba(30, 41, 59, 0.3);
+  border-bottom: 1px solid #334155;
+  transition: background-color 0.2s ease;
+  background: rgba(30, 41, 59, 0.3);
 }
 
 .tr:nth-child(even) {
-    background: rgba(30, 41, 59, 0.6);
+  background: rgba(30, 41, 59, 0.6);
 }
 
 .tr:hover {
-    background: rgba(253, 95, 0, 0.15);
+  background: rgba(253, 95, 0, 0.15);
 }
 
 .td {
-    padding: 16px 20px;
-    font-size: 14px;
-    color: #e2e8f0;
-    vertical-align: top;
+  padding: 16px 12px;
+  font-size: 14px;
+  color: #e2e8f0;
+  vertical-align: top;
+}
+
+.td:first-child {
+  padding-left: 20px;
+}
+
+.td:last-child {
+  padding-right: 20px;
 }
 
 .tr:hover .td {
-    color: #f1f5f9;
+  color: #f1f5f9;
 }
 
 .timeDate {
-    display: block;
-    font-weight: 500;
-    color: #f1f5f9;
-    margin-bottom: 4px;
+  display: block;
+  font-weight: 500;
+  color: #f1f5f9;
+  margin-bottom: 4px;
+  white-space: nowrap;
 }
 
 .timeTime {
-    display: block;
-    font-size: 12px;
-    color: #94a3b8;
+  display: block;
+  font-size: 12px;
+  color: #94a3b8;
+  white-space: nowrap;
 }
 
 .targetInfo {
-    max-width: 250px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    display: block;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
 }
 
 .actionBadge {
-    display: inline-block;
-    font-size: 12px;
-    font-weight: 500;
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .changeObject {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .changeField {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    font-size: 13px;
-    line-height: 1.5;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .changeKey {
-    color: #94a3b8;
-    min-width: 110px;
-    font-size: 12px;
+  color: #94a3b8;
+  min-width: 90px;
+  font-size: 12px;
 }
 
 .oldValue {
-    color: #ef4444;
-    text-decoration: line-through;
-    opacity: 0.8;
+  color: #ef4444;
+  text-decoration: line-through;
+  opacity: 0.8;
 }
 
 .newValue {
-    color: #22c55e;
-    font-weight: 500;
+  color: #22c55e;
+  font-weight: 500;
 }
 
 .emptyContainer {
-    padding: 60px 20px;
-    text-align: center;
-    background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
-    border-radius: var(--radius-xl);
-    border: 1px solid #334155;
+  padding: 60px 20px;
+  text-align: center;
+  background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+  border-radius: var(--radius-xl);
+  border: 1px solid #334155;
 }
 
 .emptyText {
-    color: #a0a4b8;
-    font-size: 15px;
+  color: #a0a4b8;
+  font-size: 15px;
 }
 
 @media (max-width: 768px) {
-    .table {
-        min-width: 1000px;
-    }
+  .tableWrapper {
+    overflow-x: visible;
+    background: transparent;
+    box-shadow: none;
+    border: none;
+  }
 
-    .th,
-    .td {
-        padding: 12px 16px;
-    }
+  .table {
+    min-width: auto;
+    display: block;
+  }
 
-    .changeKey {
-        min-width: 90px;
-    }
+  .tableHead {
+    display: none;
+  }
+
+  .tableBody {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .tr {
+    display: block;
+    padding: 16px;
+    border-radius: var(--radius-lg);
+    border: 1px solid #334155;
+    background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px dashed #334155;
+  }
+
+  .td:first-child {
+    padding-left: 0;
+    border-bottom: 1px solid #334155;
+    margin-bottom: 8px;
+  }
+
+  .td:last-child {
+    padding-right: 0;
+    border-bottom: none;
+  }
+
+  .td::before {
+    content: attr(data-label);
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    min-width: 100px;
+  }
+
+  .td:first-child::before {
+    display: none;
+  }
+
+  .td:first-child {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .timeDate {
+    white-space: normal;
+    margin-bottom: 0;
+    margin-right: 8px;
+  }
+
+  .timeTime {
+    white-space: normal;
+  }
+
+  .targetInfo {
+    max-width: none;
+    white-space: normal;
+  }
+
+  .changeObject {
+    width: 100%;
+  }
+
+  .changeField {
+    flex-wrap: wrap;
+  }
+
+  .changeKey {
+    min-width: 80px;
+  }
+
+  .emptyContainer {
+    padding: 40px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tableBody {
+    gap: 12px;
+  }
+
+  .tr {
+    padding: 12px;
+  }
+
+  .td {
+    padding: 6px 0;
+    font-size: 13px;
+  }
+
+  .td::before {
+    font-size: 10px;
+    min-width: 80px;
+  }
+
+  .td:first-child {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 4px;
+  }
+
+  .timeDate {
+    font-size: 14px;
+  }
+
+  .timeTime {
+    font-size: 11px;
+  }
+
+  .changeKey {
+    min-width: 70px;
+    font-size: 10px;
+  }
+
+  .changeField {
+    font-size: 12px;
+  }
+
+  .actionBadge {
+    font-size: 11px;
+  }
+
+  .emptyContainer {
+    padding: 30px 12px;
+  }
+
+  .emptyText {
+    font-size: 13px;
+  }
 }
