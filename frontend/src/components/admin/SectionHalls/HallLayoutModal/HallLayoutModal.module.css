@@ -101,24 +101,8 @@
   align-items: center;
   max-width: 900px;
   margin: 0 auto;
-  overflow-x: auto;
+  overflow-x: visible;
   padding: var(--space-2);
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-}
-
-.rowsContainer::-webkit-scrollbar {
-  height: 6px;
-}
-
-.rowsContainer::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 3px;
-}
-
-.rowsContainer::-webkit-scrollbar-thumb {
-  background: rgba(var(--color-primary-rgb), 0.5);
-  border-radius: 3px;
 }
 
 .row {
@@ -127,7 +111,6 @@
   gap: var(--space-4);
   width: 100%;
   justify-content: center;
-  min-width: fit-content;
 }
 
 .rowLabel {
@@ -416,29 +399,59 @@
     padding: var(--space-4);
   }
 
+  .stats {
+    gap: 12px;
+  }
+
+  .statItem {
+    padding: 8px 12px;
+    min-width: 75px;
+  }
+
+  .statNumber {
+    font-size: 20px;
+  }
+
+  .statLabel {
+    font-size: 10px;
+  }
+
   .screen {
-    padding: var(--space-4) var(--space-6);
-    font-size: 1rem;
+    padding: var(--space-4) var(--space-5);
+    font-size: 1.1rem;
     letter-spacing: 2px;
-    max-width: 90%;
+    max-width: 85%;
   }
 
   .screenReflection {
-    max-width: 80%;
+    max-width: 75%;
+    height: 14px;
   }
 
   .legend {
     padding: var(--space-4);
+    max-width: 100%;
+  }
+
+  .legendTitle {
+    font-size: 1rem;
+    margin-bottom: var(--space-3);
   }
 
   .legendGrid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
   }
 
   .legendItem {
     padding: var(--space-2) var(--space-3);
     font-size: 0.8rem;
+    gap: var(--space-2);
+  }
+
+  .legendColor {
+    width: 16px;
+    height: 16px;
   }
 
   .seatsLayout {
@@ -446,7 +459,8 @@
   }
 
   .rowsContainer {
-    padding: var(--space-1);
+    padding: 0;
+    gap: var(--space-3);
   }
 
   .row {
@@ -456,21 +470,31 @@
   .rowLabel {
     min-width: 45px;
     font-size: 10px;
+    padding-right: 4px;
+  }
+
+  .seatsRow {
+    gap: 3px;
+  }
+
+  .seatButton {
+    height: 26px;
+    font-size: 9px;
+    margin: 0 1px;
   }
 
   .seatButton.standard,
   .seatButton.vip {
-    width: 28px;
-    height: 28px;
+    width: 26px;
   }
 
   .seatButton.couple {
-    width: 56px;
-    height: 28px;
+    width: 52px;
+    height: 26px;
   }
 
   .seatNumber {
-    font-size: 9px;
+    font-size: 8px;
   }
 
   .footer {
@@ -478,98 +502,180 @@
   }
 
   .instructions {
-    padding: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    gap: var(--space-3);
+  }
+
+  .instructionIcon {
+    font-size: 1.3rem;
+  }
+
+  .instructionText {
+    font-size: 0.8rem;
   }
 
   .instructionText p {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
+    margin: 3px 0;
+  }
+
+  .note {
+    font-size: 10px;
+  }
+
+  .loading {
+    padding: 2.5rem;
+  }
+
+  .noLayout {
+    padding: 2.5rem 1.5rem;
+  }
+
+  .emptyIcon {
+    font-size: 3.5rem;
+  }
+
+  .noLayout h3 {
+    font-size: 1.3rem;
+  }
+
+  .noLayout p {
+    font-size: 1rem;
   }
 }
 
 @media (max-width: 480px) {
   .modalContent {
-    padding: var(--space-3);
-  }
-
-  .screen {
-    padding: var(--space-3) var(--space-4);
-    font-size: 0.9rem;
-    letter-spacing: 1px;
+    padding: var(--space-2);
   }
 
   .stats {
-    gap: 8px;
+    gap: 6px;
   }
 
   .statItem {
-    padding: 6px 10px;
-    min-width: 60px;
+    padding: 4px 8px;
+    min-width: 55px;
   }
 
   .statNumber {
-    font-size: 18px;
+    font-size: 14px;
   }
 
   .statLabel {
-    font-size: 10px;
+    font-size: 8px;
+  }
+
+  .screen {
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+  }
+
+  .rowLabel {
+    display: none;
+  }
+
+  .seatsLayout {
+    padding: var(--space-2) var(--space-1);
+  }
+
+  .rowsContainer {
+    gap: var(--space-1);
+  }
+
+  .row {
+    gap: 0;
+  }
+
+  .seatsRow {
+    gap: 1px;
+  }
+
+  .seatButton {
+    height: 20px;
+    font-size: 7px;
+    margin: 0;
   }
 
   .seatButton.standard,
   .seatButton.vip {
-    width: 24px;
-    height: 24px;
+    width: 20px;
   }
 
   .seatButton.couple {
-    width: 48px;
-    height: 24px;
+    width: 41px;
+    height: 20px;
   }
 
-  .rowLabel {
-    min-width: 35px;
-    font-size: 9px;
-    padding-right: 5px;
+  .seatNumber {
+    font-size: 6px;
   }
 
   .legend {
-    padding: var(--space-3);
-  }
-
-  .legendTitle {
-    font-size: 0.9rem;
-    margin-bottom: var(--space-2);
-  }
-
-  .legendGrid {
-    grid-template-columns: 1fr;
-    gap: 6px;
-  }
-
-  .legendItem {
-    padding: var(--space-1) var(--space-2);
-  }
-
-  .legendColor {
-    width: 16px;
-    height: 16px;
-  }
-
-  .instructions {
-    flex-direction: column;
-    text-align: center;
-    gap: var(--space-2);
     padding: var(--space-2);
   }
 
-  .instructionIcon {
-    font-size: 1.2rem;
+  .legendTitle {
+    font-size: 0.8rem;
+    margin-bottom: var(--space-1);
   }
 
-  .instructionText p {
+  .legendGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+  }
+
+  .legendItem {
+    padding: var(--space-1);
+    font-size: 0.65rem;
+    gap: var(--space-1);
+  }
+
+  .legendColor {
+    width: 12px;
+    height: 12px;
+  }
+
+  .instructions {
+    padding: var(--space-2);
+    gap: var(--space-1);
+  }
+
+  .instructionIcon {
+    font-size: 1rem;
+  }
+
+  .instructionText {
     font-size: 0.7rem;
   }
 
+  .instructionText p {
+    font-size: 0.6rem;
+    margin: 2px 0;
+  }
+
   .note {
-    font-size: 10px;
+    font-size: 8px;
+  }
+
+  .loading {
+    padding: 1.5rem;
+  }
+
+  .noLayout {
+    padding: 1.5rem 1rem;
+  }
+
+  .emptyIcon {
+    font-size: 2.5rem;
+  }
+
+  .noLayout h3 {
+    font-size: 1rem;
+  }
+
+  .noLayout p {
+    font-size: 0.8rem;
   }
 }
