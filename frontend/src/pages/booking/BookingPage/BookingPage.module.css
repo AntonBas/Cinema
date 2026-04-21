@@ -1,110 +1,169 @@
 .bookingPage {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 24px 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 20px;
+  overflow-x: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .header {
-    text-align: center;
-    margin-bottom: 40px;
-    padding-bottom: 24px;
-    border-bottom: 2px solid var(--color-border);
+  text-align: center;
+  margin-bottom: 40px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid var(--color-border);
 }
 
 .header h1 {
-    margin: 0 0 16px 0;
-    font-size: 32px;
-    color: var(--color-text-primary);
-    font-weight: 700;
+  margin: 0 0 16px 0;
+  font-size: 32px;
+  color: var(--color-text-primary);
+  font-weight: 700;
 }
 
 .sessionInfo {
-    display: flex;
-    justify-content: center;
-    gap: 32px;
-    color: var(--color-text-secondary);
-    font-size: 16px;
-    flex-wrap: wrap;
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  color: var(--color-text-secondary);
+  font-size: 16px;
+  flex-wrap: wrap;
 }
 
 .sessionInfo span {
-    padding: 8px 16px;
-    background: var(--color-bg-secondary);
-    border-radius: 8px;
-    border: 1px solid var(--color-border);
+  padding: 8px 16px;
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
 }
 
 .content {
-    display: grid;
-    grid-template-columns: 1fr 350px;
-    gap: 40px;
-    align-items: start;
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 40px;
+  align-items: start;
 }
 
 .hallSection {
-    background: rgba(42, 48, 65, 0.6);
-    border-radius: 12px;
-    padding: 24px;
-    box-shadow: var(--shadow-md);
-    border: 1px solid var(--color-border);
+  background: rgba(42, 48, 65, 0.6);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border);
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.hallSection::-webkit-scrollbar {
+  height: 6px;
+}
+
+.hallSection::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.hallSection::-webkit-scrollbar-thumb {
+  background: rgba(var(--color-primary-rgb), 0.5);
+  border-radius: 3px;
 }
 
 .sidebarSection {
-    position: sticky;
-    top: 100px;
-    height: fit-content;
+  position: sticky;
+  top: 100px;
+  height: fit-content;
 }
 
 .loading {
-    text-align: center;
-    padding: 100px 20px;
-    font-size: 18px;
-    color: var(--color-text-secondary);
+  text-align: center;
+  padding: 100px 20px;
+  font-size: 18px;
+  color: var(--color-text-secondary);
 }
 
 .error {
-    text-align: center;
-    padding: 100px 20px;
-    font-size: 18px;
-    color: var(--color-error);
-    background: var(--color-error-light);
-    border-radius: 12px;
-    margin: 24px;
-    border: 1px solid var(--color-error);
+  text-align: center;
+  padding: 100px 20px;
+  font-size: 18px;
+  color: var(--color-error);
+  background: var(--color-error-light);
+  border-radius: 12px;
+  margin: 24px;
+  border: 1px solid var(--color-error);
 }
 
 @media (max-width: 1024px) {
-    .content {
-        grid-template-columns: 1fr;
-        gap: 30px;
-    }
+  .content {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
 
-    .sidebarSection {
-        position: static;
-    }
+  .sidebarSection {
+    position: static;
+  }
 }
 
 @media (max-width: 768px) {
-    .bookingPage {
-        padding: 16px;
-    }
+  .bookingPage {
+    padding: 16px 12px;
+  }
 
-    .header h1 {
-        font-size: 24px;
-    }
+  .header {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+  }
 
-    .sessionInfo {
-        flex-direction: column;
-        align-items: center;
-        gap: 16px;
-    }
+  .header h1 {
+    font-size: 22px;
+  }
 
-    .sessionInfo span {
-        width: 100%;
-        max-width: 250px;
-    }
+  .sessionInfo {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
 
-    .hallSection {
-        padding: 16px;
-    }
+  .sessionInfo span {
+    width: auto;
+    max-width: none;
+    padding: 6px 12px;
+    font-size: 14px;
+  }
+
+  .hallSection {
+    padding: 12px;
+    border-radius: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .bookingPage {
+    padding: 12px 8px;
+  }
+
+  .header h1 {
+    font-size: 18px;
+  }
+
+  .sessionInfo {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .sessionInfo span {
+    width: 100%;
+    text-align: center;
+    font-size: 13px;
+    padding: 5px 10px;
+  }
+
+  .hallSection {
+    padding: 8px;
+  }
+
+  .content {
+    gap: 20px;
+  }
 }
