@@ -25,6 +25,10 @@ const isExpired = (endDate?: string): boolean => {
   return new Date(endDate) < new Date();
 };
 
+const getInitialItemsToShow = () => {
+  return window.innerWidth <= 768 ? 1 : 3;
+};
+
 export const Promotions: React.FC<PromotionsProps> = ({
   promotions,
   loading,
@@ -34,19 +38,14 @@ export const Promotions: React.FC<PromotionsProps> = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [claimingId, setClaimingId] = useState<number | null>(null);
-  const [itemsToShow, setItemsToShow] = useState(3);
+  const [itemsToShow, setItemsToShow] = useState(getInitialItemsToShow);
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth <= 768) {
-        setItemsToShow(1);
-      } else {
-        setItemsToShow(3);
-      }
+      setItemsToShow(window.innerWidth <= 768 ? 1 : 3);
     };
 
-    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
