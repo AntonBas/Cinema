@@ -2,7 +2,9 @@ package ua.lviv.bas.cinema.scheduler;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
+import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -52,14 +54,15 @@ public class BookingScheduler {
 				sr.setBooking(null);
 			});
 
-			seatReservationRepository.saveAll(booking.getSeatReservations());
+			seatReservationRepository.saveAll(Objects.requireNonNull(booking.getSeatReservations(),
+					"Booking seat reservations must not be null"));
 
 			if (booking.getBonusPointsUsed() != null && booking.getBonusPointsUsed() > 0) {
 				bonusService.refundPoints(booking);
 			}
 
-			cacheManager.getCache("seatAvailability").evict(booking.getSession().getId());
-			cacheManager.getCache("availableSeatsCount").evict(booking.getSession().getId());
+			evictCacheIfPresent("seatAvailability", booking.getSession().getId());
+			evictCacheIfPresent("availableSeatsCount", booking.getSession().getId());
 		}
 
 		bookingRepository.saveAll(expiredBookings);
@@ -90,9 +93,10 @@ public class BookingScheduler {
 					sr.setStatus(ReservationStatus.EXPIRED);
 					sr.setBooking(null);
 				});
-				seatReservationRepository.saveAll(payment.getBooking().getSeatReservations());
-				cacheManager.getCache("seatAvailability").evict(payment.getBooking().getSession().getId());
-				cacheManager.getCache("availableSeatsCount").evict(payment.getBooking().getSession().getId());
+				seatReservationRepository.saveAll(Objects.requireNonNull(payment.getBooking().getSeatReservations(),
+						"Payment booking seat reservations must not be null"));
+				evictCacheIfPresent("seatAvailability", payment.getBooking().getSession().getId());
+				evictCacheIfPresent("availableSeatsCount", payment.getBooking().getSession().getId());
 			}
 		}
 
@@ -128,6 +132,13 @@ public class BookingScheduler {
 			log.info("Cleaned up {} old payments", oldPayments.size());
 		} else {
 			log.debug("No old payments to clean up");
+		}
+	}
+
+	private void evictCacheIfPresent(String cacheName, Long key) {
+		Cache cache = cacheManager.getCache(Objects.requireNonNull(cacheName, "Cache name must not be null"));
+		if (cache != null) {
+			cache.evict(Objects.requireNonNull(key, "Cache eviction key must not be null"));
 		}
 	}
 }

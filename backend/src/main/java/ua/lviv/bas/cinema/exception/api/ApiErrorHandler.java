@@ -7,6 +7,7 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.core.Ordered;
@@ -196,6 +197,7 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
 		return buildResponseEntity(apiError, request);
 	}
 
+	@NonNull
 	private ResponseEntity<Object> buildResponseEntity(@NonNull ApiError apiError, @NonNull WebRequest request) {
 		if (request instanceof ServletWebRequest) {
 			String path = ((ServletWebRequest) request).getRequest().getRequestURI();
@@ -203,6 +205,7 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
 		} else {
 			apiError.setPath("unknown");
 		}
-		return new ResponseEntity<>(apiError, apiError.getStatus());
+		return new ResponseEntity<>(apiError,
+				Objects.requireNonNull(apiError.getStatus(), "ApiError status must not be null"));
 	}
 }

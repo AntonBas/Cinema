@@ -33,7 +33,9 @@ public class SessionSpecification {
 				predicates.add(cb.between(root.get("startTime"), startOfDay, endOfDay));
 			}
 
-			query.orderBy(cb.asc(root.join("movie").get("title")), cb.asc(root.get("startTime")));
+			if (query != null) {
+				query.orderBy(cb.asc(root.join("movie").get("title")), cb.asc(root.get("startTime")));
+			}
 
 			return cb.and(predicates.toArray(new Predicate[0]));
 		};
@@ -66,11 +68,13 @@ public class SessionSpecification {
 				predicates.add(cb.lessThan(root.get("startTime"), dateTo.plusDays(1).atStartOfDay()));
 			}
 
-			query.orderBy(
-					cb.asc(cb.selectCase().when(cb.equal(root.get("status"), CinemaSessionStatus.SCHEDULED), 1)
-							.when(cb.equal(root.get("status"), CinemaSessionStatus.ONGOING), 2)
-							.when(cb.equal(root.get("status"), CinemaSessionStatus.CANCELLED), 3).otherwise(4)),
-					cb.desc(root.get("startTime")));
+			if (query != null) {
+				query.orderBy(
+						cb.asc(cb.selectCase().when(cb.equal(root.get("status"), CinemaSessionStatus.SCHEDULED), 1)
+								.when(cb.equal(root.get("status"), CinemaSessionStatus.ONGOING), 2)
+								.when(cb.equal(root.get("status"), CinemaSessionStatus.CANCELLED), 3).otherwise(4)),
+						cb.desc(root.get("startTime")));
+			}
 
 			return cb.and(predicates.toArray(new Predicate[0]));
 		};

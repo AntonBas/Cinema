@@ -2,9 +2,11 @@ package ua.lviv.bas.cinema.scheduler;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -41,8 +43,8 @@ public class SeatReservationScheduler {
 		seatReservationRepository.deleteAll(expiredReservations);
 
 		affectedSessionIds.forEach(sessionId -> {
-			cacheManager.getCache("seatAvailability").evict(sessionId);
-			cacheManager.getCache("availableSeatsCount").evict(sessionId);
+			evictCacheIfPresent("seatAvailability", sessionId);
+			evictCacheIfPresent("availableSeatsCount", sessionId);
 		});
 
 		log.info("Deleted {} expired temporary seat reservations for sessions: {}", expiredReservations.size(),
@@ -60,5 +62,12 @@ public class SeatReservationScheduler {
 
 		seatReservationRepository.deleteAll(expiredReservations);
 		log.info("Deleted {} expired reservations", expiredReservations.size());
+	}
+
+	private void evictCacheIfPresent(String cacheName, Long key) {
+		Cache cache = cacheManager.getCache(Objects.requireNonNull(cacheName, "Cache name must not be null"));
+		if (cache != null) {
+			cache.evict(Objects.requireNonNull(key, "Cache eviction key must not be null"));
+		}
 	}
 }
