@@ -43,9 +43,7 @@ public class EmailTokenGeneratorServiceTest {
 	void generateVerificationToken_Success() {
 		User user = createUser();
 
-		when(userRepository.findByEmail(USER_EMAIL)).thenReturn(Optional.of(user));
-
-		tokenGeneratorService.generateVerificationToken(USER_EMAIL);
+		tokenGeneratorService.generateVerificationToken(user);
 
 		verify(tokenRepository).deleteByUserAndType(user, TokenType.VERIFICATION);
 		verify(tokenRepository).save(any(EmailToken.class));
@@ -69,9 +67,7 @@ public class EmailTokenGeneratorServiceTest {
 	void generateEmailChangeToken_Success() {
 		User user = createUser();
 
-		when(userRepository.findByEmail(USER_EMAIL)).thenReturn(Optional.of(user));
-
-		tokenGeneratorService.generateEmailChangeToken(USER_EMAIL, NEW_EMAIL);
+		tokenGeneratorService.generateEmailChangeToken(user, NEW_EMAIL);
 
 		verify(tokenRepository).deleteByUserAndType(user, TokenType.EMAIL_CHANGE);
 		verify(tokenRepository).save(any(EmailToken.class));
@@ -80,7 +76,9 @@ public class EmailTokenGeneratorServiceTest {
 
 	@Test
 	void generateEmailChangeToken_NullNewEmail_ThrowsException() {
-		assertThatThrownBy(() -> tokenGeneratorService.generateEmailChangeToken(USER_EMAIL, null))
+		User user = createUser();
+
+		assertThatThrownBy(() -> tokenGeneratorService.generateEmailChangeToken(user, null))
 				.isInstanceOf(IllegalArgumentException.class);
 	}
 
@@ -88,7 +86,7 @@ public class EmailTokenGeneratorServiceTest {
 	void generateToken_UserNotFound_ThrowsException() {
 		when(userRepository.findByEmail(USER_EMAIL)).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> tokenGeneratorService.generateVerificationToken(USER_EMAIL))
+		assertThatThrownBy(() -> tokenGeneratorService.generatePasswordResetToken(USER_EMAIL))
 				.isInstanceOf(UserNotFoundException.class);
 	}
 

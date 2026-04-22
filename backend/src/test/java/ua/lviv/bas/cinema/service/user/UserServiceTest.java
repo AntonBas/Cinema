@@ -100,7 +100,7 @@ public class UserServiceTest {
 
 		assertThat(result).isEqualTo(response);
 		verify(userRepository).save(user);
-		verify(emailTokenGeneratorService).generateVerificationToken(EMAIL);
+		verify(emailTokenGeneratorService).generateVerificationToken(savedUser);
 	}
 
 	@Test
@@ -308,7 +308,7 @@ public class UserServiceTest {
 
 		userService.requestEmailChange(USER_ID, "currentPassword", newEmail);
 
-		verify(emailTokenGeneratorService).generateEmailChangeToken(EMAIL, newEmail);
+		verify(emailTokenGeneratorService).generateEmailChangeToken(user, newEmail);
 	}
 
 	@Test
