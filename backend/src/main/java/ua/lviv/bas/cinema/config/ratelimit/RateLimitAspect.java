@@ -16,52 +16,61 @@ import jakarta.servlet.http.HttpServletResponse;
 @Component
 public class RateLimitAspect {
 
-	@Autowired
-	private RateLimitConfig.RateLimitService rateLimitService;
+    @Autowired
+    private RateLimitConfig.RateLimitService rateLimitService;
 
-	@Around("@annotation(rateLimit)")
-	public Object checkRateLimit(ProceedingJoinPoint joinPoint, RateLimit rateLimit) throws Throwable {
-		String key = resolveKey(rateLimit.key());
+    @Around("@annotation(rateLimit)")
+    public Object checkRateLimit(ProceedingJoinPoint joinPoint, RateLimit rateLimit) throws Throwable {
+        String key = resolveKey(rateLimit.key());
 
-		boolean consumed = rateLimitService.tryConsume(key, 1, rateLimit.value(), rateLimit.duration());
+        boolean consumed = rateLimitService.tryConsume(key, 1, rateLimit.value(), rateLimit.duration());
 
-		if (!consumed) {
-			HttpServletResponse response = getResponse();
-			response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-			response.setHeader("X-Rate-Limit-Limit", String.valueOf(rateLimit.value()));
-			response.setHeader("X-Rate-Limit-Remaining", "0");
-			response.setHeader("Retry-After", String.valueOf(rateLimit.duration() * 60));
-			return null;
-		}
+        if (!consumed) {
+            HttpServletResponse response = getResponse();
+            if (response != null) {
+                response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+                response.setHeader("X-Rate-Limit-Limit", String.valueOf(rateLimit.value()));
+                response.setHeader("X-Rate-Limit-Remaining", "0");
+                response.setHeader("Retry-After", String.valueOf(rateLimit.duration() * 60));
+            }
+            return null;
+        }
 
-		return joinPoint.proceed();
-	}
+        return joinPoint.proceed();
+    }
 
-	private String resolveKey(String keyExpression) {
-		HttpServletRequest request = getRequest();
+    private String resolveKey(String keyExpression) {
+        HttpServletRequest request = getRequest();
 
-		if ("ip".equals(keyExpression)) {
-			String xForwardedFor = request.getHeader("X-Forwarded-For");
-			if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-				return xForwardedFor.split(",")[0].trim();
-			}
-			return request.getRemoteAddr();
-		}
+        if (request == null) {
+            return "unknown";
+        }
 
-		if ("user".equals(keyExpression)) {
-			return request.getUserPrincipal() != null ? request.getUserPrincipal().getName() : "anonymous";
-		}
+        if ("ip".equals(keyExpression)) {
+            String xForwardedFor = request.getHeader("X-Forwarded-For");
+            if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+                return xForwardedFor.split(",")[0].trim();
+            }
+            String remoteAddr = request.getRemoteAddr();
+            return remoteAddr != null ? remoteAddr : "unknown";
+        }
 
-		return request.getRemoteAddr();
-	}
+        if ("user".equals(keyExpression)) {
+            var principal = request.getUserPrincipal();
+            return principal != null ? principal.getName() : "anonymous";
+        }
 
-	private HttpServletRequest getRequest() {
-		ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-		return attributes != null ? attributes.getRequest() : null;
-	}
+        String remoteAddr = request.getRemoteAddr();
+        return remoteAddr != null ? remoteAddr : "unknown";
+    }
 
-	private HttpServletResponse getResponse() {
-		ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-		return attributes != null ? attributes.getResponse() : null;
-	}
+    private HttpServletRequest getRequest() {
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        return attributes != null ? attributes.getRequest() : null;
+    }
+
+    private HttpServletResponse getResponse() {
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        return attributes != null ? attributes.getResponse() : null;
+    }
 }
