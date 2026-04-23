@@ -39,39 +39,39 @@ import ua.lviv.bas.cinema.service.cinema.PersonService;
 @PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
 public class AdminPersonController {
 
-	private final PersonService personService;
+    private final PersonService personService;
 
-	@PostMapping
-	@ResponseStatus(HttpStatus.CREATED)
-	@Operation(summary = "Create new person")
-	@ApiResponses(value = { @ApiResponse(responseCode = "201", description = "Person created successfully") })
-	public PersonResponse createPerson(@RequestBody @Valid PersonRequest request) {
-		log.info("POST /api/admin/persons - Creating new person: {}", request.name());
-		return personService.createPerson(request);
-	}
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Create new person")
+    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Person created successfully")})
+    public PersonResponse createPerson(@RequestBody @Valid PersonRequest request) {
+        log.info("POST /api/admin/persons - Creating new person: {}", request.name());
+        return personService.createPerson(request);
+    }
 
-	@GetMapping
-	@Operation(summary = "Get all persons with filters")
-	public PageResponse<PersonListResponse> getPersons(@RequestParam(required = false) String query,
-			@RequestParam(required = false) PersonRole role, @PageableDefault(size = 12) Pageable pageable) {
-		log.info("GET /api/admin/persons - query: '{}', role: {}", query, role);
-		return PageResponse.from(personService.getPersons(query, role, pageable));
-	}
+    @GetMapping
+    @Operation(summary = "Get all persons with filters")
+    public PageResponse<PersonListResponse> getPersons(@RequestParam(required = false) String query,
+                                                       @RequestParam(required = false) PersonRole role, @PageableDefault(size = 12) Pageable pageable) {
+        log.info("GET /api/admin/persons - query: '{}', role: {}", query, role);
+        return PageResponse.from(personService.getPersons(query, role, pageable));
+    }
 
-	@PutMapping("/{id}")
-	@Operation(summary = "Update person")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Person updated successfully") })
-	public PersonResponse updatePerson(@PathVariable Long id, @RequestBody @Valid PersonRequest request) {
-		log.info("PUT /api/admin/persons/{} - Updating person", id);
-		return personService.updatePerson(id, request);
-	}
+    @PutMapping("/{id}")
+    @Operation(summary = "Update person")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Person updated successfully")})
+    public PersonResponse updatePerson(@PathVariable Long id, @RequestBody @Valid PersonRequest request) {
+        log.info("PUT /api/admin/persons/{} - Updating person", id);
+        return personService.updatePerson(id, request);
+    }
 
-	@DeleteMapping("/{id}")
-	@ResponseStatus(HttpStatus.NO_CONTENT)
-	@Operation(summary = "Delete person")
-	@ApiResponses(value = { @ApiResponse(responseCode = "204", description = "Person deleted successfully") })
-	public void deletePerson(@PathVariable Long id) {
-		log.info("DELETE /api/admin/persons/{} - Deleting person", id);
-		personService.deletePerson(id);
-	}
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Delete person")
+    @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Person deleted successfully")})
+    public void deletePerson(@PathVariable Long id) {
+        log.info("DELETE /api/admin/persons/{} - Deleting person", id);
+        personService.deletePerson(id);
+    }
 }

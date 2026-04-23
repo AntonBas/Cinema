@@ -1,9 +1,10 @@
 package ua.lviv.bas.cinema.controller.api;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
@@ -11,15 +12,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
 import ua.lviv.bas.cinema.service.cinema.SessionService;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @RestController
@@ -28,16 +27,16 @@ import ua.lviv.bas.cinema.service.cinema.SessionService;
 @Tag(name = "Session API", description = "Public endpoints for viewing cinema sessions")
 public class SessionController {
 
-	private final SessionService sessionService;
+    private final SessionService sessionService;
 
-	@RateLimit(value = 20, duration = 1, key = "ip")
-	@GetMapping
-	@Operation(summary = "Get schedule sessions")
-	@ApiResponse(responseCode = "200", description = "Sessions retrieved successfully")
-	public ResponseEntity<List<SessionScheduleResponse>> getSchedule(@RequestParam(required = false) String searchTerm,
-			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-		log.info("Getting schedule sessions for date: {}, search: {}", date, searchTerm);
-		var sessions = sessionService.getSchedule(searchTerm, date);
-		return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES)).body(sessions);
-	}
+    @RateLimit(value = 20, duration = 1)
+    @GetMapping
+    @Operation(summary = "Get schedule sessions")
+    @ApiResponse(responseCode = "200", description = "Sessions retrieved successfully")
+    public ResponseEntity<List<SessionScheduleResponse>> getSchedule(@RequestParam(required = false) String searchTerm,
+                                                                     @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        log.info("Getting schedule sessions for date: {}, search: {}", date, searchTerm);
+        var sessions = sessionService.getSchedule(searchTerm, date);
+        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES)).body(sessions);
+    }
 }

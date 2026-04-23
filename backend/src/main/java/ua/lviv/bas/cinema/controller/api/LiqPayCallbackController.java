@@ -21,24 +21,24 @@ import ua.lviv.bas.cinema.service.booking.PaymentStatusService;
 @Tag(name = "LiqPay Callback", description = "Callback endpoint for LiqPay payment gateway")
 public class LiqPayCallbackController {
 
-	private final PaymentStatusService paymentStatusService;
+    private final PaymentStatusService paymentStatusService;
 
-	@PostMapping("/callback")
-	@ResponseStatus(HttpStatus.OK)
-	@Operation(summary = "LiqPay callback")
-	@ApiResponse(responseCode = "200", description = "Callback processed successfully")
-	public String handleCallback(HttpServletRequest request) {
-		var data = request.getParameter("data");
-		var signature = request.getParameter("signature");
+    @PostMapping("/callback")
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "LiqPay callback")
+    @ApiResponse(responseCode = "200", description = "Callback processed successfully")
+    public String handleCallback(HttpServletRequest request) {
+        var data = request.getParameter("data");
+        var signature = request.getParameter("signature");
 
-		log.info("POST /api/liqpay/callback");
+        log.info("POST /api/liqpay/callback");
 
-		if (data == null || signature == null) {
-			log.error("Missing required parameters: data or signature is null");
-			return "Missing required parameters";
-		}
+        if (data == null || signature == null) {
+            log.error("Missing required parameters: data or signature is null");
+            return "Missing required parameters";
+        }
 
-		paymentStatusService.handleCallback(data, signature);
-		return "OK";
-	}
+        paymentStatusService.handleCallback(data, signature);
+        return "OK";
+    }
 }

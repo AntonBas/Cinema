@@ -38,51 +38,51 @@ import ua.lviv.bas.cinema.service.user.AdminUserService;
 @SecurityRequirement(name = "bearerAuth")
 public class AdminUserController {
 
-	private final AdminUserService adminUserService;
+    private final AdminUserService adminUserService;
 
-	@GetMapping
-	@Operation(summary = "Get users with filters")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Users retrieved successfully") })
-	public PageResponse<AdminUserListResponse> getUsers(@RequestParam(required = false) String query,
-			@RequestParam(required = false) UserRole role,
-			@RequestParam(required = false) VerificationStatus verificationStatus,
-			@RequestParam(required = false) Boolean enabled,
-			@PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+    @GetMapping
+    @Operation(summary = "Get users with filters")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Users retrieved successfully")})
+    public PageResponse<AdminUserListResponse> getUsers(@RequestParam(required = false) String query,
+                                                        @RequestParam(required = false) UserRole role,
+                                                        @RequestParam(required = false) VerificationStatus verificationStatus,
+                                                        @RequestParam(required = false) Boolean enabled,
+                                                        @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
 
-		log.info("GET /api/admin/users - search: {}, role: {}, verificationStatus: {}, enabled: {}", query, role,
-				verificationStatus, enabled);
-		return PageResponse.from(adminUserService.getUsers(query, role, verificationStatus, enabled, pageable));
-	}
+        log.info("GET /api/admin/users - search: {}, role: {}, verificationStatus: {}, enabled: {}", query, role,
+                verificationStatus, enabled);
+        return PageResponse.from(adminUserService.getUsers(query, role, verificationStatus, enabled, pageable));
+    }
 
-	@PatchMapping("/{userId}/role")
-	@Operation(summary = "Update user role")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "User role updated successfully"),
-			@ApiResponse(responseCode = "404", description = "User not found") })
-	public AdminUserListResponse updateRole(@PathVariable Long userId,
-			@Valid @RequestBody UserRoleUpdateRequest request) {
-		log.info("PATCH /api/admin/users/{}/role - Updating role to {}", userId, request.userRole());
-		return adminUserService.updateRole(userId, request.userRole());
-	}
+    @PatchMapping("/{userId}/role")
+    @Operation(summary = "Update user role")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "User role updated successfully"),
+            @ApiResponse(responseCode = "404", description = "User not found")})
+    public AdminUserListResponse updateRole(@PathVariable Long userId,
+                                            @Valid @RequestBody UserRoleUpdateRequest request) {
+        log.info("PATCH /api/admin/users/{}/role - Updating role to {}", userId, request.userRole());
+        return adminUserService.updateRole(userId, request.userRole());
+    }
 
-	@PatchMapping("/{userId}/status")
-	@Operation(summary = "Update user status")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "User status updated successfully"),
-			@ApiResponse(responseCode = "404", description = "User not found") })
-	public AdminUserListResponse updateStatus(@PathVariable Long userId,
-			@Valid @RequestBody UserStatusUpdateRequest request) {
-		log.info("PATCH /api/admin/users/{}/status - Updating status to {}", userId, request.enabled());
-		return adminUserService.updateStatus(userId, request.enabled());
-	}
+    @PatchMapping("/{userId}/status")
+    @Operation(summary = "Update user status")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "User status updated successfully"),
+            @ApiResponse(responseCode = "404", description = "User not found")})
+    public AdminUserListResponse updateStatus(@PathVariable Long userId,
+                                              @Valid @RequestBody UserStatusUpdateRequest request) {
+        log.info("PATCH /api/admin/users/{}/status - Updating status to {}", userId, request.enabled());
+        return adminUserService.updateStatus(userId, request.enabled());
+    }
 
-	@PatchMapping("/{userId}/verification")
-	@Operation(summary = "Update verification status")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Verification status updated successfully"),
-			@ApiResponse(responseCode = "404", description = "User not found") })
-	public AdminUserListResponse updateVerification(@PathVariable Long userId,
-			@Valid @RequestBody VerificationBirthDateRequest request) {
-		log.info("PATCH /api/admin/users/{}/verification - Updating verification to {}", userId,
-				request.verificationStatus());
-		return adminUserService.updateVerification(userId, request.verificationStatus());
-	}
+    @PatchMapping("/{userId}/verification")
+    @Operation(summary = "Update verification status")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Verification status updated successfully"),
+            @ApiResponse(responseCode = "404", description = "User not found")})
+    public AdminUserListResponse updateVerification(@PathVariable Long userId,
+                                                    @Valid @RequestBody VerificationBirthDateRequest request) {
+        log.info("PATCH /api/admin/users/{}/verification - Updating verification to {}", userId,
+                request.verificationStatus());
+        return adminUserService.updateVerification(userId, request.verificationStatus());
+    }
 }

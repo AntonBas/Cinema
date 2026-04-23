@@ -29,42 +29,42 @@ import ua.lviv.bas.cinema.service.booking.SeatReservationService;
 @Tag(name = "Seat Reservation", description = "APIs for seat reservation and availability")
 public class SeatReservationController {
 
-	private final SeatReservationService seatReservationService;
+    private final SeatReservationService seatReservationService;
 
-	@GetMapping("/{sessionId}/seats")
-	@Operation(summary = "Get seat availability")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Seat availability retrieved successfully"),
-			@ApiResponse(responseCode = "404", description = "Session not found") })
-	public SeatReservationResponse getAvailability(@PathVariable Long sessionId) {
-		log.info("GET /api/sessions/{}/seats", sessionId);
-		return seatReservationService.getAvailability(sessionId);
-	}
+    @GetMapping("/{sessionId}/seats")
+    @Operation(summary = "Get seat availability")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Seat availability retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Session not found")})
+    public SeatReservationResponse getAvailability(@PathVariable Long sessionId) {
+        log.info("GET /api/sessions/{}/seats", sessionId);
+        return seatReservationService.getAvailability(sessionId);
+    }
 
-	@PostMapping("/{sessionId}/seats/{seatId}/hold")
-	@ResponseStatus(HttpStatus.OK)
-	@Operation(summary = "Hold a seat")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Seat held successfully"),
-			@ApiResponse(responseCode = "404", description = "Session or seat not found"),
-			@ApiResponse(responseCode = "409", description = "Seat is already reserved") })
-	@SecurityRequirement(name = "bearerAuth")
-	@PreAuthorize("isAuthenticated()")
-	public void hold(@PathVariable Long sessionId, @PathVariable Long seatId,
-			@AuthenticationPrincipal CustomUserDetails userDetails) {
-		log.info("POST /api/sessions/{}/seats/{}/hold - user: {}", sessionId, seatId, userDetails.getUserId());
-		seatReservationService.hold(sessionId, seatId, userDetails.getUser());
-	}
+    @PostMapping("/{sessionId}/seats/{seatId}/hold")
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Hold a seat")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Seat held successfully"),
+            @ApiResponse(responseCode = "404", description = "Session or seat not found"),
+            @ApiResponse(responseCode = "409", description = "Seat is already reserved")})
+    @SecurityRequirement(name = "bearerAuth")
+    @PreAuthorize("isAuthenticated()")
+    public void hold(@PathVariable Long sessionId, @PathVariable Long seatId,
+                     @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.info("POST /api/sessions/{}/seats/{}/hold - user: {}", sessionId, seatId, userDetails.getUserId());
+        seatReservationService.hold(sessionId, seatId, userDetails.getUser());
+    }
 
-	@DeleteMapping("/{sessionId}/seats/{seatId}/hold")
-	@ResponseStatus(HttpStatus.OK)
-	@Operation(summary = "Cancel hold")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Hold cancelled successfully"),
-			@ApiResponse(responseCode = "404", description = "Hold not found") })
-	@SecurityRequirement(name = "bearerAuth")
-	@PreAuthorize("isAuthenticated()")
-	public void cancel(@PathVariable Long sessionId, @PathVariable Long seatId,
-			@AuthenticationPrincipal CustomUserDetails userDetails) {
-		log.info("DELETE /api/sessions/{}/seats/{}/hold - user: {}", sessionId, seatId, userDetails.getUserId());
-		seatReservationService.cancel(sessionId, seatId, userDetails.getUser());
-	}
+    @DeleteMapping("/{sessionId}/seats/{seatId}/hold")
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Cancel hold")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Hold cancelled successfully"),
+            @ApiResponse(responseCode = "404", description = "Hold not found")})
+    @SecurityRequirement(name = "bearerAuth")
+    @PreAuthorize("isAuthenticated()")
+    public void cancel(@PathVariable Long sessionId, @PathVariable Long seatId,
+                       @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.info("DELETE /api/sessions/{}/seats/{}/hold - user: {}", sessionId, seatId, userDetails.getUserId());
+        seatReservationService.cancel(sessionId, seatId, userDetails.getUser());
+    }
 }

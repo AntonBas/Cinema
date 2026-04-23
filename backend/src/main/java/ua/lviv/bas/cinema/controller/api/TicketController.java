@@ -36,7 +36,7 @@ public class TicketController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(required = false) TicketStatus status,
             @RequestParam(required = false) String movieTitle,
-            @PageableDefault(size = 10) Pageable pageable
+            @PageableDefault Pageable pageable
     ) {
         var user = userDetails.getUser();
         var page = ticketService.getTickets(user, status, movieTitle, pageable);
@@ -62,7 +62,7 @@ public class TicketController {
         return ticketService.generateQR(ticketCode);
     }
 
-    @RateLimit(value = 20, duration = 1, key = "ip")
+    @RateLimit(value = 20, duration = 1)
     @PostMapping("/code/{ticketCode}/validate")
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Validate ticket")

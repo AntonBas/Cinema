@@ -29,19 +29,19 @@ import ua.lviv.bas.cinema.service.booking.RefundService;
 @SecurityRequirement(name = "bearerAuth")
 public class RefundController {
 
-	private final RefundService refundService;
+    private final RefundService refundService;
 
-	@RateLimit(value = 3, duration = 10, key = "user")
-	@PostMapping
-	@Operation(summary = "Refund a ticket")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Refund processed successfully"),
-			@ApiResponse(responseCode = "400", description = "Invalid request or ticket not refundable"),
-			@ApiResponse(responseCode = "404", description = "Ticket not found") })
-	@PreAuthorize("isAuthenticated()")
-	public RefundResponse refund(@Valid @RequestBody RefundRequest request,
-			@AuthenticationPrincipal CustomUserDetails userDetails) {
-		var user = userDetails.getUser();
-		log.info("POST /api/refunds - user: {}, ticket: {}", user.getId(), request.ticketId());
-		return refundService.refund(request, user.getId());
-	}
+    @RateLimit(value = 3, duration = 10, key = "user")
+    @PostMapping
+    @Operation(summary = "Refund a ticket")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Refund processed successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request or ticket not refundable"),
+            @ApiResponse(responseCode = "404", description = "Ticket not found")})
+    @PreAuthorize("isAuthenticated()")
+    public RefundResponse refund(@Valid @RequestBody RefundRequest request,
+                                 @AuthenticationPrincipal CustomUserDetails userDetails) {
+        var user = userDetails.getUser();
+        log.info("POST /api/refunds - user: {}, ticket: {}", user.getId(), request.ticketId());
+        return refundService.refund(request, user.getId());
+    }
 }

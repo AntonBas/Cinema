@@ -35,45 +35,45 @@ import ua.lviv.bas.cinema.service.booking.PaymentStatusService;
 @SecurityRequirement(name = "bearerAuth")
 public class PaymentController {
 
-	private final PaymentService paymentService;
-	private final PaymentStatusService paymentStatusService;
+    private final PaymentService paymentService;
+    private final PaymentStatusService paymentStatusService;
 
-	@RateLimit(value = 5, duration = 5, key = "user")
-	@PostMapping
-	@ResponseStatus(HttpStatus.CREATED)
-	@Operation(summary = "Create payment")
-	@ApiResponses(value = { @ApiResponse(responseCode = "201", description = "Payment created successfully"),
-			@ApiResponse(responseCode = "400", description = "Invalid request"),
-			@ApiResponse(responseCode = "404", description = "Booking not found"),
-			@ApiResponse(responseCode = "409", description = "Payment already in progress") })
-	@PreAuthorize("isAuthenticated()")
-	public PaymentResponse createPayment(@Valid @RequestBody PaymentCreateRequest request,
-			@AuthenticationPrincipal CustomUserDetails userDetails) {
-		var user = userDetails.getUser();
-		log.info("POST /api/payments - user: {}, booking: {}", user.getId(), request.bookingId());
-		return paymentService.createPayment(request, user);
-	}
+    @RateLimit(duration = 5, key = "user")
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Create payment")
+    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Payment created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request"),
+            @ApiResponse(responseCode = "404", description = "Booking not found"),
+            @ApiResponse(responseCode = "409", description = "Payment already in progress")})
+    @PreAuthorize("isAuthenticated()")
+    public PaymentResponse createPayment(@Valid @RequestBody PaymentCreateRequest request,
+                                         @AuthenticationPrincipal CustomUserDetails userDetails) {
+        var user = userDetails.getUser();
+        log.info("POST /api/payments - user: {}, booking: {}", user.getId(), request.bookingId());
+        return paymentService.createPayment(request, user);
+    }
 
-	@RateLimit(value = 10, duration = 1, key = "user")
-	@GetMapping("/{paymentId}/liqpay-data")
-	@Operation(summary = "Get LiqPay data")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Payment data retrieved"),
-			@ApiResponse(responseCode = "404", description = "Payment not found") })
-	public PaymentLiqPayDataResponse getLiqPayData(@PathVariable Long paymentId) {
-		log.info("GET /api/payments/{}/liqpay-data", paymentId);
-		return paymentStatusService.preparePaymentData(paymentId);
-	}
+    @RateLimit(value = 10, duration = 1, key = "user")
+    @GetMapping("/{paymentId}/liqpay-data")
+    @Operation(summary = "Get LiqPay data")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Payment data retrieved"),
+            @ApiResponse(responseCode = "404", description = "Payment not found")})
+    public PaymentLiqPayDataResponse getLiqPayData(@PathVariable Long paymentId) {
+        log.info("GET /api/payments/{}/liqpay-data", paymentId);
+        return paymentStatusService.preparePaymentData(paymentId);
+    }
 
-	@RateLimit(value = 20, duration = 1, key = "user")
-	@GetMapping("/{paymentId}")
-	@Operation(summary = "Get payment")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Payment retrieved"),
-			@ApiResponse(responseCode = "404", description = "Payment not found") })
-	@PreAuthorize("isAuthenticated()")
-	public PaymentResponse getPayment(@PathVariable Long paymentId,
-			@AuthenticationPrincipal CustomUserDetails userDetails) {
-		var user = userDetails.getUser();
-		log.info("GET /api/payments/{} - user: {}", paymentId, user.getId());
-		return paymentService.getPayment(paymentId, user);
-	}
+    @RateLimit(value = 20, duration = 1, key = "user")
+    @GetMapping("/{paymentId}")
+    @Operation(summary = "Get payment")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Payment retrieved"),
+            @ApiResponse(responseCode = "404", description = "Payment not found")})
+    @PreAuthorize("isAuthenticated()")
+    public PaymentResponse getPayment(@PathVariable Long paymentId,
+                                      @AuthenticationPrincipal CustomUserDetails userDetails) {
+        var user = userDetails.getUser();
+        log.info("GET /api/payments/{} - user: {}", paymentId, user.getId());
+        return paymentService.getPayment(paymentId, user);
+    }
 }

@@ -27,28 +27,28 @@ import ua.lviv.bas.cinema.service.bonus.BonusService;
 @SecurityRequirement(name = "bearerAuth")
 public class BonusController {
 
-	private final BonusService bonusService;
+    private final BonusService bonusService;
 
-	@RateLimit(value = 20, duration = 1, key = "user")
-	@GetMapping("/balance")
-	@Operation(summary = "Get bonus balance")
-	@ApiResponse(responseCode = "200", description = "Balance retrieved successfully")
-	@ApiResponse(responseCode = "404", description = "Bonus card not found")
-	@PreAuthorize("isAuthenticated()")
-	public BonusBalanceResponse getBalance(
-			@Parameter(hidden = true) @AuthenticationPrincipal(expression = "userId") Long userId) {
-		return bonusService.getBalance(userId);
-	}
+    @RateLimit(value = 20, duration = 1, key = "user")
+    @GetMapping("/balance")
+    @Operation(summary = "Get bonus balance")
+    @ApiResponse(responseCode = "200", description = "Balance retrieved successfully")
+    @ApiResponse(responseCode = "404", description = "Bonus card not found")
+    @PreAuthorize("isAuthenticated()")
+    public BonusBalanceResponse getBalance(
+            @Parameter(hidden = true) @AuthenticationPrincipal(expression = "userId") Long userId) {
+        return bonusService.getBalance(userId);
+    }
 
-	@RateLimit(value = 30, duration = 1, key = "user")
-	@GetMapping("/transactions")
-	@Operation(summary = "Get bonus transactions")
-	@ApiResponse(responseCode = "200", description = "Transactions retrieved successfully")
-	@PreAuthorize("isAuthenticated()")
-	public PageResponse<BonusTransactionResponse> getTransactions(
-			@Parameter(hidden = true) @AuthenticationPrincipal(expression = "userId") Long userId,
-			@PageableDefault(size = 20) Pageable pageable) {
-		var page = bonusService.getTransactions(userId, pageable);
-		return PageResponse.from(page);
-	}
+    @RateLimit(value = 30, duration = 1, key = "user")
+    @GetMapping("/transactions")
+    @Operation(summary = "Get bonus transactions")
+    @ApiResponse(responseCode = "200", description = "Transactions retrieved successfully")
+    @PreAuthorize("isAuthenticated()")
+    public PageResponse<BonusTransactionResponse> getTransactions(
+            @Parameter(hidden = true) @AuthenticationPrincipal(expression = "userId") Long userId,
+            @PageableDefault(size = 20) Pageable pageable) {
+        var page = bonusService.getTransactions(userId, pageable);
+        return PageResponse.from(page);
+    }
 }

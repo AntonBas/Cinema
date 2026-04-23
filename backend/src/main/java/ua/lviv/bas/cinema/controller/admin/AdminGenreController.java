@@ -40,45 +40,45 @@ import ua.lviv.bas.cinema.service.cinema.GenreService;
 @PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
 public class AdminGenreController {
 
-	private final GenreService genreService;
+    private final GenreService genreService;
 
-	@PostMapping
-	@ResponseStatus(HttpStatus.CREATED)
-	@Operation(summary = "Create new genre")
-	@ApiResponses(value = { @ApiResponse(responseCode = "201", description = "Genre created successfully"),
-			@ApiResponse(responseCode = "400", description = "Invalid request data or genre name already exists"),
-			@ApiResponse(responseCode = "401", description = "User not authenticated"),
-			@ApiResponse(responseCode = "403", description = "User does not have required role") })
-	public GenreResponse createGenre(@RequestBody @Valid GenreRequest request) {
-		log.info("POST /api/admin/genres - Creating new genre: {}", request.name());
-		return genreService.createGenre(request);
-	}
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Create new genre")
+    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Genre created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data or genre name already exists"),
+            @ApiResponse(responseCode = "401", description = "User not authenticated"),
+            @ApiResponse(responseCode = "403", description = "User does not have required role")})
+    public GenreResponse createGenre(@RequestBody @Valid GenreRequest request) {
+        log.info("POST /api/admin/genres - Creating new genre: {}", request.name());
+        return genreService.createGenre(request);
+    }
 
-	@GetMapping
-	@Operation(summary = "Get genres list sorted by popularity")
-	public PageResponse<GenreListResponse> getGenres(@RequestParam(required = false) String query,
-			@PageableDefault(size = 10) Pageable pageable) {
-		log.info("GET /api/admin/genres - query: '{}'", query);
-		return PageResponse.from(genreService.getGenres(query, pageable));
-	}
+    @GetMapping
+    @Operation(summary = "Get genres list sorted by popularity")
+    public PageResponse<GenreListResponse> getGenres(@RequestParam(required = false) String query,
+                                                     @PageableDefault Pageable pageable) {
+        log.info("GET /api/admin/genres - query: '{}'", query);
+        return PageResponse.from(genreService.getGenres(query, pageable));
+    }
 
-	@PutMapping("/{id}")
-	@Operation(summary = "Update genre")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Genre updated successfully"),
-			@ApiResponse(responseCode = "400", description = "Invalid request data or genre name already exists"),
-			@ApiResponse(responseCode = "404", description = "Genre not found") })
-	public GenreResponse updateGenre(@PathVariable Long id, @RequestBody @Valid GenreRequest request) {
-		log.info("PUT /api/admin/genres/{} - Updating genre", id);
-		return genreService.updateGenre(id, request);
-	}
+    @PutMapping("/{id}")
+    @Operation(summary = "Update genre")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Genre updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data or genre name already exists"),
+            @ApiResponse(responseCode = "404", description = "Genre not found")})
+    public GenreResponse updateGenre(@PathVariable Long id, @RequestBody @Valid GenreRequest request) {
+        log.info("PUT /api/admin/genres/{} - Updating genre", id);
+        return genreService.updateGenre(id, request);
+    }
 
-	@DeleteMapping("/{id}")
-	@ResponseStatus(HttpStatus.NO_CONTENT)
-	@Operation(summary = "Delete genre")
-	@ApiResponses(value = { @ApiResponse(responseCode = "204", description = "Genre deleted successfully"),
-			@ApiResponse(responseCode = "404", description = "Genre not found") })
-	public void deleteGenre(@PathVariable Long id) {
-		log.info("DELETE /api/admin/genres/{} - Deleting genre", id);
-		genreService.deleteGenre(id);
-	}
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Delete genre")
+    @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Genre deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Genre not found")})
+    public void deleteGenre(@PathVariable Long id) {
+        log.info("DELETE /api/admin/genres/{} - Deleting genre", id);
+        genreService.deleteGenre(id);
+    }
 }

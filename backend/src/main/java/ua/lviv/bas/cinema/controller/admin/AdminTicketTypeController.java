@@ -39,58 +39,58 @@ import ua.lviv.bas.cinema.service.ticket.TicketTypeService;
 @PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
 public class AdminTicketTypeController {
 
-	private final TicketTypeService ticketTypeService;
+    private final TicketTypeService ticketTypeService;
 
-	@PostMapping
-	@ResponseStatus(HttpStatus.CREATED)
-	@Operation(summary = "Create a new ticket type")
-	@ApiResponses(value = { @ApiResponse(responseCode = "201", description = "Ticket type created successfully"),
-			@ApiResponse(responseCode = "400", description = "Invalid input data"),
-			@ApiResponse(responseCode = "409", description = "Ticket type with this display name already exists") })
-	public TicketTypeResponse createTicketType(@Valid @RequestBody TicketTypeRequest request) {
-		log.info("POST /api/admin/ticket-types - Creating ticket type: {}", request.displayName());
-		return ticketTypeService.createTicketType(request);
-	}
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Create a new ticket type")
+    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Ticket type created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input data"),
+            @ApiResponse(responseCode = "409", description = "Ticket type with this display name already exists")})
+    public TicketTypeResponse createTicketType(@Valid @RequestBody TicketTypeRequest request) {
+        log.info("POST /api/admin/ticket-types - Creating ticket type: {}", request.displayName());
+        return ticketTypeService.createTicketType(request);
+    }
 
-	@GetMapping
-	@Operation(summary = "Get all ticket types")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Ticket types retrieved successfully") })
-	public PageResponse<TicketTypeResponse> getTicketTypes(@RequestParam(required = false) Boolean active,
-			@RequestParam(required = false) TicketTypeCategory category, @RequestParam(required = false) String query,
-			@PageableDefault(size = 10) Pageable pageable) {
-		log.info("GET /api/admin/ticket-types - active: {}, category: {}, query: {}", active, category, query);
-		return PageResponse.from(ticketTypeService.getTicketTypes(active, category, query, pageable));
-	}
+    @GetMapping
+    @Operation(summary = "Get all ticket types")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Ticket types retrieved successfully")})
+    public PageResponse<TicketTypeResponse> getTicketTypes(@RequestParam(required = false) Boolean active,
+                                                           @RequestParam(required = false) TicketTypeCategory category, @RequestParam(required = false) String query,
+                                                           @PageableDefault Pageable pageable) {
+        log.info("GET /api/admin/ticket-types - active: {}, category: {}, query: {}", active, category, query);
+        return PageResponse.from(ticketTypeService.getTicketTypes(active, category, query, pageable));
+    }
 
-	@PutMapping("/{id}")
-	@Operation(summary = "Update ticket type")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Ticket type updated successfully"),
-			@ApiResponse(responseCode = "400", description = "Invalid input data"),
-			@ApiResponse(responseCode = "404", description = "Ticket type not found"),
-			@ApiResponse(responseCode = "409", description = "Ticket type with this display name already exists") })
-	public TicketTypeResponse updateTicketType(@PathVariable Long id, @Valid @RequestBody TicketTypeRequest request) {
-		log.info("PUT /api/admin/ticket-types/{} - Updating ticket type", id);
-		return ticketTypeService.updateTicketType(id, request);
-	}
+    @PutMapping("/{id}")
+    @Operation(summary = "Update ticket type")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Ticket type updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input data"),
+            @ApiResponse(responseCode = "404", description = "Ticket type not found"),
+            @ApiResponse(responseCode = "409", description = "Ticket type with this display name already exists")})
+    public TicketTypeResponse updateTicketType(@PathVariable Long id, @Valid @RequestBody TicketTypeRequest request) {
+        log.info("PUT /api/admin/ticket-types/{} - Updating ticket type", id);
+        return ticketTypeService.updateTicketType(id, request);
+    }
 
-	@DeleteMapping("/{id}")
-	@ResponseStatus(HttpStatus.NO_CONTENT)
-	@Operation(summary = "Delete ticket type")
-	@ApiResponses(value = { @ApiResponse(responseCode = "204", description = "Ticket type deleted successfully"),
-			@ApiResponse(responseCode = "404", description = "Ticket type not found"),
-			@ApiResponse(responseCode = "409", description = "Ticket type is in use and cannot be deleted") })
-	public void deleteTicketType(@PathVariable Long id) {
-		log.info("DELETE /api/admin/ticket-types/{} - Deleting ticket type", id);
-		ticketTypeService.deleteTicketType(id);
-	}
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Delete ticket type")
+    @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Ticket type deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Ticket type not found"),
+            @ApiResponse(responseCode = "409", description = "Ticket type is in use and cannot be deleted")})
+    public void deleteTicketType(@PathVariable Long id) {
+        log.info("DELETE /api/admin/ticket-types/{} - Deleting ticket type", id);
+        ticketTypeService.deleteTicketType(id);
+    }
 
-	@PatchMapping("/{id}/toggle")
-	@Operation(summary = "Toggle ticket type active status")
-	@ApiResponses(value = { @ApiResponse(responseCode = "200", description = "Ticket type status toggled successfully"),
-			@ApiResponse(responseCode = "404", description = "Ticket type not found"),
-			@ApiResponse(responseCode = "409", description = "Cannot deactivate ticket type in use") })
-	public TicketTypeResponse toggleActive(@PathVariable Long id) {
-		log.info("PATCH /api/admin/ticket-types/{}/toggle - Toggling active status", id);
-		return ticketTypeService.toggleActiveStatus(id);
-	}
+    @PatchMapping("/{id}/toggle")
+    @Operation(summary = "Toggle ticket type active status")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Ticket type status toggled successfully"),
+            @ApiResponse(responseCode = "404", description = "Ticket type not found"),
+            @ApiResponse(responseCode = "409", description = "Cannot deactivate ticket type in use")})
+    public TicketTypeResponse toggleActive(@PathVariable Long id) {
+        log.info("PATCH /api/admin/ticket-types/{}/toggle - Toggling active status", id);
+        return ticketTypeService.toggleActiveStatus(id);
+    }
 }
