@@ -18,26 +18,26 @@ import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
 @Transactional(readOnly = true)
 public class SeatService {
 
-	private final SeatRepository seatRepository;
-	private final SeatMapper seatMapper;
+    private final SeatRepository seatRepository;
+    private final SeatMapper seatMapper;
 
-	@CacheEvict(value = { "seats", "cinemaHalls" }, allEntries = true)
-	@Transactional
-	public SeatResponse updateSeatType(Long hallId, Long seatId, SeatType seatType) {
-		log.info("Updating seat type for seat id: {} to {}", seatId, seatType);
-		var seat = seatRepository.findById(seatId).orElseThrow(() -> new SeatNotFoundException(seatId));
-		seat.setSeatType(seatType);
-		var updated = seatRepository.save(seat);
-		return seatMapper.toSeatResponse(updated);
-	}
+    @CacheEvict(value = {"seats", "cinemaHalls"}, allEntries = true)
+    @Transactional
+    public SeatResponse updateSeatType(Long seatId, SeatType seatType) {
+        log.info("Updating seat type for seat id: {} to {}", seatId, seatType);
+        var seat = seatRepository.findById(seatId).orElseThrow(() -> new SeatNotFoundException(seatId));
+        seat.setSeatType(seatType);
+        var updated = seatRepository.save(seat);
+        return seatMapper.toSeatResponse(updated);
+    }
 
-	@CacheEvict(value = { "seats", "cinemaHalls" }, allEntries = true)
-	@Transactional
-	public SeatResponse setSeatActiveStatus(Long hallId, Long seatId, boolean active) {
-		log.info("Setting seat active status: seatId={}, active={}", seatId, active);
-		var seat = seatRepository.findById(seatId).orElseThrow(() -> new SeatNotFoundException(seatId));
-		seat.setActive(active);
-		var updated = seatRepository.save(seat);
-		return seatMapper.toSeatResponse(updated);
-	}
+    @CacheEvict(value = {"seats", "cinemaHalls"}, allEntries = true)
+    @Transactional
+    public SeatResponse setSeatActiveStatus(Long seatId, boolean active) {
+        log.info("Setting seat active status: seatId={}, active={}", seatId, active);
+        var seat = seatRepository.findById(seatId).orElseThrow(() -> new SeatNotFoundException(seatId));
+        seat.setActive(active);
+        var updated = seatRepository.save(seat);
+        return seatMapper.toSeatResponse(updated);
+    }
 }

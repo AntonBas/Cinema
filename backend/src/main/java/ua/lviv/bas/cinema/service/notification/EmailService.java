@@ -1,228 +1,227 @@
 package ua.lviv.bas.cinema.service.notification;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.exception.infrastructure.ExternalServiceException;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailService {
-	private final JavaMailSender mailSender;
+    private final JavaMailSender mailSender;
 
-	@Value("${app.frontend.url:http://localhost:5173}")
-	private String frontendUrl;
+    @Value("${app.frontend.url:http://localhost:5173}")
+    private String frontendUrl;
 
-	@Value("${app.email.from:noreply@cinema.com}")
-	private String fromEmail;
+    @Value("${app.email.from:noreply@cinema.com}")
+    private String fromEmail;
 
-	@Value("${app.company.name:Cinema}")
-	private String companyName;
+    @Value("${app.company.name:Cinema}")
+    private String companyName;
 
-	private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
-	@Async
-	public void sendVerificationEmail(String toEmail, String token) {
-		sendCriticalEmail(toEmail, "Confirm Your Email Address", () -> {
-			String link = frontendUrl + "/verify-email/" + token;
-			return String.format("""
-					Confirm Your Email Address
+    @Async
+    public void sendVerificationEmail(String toEmail, String token) {
+        sendCriticalEmail(toEmail, "Confirm Your Email Address", () -> {
+            String link = frontendUrl + "/verify-email/" + token;
+            return String.format("""
+                    Confirm Your Email Address
+                    
+                    Thank you for registering with %s!
+                    
+                    To activate your account, please click the link below:
+                    %s
+                    
+                    This link will expire in 10 minutes.
+                    
+                    If you didn't create an account, please ignore this email.
+                    
+                    %s""", companyName, link, getCompanySignature());
+        });
+    }
 
-					Thank you for registering with %s!
+    @Async
+    public void sendPasswordResetEmail(String toEmail, String token) {
+        sendCriticalEmail(toEmail, "Password Reset Request", () -> {
+            String link = frontendUrl + "/reset-password/" + token;
+            return String.format("""
+                    Password Reset Request
+                    
+                    You have requested to reset your password for your %s account.
+                    
+                    To reset your password, click the link below:
+                    %s
+                    
+                    This link will expire in 10 minutes.
+                    
+                    If you didn't request a password reset, please ignore this email.
+                    
+                    %s""", companyName, link, getCompanySignature());
+        });
+    }
 
-					To activate your account, please click the link below:
-					%s
+    @Async
+    public void sendTicketsEmail(String toEmail, String bookingNumber, String movieTitle, String sessionTime,
+                                 String hallName, BigDecimal amountPaid, String paymentMethod, String seatInfo) {
+        sendNonCriticalEmail(toEmail, "Your Tickets: " + movieTitle, () -> String.format("""
+                        Your Tickets - %s
+                        
+                        Booking Number: %s
+                        Movie: %s
+                        Time: %s
+                        Hall: %s
+                        Seats: %s
+                        Amount Paid: %s UAH
+                        Payment Method: %s
+                        
+                        Your tickets are available in your account:
+                        %s/account/tickets
+                        
+                        Please present the QR codes at the cinema entrance.
+                        Arrive 10-15 minutes before the session.
+                        
+                        Important:
+                        • Have your ID ready if required
+                        • No refunds 30 minutes before session
+                        • QR codes available in your account
+                        
+                        Thank you for choosing %s!
+                        
+                        This is an automated email. Please do not reply.""", movieTitle, bookingNumber, movieTitle, sessionTime,
+                hallName, seatInfo, amountPaid, paymentMethod, frontendUrl, companyName));
+    }
 
-					This link will expire in 10 minutes.
+    @Async
+    public void sendPaymentFailedEmail(String toEmail, String bookingNumber, String movieTitle, String sessionTime,
+                                       String errorMessage) {
+        sendNonCriticalEmail(toEmail, "Payment Failed: " + movieTitle, () -> String.format("""
+                Payment Failed
+                
+                Booking Number: %s
+                Movie: %s
+                Time: %s
+                
+                Error: %s
+                
+                Please try again or contact support.
+                
+                %s""", bookingNumber, movieTitle, sessionTime, errorMessage, getCompanySignature()));
+    }
 
-					If you didn't create an account, please ignore this email.
+    @Async
+    public void sendRefundEmail(String toEmail, String bookingNumber, String movieTitle, String sessionTime,
+                                String hallName, BigDecimal refundAmount, String seatInfo, String refundReason) {
+        sendNonCriticalEmail(toEmail, "Refund Confirmation: " + movieTitle,
+                () -> String.format("""
+                                Refund Confirmation - %s
+                                
+                                Your refund request has been successfully processed.
+                                
+                                Booking Number: %s
+                                Movie: %s
+                                Time: %s
+                                Hall: %s
+                                Seats: %s
+                                Refund Amount: %s UAH
+                                Reason: %s
+                                
+                                The refunded amount will be returned to your original
+                                payment method within 3-5 business days.
+                                
+                                Refund Summary:
+                                • Ticket price refunded: %s UAH
+                                • Refund processed at: %s
+                                
+                                If you have any questions about your refund,
+                                please contact our support team.
+                                
+                                Thank you for choosing %s!
+                                
+                                This is an automated email. Please do not reply.""", movieTitle, bookingNumber, movieTitle,
+                        sessionTime, hallName, seatInfo, refundAmount, refundReason, refundAmount,
+                        LocalDateTime.now().format(DATE_TIME_FORMATTER), companyName));
+    }
 
-					%s""", companyName, link, getCompanySignature());
-		});
-	}
+    @Async
+    public void sendEmailChangeConfirmation(String toEmail, String token) {
+        sendCriticalEmail(toEmail, "Confirm Your Email Change", () -> {
+            String link = frontendUrl + "/confirm-email-change/" + token;
+            return String.format("""
+                    Confirm Your Email Change
+                    
+                    You have requested to change your %s account email address.
+                    
+                    To confirm this change, please click the link below:
+                    %s
+                    
+                    This link will expire in 24 hours.
+                    
+                    If you didn't request this change, please ignore this email.
+                    
+                    %s""", companyName, link, getCompanySignature());
+        });
+    }
 
-	@Async
-	public void sendPasswordResetEmail(String toEmail, String token) {
-		sendCriticalEmail(toEmail, "Password Reset Request", () -> {
-			String link = frontendUrl + "/reset-password/" + token;
-			return String.format("""
-					Password Reset Request
+    @Async
+    public void sendEmailChangeNotification(String oldEmail, String newEmail) {
+        sendNonCriticalEmail(oldEmail, "Email Address Changed", () -> String.format("""
+                Email Address Changed
+                
+                Your %s account email address has been successfully changed:
+                
+                Old email: %s
+                New email: %s
+                
+                If you didn't make this change, please contact our support team immediately.
+                
+                %s""", companyName, oldEmail, newEmail, getCompanySignature()));
+    }
 
-					You have requested to reset your password for your %s account.
+    private void sendCriticalEmail(String toEmail, String subject, EmailContentSupplier contentSupplier) {
+        try {
+            sendSimpleEmail(toEmail, subject, contentSupplier.get());
+            log.info("Critical email sent to: {}", toEmail);
+        } catch (MailException e) {
+            log.error("Failed to send critical email to: {} - {}", toEmail, e.getMessage());
+            throw new ExternalServiceException("Email Service", e);
+        }
+    }
 
-					To reset your password, click the link below:
-					%s
+    private void sendNonCriticalEmail(String toEmail, String subject, EmailContentSupplier contentSupplier) {
+        try {
+            sendSimpleEmail(toEmail, subject, contentSupplier.get());
+            log.info("Non-critical email sent to: {}", toEmail);
+        } catch (Exception e) {
+            log.error("Failed to send non-critical email to: {} - {}", toEmail, e.getMessage());
+        }
+    }
 
-					This link will expire in 10 minutes.
+    private void sendSimpleEmail(String toEmail, String subject, String text) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
+        message.setTo(toEmail);
+        message.setSubject(subject);
+        message.setText(text);
+        mailSender.send(message);
+    }
 
-					If you didn't request a password reset, please ignore this email.
+    private String getCompanySignature() {
+        return String.format("Best regards,\n%s Team", companyName);
+    }
 
-					%s""", companyName, link, getCompanySignature());
-		});
-	}
-
-	@Async
-	public void sendTicketsEmail(String toEmail, String bookingNumber, String movieTitle, String sessionTime,
-			String hallName, BigDecimal amountPaid, String paymentMethod, String seatInfo) {
-		sendNonCriticalEmail(toEmail, "Your Tickets: " + movieTitle, () -> String.format("""
-				Your Tickets - %s
-
-				Booking Number: %s
-				Movie: %s
-				Time: %s
-				Hall: %s
-				Seats: %s
-				Amount Paid: %s UAH
-				Payment Method: %s
-
-				Your tickets are available in your account:
-				%s/account/tickets
-
-				Please present the QR codes at the cinema entrance.
-				Arrive 10-15 minutes before the session.
-
-				Important:
-				• Have your ID ready if required
-				• No refunds 30 minutes before session
-				• QR codes available in your account
-
-				Thank you for choosing %s!
-
-				This is an automated email. Please do not reply.""", movieTitle, bookingNumber, movieTitle, sessionTime,
-				hallName, seatInfo, amountPaid, paymentMethod, frontendUrl, companyName));
-	}
-
-	@Async
-	public void sendPaymentFailedEmail(String toEmail, String bookingNumber, String movieTitle, String sessionTime,
-			String errorMessage) {
-		sendNonCriticalEmail(toEmail, "Payment Failed: " + movieTitle, () -> String.format("""
-				Payment Failed
-
-				Booking Number: %s
-				Movie: %s
-				Time: %s
-
-				Error: %s
-
-				Please try again or contact support.
-
-				%s""", bookingNumber, movieTitle, sessionTime, errorMessage, getCompanySignature()));
-	}
-
-	@Async
-	public void sendRefundEmail(String toEmail, String bookingNumber, String movieTitle, String sessionTime,
-			String hallName, BigDecimal refundAmount, String seatInfo, String refundReason) {
-		sendNonCriticalEmail(toEmail, "Refund Confirmation: " + movieTitle,
-				() -> String.format("""
-						Refund Confirmation - %s
-
-						Your refund request has been successfully processed.
-
-						Booking Number: %s
-						Movie: %s
-						Time: %s
-						Hall: %s
-						Seats: %s
-						Refund Amount: %s UAH
-						Reason: %s
-
-						The refunded amount will be returned to your original
-						payment method within 3-5 business days.
-
-						Refund Summary:
-						• Ticket price refunded: %s UAH
-						• Refund processed at: %s
-
-						If you have any questions about your refund,
-						please contact our support team.
-
-						Thank you for choosing %s!
-
-						This is an automated email. Please do not reply.""", movieTitle, bookingNumber, movieTitle,
-						sessionTime, hallName, seatInfo, refundAmount, refundReason, refundAmount,
-						LocalDateTime.now().format(DATE_TIME_FORMATTER), companyName));
-	}
-
-	@Async
-	public void sendEmailChangeConfirmation(String toEmail, String token) {
-		sendCriticalEmail(toEmail, "Confirm Your Email Change", () -> {
-			String link = frontendUrl + "/confirm-email-change/" + token;
-			return String.format("""
-					Confirm Your Email Change
-
-					You have requested to change your %s account email address.
-
-					To confirm this change, please click the link below:
-					%s
-
-					This link will expire in 24 hours.
-
-					If you didn't request this change, please ignore this email.
-
-					%s""", companyName, link, getCompanySignature());
-		});
-	}
-
-	@Async
-	public void sendEmailChangeNotification(String oldEmail, String newEmail) {
-		sendNonCriticalEmail(oldEmail, "Email Address Changed", () -> String.format("""
-				Email Address Changed
-
-				Your %s account email address has been successfully changed:
-
-				Old email: %s
-				New email: %s
-
-				If you didn't make this change, please contact our support team immediately.
-
-				%s""", companyName, oldEmail, newEmail, getCompanySignature()));
-	}
-
-	private void sendCriticalEmail(String toEmail, String subject, EmailContentSupplier contentSupplier) {
-		try {
-			sendSimpleEmail(toEmail, subject, contentSupplier.get());
-			log.info("Email sent to {}", toEmail);
-		} catch (MailException e) {
-			log.error("Failed to send email to {}: {}", toEmail, e.getMessage());
-			throw new ExternalServiceException("Email Service", e);
-		}
-	}
-
-	private void sendNonCriticalEmail(String toEmail, String subject, EmailContentSupplier contentSupplier) {
-		try {
-			sendSimpleEmail(toEmail, subject, contentSupplier.get());
-			log.info("Email sent to {}", toEmail);
-		} catch (Exception e) {
-			log.error("Failed to send email to {}: {}", toEmail, e.getMessage());
-		}
-	}
-
-	private void sendSimpleEmail(String toEmail, String subject, String text) {
-		SimpleMailMessage message = new SimpleMailMessage();
-		message.setFrom(fromEmail);
-		message.setTo(toEmail);
-		message.setSubject(subject);
-		message.setText(text);
-		mailSender.send(message);
-	}
-
-	private String getCompanySignature() {
-		return String.format("Best regards,\n%s Team", companyName);
-	}
-
-	@FunctionalInterface
-	private interface EmailContentSupplier {
-		String get();
-	}
+    @FunctionalInterface
+    private interface EmailContentSupplier {
+        String get();
+    }
 }
