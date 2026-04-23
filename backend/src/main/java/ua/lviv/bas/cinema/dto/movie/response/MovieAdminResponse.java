@@ -1,42 +1,58 @@
 package ua.lviv.bas.cinema.dto.movie.response;
 
-import java.time.LocalDate;
-import java.util.List;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import ua.lviv.bas.cinema.domain.cinema.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.cinema.status.MovieStatus;
 
+import java.time.LocalDate;
+import java.util.List;
+
 @Schema(description = "Response DTO for admin movie operations (create, update, admin list)")
 public record MovieAdminResponse(
 
-		@Schema(description = "Unique identifier of the movie", example = "1") Long id,
+        @Schema(description = "Unique identifier of the movie", example = "1")
+        Long id,
 
-		@Schema(description = "Title of the movie", example = "Inception") String title,
+        @Schema(description = "Title of the movie", example = "Inception")
+        String title,
 
-		@Schema(description = "URL to the movie trailer", example = "https://www.youtube.com/watch?v=YoHD9XEInc0") String trailerUrl,
+        @Schema(description = "URL to the movie trailer", example = "https://www.youtube.com/watch?v=YoHD9XEInc0")
+        String trailerUrl,
 
-		@Schema(description = "Movie description/synopsis", example = "A thief who steals corporate secrets through dream-sharing technology") String description,
+        @Schema(description = "Movie description/synopsis", example = "A thief who steals corporate secrets through dream-sharing technology")
+        String description,
 
-		@Schema(description = "Duration of the movie in minutes", example = "148") Integer durationMinutes,
+        @Schema(description = "Duration of the movie in minutes", example = "148")
+        Integer durationMinutes,
 
-		@Schema(description = "Release date of the movie", example = "2024-01-15") LocalDate releaseDate,
+        @Schema(description = "Release date of the movie", example = "2024-01-15")
+        LocalDate releaseDate,
 
-		@Schema(description = "Date when the movie stops showing in cinemas", example = "2024-03-15") LocalDate endShowingDate,
+        @Schema(description = "Date when the movie stops showing in cinemas", example = "2024-03-15")
+        LocalDate endShowingDate,
 
-		@Schema(description = "Age rating of the movie", example = "PEGI_12") AgeRating ageRating,
+        @Schema(description = "Age rating of the movie", example = "PEGI_12")
+        AgeRating ageRating,
 
-		@Schema(description = "Current status of the movie", example = "CURRENT") MovieStatus status,
+        @Schema(description = "Current status of the movie", example = "CURRENT")
+        MovieStatus status,
 
-		@Schema(description = "File name of the movie poster", example = "inception-poster.jpg") String posterFileName,
+        @Schema(description = "File name of the movie poster", example = "inception-poster.jpg")
+        String posterFileName,
 
-		@Schema(description = "URL to the movie poster image", example = "/api/movies/1/poster") String posterUrl,
+        @Schema(description = "URL to the movie poster image", example = "/api/movies/1/poster")
+        String posterUrl,
 
-		@Schema(description = "List of genres associated with the movie") List<GenreResponse> genres,
+        @Schema(description = "List of genres associated with the movie")
+        List<GenreResponse> genres,
 
-		@Schema(description = "List of actors in the movie") List<PersonResponse> actors,
+        @Schema(description = "List of actors in the movie")
+        List<PersonResponse> actors,
 
-		@Schema(description = "List of directors of the movie") List<PersonResponse> directors,
+        @Schema(description = "List of directors of the movie")
+        List<PersonResponse> directors,
 
-		@Schema(description = "List of screenwriters of the movie") List<PersonResponse> screenwriters) {
+        @Schema(description = "List of screenwriters of the movie")
+        List<PersonResponse> screenwriters
+) {
 }

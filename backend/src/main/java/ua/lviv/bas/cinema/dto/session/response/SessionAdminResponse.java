@@ -1,34 +1,49 @@
 package ua.lviv.bas.cinema.dto.session.response;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
 
-public record SessionAdminResponse(@Schema(description = "Unique identifier of the session", example = "1") Long id,
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
-		@Schema(description = "Start time of the session", example = "2024-01-15T18:30:00") LocalDateTime startTime,
+public record SessionAdminResponse(
+        @Schema(description = "Unique identifier of the session", example = "1")
+        Long id,
 
-		@Schema(description = "End time of the session", example = "2024-01-15T21:00:00") LocalDateTime endTime,
+        @Schema(description = "Start time of the session", example = "2024-01-15T18:30:00")
+        LocalDateTime startTime,
 
-		@Schema(description = "Base price", example = "150.00") BigDecimal basePrice,
+        @Schema(description = "End time of the session", example = "2024-01-15T21:00:00")
+        LocalDateTime endTime,
 
-		@Schema(description = "Current status", example = "SCHEDULED") CinemaSessionStatus status,
+        @Schema(description = "Base price", example = "150.00")
+        BigDecimal basePrice,
 
-		@Schema(description = "ID of the movie", example = "5") Long movieId,
+        @Schema(description = "Current status", example = "SCHEDULED")
+        CinemaSessionStatus status,
 
-		@Schema(description = "Title of the movie", example = "Inception") String movieTitle,
+        @Schema(description = "ID of the movie", example = "5")
+        Long movieId,
 
-		@Schema(description = "Duration in minutes", example = "148") Integer movieDuration,
+        @Schema(description = "Title of the movie", example = "Inception")
+        String movieTitle,
 
-		@Schema(description = "ID of the cinema hall", example = "3") Long hallId,
+        @Schema(description = "Duration in minutes", example = "148")
+        Integer movieDuration,
 
-		@Schema(description = "Name of the cinema hall", example = "Hall A") String hallName,
+        @Schema(description = "ID of the cinema hall", example = "3")
+        Long hallId,
 
-		@Schema(description = "Hall capacity", example = "150") Integer hallCapacity,
+        @Schema(description = "Name of the cinema hall", example = "Hall A")
+        String hallName,
 
-		@Schema(description = "Tickets sold", example = "45") Integer ticketsSold,
+        @Schema(description = "Hall capacity", example = "150")
+        Integer hallCapacity,
 
-		@Schema(description = "Total revenue", example = "6750.00") BigDecimal totalRevenue) {
+        @Schema(description = "Tickets sold", example = "45")
+        Integer ticketsSold,
+
+        @Schema(description = "Total revenue", example = "6750.00")
+        BigDecimal totalRevenue
+) {
 }

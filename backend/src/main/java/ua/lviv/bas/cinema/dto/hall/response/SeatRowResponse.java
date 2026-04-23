@@ -1,12 +1,17 @@
 package ua.lviv.bas.cinema.dto.hall.response;
 
-import java.util.List;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 
-public record SeatRowResponse(@Schema(description = "Row number (starting from 1)", example = "1") Integer rowNumber,
+import java.util.List;
 
-		@Schema(description = "Total number of seats in this row", example = "15") int seatsCount,
+public record SeatRowResponse(
+        @Schema(description = "Row number (starting from 1)", example = "1")
+        Integer rowNumber,
 
-		@Schema(description = "List of seats in this row") List<SeatResponse> seats) {
+        @Schema(description = "Total number of seats in this row", example = "15")
+        int seatsCount,
+
+        @Schema(description = "List of seats in this row")
+        List<SeatResponse> seats
+) {
 }

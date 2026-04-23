@@ -5,5 +5,8 @@ import jakarta.validation.constraints.NotNull;
 import ua.lviv.bas.cinema.domain.user.UserRole;
 
 public record UserRoleUpdateRequest(
-		@Schema(description = "New role for the user", example = "ROLE_ADMIN", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "Role is required") UserRole userRole) {
+        @Schema(description = "New role for the user", example = "ROLE_ADMIN", requiredMode = Schema.RequiredMode.REQUIRED)
+        @NotNull(message = "Role is required")
+        UserRole userRole
+) {
 }
