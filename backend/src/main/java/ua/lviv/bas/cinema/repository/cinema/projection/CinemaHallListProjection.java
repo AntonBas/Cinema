@@ -1,9 +1,9 @@
 package ua.lviv.bas.cinema.repository.cinema.projection;
 
 public interface CinemaHallListProjection {
-	Long getId();
+    Long getId();
 
-	String getName();
+    String getName();
 
-	Long getSeatsCount();
+    Long getSeatsCount();
 }

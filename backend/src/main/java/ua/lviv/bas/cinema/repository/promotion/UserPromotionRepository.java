@@ -11,8 +11,8 @@ import ua.lviv.bas.cinema.domain.user.User;
 
 @Repository
 public interface UserPromotionRepository extends JpaRepository<UserPromotion, Long> {
-	boolean existsByUserAndPromotion(User user, Promotion promotion);
+    boolean existsByUserAndPromotion(User user, Promotion promotion);
 
-	@Query("SELECT COUNT(up) > 0 FROM UserPromotion up WHERE up.user = :user AND up.promotion.id = :promotionId")
-	boolean existsByUserAndPromotionId(@Param("user") User user, @Param("promotionId") Long promotionId);
+    @Query("SELECT COUNT(up) > 0 FROM UserPromotion up WHERE up.user = :user AND up.promotion.id = :promotionId")
+    boolean existsByUserAndPromotionId(@Param("user") User user, @Param("promotionId") Long promotionId);
 }

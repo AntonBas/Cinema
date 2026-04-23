@@ -1,9 +1,9 @@
 package ua.lviv.bas.cinema.repository.cinema.projection;
 
 public interface GenreListProjection {
-	Long getId();
+    Long getId();
 
-	String getName();
+    String getName();
 
-	Integer getMovieCount();
+    Integer getMovieCount();
 }

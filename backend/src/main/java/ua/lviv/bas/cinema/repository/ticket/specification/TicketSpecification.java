@@ -11,27 +11,27 @@ import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
 @Component
 public class TicketSpecification {
 
-	public Specification<Ticket> buildForUser(Long userId, TicketStatus status, String movieTitle) {
-		return Specification.allOf(filterByUserId(userId), filterByStatus(status), filterByMovieTitle(movieTitle));
-	}
+    public Specification<Ticket> buildForUser(Long userId, TicketStatus status, String movieTitle) {
+        return Specification.allOf(filterByUserId(userId), filterByStatus(status), filterByMovieTitle(movieTitle));
+    }
 
-	private Specification<Ticket> filterByUserId(Long userId) {
-		return (root, query, cb) -> cb.equal(root.get("user").get("id"), userId);
-	}
+    private Specification<Ticket> filterByUserId(Long userId) {
+        return (root, query, cb) -> cb.equal(root.get("user").get("id"), userId);
+    }
 
-	private Specification<Ticket> filterByStatus(TicketStatus status) {
-		return (root, query, cb) -> status != null ? cb.equal(root.get("status"), status) : null;
-	}
+    private Specification<Ticket> filterByStatus(TicketStatus status) {
+        return (root, query, cb) -> status != null ? cb.equal(root.get("status"), status) : null;
+    }
 
-	private Specification<Ticket> filterByMovieTitle(String movieTitle) {
-		return (root, query, cb) -> {
-			if (!StringUtils.hasText(movieTitle)) {
-				return null;
-			}
-			var booking = root.join("booking", JoinType.INNER);
-			var session = booking.join("session", JoinType.INNER);
-			var movie = session.join("movie", JoinType.INNER);
-			return cb.like(cb.lower(movie.get("title")), "%" + movieTitle.toLowerCase() + "%");
-		};
-	}
+    private Specification<Ticket> filterByMovieTitle(String movieTitle) {
+        return (root, query, cb) -> {
+            if (!StringUtils.hasText(movieTitle)) {
+                return null;
+            }
+            var booking = root.join("booking", JoinType.INNER);
+            var session = booking.join("session", JoinType.INNER);
+            var movie = session.join("movie", JoinType.INNER);
+            return cb.like(cb.lower(movie.get("title")), "%" + movieTitle.toLowerCase() + "%");
+        };
+    }
 }

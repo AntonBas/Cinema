@@ -3,18 +3,18 @@ package ua.lviv.bas.cinema.repository.bonus.projection;
 import java.time.LocalDateTime;
 
 public interface BonusTransactionProjection {
-	Long getId();
+    Long getId();
 
-	String getType();
+    String getType();
 
-	Integer getPointsChangeRaw();
+    Integer getPointsChangeRaw();
 
-	LocalDateTime getCreatedAt();
+    LocalDateTime getCreatedAt();
 
-	Integer getNewBalance();
+    Integer getNewBalance();
 
-	default String getPointsChange() {
-		Integer raw = getPointsChangeRaw();
-		return raw != null ? (raw > 0 ? "+" + raw : String.valueOf(raw)) : null;
-	}
+    default String getPointsChange() {
+        Integer raw = getPointsChangeRaw();
+        return raw != null ? (raw > 0 ? "+" + raw : String.valueOf(raw)) : null;
+    }
 }

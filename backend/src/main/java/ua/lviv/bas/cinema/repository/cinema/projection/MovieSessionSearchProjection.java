@@ -1,9 +1,9 @@
 package ua.lviv.bas.cinema.repository.cinema.projection;
 
 public interface MovieSessionSearchProjection {
-	Long getId();
+    Long getId();
 
-	String getTitle();
+    String getTitle();
 
-	Integer getDurationMinutes();
+    Integer getDurationMinutes();
 }

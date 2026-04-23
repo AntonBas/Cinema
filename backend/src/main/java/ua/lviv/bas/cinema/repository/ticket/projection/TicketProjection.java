@@ -1,34 +1,34 @@
 package ua.lviv.bas.cinema.repository.ticket.projection;
 
+import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
-
 public interface TicketProjection {
-	Long getId();
+    Long getId();
 
-	String getUniqueCode();
+    String getUniqueCode();
 
-	TicketStatus getStatus();
+    TicketStatus getStatus();
 
-	LocalDateTime getPurchaseTime();
+    LocalDateTime getPurchaseTime();
 
-	BigDecimal getFinalPrice();
+    BigDecimal getFinalPrice();
 
-	String getTicketTypeName();
+    String getTicketTypeName();
 
-	String getMovieTitle();
+    String getMovieTitle();
 
-	LocalDateTime getSessionStartTime();
+    LocalDateTime getSessionStartTime();
 
-	String getHallName();
+    String getHallName();
 
-	Integer getRow();
+    Integer getRow();
 
-	Integer getSeatNumber();
+    Integer getSeatNumber();
 
-	Long getUserId();
+    Long getUserId();
 
-	Long getMovieId();
+    Long getMovieId();
 }

@@ -3,15 +3,15 @@ package ua.lviv.bas.cinema.repository.promotion.projection;
 import java.time.LocalDate;
 
 public interface PromotionResponseProjection {
-	Long getId();
+    Long getId();
 
-	String getTitle();
+    String getTitle();
 
-	String getDescription();
+    String getDescription();
 
-	Integer getBonusPoints();
+    Integer getBonusPoints();
 
-	LocalDate getStartDate();
+    LocalDate getStartDate();
 
-	LocalDate getEndDate();
+    LocalDate getEndDate();
 }

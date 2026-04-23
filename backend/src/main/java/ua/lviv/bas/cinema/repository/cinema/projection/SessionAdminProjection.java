@@ -4,27 +4,27 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public interface SessionAdminProjection {
-	Long getId();
+    Long getId();
 
-	LocalDateTime getStartTime();
+    LocalDateTime getStartTime();
 
-	BigDecimal getBasePrice();
+    BigDecimal getBasePrice();
 
-	String getStatus();
+    String getStatus();
 
-	Long getMovieId();
+    Long getMovieId();
 
-	String getMovieTitle();
+    String getMovieTitle();
 
-	Integer getMovieDuration();
+    Integer getMovieDuration();
 
-	Long getHallId();
+    Long getHallId();
 
-	String getHallName();
+    String getHallName();
 
-	Long getHallCapacity();
+    Long getHallCapacity();
 
-	Long getTicketsSold();
+    Long getTicketsSold();
 
-	BigDecimal getTotalRevenue();
+    BigDecimal getTotalRevenue();
 }

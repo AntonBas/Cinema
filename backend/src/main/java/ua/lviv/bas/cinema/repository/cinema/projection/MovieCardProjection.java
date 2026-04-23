@@ -1,30 +1,30 @@
 package ua.lviv.bas.cinema.repository.cinema.projection;
 
-import java.time.LocalDate;
-
 import ua.lviv.bas.cinema.domain.cinema.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.cinema.status.MovieStatus;
 
+import java.time.LocalDate;
+
 public interface MovieCardProjection {
-	Long getId();
+    Long getId();
 
-	String getSlug();
+    String getSlug();
 
-	String getTitle();
+    String getTitle();
 
-	String getPosterFileName();
+    String getPosterFileName();
 
-	Integer getDurationMinutes();
+    Integer getDurationMinutes();
 
-	AgeRating getAgeRating();
+    AgeRating getAgeRating();
 
-	MovieStatus getStatus();
+    MovieStatus getStatus();
 
-	LocalDate getReleaseDate();
+    LocalDate getReleaseDate();
 
-	LocalDate getEndShowingDate();
+    LocalDate getEndShowingDate();
 
-	default String getPosterUrl() {
-		return "/api/movies/" + getId() + "/poster";
-	}
+    default String getPosterUrl() {
+        return "/api/movies/" + getId() + "/poster";
+    }
 }

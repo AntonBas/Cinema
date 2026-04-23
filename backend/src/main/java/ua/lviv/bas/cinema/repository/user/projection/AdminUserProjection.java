@@ -1,28 +1,28 @@
 package ua.lviv.bas.cinema.repository.user.projection;
 
-import java.time.LocalDateTime;
-
 import ua.lviv.bas.cinema.domain.user.UserRole;
 import ua.lviv.bas.cinema.domain.user.VerificationStatus;
 
+import java.time.LocalDateTime;
+
 public interface AdminUserProjection {
-	Long getId();
+    Long getId();
 
-	String getEmail();
+    String getEmail();
 
-	String getFirstName();
+    String getFirstName();
 
-	String getLastName();
+    String getLastName();
 
-	UserRole getUserRole();
+    UserRole getUserRole();
 
-	boolean isEnabled();
+    boolean isEnabled();
 
-	VerificationStatus getVerificationStatus();
+    VerificationStatus getVerificationStatus();
 
-	LocalDateTime getVerifiedAt();
+    LocalDateTime getVerifiedAt();
 
-	Long getTicketsCount();
+    Long getTicketsCount();
 
-	LocalDateTime getLastActivity();
+    LocalDateTime getLastActivity();
 }

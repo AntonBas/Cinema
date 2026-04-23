@@ -3,11 +3,11 @@ package ua.lviv.bas.cinema.repository.cinema.projection;
 import ua.lviv.bas.cinema.domain.cinema.enums.PersonRole;
 
 public interface PersonListProjection {
-	Long getId();
+    Long getId();
 
-	String getName();
+    String getName();
 
-	PersonRole getRole();
+    PersonRole getRole();
 
-	Integer getMovieCount();
+    Integer getMovieCount();
 }
