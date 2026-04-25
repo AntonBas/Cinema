@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.shared;
+package ua.lviv.bas.cinema.service.common;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

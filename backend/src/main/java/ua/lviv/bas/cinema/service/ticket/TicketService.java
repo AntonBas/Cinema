@@ -26,7 +26,7 @@ import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.repository.ticket.specification.TicketSpecification;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.integration.qr.QRCodeService;
-import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
+import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;

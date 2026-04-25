@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.shared;
+package ua.lviv.bas.cinema.service.common;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;

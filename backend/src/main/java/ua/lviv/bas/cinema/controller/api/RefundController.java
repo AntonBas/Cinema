@@ -16,7 +16,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
-import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
+import ua.lviv.bas.cinema.config.security.CustomUserDetails;
 import ua.lviv.bas.cinema.dto.refund.request.RefundRequest;
 import ua.lviv.bas.cinema.dto.refund.response.RefundResponse;
 import ua.lviv.bas.cinema.service.booking.RefundService;

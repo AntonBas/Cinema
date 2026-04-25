@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.shared;
+package ua.lviv.bas.cinema.service.common;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

@@ -23,7 +23,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
-import ua.lviv.bas.cinema.dto.PageResponse;
+import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionListResponse;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;

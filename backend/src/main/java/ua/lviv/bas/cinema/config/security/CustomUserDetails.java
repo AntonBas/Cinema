@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.config.security.user;
+package ua.lviv.bas.cinema.config.security;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;

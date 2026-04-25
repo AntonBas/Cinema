@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto;
+package ua.lviv.bas.cinema.dto.common;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;

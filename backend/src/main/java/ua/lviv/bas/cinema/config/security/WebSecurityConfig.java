@@ -18,11 +18,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import ua.lviv.bas.cinema.config.security.jwt.JwtAuthenticationFilter;
-import ua.lviv.bas.cinema.config.security.jwt.JwtTokenProvider;
-import ua.lviv.bas.cinema.config.security.oauth2.CustomOAuth2UserService;
-import ua.lviv.bas.cinema.config.security.oauth2.OAuth2AuthenticationSuccessHandler;
-import ua.lviv.bas.cinema.config.security.user.CustomUserDetailsService;
 
 import java.util.List;
 

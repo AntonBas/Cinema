@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.config.security.user;
+package ua.lviv.bas.cinema.config.security;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.UserDetails;

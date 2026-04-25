@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.config.security.jwt;
+package ua.lviv.bas.cinema.config.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -14,7 +14,6 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-import ua.lviv.bas.cinema.config.security.user.CustomUserDetailsService;
 
 import java.io.IOException;
 

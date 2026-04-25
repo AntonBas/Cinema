@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.config.security.oauth2;
+package ua.lviv.bas.cinema.config.security;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -10,7 +10,6 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
-import ua.lviv.bas.cinema.config.security.jwt.JwtTokenProvider;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.repository.user.UserRepository;
 

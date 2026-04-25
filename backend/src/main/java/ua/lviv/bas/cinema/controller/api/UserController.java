@@ -13,7 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
-import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
+import ua.lviv.bas.cinema.config.security.CustomUserDetails;
 import ua.lviv.bas.cinema.dto.user.request.UserEmailChangeRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserPasswordUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;

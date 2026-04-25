@@ -27,7 +27,7 @@ import ua.lviv.bas.cinema.repository.booking.RefundRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.service.bonus.BonusService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
-import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
+import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

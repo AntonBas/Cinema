@@ -34,7 +34,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
-import ua.lviv.bas.cinema.dto.PageResponse;
+import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeRequest;
 import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeResponse;
 import ua.lviv.bas.cinema.exception.api.ApiErrorHandler;

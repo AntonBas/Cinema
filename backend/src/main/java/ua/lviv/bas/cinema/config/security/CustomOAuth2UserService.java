@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.config.security.oauth2;
+package ua.lviv.bas.cinema.config.security;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

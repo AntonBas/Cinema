@@ -21,8 +21,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import ua.lviv.bas.cinema.config.security.jwt.JwtTokenProvider;
-import ua.lviv.bas.cinema.config.security.oauth2.OAuth2AuthenticationSuccessHandler;
+import ua.lviv.bas.cinema.config.security.JwtTokenProvider;
+import ua.lviv.bas.cinema.config.security.OAuth2AuthenticationSuccessHandler;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.repository.user.UserRepository;
 

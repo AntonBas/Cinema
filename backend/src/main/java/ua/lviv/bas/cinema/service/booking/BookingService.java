@@ -39,7 +39,7 @@ import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
 import ua.lviv.bas.cinema.service.bonus.BonusService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
-import ua.lviv.bas.cinema.service.shared.PriceCalculatorService;
+import ua.lviv.bas.cinema.service.common.PriceCalculatorService;
 
 @Slf4j
 @Service

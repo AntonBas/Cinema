@@ -25,9 +25,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-import ua.lviv.bas.cinema.config.security.jwt.JwtTokenProvider;
-import ua.lviv.bas.cinema.config.security.user.CustomUserDetails;
-import ua.lviv.bas.cinema.config.security.user.CustomUserDetailsService;
+import ua.lviv.bas.cinema.config.security.JwtTokenProvider;
+import ua.lviv.bas.cinema.config.security.CustomUserDetails;
+import ua.lviv.bas.cinema.config.security.CustomUserDetailsService;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.domain.user.UserRole;
 import ua.lviv.bas.cinema.domain.user.VerificationStatus;

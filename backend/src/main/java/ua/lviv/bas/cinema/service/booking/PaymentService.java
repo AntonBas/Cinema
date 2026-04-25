@@ -26,8 +26,8 @@ import ua.lviv.bas.cinema.service.bonus.BonusService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.integration.payment.PaymentGatewayService;
 import ua.lviv.bas.cinema.service.notification.EmailService;
-import ua.lviv.bas.cinema.service.shared.DateTimeFormatterService;
-import ua.lviv.bas.cinema.service.shared.NumberGeneratorService;
+import ua.lviv.bas.cinema.service.common.DateTimeFormatterService;
+import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.service.ticket.TicketService;
 
 import java.math.BigDecimal;
