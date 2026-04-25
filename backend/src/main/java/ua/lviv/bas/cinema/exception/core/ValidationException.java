@@ -3,19 +3,23 @@ package ua.lviv.bas.cinema.exception.core;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.Nullable;
 
+import java.io.Serial;
+
 public abstract class ValidationException extends BusinessException {
-	private static final long serialVersionUID = 1L;
 
-	public ValidationException(String message, String errorCode) {
-		super(message, errorCode, HttpStatus.BAD_REQUEST, null);
-	}
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-	public ValidationException(String message, String errorCode, @Nullable String debugMessage) {
-		super(message, errorCode, HttpStatus.BAD_REQUEST, debugMessage);
-	}
+    public ValidationException(String message, String errorCode) {
+        super(message, errorCode, HttpStatus.BAD_REQUEST, null);
+    }
 
-	public ValidationException(String message, String errorCode, @Nullable String debugMessage,
-			@Nullable Throwable cause) {
-		super(message, errorCode, HttpStatus.BAD_REQUEST, debugMessage, cause);
-	}
+    public ValidationException(String message, String errorCode, @Nullable String debugMessage) {
+        super(message, errorCode, HttpStatus.BAD_REQUEST, debugMessage);
+    }
+
+    public ValidationException(String message, String errorCode, @Nullable String debugMessage,
+                               @Nullable Throwable cause) {
+        super(message, errorCode, HttpStatus.BAD_REQUEST, debugMessage, cause);
+    }
 }
