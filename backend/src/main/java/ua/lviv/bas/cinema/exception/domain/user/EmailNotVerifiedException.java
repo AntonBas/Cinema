@@ -4,14 +4,16 @@ import org.springframework.http.HttpStatus;
 
 import ua.lviv.bas.cinema.exception.core.BusinessException;
 
+import java.io.Serial;
+
 public class EmailNotVerifiedException extends BusinessException {
 
-	private static final long serialVersionUID = 1L;
-	private static final String ERROR_CODE = "EMAIL_NOT_VERIFIED";
-	private static final HttpStatus STATUS = HttpStatus.BAD_REQUEST;
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-	public EmailNotVerifiedException(String action, String email) {
-		super(String.format("Cannot %s: email '%s' is not verified", action, email), ERROR_CODE, STATUS,
-				String.format("Email verification required for %s action", action));
-	}
+    public EmailNotVerifiedException(String action) {
+        super(String.format("Cannot %s: email is not verified", action), "EMAIL_NOT_VERIFIED",
+                HttpStatus.BAD_REQUEST,
+                String.format("Email verification required for %s action", action));
+    }
 }

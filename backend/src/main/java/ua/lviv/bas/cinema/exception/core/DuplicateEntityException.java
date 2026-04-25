@@ -22,4 +22,8 @@ public class DuplicateEntityException extends ConflictException {
     public DuplicateEntityException(String message, Throwable cause) {
         super(message, "DUPLICATE_ENTITY", cause.getMessage(), cause);
     }
+
+    public DuplicateEntityException(String message) {
+        super(message, "DUPLICATE_ENTITY", null);
+    }
 }

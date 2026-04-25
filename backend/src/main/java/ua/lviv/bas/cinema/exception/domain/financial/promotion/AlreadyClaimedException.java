@@ -2,12 +2,15 @@ package ua.lviv.bas.cinema.exception.domain.financial.promotion;
 
 import ua.lviv.bas.cinema.exception.core.ConflictException;
 
-public class AlreadyClaimedException extends ConflictException {
-	private static final long serialVersionUID = 1L;
+import java.io.Serial;
 
-	public AlreadyClaimedException(String userEmail, String promotionTitle) {
-		super(String.format("User '%s' has already claimed promotion '%s'", userEmail, promotionTitle),
-				"PROMOTION_ALREADY_CLAIMED",
-				String.format("User '%s' already claimed promotion '%s'", userEmail, promotionTitle));
-	}
+public class AlreadyClaimedException extends ConflictException {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    public AlreadyClaimedException(String promotionTitle) {
+        super(String.format("Promotion '%s' has already been claimed", promotionTitle), "PROMOTION_ALREADY_CLAIMED",
+                String.format("User already claimed promotion '%s'", promotionTitle));
+    }
 }

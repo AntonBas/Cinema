@@ -4,12 +4,16 @@ import org.springframework.http.HttpStatus;
 
 import ua.lviv.bas.cinema.exception.core.BusinessException;
 
+import java.io.Serial;
+
 public class HallLayoutHasTicketsException extends BusinessException {
 
-	private static final long serialVersionUID = 1L;
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-	public HallLayoutHasTicketsException(Long hallId) {
-		super(String.format("Cannot update hall layout for hall %d because seats have booked tickets", hallId),
-				"HALL_LAYOUT_HAS_TICKETS", HttpStatus.CONFLICT, String.format("Hall %d has booked tickets", hallId));
-	}
+    public HallLayoutHasTicketsException() {
+        super("Cannot update hall layout because seats have booked tickets",
+                "HALL_LAYOUT_HAS_TICKETS", HttpStatus.CONFLICT,
+                "Hall has booked tickets, layout update blocked");
+    }
 }
