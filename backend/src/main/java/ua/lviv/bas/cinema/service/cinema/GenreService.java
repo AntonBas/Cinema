@@ -26,70 +26,70 @@ import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 @Transactional(readOnly = true)
 public class GenreService {
 
-	private final GenreRepository genreRepository;
-	private final GenreMapper genreMapper;
-	private final MovieRepository movieRepository;
+    private final GenreRepository genreRepository;
+    private final GenreMapper genreMapper;
+    private final MovieRepository movieRepository;
 
-	@CacheEvict(value = "genres", allEntries = true)
-	@Transactional
-	public GenreResponse createGenre(GenreRequest request) {
-		log.info("Creating genre: {}", request.name());
-		validateGenreUniqueness(request.name(), null);
+    @CacheEvict(value = "genres", allEntries = true)
+    @Transactional
+    public GenreResponse createGenre(GenreRequest request) {
+        log.info("Creating genre: {}", request.name());
+        validateGenreUniqueness(request.name(), null);
 
-		var genre = genreMapper.toGenre(request);
-		var saved = genreRepository.save(genre);
+        var genre = genreMapper.toGenre(request);
+        var saved = genreRepository.save(genre);
 
-		log.debug("Genre created with ID: {}", saved.getId());
-		return genreMapper.toGenreResponse(saved);
-	}
+        log.debug("Genre created with ID: {}", saved.getId());
+        return genreMapper.toGenreResponse(saved);
+    }
 
-	@Cacheable(value = "genres", key = "'list-' + #query + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
-	public Page<GenreListResponse> getGenres(String query, Pageable pageable) {
-		log.info("Getting genres: query='{}', page={}, size={}", query, pageable.getPageNumber(),
-				pageable.getPageSize());
-		return genreRepository.findGenresByFilters(query, pageable).map(genreMapper::toGenreListResponse);
-	}
+    @Cacheable(value = "genres", key = "'list-' + #query + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+    public Page<GenreListResponse> getGenres(String query, Pageable pageable) {
+        log.info("Getting genres: query='{}', page={}, size={}", query, pageable.getPageNumber(),
+                pageable.getPageSize());
+        return genreRepository.findGenresByFilters(query, pageable).map(genreMapper::toGenreListResponse);
+    }
 
-	@CacheEvict(value = "genres", allEntries = true)
-	@Transactional
-	public GenreResponse updateGenre(Long id, GenreRequest request) {
-		log.info("Updating genre with id: {}, new name: {}", id, request.name());
+    @CacheEvict(value = "genres", allEntries = true)
+    @Transactional
+    public GenreResponse updateGenre(Long id, GenreRequest request) {
+        log.info("Updating genre with id: {}, new name: {}", id, request.name());
 
-		var genre = genreRepository.findById(id).orElseThrow(() -> new GenreNotFoundException(id));
-		validateGenreUniqueness(request.name(), id);
+        var genre = genreRepository.findById(id).orElseThrow(() -> new GenreNotFoundException(id));
+        validateGenreUniqueness(request.name(), id);
 
-		genreMapper.updateGenreFromRequest(request, genre);
-		var updated = genreRepository.save(genre);
+        genreMapper.updateGenreFromRequest(request, genre);
+        var updated = genreRepository.save(genre);
 
-		log.debug("Genre updated with ID: {}", updated.getId());
-		return genreMapper.toGenreResponse(updated);
-	}
+        log.debug("Genre updated with ID: {}", updated.getId());
+        return genreMapper.toGenreResponse(updated);
+    }
 
-	@CacheEvict(value = "genres", allEntries = true)
-	@Transactional
-	public void deleteGenre(Long id) {
-		log.info("Deleting genre with id: {}", id);
+    @CacheEvict(value = "genres", allEntries = true)
+    @Transactional
+    public void deleteGenre(Long id) {
+        log.info("Deleting genre with id: {}", id);
 
-		var genre = genreRepository.findById(id).orElseThrow(() -> new GenreNotFoundException(id));
-		checkGenreUsageInMovies(genre);
-		genreRepository.deleteById(id);
+        var genre = genreRepository.findById(id).orElseThrow(() -> new GenreNotFoundException(id));
+        checkGenreUsageInMovies(genre);
+        genreRepository.deleteById(id);
 
-		log.debug("Genre deleted with ID: {}", id);
-	}
+        log.debug("Genre deleted with ID: {}", id);
+    }
 
-	private void validateGenreUniqueness(String name, Long excludeId) {
-		boolean exists = excludeId != null ? genreRepository.existsByNameIgnoreCaseAndIdNot(name, excludeId)
-				: genreRepository.existsByNameIgnoreCase(name);
+    private void validateGenreUniqueness(String name, Long excludeId) {
+        boolean exists = excludeId != null ? genreRepository.existsByNameIgnoreCaseAndIdNot(name, excludeId)
+                : genreRepository.existsByNameIgnoreCase(name);
 
-		if (exists) {
-			throw new DuplicateEntityException("Genre", name);
-		}
-	}
+        if (exists) {
+            throw new DuplicateEntityException("Genre", name);
+        }
+    }
 
-	private void checkGenreUsageInMovies(Genre genre) {
-		long usageCount = movieRepository.countMovieUsageByGenreId(genre.getId());
-		if (usageCount > 0) {
-			throw new GenreHasMoviesException(genre.getId(), genre.getName(), usageCount);
-		}
-	}
+    private void checkGenreUsageInMovies(Genre genre) {
+        long usageCount = movieRepository.countMovieUsageByGenreId(genre.getId());
+        if (usageCount > 0) {
+            throw new GenreHasMoviesException(genre.getId(), genre.getName(), usageCount);
+        }
+    }
 }

@@ -2,17 +2,20 @@ package ua.lviv.bas.cinema.exception.domain.cinema;
 
 import ua.lviv.bas.cinema.exception.core.NotFoundException;
 
+import java.io.Serial;
+
 public class MovieNotFoundException extends NotFoundException {
 
-	private static final long serialVersionUID = 1L;
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-	public MovieNotFoundException(Long movieId) {
-		super(String.format("Movie with id '%d' not found", movieId), "MOVIE_NOT_FOUND",
-				String.format("Movie entity with id %d does not exist", movieId));
-	}
+    public MovieNotFoundException(Long movieId) {
+        super("Movie not found", "MOVIE_NOT_FOUND",
+                String.format("Movie entity with id %d does not exist", movieId));
+    }
 
-	public MovieNotFoundException(String title) {
-		super(String.format("Movie with title '%s' not found", title), "MOVIE_NOT_FOUND",
-				String.format("Movie entity with title %s does not exist", title));
-	}
+    public MovieNotFoundException(String slug) {
+        super("Movie not found", "MOVIE_NOT_FOUND",
+                String.format("Movie entity with slug '%s' does not exist", slug));
+    }
 }

@@ -27,70 +27,70 @@ import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
 @Transactional(readOnly = true)
 public class PersonService {
 
-	private final PersonRepository personRepository;
-	private final MovieRepository movieRepository;
-	private final PersonMapper personMapper;
+    private final PersonRepository personRepository;
+    private final MovieRepository movieRepository;
+    private final PersonMapper personMapper;
 
-	@CacheEvict(value = "persons", allEntries = true)
-	@Transactional
-	public PersonResponse createPerson(PersonRequest request) {
-		log.info("Creating person: {}", request.name());
-		validatePersonUniqueness(request.name(), request.role(), null);
+    @CacheEvict(value = "persons", allEntries = true)
+    @Transactional
+    public PersonResponse createPerson(PersonRequest request) {
+        log.info("Creating person: {}", request.name());
+        validatePersonUniqueness(request.name(), request.role(), null);
 
-		var person = personMapper.toPerson(request);
-		var saved = personRepository.save(person);
+        var person = personMapper.toPerson(request);
+        var saved = personRepository.save(person);
 
-		log.debug("Person created with ID: {}", saved.getId());
-		return personMapper.toPersonResponse(saved);
-	}
+        log.debug("Person created with ID: {}", saved.getId());
+        return personMapper.toPersonResponse(saved);
+    }
 
-	@Cacheable(value = "persons", key = "{ 'list', #query, #role?.name(), #pageable.pageNumber, #pageable.pageSize, #pageable.sort.toString() }")
-	public Page<PersonListResponse> getPersons(String query, PersonRole role, Pageable pageable) {
-		log.info("Getting persons: query='{}', role={}, page={}, size={}", query, role, pageable.getPageNumber(),
-				pageable.getPageSize());
-		return personRepository.findPersonsByFilters(query, role, pageable).map(personMapper::toPersonListResponse);
-	}
+    @Cacheable(value = "persons", key = "{ 'list', #query, #role?.name(), #pageable.pageNumber, #pageable.pageSize, #pageable.sort.toString() }")
+    public Page<PersonListResponse> getPersons(String query, PersonRole role, Pageable pageable) {
+        log.info("Getting persons: query='{}', role={}, page={}, size={}", query, role, pageable.getPageNumber(),
+                pageable.getPageSize());
+        return personRepository.findPersonsByFilters(query, role, pageable).map(personMapper::toPersonListResponse);
+    }
 
-	@CacheEvict(value = "persons", allEntries = true)
-	@Transactional
-	public PersonResponse updatePerson(Long id, PersonRequest request) {
-		log.info("Updating person with id: {}", id);
+    @CacheEvict(value = "persons", allEntries = true)
+    @Transactional
+    public PersonResponse updatePerson(Long id, PersonRequest request) {
+        log.info("Updating person with id: {}", id);
 
-		var person = personRepository.findById(id).orElseThrow(() -> new PersonNotFoundException(id));
-		validatePersonUniqueness(request.name(), request.role(), id);
+        var person = personRepository.findById(id).orElseThrow(() -> new PersonNotFoundException(id));
+        validatePersonUniqueness(request.name(), request.role(), id);
 
-		personMapper.updatePersonFromRequest(request, person);
-		var updated = personRepository.save(person);
+        personMapper.updatePersonFromRequest(request, person);
+        var updated = personRepository.save(person);
 
-		log.debug("Person updated with ID: {}", updated.getId());
-		return personMapper.toPersonResponse(updated);
-	}
+        log.debug("Person updated with ID: {}", updated.getId());
+        return personMapper.toPersonResponse(updated);
+    }
 
-	@CacheEvict(value = "persons", allEntries = true)
-	@Transactional
-	public void deletePerson(Long id) {
-		log.info("Deleting person with id: {}", id);
+    @CacheEvict(value = "persons", allEntries = true)
+    @Transactional
+    public void deletePerson(Long id) {
+        log.info("Deleting person with id: {}", id);
 
-		var person = personRepository.findById(id).orElseThrow(() -> new PersonNotFoundException(id));
-		checkPersonUsageInMovies(person);
-		personRepository.delete(person);
+        var person = personRepository.findById(id).orElseThrow(() -> new PersonNotFoundException(id));
+        checkPersonUsageInMovies(person);
+        personRepository.delete(person);
 
-		log.debug("Person deleted with ID: {}", id);
-	}
+        log.debug("Person deleted with ID: {}", id);
+    }
 
-	private void validatePersonUniqueness(String name, PersonRole role, Long excludeId) {
-		boolean exists = excludeId != null ? personRepository.existsByNameAndRoleAndIdNot(name, role, excludeId)
-				: personRepository.existsByNameAndRole(name, role);
+    private void validatePersonUniqueness(String name, PersonRole role, Long excludeId) {
+        boolean exists = excludeId != null ? personRepository.existsByNameAndRoleAndIdNot(name, role, excludeId)
+                : personRepository.existsByNameAndRole(name, role);
 
-		if (exists) {
-			throw new DuplicateEntityException("Person", name + " (" + role + ")");
-		}
-	}
+        if (exists) {
+            throw new DuplicateEntityException("Person", name + " (" + role + ")");
+        }
+    }
 
-	private void checkPersonUsageInMovies(Person person) {
-		long usageCount = movieRepository.countMovieUsageByPersonId(person.getId());
-		if (usageCount > 0) {
-			throw new PersonHasMoviesException(person.getId(), person.getName(), usageCount);
-		}
-	}
+    private void checkPersonUsageInMovies(Person person) {
+        long usageCount = movieRepository.countMovieUsageByPersonId(person.getId());
+        if (usageCount > 0) {
+            throw new PersonHasMoviesException(person.getName(), usageCount);
+        }
+    }
 }
