@@ -23,6 +23,7 @@ import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
 import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.domain.user.User;
+import ua.lviv.bas.cinema.dto.ticket.response.TicketCashierResponse;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketValidationException;
@@ -44,7 +45,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class TicketServiceTest {
+class TicketServiceTest {
 
     @Mock
     private TicketRepository ticketRepository;
@@ -68,15 +69,13 @@ public class TicketServiceTest {
     private SeatReservation seatReservation;
     private Ticket testTicket;
     private TicketResponse testTicketResponse;
+    private TicketCashierResponse testTicketCashierResponse;
     private Session testSession;
-    private Seat testSeat;
-    private TicketType ticketType;
 
     private static final Long USER_ID = 1L;
     private static final Long OTHER_USER_ID = 2L;
     private static final Long TICKET_ID = 100L;
     private static final Long BOOKING_ID = 1L;
-    private static final Long SEAT_ID = 1L;
     private static final String TICKET_CODE = "TICKET-123";
     private static final String GENERATED_CODE = "TICKET-GEN-456";
     private static final BigDecimal PRICE = new BigDecimal("150.00");
@@ -92,8 +91,7 @@ public class TicketServiceTest {
         testUser.setId(USER_ID);
         testUser.setEmail("test@example.com");
 
-        testSeat = new Seat();
-        testSeat.setId(SEAT_ID);
+        Seat testSeat = new Seat();
         testSeat.setRow(5);
         testSeat.setNumber(12);
 
@@ -118,8 +116,9 @@ public class TicketServiceTest {
         testPayment = new Payment();
         testPayment.setId(1L);
 
-        ticketType = new TicketType();
+        TicketType ticketType = new TicketType();
         ticketType.setDisplayName("Adult");
+        ticketType.setRequiresDocument(false);
 
         seatReservation = new SeatReservation();
         seatReservation.setSeat(testSeat);
@@ -140,6 +139,10 @@ public class TicketServiceTest {
         testTicketResponse = new TicketResponse(TICKET_ID, TICKET_CODE, "/api/tickets/" + TICKET_CODE + "/qr",
                 TicketStatus.ACTIVE, LocalDateTime.now(), PRICE, "Adult", "Test Movie", testSession.getStartTime(),
                 "Hall A", 5, 12);
+
+        testTicketCashierResponse = new TicketCashierResponse(TICKET_ID, TICKET_CODE, TicketStatus.ACTIVE,
+                "Test Movie", testSession.getStartTime(), "Hall A", "5", 12,
+                "Adult", false, null, "test@example.com", PRICE);
     }
 
     @Test
@@ -152,7 +155,7 @@ public class TicketServiceTest {
         List<Ticket> tickets = ticketService.createTicketsForBooking(testBooking, testPayment);
 
         assertThat(tickets).hasSize(1);
-        Ticket ticket = tickets.get(0);
+        Ticket ticket = tickets.getFirst();
         assertThat(ticket.getUniqueCode()).isEqualTo(GENERATED_CODE);
         assertThat(ticket.getStatus()).isEqualTo(TicketStatus.ACTIVE);
         assertThat(ticket.getOriginalPrice()).isEqualTo(PRICE);
@@ -161,29 +164,6 @@ public class TicketServiceTest {
         assertThat(ticket.getSeatReservation().getSeat()).isNotNull();
         assertThat(ticket.getSeatReservation().getSeat().getNumber()).isEqualTo(12);
         verify(ticketRepository).saveAll(anyList());
-    }
-
-    @Test
-    void getTicketByIdShouldSucceed() {
-        when(ticketRepository.findByIdAndUserIdAndStatus(TICKET_ID, USER_ID, TicketStatus.ACTIVE))
-                .thenReturn(Optional.of(testTicket));
-        when(ticketMapper.toTicketResponse(testTicket)).thenReturn(testTicketResponse);
-
-        TicketResponse result = ticketService.getTicket(TICKET_ID, testUser);
-
-        assertThat(result).isNotNull();
-        assertThat(result.id()).isEqualTo(TICKET_ID);
-        assertThat(result.ticketCode()).isEqualTo(TICKET_CODE);
-        assertThat(result.qrCodeUrl()).isEqualTo("/api/tickets/" + TICKET_CODE + "/qr");
-    }
-
-    @Test
-    void getTicketByIdWhenNotFoundShouldThrowException() {
-        when(ticketRepository.findByIdAndUserIdAndStatus(TICKET_ID, USER_ID, TicketStatus.ACTIVE))
-                .thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> ticketService.getTicket(TICKET_ID, testUser))
-                .isInstanceOf(TicketValidationException.class);
     }
 
     @Test
@@ -218,13 +198,41 @@ public class TicketServiceTest {
     }
 
     @Test
+    void getTicketForCashierShouldSucceed() {
+        when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
+        when(ticketMapper.toTicketCashierResponse(testTicket)).thenReturn(testTicketCashierResponse);
+
+        TicketCashierResponse result = ticketService.getTicketForCashier(TICKET_CODE);
+
+        assertThat(result).isNotNull();
+        assertThat(result.id()).isEqualTo(TICKET_ID);
+        assertThat(result.uniqueCode()).isEqualTo(TICKET_CODE);
+        assertThat(result.userEmail()).isEqualTo("test@example.com");
+        assertThat(result.movieTitle()).isEqualTo("Test Movie");
+        assertThat(result.hallName()).isEqualTo("Hall A");
+        assertThat(result.seatRow()).isEqualTo("5");
+        assertThat(result.seatNumber()).isEqualTo(12);
+        assertThat(result.ticketType()).isEqualTo("Adult");
+        assertThat(result.requiresDocument()).isFalse();
+        assertThat(result.documentType()).isNull();
+    }
+
+    @Test
+    void getTicketForCashierWhenNotFoundShouldThrowException() {
+        when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> ticketService.getTicketForCashier(TICKET_CODE))
+                .isInstanceOf(TicketNotFoundException.class);
+    }
+
+    @Test
     void getTicketsShouldSucceed() {
         TicketStatus status = TicketStatus.ACTIVE;
         String movieTitle = "Test Movie";
         Pageable pageable = Pageable.unpaged();
 
         @SuppressWarnings("unchecked")
-        Specification<Ticket> specification = (Specification<Ticket>) org.mockito.Mockito.mock(Specification.class);
+        Specification<Ticket> specification = (Specification<Ticket>) mock(Specification.class);
         Page<Ticket> ticketPage = new PageImpl<>(List.of(testTicket));
 
         when(ticketSpecification.buildForUser(eq(USER_ID), eq(status), eq(movieTitle)))
@@ -235,7 +243,7 @@ public class TicketServiceTest {
         Page<TicketResponse> result = ticketService.getTickets(testUser, status, movieTitle, pageable);
 
         assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().get(0).id()).isEqualTo(TICKET_ID);
+        assertThat(result.getContent().getFirst().id()).isEqualTo(TICKET_ID);
     }
 
     @Test
@@ -243,7 +251,7 @@ public class TicketServiceTest {
         Pageable pageable = Pageable.unpaged();
 
         @SuppressWarnings("unchecked")
-        Specification<Ticket> specification = (Specification<Ticket>) org.mockito.Mockito.mock(Specification.class);
+        Specification<Ticket> specification = (Specification<Ticket>) mock(Specification.class);
         Page<Ticket> ticketPage = new PageImpl<>(List.of(testTicket));
 
         when(ticketSpecification.buildForUser(eq(USER_ID), eq(null), eq(null)))
@@ -254,7 +262,7 @@ public class TicketServiceTest {
         Page<TicketResponse> result = ticketService.getTickets(testUser, null, null, pageable);
 
         assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().get(0).id()).isEqualTo(TICKET_ID);
+        assertThat(result.getContent().getFirst().id()).isEqualTo(TICKET_ID);
     }
 
     @Test
@@ -264,7 +272,7 @@ public class TicketServiceTest {
         testTicket.setStatus(TicketStatus.USED);
 
         @SuppressWarnings("unchecked")
-        Specification<Ticket> specification = (Specification<Ticket>) org.mockito.Mockito.mock(Specification.class);
+        Specification<Ticket> specification = (Specification<Ticket>) mock(Specification.class);
         Page<Ticket> ticketPage = new PageImpl<>(List.of(testTicket));
 
         when(ticketSpecification.buildForUser(eq(USER_ID), eq(TicketStatus.USED), eq(null)))
@@ -282,7 +290,7 @@ public class TicketServiceTest {
         Pageable pageable = Pageable.unpaged();
 
         @SuppressWarnings("unchecked")
-        Specification<Ticket> specification = (Specification<Ticket>) org.mockito.Mockito.mock(Specification.class);
+        Specification<Ticket> specification = (Specification<Ticket>) mock(Specification.class);
         Page<Ticket> ticketPage = new PageImpl<>(List.of(testTicket));
 
         when(ticketSpecification.buildForUser(eq(USER_ID), eq(null), eq("Test")))
@@ -299,10 +307,13 @@ public class TicketServiceTest {
     void validateShouldSucceed() {
         when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
         when(ticketRepository.save(testTicket)).thenReturn(testTicket);
+        when(ticketMapper.toTicketCashierResponse(testTicket)).thenReturn(testTicketCashierResponse);
 
-        ticketService.validate(TICKET_CODE);
+        TicketCashierResponse result = ticketService.validate(TICKET_CODE);
 
         assertThat(testTicket.getStatus()).isEqualTo(TicketStatus.USED);
+        assertThat(result).isNotNull();
+        assertThat(result.uniqueCode()).isEqualTo(TICKET_CODE);
         verify(ticketRepository).save(testTicket);
     }
 
@@ -505,6 +516,7 @@ public class TicketServiceTest {
     void auditServiceShouldBeCalledOnValidate() {
         when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
         when(ticketRepository.save(testTicket)).thenReturn(testTicket);
+        when(ticketMapper.toTicketCashierResponse(testTicket)).thenReturn(testTicketCashierResponse);
 
         ticketService.validate(TICKET_CODE);
 
