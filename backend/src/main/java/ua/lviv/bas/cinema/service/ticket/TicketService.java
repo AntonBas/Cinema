@@ -18,6 +18,7 @@ import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
 import ua.lviv.bas.cinema.domain.user.User;
+import ua.lviv.bas.cinema.dto.ticket.response.TicketCashierResponse;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketValidationException;
@@ -74,11 +75,9 @@ public class TicketService {
                 .status(TicketStatus.ACTIVE).purchaseTime(LocalDateTime.now()).build();
     }
 
-    @Cacheable(value = "tickets", key = "#ticketId + '-' + #user.id")
-    public TicketResponse getTicket(Long ticketId, User user) {
-        var ticket = ticketRepository.findByIdAndUserIdAndStatus(ticketId, user.getId(), TicketStatus.ACTIVE)
-                .orElseThrow(TicketValidationException::notFound);
-        return toTicketResponse(ticket);
+    public TicketCashierResponse getTicketForCashier(String uniqueCode) {
+        var ticket = ticketRepository.findByUniqueCode(uniqueCode).orElseThrow(() -> new TicketNotFoundException("Ticket not found with code: " + uniqueCode));
+        return ticketMapper.toTicketCashierResponse(ticket);
     }
 
     @Cacheable(value = "tickets", key = "#ticketCode + '-' + #user.id")
@@ -102,7 +101,7 @@ public class TicketService {
 
     @CacheEvict(value = "tickets", allEntries = true)
     @Transactional
-    public void validate(String ticketCode) {
+    public TicketCashierResponse validate(String ticketCode) {
         var ticket = ticketRepository.findByUniqueCode(ticketCode).orElseThrow(TicketValidationException::notFound);
 
         var oldStatus = ticket.getStatus();
@@ -112,6 +111,8 @@ public class TicketService {
         ticketRepository.save(ticket);
         log.info("Ticket {} validated and marked as used", ticketCode);
         auditValidate(ticket, oldStatus);
+
+        return ticketMapper.toTicketCashierResponse(ticket);
     }
 
     @Transactional(readOnly = true)
