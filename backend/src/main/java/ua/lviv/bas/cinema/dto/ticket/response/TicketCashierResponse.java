@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 public record TicketCashierResponse(
 
         @Schema(description = "Ticket ID", example = "123")
-        Long ticketId,
+        Long id,
 
         @Schema(description = "Unique ticket code from QR", example = "TKT-B1F0445950FE")
         String uniqueCode,
