@@ -39,6 +39,8 @@ import SectionPromotion from "@/components/admin/SectionPromotion/SectionPromoti
 import SectionTicketType from "@/components/admin/SectionTicketType/SectionTicketType";
 import { SectionAuditLogs } from "@/components/admin/SectionAuditLogs/SectionAuditLogs";
 
+import { CashierScanPage } from "@/pages/cashier/CashierScanPage";
+
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
@@ -165,6 +167,15 @@ export const AppRoutes: React.FC = () => {
           <ProtectedRoute>
             <SuccessPage />
           </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/cashier/scan/:uniqueCode"
+        element={
+          <AdminRoute>
+            <CashierScanPage />
+          </AdminRoute>
         }
       />
 
