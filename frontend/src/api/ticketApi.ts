@@ -21,9 +21,6 @@ export const ticketApi = {
       responseType: "blob",
     }),
 
-  validate: (ticketCode: string) =>
-    api.post<void>(`${BASE_URL}/code/${ticketCode}/validate`),
-
   getTicketForCashier: (uniqueCode: string) =>
     api.get<TicketCashierResponse>(`${CASHIER_BASE_URL}/${uniqueCode}`),
 

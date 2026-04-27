@@ -13,21 +13,18 @@ export const useTickets = () => {
   const ticketsApi = useApi<PageResponse<TicketResponse>>();
   const ticketApiHook = useApi<TicketResponse>();
   const qrCodeApi = useApi<Blob>();
-  const validateApi = useApi<void>();
   const cashierTicketApi = useApi<TicketCashierResponse>();
   const cashierValidateApi = useApi<TicketCashierResponse>();
 
   const ticketsApiRef = useRef(ticketsApi);
   const ticketApiRef = useRef(ticketApiHook);
   const qrCodeApiRef = useRef(qrCodeApi);
-  const validateApiRef = useRef(validateApi);
   const cashierTicketApiRef = useRef(cashierTicketApi);
   const cashierValidateApiRef = useRef(cashierValidateApi);
 
   ticketsApiRef.current = ticketsApi;
   ticketApiRef.current = ticketApiHook;
   qrCodeApiRef.current = qrCodeApi;
-  validateApiRef.current = validateApi;
   cashierTicketApiRef.current = cashierTicketApi;
   cashierValidateApiRef.current = cashierValidateApi;
 
@@ -35,7 +32,6 @@ export const useTickets = () => {
     ticketsApi.loading ||
       ticketApiHook.loading ||
       qrCodeApi.loading ||
-      validateApi.loading ||
       cashierTicketApi.loading ||
       cashierValidateApi.loading,
     { delay: 150, minDisplayTime: 300 },
@@ -56,13 +52,6 @@ export const useTickets = () => {
 
   const getQRCode = useCallback(async (ticketCode: string) => {
     return qrCodeApiRef.current.execute(() => ticketApi.getQRCode(ticketCode));
-  }, []);
-
-  const validate = useCallback(async (ticketCode: string) => {
-    return validateApiRef.current.execute(
-      () => ticketApi.validate(ticketCode),
-      { successMessage: "Ticket validated successfully" },
-    );
   }, []);
 
   const getTicketForCashier = useCallback(async (uniqueCode: string) => {
@@ -89,13 +78,11 @@ export const useTickets = () => {
     ticketsError: ticketsApi.error,
     ticketError: ticketApiHook.error,
     qrCodeError: qrCodeApi.error,
-    validateError: validateApi.error,
     cashierTicketError: cashierTicketApi.error,
     cashierValidateError: cashierValidateApi.error,
     getUserTickets,
     getByCode,
     getQRCode,
-    validate,
     getTicketForCashier,
     validateTicket,
   };

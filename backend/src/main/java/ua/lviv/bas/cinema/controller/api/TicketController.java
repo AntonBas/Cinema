@@ -7,9 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
@@ -60,15 +58,5 @@ public class TicketController {
     public byte[] getQR(@PathVariable String ticketCode) {
         log.info("GET /api/tickets/code/{}/qr", ticketCode);
         return ticketService.generateQR(ticketCode);
-    }
-
-    @RateLimit(value = 20, duration = 1)
-    @PostMapping("/code/{ticketCode}/validate")
-    @ResponseStatus(HttpStatus.OK)
-    @Operation(summary = "Validate ticket")
-    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
-    public void validate(@PathVariable String ticketCode) {
-        log.info("POST /api/tickets/code/{}/validate", ticketCode);
-        ticketService.validate(ticketCode);
     }
 }
