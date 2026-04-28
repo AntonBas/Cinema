@@ -89,7 +89,6 @@ app:
     secret: ${JWT_SECRET:local_fallback_secret_key_for_dev_only}
     expiration: 86400000
   qr:
-    size: 200
     margin: 1
     format: PNG
   base-url: ${APP_BASE_URL:http://localhost:5173}
