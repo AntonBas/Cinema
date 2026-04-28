@@ -14,52 +14,37 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PosterService {
 
-	private final FileStorageService fileStorageService;
+    private final FileStorageService fileStorageService;
 
-	private static final String POSTER_SUB_DIRECTORY = "posters";
-	private static final String DEFAULT_POSTER_URL = "/images/default-poster.jpg";
+    private static final String POSTER_SUB_DIRECTORY = "posters";
 
-	public String uploadPoster(MultipartFile posterFile) {
-		return fileStorageService.storeFile(posterFile, POSTER_SUB_DIRECTORY);
-	}
+    public String uploadPoster(MultipartFile posterFile) {
+        return fileStorageService.storeFile(posterFile, POSTER_SUB_DIRECTORY);
+    }
 
-	public void deletePoster(String posterFileName) {
-		fileStorageService.deleteFile(posterFileName, POSTER_SUB_DIRECTORY);
-	}
+    public void deletePoster(String posterFileName) {
+        fileStorageService.deleteFile(posterFileName, POSTER_SUB_DIRECTORY);
+    }
 
-	public ResponseEntity<byte[]> getPosterResponse(String posterFileName) {
-		if (posterFileName == null || posterFileName.isBlank()) {
-			return ResponseEntity.notFound().build();
-		}
+    public ResponseEntity<byte[]> getPosterResponse(String posterFileName) {
+        if (posterFileName == null || posterFileName.isBlank()) {
+            return ResponseEntity.notFound().build();
+        }
 
-		var data = fileStorageService.loadFile(posterFileName, POSTER_SUB_DIRECTORY);
-		if (data == null) {
-			return ResponseEntity.notFound().build();
-		}
+        var data = fileStorageService.loadFile(posterFileName, POSTER_SUB_DIRECTORY);
+        if (data == null) {
+            return ResponseEntity.notFound().build();
+        }
 
-		var contentType = fileStorageService.determineContentType(posterFileName);
-		MediaType mediaType;
-		try {
-			mediaType = MediaType.parseMediaType(contentType);
-		} catch (Exception e) {
-			log.warn("Invalid media type: {}, using default", contentType);
-			mediaType = MediaType.APPLICATION_OCTET_STREAM;
-		}
+        var contentType = fileStorageService.determineContentType(posterFileName);
+        MediaType mediaType;
+        try {
+            mediaType = MediaType.parseMediaType(contentType);
+        } catch (Exception e) {
+            log.warn("Invalid media type: {}, using default", contentType);
+            mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        }
 
-		return ResponseEntity.ok().contentType(mediaType).header(HttpHeaders.CACHE_CONTROL, "max-age=3600").body(data);
-	}
-
-	public String getPosterUrl(Long movieId, String posterFileName) {
-		if (posterFileName == null || posterFileName.isBlank()) {
-			return DEFAULT_POSTER_URL;
-		}
-		return "/api/movies/" + movieId + "/poster";
-	}
-
-	public boolean hasPoster(String posterFileName) {
-		if (posterFileName == null || posterFileName.isBlank()) {
-			return false;
-		}
-		return fileStorageService.fileExists(posterFileName, POSTER_SUB_DIRECTORY);
-	}
+        return ResponseEntity.ok().contentType(mediaType).header(HttpHeaders.CACHE_CONTROL, "max-age=3600").body(data);
+    }
 }
