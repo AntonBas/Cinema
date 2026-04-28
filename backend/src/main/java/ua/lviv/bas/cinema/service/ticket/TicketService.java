@@ -25,13 +25,12 @@ import ua.lviv.bas.cinema.exception.domain.ticket.TicketValidationException;
 import ua.lviv.bas.cinema.mapper.ticket.TicketMapper;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.repository.ticket.specification.TicketSpecification;
+import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.integration.qr.QRCodeService;
-import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -54,7 +53,7 @@ public class TicketService {
     private String ticketBaseUrl;
 
     @Transactional
-    public List<Ticket> createTicketsForBooking(Booking booking, Payment payment) {
+    public void createTicketsForBooking(Booking booking, Payment payment) {
         var tickets = booking.getSeatReservations().stream()
                 .map(seatReservation -> buildTicket(booking, payment, seatReservation)).toList();
 
@@ -64,8 +63,6 @@ public class TicketService {
         for (var ticket : savedTickets) {
             auditCreate(ticket, booking.getId());
         }
-
-        return savedTickets;
     }
 
     private Ticket buildTicket(Booking booking, Payment payment, SeatReservation seatReservation) {
@@ -116,11 +113,6 @@ public class TicketService {
     }
 
     @Transactional(readOnly = true)
-    public boolean isValid(String ticketCode) {
-        return ticketRepository.findByUniqueCode(ticketCode).map(this::isValidForEntry).orElse(false);
-    }
-
-    @Transactional(readOnly = true)
     public TicketStatus getStatus(String ticketCode) {
         return ticketRepository.findByUniqueCode(ticketCode).map(Ticket::getStatus).orElse(null);
     }
@@ -160,15 +152,6 @@ public class TicketService {
         }
         if (session.getStatus() == CinemaSessionStatus.CANCELLED) {
             throw new TicketValidationException("Session has been cancelled");
-        }
-    }
-
-    private boolean isValidForEntry(Ticket ticket) {
-        try {
-            validateForEntry(ticket);
-            return true;
-        } catch (TicketValidationException e) {
-            return false;
         }
     }
 
