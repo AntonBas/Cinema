@@ -54,6 +54,22 @@ public class PaymentController {
         return paymentService.createPayment(request, user);
     }
 
+    @RateLimit(duration = 1, key = "user")
+    @PostMapping("/{paymentId}/retry")
+    @Operation(summary = "Retry failed payment")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Payment retry initiated"),
+            @ApiResponse(responseCode = "404", description = "Payment not found"),
+            @ApiResponse(responseCode = "400", description = "Payment cannot be retried")
+    })
+    @PreAuthorize("isAuthenticated()")
+    public PaymentResponse retryPayment(@PathVariable Long paymentId,
+                                        @AuthenticationPrincipal CustomUserDetails userDetails) {
+        var user = userDetails.getUser();
+        log.info("POST /api/payments/{}/retry - user: {}", paymentId, user.getId());
+        return paymentService.retryPayment(paymentId, user);
+    }
+
     @RateLimit(value = 10, duration = 1, key = "user")
     @GetMapping("/{paymentId}/liqpay-data")
     @Operation(summary = "Get LiqPay data")
