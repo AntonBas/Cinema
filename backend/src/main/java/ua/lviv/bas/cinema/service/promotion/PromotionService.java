@@ -130,7 +130,7 @@ public class PromotionService {
             throw new PromotionNotActiveException(promotion.getTitle());
         }
 
-        if (userPromotionRepository.existsByUserAndPromotion(user, promotion)) {
+        if (hasUserClaimedPromotion(user, promotion.getId())) {
             throw new AlreadyClaimedException(promotion.getTitle());
         }
 
