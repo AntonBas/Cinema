@@ -67,8 +67,6 @@ public abstract class CinemaHallMapper {
     @Mapping(target = "capacity", source = "hall", qualifiedByName = "calculateCapacity")
     public abstract CinemaHallListResponse toCinemaHallListResponse(CinemaHall hall);
 
-    public abstract List<CinemaHallListResponse> toCinemaHallListResponseList(List<CinemaHall> halls);
-
     @Mapping(target = "capacity", source = "seatsCount")
     public abstract CinemaHallListResponse toCinemaHallListResponse(CinemaHallListProjection projection);
 

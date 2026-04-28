@@ -3,11 +3,9 @@ package ua.lviv.bas.cinema.mapper.ticket;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
-
 import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketCashierResponse;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
-import ua.lviv.bas.cinema.repository.ticket.projection.TicketProjection;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface TicketMapper {
@@ -22,17 +20,6 @@ public interface TicketMapper {
     @Mapping(target = "seatNumber", source = "seatReservation.seat.number")
     @Mapping(target = "qrCodeUrl", ignore = true)
     TicketResponse toTicketResponse(Ticket ticket);
-
-    @Mapping(target = "ticketCode", source = "uniqueCode")
-    @Mapping(target = "price", source = "finalPrice")
-    @Mapping(target = "ticketType", source = "ticketTypeName")
-    @Mapping(target = "movieTitle", source = "movieTitle")
-    @Mapping(target = "sessionTime", source = "sessionStartTime")
-    @Mapping(target = "hallName", source = "hallName")
-    @Mapping(target = "row", source = "row")
-    @Mapping(target = "seatNumber", source = "seatNumber")
-    @Mapping(target = "qrCodeUrl", ignore = true)
-    TicketResponse toTicketResponse(TicketProjection projection);
 
     @Mapping(target = "ticketType", source = "ticketType.displayName")
     @Mapping(target = "requiresDocument", source = "ticketType.requiresDocument")

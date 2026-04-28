@@ -16,20 +16,17 @@ import ua.lviv.bas.cinema.repository.cinema.projection.GenreListProjection;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface GenreMapper {
 
-	@Mapping(target = "movieCount", expression = "java(genre.getMovies() != null ? genre.getMovies().size() : 0)")
-	GenreListResponse toGenreListResponse(Genre genre);
+    @Mapping(target = "movieCount", source = "movieCount")
+    GenreListResponse toGenreListResponse(GenreListProjection projection);
 
-	@Mapping(target = "movieCount", source = "movieCount")
-	GenreListResponse toGenreListResponse(GenreListProjection projection);
+    GenreResponse toGenreResponse(Genre genre);
 
-	GenreResponse toGenreResponse(Genre genre);
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "movies", ignore = true)
+    Genre toGenre(GenreRequest genreRequest);
 
-	@Mapping(target = "id", ignore = true)
-	@Mapping(target = "movies", ignore = true)
-	Genre toGenre(GenreRequest genreRequest);
-
-	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-	@Mapping(target = "id", ignore = true)
-	@Mapping(target = "movies", ignore = true)
-	void updateGenreFromRequest(GenreRequest genreRequest, @MappingTarget Genre genre);
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "movies", ignore = true)
+    void updateGenreFromRequest(GenreRequest genreRequest, @MappingTarget Genre genre);
 }

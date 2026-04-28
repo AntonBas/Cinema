@@ -16,18 +16,15 @@ import ua.lviv.bas.cinema.repository.cinema.projection.PersonListProjection;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface PersonMapper {
 
-	@Mapping(target = "movieCount", constant = "0")
-	PersonListResponse toPersonListResponse(Person person);
+    @Mapping(target = "movieCount", source = "movieCount")
+    PersonListResponse toPersonListResponse(PersonListProjection projection);
 
-	@Mapping(target = "movieCount", source = "movieCount")
-	PersonListResponse toPersonListResponse(PersonListProjection projection);
+    PersonResponse toPersonResponse(Person person);
 
-	PersonResponse toPersonResponse(Person person);
+    @Mapping(target = "id", ignore = true)
+    Person toPerson(PersonRequest request);
 
-	@Mapping(target = "id", ignore = true)
-	Person toPerson(PersonRequest request);
-
-	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-	@Mapping(target = "id", ignore = true)
-	void updatePersonFromRequest(PersonRequest request, @MappingTarget Person person);
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
+    void updatePersonFromRequest(PersonRequest request, @MappingTarget Person person);
 }
