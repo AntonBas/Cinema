@@ -1,93 +1,75 @@
 package ua.lviv.bas.cinema.service.integration.audit;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.audit.AuditLog;
 import ua.lviv.bas.cinema.domain.audit.AuditLogDetail;
 import ua.lviv.bas.cinema.repository.audit.AuditLogRepository;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuditService {
 
-	private final AuditLogRepository auditLogRepository;
+    private final AuditLogRepository auditLogRepository;
 
-	@Transactional
-	public void logChange(String entityType, Long entityId, String targetInfo, AuditAction action,
-			Map<String, Object> oldValues, Map<String, Object> newValues) {
-		try {
-			var auditLog = AuditLog.builder().entityType(entityType).entityId(entityId).targetInfo(targetInfo)
-					.action(action).changedBy(getCurrentUser()).changedAt(LocalDateTime.now()).build();
+    @Transactional
+    public void logChange(String entityType, Long entityId, String targetInfo, AuditAction action,
+                          Map<String, Object> oldValues, Map<String, Object> newValues) {
+        try {
+            var auditLog = AuditLog.builder().entityType(entityType).entityId(entityId).targetInfo(targetInfo)
+                    .action(action).changedBy(getCurrentUser()).changedAt(LocalDateTime.now()).build();
 
-			List<AuditLogDetail> details = new ArrayList<>();
+            List<AuditLogDetail> details = new ArrayList<>();
 
-			if (oldValues != null && newValues != null) {
-				for (var entry : newValues.entrySet()) {
-					String field = entry.getKey();
-					Object newVal = entry.getValue();
-					Object oldVal = oldValues.get(field);
+            if (oldValues != null && newValues != null) {
+                for (var entry : newValues.entrySet()) {
+                    String field = entry.getKey();
+                    Object newVal = entry.getValue();
+                    Object oldVal = oldValues.get(field);
 
-					if (!areEqual(oldVal, newVal)) {
-						details.add(AuditLogDetail.builder().auditLog(auditLog).fieldName(field)
-								.oldValue(oldVal != null ? oldVal.toString() : null)
-								.newValue(newVal != null ? newVal.toString() : null).build());
-					}
-				}
-			}
+                    if (!areEqual(oldVal, newVal)) {
+                        details.add(AuditLogDetail.builder().auditLog(auditLog).fieldName(field)
+                                .oldValue(oldVal != null ? oldVal.toString() : null)
+                                .newValue(newVal != null ? newVal.toString() : null).build());
+                    }
+                }
+            }
 
-			auditLog.setDetails(details);
-			auditLogRepository.save(auditLog);
+            auditLog.setDetails(details);
+            auditLogRepository.save(auditLog);
 
-			log.debug("Audit log saved: {} {} {}", entityType, entityId, action);
+            log.debug("Audit log saved: {} {} {}", entityType, entityId, action);
 
-		} catch (Exception e) {
-			log.error("Failed to save audit log", e);
-		}
-	}
+        } catch (Exception e) {
+            log.error("Failed to save audit log", e);
+        }
+    }
 
-	@Transactional
-	public void logSimpleChange(String entityType, Long entityId, String targetInfo, AuditAction action,
-			Object oldValue, Object newValue) {
-		Map<String, Object> oldMap = null;
-		Map<String, Object> newMap = null;
+    private boolean areEqual(Object a, Object b) {
+        if (a == null && b == null) {
+            return true;
+        }
+        if (a == null || b == null) {
+            return false;
+        }
+        return a.equals(b);
+    }
 
-		if (oldValue != null || newValue != null) {
-			oldMap = new HashMap<>();
-			newMap = new HashMap<>();
-			oldMap.put("value", oldValue);
-			newMap.put("value", newValue);
-		}
-
-		logChange(entityType, entityId, targetInfo, action, oldMap, newMap);
-	}
-
-	private boolean areEqual(Object a, Object b) {
-		if (a == null && b == null) {
-			return true;
-		}
-		if (a == null || b == null) {
-			return false;
-		}
-		return a.equals(b);
-	}
-
-	private String getCurrentUser() {
-		var authentication = SecurityContextHolder.getContext().getAuthentication();
-		if (authentication == null || !authentication.isAuthenticated()) {
-			return "system";
-		}
-		return authentication.getName();
-	}
+    private String getCurrentUser() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "system";
+        }
+        return authentication.getName();
+    }
 }
