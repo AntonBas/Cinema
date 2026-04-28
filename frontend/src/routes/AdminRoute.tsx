@@ -6,6 +6,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 
 interface AdminRouteProps {
   children: React.ReactNode;
+  allowedRoles?: string[];
 }
 
 const centerStyle = {
@@ -16,7 +17,10 @@ const centerStyle = {
   background: "linear-gradient(135deg, #0c0c0c, #1a1a1a)",
 };
 
-export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
+export const AdminRoute: React.FC<AdminRouteProps> = ({
+  children,
+  allowedRoles = ["ROLE_ADMIN", "ROLE_CONTENT_MANAGER", "ROLE_CASHIER"],
+}) => {
   const { user, loading, isAuthenticated } = useAuth();
   const showLoading = useDelayedLoading(loading, {
     delay: 300,
@@ -26,7 +30,7 @@ export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
   if (showLoading) {
     return (
       <div style={centerStyle}>
-        <LoadingSpinner text="Verifying admin access..." />
+        <LoadingSpinner text="Verifying access..." />
       </div>
     );
   }
@@ -43,10 +47,9 @@ export const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
     );
   }
 
-  const isAdmin =
-    user.userRole === "ROLE_ADMIN" || user.userRole === "ROLE_CONTENT_MANAGER";
+  const hasAccess = allowedRoles.includes(user.userRole);
 
-  if (!isAdmin) {
+  if (!hasAccess) {
     return <Navigate to="/" replace />;
   }
 
