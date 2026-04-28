@@ -56,23 +56,6 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
 
     @Query(value = """
             SELECT
-                s.id as sessionId,
-                (SELECT COUNT(seat.id) FROM seats seat WHERE seat.hall_id = h.id) - COALESCE(reserved.reserved, 0) as availableSeats
-            FROM sessions s
-            JOIN cinema_halls h ON h.id = s.hall_id
-            LEFT JOIN (
-                SELECT sr.session_id as sessionId, COUNT(sr.id) as reserved
-                FROM seat_reservations sr
-                WHERE sr.session_id IN (:sessionIds)
-                AND sr.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')
-                GROUP BY sr.session_id
-            ) reserved ON reserved.sessionId = s.id
-            WHERE s.id IN (:sessionIds)
-            """, nativeQuery = true)
-    List<Object[]> findAvailableSeatsBatch(@Param("sessionIds") List<Long> sessionIds);
-
-    @Query(value = """
-            SELECT
                 s.id,
                 s.start_time as startTime,
                 s.base_price as basePrice,

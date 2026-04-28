@@ -27,6 +27,7 @@ import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
 import ua.lviv.bas.cinema.repository.cinema.projection.SessionAdminProjection;
 import ua.lviv.bas.cinema.repository.cinema.specification.SessionSpecification;
+import ua.lviv.bas.cinema.service.booking.SeatReservationService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 import java.time.LocalDate;
@@ -47,6 +48,7 @@ public class SessionService {
     private final SessionSpecification sessionSpecification;
     private final MovieRepository movieRepository;
     private final CinemaHallService cinemaHallService;
+    private final SeatReservationService seatReservationService;
     private final AuditService auditService;
 
     @CacheEvict(value = {"sessions", "seatAvailability"}, allEntries = true)
@@ -78,7 +80,7 @@ public class SessionService {
         var sessions = sessionRepository.findAll(spec);
 
         var sessionIds = sessions.stream().map(Session::getId).toList();
-        var availableSeats = getAvailableSeatsBatch(sessionIds);
+        var availableSeats = seatReservationService.getAvailableSeatsBatch(sessionIds);
 
         return sessions.stream().map(session -> {
             var proj = sessionRepository.findScheduleProjectionById(session.getId()).orElseThrow();
@@ -219,14 +221,6 @@ public class SessionService {
 
         auditService.logChange("Session", sessionId, "Session #" + sessionId, AuditAction.REACTIVATED, oldDetails,
                 newDetails);
-    }
-
-    private Map<Long, Integer> getAvailableSeatsBatch(List<Long> sessionIds) {
-        if (sessionIds.isEmpty()) {
-            return Map.of();
-        }
-        return sessionRepository.findAvailableSeatsBatch(sessionIds).stream()
-                .collect(Collectors.toMap(arr -> (Long) arr[0], arr -> ((Number) arr[1]).intValue()));
     }
 
     private void validateStartTime(LocalDateTime startTime) {

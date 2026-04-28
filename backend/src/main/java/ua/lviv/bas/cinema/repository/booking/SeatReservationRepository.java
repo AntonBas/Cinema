@@ -41,4 +41,16 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
             """)
     List<Object[]> findBookedSeatIds(@Param("hallId") Long hallId, @Param("sessionId") Long sessionId,
                                      @Param("statuses") List<ReservationStatus> statuses);
+
+    @Query(value = """
+            SELECT
+                sr.session_id as sessionId,
+                (SELECT COUNT(seat.id) FROM seats seat WHERE seat.hall_id = s.hall_id) - COUNT(sr.id) as availableSeats
+            FROM seat_reservations sr
+            JOIN sessions s ON s.id = sr.session_id
+            WHERE sr.session_id IN (:sessionIds)
+            AND sr.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')
+            GROUP BY sr.session_id, s.hall_id
+            """, nativeQuery = true)
+    List<Object[]> findAvailableSeatsBatch(@Param("sessionIds") List<Long> sessionIds);
 }

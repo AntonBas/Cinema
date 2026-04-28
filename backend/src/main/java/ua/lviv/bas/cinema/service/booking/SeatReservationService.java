@@ -106,21 +106,6 @@ public class SeatReservationService {
         validateSeat(sessionId, seatId);
     }
 
-    public boolean isAvailable(Long sessionId, Long seatId) {
-        return !isReserved(sessionId, seatId);
-    }
-
-    @Cacheable(value = "availableSeatsCount", key = "#sessionId")
-    public int getAvailableCount(Long sessionId) {
-        var session = sessionRepository.findById(sessionId).orElseThrow(() -> new SessionNotFoundException(sessionId));
-
-        long totalSeats = seatRepository.countByHallId(session.getHall().getId());
-        long bookedSeats = seatReservationRepository.countBySessionIdAndStatusIn(sessionId,
-                ReservationStatus.ACTIVE_STATUSES);
-
-        return (int) (totalSeats - bookedSeats);
-    }
-
     public SeatAvailabilityStatus getStatus(Long sessionId, Long seatId) {
         var statuses = seatReservationRepository.findStatusesBySessionIdAndSeatId(sessionId, seatId);
 
@@ -139,6 +124,14 @@ public class SeatReservationService {
         }
 
         return new SeatAvailabilityStatus(!isReserved, status);
+    }
+
+    public Map<Long, Integer> getAvailableSeatsBatch(List<Long> sessionIds) {
+        if (sessionIds.isEmpty()) {
+            return Map.of();
+        }
+        return seatReservationRepository.findAvailableSeatsBatch(sessionIds).stream()
+                .collect(Collectors.toMap(arr -> (Long) arr[0], arr -> ((Number) arr[1]).intValue()));
     }
 
     private void validateSeat(Long sessionId, Long seatId) {
@@ -175,10 +168,6 @@ public class SeatReservationService {
     }
 
     public record SeatAvailabilityStatus(boolean available, ReservationStatus status) {
-        public boolean isTemporarilyReserved() {
-            return status == ReservationStatus.PENDING;
-        }
-
         public boolean isConfirmed() {
             return status == ReservationStatus.CONFIRMED;
         }
