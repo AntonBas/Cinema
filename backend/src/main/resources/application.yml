@@ -92,7 +92,7 @@ app:
     size: 200
     margin: 1
     format: PNG
-  base-url: ${APP_BASE_URL:http://localhost:8080}
+  base-url: ${APP_BASE_URL:http://localhost:5173}
   company:
     name: "Bas Cinema"
   frontend:
