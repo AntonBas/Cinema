@@ -126,7 +126,7 @@ public class TicketService {
     }
 
     public byte[] generateQR(String ticketCode) {
-        var qrContent = ticketBaseUrl + "/api/tickets/validate/" + ticketCode;
+        var qrContent = ticketBaseUrl + "/cashier/scan/" + ticketCode;
         return qrCodeService.generateQRCode(qrContent, qrCodeSize);
     }
 
