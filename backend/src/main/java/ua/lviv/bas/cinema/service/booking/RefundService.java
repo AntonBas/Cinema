@@ -26,15 +26,14 @@ import ua.lviv.bas.cinema.mapper.booking.RefundMapper;
 import ua.lviv.bas.cinema.repository.booking.RefundRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.service.bonus.BonusService;
-import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
+import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -107,12 +106,6 @@ public class RefundService {
         }
     }
 
-    @Transactional(readOnly = true)
-    public List<RefundResponse> getRefunds(Long userId) {
-        var refunds = refundRepository.findByUserIdOrderByCreatedDateDesc(userId);
-        return refunds.stream().map(this::buildResponse).toList();
-    }
-
     private String validate(Ticket ticket) {
         if (ticket.getStatus() != TicketStatus.ACTIVE) {
             return "Ticket is not active. Current status: " + ticket.getStatus();
@@ -163,7 +156,7 @@ public class RefundService {
         String seatInfo = "N/A";
         var seatReservations = ticket.getBooking().getSeatReservations();
         if (seatReservations != null && !seatReservations.isEmpty()) {
-            var bookedSeat = seatReservations.get(0);
+            var bookedSeat = seatReservations.getFirst();
             seatInfo = String.format("Row %d, Seat %d", bookedSeat.getSeat().getRow(),
                     bookedSeat.getSeat().getNumber());
         }
