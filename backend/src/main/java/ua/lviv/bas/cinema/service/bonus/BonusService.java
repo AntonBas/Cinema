@@ -31,7 +31,6 @@ import ua.lviv.bas.cinema.repository.bonus.BonusTransactionRepository;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Map;
 
@@ -59,16 +58,6 @@ public class BonusService {
     public Page<BonusTransactionResponse> getTransactions(Long userId, Pageable pageable) {
         var page = bonusTransactionRepository.findProjectionsByUserId(userId, pageable);
         return page.map(bonusMapper::toResponse);
-    }
-
-    @Cacheable(value = "bonus", key = "'available:' + #userId + '-' + #totalPrice")
-    @Transactional(readOnly = true)
-    public Integer getAvailablePoints(Long userId, BigDecimal totalPrice) {
-        var card = getCardByUserId(userId);
-        int available = card.getPointsBalance();
-        var maxDiscount = totalPrice.multiply(bonusProperties.getMaxDiscountPercentage());
-        int maxByPrice = maxDiscount.divide(bonusProperties.getPointValue(), 0, RoundingMode.DOWN).intValue();
-        return Math.min(available, Math.max(maxByPrice, 0));
     }
 
     @CacheEvict(value = "bonus", allEntries = true)
@@ -105,47 +94,46 @@ public class BonusService {
 
     @CacheEvict(value = "bonus", allEntries = true)
     @Transactional
-    public Integer addPromotionPoints(User user, Integer points, String promotionTitle) {
+    public void addPromotionPoints(User user, Integer points, String promotionTitle) {
         validatePositivePoints(points);
         var card = getOrCreateCard(user);
         addPointsToCard(card, points);
         createTransaction(card, points, BonusTransactionType.PROMOTION_BONUS, "PROMOTION_" + promotionTitle);
         auditPointsAdded(card, user, points, promotionTitle);
-        return card.getPointsBalance();
     }
 
     @CacheEvict(value = "bonus", allEntries = true)
     @Transactional
-    public BonusTransaction spendPoints(Long userId, Integer points, Booking booking) {
+    public void spendPoints(Long userId, Integer points, Booking booking) {
         validateRedemption(userId, points);
         var card = getCardByUserId(userId);
         int oldBalance = card.getPointsBalance();
         subtractPointsFromCard(card, points);
         bonusCardRepository.save(card);
         auditPointsSpent(card, booking, oldBalance);
-        return createTransaction(card, -points, BonusTransactionType.BOOKING_SPEND, "BOOKING_" + booking.getId(),
+        createTransaction(card, -points, BonusTransactionType.BOOKING_SPEND, "BOOKING_" + booking.getId(),
                 booking);
     }
 
     @CacheEvict(value = "bonus", allEntries = true)
     @Transactional
-    public BonusTransaction accruePointsForPayment(Long userId, Integer points, Booking booking, Payment payment) {
+    public void accruePointsForPayment(Long userId, Integer points, Booking booking, Payment payment) {
         if (points == null || points <= 0) {
-            return null;
+            return;
         }
         var card = getCardByUserId(userId);
         addPointsToCard(card, points);
         bonusCardRepository.save(card);
         auditPointsAccrued(card, payment, points);
-        return createTransaction(card, points, BonusTransactionType.PAYMENT_ACCRUAL, "PAYMENT_" + payment.getId(),
+        createTransaction(card, points, BonusTransactionType.PAYMENT_ACCRUAL, "PAYMENT_" + payment.getId(),
                 booking);
     }
 
     @CacheEvict(value = "bonus", allEntries = true)
     @Transactional
-    public BonusTransaction refundPoints(Booking booking) {
+    public void refundPoints(Booking booking) {
         if (booking.getBonusPointsUsed() == null || booking.getBonusPointsUsed() <= 0) {
-            return null;
+            return;
         }
         var card = getCardByUserId(booking.getUser().getId());
         var points = booking.getBonusPointsUsed();
@@ -153,7 +141,7 @@ public class BonusService {
         addPointsToCard(card, points);
         bonusCardRepository.save(card);
         auditPointsRefunded(card, booking, oldBalance);
-        return createTransaction(card, points, BonusTransactionType.REFUND_RETURN, "REFUND_BOOKING_" + booking.getId(),
+        createTransaction(card, points, BonusTransactionType.REFUND_RETURN, "REFUND_BOOKING_" + booking.getId(),
                 booking);
     }
 
@@ -222,14 +210,14 @@ public class BonusService {
         card.setPointsBalance(card.getPointsBalance() - points);
     }
 
-    private BonusTransaction createTransaction(BonusCard card, Integer points, BonusTransactionType type,
-                                               String referenceId, Booking booking) {
+    private void createTransaction(BonusCard card, Integer points, BonusTransactionType type,
+                                   String referenceId, Booking booking) {
         if (points > 0) {
             validatePositivePoints(points);
         }
         var transaction = BonusTransaction.builder().bonusCard(card).booking(booking).type(type).pointsChange(points)
                 .referenceId(referenceId).build();
-        return bonusTransactionRepository.save(transaction);
+        bonusTransactionRepository.save(transaction);
     }
 
     private BonusBalanceResponse buildBalanceResponse(BonusCard card) {
