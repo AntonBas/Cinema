@@ -1,18 +1,17 @@
 package ua.lviv.bas.cinema.service.common;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.when;
-
-import java.time.LocalDateTime;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import ua.lviv.bas.cinema.domain.booking.Booking;
 import ua.lviv.bas.cinema.domain.booking.Refund;
+
+import java.time.LocalDateTime;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class NumberGeneratorServiceTest {
@@ -79,11 +78,5 @@ public class NumberGeneratorServiceTest {
 
 		assertThatThrownBy(() -> numberGeneratorService.generateRefundNumber(refund))
 				.isInstanceOf(IllegalStateException.class).hasMessageContaining("Refund ID is required");
-	}
-
-	@Test
-	void generatePaymentOrderId_ShouldStartWithPAY() {
-		String result = numberGeneratorService.generatePaymentOrderId();
-		assertThat(result).startsWith("PAY_");
 	}
 }

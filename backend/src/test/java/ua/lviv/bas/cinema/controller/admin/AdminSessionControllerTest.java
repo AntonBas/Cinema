@@ -33,14 +33,14 @@ public class AdminSessionControllerTest {
     @InjectMocks
     private AdminSessionController adminSessionController;
 
-    private SessionResponse createSessionResponse(Long id, String title, BigDecimal basePrice) {
-        return new SessionResponse(id, LocalDateTime.now().plusHours(2), LocalDateTime.now().plusHours(4), basePrice,
-                CinemaSessionStatus.SCHEDULED, 1L, title, 120, 1L, "Hall 1");
+    private SessionResponse createSessionResponse(BigDecimal basePrice) {
+        return new SessionResponse(1L, LocalDateTime.now().plusHours(2), LocalDateTime.now().plusHours(4), basePrice,
+                CinemaSessionStatus.SCHEDULED, 1L, "Test Movie", 120, 1L, "Hall 1");
     }
 
-    private SessionAdminResponse createSessionAdminResponse(Long id, String title, BigDecimal basePrice) {
-        return new SessionAdminResponse(id, LocalDateTime.now().plusHours(2), LocalDateTime.now().plusHours(4),
-                basePrice, CinemaSessionStatus.SCHEDULED, 1L, title, 120, 1L, "Hall 1", 100, 0, BigDecimal.ZERO);
+    private SessionAdminResponse createSessionAdminResponse(BigDecimal basePrice) {
+        return new SessionAdminResponse(1L, LocalDateTime.now().plusHours(2), LocalDateTime.now().plusHours(4),
+                basePrice, CinemaSessionStatus.SCHEDULED, 1L, "Test Movie", 120, 1L, "Hall 1", 100, 0, BigDecimal.ZERO);
     }
 
     @Test
@@ -49,7 +49,7 @@ public class AdminSessionControllerTest {
         BigDecimal price = BigDecimal.valueOf(250);
         SessionRequest request = new SessionRequest(startTime, price, 1L, 1L);
 
-        SessionResponse response = createSessionResponse(1L, "Test Movie", price);
+        SessionResponse response = createSessionResponse(price);
 
         when(sessionService.createSession(request)).thenReturn(response);
 
@@ -76,7 +76,7 @@ public class AdminSessionControllerTest {
     @Test
     void getSessionShouldReturnSession() {
         BigDecimal price = BigDecimal.valueOf(250);
-        SessionResponse response = createSessionResponse(1L, "Test Movie", price);
+        SessionResponse response = createSessionResponse(price);
 
         when(sessionService.getSession(1L)).thenReturn(response);
 
@@ -106,7 +106,7 @@ public class AdminSessionControllerTest {
         LocalDate dateTo = LocalDate.now().plusDays(7);
         BigDecimal price = BigDecimal.valueOf(250);
 
-        SessionAdminResponse response = createSessionAdminResponse(1L, "Test Movie", price);
+        SessionAdminResponse response = createSessionAdminResponse(price);
         Page<SessionAdminResponse> page = new PageImpl<>(List.of(response), pageable, 1);
 
         when(sessionService.getSessions(hallId, movieTitle, status, dateFrom, dateTo, pageable)).thenReturn(page);
@@ -125,7 +125,7 @@ public class AdminSessionControllerTest {
     @Test
     void getSessionsWithNullFiltersShouldReturnAllSessions() {
         Pageable pageable = PageRequest.of(0, 10);
-        SessionAdminResponse response = createSessionAdminResponse(1L, "Test Movie", BigDecimal.valueOf(250));
+        SessionAdminResponse response = createSessionAdminResponse(BigDecimal.valueOf(250));
         Page<SessionAdminResponse> page = new PageImpl<>(List.of(response), pageable, 1);
 
         when(sessionService.getSessions(null, null, null, null, null, pageable)).thenReturn(page);
@@ -143,7 +143,7 @@ public class AdminSessionControllerTest {
         BigDecimal newPrice = BigDecimal.valueOf(300);
         SessionRequest request = new SessionRequest(null, newPrice, null, null);
 
-        SessionResponse response = createSessionResponse(1L, "Test Movie", newPrice);
+        SessionResponse response = createSessionResponse(newPrice);
 
         when(sessionService.updateSession(1L, request)).thenReturn(response);
 

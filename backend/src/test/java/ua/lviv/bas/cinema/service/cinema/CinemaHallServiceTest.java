@@ -123,7 +123,7 @@ public class CinemaHallServiceTest {
         List<CinemaHallListResponse> result = cinemaHallService.getHalls();
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).id()).isEqualTo(HALL_ID);
+        assertThat(result.getFirst().id()).isEqualTo(HALL_ID);
     }
 
     @Test

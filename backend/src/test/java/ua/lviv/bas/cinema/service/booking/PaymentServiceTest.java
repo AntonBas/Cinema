@@ -17,7 +17,6 @@ import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
 import ua.lviv.bas.cinema.domain.cinema.Movie;
 import ua.lviv.bas.cinema.domain.cinema.Seat;
 import ua.lviv.bas.cinema.domain.cinema.Session;
-import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.payment.request.PaymentCreateRequest;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
@@ -38,7 +37,10 @@ import ua.lviv.bas.cinema.service.ticket.TicketService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -63,11 +65,11 @@ public class PaymentServiceTest {
     @Mock
     private BookingService bookingService;
     @Mock
-    private AuditService auditService;
+    private DateTimeFormatterService dateTimeFormatter;
     @Mock
     private EmailService emailService;
     @Mock
-    private DateTimeFormatterService dateTimeFormatter;
+    private AuditService auditService;
 
     @InjectMocks
     private PaymentService paymentService;
@@ -99,7 +101,7 @@ public class PaymentServiceTest {
 
         testBooking = Booking.builder().id(BOOKING_ID).user(testUser).session(session).status(BookingStatus.PENDING)
                 .finalPrice(AMOUNT).expiresAt(LocalDateTime.now().plusHours(1))
-                .seatReservations(Arrays.asList(seatReservation)).build();
+                .seatReservations(Collections.singletonList(seatReservation)).build();
 
         testPayment = Payment.builder().id(PAYMENT_ID).booking(testBooking).amount(AMOUNT).status(PaymentStatus.PENDING)
                 .liqpayOrderId("ORD_TEST123456789").build();
@@ -219,9 +221,6 @@ public class PaymentServiceTest {
         callbackData.put("transaction_id", "TXN123");
         callbackData.put("sender_card_mask", "****1234");
 
-        List<Ticket> tickets = Arrays.asList(Ticket.builder().build());
-
-        when(ticketService.createTicketsForBooking(testBooking, testPayment)).thenReturn(tickets);
         when(bonusService.calculateAccrualPoints(AMOUNT)).thenReturn(20);
         when(dateTimeFormatter.formatStandard(any(LocalDateTime.class))).thenReturn("2024-01-01 14:00");
         when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");

@@ -30,9 +30,9 @@ import ua.lviv.bas.cinema.exception.domain.ticket.TicketValidationException;
 import ua.lviv.bas.cinema.mapper.ticket.TicketMapper;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.repository.ticket.specification.TicketSpecification;
+import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.integration.qr.QRCodeService;
-import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -152,18 +152,10 @@ class TicketServiceTest {
         when(numberGenerator.generateTicketCode()).thenReturn(GENERATED_CODE);
         when(ticketRepository.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        List<Ticket> tickets = ticketService.createTicketsForBooking(testBooking, testPayment);
+        ticketService.createTicketsForBooking(testBooking, testPayment);
 
-        assertThat(tickets).hasSize(1);
-        Ticket ticket = tickets.getFirst();
-        assertThat(ticket.getUniqueCode()).isEqualTo(GENERATED_CODE);
-        assertThat(ticket.getStatus()).isEqualTo(TicketStatus.ACTIVE);
-        assertThat(ticket.getOriginalPrice()).isEqualTo(PRICE);
-        assertThat(ticket.getFinalPrice()).isEqualTo(PRICE);
-        assertThat(ticket.getSeatReservation()).isNotNull();
-        assertThat(ticket.getSeatReservation().getSeat()).isNotNull();
-        assertThat(ticket.getSeatReservation().getSeat().getNumber()).isEqualTo(12);
         verify(ticketRepository).saveAll(anyList());
+        verify(auditService).logChange(eq("Ticket"), any(), any(), eq(ua.lviv.bas.cinema.domain.audit.AuditAction.CREATED), eq(null), any());
     }
 
     @Test
@@ -268,7 +260,6 @@ class TicketServiceTest {
     @Test
     void getTicketsWithStatusOnlyShouldSucceed() {
         Pageable pageable = Pageable.unpaged();
-
         testTicket.setStatus(TicketStatus.USED);
 
         @SuppressWarnings("unchecked")
@@ -315,6 +306,7 @@ class TicketServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.uniqueCode()).isEqualTo(TICKET_CODE);
         verify(ticketRepository).save(testTicket);
+        verify(auditService).logChange(eq("Ticket"), eq(TICKET_ID), any(), eq(ua.lviv.bas.cinema.domain.audit.AuditAction.VALIDATED), any(), any());
     }
 
     @Test
@@ -395,7 +387,7 @@ class TicketServiceTest {
 
     @Test
     void generateQRShouldSucceed() {
-        String expectedQrContent = BASE_URL + "/api/tickets/validate/" + TICKET_CODE;
+        String expectedQrContent = BASE_URL + "/cashier/scan/" + TICKET_CODE;
         byte[] expectedQrCode = new byte[]{1, 2, 3};
 
         when(qrCodeService.generateQRCode(expectedQrContent, QR_CODE_SIZE)).thenReturn(expectedQrCode);
@@ -404,122 +396,5 @@ class TicketServiceTest {
 
         assertThat(result).isEqualTo(expectedQrCode);
         verify(qrCodeService).generateQRCode(expectedQrContent, QR_CODE_SIZE);
-    }
-
-    @Test
-    void isValidWithValidTicketShouldReturnTrue() {
-        when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
-
-        boolean result = ticketService.isValid(TICKET_CODE);
-
-        assertThat(result).isTrue();
-    }
-
-    @Test
-    void isValidWithUsedTicketShouldReturnFalse() {
-        testTicket.setStatus(TicketStatus.USED);
-
-        when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
-
-        boolean result = ticketService.isValid(TICKET_CODE);
-
-        assertThat(result).isFalse();
-    }
-
-    @Test
-    void isValidWithRefundedTicketShouldReturnFalse() {
-        testTicket.setStatus(TicketStatus.REFUNDED);
-
-        when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
-
-        boolean result = ticketService.isValid(TICKET_CODE);
-
-        assertThat(result).isFalse();
-    }
-
-    @Test
-    void isValidWithSessionNotStartedShouldReturnFalse() {
-        testSession.setStartTime(LocalDateTime.now().plusHours(2));
-        testTicket.setStatus(TicketStatus.ACTIVE);
-
-        when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
-
-        boolean result = ticketService.isValid(TICKET_CODE);
-
-        assertThat(result).isFalse();
-    }
-
-    @Test
-    void isValidWithSessionEndedLongAgoShouldReturnFalse() {
-        testSession.setStartTime(LocalDateTime.now().minusHours(3));
-        testTicket.setStatus(TicketStatus.ACTIVE);
-
-        when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
-
-        boolean result = ticketService.isValid(TICKET_CODE);
-
-        assertThat(result).isFalse();
-    }
-
-    @Test
-    void isValidWithCancelledSessionShouldReturnFalse() {
-        testSession.setStatus(CinemaSessionStatus.CANCELLED);
-        testTicket.setStatus(TicketStatus.ACTIVE);
-
-        when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
-
-        boolean result = ticketService.isValid(TICKET_CODE);
-
-        assertThat(result).isFalse();
-    }
-
-    @Test
-    void isValidWhenTicketNotFoundShouldReturnFalse() {
-        when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.empty());
-
-        boolean result = ticketService.isValid(TICKET_CODE);
-
-        assertThat(result).isFalse();
-    }
-
-    @Test
-    void getStatusShouldSucceed() {
-        when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
-
-        TicketStatus result = ticketService.getStatus(TICKET_CODE);
-
-        assertThat(result).isEqualTo(TicketStatus.ACTIVE);
-    }
-
-    @Test
-    void getStatusWhenTicketNotFoundShouldReturnNull() {
-        when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.empty());
-
-        TicketStatus result = ticketService.getStatus(TICKET_CODE);
-
-        assertThat(result).isNull();
-    }
-
-    @Test
-    void auditServiceShouldBeCalledOnCreateTickets() {
-        testBooking.setSeatReservations(List.of(seatReservation));
-
-        when(numberGenerator.generateTicketCode()).thenReturn(GENERATED_CODE);
-        when(ticketRepository.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
-
-        ticketService.createTicketsForBooking(testBooking, testPayment);
-
-        verify(auditService).logChange(eq("Ticket"), any(), any(), eq(ua.lviv.bas.cinema.domain.audit.AuditAction.CREATED), eq(null), any());
-    }
-
-    @Test
-    void auditServiceShouldBeCalledOnValidate() {
-        when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
-        when(ticketRepository.save(testTicket)).thenReturn(testTicket);
-        when(ticketMapper.toTicketCashierResponse(testTicket)).thenReturn(testTicketCashierResponse);
-
-        ticketService.validate(TICKET_CODE);
-
-        verify(auditService).logChange(eq("Ticket"), eq(TICKET_ID), any(), eq(ua.lviv.bas.cinema.domain.audit.AuditAction.VALIDATED), any(), any());
     }
 }

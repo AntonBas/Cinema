@@ -1,23 +1,11 @@
 package ua.lviv.bas.cinema.controller.api;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.time.LocalDate;
-import java.util.Map;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
-
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.domain.user.UserRole;
@@ -28,6 +16,15 @@ import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.service.user.UserService;
+
+import java.time.LocalDate;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class UserControllerTest {
@@ -135,7 +132,7 @@ public class UserControllerTest {
 		Long userId = 1L;
 		CustomUserDetails userDetails = createMockUserDetails(userId);
 
-		UserEmailChangeRequest request = new UserEmailChangeRequest("new.email@example.com", "wrongpassword");
+		UserEmailChangeRequest request = new UserEmailChangeRequest("new.email@example.com", "wrong password");
 
 		doThrow(new BadCredentialsException("Invalid password")).when(userService).requestEmailChange(userId,
 				request.password(), request.newEmail());

@@ -1,172 +1,153 @@
 package ua.lviv.bas.cinema.mapper.cinema;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
-
 import ua.lviv.bas.cinema.domain.cinema.Person;
 import ua.lviv.bas.cinema.domain.cinema.enums.PersonRole;
 import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.repository.cinema.projection.PersonListProjection;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class PersonMapperTest {
 
-	private final PersonMapper mapper = Mappers.getMapper(PersonMapper.class);
+    private final PersonMapper mapper = Mappers.getMapper(PersonMapper.class);
 
-	@Test
-	void toPersonListResponseFromEntity() {
-		var person = Person.builder().id(1L).name("John Doe").role(PersonRole.ACTOR).build();
-		var response = mapper.toPersonListResponse(person);
+    @Test
+    void toPersonListResponseFromProjection() {
+        PersonListProjection projection = new PersonListProjection() {
+            @Override
+            public Long getId() {
+                return 1L;
+            }
 
-		assertThat(response).isNotNull();
-		assertThat(response.id()).isEqualTo(1L);
-		assertThat(response.name()).isEqualTo("John Doe");
-		assertThat(response.role()).isEqualTo(PersonRole.ACTOR);
-		assertThat(response.movieCount()).isZero();
-	}
+            @Override
+            public String getName() {
+                return "John Doe";
+            }
 
-	@Test
-	void toPersonListResponseFromProjection() {
-		PersonListProjection projection = new PersonListProjection() {
-			@Override
-			public Long getId() {
-				return 1L;
-			}
+            @Override
+            public PersonRole getRole() {
+                return PersonRole.ACTOR;
+            }
 
-			@Override
-			public String getName() {
-				return "John Doe";
-			}
+            @Override
+            public Integer getMovieCount() {
+                return 15;
+            }
+        };
 
-			@Override
-			public PersonRole getRole() {
-				return PersonRole.ACTOR;
-			}
+        var response = mapper.toPersonListResponse(projection);
 
-			@Override
-			public Integer getMovieCount() {
-				return 15;
-			}
-		};
+        assertThat(response).isNotNull();
+        assertThat(response.id()).isEqualTo(1L);
+        assertThat(response.name()).isEqualTo("John Doe");
+        assertThat(response.role()).isEqualTo(PersonRole.ACTOR);
+        assertThat(response.movieCount()).isEqualTo(15);
+    }
 
-		var response = mapper.toPersonListResponse(projection);
+    @Test
+    void toPersonListResponseFromProjectionWithNullMovieCount() {
+        PersonListProjection projection = new PersonListProjection() {
+            @Override
+            public Long getId() {
+                return 1L;
+            }
 
-		assertThat(response).isNotNull();
-		assertThat(response.id()).isEqualTo(1L);
-		assertThat(response.name()).isEqualTo("John Doe");
-		assertThat(response.role()).isEqualTo(PersonRole.ACTOR);
-		assertThat(response.movieCount()).isEqualTo(15);
-	}
+            @Override
+            public String getName() {
+                return "John Doe";
+            }
 
-	@Test
-	void toPersonListResponseFromProjectionWithNullMovieCount() {
-		PersonListProjection projection = new PersonListProjection() {
-			@Override
-			public Long getId() {
-				return 1L;
-			}
+            @Override
+            public PersonRole getRole() {
+                return PersonRole.ACTOR;
+            }
 
-			@Override
-			public String getName() {
-				return "John Doe";
-			}
+            @Override
+            public Integer getMovieCount() {
+                return null;
+            }
+        };
 
-			@Override
-			public PersonRole getRole() {
-				return PersonRole.ACTOR;
-			}
+        var response = mapper.toPersonListResponse(projection);
 
-			@Override
-			public Integer getMovieCount() {
-				return null;
-			}
-		};
+        assertThat(response).isNotNull();
+        assertThat(response.id()).isEqualTo(1L);
+        assertThat(response.name()).isEqualTo("John Doe");
+        assertThat(response.role()).isEqualTo(PersonRole.ACTOR);
+        assertThat(response.movieCount()).isNull();
+    }
 
-		var response = mapper.toPersonListResponse(projection);
+    @Test
+    void toPersonResponse() {
+        var person = Person.builder().id(1L).name("John Doe").role(PersonRole.ACTOR).build();
+        var response = mapper.toPersonResponse(person);
 
-		assertThat(response).isNotNull();
-		assertThat(response.id()).isEqualTo(1L);
-		assertThat(response.name()).isEqualTo("John Doe");
-		assertThat(response.role()).isEqualTo(PersonRole.ACTOR);
-		assertThat(response.movieCount()).isNull();
-	}
+        assertThat(response).isNotNull();
+        assertThat(response.id()).isEqualTo(1L);
+        assertThat(response.name()).isEqualTo("John Doe");
+        assertThat(response.role()).isEqualTo(PersonRole.ACTOR);
+    }
 
-	@Test
-	void toPersonResponse() {
-		var person = Person.builder().id(1L).name("John Doe").role(PersonRole.ACTOR).build();
-		var response = mapper.toPersonResponse(person);
+    @Test
+    void toPersonFromRequest() {
+        var request = new PersonRequest("New Person", PersonRole.SCREENWRITER);
+        var person = mapper.toPerson(request);
 
-		assertThat(response).isNotNull();
-		assertThat(response.id()).isEqualTo(1L);
-		assertThat(response.name()).isEqualTo("John Doe");
-		assertThat(response.role()).isEqualTo(PersonRole.ACTOR);
-	}
+        assertThat(person).isNotNull();
+        assertThat(person.getId()).isNull();
+        assertThat(person.getName()).isEqualTo("New Person");
+        assertThat(person.getRole()).isEqualTo(PersonRole.SCREENWRITER);
+    }
 
-	@Test
-	void toPersonFromRequest() {
-		var request = new PersonRequest("New Person", PersonRole.SCREENWRITER);
-		var person = mapper.toPerson(request);
+    @Test
+    void updatePersonFromRequest() {
+        var person = Person.builder().id(1L).name("Old Name").role(PersonRole.ACTOR).build();
+        var request = new PersonRequest("New Name", PersonRole.DIRECTOR);
+        mapper.updatePersonFromRequest(request, person);
 
-		assertThat(person).isNotNull();
-		assertThat(person.getId()).isNull();
-		assertThat(person.getName()).isEqualTo("New Person");
-		assertThat(person.getRole()).isEqualTo(PersonRole.SCREENWRITER);
-	}
+        assertThat(person.getId()).isEqualTo(1L);
+        assertThat(person.getName()).isEqualTo("New Name");
+        assertThat(person.getRole()).isEqualTo(PersonRole.DIRECTOR);
+    }
 
-	@Test
-	void updatePersonFromRequest() {
-		var person = Person.builder().id(1L).name("Old Name").role(PersonRole.ACTOR).build();
-		var request = new PersonRequest("New Name", PersonRole.DIRECTOR);
-		mapper.updatePersonFromRequest(request, person);
+    @Test
+    void updatePersonFromRequestWithNullFields() {
+        var person = Person.builder().id(1L).name("Old Name").role(PersonRole.ACTOR).build();
+        var request = new PersonRequest(null, null);
+        mapper.updatePersonFromRequest(request, person);
 
-		assertThat(person.getId()).isEqualTo(1L);
-		assertThat(person.getName()).isEqualTo("New Name");
-		assertThat(person.getRole()).isEqualTo(PersonRole.DIRECTOR);
-	}
+        assertThat(person.getId()).isEqualTo(1L);
+        assertThat(person.getName()).isEqualTo("Old Name");
+        assertThat(person.getRole()).isEqualTo(PersonRole.ACTOR);
+    }
 
-	@Test
-	void updatePersonFromRequestWithNullFields() {
-		var person = Person.builder().id(1L).name("Old Name").role(PersonRole.ACTOR).build();
-		var request = new PersonRequest(null, null);
-		mapper.updatePersonFromRequest(request, person);
+    @Test
+    void updatePersonFromRequestWithNullRequest() {
+        var person = Person.builder().id(1L).name("Old Name").role(PersonRole.ACTOR).build();
+        mapper.updatePersonFromRequest(null, person);
 
-		assertThat(person.getId()).isEqualTo(1L);
-		assertThat(person.getName()).isEqualTo("Old Name");
-		assertThat(person.getRole()).isEqualTo(PersonRole.ACTOR);
-	}
+        assertThat(person.getId()).isEqualTo(1L);
+        assertThat(person.getName()).isEqualTo("Old Name");
+        assertThat(person.getRole()).isEqualTo(PersonRole.ACTOR);
+    }
 
-	@Test
-	void updatePersonFromRequestWithNullRequest() {
-		var person = Person.builder().id(1L).name("Old Name").role(PersonRole.ACTOR).build();
-		mapper.updatePersonFromRequest(null, person);
+    @Test
+    void toPersonListResponseWithNullProjection() {
+        var response = mapper.toPersonListResponse(null);
+        assertThat(response).isNull();
+    }
 
-		assertThat(person.getId()).isEqualTo(1L);
-		assertThat(person.getName()).isEqualTo("Old Name");
-		assertThat(person.getRole()).isEqualTo(PersonRole.ACTOR);
-	}
+    @Test
+    void toPersonResponseWithNullEntity() {
+        var response = mapper.toPersonResponse(null);
+        assertThat(response).isNull();
+    }
 
-	@Test
-	void toPersonListResponseWithNullEntity() {
-		var response = mapper.toPersonListResponse((Person) null);
-		assertThat(response).isNull();
-	}
-
-	@Test
-	void toPersonListResponseWithNullProjection() {
-		var response = mapper.toPersonListResponse((PersonListProjection) null);
-		assertThat(response).isNull();
-	}
-
-	@Test
-	void toPersonResponseWithNullEntity() {
-		var response = mapper.toPersonResponse(null);
-		assertThat(response).isNull();
-	}
-
-	@Test
-	void toPersonWithNullRequest() {
-		var person = mapper.toPerson((PersonRequest) null);
-		assertThat(person).isNull();
-	}
+    @Test
+    void toPersonWithNullRequest() {
+        var person = mapper.toPerson(null);
+        assertThat(person).isNull();
+    }
 }

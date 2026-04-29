@@ -35,20 +35,20 @@ public class PromotionControllerTest {
     @InjectMocks
     private PromotionController promotionController;
 
-    private final Long USER_ID = 1L;
-    private final String EMAIL = "test@example.com";
     private final Long PROMOTION_ID = 1L;
     private final String TITLE = "Test Promotion";
-    private final Integer BONUS_POINTS = 100;
 
     private User createUser() {
         User user = new User();
+        Long USER_ID = 1L;
         user.setId(USER_ID);
+        String EMAIL = "test@example.com";
         user.setEmail(EMAIL);
         return user;
     }
 
     private PromotionResponse createPromotionResponse() {
+        Integer BONUS_POINTS = 100;
         return new PromotionResponse(PROMOTION_ID, TITLE, "Description", BONUS_POINTS, LocalDate.now().minusDays(1),
                 LocalDate.now().plusDays(5));
     }

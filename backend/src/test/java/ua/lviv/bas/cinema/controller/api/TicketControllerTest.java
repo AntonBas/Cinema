@@ -35,13 +35,13 @@ public class TicketControllerTest {
     @InjectMocks
     private TicketController ticketController;
 
-    private final Long USER_ID = 1L;
-    private final String EMAIL = "user@example.com";
     private final String TICKET_CODE = "TKT-20240115-ABC123";
 
     private User createUser() {
         User user = new User();
+        Long USER_ID = 1L;
         user.setId(USER_ID);
+        String EMAIL = "user@example.com";
         user.setEmail(EMAIL);
         return user;
     }
@@ -50,8 +50,8 @@ public class TicketControllerTest {
         return new CustomUserDetails(createUser());
     }
 
-    private TicketResponse createTicketResponse(Long id, String code, TicketStatus status) {
-        return new TicketResponse(id, code, "/api/tickets/code/" + code + "/qr", status, LocalDateTime.now(),
+    private TicketResponse createTicketResponse() {
+        return new TicketResponse(1L, "TKT-20240115-ABC123", "/api/tickets/code/" + "TKT-20240115-ABC123" + "/qr", TicketStatus.ACTIVE, LocalDateTime.now(),
                 new BigDecimal("250.00"), "Adult", "Inception", LocalDateTime.now().plusDays(1), "Hall A", 1, 12);
     }
 
@@ -60,7 +60,7 @@ public class TicketControllerTest {
         CustomUserDetails userDetails = createUserDetails();
         User user = userDetails.getUser();
         Pageable pageable = PageRequest.of(0, 10);
-        TicketResponse ticket = createTicketResponse(1L, TICKET_CODE, TicketStatus.ACTIVE);
+        TicketResponse ticket = createTicketResponse();
         Page<TicketResponse> page = new PageImpl<>(List.of(ticket), pageable, 1);
 
         when(ticketService.getTickets(eq(user), isNull(), isNull(), eq(pageable))).thenReturn(page);
@@ -77,7 +77,7 @@ public class TicketControllerTest {
         CustomUserDetails userDetails = createUserDetails();
         User user = userDetails.getUser();
         Pageable pageable = PageRequest.of(0, 10);
-        TicketResponse ticket = createTicketResponse(1L, TICKET_CODE, TicketStatus.ACTIVE);
+        TicketResponse ticket = createTicketResponse();
         Page<TicketResponse> page = new PageImpl<>(List.of(ticket), pageable, 1);
         TicketStatus status = TicketStatus.ACTIVE;
 
@@ -95,7 +95,7 @@ public class TicketControllerTest {
         CustomUserDetails userDetails = createUserDetails();
         User user = userDetails.getUser();
         Pageable pageable = PageRequest.of(0, 10);
-        TicketResponse ticket = createTicketResponse(1L, TICKET_CODE, TicketStatus.ACTIVE);
+        TicketResponse ticket = createTicketResponse();
         Page<TicketResponse> page = new PageImpl<>(List.of(ticket), pageable, 1);
         String movieTitle = "Inception";
 
@@ -113,7 +113,7 @@ public class TicketControllerTest {
         CustomUserDetails userDetails = createUserDetails();
         User user = userDetails.getUser();
         Pageable pageable = PageRequest.of(0, 10);
-        TicketResponse ticket = createTicketResponse(1L, TICKET_CODE, TicketStatus.ACTIVE);
+        TicketResponse ticket = createTicketResponse();
         Page<TicketResponse> page = new PageImpl<>(List.of(ticket), pageable, 1);
         TicketStatus status = TicketStatus.ACTIVE;
         String movieTitle = "Inception";
@@ -148,7 +148,7 @@ public class TicketControllerTest {
     void getTicketByCodeShouldReturnTicket() {
         CustomUserDetails userDetails = createUserDetails();
         User user = userDetails.getUser();
-        TicketResponse ticket = createTicketResponse(1L, TICKET_CODE, TicketStatus.ACTIVE);
+        TicketResponse ticket = createTicketResponse();
 
         when(ticketService.getTicket(TICKET_CODE, user)).thenReturn(ticket);
 
@@ -169,12 +169,5 @@ public class TicketControllerTest {
 
         assertThat(response).isEqualTo(qrCode);
         verify(ticketService).generateQR(TICKET_CODE);
-    }
-
-    @Test
-    void validateShouldCallService() {
-        ticketController.validate(TICKET_CODE);
-
-        verify(ticketService).validate(TICKET_CODE);
     }
 }

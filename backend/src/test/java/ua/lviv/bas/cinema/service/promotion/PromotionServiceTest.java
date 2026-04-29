@@ -251,7 +251,7 @@ public class PromotionServiceTest {
     @Test
     void claimPromotionShouldSucceed() {
         when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(promotion));
-        when(userPromotionRepository.existsByUserAndPromotion(user, promotion)).thenReturn(false);
+        when(userPromotionRepository.existsByUserAndPromotionId(user, PROMOTION_ID)).thenReturn(false);
         when(userPromotionRepository.save(any(UserPromotion.class))).thenAnswer(i -> i.getArgument(0));
         when(promotionMapper.toPromotionResponse(promotion)).thenReturn(promotionResponse);
 
@@ -279,7 +279,7 @@ public class PromotionServiceTest {
     @Test
     void claimPromotionWhenAlreadyClaimedShouldThrowException() {
         when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(promotion));
-        when(userPromotionRepository.existsByUserAndPromotion(user, promotion)).thenReturn(true);
+        when(userPromotionRepository.existsByUserAndPromotionId(user, PROMOTION_ID)).thenReturn(true);
 
         assertThatThrownBy(() -> promotionService.claimPromotion(claimRequest, user))
                 .isInstanceOf(AlreadyClaimedException.class);

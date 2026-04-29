@@ -1,179 +1,141 @@
 package ua.lviv.bas.cinema.mapper.cinema;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.HashSet;
-
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
-
 import ua.lviv.bas.cinema.domain.cinema.Genre;
-import ua.lviv.bas.cinema.domain.cinema.Movie;
 import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
 import ua.lviv.bas.cinema.dto.movie.response.GenreListResponse;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.repository.cinema.projection.GenreListProjection;
 
+import java.util.HashSet;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class GenreMapperTest {
 
-	private final GenreMapper mapper = Mappers.getMapper(GenreMapper.class);
+    private final GenreMapper mapper = Mappers.getMapper(GenreMapper.class);
 
-	@Test
-	void toGenreListResponseFromEntity_ShouldMapAllFields() {
-		Genre genre = Genre.builder().id(1L).name("Action").movies(new HashSet<>()).build();
+    @Test
+    void toGenreListResponseFromProjectionShouldMapAllFields() {
+        GenreListProjection projection = new GenreListProjection() {
+            @Override
+            public Long getId() {
+                return 1L;
+            }
 
-		GenreListResponse response = mapper.toGenreListResponse(genre);
+            @Override
+            public String getName() {
+                return "Comedy";
+            }
 
-		assertThat(response).isNotNull();
-		assertThat(response.id()).isEqualTo(1L);
-		assertThat(response.name()).isEqualTo("Action");
-		assertThat(response.movieCount()).isZero();
-	}
+            @Override
+            public Integer getMovieCount() {
+                return 5;
+            }
+        };
 
-	@Test
-	void toGenreListResponseFromEntity_WithMovies_ShouldCountMovies() {
-		Genre genre = Genre.builder().id(1L).name("Action").movies(new HashSet<>()).build();
+        GenreListResponse response = mapper.toGenreListResponse(projection);
 
-		genre.getMovies().add(Movie.builder().id(1L).build());
-		genre.getMovies().add(Movie.builder().id(2L).build());
+        assertThat(response).isNotNull();
+        assertThat(response.id()).isEqualTo(1L);
+        assertThat(response.name()).isEqualTo("Comedy");
+        assertThat(response.movieCount()).isEqualTo(5);
+    }
 
-		GenreListResponse response = mapper.toGenreListResponse(genre);
+    @Test
+    void toGenreListResponseFromProjectionWithNullMovieCountShouldMapNull() {
+        GenreListProjection projection = new GenreListProjection() {
+            @Override
+            public Long getId() {
+                return 1L;
+            }
 
-		assertThat(response).isNotNull();
-		assertThat(response.id()).isEqualTo(1L);
-		assertThat(response.name()).isEqualTo("Action");
-		assertThat(response.movieCount()).isEqualTo(2);
-	}
+            @Override
+            public String getName() {
+                return "Comedy";
+            }
 
-	@Test
-	void toGenreListResponseFromProjection_ShouldMapAllFields() {
-		GenreListProjection projection = new GenreListProjection() {
-			@Override
-			public Long getId() {
-				return 1L;
-			}
+            @Override
+            public Integer getMovieCount() {
+                return null;
+            }
+        };
 
-			@Override
-			public String getName() {
-				return "Comedy";
-			}
+        GenreListResponse response = mapper.toGenreListResponse(projection);
 
-			@Override
-			public Integer getMovieCount() {
-				return 5;
-			}
-		};
+        assertThat(response).isNotNull();
+        assertThat(response.id()).isEqualTo(1L);
+        assertThat(response.name()).isEqualTo("Comedy");
+        assertThat(response.movieCount()).isNull();
+    }
 
-		GenreListResponse response = mapper.toGenreListResponse(projection);
+    @Test
+    void toGenreResponseShouldMapEntityToResponse() {
+        Genre genre = Genre.builder().id(1L).name("Action").build();
 
-		assertThat(response).isNotNull();
-		assertThat(response.id()).isEqualTo(1L);
-		assertThat(response.name()).isEqualTo("Comedy");
-		assertThat(response.movieCount()).isEqualTo(5);
-	}
+        GenreResponse response = mapper.toGenreResponse(genre);
 
-	@Test
-	void toGenreListResponseFromProjection_WithNullMovieCount_ShouldMapNull() {
-		GenreListProjection projection = new GenreListProjection() {
-			@Override
-			public Long getId() {
-				return 1L;
-			}
+        assertThat(response).isNotNull();
+        assertThat(response.id()).isEqualTo(1L);
+        assertThat(response.name()).isEqualTo("Action");
+    }
 
-			@Override
-			public String getName() {
-				return "Comedy";
-			}
+    @Test
+    void toGenreShouldMapRequestToEntity() {
+        GenreRequest request = new GenreRequest("Drama");
+        Genre genre = mapper.toGenre(request);
 
-			@Override
-			public Integer getMovieCount() {
-				return null;
-			}
-		};
+        assertThat(genre).isNotNull();
+        assertThat(genre.getId()).isNull();
+        assertThat(genre.getName()).isEqualTo("Drama");
+        assertThat(genre.getMovies()).isNotNull();
+        assertThat(genre.getMovies()).isEmpty();
+    }
 
-		GenreListResponse response = mapper.toGenreListResponse(projection);
+    @Test
+    void updateGenreFromRequestShouldUpdateOnlyNonNullFields() {
+        Genre existing = Genre.builder().id(1L).name("Old").movies(new HashSet<>()).build();
+        GenreRequest request = new GenreRequest("New");
+        mapper.updateGenreFromRequest(request, existing);
 
-		assertThat(response).isNotNull();
-		assertThat(response.id()).isEqualTo(1L);
-		assertThat(response.name()).isEqualTo("Comedy");
-		assertThat(response.movieCount()).isNull();
-	}
+        assertThat(existing.getId()).isEqualTo(1L);
+        assertThat(existing.getName()).isEqualTo("New");
+        assertThat(existing.getMovies()).isNotNull();
+    }
 
-	@Test
-	void toGenreResponse_ShouldMapEntityToResponse() {
-		Genre genre = Genre.builder().id(1L).name("Action").build();
+    @Test
+    void updateGenreFromRequestWithSameNameShouldNotChange() {
+        Genre existing = Genre.builder().id(1L).name("Action").build();
+        GenreRequest request = new GenreRequest("Action");
+        mapper.updateGenreFromRequest(request, existing);
 
-		GenreResponse response = mapper.toGenreResponse(genre);
+        assertThat(existing.getName()).isEqualTo("Action");
+    }
 
-		assertThat(response).isNotNull();
-		assertThat(response.id()).isEqualTo(1L);
-		assertThat(response.name()).isEqualTo("Action");
-	}
+    @Test
+    void toGenreListResponseWithNullProjectionShouldReturnNull() {
+        GenreListResponse response = mapper.toGenreListResponse(null);
+        assertThat(response).isNull();
+    }
 
-	@Test
-	void toGenre_ShouldMapRequestToEntity() {
-		GenreRequest request = new GenreRequest("Drama");
-		Genre genre = mapper.toGenre(request);
+    @Test
+    void toGenreResponseWithNullEntityShouldReturnNull() {
+        GenreResponse response = mapper.toGenreResponse(null);
+        assertThat(response).isNull();
+    }
 
-		assertThat(genre).isNotNull();
-		assertThat(genre.getId()).isNull();
-		assertThat(genre.getName()).isEqualTo("Drama");
-		assertThat(genre.getMovies()).isNotNull();
-		assertThat(genre.getMovies()).isEmpty();
-	}
+    @Test
+    void toGenreWithNullRequestShouldReturnNull() {
+        Genre genre = mapper.toGenre(null);
+        assertThat(genre).isNull();
+    }
 
-	@Test
-	void updateGenreFromRequest_ShouldUpdateOnlyNonNullFields() {
-		Genre existing = Genre.builder().id(1L).name("Old").movies(new HashSet<>()).build();
+    @Test
+    void updateGenreFromRequestWithNullRequestShouldNotChange() {
+        Genre existing = Genre.builder().id(1L).name("Action").build();
+        mapper.updateGenreFromRequest(null, existing);
 
-		GenreRequest request = new GenreRequest("New");
-		mapper.updateGenreFromRequest(request, existing);
-
-		assertThat(existing.getId()).isEqualTo(1L);
-		assertThat(existing.getName()).isEqualTo("New");
-		assertThat(existing.getMovies()).isNotNull();
-	}
-
-	@Test
-	void updateGenreFromRequest_WithSameName_ShouldNotChange() {
-		Genre existing = Genre.builder().id(1L).name("Action").build();
-
-		GenreRequest request = new GenreRequest("Action");
-		mapper.updateGenreFromRequest(request, existing);
-
-		assertThat(existing.getName()).isEqualTo("Action");
-	}
-
-	@Test
-	void toGenreListResponse_WithNullEntity_ShouldReturnNull() {
-		GenreListResponse response = mapper.toGenreListResponse((Genre) null);
-		assertThat(response).isNull();
-	}
-
-	@Test
-	void toGenreListResponse_WithNullProjection_ShouldReturnNull() {
-		GenreListResponse response = mapper.toGenreListResponse((GenreListProjection) null);
-		assertThat(response).isNull();
-	}
-
-	@Test
-	void toGenreResponse_WithNullEntity_ShouldReturnNull() {
-		GenreResponse response = mapper.toGenreResponse(null);
-		assertThat(response).isNull();
-	}
-
-	@Test
-	void toGenre_WithNullRequest_ShouldReturnNull() {
-		Genre genre = mapper.toGenre(null);
-		assertThat(genre).isNull();
-	}
-
-	@Test
-	void updateGenreFromRequest_WithNullRequest_ShouldNotChange() {
-		Genre existing = Genre.builder().id(1L).name("Action").build();
-
-		mapper.updateGenreFromRequest(null, existing);
-
-		assertThat(existing.getName()).isEqualTo("Action");
-	}
+        assertThat(existing.getName()).isEqualTo("Action");
+    }
 }
