@@ -77,4 +77,19 @@ public class TicketSpecification {
             return cb.like(cb.lower(movie.get("title")), "%" + movieTitle.toLowerCase() + "%");
         };
     }
+
+    public Specification<Ticket> hasTicketTypeId(Long ticketTypeId) {
+        return (root, query, cb) -> {
+            if (ticketTypeId == null) return null;
+            return cb.equal(root.get("ticketType").get("id"), ticketTypeId);
+        };
+    }
+
+    public Specification<Ticket> sessionStartTimeAfter(LocalDateTime time) {
+        return (root, query, cb) -> {
+            var booking = root.join("booking", JoinType.LEFT);
+            var session = booking.join("session", JoinType.LEFT);
+            return cb.greaterThan(session.get("startTime"), time);
+        };
+    }
 }
