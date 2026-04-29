@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeRequest;
@@ -22,15 +23,16 @@ import ua.lviv.bas.cinema.mapper.ticket.TicketTypeMapper;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
 import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeProjection;
+import ua.lviv.bas.cinema.repository.ticket.specification.TicketSpecification;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,6 +48,9 @@ public class TicketTypeServiceTest {
     private TicketTypeMapper ticketTypeMapper;
 
     @Mock
+    private TicketSpecification ticketSpecification;
+
+    @Mock
     private AuditService auditService;
 
     @InjectMocks
@@ -58,6 +63,9 @@ public class TicketTypeServiceTest {
     @BeforeEach
     void setUp() {
         lenient().doNothing().when(auditService).logChange(any(), any(), any(), any(), any(), any());
+        lenient().when(ticketSpecification.hasStatus(any())).thenReturn((root, query, cb) -> cb.conjunction());
+        lenient().when(ticketSpecification.hasTicketTypeId(anyLong())).thenReturn((root, query, cb) -> cb.conjunction());
+        lenient().when(ticketSpecification.sessionStartTimeAfter(any())).thenReturn((root, query, cb) -> cb.conjunction());
     }
 
     @Test
@@ -158,8 +166,7 @@ public class TicketTypeServiceTest {
         TicketType ticketType = createTicketType();
 
         when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
-        when(ticketRepository.countByTicketTypeIdAndStatusInAndBookingSessionStartTimeAfter(eq(TICKET_TYPE_ID),
-                anyList(), any(LocalDateTime.class))).thenReturn(0L);
+        when(ticketRepository.count(any(Specification.class))).thenReturn(0L);
 
         ticketTypeService.deleteTicketType(TICKET_TYPE_ID);
 
@@ -171,8 +178,7 @@ public class TicketTypeServiceTest {
         TicketType ticketType = createTicketType();
 
         when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
-        when(ticketRepository.countByTicketTypeIdAndStatusInAndBookingSessionStartTimeAfter(eq(TICKET_TYPE_ID),
-                anyList(), any(LocalDateTime.class))).thenReturn(3L);
+        when(ticketRepository.count(any(Specification.class))).thenReturn(3L);
 
         assertThatThrownBy(() -> ticketTypeService.deleteTicketType(TICKET_TYPE_ID))
                 .isInstanceOf(TicketTypeInUseException.class);
@@ -192,8 +198,7 @@ public class TicketTypeServiceTest {
 
         assertThat(result).isEqualTo(response);
         assertThat(ticketType.isActive()).isTrue();
-        verify(ticketRepository, never()).countByTicketTypeIdAndStatusInAndBookingSessionStartTimeAfter(any(),
-                anyList(), any());
+        verify(ticketRepository, never()).count(any(Specification.class));
     }
 
     @Test
@@ -203,8 +208,7 @@ public class TicketTypeServiceTest {
         TicketTypeResponse response = createTicketTypeResponse();
 
         when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
-        when(ticketRepository.countByTicketTypeIdAndStatusInAndBookingSessionStartTimeAfter(eq(TICKET_TYPE_ID),
-                anyList(), any(LocalDateTime.class))).thenReturn(0L);
+        when(ticketRepository.count(any(Specification.class))).thenReturn(0L);
         when(ticketTypeRepository.save(ticketType)).thenReturn(ticketType);
         when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
 
@@ -220,8 +224,7 @@ public class TicketTypeServiceTest {
         ticketType.setActive(true);
 
         when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
-        when(ticketRepository.countByTicketTypeIdAndStatusInAndBookingSessionStartTimeAfter(eq(TICKET_TYPE_ID),
-                anyList(), any(LocalDateTime.class))).thenReturn(2L);
+        when(ticketRepository.count(any(Specification.class))).thenReturn(2L);
 
         assertThatThrownBy(() -> ticketTypeService.toggleActiveStatus(TICKET_TYPE_ID))
                 .isInstanceOf(TicketTypeInUseException.class);
