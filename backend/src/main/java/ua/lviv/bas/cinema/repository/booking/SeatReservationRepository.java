@@ -29,10 +29,6 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
     Optional<SeatReservation> findBySessionIdAndSeatIdAndStatusAndReservedByUserId(Long sessionId, Long seatId,
                                                                                    ReservationStatus status, Long userId);
 
-    @Query("SELECT COUNT(sr) FROM SeatReservation sr WHERE sr.session.id = :sessionId AND sr.status IN :statuses")
-    long countBySessionIdAndStatusIn(@Param("sessionId") Long sessionId,
-                                     @Param("statuses") List<ReservationStatus> statuses);
-
     @Query("""
             SELECT s.id, sr.status
             FROM Seat s
@@ -42,15 +38,13 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
     List<Object[]> findBookedSeatIds(@Param("hallId") Long hallId, @Param("sessionId") Long sessionId,
                                      @Param("statuses") List<ReservationStatus> statuses);
 
-    @Query(value = """
-            SELECT
-                sr.session_id as sessionId,
-                (SELECT COUNT(seat.id) FROM seats seat WHERE seat.hall_id = s.hall_id) - COUNT(sr.id) as availableSeats
-            FROM seat_reservations sr
-            JOIN sessions s ON s.id = sr.session_id
-            WHERE sr.session_id IN (:sessionIds)
-            AND sr.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')
-            GROUP BY sr.session_id, s.hall_id
-            """, nativeQuery = true)
-    List<Object[]> findAvailableSeatsBatch(@Param("sessionIds") List<Long> sessionIds);
+    @Query("SELECT s.id, (SELECT COUNT(seat) FROM Seat seat WHERE seat.hall.id = s.hall.id) " +
+            "FROM Session s WHERE s.id IN :sessionIds")
+    List<Object[]> findTotalSeatsBySessionIds(@Param("sessionIds") List<Long> sessionIds);
+
+    @Query("SELECT sr.session.id, COUNT(sr) FROM SeatReservation sr " +
+            "WHERE sr.session.id IN :sessionIds AND sr.status IN :statuses " +
+            "GROUP BY sr.session.id")
+    List<Object[]> findBookedCountBySessionIds(@Param("sessionIds") List<Long> sessionIds,
+                                               @Param("statuses") List<ReservationStatus> statuses);
 }

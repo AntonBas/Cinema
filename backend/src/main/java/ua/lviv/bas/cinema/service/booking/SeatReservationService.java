@@ -130,8 +130,24 @@ public class SeatReservationService {
         if (sessionIds.isEmpty()) {
             return Map.of();
         }
-        return seatReservationRepository.findAvailableSeatsBatch(sessionIds).stream()
-                .collect(Collectors.toMap(arr -> (Long) arr[0], arr -> ((Number) arr[1]).intValue()));
+
+        Map<Long, Integer> totalSeatsMap = seatReservationRepository.findTotalSeatsBySessionIds(sessionIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        arr -> (Long) arr[0],
+                        arr -> ((Number) arr[1]).intValue()));
+
+        Map<Long, Integer> bookedMap = seatReservationRepository
+                .findBookedCountBySessionIds(sessionIds, ReservationStatus.ACTIVE_STATUSES)
+                .stream()
+                .collect(Collectors.toMap(
+                        arr -> (Long) arr[0],
+                        arr -> ((Number) arr[1]).intValue()));
+
+        return sessionIds.stream()
+                .collect(Collectors.toMap(
+                        id -> id,
+                        id -> totalSeatsMap.getOrDefault(id, 0) - bookedMap.getOrDefault(id, 0)));
     }
 
     private void validateSeat(Long sessionId, Long seatId) {
