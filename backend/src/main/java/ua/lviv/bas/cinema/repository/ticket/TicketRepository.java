@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
 
@@ -19,9 +20,9 @@ public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecif
 
     Optional<Ticket> findByIdAndUserIdAndStatus(Long ticketId, Long userId, TicketStatus status);
 
-    @Query("SELECT t FROM Ticket t WHERE t.status = :status AND t.booking.session.startTime < :currentTime")
-    List<Ticket> findActiveTicketsWithPastSessions(@Param("status") TicketStatus status,
-                                                   @Param("currentTime") LocalDateTime currentTime);
+    @Query("SELECT t FROM Ticket t WHERE t.status = :status AND t.booking.session.status = :sessionStatus")
+    List<Ticket> findActiveTicketsBySessionStatus(@Param("status") TicketStatus status,
+                                                  @Param("sessionStatus") CinemaSessionStatus sessionStatus);
 
     @Query("SELECT t FROM Ticket t WHERE t.booking.session.startTime BETWEEN :fromTime AND :toTime AND t.status = :status")
     List<Ticket> findByBookingSessionStartTimeBetweenAndStatus(@Param("fromTime") LocalDateTime fromTime,

@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
@@ -23,8 +24,7 @@ public class TicketScheduler {
     @Transactional
     public void markTicketsAsExpiredAfterSession() {
         log.debug("Starting to mark tickets as expired after sessions");
-        LocalDateTime now = LocalDateTime.now();
-        List<Ticket> tickets = ticketRepository.findActiveTicketsWithPastSessions(TicketStatus.ACTIVE, now);
+        List<Ticket> tickets = ticketRepository.findActiveTicketsBySessionStatus(TicketStatus.ACTIVE, CinemaSessionStatus.COMPLETED);
 
         if (tickets.isEmpty()) {
             log.debug("No tickets to mark as expired");
