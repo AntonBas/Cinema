@@ -63,7 +63,7 @@ export const TicketQRModal: React.FC<TicketQRModalProps> = ({
           <div className={styles.ticketCodeValue}>
             {ticketCode}
             <Button variant="secondary" size="small" onClick={handleCopyCode}>
-              {copied ? "✓ Copied!" : "📋 Copy"}
+              {copied ? "Copied!" : "Copy"}
             </Button>
           </div>
         </div>
@@ -108,7 +108,7 @@ export const TicketQRModal: React.FC<TicketQRModalProps> = ({
             onClick={handleDownload}
             disabled={!qrImage || loading}
           >
-            ⬇️ Download QR Code
+            Download QR Code
           </Button>
           <Button variant="secondary" onClick={onClose}>
             Close
