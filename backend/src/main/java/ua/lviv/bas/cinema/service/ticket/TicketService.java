@@ -112,11 +112,6 @@ public class TicketService {
         return ticketMapper.toTicketCashierResponse(ticket);
     }
 
-    @Transactional(readOnly = true)
-    public TicketStatus getStatus(String ticketCode) {
-        return ticketRepository.findByUniqueCode(ticketCode).map(Ticket::getStatus).orElse(null);
-    }
-
     public byte[] generateQR(String ticketCode) {
         var qrContent = ticketBaseUrl + "/cashier/scan/" + ticketCode;
         return qrCodeService.generateQRCode(qrContent, qrCodeSize);
