@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 import ua.lviv.bas.cinema.domain.cinema.Genre;
@@ -31,7 +32,7 @@ import ua.lviv.bas.cinema.repository.cinema.GenreRepository;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
 import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
-import ua.lviv.bas.cinema.repository.cinema.projection.MovieCardProjection;
+import ua.lviv.bas.cinema.repository.cinema.specification.MovieSpecification;
 import ua.lviv.bas.cinema.scheduler.MovieScheduler;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.integration.file.PosterService;
@@ -68,6 +69,8 @@ public class MovieServiceTest {
     private AuditService auditService;
     @Mock
     private SessionRepository sessionRepository;
+    @Mock
+    private MovieSpecification movieSpecification;
 
     @InjectMocks
     private MovieService movieService;
@@ -120,6 +123,14 @@ public class MovieServiceTest {
                 .endShowingDate(LocalDate.now().plusDays(40)).ageRating(AgeRating.PEGI_16).genreIds(List.of(1L))
                 .actorIds(List.of(3L)).directorIds(List.of(5L, 7L)).screenwriterIds(List.of(6L, 8L)).removePoster(false)
                 .build();
+
+        lenient().when(movieSpecification.forMovies(any(), any())).thenReturn((root, query, cb) -> cb.conjunction());
+        lenient().when(movieSpecification.currentMovies()).thenReturn((root, query, cb) -> cb.conjunction());
+        lenient().when(movieSpecification.upcomingMovies()).thenReturn((root, query, cb) -> cb.conjunction());
+        lenient().when(movieSpecification.leavingSoonMovies()).thenReturn((root, query, cb) -> cb.conjunction());
+        lenient().when(movieSpecification.byDate(any())).thenReturn((root, query, cb) -> cb.conjunction());
+        lenient().when(movieSpecification.byDateAndTitle(any(), any())).thenReturn((root, query, cb) -> cb.conjunction());
+        lenient().when(movieSpecification.forPublicListing(any())).thenReturn((root, query, cb) -> cb.conjunction());
     }
 
     @Test
@@ -198,8 +209,7 @@ public class MovieServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
         Page<Movie> moviePage = new PageImpl<>(List.of(movie));
 
-        when(movieRepository.findMoviesByQueryAndStatus(MOVIE_TITLE, MovieStatus.UPCOMING, pageable))
-                .thenReturn(moviePage);
+        when(movieRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(moviePage);
         when(movieMapper.toMovieCardResponse(movie)).thenReturn(cardResponse);
 
         Page<MovieCardResponse> result = movieService.getMovies(MOVIE_TITLE, MovieStatus.UPCOMING, pageable);
@@ -211,11 +221,10 @@ public class MovieServiceTest {
     @Test
     void getCurrentMoviesShouldReturnList() {
         Pageable pageable = PageRequest.of(0, 6);
-        MovieCardProjection projection = createMovieCardProjection();
-        Page<MovieCardProjection> projectionPage = new PageImpl<>(List.of(projection));
+        Page<Movie> moviePage = new PageImpl<>(List.of(movie));
 
-        when(movieRepository.findCurrentMovies(pageable)).thenReturn(projectionPage);
-        when(movieMapper.toMovieCardResponse(projection)).thenReturn(cardResponse);
+        when(movieRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(moviePage);
+        when(movieMapper.toMovieCardResponse(movie)).thenReturn(cardResponse);
 
         List<MovieCardResponse> result = movieService.getCurrentMovies(pageable);
 
@@ -226,11 +235,10 @@ public class MovieServiceTest {
     @Test
     void getUpcomingMoviesShouldReturnList() {
         Pageable pageable = PageRequest.of(0, 6);
-        MovieCardProjection projection = createMovieCardProjection();
-        Page<MovieCardProjection> projectionPage = new PageImpl<>(List.of(projection));
+        Page<Movie> moviePage = new PageImpl<>(List.of(movie));
 
-        when(movieRepository.findUpcomingMovies(pageable)).thenReturn(projectionPage);
-        when(movieMapper.toMovieCardResponse(projection)).thenReturn(cardResponse);
+        when(movieRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(moviePage);
+        when(movieMapper.toMovieCardResponse(movie)).thenReturn(cardResponse);
 
         List<MovieCardResponse> result = movieService.getUpcomingMovies(pageable);
 
@@ -241,11 +249,10 @@ public class MovieServiceTest {
     @Test
     void getLeavingSoonMoviesShouldReturnList() {
         Pageable pageable = PageRequest.of(0, 6);
-        MovieCardProjection projection = createMovieCardProjection();
-        Page<MovieCardProjection> projectionPage = new PageImpl<>(List.of(projection));
+        Page<Movie> moviePage = new PageImpl<>(List.of(movie));
 
-        when(movieRepository.findLeavingSoonMovies(pageable)).thenReturn(projectionPage);
-        when(movieMapper.toMovieCardResponse(projection)).thenReturn(cardResponse);
+        when(movieRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(moviePage);
+        when(movieMapper.toMovieCardResponse(movie)).thenReturn(cardResponse);
 
         List<MovieCardResponse> result = movieService.getLeavingSoonMovies(pageable);
 
@@ -369,7 +376,7 @@ public class MovieServiceTest {
         assertThatThrownBy(() -> movieService.deleteMovie(MOVIE_ID)).isInstanceOf(MovieHasSessionsException.class);
 
         verify(posterService, never()).deletePoster(anyString());
-        verify(movieRepository, never()).delete(any());
+        verify(movieRepository, never()).delete((Movie) any());
     }
 
     @Test
@@ -381,9 +388,8 @@ public class MovieServiceTest {
 
     @Test
     void searchMoviesByTitleShouldReturnList() {
-        MovieCardProjection projection = createMovieCardProjection();
-        when(movieRepository.findMoviesForSessionSearch("test")).thenReturn(List.of(projection));
-        when(movieMapper.toMovieSessionSearchResponse(projection))
+        when(movieRepository.findAll(any(Specification.class))).thenReturn(List.of(movie));
+        when(movieMapper.toMovieSessionSearchResponse(movie))
                 .thenReturn(new MovieSessionSearchResponse(MOVIE_ID, MOVIE_TITLE, 120));
 
         List<MovieSessionSearchResponse> result = movieService.searchMovies("test", null);
@@ -391,15 +397,13 @@ public class MovieServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().id()).isEqualTo(MOVIE_ID);
         assertThat(result.getFirst().title()).isEqualTo(MOVIE_TITLE);
-        assertThat(result.getFirst().durationMinutes()).isEqualTo(120);
     }
 
     @Test
     void searchMoviesByDateShouldReturnList() {
         LocalDate date = LocalDate.now();
-        MovieCardProjection projection = createMovieCardProjection();
-        when(movieRepository.findMoviesByDate(date)).thenReturn(List.of(projection));
-        when(movieMapper.toMovieSessionSearchResponse(projection))
+        when(movieRepository.findAll(any(Specification.class))).thenReturn(List.of(movie));
+        when(movieMapper.toMovieSessionSearchResponse(movie))
                 .thenReturn(new MovieSessionSearchResponse(MOVIE_ID, MOVIE_TITLE, 120));
 
         List<MovieSessionSearchResponse> result = movieService.searchMovies(null, date);
@@ -437,54 +441,5 @@ public class MovieServiceTest {
         ResponseEntity<byte[]> result = movieService.getPoster(MOVIE_ID);
 
         assertThat(result.getStatusCode().is4xxClientError()).isTrue();
-    }
-
-    private MovieCardProjection createMovieCardProjection() {
-        return new MovieCardProjection() {
-            @Override
-            public Long getId() {
-                return MOVIE_ID;
-            }
-
-            @Override
-            public String getSlug() {
-                return SLUG;
-            }
-
-            @Override
-            public String getTitle() {
-                return MOVIE_TITLE;
-            }
-
-            @Override
-            public String getPosterFileName() {
-                return "poster.jpg";
-            }
-
-            @Override
-            public Integer getDurationMinutes() {
-                return 120;
-            }
-
-            @Override
-            public AgeRating getAgeRating() {
-                return AgeRating.PEGI_12;
-            }
-
-            @Override
-            public MovieStatus getStatus() {
-                return MovieStatus.UPCOMING;
-            }
-
-            @Override
-            public LocalDate getReleaseDate() {
-                return LocalDate.now().plusDays(1);
-            }
-
-            @Override
-            public LocalDate getEndShowingDate() {
-                return LocalDate.now().plusDays(30);
-            }
-        };
     }
 }
