@@ -22,7 +22,6 @@ public interface MovieMapper {
     @Mapping(target = "posterUrl", expression = "java(getPosterUrl(movie.getId()))")
     MovieAdminResponse toMovieAdminResponse(Movie movie);
 
-    @Mapping(target = "posterUrl", expression = "java(getPosterUrl(movie.getId()))")
     MovieSessionSearchResponse toMovieSessionSearchResponse(Movie movie);
 
     @Mapping(target = "id", ignore = true)
