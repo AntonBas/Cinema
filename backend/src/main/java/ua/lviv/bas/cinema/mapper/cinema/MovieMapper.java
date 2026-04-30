@@ -8,7 +8,6 @@ import ua.lviv.bas.cinema.dto.movie.response.MovieAdminResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
-import ua.lviv.bas.cinema.repository.cinema.projection.MovieCardProjection;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE, uses = {PersonMapper.class,
         GenreMapper.class, SessionMapper.class})
@@ -17,16 +16,14 @@ public interface MovieMapper {
     @Mapping(target = "posterUrl", expression = "java(getPosterUrl(movie.getId()))")
     MovieCardResponse toMovieCardResponse(Movie movie);
 
-    @Mapping(target = "posterUrl", expression = "java(getPosterUrl(projection.getId()))")
-    MovieCardResponse toMovieCardResponse(MovieCardProjection projection);
-
     @Mapping(target = "posterUrl", expression = "java(getPosterUrl(movie.getId()))")
     MovieDetailResponse toMovieDetailResponse(Movie movie);
 
     @Mapping(target = "posterUrl", expression = "java(getPosterUrl(movie.getId()))")
     MovieAdminResponse toMovieAdminResponse(Movie movie);
 
-    MovieSessionSearchResponse toMovieSessionSearchResponse(MovieCardProjection projection);
+    @Mapping(target = "posterUrl", expression = "java(getPosterUrl(movie.getId()))")
+    MovieSessionSearchResponse toMovieSessionSearchResponse(Movie movie);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "slug", ignore = true)
@@ -51,6 +48,7 @@ public interface MovieMapper {
     @Mapping(target = "posterFileName", ignore = true)
     void updateMovieFromRequest(MovieUpdateRequest request, @MappingTarget Movie movie);
 
+    @SuppressWarnings("unused")
     default String getPosterUrl(Long id) {
         return id != null ? "/api/movies/" + id + "/poster" : null;
     }

@@ -6,6 +6,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,7 @@ import ua.lviv.bas.cinema.repository.cinema.GenreRepository;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
 import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
+import ua.lviv.bas.cinema.repository.cinema.specification.MovieSpecification;
 import ua.lviv.bas.cinema.scheduler.MovieScheduler;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.integration.file.PosterService;
@@ -54,6 +56,7 @@ public class MovieService {
     private final PosterService posterService;
     private final AuditService auditService;
     private final SessionRepository sessionRepository;
+    private final MovieSpecification movieSpecification;
 
     @CacheEvict(value = "movies", allEntries = true)
     @Transactional
@@ -107,43 +110,49 @@ public class MovieService {
     public Page<MovieCardResponse> getMovies(String query, MovieStatus status, Pageable pageable) {
         log.info("Getting movies: query='{}', status={}, page={}, size={}", query, status, pageable.getPageNumber(),
                 pageable.getPageSize());
-        return movieRepository.findMoviesByQueryAndStatus(query, status, pageable)
-                .map(movieMapper::toMovieCardResponse);
+        Specification<Movie> spec = movieSpecification.forMovies(query, status);
+        return movieRepository.findAll(spec, pageable).map(movieMapper::toMovieCardResponse);
     }
 
     @Cacheable(value = "movies", key = "'current-' + #pageable.pageNumber + '-' + #pageable.pageSize")
     public List<MovieCardResponse> getCurrentMovies(Pageable pageable) {
-        return movieRepository.findCurrentMovies(pageable).map(movieMapper::toMovieCardResponse).getContent();
+        Specification<Movie> spec = movieSpecification.currentMovies();
+        return movieRepository.findAll(spec, pageable).map(movieMapper::toMovieCardResponse).getContent();
     }
 
     @Cacheable(value = "movies", key = "'upcoming-' + #pageable.pageNumber + '-' + #pageable.pageSize")
     public List<MovieCardResponse> getUpcomingMovies(Pageable pageable) {
-        return movieRepository.findUpcomingMovies(pageable).map(movieMapper::toMovieCardResponse).getContent();
+        Specification<Movie> spec = movieSpecification.upcomingMovies();
+        return movieRepository.findAll(spec, pageable).map(movieMapper::toMovieCardResponse).getContent();
     }
 
     @Cacheable(value = "movies", key = "'leaving-soon-' + #pageable.pageNumber + '-' + #pageable.pageSize")
     public List<MovieCardResponse> getLeavingSoonMovies(Pageable pageable) {
-        return movieRepository.findLeavingSoonMovies(pageable).map(movieMapper::toMovieCardResponse).getContent();
+        Specification<Movie> spec = movieSpecification.leavingSoonMovies();
+        return movieRepository.findAll(spec, pageable).map(movieMapper::toMovieCardResponse).getContent();
     }
 
     public List<MovieSessionSearchResponse> searchMovies(String query, LocalDate date) {
         log.info("Searching movies with query: '{}', date: {}", query, date);
 
         if (date != null) {
-            var projections = (query != null && !query.isBlank())
-                    ? movieRepository.findMoviesByDateAndTitle(date, query)
-                    : movieRepository.findMoviesByDate(date);
-            return projections.stream().map(movieMapper::toMovieSessionSearchResponse).toList();
+            Specification<Movie> spec = (query != null && !query.isBlank())
+                    ? movieSpecification.byDateAndTitle(date, query)
+                    : movieSpecification.byDate(date);
+            return movieRepository.findAll(spec).stream()
+                    .map(movieMapper::toMovieSessionSearchResponse).toList();
         }
 
         if (query == null || query.isBlank()) {
             return List.of();
         }
 
-        var projections = isValidDate(query) ? movieRepository.findMoviesByDate(LocalDate.parse(query))
-                : movieRepository.findMoviesForSessionSearch(query);
+        Specification<Movie> spec = isValidDate(query)
+                ? movieSpecification.byDate(LocalDate.parse(query))
+                : movieSpecification.forPublicListing(query);
 
-        return projections.stream().map(movieMapper::toMovieSessionSearchResponse).toList();
+        return movieRepository.findAll(spec).stream()
+                .map(movieMapper::toMovieSessionSearchResponse).toList();
     }
 
     public ResponseEntity<byte[]> getPoster(Long id) {
