@@ -103,7 +103,7 @@ const PromotionTable: React.FC<PromotionTableProps> = ({
                 <td className={styles.td} data-label="Actions">
                   <div className={styles.actions}>
                     <Button
-                      variant="secondary"
+                      variant="success"
                       size="small"
                       onClick={() => onEdit(promotion.id)}
                       className={styles.actionButton}

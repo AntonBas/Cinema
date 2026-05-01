@@ -80,7 +80,25 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
   if (ticketTypes.length === 0) {
     return (
       <div className={styles.empty}>
-        <div className={styles.emptyIcon}>🎫</div>
+        <div className={styles.emptyIcon}>
+          <svg
+            width="48"
+            height="48"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect x="3" y="5" width="18" height="14" rx="2" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+            <line x1="7" y1="5" x2="7" y2="19" />
+            <line x1="17" y1="5" x2="17" y2="19" />
+            <line x1="10" y1="10" x2="10" y2="14" />
+            <line x1="14" y1="10" x2="14" y2="14" />
+          </svg>
+        </div>
         <h3>No ticket types found</h3>
         <p>There are no ticket types matching your criteria.</p>
       </div>
@@ -162,7 +180,7 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
                     <td className={styles.actionsCell} data-label="Actions">
                       <div className={styles.actions}>
                         <Button
-                          variant="secondary"
+                          variant="success"
                           size="small"
                           onClick={() => onEdit(ticketType)}
                           className={styles.actionButton}

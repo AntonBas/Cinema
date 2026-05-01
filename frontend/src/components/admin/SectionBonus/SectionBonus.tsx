@@ -111,7 +111,7 @@ const SectionBonus = () => {
                 <td data-label="Actions">
                   <div className={styles.actions}>
                     <Button
-                      variant="secondary"
+                      variant="success"
                       size="small"
                       onClick={() => setEditingRule(rule)}
                     >

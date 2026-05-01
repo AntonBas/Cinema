@@ -136,39 +136,18 @@
 
 .actions {
   display: flex;
+  flex-direction: column;
   gap: var(--space-2);
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  align-items: flex-end;
 }
 
 .actionButton {
-  min-width: 70px;
+  min-width: 90px;
   font-weight: 500;
   transition: all var(--transition-fast);
   font-size: var(--font-size-xs);
   padding: var(--space-1) var(--space-2);
-}
-
-.actionButton:first-child {
-  background: rgba(var(--color-primary-rgb), 0.1);
-  border-color: rgba(var(--color-primary-rgb), 0.3);
-  color: var(--color-primary);
-}
-
-.actionButton:first-child:hover {
-  background: rgba(var(--color-primary-rgb), 0.2);
-  transform: translateY(-1px);
-}
-
-.actionButton:last-child {
-  background: rgba(var(--color-error-rgb), 0.1);
-  border-color: rgba(var(--color-error-rgb), 0.3);
-  color: var(--color-error);
-}
-
-.actionButton:last-child:hover {
-  background: rgba(var(--color-error-rgb), 0.2);
-  transform: translateY(-1px);
+  justify-content: center;
 }
 
 .emptyContainer {
@@ -267,6 +246,7 @@
 
   .actions {
     justify-content: flex-start;
+    align-items: flex-start;
     margin-top: var(--space-2);
   }
 
@@ -308,10 +288,12 @@
 
   .actions {
     gap: var(--space-1);
+    align-items: stretch;
   }
 
   .actionButton {
-    min-width: 60px;
+    min-width: auto;
+    width: 100%;
     font-size: 10px;
     padding: 4px;
   }
