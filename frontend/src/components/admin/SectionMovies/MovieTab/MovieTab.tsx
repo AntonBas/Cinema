@@ -96,13 +96,34 @@ export const MovieTab: React.FC = () => {
     [],
   );
 
+  const loadTabCount = useCallback(async (tab: MovieTabType) => {
+    try {
+      const status = tab as MovieStatus;
+      const response = await movieApi.admin.getMovies({
+        page: 0,
+        size: 1,
+        status,
+      });
+
+      setTabData((prev) => ({
+        ...prev,
+        [tab]: {
+          ...prev[tab],
+          total: response?.data?.totalElements || 0,
+        },
+      }));
+    } catch (error) {
+      console.error(`Failed to load ${tab} count:`, error);
+    }
+  }, []);
+
   const loadAllTabCounts = useCallback(async () => {
     await Promise.all([
-      loadTabData("CURRENT", 0, ""),
-      loadTabData("UPCOMING", 0, ""),
-      loadTabData("ARCHIVED", 0, ""),
+      loadTabCount("CURRENT"),
+      loadTabCount("UPCOMING"),
+      loadTabCount("ARCHIVED"),
     ]);
-  }, [loadTabData]);
+  }, [loadTabCount]);
 
   useEffect(() => {
     loadAllTabCounts();
