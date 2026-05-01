@@ -139,8 +139,8 @@ public class TicketService {
         var session = ticket.getBooking().getSession();
         var now = LocalDateTime.now();
 
-        if (session.getStartTime().isAfter(now)) {
-            throw new TicketValidationException("Session has not started yet");
+        if (session.getStartTime().isAfter(now.plusHours(1))) {
+            throw new TicketValidationException("Too early. Entry allowed 1 hour before session start");
         }
         if (session.getStartTime().isBefore(now.minusHours(2))) {
             throw new TicketValidationException("Session ended more than 2 hours ago");
