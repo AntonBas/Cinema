@@ -100,6 +100,26 @@ app:
     from: ${EMAIL_FROM:noreply@bascinema.com}
   upload:
     dir: ${UPLOAD_DIR:uploads}
+  refund-policy:
+    processing-time: "5-7 business days"
+    contact-email: "support@bascinema.com"
+    rules:
+      - name: "Full Refund"
+        description: "100% refund — 48+ hours before the session"
+        percentage: 100
+        condition: "More than 48 hours before session start"
+      - name: "Standard Refund"
+        description: "85% refund — 24-48 hours before the session"
+        percentage: 85
+        condition: "24 to 48 hours before session start"
+      - name: "Last Minute Refund"
+        description: "50% refund — 2-24 hours before the session"
+        percentage: 50
+        condition: "2 to 24 hours before session start"
+      - name: "No Refund"
+        description: "Refund not available — less than 2 hours before the session"
+        percentage: 0
+        condition: "Less than 2 hours before session start"
 
 booking:
   expiration-minutes: 30
