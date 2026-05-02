@@ -80,6 +80,7 @@ public class WebSecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/sessions").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/sessions/*/seats").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/promotions").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/refunds/policy").permitAll()
                         .requestMatchers("/api/liqpay/callback").permitAll()
                         .requestMatchers("/api/bonus/**").authenticated()
                         .requestMatchers("/api/bookings/**").authenticated()

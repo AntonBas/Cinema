@@ -17,6 +17,7 @@ import { ProfilePage } from "@/pages/account/ProfilePage/ProfilePage";
 import { SecurityPage } from "@/pages/account/SecurityPage/SecurityPage";
 import { BonusPage } from "@/pages/account/BonusPage/BonusPage";
 import { TicketsPage } from "@/pages/account/TicketsPage/TicketsPage";
+import { RefundPolicyPage } from "@/pages/RefundPolicyPage/RefundPolicyPage";
 
 import { MoviesLayout } from "@/pages/movies/MoviesLayout/MoviesLayout";
 import { CurrentMoviesPage } from "@/pages/movies/CurrentMoviesPage/CurrentMoviesPage";
@@ -97,6 +98,8 @@ export const AppRoutes: React.FC = () => {
       <Route path="/movies/:slug" element={<MovieDetailPage />} />
 
       <Route path="/schedule" element={<SessionsPage />} />
+
+      <Route path="/refund-policy" element={<RefundPolicyPage />} />
 
       <Route
         path="/account"
