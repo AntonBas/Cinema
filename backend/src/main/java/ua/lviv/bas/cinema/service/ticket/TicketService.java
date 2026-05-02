@@ -13,7 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.booking.Booking;
 import ua.lviv.bas.cinema.domain.booking.Payment;
+import ua.lviv.bas.cinema.domain.booking.Refund;
 import ua.lviv.bas.cinema.domain.booking.SeatReservation;
+import ua.lviv.bas.cinema.domain.booking.status.ReservationStatus;
 import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
@@ -52,6 +54,7 @@ public class TicketService {
     @Value("${app.base-url}")
     private String ticketBaseUrl;
 
+    @CacheEvict(value = "tickets", allEntries = true)
     @Transactional
     public void createTicketsForBooking(Booking booking, Payment payment) {
         var tickets = booking.getSeatReservations().stream()
@@ -147,6 +150,19 @@ public class TicketService {
         }
         if (session.getStatus() == CinemaSessionStatus.CANCELLED) {
             throw new TicketValidationException("Session has been cancelled");
+        }
+    }
+
+    @CacheEvict(value = "tickets", allEntries = true)
+    @Transactional
+    public void markAsRefunded(Ticket ticket, Refund refund) {
+        ticket.setStatus(TicketStatus.REFUNDED);
+        ticket.setRefund(refund);
+        ticketRepository.save(ticket);
+
+        var seatReservation = ticket.getSeatReservation();
+        if (seatReservation != null) {
+            seatReservation.setStatus(ReservationStatus.CANCELLED);
         }
     }
 
