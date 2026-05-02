@@ -1,126 +1,112 @@
 .overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    animation: fadeIn var(--transition-normal);
-    padding: var(--space-8);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn var(--transition-normal);
+  padding: var(--space-8);
 }
 
 .modal {
-    background: var(--color-bg-modal);
-    border-radius: var(--radius-xl);
-    position: relative;
-    box-shadow: var(--shadow-xl);
-    animation: slideUp var(--transition-normal);
-    max-height: 90vh;
-    overflow-y: auto;
-    border: 1px solid var(--color-border);
+  background: var(--color-bg-modal);
+  border-radius: var(--radius-xl);
+  position: relative;
+  box-shadow: var(--shadow-xl);
+  animation: slideUp var(--transition-normal);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
 }
 
 .small {
-    width: 100%;
-    max-width: 400px;
-    padding: var(--space-8);
+  width: 100%;
+  max-width: 400px;
 }
 
 .medium {
-    width: 100%;
-    max-width: 500px;
-    padding: var(--space-10);
+  width: 100%;
+  max-width: 500px;
 }
 
 .large {
-    width: 100%;
-    max-width: 600px;
-    padding: var(--space-12);
+  width: 100%;
+  max-width: 600px;
 }
 
 .fullscreen {
-    width: 95vw;
-    height: 95vh;
-    max-width: none;
-    padding: var(--space-8);
+  width: 95vw;
+  height: 95vh;
+  max-width: none;
 }
 
 .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--space-6);
-    padding-bottom: var(--space-4);
-    border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-6) var(--space-6) 0 var(--space-6);
+  flex-shrink: 0;
 }
 
 .title {
-    margin: 0;
-    color: var(--color-text-primary);
-    font-size: var(--font-size-2xl);
-    font-weight: 600;
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
 }
 
 .closeButton {
-    background: rgba(var(--color-primary-rgb), var(--opacity-low));
-    border: 1px solid rgba(var(--color-primary-rgb), var(--opacity-high));
-    color: var(--color-primary);
-    cursor: pointer;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-md);
-    transition: all var(--transition-normal);
+  background: rgba(var(--color-primary-rgb), var(--opacity-low));
+  border: 1px solid rgba(var(--color-primary-rgb), var(--opacity-high));
+  color: var(--color-primary);
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-normal);
+  flex-shrink: 0;
 }
 
 .closeButton:hover {
-    background: var(--color-primary);
-    color: var(--color-text-primary);
-    transform: rotate(90deg);
+  background: var(--color-primary);
+  color: var(--color-text-primary);
+  transform: rotate(90deg);
 }
 
 .content {
-    color: var(--color-text-primary);
-    height: 100%;
+  color: var(--color-text-primary);
+  overflow-y: auto;
+  flex: 1;
 }
 
 @keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 768px) {
-    .overlay {
-        padding: var(--space-2);
-    }
+  .overlay {
+    padding: var(--space-2);
+  }
 
-    .small,
-    .medium,
-    .large,
-    .fullscreen {
-        padding: var(--space-6);
-    }
-
-    .fullscreen {
-        width: 98vw;
-        height: 98vh;
-    }
-
-    .closeButton {
-        top: var(--space-1);
-        right: var(--space-1);
-    }
+  .fullscreen {
+    width: 98vw;
+    height: 98vh;
+  }
 }
