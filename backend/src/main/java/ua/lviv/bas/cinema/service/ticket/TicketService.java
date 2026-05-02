@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -153,7 +154,11 @@ public class TicketService {
         }
     }
 
-    @CacheEvict(value = "tickets", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "tickets", allEntries = true),
+            @CacheEvict(value = "seatAvailability", key = "#ticket.seatReservation.session.id"),
+            @CacheEvict(value = "availableSeatsCount", key = "#ticket.seatReservation.session.id")
+    })
     @Transactional
     public void markAsRefunded(Ticket ticket, Refund refund) {
         ticket.setStatus(TicketStatus.REFUNDED);
