@@ -153,7 +153,7 @@ public class PaymentService {
     }
 
     public void refund(Payment payment, BigDecimal amount, String description) {
-        if (payment.getStatus() != PaymentStatus.SUCCESS) {
+        if (payment.getStatus() != PaymentStatus.SUCCESS && payment.getStatus() != PaymentStatus.PARTIALLY_REFUNDED) {
             throw PaymentProcessingException.refundFailed("Cannot refund payment with status: " + payment.getStatus());
         }
 
