@@ -28,6 +28,7 @@ import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.service.bonus.BonusService;
 import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
+import ua.lviv.bas.cinema.service.ticket.TicketService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -50,6 +51,7 @@ public class RefundService {
     private final RefundItemMapper refundItemMapper;
     private final NumberGeneratorService numberGenerator;
     private final AuditService auditService;
+    private final TicketService ticketService;
 
     @Transactional(readOnly = true)
     public RefundPreviewResponse getPreview(RefundPreviewRequest request, Long userId) {
@@ -59,7 +61,7 @@ public class RefundService {
         if (validationError != null) {
             return createNonRefundablePreview(ticket, validationError);
         }
-        if (ticket.getPayment().getStatus() != PaymentStatus.SUCCESS) {
+        if (ticket.getPayment().getStatus() != PaymentStatus.SUCCESS && ticket.getPayment().getStatus() != PaymentStatus.PARTIALLY_REFUNDED) {
             return createNonRefundablePreview(ticket, "Payment cannot be refunded via API. Contact support.");
         }
         return createPreview(ticket);
@@ -73,7 +75,7 @@ public class RefundService {
         if (validationError != null) {
             throw new TicketNotRefundableException(validationError);
         }
-        if (ticket.getPayment().getStatus() != PaymentStatus.SUCCESS) {
+        if (ticket.getPayment().getStatus() != PaymentStatus.SUCCESS && ticket.getPayment().getStatus() != PaymentStatus.PARTIALLY_REFUNDED) {
             throw new TicketNotRefundableException("Payment cannot be refunded via API. Contact support.");
         }
 
@@ -91,9 +93,7 @@ public class RefundService {
                         BonusTransactionType.REFUND_RETURN, "REFUND_TICKET_" + ticket.getId());
             }
 
-            ticket.setStatus(TicketStatus.REFUNDED);
-            ticket.setRefund(refund);
-            ticketRepository.save(ticket);
+            ticketService.markAsRefunded(ticket, refund);
 
             auditRefund(refund, ticket, refundAmount, percentage, bonusPointsToRefund);
             return buildResponse(refund);
