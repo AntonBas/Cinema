@@ -16,6 +16,7 @@ const TABS: Array<{ id: TicketStatus | "all"; label: string }> = [
   { id: "ACTIVE", label: "Active" },
   { id: "USED", label: "Used" },
   { id: "REFUNDED", label: "Refunded" },
+  { id: "EXPIRED", label: "Expired" },
 ];
 
 export const TicketsPage: React.FC = () => {
