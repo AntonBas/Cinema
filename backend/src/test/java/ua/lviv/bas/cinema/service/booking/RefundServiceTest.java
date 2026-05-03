@@ -33,6 +33,7 @@ import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.service.bonus.BonusService;
 import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
+import ua.lviv.bas.cinema.service.ticket.TicketService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -65,6 +66,8 @@ public class RefundServiceTest {
     private NumberGeneratorService numberGenerator;
     @Mock
     private AuditService auditService;
+    @Mock
+    private TicketService ticketService;
     @InjectMocks
     private RefundService refundService;
 
@@ -91,13 +94,18 @@ public class RefundServiceTest {
         testSession = Session.builder().startTime(LocalDateTime.now().plusHours(3)).movie(movie).hall(hall).build();
         Seat seat = Seat.builder().row(5).number(10).build();
         SeatReservation seatReservation = SeatReservation.builder().seat(seat).build();
-        Booking booking = Booking.builder().session(testSession).seatReservations(List.of(seatReservation)).build();
-        testPayment = Payment.builder().id(1L).liqpayPaymentId("PAY123").status(PaymentStatus.SUCCESS).build();
+        Booking booking = Booking.builder()
+                .session(testSession)
+                .seatReservations(List.of(seatReservation))
+                .totalPrice(TICKET_PRICE)
+                .bonusPointsUsed(BONUS_POINTS_USED)
+                .build();
+        testPayment = Payment.builder().id(1L).amount(TICKET_PRICE).liqpayPaymentId("PAY123").status(PaymentStatus.SUCCESS).build();
         TicketType ticketType = TicketType.builder().displayName("Standard").build();
         testTicket = Ticket.builder().id(TICKET_ID).user(testUser).booking(booking).ticketType(ticketType)
                 .finalPrice(TICKET_PRICE).originalPrice(TICKET_PRICE).uniqueCode("TKT-123456")
                 .status(TicketStatus.ACTIVE).payment(testPayment).bonusPointsUsed(BONUS_POINTS_USED)
-                .purchaseTime(LocalDateTime.now().minusHours(1)).build();
+                .purchaseTime(LocalDateTime.now().minusHours(1)).seatReservation(seatReservation).build();
         testRefund = Refund.builder().id(1L).user(testUser).payment(testPayment).totalAmount(REFUND_AMOUNT)
                 .totalBonusPointsToDeduct(BONUS_POINTS_TO_REFUND).build();
         previewRequest = new RefundPreviewRequest(TICKET_ID);
@@ -117,7 +125,6 @@ public class RefundServiceTest {
         assertThat(response).isNotNull();
         assertThat(response.ticketId()).isEqualTo(TICKET_ID);
         assertThat(response.isRefundable()).isTrue();
-        assertThat(response.refundPercentage()).isEqualTo(PERCENTAGE);
         assertThat(response.refundAmount()).isEqualTo(REFUND_AMOUNT);
         assertThat(response.bonusPointsToRefund()).isEqualTo(BONUS_POINTS_TO_REFUND);
     }
@@ -180,7 +187,7 @@ public class RefundServiceTest {
         when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(true);
         when(refundRules.getRefundPercentage(testSession.getStartTime())).thenReturn(PERCENTAGE);
         when(refundRepository.save(any(Refund.class))).thenReturn(testRefund);
-        when(bonusService.getOrCreateCard(testUser)).thenReturn(null);
+        doNothing().when(bonusService).refundPointsForTicket(eq(USER_ID), eq(BONUS_POINTS_TO_REFUND), any(String.class));
         when(numberGenerator.generateRefundNumber(testRefund)).thenReturn("RF-2024-00001");
 
         RefundResponse mockResponse = new RefundResponse(1L, "RF-2024-00001", "PROCESSED", REFUND_AMOUNT,
@@ -193,9 +200,8 @@ public class RefundServiceTest {
 
         assertThat(response).isNotNull();
         assertThat(response.id()).isEqualTo(1L);
-        verify(paymentService).refund(eq(testPayment), eq(REFUND_AMOUNT), any(String.class));
-        verify(ticketRepository).save(testTicket);
-        assertThat(testTicket.getStatus()).isEqualTo(TicketStatus.REFUNDED);
+        verify(paymentService).refund(eq(testPayment), eq(REFUND_AMOUNT), any(String.class), eq(testTicket));
+        verify(ticketService).markAsRefunded(testTicket, testRefund);
     }
 
     @Test

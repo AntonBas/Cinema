@@ -17,6 +17,8 @@ import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
 import ua.lviv.bas.cinema.domain.cinema.Movie;
 import ua.lviv.bas.cinema.domain.cinema.Seat;
 import ua.lviv.bas.cinema.domain.cinema.Session;
+import ua.lviv.bas.cinema.domain.ticket.Ticket;
+import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.payment.request.PaymentCreateRequest;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
@@ -78,6 +80,7 @@ public class PaymentServiceTest {
     private Booking testBooking;
     private Payment testPayment;
     private PaymentCreateRequest createRequest;
+    private Ticket testTicket;
 
     private static final Long USER_ID = 1L;
     private static final Long BOOKING_ID = 2L;
@@ -96,7 +99,8 @@ public class PaymentServiceTest {
 
         Session session = Session.builder().movie(movie).hall(hall).startTime(LocalDateTime.now().plusHours(2)).build();
 
-        SeatReservation seatReservation = SeatReservation.builder().seat(Seat.builder().row(1).number(1).build())
+        Seat seat = Seat.builder().row(1).number(1).build();
+        SeatReservation seatReservation = SeatReservation.builder().seat(seat)
                 .status(ReservationStatus.CONFIRMED).build();
 
         testBooking = Booking.builder().id(BOOKING_ID).user(testUser).session(session).status(BookingStatus.PENDING)
@@ -105,6 +109,10 @@ public class PaymentServiceTest {
 
         testPayment = Payment.builder().id(PAYMENT_ID).booking(testBooking).amount(AMOUNT).status(PaymentStatus.PENDING)
                 .liqpayOrderId("ORD_TEST123456789").build();
+
+        TicketType ticketType = TicketType.builder().displayName("Standard").build();
+        testTicket = Ticket.builder().id(1L).user(testUser).booking(testBooking).ticketType(ticketType)
+                .seatReservation(seatReservation).build();
 
         createRequest = new PaymentCreateRequest(BOOKING_ID);
     }
@@ -267,7 +275,7 @@ public class PaymentServiceTest {
         when(dateTimeFormatter.formatStandard(any(LocalDateTime.class))).thenReturn("2024-01-01 14:00");
         when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
 
-        paymentService.refund(testPayment, refundAmount, description);
+        paymentService.refund(testPayment, refundAmount, description, testTicket);
 
         assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.PARTIALLY_REFUNDED);
         verify(paymentGatewayService).processRefund("refund_data");
@@ -278,7 +286,7 @@ public class PaymentServiceTest {
         testPayment.setStatus(PaymentStatus.PENDING);
         BigDecimal refundAmount = new BigDecimal("100.00");
 
-        assertThatThrownBy(() -> paymentService.refund(testPayment, refundAmount, "Test"))
+        assertThatThrownBy(() -> paymentService.refund(testPayment, refundAmount, "Test", testTicket))
                 .isInstanceOf(PaymentProcessingException.class);
     }
 
@@ -296,7 +304,7 @@ public class PaymentServiceTest {
         when(dateTimeFormatter.formatStandard(any(LocalDateTime.class))).thenReturn("2024-01-01 14:00");
         when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
 
-        paymentService.refund(testPayment, refundAmount, description);
+        paymentService.refund(testPayment, refundAmount, description, testTicket);
 
         assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.REFUNDED);
     }
