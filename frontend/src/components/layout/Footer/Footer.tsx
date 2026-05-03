@@ -1,6 +1,6 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import styles from './Footer.module.css';
+import React from "react";
+import { Link } from "react-router-dom";
+import styles from "./Footer.module.css";
 
 export const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -16,9 +16,15 @@ export const Footer: React.FC = () => {
         <div className={styles.footerSection}>
           <h4>Quick Links</h4>
           <ul>
-            <li><Link to="/">Home</Link></li>
-            <li><Link to="/movies/current">Movies</Link></li>
-            <li><Link to="/schedule">Schedule</Link></li>
+            <li>
+              <Link to="/">Home</Link>
+            </li>
+            <li>
+              <Link to="/movies/current">Movies</Link>
+            </li>
+            <li>
+              <Link to="/schedule">Schedule</Link>
+            </li>
           </ul>
         </div>
 
@@ -38,6 +44,15 @@ export const Footer: React.FC = () => {
                         <a href="#" className={styles.socialIcon} aria-label="Instagram">📸</a>
                         <a href="#" className={styles.socialIcon} aria-label="Twitter">🐦</a>
                     </div> */}
+        </div>
+
+        <div className={styles.footerSection}>
+          <h4>Information</h4>
+          <ul>
+            <li>
+              <Link to="/refund-policy">Refund Policy</Link>
+            </li>
+          </ul>
         </div>
       </div>
 
