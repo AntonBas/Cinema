@@ -11,6 +11,7 @@ import ua.lviv.bas.cinema.domain.booking.Payment;
 import ua.lviv.bas.cinema.domain.booking.status.BookingStatus;
 import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
 import ua.lviv.bas.cinema.domain.booking.status.ReservationStatus;
+import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.payment.request.PaymentCreateRequest;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
@@ -152,7 +153,7 @@ public class PaymentService {
         auditFailure(payment, oldStatus, callbackData);
     }
 
-    public void refund(Payment payment, BigDecimal amount, String description) {
+    public void refund(Payment payment, BigDecimal amount, String description, Ticket ticket) {
         if (payment.getStatus() != PaymentStatus.SUCCESS && payment.getStatus() != PaymentStatus.PARTIALLY_REFUNDED) {
             throw PaymentProcessingException.refundFailed("Cannot refund payment with status: " + payment.getStatus());
         }
@@ -188,7 +189,7 @@ public class PaymentService {
         payment.setStatus(newStatus);
         paymentRepository.save(payment);
 
-        sendRefundEmail(payment, amount, description);
+        sendRefundEmail(payment, amount, description, ticket);
         auditRefund(payment, oldStatus, newStatus, amount, description);
     }
 
@@ -241,11 +242,12 @@ public class PaymentService {
         }
     }
 
-    private void sendRefundEmail(Payment payment, BigDecimal amount, String description) {
+    private void sendRefundEmail(Payment payment, BigDecimal amount, String description, Ticket ticket) {
         try {
             var booking = payment.getBooking();
             var sessionTime = dateTimeFormatter.formatStandard(booking.getSession().getStartTime());
-            var seatsInfo = extractSeatsInfo(booking);
+            var seat = ticket.getSeatReservation().getSeat();
+            var seatsInfo = String.format("Row %d, Seat %d", seat.getRow(), seat.getNumber());
             var bookingNumber = numberGenerator.generateBookingNumber(booking);
 
             emailService.sendRefundEmail(booking.getUser().getEmail(), bookingNumber,

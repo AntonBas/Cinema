@@ -145,6 +145,21 @@ public class BonusService {
                 booking);
     }
 
+    @CacheEvict(value = "bonus", allEntries = true)
+    @Transactional
+    public void refundPointsForTicket(Long userId, Integer points, String referenceId) {
+        if (points == null || points <= 0) {
+            return;
+        }
+        var card = getCardByUserId(userId);
+        int oldBalance = card.getPointsBalance();
+        addPointsToCard(card, points);
+        bonusCardRepository.save(card);
+        auditBonusChange(card.getId(), "Ticket " + referenceId, AuditAction.POINTS_REFUNDED,
+                Map.of("points", oldBalance), Map.of("points", card.getPointsBalance()));
+        createTransaction(card, points, BonusTransactionType.REFUND_RETURN, referenceId);
+    }
+
     @Transactional(readOnly = true)
     public Integer calculateAccrualPoints(BigDecimal amount) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {

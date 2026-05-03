@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.config.properties.RefundRules;
 import ua.lviv.bas.cinema.domain.audit.AuditAction;
-import ua.lviv.bas.cinema.domain.bonus.BonusTransactionType;
 import ua.lviv.bas.cinema.domain.booking.Refund;
 import ua.lviv.bas.cinema.domain.booking.RefundItem;
 import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
@@ -81,16 +80,20 @@ public class RefundService {
 
         var sessionTime = ticket.getBooking().getSession().getStartTime();
         var percentage = refundRules.getRefundPercentage(sessionTime);
-        var refundAmount = calculateRefundAmount(ticket.getFinalPrice(), percentage);
-        var bonusPointsToRefund = calculateBonusRefund(ticket.getBonusPointsUsed(), percentage);
+        var booking = ticket.getBooking();
+        var totalSeats = booking.getSeatReservations().size();
+        var cashAmount = calculateCashAmount(ticket);
+        var refundAmount = calculateRefundAmount(cashAmount, percentage);
+        var bookingBonusPointsUsed = booking.getBonusPointsUsed();
+        var bonusPerTicket = totalSeats > 0 ? bookingBonusPointsUsed / totalSeats : 0;
+        var bonusPointsToRefund = calculateBonusRefund(bonusPerTicket, percentage);
         var refund = createRefund(ticket, refundAmount, percentage, bonusPointsToRefund, request.reason());
 
         try {
-            paymentService.refund(refund.getPayment(), refundAmount, "Refund for ticket #" + ticket.getUniqueCode());
+            paymentService.refund(refund.getPayment(), refundAmount, "Refund for ticket #" + ticket.getUniqueCode(), ticket);
 
             if (bonusPointsToRefund != null && bonusPointsToRefund > 0) {
-                bonusService.createTransaction(bonusService.getOrCreateCard(refund.getUser()), bonusPointsToRefund,
-                        BonusTransactionType.REFUND_RETURN, "REFUND_TICKET_" + ticket.getId());
+                bonusService.refundPointsForTicket(refund.getUser().getId(), bonusPointsToRefund, "REFUND_TICKET_" + ticket.getId());
             }
 
             ticketService.markAsRefunded(ticket, refund);
@@ -123,6 +126,19 @@ public class RefundService {
         return null;
     }
 
+    private BigDecimal calculateCashAmount(Ticket ticket) {
+        var paymentAmount = ticket.getPayment().getAmount();
+        var totalBookingPrice = ticket.getBooking().getTotalPrice();
+        if (totalBookingPrice.compareTo(BigDecimal.ZERO) > 0) {
+            return ticket.getFinalPrice().multiply(paymentAmount)
+                    .divide(totalBookingPrice, 2, RoundingMode.HALF_UP);
+        }
+        var totalSeats = ticket.getBooking().getSeatReservations().size();
+        return totalSeats > 0
+                ? paymentAmount.divide(BigDecimal.valueOf(totalSeats), 2, RoundingMode.HALF_UP)
+                : paymentAmount;
+    }
+
     private BigDecimal calculateRefundAmount(BigDecimal price, BigDecimal percentage) {
         return price.multiply(percentage).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
     }
@@ -150,23 +166,27 @@ public class RefundService {
     private RefundPreviewResponse createPreview(Ticket ticket) {
         var sessionTime = ticket.getBooking().getSession().getStartTime();
         var percentage = refundRules.getRefundPercentage(sessionTime);
-        var refundAmount = calculateRefundAmount(ticket.getFinalPrice(), percentage);
-        var feeAmount = ticket.getFinalPrice().subtract(refundAmount);
+        var booking = ticket.getBooking();
+        var totalSeats = booking.getSeatReservations().size();
+        var cashAmount = calculateCashAmount(ticket);
+        var refundAmount = calculateRefundAmount(cashAmount, percentage);
+        var feeAmount = cashAmount.subtract(refundAmount);
+        var bonusPerTicket = totalSeats > 0 ? booking.getBonusPointsUsed() / totalSeats : 0;
 
         String seatInfo = "N/A";
-        var seatReservations = ticket.getBooking().getSeatReservations();
-        if (seatReservations != null && !seatReservations.isEmpty()) {
+        var seatReservations = booking.getSeatReservations();
+        if (!seatReservations.isEmpty()) {
             var bookedSeat = seatReservations.getFirst();
             seatInfo = String.format("Row %d, Seat %d", bookedSeat.getSeat().getRow(),
                     bookedSeat.getSeat().getNumber());
         }
 
         return new RefundPreviewResponse(ticket.getId(), ticket.getUniqueCode(),
-                ticket.getBooking().getSession().getMovie().getTitle(), sessionTime,
-                ticket.getBooking().getSession().getHall().getName(), seatInfo, ticket.getOriginalPrice(),
+                booking.getSession().getMovie().getTitle(), sessionTime,
+                booking.getSession().getHall().getName(), seatInfo, ticket.getOriginalPrice(),
                 ticket.getFinalPrice(), refundAmount, percentage, feeAmount,
-                BigDecimal.valueOf(100).subtract(percentage), ticket.getBonusPointsUsed(),
-                calculateBonusRefund(ticket.getBonusPointsUsed(), percentage), refundRules.getPolicyName(sessionTime),
+                BigDecimal.valueOf(100).subtract(percentage), bonusPerTicket,
+                calculateBonusRefund(bonusPerTicket, percentage), refundRules.getPolicyName(sessionTime),
                 refundRules.getPolicyDescription(sessionTime), true, null, sessionTime.minusMinutes(30),
                 formatRemainingTime(sessionTime), ticket.getPurchaseTime().toString(),
                 ticket.getTicketType().getDisplayName());
