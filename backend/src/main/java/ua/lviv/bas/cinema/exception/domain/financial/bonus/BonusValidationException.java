@@ -24,4 +24,16 @@ public class BonusValidationException extends ValidationException {
                 String.format("Bonus discount %.2f exceeds maximum allowed %.2f", discount, max),
                 "DISCOUNT_EXCEEDS_MAX");
     }
+
+    public static BonusValidationException minPointsRequired(int minPoints) {
+        return new BonusValidationException(
+                String.format("Minimum %d points required for redemption", minPoints),
+                "MIN_POINTS_REQUIRED");
+    }
+
+    public static BonusValidationException maxPointsExceeded(int maxPoints) {
+        return new BonusValidationException(
+                String.format("Maximum %d points allowed per transaction", maxPoints),
+                "MAX_POINTS_EXCEEDED");
+    }
 }

@@ -192,6 +192,17 @@ public class BonusService {
         if (card.getPointsBalance() < points) {
             throw new InsufficientPointsException(card.getPointsBalance(), points);
         }
+
+        var spendRule = bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.BOOKING_SPEND);
+        if (spendRule.isPresent()) {
+            var rule = spendRule.get();
+            if (rule.getMinPointsPerTransaction() != null && points < rule.getMinPointsPerTransaction()) {
+                throw BonusValidationException.minPointsRequired(rule.getMinPointsPerTransaction());
+            }
+            if (rule.getMaxPointsPerTransaction() != null && points > rule.getMaxPointsPerTransaction()) {
+                throw BonusValidationException.maxPointsExceeded(rule.getMaxPointsPerTransaction());
+            }
+        }
     }
 
     public BonusCard getOrCreateCard(User user) {
