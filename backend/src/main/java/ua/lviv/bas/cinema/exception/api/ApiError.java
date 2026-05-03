@@ -42,7 +42,6 @@ public class ApiError {
         this.statusCode = status.value();
     }
 
-    @SuppressWarnings("unused")
     public ApiError(HttpStatus status, String message, Throwable ex) {
         this();
         this.status = status;
@@ -58,12 +57,10 @@ public class ApiError {
         this.message = message;
     }
 
-    @SuppressWarnings("unused")
     public void addValidationErrors(List<FieldError> fieldErrors) {
         fieldErrors.forEach(this::addValidationError);
     }
 
-    @SuppressWarnings("unused")
     public void addValidationError(List<ObjectError> globalErrors) {
         globalErrors.forEach(this::addValidationError);
     }
