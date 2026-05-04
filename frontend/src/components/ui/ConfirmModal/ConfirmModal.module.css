@@ -1,15 +1,33 @@
 .content {
-    padding: var(--space-4) 0;
+  padding: var(--space-8) var(--space-6);
+  text-align: center;
+  background: var(--color-bg-modal);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }
 
 .message {
-    margin-bottom: var(--space-6);
-    line-height: 1.5;
-    color: var(--color-text-primary);
+  margin: 0 0 var(--space-8) 0;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+  font-weight: 400;
 }
 
 .actions {
-    display: flex;
-    gap: var(--space-3);
-    justify-content: flex-end;
+  display: flex;
+  gap: var(--space-4);
+  justify-content: center;
+}
+
+.actions button {
+  min-width: 140px;
+  padding: var(--space-3) var(--space-6);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.actions button:hover:not(:disabled) {
+  transform: translateY(-1px);
 }
