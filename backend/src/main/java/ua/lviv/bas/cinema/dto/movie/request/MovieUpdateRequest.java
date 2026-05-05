@@ -76,6 +76,7 @@ public class MovieUpdateRequest {
     @Schema(description = "Movie poster image file (JPG, PNG). Provide only if updating the poster.", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private MultipartFile posterFile;
 
+    @Builder.Default
     @Schema(description = "Flag to remove existing poster (set to true to remove poster)", example = "false", defaultValue = "false")
     private Boolean removePoster = false;
 }
