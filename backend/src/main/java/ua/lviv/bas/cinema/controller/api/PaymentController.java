@@ -42,10 +42,13 @@ public class PaymentController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create payment")
-    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Payment created successfully"),
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Payment created successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid request"),
+            @ApiResponse(responseCode = "401", description = "User not authenticated"),
             @ApiResponse(responseCode = "404", description = "Booking not found"),
-            @ApiResponse(responseCode = "409", description = "Payment already in progress")})
+            @ApiResponse(responseCode = "409", description = "Payment already in progress")
+    })
     @PreAuthorize("isAuthenticated()")
     public PaymentResponse createPayment(@Valid @RequestBody PaymentCreateRequest request,
                                          @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -59,8 +62,9 @@ public class PaymentController {
     @Operation(summary = "Retry failed payment")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Payment retry initiated"),
-            @ApiResponse(responseCode = "404", description = "Payment not found"),
-            @ApiResponse(responseCode = "400", description = "Payment cannot be retried")
+            @ApiResponse(responseCode = "400", description = "Payment cannot be retried"),
+            @ApiResponse(responseCode = "401", description = "User not authenticated"),
+            @ApiResponse(responseCode = "404", description = "Payment not found")
     })
     @PreAuthorize("isAuthenticated()")
     public PaymentResponse retryPayment(@PathVariable Long paymentId,
@@ -73,8 +77,10 @@ public class PaymentController {
     @RateLimit(value = 10, duration = 1, key = "user")
     @GetMapping("/{paymentId}/liqpay-data")
     @Operation(summary = "Get LiqPay data")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Payment data retrieved"),
-            @ApiResponse(responseCode = "404", description = "Payment not found")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Payment data retrieved"),
+            @ApiResponse(responseCode = "404", description = "Payment not found")
+    })
     public PaymentLiqPayDataResponse getLiqPayData(@PathVariable Long paymentId) {
         log.info("GET /api/payments/{}/liqpay-data", paymentId);
         return paymentStatusService.preparePaymentData(paymentId);
@@ -83,8 +89,11 @@ public class PaymentController {
     @RateLimit(value = 20, duration = 1, key = "user")
     @GetMapping("/{paymentId}")
     @Operation(summary = "Get payment")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Payment retrieved"),
-            @ApiResponse(responseCode = "404", description = "Payment not found")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Payment retrieved"),
+            @ApiResponse(responseCode = "401", description = "User not authenticated"),
+            @ApiResponse(responseCode = "404", description = "Payment not found")
+    })
     @PreAuthorize("isAuthenticated()")
     public PaymentResponse getPayment(@PathVariable Long paymentId,
                                       @AuthenticationPrincipal CustomUserDetails userDetails) {

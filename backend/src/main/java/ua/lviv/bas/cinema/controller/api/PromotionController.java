@@ -1,6 +1,8 @@
 package ua.lviv.bas.cinema.controller.api;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -30,6 +32,9 @@ public class PromotionController {
 
     @GetMapping
     @Operation(summary = "Get available promotions")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Promotions retrieved successfully")
+    })
     @PreAuthorize("permitAll()")
     public List<PromotionResponse> getAvailablePromotions(@AuthenticationPrincipal CustomUserDetails currentUser) {
         User user = currentUser != null ? currentUser.getUser() : null;
@@ -40,6 +45,12 @@ public class PromotionController {
     @RateLimit(value = 3, duration = 1, key = "user")
     @PostMapping("/claim")
     @Operation(summary = "Claim a promotion")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Promotion claimed successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request or promotion already claimed"),
+            @ApiResponse(responseCode = "401", description = "User not authenticated"),
+            @ApiResponse(responseCode = "404", description = "Promotion not found")
+    })
     @PreAuthorize("isAuthenticated()")
     public PromotionResponse claimPromotion(@Valid @RequestBody ClaimPromotionRequest request,
                                             @AuthenticationPrincipal CustomUserDetails currentUser) {
@@ -50,6 +61,10 @@ public class PromotionController {
 
     @GetMapping("/claimed")
     @Operation(summary = "Get claimed promotions")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Claimed promotions retrieved successfully"),
+            @ApiResponse(responseCode = "401", description = "User not authenticated")
+    })
     @PreAuthorize("isAuthenticated()")
     public List<PromotionResponse> getClaimedPromotions(@AuthenticationPrincipal CustomUserDetails currentUser) {
         User user = currentUser.getUser();

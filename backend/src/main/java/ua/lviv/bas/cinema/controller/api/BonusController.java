@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -32,8 +33,11 @@ public class BonusController {
     @RateLimit(value = 20, duration = 1, key = "user")
     @GetMapping("/balance")
     @Operation(summary = "Get bonus balance")
-    @ApiResponse(responseCode = "200", description = "Balance retrieved successfully")
-    @ApiResponse(responseCode = "404", description = "Bonus card not found")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Balance retrieved successfully"),
+            @ApiResponse(responseCode = "401", description = "User not authenticated"),
+            @ApiResponse(responseCode = "404", description = "Bonus card not found")
+    })
     @PreAuthorize("isAuthenticated()")
     public BonusBalanceResponse getBalance(
             @Parameter(hidden = true) @AuthenticationPrincipal(expression = "userId") Long userId) {
@@ -43,7 +47,10 @@ public class BonusController {
     @RateLimit(value = 30, duration = 1, key = "user")
     @GetMapping("/transactions")
     @Operation(summary = "Get bonus transactions")
-    @ApiResponse(responseCode = "200", description = "Transactions retrieved successfully")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Transactions retrieved successfully"),
+            @ApiResponse(responseCode = "401", description = "User not authenticated")
+    })
     @PreAuthorize("isAuthenticated()")
     public PageResponse<BonusTransactionResponse> getTransactions(
             @Parameter(hidden = true) @AuthenticationPrincipal(expression = "userId") Long userId,

@@ -35,8 +35,10 @@ public class TokenController {
     @RateLimit
     @PostMapping("/email/verify")
     @Operation(summary = "Verify email address", description = "Confirm user's email address using verification token.")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Email verified successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid or expired token")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Email verified successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid or expired token")
+    })
     @SecurityRequirements()
     public ResponseEntity<Map<String, String>> verifyEmail(
             @Parameter(description = "Email verification token", required = true) @RequestParam @NotBlank String token) {
@@ -49,8 +51,10 @@ public class TokenController {
     @RateLimit
     @PostMapping("/email/change/confirm")
     @Operation(summary = "Confirm email change", description = "Confirm email change using token.")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Email changed successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid or expired token")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Email changed successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid or expired token")
+    })
     @SecurityRequirements()
     public ResponseEntity<UserResponse> confirmEmailChange(
             @Parameter(description = "Email change token", required = true) @RequestParam @NotBlank String token) {

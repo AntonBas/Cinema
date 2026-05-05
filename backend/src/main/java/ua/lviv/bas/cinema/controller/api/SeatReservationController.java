@@ -35,7 +35,8 @@ public class SeatReservationController {
     @Operation(summary = "Get seat availability")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Seat availability retrieved successfully"),
-            @ApiResponse(responseCode = "404", description = "Session not found")})
+            @ApiResponse(responseCode = "404", description = "Session not found")
+    })
     public SeatReservationResponse getAvailability(@PathVariable Long sessionId) {
         log.info("GET /api/sessions/{}/seats", sessionId);
         return seatReservationService.getAvailability(sessionId);
@@ -44,9 +45,12 @@ public class SeatReservationController {
     @PostMapping("/{sessionId}/seats/{seatId}/hold")
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Hold a seat")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Seat held successfully"),
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Seat held successfully"),
+            @ApiResponse(responseCode = "401", description = "User not authenticated"),
             @ApiResponse(responseCode = "404", description = "Session or seat not found"),
-            @ApiResponse(responseCode = "409", description = "Seat is already reserved")})
+            @ApiResponse(responseCode = "409", description = "Seat is already reserved")
+    })
     @SecurityRequirement(name = "bearerAuth")
     @PreAuthorize("isAuthenticated()")
     public void hold(@PathVariable Long sessionId, @PathVariable Long seatId,
@@ -58,8 +62,11 @@ public class SeatReservationController {
     @DeleteMapping("/{sessionId}/seats/{seatId}/hold")
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Cancel hold")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Hold cancelled successfully"),
-            @ApiResponse(responseCode = "404", description = "Hold not found")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Hold cancelled successfully"),
+            @ApiResponse(responseCode = "401", description = "User not authenticated"),
+            @ApiResponse(responseCode = "404", description = "Hold not found")
+    })
     @SecurityRequirement(name = "bearerAuth")
     @PreAuthorize("isAuthenticated()")
     public void cancel(@PathVariable Long sessionId, @PathVariable Long seatId,

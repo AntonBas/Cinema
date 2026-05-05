@@ -35,9 +35,12 @@ public class RefundController {
     @RateLimit(value = 3, duration = 10, key = "user")
     @PostMapping
     @Operation(summary = "Refund a ticket")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Refund processed successfully"),
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Refund processed successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid request or ticket not refundable"),
-            @ApiResponse(responseCode = "404", description = "Ticket not found")})
+            @ApiResponse(responseCode = "401", description = "User not authenticated"),
+            @ApiResponse(responseCode = "404", description = "Ticket not found")
+    })
     @PreAuthorize("isAuthenticated()")
     public RefundResponse refund(@Valid @RequestBody RefundRequest request,
                                  @AuthenticationPrincipal CustomUserDetails userDetails) {

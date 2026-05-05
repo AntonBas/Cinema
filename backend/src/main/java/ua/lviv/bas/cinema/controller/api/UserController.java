@@ -35,8 +35,10 @@ public class UserController {
     @RateLimit(value = 30, duration = 1, key = "user")
     @GetMapping("/profile")
     @Operation(summary = "Get user profile")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Profile retrieved successfully"),
-            @ApiResponse(responseCode = "401", description = "User not authenticated")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Profile retrieved successfully"),
+            @ApiResponse(responseCode = "401", description = "User not authenticated")
+    })
     public UserProfileResponse getProfile(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         log.info("GET /api/users/profile - user: {}", userDetails.getUserId());
@@ -46,8 +48,11 @@ public class UserController {
     @RateLimit(duration = 5, key = "user")
     @PutMapping("/profile")
     @Operation(summary = "Update user profile")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Profile updated successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid request data")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Profile updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data"),
+            @ApiResponse(responseCode = "401", description = "User not authenticated")
+    })
     public UserProfileResponse updateProfile(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody UserUpdateRequest request) {
@@ -59,8 +64,11 @@ public class UserController {
     @PostMapping("/email/change-request")
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Request email change")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Email change request sent"),
-            @ApiResponse(responseCode = "400", description = "Invalid email format")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Email change request sent"),
+            @ApiResponse(responseCode = "400", description = "Invalid email format"),
+            @ApiResponse(responseCode = "401", description = "User not authenticated")
+    })
     public Map<String, String> requestEmailChange(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody UserEmailChangeRequest request) {
@@ -73,8 +81,11 @@ public class UserController {
     @PatchMapping("/password")
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Update password")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Password updated successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid request data")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Password updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data"),
+            @ApiResponse(responseCode = "401", description = "User not authenticated")
+    })
     public Map<String, String> updatePassword(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody UserPasswordUpdateRequest request) {

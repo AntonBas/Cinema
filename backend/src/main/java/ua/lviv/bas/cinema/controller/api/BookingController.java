@@ -40,10 +40,13 @@ public class BookingController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a new booking")
-    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Booking created successfully"),
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Booking created successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid request data"),
+            @ApiResponse(responseCode = "401", description = "User not authenticated"),
             @ApiResponse(responseCode = "404", description = "Session or seat not found"),
-            @ApiResponse(responseCode = "409", description = "Seat not available")})
+            @ApiResponse(responseCode = "409", description = "Seat not available")
+    })
     @PreAuthorize("isAuthenticated()")
     public BookingResponse createBooking(@Valid @RequestBody BookingCreateRequest request,
                                          @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -55,8 +58,11 @@ public class BookingController {
     @RateLimit(value = 20, duration = 1, key = "user")
     @GetMapping("/{bookingId}")
     @Operation(summary = "Get booking details")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Booking retrieved successfully"),
-            @ApiResponse(responseCode = "404", description = "Booking not found")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Booking retrieved successfully"),
+            @ApiResponse(responseCode = "401", description = "User not authenticated"),
+            @ApiResponse(responseCode = "404", description = "Booking not found")
+    })
     @PreAuthorize("isAuthenticated()")
     public BookingResponse getBooking(@PathVariable Long bookingId,
                                       @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -69,9 +75,12 @@ public class BookingController {
     @DeleteMapping("/{bookingId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Cancel a booking")
-    @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Booking cancelled successfully"),
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Booking cancelled successfully"),
             @ApiResponse(responseCode = "400", description = "Booking cannot be cancelled"),
-            @ApiResponse(responseCode = "404", description = "Booking not found")})
+            @ApiResponse(responseCode = "401", description = "User not authenticated"),
+            @ApiResponse(responseCode = "404", description = "Booking not found")
+    })
     @PreAuthorize("isAuthenticated()")
     public void cancelBooking(@PathVariable Long bookingId, @AuthenticationPrincipal CustomUserDetails userDetails) {
         var user = userDetails.getUser();

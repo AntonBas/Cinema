@@ -84,6 +84,10 @@ public class AuthController {
 
     @GetMapping("/oauth2/success")
     @Operation(summary = "OAuth2 login success")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OAuth2 login successful"),
+            @ApiResponse(responseCode = "401", description = "Invalid token")
+    })
     @SecurityRequirements()
     public LoginResponse oauth2Success(@RequestParam String token, @RequestParam Long userId,
                                        @RequestParam String email) {
@@ -136,9 +140,11 @@ public class AuthController {
         passwordResetService.reset(token, newPassword);
     }
 
-    @RateLimit(value = 10, duration = 1)
     @GetMapping("/email/check")
     @Operation(summary = "Check email availability")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Email availability checked")
+    })
     @SecurityRequirements()
     public boolean checkEmail(@RequestParam @Email @NotBlank String email) {
         log.info("GET /api/auth/email/check - email: {}", email);
