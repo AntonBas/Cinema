@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +42,7 @@ import ua.lviv.bas.cinema.service.cinema.MovieService;
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
 @Tag(name = "Admin Movies", description = "Admin APIs for managing movies")
+@SecurityRequirement(name = "bearerAuth")
 public class AdminMovieController {
 
     private final MovieService movieService;
@@ -49,8 +51,11 @@ public class AdminMovieController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create new movie")
-    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Movie created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid request data")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Movie created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
+    })
     public MovieAdminResponse createMovie(@RequestPart("movieData") String movieDataJson,
                                           @RequestPart(value = "posterFile") MultipartFile posterFile) {
         log.info("POST /api/admin/movies - Creating new movie");
@@ -61,8 +66,11 @@ public class AdminMovieController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get movie by ID")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Movie found"),
-            @ApiResponse(responseCode = "404", description = "Movie not found")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Movie found"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Movie not found")
+    })
     public MovieAdminResponse getMovie(@PathVariable Long id) {
         log.info("GET /api/admin/movies/{} - Getting movie", id);
         return movieService.getMovie(id);
@@ -70,7 +78,10 @@ public class AdminMovieController {
 
     @GetMapping
     @Operation(summary = "Get movies")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Movies retrieved successfully")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Movies retrieved successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
+    })
     public PageResponse<MovieCardResponse> getMovies(@RequestParam(required = false) String query,
                                                      @RequestParam(required = false) MovieStatus status,
                                                      @PageableDefault(size = 12, sort = "title", direction = Sort.Direction.ASC) Pageable pageable) {
@@ -80,8 +91,11 @@ public class AdminMovieController {
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Update movie")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Movie updated successfully"),
-            @ApiResponse(responseCode = "404", description = "Movie not found")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Movie updated successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Movie not found")
+    })
     public MovieAdminResponse updateMovie(@PathVariable Long id, @RequestPart("movieData") String movieDataJson,
                                           @RequestPart(value = "posterFile", required = false) MultipartFile posterFile) {
         log.info("PUT /api/admin/movies/{} - Updating movie", id);
@@ -93,8 +107,11 @@ public class AdminMovieController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete movie")
-    @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Movie deleted successfully"),
-            @ApiResponse(responseCode = "404", description = "Movie not found")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Movie deleted successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Movie not found")
+    })
     public void deleteMovie(@PathVariable Long id) {
         log.info("DELETE /api/admin/movies/{} - Deleting movie", id);
         movieService.deleteMovie(id);

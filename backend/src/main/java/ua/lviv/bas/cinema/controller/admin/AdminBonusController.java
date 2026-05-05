@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.controller.admin;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -27,15 +28,22 @@ public class AdminBonusController {
 
     @GetMapping("/rules")
     @Operation(summary = "Get all bonus rules")
-    @ApiResponse(responseCode = "200", description = "List of bonus rules retrieved successfully")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "List of bonus rules retrieved successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
+    })
     public List<BonusRulesResponse> getRules() {
         return bonusAdminService.getRules();
     }
 
     @PutMapping("/rules/{type}")
     @Operation(summary = "Update bonus rule")
-    @ApiResponse(responseCode = "200", description = "Bonus rule updated successfully")
-    @ApiResponse(responseCode = "404", description = "Bonus rule not found")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Bonus rule updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Bonus rule not found")
+    })
     public BonusRulesResponse updateRule(@PathVariable BonusTransactionType type,
                                          @Valid @RequestBody BonusRulesRequest request) {
         return bonusAdminService.updateRule(type, request);
@@ -43,8 +51,11 @@ public class AdminBonusController {
 
     @PutMapping("/rules/{type}/reset")
     @Operation(summary = "Reset bonus rule to defaults")
-    @ApiResponse(responseCode = "200", description = "Bonus rule reset successfully")
-    @ApiResponse(responseCode = "404", description = "Bonus rule not found")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Bonus rule reset successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Bonus rule not found")
+    })
     public BonusRulesResponse resetRule(@PathVariable BonusTransactionType type) {
         return bonusAdminService.resetRuleToDefaults(type);
     }

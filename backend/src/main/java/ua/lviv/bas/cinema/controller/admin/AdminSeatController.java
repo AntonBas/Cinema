@@ -32,9 +32,12 @@ public class AdminSeatController {
 
     @PutMapping("/{seatId}/type")
     @Operation(summary = "Update seat type")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Seat type updated successfully"),
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Seat type updated successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid seat type"),
-            @ApiResponse(responseCode = "404", description = "Seat not found")})
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Seat not found")
+    })
     public SeatResponse updateSeatType(
             @Parameter(description = "Hall ID", required = true, example = "1") @PathVariable Long hallId,
             @Parameter(description = "Seat ID", required = true, example = "5") @PathVariable Long seatId,
@@ -45,8 +48,11 @@ public class AdminSeatController {
 
     @PutMapping("/{seatId}/status")
     @Operation(summary = "Set seat active status")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Seat status updated successfully"),
-            @ApiResponse(responseCode = "404", description = "Seat not found")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Seat status updated successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Seat not found")
+    })
     public SeatResponse setSeatActiveStatus(
             @Parameter(description = "Hall ID", required = true, example = "1") @PathVariable Long hallId,
             @Parameter(description = "Seat ID", required = true, example = "5") @PathVariable Long seatId,

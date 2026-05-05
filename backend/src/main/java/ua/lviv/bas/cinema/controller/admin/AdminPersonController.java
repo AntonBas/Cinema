@@ -44,7 +44,11 @@ public class AdminPersonController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create new person")
-    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Person created successfully")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Person created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
+    })
     public PersonResponse createPerson(@RequestBody @Valid PersonRequest request) {
         log.info("POST /api/admin/persons - Creating new person: {}", request.name());
         return personService.createPerson(request);
@@ -52,15 +56,25 @@ public class AdminPersonController {
 
     @GetMapping
     @Operation(summary = "Get all persons with filters")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Persons retrieved successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
+    })
     public PageResponse<PersonListResponse> getPersons(@RequestParam(required = false) String query,
-                                                       @RequestParam(required = false) PersonRole role, @PageableDefault(size = 12) Pageable pageable) {
+                                                       @RequestParam(required = false) PersonRole role,
+                                                       @PageableDefault(size = 12) Pageable pageable) {
         log.info("GET /api/admin/persons - query: '{}', role: {}", query, role);
         return PageResponse.from(personService.getPersons(query, role, pageable));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Update person")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Person updated successfully")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Person updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Person not found")
+    })
     public PersonResponse updatePerson(@PathVariable Long id, @RequestBody @Valid PersonRequest request) {
         log.info("PUT /api/admin/persons/{} - Updating person", id);
         return personService.updatePerson(id, request);
@@ -69,7 +83,11 @@ public class AdminPersonController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete person")
-    @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Person deleted successfully")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Person deleted successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Person not found")
+    })
     public void deletePerson(@PathVariable Long id) {
         log.info("DELETE /api/admin/persons/{} - Deleting person", id);
         personService.deletePerson(id);

@@ -33,7 +33,6 @@ import ua.lviv.bas.cinema.service.user.AdminUserService;
 @RestController
 @RequestMapping("/api/admin/users")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
 @Tag(name = "Admin User Management", description = "Endpoints for managing users (Admin only)")
 @SecurityRequirement(name = "bearerAuth")
 public class AdminUserController {
@@ -41,8 +40,12 @@ public class AdminUserController {
     private final AdminUserService adminUserService;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'CASHIER')")
     @Operation(summary = "Get users with filters")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Users retrieved successfully")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Users retrieved successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
+    })
     public PageResponse<AdminUserListResponse> getUsers(@RequestParam(required = false) String query,
                                                         @RequestParam(required = false) UserRole role,
                                                         @RequestParam(required = false) VerificationStatus verificationStatus,
@@ -55,9 +58,13 @@ public class AdminUserController {
     }
 
     @PatchMapping("/{userId}/role")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update user role")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "User role updated successfully"),
-            @ApiResponse(responseCode = "404", description = "User not found")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User role updated successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     public AdminUserListResponse updateRole(@PathVariable Long userId,
                                             @Valid @RequestBody UserRoleUpdateRequest request) {
         log.info("PATCH /api/admin/users/{}/role - Updating role to {}", userId, request.userRole());
@@ -65,9 +72,13 @@ public class AdminUserController {
     }
 
     @PatchMapping("/{userId}/status")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update user status")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "User status updated successfully"),
-            @ApiResponse(responseCode = "404", description = "User not found")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User status updated successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     public AdminUserListResponse updateStatus(@PathVariable Long userId,
                                               @Valid @RequestBody UserStatusUpdateRequest request) {
         log.info("PATCH /api/admin/users/{}/status - Updating status to {}", userId, request.enabled());
@@ -75,10 +86,13 @@ public class AdminUserController {
     }
 
     @PatchMapping("/{userId}/verification")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CASHIER')")
     @Operation(summary = "Update verification status")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Verification status updated successfully"),
-            @ApiResponse(responseCode = "404", description = "User not found")})
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     public AdminUserListResponse updateVerification(@PathVariable Long userId,
                                                     @Valid @RequestBody VerificationBirthDateRequest request) {
         log.info("PATCH /api/admin/users/{}/verification - Updating verification to {}", userId,

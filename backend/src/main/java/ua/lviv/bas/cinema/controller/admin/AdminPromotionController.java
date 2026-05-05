@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -42,6 +44,11 @@ public class AdminPromotionController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a new promotion")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Promotion created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
+    })
     public PromotionResponse createPromotion(@Valid @RequestBody PromotionRequest request) {
         log.info("POST /api/admin/promotions - Creating new promotion: {}", request.title());
         return promotionService.createPromotion(request);
@@ -49,6 +56,11 @@ public class AdminPromotionController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get promotion by ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Promotion found"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Promotion not found")
+    })
     public PromotionResponse getPromotion(@PathVariable Long id) {
         log.info("GET /api/admin/promotions/{}", id);
         return promotionService.getPromotion(id);
@@ -56,6 +68,10 @@ public class AdminPromotionController {
 
     @GetMapping
     @Operation(summary = "Get all promotions")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Promotions retrieved successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
+    })
     public PageResponse<PromotionListResponse> getPromotions(@RequestParam(required = false) String query,
                                                              @PageableDefault(sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("GET /api/admin/promotions - query: '{}'", query);
@@ -64,6 +80,12 @@ public class AdminPromotionController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Update promotion")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Promotion updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Promotion not found")
+    })
     public PromotionResponse updatePromotion(@PathVariable Long id, @Valid @RequestBody PromotionRequest request) {
         log.info("PUT /api/admin/promotions/{} - Updating promotion", id);
         return promotionService.updatePromotion(id, request);
@@ -72,6 +94,11 @@ public class AdminPromotionController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete promotion")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Promotion deleted successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Promotion not found")
+    })
     public void deletePromotion(@PathVariable Long id) {
         log.info("DELETE /api/admin/promotions/{} - Deleting promotion", id);
         promotionService.deletePromotion(id);

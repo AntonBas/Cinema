@@ -45,10 +45,11 @@ public class AdminGenreController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create new genre")
-    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Genre created successfully"),
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Genre created successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid request data or genre name already exists"),
-            @ApiResponse(responseCode = "401", description = "User not authenticated"),
-            @ApiResponse(responseCode = "403", description = "User does not have required role")})
+            @ApiResponse(responseCode = "403", description = "Access denied")
+    })
     public GenreResponse createGenre(@RequestBody @Valid GenreRequest request) {
         log.info("POST /api/admin/genres - Creating new genre: {}", request.name());
         return genreService.createGenre(request);
@@ -56,6 +57,10 @@ public class AdminGenreController {
 
     @GetMapping
     @Operation(summary = "Get genres list sorted by popularity")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Genres retrieved successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
+    })
     public PageResponse<GenreListResponse> getGenres(@RequestParam(required = false) String query,
                                                      @PageableDefault Pageable pageable) {
         log.info("GET /api/admin/genres - query: '{}'", query);
@@ -64,9 +69,12 @@ public class AdminGenreController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Update genre")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Genre updated successfully"),
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Genre updated successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid request data or genre name already exists"),
-            @ApiResponse(responseCode = "404", description = "Genre not found")})
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Genre not found")
+    })
     public GenreResponse updateGenre(@PathVariable Long id, @RequestBody @Valid GenreRequest request) {
         log.info("PUT /api/admin/genres/{} - Updating genre", id);
         return genreService.updateGenre(id, request);
@@ -75,8 +83,11 @@ public class AdminGenreController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete genre")
-    @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Genre deleted successfully"),
-            @ApiResponse(responseCode = "404", description = "Genre not found")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Genre deleted successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Genre not found")
+    })
     public void deleteGenre(@PathVariable Long id) {
         log.info("DELETE /api/admin/genres/{} - Deleting genre", id);
         genreService.deleteGenre(id);

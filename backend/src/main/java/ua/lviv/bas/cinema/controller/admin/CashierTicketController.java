@@ -26,8 +26,9 @@ public class CashierTicketController {
 
     @GetMapping("/{uniqueCode}")
     @Operation(summary = "Get ticket info by unique code", description = "Returns ticket details for cashier review before validation")
-    @ApiResponses({
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Ticket found"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
             @ApiResponse(responseCode = "404", description = "Ticket not found")
     })
     public ResponseEntity<TicketCashierResponse> getTicket(@PathVariable String uniqueCode) {
@@ -36,8 +37,9 @@ public class CashierTicketController {
 
     @PostMapping("/{uniqueCode}/validate")
     @Operation(summary = "Validate and mark ticket as used", description = "Validates ticket and changes status to USED")
-    @ApiResponses({
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Ticket validated"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
             @ApiResponse(responseCode = "404", description = "Ticket not found")
     })
     public ResponseEntity<TicketCashierResponse> validateTicket(@PathVariable String uniqueCode) {

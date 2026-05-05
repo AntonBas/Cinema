@@ -31,9 +31,12 @@ public class AdminCinemaHallController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a new cinema hall")
-    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "Cinema hall created successfully"),
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Cinema hall created successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid request data"),
-            @ApiResponse(responseCode = "409", description = "Hall with this name already exists")})
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "409", description = "Hall with this name already exists")
+    })
     public CinemaHallResponse createHall(@Valid @RequestBody CinemaHallRequest request) {
         log.info("POST /api/admin/cinema-halls - Creating new cinema hall: {}", request.name());
         return cinemaHallService.createHall(request);
@@ -41,7 +44,10 @@ public class AdminCinemaHallController {
 
     @GetMapping
     @Operation(summary = "Get all cinema halls")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Halls retrieved successfully")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Halls retrieved successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
+    })
     public List<CinemaHallListResponse> getHalls() {
         log.info("GET /api/admin/cinema-halls - Getting all cinema halls");
         return cinemaHallService.getHalls();
@@ -49,8 +55,11 @@ public class AdminCinemaHallController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get cinema hall by ID")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Hall found"),
-            @ApiResponse(responseCode = "404", description = "Hall not found")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Hall found"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Hall not found")
+    })
     public CinemaHallResponse getHall(@PathVariable Long id) {
         log.info("GET /api/admin/cinema-halls/{} - Getting cinema hall", id);
         return cinemaHallService.getHall(id);
@@ -58,10 +67,13 @@ public class AdminCinemaHallController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Update cinema hall")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Hall updated successfully"),
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Hall updated successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid request data"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
             @ApiResponse(responseCode = "404", description = "Hall not found"),
-            @ApiResponse(responseCode = "409", description = "Cannot update hall with active sessions")})
+            @ApiResponse(responseCode = "409", description = "Cannot update hall with active sessions")
+    })
     public CinemaHallResponse updateHall(@PathVariable Long id, @Valid @RequestBody CinemaHallRequest request) {
         log.info("PUT /api/admin/cinema-halls/{} - Updating cinema hall", id);
         return cinemaHallService.updateHall(id, request);
@@ -70,9 +82,12 @@ public class AdminCinemaHallController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete cinema hall")
-    @ApiResponses(value = {@ApiResponse(responseCode = "204", description = "Hall deleted successfully"),
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Hall deleted successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
             @ApiResponse(responseCode = "404", description = "Hall not found"),
-            @ApiResponse(responseCode = "409", description = "Cannot delete hall with active sessions")})
+            @ApiResponse(responseCode = "409", description = "Cannot delete hall with active sessions")
+    })
     public void deleteHall(@PathVariable Long id) {
         log.info("DELETE /api/admin/cinema-halls/{} - Deleting cinema hall", id);
         cinemaHallService.deleteHall(id);
@@ -80,8 +95,11 @@ public class AdminCinemaHallController {
 
     @GetMapping("/{id}/layout")
     @Operation(summary = "Get hall layout")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Layout retrieved successfully"),
-            @ApiResponse(responseCode = "404", description = "Hall not found")})
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Layout retrieved successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Hall not found")
+    })
     public HallLayoutResponse getHallLayout(@PathVariable Long id) {
         log.info("GET /api/admin/cinema-halls/{}/layout - Getting hall layout", id);
         return cinemaHallService.getHallLayout(id);
