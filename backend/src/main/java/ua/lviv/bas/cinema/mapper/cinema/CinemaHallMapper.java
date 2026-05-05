@@ -11,7 +11,6 @@ import ua.lviv.bas.cinema.domain.cinema.enums.SeatType;
 import ua.lviv.bas.cinema.dto.hall.response.CinemaHallListResponse;
 import ua.lviv.bas.cinema.dto.hall.response.CinemaHallResponse;
 import ua.lviv.bas.cinema.dto.hall.response.HallLayoutResponse;
-import ua.lviv.bas.cinema.dto.hall.response.SeatRowResponse;
 import ua.lviv.bas.cinema.repository.cinema.projection.CinemaHallListProjection;
 
 import java.util.Comparator;
@@ -85,13 +84,14 @@ public abstract class CinemaHallMapper {
     @Mapping(target = "rows", source = "seats")
     public abstract HallLayoutResponse toHallLayoutResponse(CinemaHall hall);
 
-    protected List<SeatRowResponse> mapSeatsToRows(List<Seat> seats) {
+    protected List<HallLayoutResponse.SeatRowResponse> mapSeatsToRows(List<Seat> seats) {
         if (seats == null) {
             return List.of();
         }
         return seats.stream().collect(Collectors.groupingBy(Seat::getRow)).entrySet().stream()
-                .map(entry -> new SeatRowResponse(entry.getKey(), entry.getValue().size(),
+                .map(entry -> new HallLayoutResponse.SeatRowResponse(entry.getKey(), entry.getValue().size(),
                         seatMapper.toSeatResponseList(entry.getValue())))
-                .sorted(Comparator.comparingInt(SeatRowResponse::rowNumber)).toList();
+                .sorted(Comparator.comparingInt(HallLayoutResponse.SeatRowResponse::rowNumber)).toList();
     }
+
 }

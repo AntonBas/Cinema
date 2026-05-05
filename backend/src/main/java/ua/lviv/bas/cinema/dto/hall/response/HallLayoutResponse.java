@@ -24,4 +24,16 @@ public record HallLayoutResponse(
         @Schema(description = "List of rows with their seat information")
         List<SeatRowResponse> rows
 ) {
+    @Schema(description = "Row layout information with seats")
+    public record SeatRowResponse(
+            @Schema(description = "Row number (starting from 1)", example = "1")
+            Integer rowNumber,
+
+            @Schema(description = "Total number of seats in this row", example = "15")
+            int seatsCount,
+
+            @Schema(description = "List of seats in this row")
+            List<SeatResponse> seats
+    ) {
+    }
 }
