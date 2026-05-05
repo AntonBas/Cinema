@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.dto.movie.response;
 import io.swagger.v3.oas.annotations.media.Schema;
 import ua.lviv.bas.cinema.domain.cinema.enums.PersonRole;
 
+@Schema(description = "Movie person with movie count for list view")
 public record PersonListResponse(
 
         @Schema(description = "Unique identifier of the person", example = "1")

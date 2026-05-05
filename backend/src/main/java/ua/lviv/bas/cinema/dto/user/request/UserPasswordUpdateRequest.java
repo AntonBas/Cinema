@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+@Schema(description = "Request to update user password")
 public record UserPasswordUpdateRequest(
         @Schema(description = "Current password for verification", example = "OldPassword123!", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank(message = "Current password is required")

@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Schema(description = "Request to create or update a cinema session")
 public record SessionRequest(
         @Schema(description = "Start time of the movie session", example = "2024-01-15T18:30:00")
         @FutureOrPresent

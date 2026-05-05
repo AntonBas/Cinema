@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
+@Schema(description = "Cinema hall layout with seat grid")
 public record HallLayoutResponse(
         @Schema(description = "Unique identifier of the cinema hall", example = "1")
         Long hallId,

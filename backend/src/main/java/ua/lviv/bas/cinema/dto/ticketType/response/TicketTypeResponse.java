@@ -5,6 +5,7 @@ import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
 
 import java.math.BigDecimal;
 
+@Schema(description = "Ticket type details response")
 public record TicketTypeResponse(
         @Schema(description = "Unique identifier of the ticket type", example = "1")
         Long id,

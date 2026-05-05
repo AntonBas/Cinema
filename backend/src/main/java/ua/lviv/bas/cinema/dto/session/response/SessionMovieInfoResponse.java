@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Schema(description = "Session info for movie detail page")
 public record SessionMovieInfoResponse(
         @Schema(description = "Unique identifier of the session", example = "1")
         Long id,

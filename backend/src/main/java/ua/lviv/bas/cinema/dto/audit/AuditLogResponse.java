@@ -6,6 +6,7 @@ import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Schema(description = "Field change details")
 public record AuditLogResponse(
         @Schema(description = "Unique identifier of the audit log entry", example = "1")
         Long id,

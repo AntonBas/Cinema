@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 
+@Schema(description = "Refund item details for a specific ticket")
 public record RefundItemResponse(
         @Schema(description = "Refund item ID", example = "1")
         Long id,

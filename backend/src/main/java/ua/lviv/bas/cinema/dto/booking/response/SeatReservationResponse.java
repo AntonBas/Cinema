@@ -6,6 +6,7 @@ import ua.lviv.bas.cinema.domain.cinema.enums.SeatType;
 import java.math.BigDecimal;
 import java.util.List;
 
+@Schema(description = "Seat availability and reservation information for a session")
 public record SeatReservationResponse(
         @Schema(description = "Session ID", example = "1")
         Long sessionId,
@@ -25,6 +26,7 @@ public record SeatReservationResponse(
         @Schema(description = "List of seats")
         List<SeatInfo> seats
 ) {
+    @Schema(description = "Individual seat information")
     public record SeatInfo(
             @Schema(description = "Seat ID", example = "45")
             Long id,
@@ -52,6 +54,7 @@ public record SeatReservationResponse(
     ) {
     }
 
+    @Schema(description = "Ticket type price details for a seat")
     public record TicketPriceInfo(
             @Schema(description = "Ticket type ID", example = "1")
             Long ticketTypeId,

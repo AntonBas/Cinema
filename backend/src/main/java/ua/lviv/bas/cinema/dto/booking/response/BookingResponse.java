@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Schema(description = "Booking information response")
 public record BookingResponse(
         @Schema(description = "Booking ID", example = "123")
         Long id,
@@ -50,6 +51,7 @@ public record BookingResponse(
         @Schema(description = "List of seat reservations")
         List<SeatReservationInfo> seatReservations
 ) {
+    @Schema(description = "Seat reservation details")
     public record SeatReservationInfo(
             @Schema(description = "Seat reservation ID", example = "456")
             Long id,

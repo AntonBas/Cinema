@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 
+@Schema(description = "User bonus points balance and redemption limits")
 public record BonusBalanceResponse(
         @Schema(description = "Current points balance", example = "250")
         Integer pointsBalance,

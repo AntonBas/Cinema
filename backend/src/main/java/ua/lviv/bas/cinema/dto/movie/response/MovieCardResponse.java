@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import ua.lviv.bas.cinema.domain.cinema.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.cinema.status.MovieStatus;
 
+@Schema(description = "Movie card for list display")
 public record MovieCardResponse(
 
         @Schema(description = "Unique identifier of the movie", example = "1")

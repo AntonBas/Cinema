@@ -6,6 +6,7 @@ import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Schema(description = "Session details response")
 public record SessionResponse(
         @Schema(description = "Unique identifier of the session", example = "1")
         Long id,

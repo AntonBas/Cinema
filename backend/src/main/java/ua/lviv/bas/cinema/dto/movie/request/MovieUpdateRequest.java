@@ -77,6 +77,5 @@ public class MovieUpdateRequest {
     private MultipartFile posterFile;
 
     @Schema(description = "Flag to remove existing poster (set to true to remove poster)", example = "false", defaultValue = "false")
-    @Builder.Default
     private Boolean removePoster = false;
 }

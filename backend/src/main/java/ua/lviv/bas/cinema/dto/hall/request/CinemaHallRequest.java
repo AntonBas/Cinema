@@ -6,6 +6,7 @@ import ua.lviv.bas.cinema.domain.cinema.enums.SeatType;
 
 import java.util.List;
 
+@Schema(description = "Request to create or update a cinema hall")
 public record CinemaHallRequest(
         @Schema(description = "Name of the cinema hall", example = "Hall A - Dolby Atmos", requiredMode = Schema.RequiredMode.REQUIRED, minLength = 2, maxLength = 25)
         @NotBlank(message = "Hall name is required")

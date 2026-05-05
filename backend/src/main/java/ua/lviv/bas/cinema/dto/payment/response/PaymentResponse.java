@@ -6,6 +6,7 @@ import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Schema(description = "Payment information response")
 public record PaymentResponse(
         @Schema(description = "Payment ID", example = "28")
         Long id,

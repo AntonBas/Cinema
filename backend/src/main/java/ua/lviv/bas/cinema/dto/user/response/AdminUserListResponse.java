@@ -6,6 +6,7 @@ import ua.lviv.bas.cinema.domain.user.VerificationStatus;
 
 import java.time.LocalDateTime;
 
+@Schema(description = "User information for admin list view")
 public record AdminUserListResponse(
         @Schema(description = "Unique identifier of the user", example = "1")
         Long id,

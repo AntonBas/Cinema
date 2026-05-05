@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Schema(description = "Session information for public schedule view")
 public record SessionScheduleResponse(
         @Schema(description = "Unique identifier of the session", example = "1")
         Long id,

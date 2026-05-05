@@ -5,6 +5,7 @@ import ua.lviv.bas.cinema.domain.cinema.enums.SeatType;
 
 import java.util.List;
 
+@Schema(description = "Cinema hall details")
 public record CinemaHallResponse(
         @Schema(description = "Unique identifier of the cinema hall", example = "1")
         Long id,

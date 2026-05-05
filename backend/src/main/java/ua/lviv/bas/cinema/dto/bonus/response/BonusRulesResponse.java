@@ -5,6 +5,7 @@ import ua.lviv.bas.cinema.domain.bonus.BonusTransactionType;
 
 import java.math.BigDecimal;
 
+@Schema(description = "Bonus rule configuration")
 public record BonusRulesResponse(
         @Schema(description = "Rule ID", example = "1")
         Long id,

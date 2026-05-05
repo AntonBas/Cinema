@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import ua.lviv.bas.cinema.domain.cinema.enums.PersonRole;
 
+@Schema(description = "Request to create or update a movie person")
 public record PersonRequest(
         @Schema(description = "Full name of the person", example = "Leonardo DiCaprio", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank(message = "Person name is required")

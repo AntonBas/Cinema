@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.dto.payment.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+@Schema(description = "LiqPay payment data for checkout form")
 public record PaymentLiqPayDataResponse(
         @Schema(description = "Encoded data for LiqPay", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
         String data,

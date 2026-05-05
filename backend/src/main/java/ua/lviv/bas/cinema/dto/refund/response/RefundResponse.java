@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Schema(description = "Refund response with full details")
 public record RefundResponse(
         @Schema(description = "Refund ID", example = "1")
         Long id,

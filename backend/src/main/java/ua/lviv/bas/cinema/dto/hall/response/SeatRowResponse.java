@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
+@Schema(description = "Row layout information with seats")
 public record SeatRowResponse(
         @Schema(description = "Row number (starting from 1)", example = "1")
         Integer rowNumber,

@@ -19,7 +19,7 @@ public record MovieDetailResponse(
         @Schema(description = "URL-friendly slug for the movie", example = "inception-2020")
         String slug,
 
-        @Schema(description = "URL to the movie trailer", example = "https://www.youtube.com/watch?v=YoHD9XEInc0")
+        @Schema(description = "URL to the movie trailer", example = "https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=RDdQw4w9WgXcQ&start_radio=1")
         String trailerUrl,
 
         @Schema(description = "Movie description/synopsis")

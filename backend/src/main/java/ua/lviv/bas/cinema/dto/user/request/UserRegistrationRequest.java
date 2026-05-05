@@ -5,6 +5,7 @@ import jakarta.validation.constraints.*;
 
 import java.time.LocalDate;
 
+@Schema(description = "User registration request")
 public record UserRegistrationRequest(
         @Schema(description = "User's email address", example = "john.doe@example.com", requiredMode = Schema.RequiredMode.REQUIRED)
         @Email(message = "Invalid email format")

@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+@Schema(description = "Request to create or update a genre")
 public record GenreRequest(
         @Schema(description = "Name of the genre", example = "Action", requiredMode = Schema.RequiredMode.REQUIRED, minLength = 2, maxLength = 30)
         @NotBlank(message = "Genre name is required")

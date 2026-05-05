@@ -5,6 +5,7 @@ import jakarta.validation.constraints.*;
 
 import java.time.LocalDate;
 
+@Schema(description = "Request to update user profile information")
 public record UserUpdateRequest(
         @Schema(description = "User's first name", example = "John", requiredMode = Schema.RequiredMode.REQUIRED, minLength = 2, maxLength = 50)
         @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")

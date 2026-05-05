@@ -5,6 +5,7 @@ import ua.lviv.bas.cinema.domain.user.VerificationStatus;
 
 import java.time.LocalDate;
 
+@Schema(description = "User profile information response")
 public record UserProfileResponse(
         @Schema(description = "Unique identifier of the user", example = "1")
         Long id,

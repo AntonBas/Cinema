@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
+@Schema(description = "Request to change user email")
 public record UserEmailChangeRequest(
         @Schema(description = "New email address for the user", example = "new.email@example.com", requiredMode = Schema.RequiredMode.REQUIRED)
         @Email(message = "Invalid email format")

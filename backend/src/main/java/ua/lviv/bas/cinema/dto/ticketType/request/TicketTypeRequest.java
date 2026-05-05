@@ -6,6 +6,7 @@ import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
 
 import java.math.BigDecimal;
 
+@Schema(description = "Request to create or update a ticket type")
 public record TicketTypeRequest(
         @NotBlank(message = "Display name must not be blank")
         @Size(min = 1, max = 50, message = "Display name must be between 1 and 50 characters")
@@ -14,7 +15,7 @@ public record TicketTypeRequest(
 
         @NotNull(message = "Price multiplier must not be null")
         @DecimalMin(value = "0.01", inclusive = false, message = "Price multiplier must be greater than 0")
-        @DecimalMax(value = "9.99", inclusive = true, message = "Price multiplier must be less than or equal to 9.99")
+        @DecimalMax(value = "9.99", message = "Price multiplier must be less than or equal to 9.99")
         @Schema(description = "Price multiplier", example = "1.0")
         BigDecimal priceMultiplier,
 

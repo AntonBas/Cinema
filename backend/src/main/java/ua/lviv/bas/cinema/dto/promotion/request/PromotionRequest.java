@@ -5,6 +5,7 @@ import jakarta.validation.constraints.*;
 
 import java.time.LocalDate;
 
+@Schema(description = "Request to create or update a promotion")
 public record PromotionRequest(
         @NotBlank(message = "Title is required")
         @Size(max = 60, message = "Title must not exceed 60 characters")

@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
+@Schema(description = "Request to create a new booking")
 public record BookingCreateRequest(
         @NotNull(message = "Session ID is required")
         @Schema(description = "Session ID", example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
@@ -23,6 +24,7 @@ public record BookingCreateRequest(
         @Schema(description = "Number of bonus points to use", example = "100", defaultValue = "0")
         Integer bonusPointsToUse
 ) {
+    @Schema(description = "Seat selection details")
     public record SeatSelectionRequest(
             @NotNull(message = "Seat ID is required")
             @Schema(description = "Seat ID", example = "45", requiredMode = Schema.RequiredMode.REQUIRED)

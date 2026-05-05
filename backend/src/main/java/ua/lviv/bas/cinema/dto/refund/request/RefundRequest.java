@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+@Schema(description = "Request to process a ticket refund")
 public record RefundRequest(
         @NotNull(message = "Ticket ID is required")
         @Schema(description = "Ticket ID for refund", example = "123")

@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.dto.hall.response;
 import io.swagger.v3.oas.annotations.media.Schema;
 import ua.lviv.bas.cinema.domain.cinema.enums.SeatType;
 
+@Schema(description = "Individual seat details")
 public record SeatResponse(
         @Schema(description = "Unique identifier of the seat", example = "1")
         Long id,

@@ -5,6 +5,7 @@ import ua.lviv.bas.cinema.domain.bonus.BonusTransactionType;
 
 import java.time.LocalDateTime;
 
+@Schema(description = "Bonus points transaction history entry")
 public record BonusTransactionResponse(
         @Schema(description = "Transaction ID", example = "1")
         Long id,

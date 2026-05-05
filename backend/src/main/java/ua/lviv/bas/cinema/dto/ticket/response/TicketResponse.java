@@ -6,6 +6,7 @@ import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Schema(description = "Ticket information response")
 public record TicketResponse(
         @Schema(description = "Ticket ID", example = "999")
         Long id,
