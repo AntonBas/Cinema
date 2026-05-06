@@ -17,23 +17,57 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAdmin, isCashier, isContentManager } = useAuth();
-
+  const { user } = useAuth();
   const allMenuItems = [
-    { path: "/admin/movies", label: "Movies", icon: "🎬" },
-    { path: "/admin/schedule", label: "Schedule", icon: "⏰" },
-    { path: "/admin/halls", label: "Halls", icon: "🎭" },
-    { path: "/admin/users", label: "Users", icon: "👥" },
-    { path: "/admin/bonus", label: "Bonus", icon: "🎁" },
-    { path: "/admin/promotion", label: "Promotion", icon: "📢" },
-    { path: "/admin/ticket-type", label: "Ticket Types", icon: "🎫" },
-    { path: "/admin/audit-logs", label: "Audit Logs", icon: "📋" },
+    {
+      path: "/admin/movies",
+      label: "Movies",
+      icon: "🎬",
+      roles: ["ROLE_ADMIN", "ROLE_CONTENT_MANAGER"],
+    },
+    {
+      path: "/admin/schedule",
+      label: "Schedule",
+      icon: "⏰",
+      roles: ["ROLE_ADMIN", "ROLE_CONTENT_MANAGER"],
+    },
+    {
+      path: "/admin/halls",
+      label: "Halls",
+      icon: "🎭",
+      roles: ["ROLE_ADMIN", "ROLE_CONTENT_MANAGER"],
+    },
+    {
+      path: "/admin/users",
+      label: "Users",
+      icon: "👥",
+      roles: ["ROLE_ADMIN", "ROLE_CASHIER"],
+    },
+    { path: "/admin/bonus", label: "Bonus", icon: "🎁", roles: ["ROLE_ADMIN"] },
+    {
+      path: "/admin/promotion",
+      label: "Promotion",
+      icon: "📢",
+      roles: ["ROLE_ADMIN", "ROLE_CONTENT_MANAGER"],
+    },
+    {
+      path: "/admin/ticket-type",
+      label: "Ticket Types",
+      icon: "🎫",
+      roles: ["ROLE_ADMIN"],
+    },
+    {
+      path: "/admin/audit-logs",
+      label: "Audit Logs",
+      icon: "📋",
+      roles: ["ROLE_ADMIN"],
+    },
   ];
 
-  const isLimitedRole = isCashier || isContentManager;
-  const menuItems = isLimitedRole
-    ? allMenuItems.filter((item) => item.path === "/admin/users")
-    : allMenuItems;
+  const userRole = user?.userRole ?? "";
+  const menuItems = allMenuItems.filter((item) =>
+    item.roles.includes(userRole),
+  );
 
   const handleBackToWebsite = () => {
     navigate("/");

@@ -16,7 +16,14 @@ const LINKS: NavLink[] = [
 ];
 
 export const Header: React.FC = () => {
-  const { user, isAuthenticated, logout } = useAuth();
+  const {
+    user,
+    isAuthenticated,
+    isAdmin,
+    isCashier,
+    isContentManager,
+    logout,
+  } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -55,10 +62,8 @@ export const Header: React.FC = () => {
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
-  const hasAdminAccess =
-    user?.userRole === "ROLE_ADMIN" || user?.userRole === "ROLE_CASHIER";
-  const adminPanelPath =
-    user?.userRole === "ROLE_ADMIN" ? "/admin/movies" : "/admin/users";
+  const hasAdminAccess = isAdmin || isCashier || isContentManager;
+  const adminPanelPath = isCashier ? "/admin/users" : "/admin/movies";
 
   return (
     <header className={styles.headerMain}>
