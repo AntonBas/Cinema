@@ -55,6 +55,11 @@ export const Header: React.FC = () => {
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
+  const hasAdminAccess =
+    user?.userRole === "ROLE_ADMIN" || user?.userRole === "ROLE_CASHIER";
+  const adminPanelPath =
+    user?.userRole === "ROLE_ADMIN" ? "/admin/movies" : "/admin/users";
+
   return (
     <header className={styles.headerMain}>
       <nav className={styles.headerNavbar}>
@@ -112,10 +117,10 @@ export const Header: React.FC = () => {
                       Profile
                     </Link>
                   </li>
-                  {user?.userRole === "ROLE_ADMIN" && (
+                  {hasAdminAccess && (
                     <li>
                       <Link
-                        to="/admin/movies"
+                        to={adminPanelPath}
                         onClick={() => setIsDropdownOpen(false)}
                       >
                         Admin Panel
@@ -179,8 +184,8 @@ export const Header: React.FC = () => {
                 <Link to="/account" onClick={closeMobileMenu}>
                   Profile
                 </Link>
-                {user?.userRole === "ROLE_ADMIN" && (
-                  <Link to="/admin/movies" onClick={closeMobileMenu}>
+                {hasAdminAccess && (
+                  <Link to={adminPanelPath} onClick={closeMobileMenu}>
                     Admin Panel
                   </Link>
                 )}

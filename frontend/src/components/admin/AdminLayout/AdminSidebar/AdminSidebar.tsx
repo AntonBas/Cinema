@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 import styles from "./AdminSidebar.module.css";
 import clsx from "clsx";
 
@@ -16,8 +17,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isAdmin, isCashier, isContentManager } = useAuth();
 
-  const menuItems = [
+  const allMenuItems = [
     { path: "/admin/movies", label: "Movies", icon: "🎬" },
     { path: "/admin/schedule", label: "Schedule", icon: "⏰" },
     { path: "/admin/halls", label: "Halls", icon: "🎭" },
@@ -27,6 +29,11 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     { path: "/admin/ticket-type", label: "Ticket Types", icon: "🎫" },
     { path: "/admin/audit-logs", label: "Audit Logs", icon: "📋" },
   ];
+
+  const isLimitedRole = isCashier || isContentManager;
+  const menuItems = isLimitedRole
+    ? allMenuItems.filter((item) => item.path === "/admin/users")
+    : allMenuItems;
 
   const handleBackToWebsite = () => {
     navigate("/");
