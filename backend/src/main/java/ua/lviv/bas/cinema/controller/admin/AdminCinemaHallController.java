@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ua.lviv.bas.cinema.dto.hall.request.CinemaHallRequest;
 import ua.lviv.bas.cinema.dto.hall.response.CinemaHallListResponse;
@@ -24,6 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Admin Cinema Hall Management", description = "Admin endpoints for managing cinema halls")
 @SecurityRequirement(name = "bearerAuth")
+@PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
 public class AdminCinemaHallController {
 
     private final CinemaHallService cinemaHallService;
