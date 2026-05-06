@@ -36,7 +36,7 @@ import ua.lviv.bas.cinema.service.ticket.TicketTypeService;
 @RequiredArgsConstructor
 @Tag(name = "Admin Ticket Types", description = "Admin API for managing ticket types")
 @SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("hasAnyRole('ADMIN', 'CONTENT_MANAGER')")
+@PreAuthorize("hasAnyRole('ADMIN')")
 public class AdminTicketTypeController {
 
     private final TicketTypeService ticketTypeService;
