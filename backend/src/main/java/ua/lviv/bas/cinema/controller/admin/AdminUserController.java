@@ -33,7 +33,7 @@ import ua.lviv.bas.cinema.service.user.AdminUserService;
 @RestController
 @RequestMapping("/api/admin/users")
 @RequiredArgsConstructor
-@Tag(name = "Admin User Management", description = "Endpoints for managing users (Admin only)")
+@Tag(name = "Admin User Management", description = "Endpoints for managing users (Admin and Cashier)")
 @SecurityRequirement(name = "bearerAuth")
 public class AdminUserController {
 
