@@ -1,31 +1,89 @@
-## 🔗 API Documentation
+# 📚 Cinema Management System — Full Documentation
 
-Swagger UI available at:
-http://localhost:8080/swagger-ui.html
-
----
-
-## 🧪 Test Accounts
-
-| Email                                       | Password | Role            |
-| ------------------------------------------- | -------- | --------------- |
-| [admin@test.com](mailto:admin@test.com)     | admin    | ADMIN           |
-| [manager@test.com](mailto:manager@test.com) | manager  | CONTENT_MANAGER |
-| [cashier@test.com](mailto:cashier@test.com) | cashier  | CASHIER         |
-| [user@test.com](mailto:user@test.com)       | user     | USER            |
+Complete feature descriptions, technical details, and project structure.
 
 ---
 
-## 📌 Notes
+## 🚀 Getting Started
 
-- Demo, screenshots, and video walkthrough will be added.
-- This project focuses on real-world backend complexity and business logic.
+### Prerequisites
 
-# 🎬 Cinema Management System
+- Java 21 or higher
+- Node.js 20+ and npm
+- Docker and Docker Compose (recommended)
+- Maven (for backend builds)
 
-A full-stack, feature-rich web application for modern cinema operations. The platform provides separate, seamless experiences for moviegoers, cinema staff, and administrators, all within a single system.
+### Test Accounts
 
-**Backend:** Java Spring Boot | **Frontend:** React (TypeScript) | **Database:** PostgreSQL
+| Email            | Password | Role            |
+| :--------------- | :------- | :-------------- |
+| admin@test.com   | admin    | Administrator   |
+| cashier@test.com | cashier  | Cashier         |
+| manager@test.com | manager  | Content Manager |
+| user@test.com    | user     | User            |
+
+### Option 1: Docker Setup (Recommended)
+
+The easiest way to run the entire stack with a single command.
+
+1. Clone the repository
+   git clone https://github.com/AntonBas/Cinema.git
+   cd Cinema
+
+2. Configure environment variables
+   cp .env.docker.example .env.docker
+   Fill in the required values. See .env.docker.example for all available variables.
+
+3. Start all services
+   docker-compose up -d
+
+4. Access the application
+
+Service URL
+Frontend http://localhost:5173
+Backend API http://localhost:8080/api
+Swagger UI http://localhost:8080/swagger-ui.html
+Ngrok Inspector http://localhost:4040
+
+5. Stop services
+   docker-compose down
+
+### Option 2: Local Development Setup
+
+Run backend and frontend separately for faster development.
+
+#### Backend Setup
+
+cd backend
+cp .env.example .env
+Edit .env with your local values. See backend/.env.example for all available variables.
+
+cd ..
+docker-compose up -d postgres
+cd backend
+./mvnw spring-boot:run
+
+Backend will be available at: http://localhost:8080
+
+#### Frontend Setup
+
+cd frontend
+npm install
+echo "VITE_API_URL=http://localhost:8080" > .env
+npm run dev
+
+Frontend will be available at: http://localhost:5173
+
+### Database Migrations
+
+Flyway migrations run automatically on application startup. Migration files are located at:
+backend/src/main/resources/db/migration/
+
+To reset the database:
+docker-compose down -v postgres
+docker-compose up -d postgres
+
+---
 
 ## ✨ Features
 
@@ -34,7 +92,7 @@ A full-stack, feature-rich web application for modern cinema operations. The pla
 The system supports four roles with different access levels:
 
 | Role                | Access                                               |
-| ------------------- | ---------------------------------------------------- |
+| :------------------ | :--------------------------------------------------- |
 | **ADMIN**           | Full access to all admin features                    |
 | **CONTENT_MANAGER** | Movies, Schedule, Halls, Promotions, Genres, Persons |
 | **CASHIER**         | User verification, ticket scanning                   |
@@ -82,8 +140,6 @@ The system supports four roles with different access levels:
 
 #### 🎬 Movies
 
-Two sections for movie discovery:
-
 **Now Playing**
 
 - All movies with `CURRENT` status
@@ -105,8 +161,6 @@ Two sections for movie discovery:
 
 #### 📅 Schedule
 
-Complete session listing with powerful filtering:
-
 - All scheduled sessions across all movies and halls
 - **Custom Calendar:**
   - Visual indicator showing which dates have available sessions
@@ -122,10 +176,7 @@ Step-by-step ticket booking with seat reservation and secure payment.
 
 **1. Seat Selection**
 
-- Visual cinema hall layout with color-coded seats:
-  - Available seats
-  - Reserved/Booked seats
-  - Selected seats
+- Visual cinema hall layout with color-coded seats: Available, Reserved/Booked, Selected
 - Seat types visible with different colors/styles (Standard, VIP, Couple)
 - **First-level reservation:** Clicking a seat locks it for **5 minutes** (prevents others from selecting it)
 
@@ -149,29 +200,16 @@ Step-by-step ticket booking with seat reservation and secure payment.
 
 **5. Booking Summary**
 
-- Complete booking details displayed:
-  - Movie title
-  - Session date and time
-  - Cinema hall
-  - Selected seats
-  - Ticket types per seat
-  - Total price
-  - Bonus points applied (if any)
-- Options:
-  - **Cancel** — release seats and cancel booking
-  - **Proceed to Payment** — continue to payment page
+- Complete booking details displayed: movie title, session date/time, cinema hall, selected seats, ticket types, total price, bonus points applied
+- Options: **Cancel** (release seats) or **Proceed to Payment**
 
 **6. Payment**
 
 - Select payment method (card via LiqPay)
 - Redirect to LiqPay secure payment page
-- After payment:
-  - **Success** — confirmation page displayed
-  - **Processing** — waiting page if payment status is pending
 - Payment status automatically updates via scheduler
 
 **7. Booking Completion**
-Upon successful payment:
 
 - Confirmation email sent to user with ticket details
 - Tickets available in **My Tickets** section
@@ -182,8 +220,6 @@ Upon successful payment:
 
 #### 💰 Refund
 
-Ticket refund process available from **My Tickets** section:
-
 **1. Initiate Refund**
 
 - Navigate to **My Tickets** → **Active** tab
@@ -193,8 +229,7 @@ Ticket refund process available from **My Tickets** section:
 **2. Refund Request**
 
 - Select refund reason from dropdown
-- System calculates refundable amount based on:
-  - Time until session start (closer to session = lower refund)
+- System calculates refundable amount based on time until session start
 - Preview shows refundable amount
 
 **3. Confirm Refund**
@@ -208,13 +243,11 @@ Ticket refund process available from **My Tickets** section:
 - Ticket status changes to `REFUNDED`
 - Refunded tickets moved to **Refunded** tab
 - Bonus points used in booking are deducted from user's balance
-- Refund transaction appears in bonus history (if applicable)
 
 **5. Refund Policy**
 
 - View full refund rules at `/refund-policy`
 - Shows refund percentages (100% / 85% / 50%) based on time until session
-- Processing time and contact information
 - Accessible from footer and refund modal
 
 ---
@@ -225,27 +258,18 @@ Ticket refund process available from **My Tickets** section:
 
 - View personal details: first name, last name, birth date, phone, email, city
 - Edit first name, last name, birth date, phone, city
-- **Birth Date Verification Warning:** If birth date is already verified and user attempts to change it, system warns that verification will be lost and Birthday Bonus eligibility will be removed
+- **Birth Date Verification Warning:** If birth date is already verified and user attempts to change it, system warns that verification will be lost
 
 **My Tickets**
 
-- List of all purchased tickets with status tabs:
-  - **All** — all tickets
-  - **Active** — upcoming valid tickets
-  - **Used** — attended sessions
-  - **Refunded** — returned tickets
-- **Ticket Actions:**
-  - View ticket details (movie, session time, hall, seat, ticket type, price)
-  - Open QR code for cinema entry
-  - Request refund (subject to refund rules)
+- List of all purchased tickets with status tabs: **All**, **Active**, **Used**, **Refunded**
+- **Ticket Actions:** View details, open QR code for cinema entry, request refund
 
 **My Bonus**
 
 - Bonus card with current point balance
 - Display of min/max points allowed per booking
-- Two tabs:
-  - **Balance** — current bonus overview
-  - **Transactions** — complete history of all bonus transactions (+ earned, - spent)
+- Two tabs: **Balance** and **Transactions** (complete history)
 
 **Security**
 
@@ -263,178 +287,114 @@ Three tabs for complete movie content management:
 **Movies Tab**
 
 - Full CRUD operations
-- Unique name validation — cannot create duplicate movie names
-- Protected deletion — cannot delete a movie if it is linked to any session
+- Unique name validation
+- Protected deletion — cannot delete if linked to any session
 - Auto-generated SEO-friendly slug from title
-- Status automatically updates via scheduler:
-  - `UPCOMING` — release date is in the future
-  - `CURRENT` — release date has passed, end date not yet reached
-  - `ARCHIVED` — end date has passed
-- Search by movie title
-- Pagination
+- Status auto-updates via scheduler: `UPCOMING` → `CURRENT` → `ARCHIVED`
+- Search by movie title, pagination
 
 **Genres Tab**
 
 - Full CRUD operations
-- Unique name validation — cannot create duplicate genre names
-- Protected deletion — cannot delete a genre if it is linked to any movie
+- Unique name validation
+- Protected deletion — cannot delete if linked to any movie
 - Counter displays number of movies for each genre
-- Sorting by movie count
-- Search by genre name
-- Pagination
+- Sorting by movie count, search, pagination
 
 **People Tab**
 
 - Full CRUD operations
 - Role selection: Actor, Director, Screenwriter
 - Unique name validation
-- Protected deletion — cannot delete a person if linked to any movie
+- Protected deletion — cannot delete if linked to any movie
 - Counter displays number of movies for each person
-- Sorting by movie count
-- Search by person name
-- Pagination
+- Sorting by movie count, search, pagination
 
 ---
 
 #### ⏰ Schedule
 
-Full session management for movie screenings:
-
 - Full CRUD operations
 - **Smart Movie Filtering:** When creating a session, only movies available on the selected date are shown
-- **Hall Conflict Validation:** Cannot schedule overlapping sessions in the same hall (considers movie duration)
-- Session status automatically updates via scheduler:
-  - `SCHEDULED` — session is in the future
-  - `UPCOMING` — session is currently playing
-  - `COMPLETED` — session has finished
-  - `CANCELED` — manually canceled by admin
-- Filter sessions by:
-  - Date range (from — to)
-  - Cinema hall
-  - Status
-- Search by movie title
-- Pagination
+- **Hall Conflict Validation:** Cannot schedule overlapping sessions in the same hall
+- Session status auto-updates: `SCHEDULED` → `UPCOMING` → `COMPLETED` / `CANCELED`
+- Filter by date range, cinema hall, status
+- Search by movie title, pagination
 
 ---
 
 #### 🎭 Halls
 
-Cinema hall management with visual layout editor:
-
 - Full CRUD operations
 - Unique hall name validation
-- **Auto-generation:** Admin specifies number of rows and seats per row, system generates the layout
-- **Automatic VIP rows:** Last 2 rows are always VIP by default
-- Option to make entire hall VIP
-- Option to designate specific rows as couple seats (double seats)
-- **Validation for couple rows:** Requires even number of seats per row
-- **Price tiers based on seat type:**
-  - `STANDARD` — base price
-  - `VIP` — premium price
-  - `COUPLE` — premium price
-- **Interactive Layout Editor (Modal):**
-  - Visual representation of the hall layout
-  - **Left-click** — change seat type (Standard ↔ VIP ↔ Couple)
-  - **Right-click** — deactivate/activate seat (e.g., for maintenance)
+- **Auto-generation:** Admin specifies rows and seats per row, system generates layout
+- Automatic VIP rows (last 2 rows) with option for full-VIP hall
+- Couple seat rows option (requires even number of seats per row)
+- **Interactive Layout Editor (Modal):** Left-click to change seat type, Right-click to deactivate/activate
 - Protected from edit/delete if hall has future scheduled sessions
 
 ---
 
 #### 👥 Users
 
-Complete user management interface:
-
 - View all registered users
-- **User information displayed:** Name, email, role, verification status, block status, ticket count, last activity
-- **Actions:**
-  - Change user role (`USER`, `CASHIER`, `Content Manager`, `ADMIN`)
-  - Verify user's birth date (enables Birthday Bonus eligibility)
-  - Block / unblock user account
-- **Security validations:**
-  - Admin cannot block themselves
-  - Cannot remove `ADMIN` role from the last remaining administrator
-- **Filters:**
-  - By role
-  - By verification status
-  - By block status
-- **Search:** By email or name
-- Pagination
+- **Actions:** Change user role, verify birth date, block/unblock account
+- **Security validations:** Admin cannot block themselves, cannot remove `ADMIN` role from last admin
+- Filter by role, verification status, block status
+- Search by email or name, pagination
 
 ---
 
 #### 🎁 Bonus
 
-System-wide bonus program configuration:
-
 - Configure four bonus rules:
-  - **Welcome Bonus** — points awarded to user after successful email verification
-  - **Birthday Bonus** — points awarded automatically on user's birthday (requires verified birth date). Applied via scheduler
-  - **Booking Spend** — minimum and maximum points a user can redeem per booking
-  - **Payment Accrual** — percentage of ticket purchase amount returned as bonus points after successful payment
+  - **Welcome Bonus** — points awarded after email verification
+  - **Birthday Bonus** — points awarded automatically on user's birthday (requires verified birth date)
+  - **Booking Spend** — min/max points a user can redeem per booking
+  - **Payment Accrual** — percentage of ticket purchase returned as bonus points
 - Admin can update any rule value
-- **Reset button** — restores all rules to default values defined in backend
+- **Reset button** — restores all rules to default values
 
 ---
 
 #### 📢 Promotion
 
-Bonus point promotions management:
-
 - Full CRUD operations
 - Unique promotion title validation
-- Status automatically updates via scheduler:
-  - `UPCOMING` — promotion is scheduled (start date in future)
-  - `ACTIVE` — promotion is currently active (current date between start and end)
-  - `EXPIRED` — promotion has ended (end date passed)
-- Expired promotions can be reactivated by updating dates (useful for recurring events like New Year)
-- Search by promotion title
-- Pagination
+- Status auto-updates: `UPCOMING` → `ACTIVE` → `EXPIRED`
+- Expired promotions can be reactivated by updating dates
+- Search by promotion title, pagination
 
 ---
 
 #### 🎫 Ticket Types
 
-Flexible ticket type configuration:
-
 - Full CRUD operations
 - Unique name validation
-- **Fields:**
-  - Name (e.g., "Child", "Standard", "Military", "Student")
-  - Category (grouping of similar types)
-  - Price multiplier (e.g., 0.5 = 50% discount off base price)
-  - Document required flag (indicates if verification is needed at cinema entrance)
-  - Active status (can be toggled on/off)
+- **Fields:** Name, Category, Price multiplier, Document required flag, Active status
 - Deactivated ticket types are hidden during booking
-- Sorting by category
-- Pagination
+- Sorting by category, pagination
 
 ---
 
 #### 📋 Audit Logs
 
-Complete history of all administrative actions:
-
 - Tracks every change made by admins across the system
-- **Log entry details:**
-  - **Time** — timestamp when change occurred
-  - **Changed By** — email of the admin who made the change
-  - **Target** — name of the entity that was modified
-  - **Action** — type of operation: `CREATE`, `UPDATE`, or `DELETE`
-  - **Changes** — brief description of what was changed
-- **Filters:**
-  - By entity type (Movie, Genre, Person, Session, Hall, User, Promotion, Ticket Type, etc.)
-  - By action type (CREATE, UPDATE, DELETE)
-- **Search:** By admin email (shows all actions performed by specific admin)
+- **Log entry details:** Time, Changed By (admin email), Target (entity name), Action (`CREATE`/`UPDATE`/`DELETE`), Changes (description)
+- Filter by entity type and action type
+- Search by admin email
 - Pagination
 
 ---
 
 ### 🔧 Technical Highlights
 
-- **Role-Based Access Control (RBAC):** Secure API endpoints and UI elements for `USER`, `CASHIER`, `CONTENT_MANAGER`, and `ADMIN`
+- **Role-Based Access Control (RBAC):** Secure API endpoints and UI elements for all four roles
 - **Rate Limiting:** API protection against brute-force and DDoS attacks
 - **RESTful API:** Well-structured backend API built with Spring Boot
 - **Modern Frontend:** Responsive and interactive UI built with React and TypeScript
+
+---
 
 ## 🛠 Tech Stack
 
@@ -485,110 +445,7 @@ Complete history of all administrative actions:
 | Flyway         | Database migrations           |
 | Maven          | Build automation              |
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-- **Java 21** or higher
-- **Node.js 20+** and npm
-- **Docker** and **Docker Compose** (recommended)
-- **Maven** (for backend builds)
-
 ---
-
-**Test Accounts** (available after Docker setup):
-
-| Email            | Password | Role            |
-| ---------------- | -------- | --------------- |
-| admin@test.com   | admin    | Administrator   |
-| cashier@test.com | cashier  | Cashier         |
-| manager@test.com | manager  | Content Manager |
-| user@test.com    | user     | User            |
-
-### Option 1: Docker Setup (Recommended)
-
-The easiest way to run the entire stack with a single command.
-
-**1. Clone the repository**
-`git clone https://github.com/AntonBas/Cinema.git`
-`cd Cinema`
-
-**2. Configure environment variables**
-
-Copy `.env.docker.example` to `.env.docker` and fill in the required values.  
-See [`.env.docker.example`](.env.docker.example) for all available variables.
-
-**3. Start all services**
-`docker-compose up -d`
-
-**4. Access the application**
-
-| Service         | URL                                   |
-| :-------------- | :------------------------------------ |
-| Frontend        | http://localhost:5173                 |
-| Backend API     | http://localhost:8080/api             |
-| Swagger UI      | http://localhost:8080/swagger-ui.html |
-| Ngrok Inspector | http://localhost:4040                 |
-
-**5. Stop services**
-`docker-compose down`
-
----
-
-### Option 2: Local Development Setup
-
-Run backend and frontend separately for faster development.
-
-#### Backend Setup
-
-`cd backend`
-
-Copy environment configuration:
-`cp .env.example .env`
-
-Edit `.env` with your local values.
-See [`backend/.env.example`](backend/.env.example) for all available variables.
-
-Start PostgreSQL via Docker:
-`cd ..`
-`docker-compose up -d postgres`
-
-Run backend:
-`cd backend`
-`./mvnw spring-boot:run`
-
-Backend will be available at: http://localhost:8080
-
-#### Frontend Setup
-
-`cd frontend`
-
-Install dependencies:
-`npm install`
-
-Create environment file:
-`echo "VITE_API_URL=http://localhost:8080" > .env`
-
-Start development server:
-`npm run dev`
-
-Frontend will be available at: http://localhost:5173
-
----
-
-### Database Migrations
-
-Flyway migrations run automatically on application startup. Migration files are located at:
-`backend/src/main/resources/db/migration/`
-
-To reset the database:
-`docker-compose down -v postgres`
-`docker-compose up -d postgres`
-
-## 📚 API Documentation
-
-Interactive API documentation is available via Swagger UI:
-`http://localhost:8080/swagger-ui.html`
 
 ## 📁 Project Structure
 
