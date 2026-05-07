@@ -22,22 +22,34 @@ Complete feature descriptions, technical details, and project structure.
 | manager@test.com | manager  | Content Manager |
 | user@test.com    | user     | User            |
 
+---
+
 ### Option 1: Docker Setup (Recommended)
 
 The easiest way to run the entire stack with a single command.
 
-1. Clone the repository
-   git clone https://github.com/AntonBas/Cinema.git
-   cd Cinema
+**1. Clone the repository**
 
-2. Configure environment variables
-   cp .env.docker.example .env.docker
-   Fill in the required values. See [.env.docker.example](https://github.com/AntonBas/Cinema/blob/develop/.env.docker.example) for all available variables.
+```bash
+git clone https://github.com/AntonBas/Cinema.git
+cd Cinema
+```
 
-3. Start all services
-   docker-compose up -d
+**2. Configure environment variables**
 
-4. Access the application
+```bash
+cp .env.docker.example .env.docker
+```
+
+Fill in the required values. See [.env.docker.example](https://github.com/AntonBas/Cinema/blob/develop/.env.docker.example) for all available variables.
+
+**3. Start all services**
+
+```bash
+docker-compose up -d
+```
+
+**4. Access the application**
 
 | Service         | URL                                   |
 | :-------------- | :------------------------------------ |
@@ -46,8 +58,11 @@ The easiest way to run the entire stack with a single command.
 | Swagger UI      | http://localhost:8080/swagger-ui.html |
 | Ngrok Inspector | http://localhost:4040                 |
 
-5. Stop services
-   docker-compose down
+**5. Stop services**
+
+```bash
+docker-compose down
+```
 
 ### Option 2: Local Development Setup
 
@@ -55,34 +70,49 @@ Run backend and frontend separately for faster development.
 
 #### Backend Setup
 
+```bash
 cd backend
 cp .env.example .env
-Edit .env with your local values. See [backend/.env.example](https://github.com/AntonBas/Cinema/blob/develop/backend/.env.example) for all available variables.
+```
 
+Edit `.env` with your local values. See [backend/.env.example](https://github.com/AntonBas/Cinema/blob/develop/backend/.env.example) for all available variables.
+
+```bash
 cd ..
 docker-compose up -d postgres
 cd backend
 ./mvnw spring-boot:run
+```
 
 Backend will be available at: http://localhost:8080
 
 #### Frontend Setup
 
+```bash
 cd frontend
 npm install
 echo "VITE_API_URL=http://localhost:8080" > .env
 npm run dev
+```
 
 Frontend will be available at: http://localhost:5173
+
+---
 
 ### Database Migrations
 
 Flyway migrations run automatically on application startup. Migration files are located at:
+
+```
 backend/src/main/resources/db/migration/
+```
 
 To reset the database:
+
+```bash
 docker-compose down -v postgres
 docker-compose up -d postgres
+```
 
 ---
 
