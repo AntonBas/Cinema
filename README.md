@@ -179,7 +179,10 @@ cp .env.docker.example .env.docker
 Edit .env.docker with your actual values. See [.env.docker.example](.env.docker.example) for all available variables.
 
 3. Start the application
-   docker-compose up -d
+
+```bash
+docker-compose up -d
+```
 
 | Service     | URL                                   |
 | :---------- | :------------------------------------ |
@@ -214,3 +217,15 @@ Complete feature descriptions, screenshots, and technical details — [docs/DOCS
 - Managing complex domain logic in real-world scenarios
 
 ---
+
+## 🎥 Demo
+
+[Watch on YouTube](in-progress)
+
+## 📸 Screenshots
+
+in progress
+
+```
+
+```
