@@ -163,13 +163,20 @@ Full system access, including all of the above plus:
 
 **Prerequisites:** Docker and Docker Compose
 
-1. Clone the repository
-   git clone https://github.com/AntonBas/Cinema.git
-   cd Cinema
+**1. Clone the repository**
+
+```bash
+git clone https://github.com/AntonBas/Cinema.git
+cd Cinema
+```
 
 2. Configure environment variables
-   cp .env.docker.example .env.docker
-   Edit .env.docker with your actual values
+
+```bash
+cp .env.docker.example .env.docker
+```
+
+Edit .env.docker with your actual values. See [.env.docker.example](.env.docker.example) for all available variables.
 
 3. Start the application
    docker-compose up -d
