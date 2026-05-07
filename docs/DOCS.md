@@ -13,6 +13,8 @@ Complete feature descriptions, technical details, and project structure.
 - Docker and Docker Compose (recommended)
 - Maven (for backend builds)
 
+---
+
 ### Test Accounts
 
 | Email            | Password | Role            |
@@ -63,6 +65,8 @@ docker-compose up -d
 ```bash
 docker-compose down
 ```
+
+---
 
 ### Option 2: Local Development Setup
 
@@ -128,6 +132,8 @@ The system supports four roles with different access levels:
 | **CONTENT_MANAGER** | Movies, Schedule, Halls, Promotions, Genres, Persons |
 | **CASHIER**         | User verification, ticket scanning                   |
 | **USER**            | Movie browsing, booking, profile management          |
+
+---
 
 ### 👤 User Features
 
