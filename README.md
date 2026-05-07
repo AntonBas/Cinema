@@ -161,6 +161,8 @@ Full system access, including all of the above plus:
 
 ## 🚀 Quick Start
 
+**Prerequisites:** Docker and Docker Compose
+
 1. Clone the repository
    git clone https://github.com/AntonBas/Cinema.git
    cd Cinema
