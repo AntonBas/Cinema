@@ -32,12 +32,19 @@ The easiest way to run the entire stack with a single command.
 
 2. Configure environment variables
    cp .env.docker.example .env.docker
-   Fill in the required values. See .env.docker.example for all available variables.
+   Fill in the required values. See [.env.docker.example](.env.docker.example) for all available variables.
 
 3. Start all services
    docker-compose up -d
 
 4. Access the application
+
+| Service         | URL                                   |
+| :-------------- | :------------------------------------ |
+| Frontend        | http://localhost:5173                 |
+| Backend API     | http://localhost:8080/api             |
+| Swagger UI      | http://localhost:8080/swagger-ui.html |
+| Ngrok Inspector | http://localhost:4040                 |
 
 Service URL
 Frontend http://localhost:5173
@@ -56,7 +63,7 @@ Run backend and frontend separately for faster development.
 
 cd backend
 cp .env.example .env
-Edit .env with your local values. See backend/.env.example for all available variables.
+Edit .env with your local values. See [backend/.env.example](backend/.env.example) for all available variables.
 
 cd ..
 docker-compose up -d postgres
