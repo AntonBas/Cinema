@@ -173,7 +173,7 @@ The system supports four roles with different access levels:
   - User clicks "Claim" to receive bonus points on their bonus card
   - Each promotion can only be claimed once per user
 
-![Homepage](images/homepage.png)
+![Homepage](images/homepage.gif)
 
 ---
 
