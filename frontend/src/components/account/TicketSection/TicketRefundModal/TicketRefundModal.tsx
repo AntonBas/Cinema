@@ -63,7 +63,7 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
         isOpen={true}
         onClose={onClose}
         title="Refund Not Available"
-        size="medium"
+        size="large"
       >
         <div className={styles.modalBody}>
           <div className={styles.errorMessage}>
@@ -93,7 +93,7 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
         isOpen={true}
         onClose={onClose}
         title="Refund Submitted"
-        size="medium"
+        size="large"
       >
         <div className={styles.modalBody}>
           <div className={styles.successMessage}>

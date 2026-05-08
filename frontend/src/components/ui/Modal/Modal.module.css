@@ -20,9 +20,9 @@
   box-shadow: var(--shadow-xl);
   animation: slideUp var(--transition-normal);
   max-height: 90vh;
-  display: flex;
-  flex-direction: column;
+  overflow-y: auto;
   border: 1px solid var(--color-border);
+  padding: var(--space-6) var(--space-8);
 }
 
 .small {
@@ -50,8 +50,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--space-6) var(--space-6) 0 var(--space-6);
-  flex-shrink: 0;
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .title {
@@ -73,7 +74,6 @@
   justify-content: center;
   border-radius: var(--radius-md);
   transition: all var(--transition-normal);
-  flex-shrink: 0;
 }
 
 .closeButton:hover {
@@ -84,8 +84,7 @@
 
 .content {
   color: var(--color-text-primary);
-  overflow-y: auto;
-  flex: 1;
+  height: 100%;
 }
 
 @keyframes slideUp {
@@ -103,6 +102,10 @@
 @media (max-width: 768px) {
   .overlay {
     padding: var(--space-2);
+  }
+
+  .modal {
+    padding: var(--space-4);
   }
 
   .fullscreen {
