@@ -71,6 +71,12 @@
   opacity: 0.5;
 }
 
+.promoCard.expired:hover {
+  transform: none;
+  border-color: var(--color-border);
+  box-shadow: none;
+}
+
 .promoCard.claimed {
   border-color: var(--color-success);
   background: linear-gradient(
@@ -78,6 +84,11 @@
     var(--color-bg-secondary),
     rgba(var(--color-success-rgb), 0.05)
   );
+}
+
+.promoCard.claimed:hover {
+  transform: none;
+  box-shadow: none;
 }
 
 .promoContent {

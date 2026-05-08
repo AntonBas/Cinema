@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button/Button";
+import { useAuth } from "@/context/AuthContext";
 import type { PromotionResponse } from "@/types/promotion";
 import styles from "./Promotions.module.css";
 
@@ -35,6 +37,8 @@ export const Promotions: React.FC<PromotionsProps> = ({
   onClaim,
   claimedPromotionIds = [],
 }) => {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [claimingId, setClaimingId] = useState<number | null>(null);
@@ -71,7 +75,7 @@ export const Promotions: React.FC<PromotionsProps> = ({
   }, [isHovered, loading, promotions.length, maxIndex, itemsToShow]);
 
   const handleClaim = async (promotionId: number, title: string) => {
-    if (claimingId) return;
+    if (!isAuthenticated || claimingId) return;
     setClaimingId(promotionId);
     try {
       await onClaim?.(promotionId, title);
@@ -158,7 +162,7 @@ export const Promotions: React.FC<PromotionsProps> = ({
                       </div>
                     </div>
                     <div className={styles.promoFooter}>
-                      {onClaim && (
+                      {isAuthenticated && onClaim && (
                         <Button
                           variant={claimed ? "success" : "primary"}
                           size="medium"
@@ -171,6 +175,15 @@ export const Promotions: React.FC<PromotionsProps> = ({
                             : expired
                               ? "Expired"
                               : "Claim"}
+                        </Button>
+                      )}
+                      {!isAuthenticated && (
+                        <Button
+                          variant="outline"
+                          size="medium"
+                          onClick={() => navigate("/login")}
+                        >
+                          Login to Claim
                         </Button>
                       )}
                     </div>
