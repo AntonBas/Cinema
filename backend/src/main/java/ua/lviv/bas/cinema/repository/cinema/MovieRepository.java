@@ -7,7 +7,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ua.lviv.bas.cinema.domain.cinema.Movie;
+import ua.lviv.bas.cinema.domain.cinema.Session;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -29,9 +31,12 @@ public interface MovieRepository extends JpaRepository<Movie, Long>, JpaSpecific
     @Query("SELECT COUNT(m) FROM Movie m WHERE EXISTS (SELECT 1 FROM m.genres g WHERE g.id = :genreId)")
     long countMovieUsageByGenreId(@Param("genreId") Long genreId);
 
-    @EntityGraph(attributePaths = {"genres", "actors", "directors", "screenwriters", "sessions", "sessions.hall"})
-    @Query("SELECT DISTINCT m FROM Movie m LEFT JOIN FETCH m.sessions s LEFT JOIN FETCH s.hall h " +
-            "WHERE m.slug = :slug AND m.status != 'ARCHIVED' " +
+    @EntityGraph(attributePaths = {"genres", "actors", "directors", "screenwriters"})
+    @Query("SELECT m FROM Movie m WHERE m.slug = :slug AND m.status != 'ARCHIVED'")
+    Optional<Movie> findMovieBySlug(@Param("slug") String slug);
+
+    @Query("SELECT s FROM Session s JOIN FETCH s.hall h " +
+            "WHERE s.movie.slug = :slug AND s.movie.status != 'ARCHIVED' " +
             "ORDER BY s.startTime ASC, h.name ASC")
-    Optional<Movie> findBySlugWithFutureSessions(@Param("slug") String slug);
+    List<Session> findSessionsByMovieSlug(@Param("slug") String slug);
 }

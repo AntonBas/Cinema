@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.cinema.Movie;
+import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.cinema.status.MovieStatus;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
@@ -39,6 +40,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -98,11 +100,15 @@ public class MovieService {
     }
 
     public MovieDetailResponse getMovieBySlug(String slug) {
-        Movie movie = movieRepository.findBySlugWithFutureSessions(slug)
+        Movie movie = movieRepository.findMovieBySlug(slug)
                 .orElseThrow(() -> new MovieNotFoundException(slug));
 
+        List<Session> sessions = movieRepository.findSessionsByMovieSlug(slug);
+
         LocalDateTime now = LocalDateTime.now();
-        movie.getSessions().removeIf(session -> session.getStartTime() == null || !session.getStartTime().isAfter(now));
+        sessions.removeIf(session -> session.getStartTime() == null || !session.getStartTime().isAfter(now));
+
+        movie.setSessions(new LinkedHashSet<>(sessions));
 
         return movieMapper.toMovieDetailResponse(movie);
     }
