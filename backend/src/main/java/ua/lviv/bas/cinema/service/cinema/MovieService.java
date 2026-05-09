@@ -6,6 +6,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -135,24 +136,24 @@ public class MovieService {
     public List<MovieSessionSearchResponse> searchMovies(String query, LocalDate date) {
         log.info("Searching movies with query: '{}', date: {}", query, date);
 
+        Specification<Movie> spec;
+
         if (date != null) {
-            Specification<Movie> spec = (query != null && !query.isBlank())
+            spec = (query != null && !query.isBlank())
                     ? movieSpecification.byDateAndTitle(date, query)
                     : movieSpecification.byDate(date);
-            return movieRepository.findAll(spec).stream()
-                    .map(movieMapper::toMovieSessionSearchResponse).toList();
-        }
-
-        if (query == null || query.isBlank()) {
+        } else if (query != null && !query.isBlank()) {
+            spec = isValidDate(query)
+                    ? movieSpecification.byDate(LocalDate.parse(query))
+                    : movieSpecification.forPublicListing(query);
+        } else {
             return List.of();
         }
 
-        Specification<Movie> spec = isValidDate(query)
-                ? movieSpecification.byDate(LocalDate.parse(query))
-                : movieSpecification.forPublicListing(query);
-
-        return movieRepository.findAll(spec).stream()
-                .map(movieMapper::toMovieSessionSearchResponse).toList();
+        Sort sort = Sort.by(Sort.Direction.ASC, "title");
+        return movieRepository.findAll(spec, sort).stream()
+                .map(movieMapper::toMovieSessionSearchResponse)
+                .toList();
     }
 
     public ResponseEntity<byte[]> getPoster(Long id) {

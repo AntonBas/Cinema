@@ -39,9 +39,6 @@ public class MovieSpecification {
                 predicates.add(cb.like(cb.lower(root.get("title")), "%" + query.toLowerCase() + "%"));
             }
 
-            if (cq != null) {
-                cq.orderBy(cb.asc(root.get("title")));
-            }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
@@ -54,9 +51,6 @@ public class MovieSpecification {
             predicates.add(cb.greaterThanOrEqualTo(root.get("endShowingDate"), date));
             predicates.add(cb.lessThanOrEqualTo(root.get("releaseDate"), date));
 
-            if (cq != null) {
-                cq.orderBy(cb.asc(root.get("title")));
-            }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
@@ -73,9 +67,6 @@ public class MovieSpecification {
                 predicates.add(cb.like(cb.lower(root.get("title")), "%" + title.toLowerCase() + "%"));
             }
 
-            if (cq != null) {
-                cq.orderBy(cb.asc(root.get("title")));
-            }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
