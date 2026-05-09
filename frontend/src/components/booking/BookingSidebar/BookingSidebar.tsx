@@ -202,7 +202,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
           >
             {isBooking
               ? "Processing..."
-              : `Book Now - ${finalPrice.toFixed(2)}₴`}
+              : `Book Now for ${finalPrice.toFixed(2)}₴`}
           </button>
         </Tooltip>
       </div>
