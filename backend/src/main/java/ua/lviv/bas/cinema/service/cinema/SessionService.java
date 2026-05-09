@@ -80,6 +80,10 @@ public class SessionService {
         Specification<Session> spec = sessionSpecification.forSchedule(searchTerm, date);
         var sessions = sessionRepository.findAll(spec);
 
+        if (sessions.isEmpty()) {
+            return List.of();
+        }
+
         var sessionIds = sessions.stream().map(Session::getId).toList();
         var availableSeats = seatReservationService.getAvailableSeatsBatch(sessionIds);
 
