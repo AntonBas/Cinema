@@ -196,8 +196,6 @@ The system supports four roles with different access levels:
 - Quick access to booking for selected session
 - Advance booking available for upcoming movies
 
----
-
 ![Moviepage](images/moviepage.gif)
 
 ---
@@ -210,6 +208,8 @@ The system supports four roles with different access levels:
   - When searching for a specific movie, calendar updates to show only dates with sessions for that movie
 - **Search:** Find sessions by movie title
 - Click on any session to proceed to booking
+
+![schedulepage](images/schedulepage.gif)
 
 ---
 
@@ -258,6 +258,8 @@ Step-by-step ticket booking with seat reservation and secure payment.
 - Tickets available in **My Tickets** section
 - Each ticket includes QR code for cinema entry
 - Bonus points awarded based on Payment Accrual rule
+
+![Bookingprocess](images/bookingprocess.gif)
 
 ---
 
