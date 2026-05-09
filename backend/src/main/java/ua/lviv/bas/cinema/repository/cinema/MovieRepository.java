@@ -30,8 +30,8 @@ public interface MovieRepository extends JpaRepository<Movie, Long>, JpaSpecific
     long countMovieUsageByGenreId(@Param("genreId") Long genreId);
 
     @EntityGraph(attributePaths = {"genres", "actors", "directors", "screenwriters", "sessions", "sessions.hall"})
-    @Query("SELECT DISTINCT m FROM Movie m LEFT JOIN FETCH m.sessions s " +
+    @Query("SELECT DISTINCT m FROM Movie m LEFT JOIN FETCH m.sessions s LEFT JOIN FETCH s.hall h " +
             "WHERE m.slug = :slug AND m.status != 'ARCHIVED' " +
-            "ORDER BY s.date ASC, s.time ASC, s.hall.name ASC")
+            "ORDER BY s.startTime ASC, h.name ASC")
     Optional<Movie> findBySlugWithFutureSessions(@Param("slug") String slug);
 }
