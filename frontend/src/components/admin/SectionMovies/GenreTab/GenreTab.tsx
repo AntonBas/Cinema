@@ -40,7 +40,7 @@ export const GenreTab: React.FC = () => {
 
   const loadGenres = useCallback(async () => {
     const response = await getAll({
-      query: params.search,
+      query: params.query,
       page: params.page || 0,
       size: params.size || 10,
     });
@@ -51,7 +51,7 @@ export const GenreTab: React.FC = () => {
         totalPages: response.totalPages,
       });
     }
-  }, [getAll, params.search, params.page, params.size]);
+  }, [getAll, params.query, params.page, params.size]);
 
   useEffect(() => {
     loadGenres();
@@ -142,7 +142,7 @@ export const GenreTab: React.FC = () => {
         <div className={styles.resultsInfo}>
           Showing {paginationInfo.start}-{paginationInfo.end} of{" "}
           {paginationInfo.total} genres
-          {params.search && ` for "${params.search}"`}
+          {params.query && ` for "${params.query}"`}
         </div>
       )}
 
