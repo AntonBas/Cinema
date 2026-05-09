@@ -3,10 +3,6 @@ spring:
     active: local
   application:
     name: cinema
-  cache:
-    type: caffeine
-    caffeine:
-      spec: maximumSize=100, expireAfterAccess=60m
   data:
     web:
       pageable:

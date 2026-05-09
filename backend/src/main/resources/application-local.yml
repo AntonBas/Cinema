@@ -1,54 +1,54 @@
 spring:
-    config:
-        activate:
-            on-profile: local
-    datasource:
-        url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:cinema_db}
-        username: ${DB_USER:cinema}
-        password: ${DB_PASSWORD:}
-    jpa:
-        show-sql: true
-        properties:
-            hibernate:
-                format_sql: true
-                use_sql_comments: true
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:cinema_db}
+    username: ${DB_USER:cinema}
+    password: ${DB_PASSWORD:}
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
 
 scheduler:
-    birthday-bonus:
-        cron: "0 */5 * * * *"
-    email-token:
-        cleanup-expired-cron: "0 */5 * * * *"
-        cleanup-confirmed-cron: "0 */5 * * * *"
-    movie-status:
-        cron: "0 */5 * * * *"
-    session-status:
-        cron: "0 */5 * * * *"
-    booking:
-        expiration-interval: 300000
-        cleanup-cron: "0 */5 * * * *"
-        reminder-cron: "0 */5 * * * *"
-    payment:
-        expiration-interval: 300000
-        cleanup-cron: "0 */5 * * * *"
-        daily-stats: "0 */5 * * * *"
-    ticket:
-        mark-as-used: 300000
-        cleanup-cron: "0 */5 * * * *"
-        daily-stats: "0 */5 * * * *"
-        upcoming-reminder: "0 */5 * * * *"
-    seat-reservation:
-        expiration-interval: 60000
-        cleanup-expired-interval: 300000
+  birthday-bonus:
+    cron: "0 */5 * * * *"
+  email-token:
+    cleanup-expired-cron: "0 */5 * * * *"
+    cleanup-confirmed-cron: "0 */5 * * * *"
+  movie-status:
+    cron: "0 */5 * * * *"
+  session-status:
+    cron: "0 */5 * * * *"
+  booking:
+    expiration-interval: 300000
+    cleanup-cron: "0 */5 * * * *"
+    reminder-cron: "0 */5 * * * *"
+  payment:
+    expiration-interval: 300000
+    cleanup-cron: "0 */5 * * * *"
+    daily-stats: "0 */5 * * * *"
+  ticket:
+    mark-as-used: 300000
+    cleanup-cron: "0 */5 * * * *"
+    daily-stats: "0 */5 * * * *"
+    upcoming-reminder: "0 */5 * * * *"
+  seat-reservation:
+    expiration-interval: 60000
+    cleanup-expired-interval: 300000
 
 logging:
-    level:
-        root: INFO
-        ua.lviv.bas.cinema: DEBUG
-        ua.lviv.bas.cinema.controller: DEBUG
-        ua.lviv.bas.cinema.service: DEBUG
-        ua.lviv.bas.cinema.config.security: DEBUG
-        org.springframework.web: DEBUG
-        org.springframework.security: DEBUG
-        org.springframework.cache: DEBUG
-        org.hibernate.SQL: DEBUG
-        org.hibernate.orm.jdbc.bind: TRACE
+  level:
+    root: INFO
+    ua.lviv.bas.cinema: DEBUG
+    ua.lviv.bas.cinema.controller: DEBUG
+    ua.lviv.bas.cinema.service: DEBUG
+    ua.lviv.bas.cinema.config.security: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.cache: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
