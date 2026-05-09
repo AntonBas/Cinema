@@ -39,6 +39,7 @@ import ua.lviv.bas.cinema.service.integration.file.PosterService;
 import ua.lviv.bas.cinema.service.integration.slug.SlugService;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -172,7 +173,7 @@ public class MovieServiceTest {
 
     @Test
     void getMovieShouldSucceed() {
-        when(movieRepository.findById(MOVIE_ID)).thenReturn(Optional.of(movie));
+        when(movieRepository.findMovieById(MOVIE_ID)).thenReturn(Optional.of(movie));
         when(movieMapper.toMovieAdminResponse(movie)).thenReturn(adminResponse);
 
         MovieAdminResponse result = movieService.getMovie(MOVIE_ID);
@@ -182,14 +183,15 @@ public class MovieServiceTest {
 
     @Test
     void getMovieWhenNotFoundShouldThrowException() {
-        when(movieRepository.findById(MOVIE_ID)).thenReturn(Optional.empty());
+        when(movieRepository.findMovieById(MOVIE_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> movieService.getMovie(MOVIE_ID)).isInstanceOf(MovieNotFoundException.class);
     }
 
     @Test
     void getMovieBySlugShouldSucceed() {
-        when(movieRepository.findBySlugWithFutureSessions(SLUG)).thenReturn(Optional.of(movie));
+        when(movieRepository.findMovieBySlug(SLUG)).thenReturn(Optional.of(movie));
+        when(movieRepository.findSessionsByMovieSlug(SLUG)).thenReturn(new ArrayList<>());
         when(movieMapper.toMovieDetailResponse(movie)).thenReturn(detailResponse);
 
         MovieDetailResponse result = movieService.getMovieBySlug(SLUG);
@@ -199,7 +201,7 @@ public class MovieServiceTest {
 
     @Test
     void getMovieBySlugWhenNotFoundShouldThrowException() {
-        when(movieRepository.findBySlugWithFutureSessions(SLUG)).thenReturn(Optional.empty());
+        when(movieRepository.findMovieBySlug(SLUG)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> movieService.getMovieBySlug(SLUG)).isInstanceOf(MovieNotFoundException.class);
     }
@@ -388,7 +390,7 @@ public class MovieServiceTest {
 
     @Test
     void searchMoviesByTitleShouldReturnList() {
-        when(movieRepository.findAll(any(Specification.class))).thenReturn(List.of(movie));
+        when(movieRepository.findAll(any(Specification.class), any(org.springframework.data.domain.Sort.class))).thenReturn(List.of(movie));
         when(movieMapper.toMovieSessionSearchResponse(movie))
                 .thenReturn(new MovieSessionSearchResponse(MOVIE_ID, MOVIE_TITLE, 120));
 
@@ -402,7 +404,7 @@ public class MovieServiceTest {
     @Test
     void searchMoviesByDateShouldReturnList() {
         LocalDate date = LocalDate.now();
-        when(movieRepository.findAll(any(Specification.class))).thenReturn(List.of(movie));
+        when(movieRepository.findAll(any(Specification.class), any(org.springframework.data.domain.Sort.class))).thenReturn(List.of(movie));
         when(movieMapper.toMovieSessionSearchResponse(movie))
                 .thenReturn(new MovieSessionSearchResponse(MOVIE_ID, MOVIE_TITLE, 120));
 
