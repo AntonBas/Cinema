@@ -70,9 +70,9 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
             FROM sessions s
             JOIN movies m ON m.id = s.movie_id
             JOIN cinema_halls h ON h.id = s.hall_id
-            WHERE s.id = :id
+            WHERE s.id IN (:ids)
             """, nativeQuery = true)
-    Optional<SessionScheduleProjection> findScheduleProjectionById(@Param("id") Long id);
+    List<SessionScheduleProjection> findScheduleProjectionsByIds(@Param("ids") List<Long> ids);
 
     @Query(value = """
             SELECT

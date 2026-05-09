@@ -26,6 +26,7 @@ import ua.lviv.bas.cinema.mapper.cinema.SessionMapper;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
 import ua.lviv.bas.cinema.repository.cinema.projection.SessionAdminProjection;
+import ua.lviv.bas.cinema.repository.cinema.projection.SessionScheduleProjection;
 import ua.lviv.bas.cinema.repository.cinema.specification.SessionSpecification;
 import ua.lviv.bas.cinema.service.booking.SeatReservationService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
@@ -82,8 +83,12 @@ public class SessionService {
         var sessionIds = sessions.stream().map(Session::getId).toList();
         var availableSeats = seatReservationService.getAvailableSeatsBatch(sessionIds);
 
+        var projections = sessionRepository.findScheduleProjectionsByIds(sessionIds)
+                .stream()
+                .collect(Collectors.toMap(SessionScheduleProjection::getId, p -> p));
+
         return sessions.stream().map(session -> {
-            var proj = sessionRepository.findScheduleProjectionById(session.getId()).orElseThrow();
+            var proj = projections.get(session.getId());
             return sessionMapper.toSessionScheduleResponse(proj)
                     .withAvailableSeats(availableSeats.getOrDefault(session.getId(), 0));
         }).toList();
