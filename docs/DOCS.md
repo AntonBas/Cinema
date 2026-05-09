@@ -198,6 +198,10 @@ The system supports four roles with different access levels:
 
 ---
 
+![Moviepage](images/moviepage.gif)
+
+---
+
 #### 📅 Schedule
 
 - All scheduled sessions across all movies and halls
