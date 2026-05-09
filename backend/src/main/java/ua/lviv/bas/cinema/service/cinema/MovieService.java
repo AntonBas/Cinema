@@ -95,7 +95,7 @@ public class MovieService {
 
     @Cacheable(value = "movies", key = "#id")
     public MovieAdminResponse getMovie(Long id) {
-        return movieRepository.findById(id).map(movieMapper::toMovieAdminResponse)
+        return movieRepository.findMovieById(id).map(movieMapper::toMovieAdminResponse)
                 .orElseThrow(() -> new MovieNotFoundException(id));
     }
 
