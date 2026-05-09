@@ -27,11 +27,11 @@ public class RateLimitConfig {
             this.buckets = buckets;
         }
 
-        public boolean tryConsume(String key, int tokens, int capacity, int durationInMinutes) {
-            String bucketKey = key + ":" + capacity + ":" + durationInMinutes;
+        public boolean tryConsume(String key, int tokens, int capacity, int durationInSeconds) {
+            String bucketKey = key + ":" + capacity + ":" + durationInSeconds;
 
             Bucket bucket = buckets.computeIfAbsent(bucketKey, k -> Bucket.builder().addLimit(
-                            limit -> limit.capacity(capacity).refillIntervally(capacity, Duration.ofMinutes(durationInMinutes)))
+                            limit -> limit.capacity(capacity).refillIntervally(capacity, Duration.ofSeconds(durationInSeconds)))
                     .build());
 
             ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(tokens);
