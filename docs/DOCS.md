@@ -295,6 +295,8 @@ Step-by-step ticket booking with seat reservation and secure payment.
 - Shows refund percentages (100% / 85% / 50%) based on time until session
 - Accessible from footer and refund modal
 
+![Refund](images/refund.gif)
+
 ---
 
 #### 👤 My Account
