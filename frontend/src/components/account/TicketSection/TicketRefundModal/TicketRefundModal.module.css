@@ -26,23 +26,6 @@
   color: var(--color-text-secondary);
 }
 
-.successMessage {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-4);
-  padding: var(--space-6);
-  background: rgba(var(--color-success-rgb), var(--opacity-low));
-  border: 1px solid rgba(var(--color-success-rgb), var(--opacity-medium));
-  border-radius: var(--radius-md);
-  color: var(--color-success);
-}
-
-.successMessage h4 {
-  font-size: var(--font-size-md);
-  font-weight: 600;
-  margin: 0 0 var(--space-3) 0;
-}
-
 .refundDetails {
   display: flex;
   flex-direction: column;

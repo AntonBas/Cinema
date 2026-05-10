@@ -97,28 +97,25 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
       >
         <div className={styles.modalBody}>
           <div className={styles.successMessage}>
-            <span>✅</span>
-            <div>
-              <h4>Refund Request Submitted</h4>
-              <div className={styles.refundDetails}>
-                <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>Refund Number</span>
-                  <span className={styles.detailValue}>
-                    {refundResult.refundNumber}
-                  </span>
-                </div>
-                <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>Status</span>
-                  <span className={`${styles.detailValue} ${styles.status}`}>
-                    {refundResult.status}
-                  </span>
-                </div>
-                <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>Amount</span>
-                  <span className={`${styles.detailValue} ${styles.amount}`}>
-                    {refundResult.totalAmount} UAH
-                  </span>
-                </div>
+            <h4>Refund Request Submitted</h4>
+            <div className={styles.refundDetails}>
+              <div className={styles.detailItem}>
+                <span className={styles.detailLabel}>Refund Number</span>
+                <span className={styles.detailValue}>
+                  {refundResult.refundNumber}
+                </span>
+              </div>
+              <div className={styles.detailItem}>
+                <span className={styles.detailLabel}>Status</span>
+                <span className={`${styles.detailValue} ${styles.status}`}>
+                  {refundResult.status}
+                </span>
+              </div>
+              <div className={styles.detailItem}>
+                <span className={styles.detailLabel}>Amount</span>
+                <span className={`${styles.detailValue} ${styles.amount}`}>
+                  {refundResult.totalAmount} UAH
+                </span>
               </div>
             </div>
           </div>
