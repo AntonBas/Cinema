@@ -323,6 +323,8 @@ Step-by-step ticket booking with seat reservation and secure payment.
 - **Change Password:** Requires current password, new password (entered twice), validation that new ≠ old
 - **Change Email:** Enter new email + current password, confirmation link sent to new email
 
+![MyAccount](images/myaccountpage.gif)
+
 ---
 
 ### ⚙️ Admin Features
