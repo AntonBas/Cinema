@@ -3,7 +3,7 @@ services:
     image: postgres:15-alpine
     container_name: cinema_postgres
     env_file:
-      - .env.docker
+      - .env
     environment:
       POSTGRES_USER: ${DB_USER:-cinema}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -37,7 +37,7 @@ services:
       postgres:
         condition: service_healthy
     env_file:
-      - .env.docker
+      - .env
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
@@ -63,6 +63,7 @@ services:
       - cinema-net
     volumes:
       - ./backend/logs:/app/logs:z
+      - ./backend/uploads:/app/uploads
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
@@ -80,13 +81,13 @@ services:
       backend:
         condition: service_healthy
     env_file:
-      - .env.docker
+      - .env
     ports:
       - "${FRONTEND_HOST_PORT:-5173}:5173"
     networks:
       - cinema-net
     environment:
-      VITE_API_URL: http://backend:8080
+      VITE_API_URL: http://localhost:8080
       CHOKIDAR_USEPOLLING: "true"
     volumes:
       - ./frontend/src:/app/src:delegated
