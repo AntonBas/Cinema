@@ -1,27 +1,35 @@
 spring:
-    config:
-        activate:
-            on-profile: docker
-    datasource:
-        url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:cinema_db}
-        hikari:
-            maximum-pool-size: 10
+  config:
+    activate:
+      on-profile: docker
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:cinema_db}
+    hikari:
+      maximum-pool-size: 10
 
 scheduler:
-    birthday-bonus:
-        cron: "0 0 9 * * *"
-    email-token:
-        cleanup-expired-cron: "0 */30 * * * *"
-        cleanup-confirmed-cron: "0 0 3 * * *"
-    movie-status:
-        cron: "0 0 2 * * *"
-    session-status:
-        cron: "0 */5 * * * *"
-    booking:
-        expiration-interval: 180000
-        cleanup-cron: "0 0 4 * * *"
-        reminder-cron: "0 */10 * * * *"
-    payment:
-        expiration-interval: 300000
-        cleanup-cron: "0 0 5 * * *"
-        daily-stats: "0 0 23 * * *"
+  birthday-bonus:
+    cron: "0 0 9 * * *"
+  email-token:
+    cleanup-expired-cron: "0 */30 * * * *"
+    cleanup-confirmed-cron: "0 0 3 * * *"
+  movie-status:
+    cron: "0 0 2 * * *"
+  session-status:
+    cron: "0 */5 * * * *"
+  booking:
+    expiration-interval: 180000
+    cleanup-cron: "0 0 4 * * *"
+    reminder-cron: "0 */10 * * * *"
+  payment:
+    expiration-interval: 300000
+    cleanup-cron: "0 0 5 * * *"
+    daily-stats: "0 0 23 * * *"
+  ticket:
+    mark-as-used: 300000
+    cleanup-cron: "0 0 3 * * *"
+    daily-stats: "0 0 22 * * *"
+    upcoming-reminder: "0 0 10 * * *"
+  seat-reservation:
+    expiration-interval: 60000
+    cleanup-expired-interval: 300000
