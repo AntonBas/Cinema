@@ -87,11 +87,12 @@ services:
     networks:
       - cinema-net
     environment:
-      VITE_API_URL: http://localhost:8080
+      VITE_PROXY_TARGET: http://backend:8080
       CHOKIDAR_USEPOLLING: "true"
     volumes:
       - ./frontend/src:/app/src:delegated
       - ./frontend/public:/app/public:delegated
+      - ./frontend/vite.config.js:/app/vite.config.js:delegated
       - /app/node_modules
       - ./frontend/index.html:/app/index.html:delegated
     stdin_open: true

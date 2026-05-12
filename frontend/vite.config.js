@@ -4,8 +4,8 @@ import path from 'path'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const proxyTarget = env.VITE_API_URL || 'http://localhost:8080'
-  
+  const proxyTarget = env.VITE_PROXY_TARGET || 'http://localhost:8080'
+
   return {
     plugins: [react()],
     resolve: {
@@ -19,6 +19,17 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
       proxy: {
         '/api': {
+          target: proxyTarget,
+          changeOrigin: true,
+          secure: false,
+          configure: (proxy) => {
+            proxy.on('error', (err) => console.log('proxy error', err));
+            proxy.on('proxyReq', (proxyReq, req) => {
+              console.log('Proxying:', req.url);
+            });
+          }
+        },
+        '/uploads': {
           target: proxyTarget,
           changeOrigin: true,
           secure: false,
