@@ -1,6 +1,17 @@
-# 📚 Cinema Management System — Full Documentation
-
 Complete feature descriptions, technical details, and project structure.
+
+---
+
+## 📑 Contents
+
+- [🚀 Getting Started](#-getting-started)
+- [✨ Features](#-features)
+  - [👥 Roles & Permissions](#-roles--permissions)
+  - [👤 User Features](#-user-features)
+  - [⚙️ Admin Features](#️-admin-features)
+  - [🔧 Technical Highlights](#-technical-highlights)
+- [🛠 Tech Stack](#-tech-stack)
+- [📁 Project Structure](#-project-structure)
 
 ---
 
@@ -76,10 +87,10 @@ Run backend and frontend separately for faster development.
 
 ```bash
 cd backend
-cp .env.example .env
+cp .env.local.example .env
 ```
 
-Edit `.env` with your local values. See [backend/.env.example](https://github.com/AntonBas/Cinema/blob/develop/backend/.env.example) for all available variables.
+Edit `.env` with your local values. See [backend/.env.local.example](https://github.com/AntonBas/Cinema/blob/develop/backend/.env.local.example) for all available variables.
 
 ```bash
 cd ..
@@ -95,11 +106,12 @@ Backend will be available at: http://localhost:8080
 ```bash
 cd frontend
 npm install
-echo "VITE_API_URL=http://localhost:8080" > .env
 npm run dev
 ```
 
 Frontend will be available at: http://localhost:5173
+
+Note: API requests to /api are automatically proxied to the backend via Vite. No CORS configuration or manual VITE_API_URL setup needed.
 
 ---
 
@@ -287,7 +299,7 @@ Step-by-step ticket booking with seat reservation and secure payment.
 
 - Ticket status changes to `REFUNDED`
 - Refunded tickets moved to **Refunded** tab
-- Bonus points used in booking are deducted from user's balance
+- Bonus points used in booking are deducted from the user's balance
 
 **5. Refund Policy**
 
