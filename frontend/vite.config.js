@@ -22,12 +22,6 @@ export default defineConfig(({ mode }) => {
           target: proxyTarget,
           changeOrigin: true,
           secure: false,
-          configure: (proxy) => {
-            proxy.on('error', (err) => console.log('proxy error', err));
-            proxy.on('proxyReq', (proxyReq, req) => {
-              console.log('Proxying:', req.url);
-            });
-          }
         },
         '/uploads': {
           target: proxyTarget,
