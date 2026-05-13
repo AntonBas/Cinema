@@ -6,6 +6,22 @@ Full-stack cinema booking platform with real-world business logic — concurrenc
 
 ---
 
+## 📑 Contents
+
+- [🚀 Overview](#-overview)
+- [🧠 Key Engineering Features](#-key-engineering-features)
+- [👥 User Features](#-user-features)
+- [👔 Staff Features](#-staff-features)
+- [⚙️ Admin Features](#️-admin-features)
+- [🏗 Architecture](#-architecture)
+- [🛠 Tech Stack](#-tech-stack)
+- [🚀 Quick Start](#-quick-start)
+- [🧪 Test Accounts](#-test-accounts)
+- [📚 Full Documentation](#-full-documentation)
+- [📈 What I Learned](#-what-i-learned)
+
+---
+
 ## 🚀 Overview
 
 Cinema Management System is designed as a production-like application that simulates real cinema operations:
