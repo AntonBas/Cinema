@@ -74,7 +74,6 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
     return (
       <div className={styles.sidebar}>
         <div className={styles.empty}>
-          <div className={styles.emptyIcon}>🎬</div>
           <h3>No seats selected</h3>
           <p>Click on available seats to select them</p>
         </div>
