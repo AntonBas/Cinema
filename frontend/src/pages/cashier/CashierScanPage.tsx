@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { Layout } from "@/components/layout/Layout/Layout";
 import { useTickets } from "@/hooks/features/tickets/useTickets";
 import { CashierStatusBadge } from "@/components/cashier/CashierStatusBadge/CashierStatusBadge";
 import { CashierTicketInfo } from "@/components/cashier/CashierTicketInfo/CashierTicketInfo";
@@ -35,34 +36,42 @@ export const CashierScanPage: React.FC = () => {
   const ticket = validatedTicket || cashierTicket;
 
   if (loading && !ticket) {
-    return <LoadingSpinner text="Loading ticket..." />;
+    return (
+      <Layout>
+        <LoadingSpinner text="Loading ticket..." />
+      </Layout>
+    );
   }
 
   if (cashierTicketError && !ticket) {
     return (
-      <div className={styles.container}>
-        <div className={styles.errorCard}>
-          <span className={styles.errorIcon}>❌</span>
-          <h2 className={styles.errorTitle}>Ticket Not Found</h2>
-          <p className={styles.errorMessage}>
-            {getErrorMessage(cashierTicketError)}
-          </p>
-          <button
-            className={styles.backButton}
-            onClick={() => navigate("/cashier")}
-          >
-            ← Back to Scanner
-          </button>
+      <Layout>
+        <div className={styles.container}>
+          <div className={styles.errorCard}>
+            <span className={styles.errorIcon}>❌</span>
+            <h2 className={styles.errorTitle}>Ticket Not Found</h2>
+            <p className={styles.errorMessage}>
+              {getErrorMessage(cashierTicketError)}
+            </p>
+            <button
+              className={styles.backButton}
+              onClick={() => navigate("/cashier")}
+            >
+              Back to Home Page
+            </button>
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   if (!ticket) {
     return (
-      <div className={styles.container}>
-        <LoadingSpinner text="Loading ticket..." />
-      </div>
+      <Layout>
+        <div className={styles.container}>
+          <LoadingSpinner text="Loading ticket..." />
+        </div>
+      </Layout>
     );
   }
 
@@ -73,36 +82,31 @@ export const CashierScanPage: React.FC = () => {
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.card}>
-        <div className={styles.header}>
-          <h1 className={styles.title}>Ticket #{ticket.uniqueCode}</h1>
-          <CashierStatusBadge status={ticket.status} />
-        </div>
-
-        <CashierTicketInfo ticket={ticket} />
-
-        <div className={styles.actions}>
-          <CashierValidateButton
-            status={ticket.status}
-            loading={loading}
-            onValidate={handleValidate}
-          />
-        </div>
-
-        {cashierValidateError && (
-          <div className={styles.error}>
-            {getErrorMessage(cashierValidateError)}
+    <Layout>
+      <div className={styles.container}>
+        <div className={styles.card}>
+          <div className={styles.header}>
+            <h1 className={styles.title}>Ticket #{ticket.uniqueCode}</h1>
+            <CashierStatusBadge status={ticket.status} />
           </div>
-        )}
 
-        <button
-          className={styles.scanAnother}
-          onClick={() => navigate("/cashier")}
-        >
-          ← Scan Another Ticket
-        </button>
+          <CashierTicketInfo ticket={ticket} />
+
+          <div className={styles.actions}>
+            <CashierValidateButton
+              status={ticket.status}
+              loading={loading}
+              onValidate={handleValidate}
+            />
+          </div>
+
+          {cashierValidateError && (
+            <div className={styles.error}>
+              {getErrorMessage(cashierValidateError)}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </Layout>
   );
 };
