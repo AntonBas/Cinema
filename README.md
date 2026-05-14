@@ -92,8 +92,7 @@ C4Context
     Rel(cinema, smtp, "Send confirmation emails", "SMTP")
 
     UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
-
----
+```
 
 ## Engineering Decisions
 
@@ -149,7 +148,7 @@ git clone https://github.com/AntonBas/Cinema.git
 cd Cinema
 cp .env.docker.example .env.docker
 docker-compose up -d
-````
+```
 
 | Service     | URL                                   |
 | ----------- | ------------------------------------- |
