@@ -24,7 +24,7 @@ export const CashierValidateButton: React.FC<CashierValidateButtonProps> = ({
       loading={loading}
       onClick={onValidate}
     >
-      ✅ Validate Ticket
+      Validate Ticket
     </Button>
   );
 };
