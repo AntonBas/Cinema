@@ -76,7 +76,6 @@ export const DateFilter: React.FC<DateFilterProps> = ({
                     className={styles.dateDisplay}
                     onClick={() => setIsCalendarOpen(!isCalendarOpen)}
                 >
-                    <span className={styles.calendarIcon}>📅</span>
                     <span className={styles.currentDate}>{formatDisplayDate(selectedDate)}</span>
                     <span className={styles.calendarToggle}>{isCalendarOpen ? '▲' : '▼'}</span>
                 </button>
