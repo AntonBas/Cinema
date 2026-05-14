@@ -1,141 +1,120 @@
 # Cinema Management System
 
-Full-stack cinema booking platform with real-world business logic — concurrency-safe seat reservation, bonus system, refund processing, and admin panel.
+> Designed as a backend-focused system to explore concurrency, asynchronous workflows, and real-world business constraints.
 
-**Backend:** Java Spring Boot | **Frontend:** React (TypeScript) | **Database:** PostgreSQL
+![Booking Demo](docs/images/booking.gif)
 
----
+Production-like full-stack cinema booking platform focused on real-world backend challenges: concurrency control, asynchronous workflows, and complex business rules.
 
-## Contents
-
-- [Overview](#-overview)
-- [Key Engineering Features](#-key-engineering-features)
-- [User Features](#-user-features)
-- [Staff Features](#-staff-features)
-- [Admin Features](#️-admin-features)
-- [Architecture](#-architecture)
-- [Tech Stack](#-tech-stack)
-- [Quick Start](#-quick-start)
-- [Test Accounts](#-test-accounts)
-- [Full Documentation](#-full-documentation)
-- [What I Learned](#-what-i-learned)
+**Backend:** Java Spring Boot  
+**Frontend:** React (TypeScript)  
+**Database:** PostgreSQL
 
 ---
 
 ## Overview
 
-Cinema Management System is designed as a production-like application that simulates real cinema operations:
+Cinema Management System simulates real cinema operations with a focus on consistency, concurrency, and complex domain logic:
 
-- Real-time seat reservation with locking mechanism
-- Multi-role system
-- Bonus & loyalty program
-- Payment and refund workflow
-- Full admin panel for system management
+- Concurrency-safe seat booking
+- Role-based access control (RBAC)
+- Async payment & refund workflows
+- Configurable bonus & loyalty system
+- Admin panel with audit logging
 
 ---
 
 ## Key Engineering Features
 
-- **Concurrency-safe seat booking**
-  - 5-minute temporary seat lock
-  - 30-minute booking window before payment
+- **Concurrency-safe booking**
+  - Temporary seat locking (5 min)
+  - Booking reservation window (30 min)
+  - Prevents race conditions and overselling
 
-- **Role-Based Access Control (RBAC)**
+- **RBAC (4 roles)**
   - USER, CASHIER, CONTENT_MANAGER, ADMIN
-  - Secured API and UI
+  - Secured API + UI
 
-- **Scheduler-driven state management**
-  - Movies, sessions, promotions auto-update statuses
+- **Async payment integration**
+  - External provider (LiqPay)
+  - Callback-based status updates
+  - Idempotent handling
 
-- **Bonus & loyalty system**
-  - Configurable rules (welcome, birthday, accrual, spending limits)
+- **Scheduler-driven automation**
+  - Session/movie status updates
+  - Promotion lifecycle management
 
-- **Refund processing system**
-  - Dynamic refund calculation based on time before session
+- **Flexible business rules**
+  - Bonus system (welcome, birthday, accrual)
+  - Dynamic refund calculation
 
 - **Audit logging**
-  - Full tracking of admin actions
-
-- **Rate limiting**
-  - API protection against brute-force/DDoS
-
-- **Payment integration**
-  - External provider (LiqPay)
-  - Async status updates
-
----
-
-## User Features
-
-- Authentication (JWT + OAuth2 Google)
-- Movie browsing (Now Showing / Coming Soon)
-- Session search with filters and calendar
-- Seat selection with visual layout
-- Ticket booking with multiple ticket types
-- Bonus usage for discounts
-- Secure payment flow
-- Ticket management (QR codes, status tracking)
-- Refund requests with calculated return amount
-- Profile & account management
-
----
-
-## Staff Features
-
-### Cashier
-
-- User verification (email, birth date)
-- Ticket scanning via QR code
-- Ticket status management (mark as used)
-
-### Content Manager
-
-- Full access to Movies, Genres, Persons (CRUD)
-- Schedule management with conflict detection
-- Cinema Halls management with interactive seat editor
-- Promotions — time-based bonus campaigns
-
----
-
-## Admin Features
-
-Full system access, including all of the above plus:
-
-- **User Management**
-  - Role management (assign/change roles)
-  - Account blocking / unblocking
-  - Birth date verification
-
-- **Bonus Configuration**
-  - Flexible rule system (welcome, birthday, spending limits, accrual %)
-
-- **Ticket Types**
-  - Dynamic pricing via multipliers
-  - Categories and active/inactive toggling
-
-- **Audit Logs**
-  - Full system change history — who did what and when
+  - Tracks all admin actions
 
 ---
 
 ## Architecture
 
-### Backend
+**Backend**
 
-- Layered architecture: Controller → Service → Repository
-- DTO pattern with MapStruct
-- Domain-oriented package structure
+- Layered architecture (Controller → Service → Repository)
+- DTO + MapStruct
 - Stateless authentication (JWT)
-- Scheduled jobs for automation
-- Centralized exception handling
+- Scheduled jobs
 
-### Frontend
+**Frontend**
 
 - Component-based architecture
-- Feature-based folder structure
-- Global state via Context API
-- API layer abstraction (Axios)
-- Reusable UI components
+- Feature-based structure
+- Context API for state management
+
+---
+
+## System Architecture
+
+```mermaid
+C4Context
+    title System Context Diagram for Cinema Management System
+
+    Person(user, "User", "Cinema visitor")
+    Person(admin, "Admin/Staff", "Cinema employee")
+
+    System(cinema, "Cinema Management System", "Handles bookings, payments, and cinema operations")
+
+    System_Ext(liqpay, "LiqPay", "Payment provider")
+    System_Ext(google, "Google OAuth", "Authentication")
+    System_Ext(smtp, "Email Service", "Notifications")
+
+    Rel(user, cinema, "Browse movies, book tickets, make payments", "HTTPS")
+    Rel(admin, cinema, "Manage content, process tickets", "HTTPS")
+    Rel(cinema, liqpay, "Process payments and refunds", "REST API")
+    Rel(cinema, google, "OAuth2 authentication", "OAuth2")
+    Rel(cinema, smtp, "Send confirmation emails", "SMTP")
+
+    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
+
+---
+
+## Engineering Decisions
+
+### Seat Booking Concurrency
+
+To prevent double booking, a temporary seat lock mechanism is used:
+
+- First-level lock (5 minutes) on seat selection
+- Second-level reservation (30 minutes) before payment
+- Expired locks are released via scheduler
+
+### Payment Flow
+
+- External payment handled via LiqPay
+- System processes async callbacks
+- Booking updates are idempotent to avoid duplicate state changes
+
+### Bonus System
+
+- Implemented as a configurable rule engine
+- Allows dynamic adjustment without code changes
 
 ---
 
@@ -143,73 +122,61 @@ Full system access, including all of the above plus:
 
 ### Backend
 
-| Technology      | Version |
-| :-------------- | :------ |
-| Java            | 21      |
-| Spring Boot     | 3.4.7   |
-| Spring Security | 6.4.7   |
-| Spring Data JPA | 3.4.7   |
-| PostgreSQL      | 15+     |
-| Flyway          | 11.7.0+ |
-| JWT (jjwt)      | 0.12.6  |
-| MapStruct       | 1.6.3   |
-| Bucket4j        | 8.10.1  |
-| Caffeine Cache  | 3.1.8   |
-| ZXing (QR Code) | 3.5.3   |
+- Java 21, Spring Boot 3
+- Spring Security, JPA
+- PostgreSQL
+- Flyway
+- Bucket4j (rate limiting)
+- Caffeine (caching)
 
 ### Frontend
 
-| Technology        | Version |
-| :---------------- | :------ |
-| React             | 19.1.1  |
-| TypeScript        | 5.8.3   |
-| Vite              | 7.3.2   |
-| React Router      | 7.8.1   |
-| Axios             | 1.15.0  |
-| Styled Components | 6.1.19  |
+- React + TypeScript
+- Vite
+- Axios
+- Styled Components
 
 ### DevOps
 
 - Docker / Docker Compose
-- Maven
 
 ---
 
 ## Quick Start
 
-**Prerequisites:** Docker and Docker Compose
-
-1. Clone the repository
-
 ```bash
 git clone https://github.com/AntonBas/Cinema.git
 cd Cinema
-```
-
-2. Configure environment variables
-
-```bash
 cp .env.docker.example .env.docker
-```
-
-Edit .env.docker with your actual values. See [.env.docker.example](.env.docker.example) for all available variables.
-
-3. Start the application
-
-```bash
 docker-compose up -d
-```
+````
 
 | Service     | URL                                   |
-| :---------- | :------------------------------------ |
+| ----------- | ------------------------------------- |
 | Frontend    | http://localhost:5173                 |
 | Backend API | http://localhost:8080/api             |
 | Swagger UI  | http://localhost:8080/swagger-ui.html |
 
+---
+
+## Demo
+
+Video walkthrough — coming soon
+
+---
+
+## Documentation
+
+Full feature documentation, flows, and technical details:
+
+[docs/DOCS.md](docs/DOCS.md)
+
+---
+
 ## Test Accounts
 
 | Email            | Password | Role            |
-| :--------------- | :------- | :-------------- |
+| ---------------- | -------- | --------------- |
 | admin@test.com   | admin    | ADMIN           |
 | manager@test.com | manager  | CONTENT_MANAGER |
 | cashier@test.com | cashier  | CASHIER         |
@@ -217,32 +184,8 @@ docker-compose up -d
 
 ---
 
-## Full Documentation
+## Highlights
 
-Complete feature descriptions, screenshots, and technical details — [docs/DOCS.md](docs/DOCS.md)
-
----
-
-## What I Learned
-
-- Designing concurrency-safe booking systems
-- Implementing flexible business rules (bonus/refund)
-- Building scalable RBAC systems
-- Structuring full-stack applications for maintainability
-- Handling async payment workflows
-- Managing complex domain logic in real-world scenarios
-
----
-
-## Demo
-
-[Watch on YouTube](in-progress)
-
-## Screenshots
-
-![Homepage](docs/images/homepage.gif)
-
----
-
-![Bookingprocess](docs/images/bookingprocess.gif)
-
+- Designed as a real-world backend system, not just CRUD
+- Focus on consistency, concurrency, and scalability
+- Covers full lifecycle: booking → payment → refund → audit
