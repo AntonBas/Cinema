@@ -2,20 +2,20 @@ Complete feature descriptions, technical details, and project structure.
 
 ---
 
-## 📑 Contents
+## Contents
 
-- [🚀 Getting Started](#-getting-started)
-- [✨ Features](#-features)
-  - [👥 Roles & Permissions](#-roles--permissions)
-  - [👤 User Features](#-user-features)
-  - [⚙️ Admin Features](#️-admin-features)
-  - [🔧 Technical Highlights](#-technical-highlights)
-- [🛠 Tech Stack](#-tech-stack)
-- [📁 Project Structure](#-project-structure)
+- [Getting Started](#-getting-started)
+- [Features](#-features)
+  - [Roles & Permissions](#-roles--permissions)
+  - [User Features](#-user-features)
+  - [Admin Features](#️-admin-features)
+  - [Technical Highlights](#-technical-highlights)
+- [Tech Stack](#-tech-stack)
+- [Project Structure](#-project-structure)
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -132,9 +132,9 @@ docker-compose up -d postgres
 
 ---
 
-## ✨ Features
+## Features
 
-### 👥 Roles & Permissions
+### Roles & Permissions
 
 The system supports four roles with different access levels:
 
@@ -147,9 +147,9 @@ The system supports four roles with different access levels:
 
 ---
 
-### 👤 User Features
+### User Features
 
-#### 🔐 Authentication & Security
+#### Authentication & Security
 
 **Registration**
 
@@ -176,7 +176,7 @@ The system supports four roles with different access levels:
 
 ---
 
-#### 🏠 Homepage
+#### Homepage
 
 - **Now Showing** — 6 recently released movies currently playing
 - **Coming Soon** — 6 movies releasing in the near future
@@ -189,7 +189,7 @@ The system supports four roles with different access levels:
 
 ---
 
-#### 🎬 Movies
+#### Movies
 
 **Now Playing**
 
@@ -212,7 +212,7 @@ The system supports four roles with different access levels:
 
 ---
 
-#### 📅 Schedule
+#### Schedule
 
 - All scheduled sessions across all movies and halls
 - **Custom Calendar:**
@@ -225,7 +225,7 @@ The system supports four roles with different access levels:
 
 ---
 
-#### 🎟️ Booking Process
+#### Booking Process
 
 Step-by-step ticket booking with seat reservation and secure payment.
 
@@ -275,7 +275,7 @@ Step-by-step ticket booking with seat reservation and secure payment.
 
 ---
 
-#### 💰 Refund
+#### Refund
 
 **1. Initiate Refund**
 
@@ -311,7 +311,7 @@ Step-by-step ticket booking with seat reservation and secure payment.
 
 ---
 
-#### 👤 My Account
+#### My Account
 
 **Profile Information**
 
@@ -339,9 +339,9 @@ Step-by-step ticket booking with seat reservation and secure payment.
 
 ---
 
-### ⚙️ Admin Features
+### Admin Features
 
-#### 🎬 Movies
+#### Movies
 
 Three tabs for complete movie content management:
 
@@ -373,7 +373,7 @@ Three tabs for complete movie content management:
 
 ---
 
-#### ⏰ Schedule
+#### Schedule
 
 - Full CRUD operations
 - **Smart Movie Filtering:** When creating a session, only movies available on the selected date are shown
@@ -384,7 +384,7 @@ Three tabs for complete movie content management:
 
 ---
 
-#### 🎭 Halls
+#### Halls
 
 - Full CRUD operations
 - Unique hall name validation
@@ -396,7 +396,7 @@ Three tabs for complete movie content management:
 
 ---
 
-#### 👥 Users
+#### Users
 
 - View all registered users
 - **Actions:** Change user role, verify birth date, block/unblock account
@@ -406,7 +406,7 @@ Three tabs for complete movie content management:
 
 ---
 
-#### 🎁 Bonus
+#### Bonus
 
 - Configure four bonus rules:
   - **Welcome Bonus** — points awarded after email verification
@@ -418,7 +418,7 @@ Three tabs for complete movie content management:
 
 ---
 
-#### 📢 Promotion
+#### Promotion
 
 - Full CRUD operations
 - Unique promotion title validation
@@ -428,7 +428,7 @@ Three tabs for complete movie content management:
 
 ---
 
-#### 🎫 Ticket Types
+#### Ticket Types
 
 - Full CRUD operations
 - Unique name validation
@@ -438,7 +438,7 @@ Three tabs for complete movie content management:
 
 ---
 
-#### 📋 Audit Logs
+#### Audit Logs
 
 - Tracks every change made by admins across the system
 - **Log entry details:** Time, Changed By (admin email), Target (entity name), Action (`CREATE`/`UPDATE`/`DELETE`), Changes (description)
@@ -448,7 +448,7 @@ Three tabs for complete movie content management:
 
 ---
 
-### 🔧 Technical Highlights
+### Technical Highlights
 
 - **Role-Based Access Control (RBAC):** Secure API endpoints and UI elements for all four roles
 - **Rate Limiting:** API protection against brute-force and DDoS attacks
@@ -457,7 +457,7 @@ Three tabs for complete movie content management:
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 ### Backend
 
@@ -508,7 +508,7 @@ Three tabs for complete movie content management:
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ### Backend (Spring Boot)
 

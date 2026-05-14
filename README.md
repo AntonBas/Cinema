@@ -1,4 +1,4 @@
-# 🎬 Cinema Management System
+# Cinema Management System
 
 Full-stack cinema booking platform with real-world business logic — concurrency-safe seat reservation, bonus system, refund processing, and admin panel.
 
@@ -6,23 +6,23 @@ Full-stack cinema booking platform with real-world business logic — concurrenc
 
 ---
 
-## 📑 Contents
+## Contents
 
-- [🚀 Overview](#-overview)
-- [🧠 Key Engineering Features](#-key-engineering-features)
-- [👥 User Features](#-user-features)
-- [👔 Staff Features](#-staff-features)
-- [⚙️ Admin Features](#️-admin-features)
-- [🏗 Architecture](#-architecture)
-- [🛠 Tech Stack](#-tech-stack)
-- [🚀 Quick Start](#-quick-start)
-- [🧪 Test Accounts](#-test-accounts)
-- [📚 Full Documentation](#-full-documentation)
-- [📈 What I Learned](#-what-i-learned)
+- [Overview](#-overview)
+- [Key Engineering Features](#-key-engineering-features)
+- [User Features](#-user-features)
+- [Staff Features](#-staff-features)
+- [Admin Features](#️-admin-features)
+- [Architecture](#-architecture)
+- [Tech Stack](#-tech-stack)
+- [Quick Start](#-quick-start)
+- [Test Accounts](#-test-accounts)
+- [Full Documentation](#-full-documentation)
+- [What I Learned](#-what-i-learned)
 
 ---
 
-## 🚀 Overview
+## Overview
 
 Cinema Management System is designed as a production-like application that simulates real cinema operations:
 
@@ -34,7 +34,7 @@ Cinema Management System is designed as a production-like application that simul
 
 ---
 
-## 🧠 Key Engineering Features
+## Key Engineering Features
 
 - **Concurrency-safe seat booking**
   - 5-minute temporary seat lock
@@ -65,7 +65,7 @@ Cinema Management System is designed as a production-like application that simul
 
 ---
 
-## 👥 User Features
+## User Features
 
 - Authentication (JWT + OAuth2 Google)
 - Movie browsing (Now Showing / Coming Soon)
@@ -80,7 +80,7 @@ Cinema Management System is designed as a production-like application that simul
 
 ---
 
-## 👔 Staff Features
+## Staff Features
 
 ### Cashier
 
@@ -97,7 +97,7 @@ Cinema Management System is designed as a production-like application that simul
 
 ---
 
-## ⚙️ Admin Features
+## Admin Features
 
 Full system access, including all of the above plus:
 
@@ -118,7 +118,7 @@ Full system access, including all of the above plus:
 
 ---
 
-## 🏗 Architecture
+## Architecture
 
 ### Backend
 
@@ -139,7 +139,7 @@ Full system access, including all of the above plus:
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 ### Backend
 
@@ -175,7 +175,7 @@ Full system access, including all of the above plus:
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 **Prerequisites:** Docker and Docker Compose
 
@@ -206,7 +206,7 @@ docker-compose up -d
 | Backend API | http://localhost:8080/api             |
 | Swagger UI  | http://localhost:8080/swagger-ui.html |
 
-## 🧪 Test Accounts
+## Test Accounts
 
 | Email            | Password | Role            |
 | :--------------- | :------- | :-------------- |
@@ -217,13 +217,13 @@ docker-compose up -d
 
 ---
 
-## 📚 Full Documentation
+## Full Documentation
 
 Complete feature descriptions, screenshots, and technical details — [docs/DOCS.md](docs/DOCS.md)
 
 ---
 
-## 📈 What I Learned
+## What I Learned
 
 - Designing concurrency-safe booking systems
 - Implementing flexible business rules (bonus/refund)
@@ -234,10 +234,10 @@ Complete feature descriptions, screenshots, and technical details — [docs/DOCS
 
 ---
 
-## 🎥 Demo
+## Demo
 
 [Watch on YouTube](in-progress)
 
-## 📸 Screenshots
+## Screenshots
 
 in progress
