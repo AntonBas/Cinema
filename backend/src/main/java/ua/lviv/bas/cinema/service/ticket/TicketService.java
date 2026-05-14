@@ -52,7 +52,7 @@ public class TicketService {
     @Value("${app.ticket.qr.size:200}")
     private int qrCodeSize;
 
-    @Value("${app.base-url}")
+    @Value("${app.frontend.url}")
     private String ticketBaseUrl;
 
     @CacheEvict(value = "tickets", allEntries = true)
