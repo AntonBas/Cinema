@@ -240,9 +240,9 @@ Complete feature descriptions, screenshots, and technical details — [docs/DOCS
 
 ## Screenshots
 
-![Homepage](images/homepage.gif)
+![Homepage](docs/images/homepage.gif)
 
 ---
 
-![Bookingprocess](images/bookingprocess.gif)
+![Bookingprocess](docs/images/bookingprocess.gif)
 
