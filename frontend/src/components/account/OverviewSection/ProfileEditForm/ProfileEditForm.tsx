@@ -76,7 +76,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
             >
                 <div className={styles.modalContent}>
                     <p className={styles.warningText}>
-                        <strong>⚠️ Attention!</strong> You are about to change your verified date of birth.
+                        <strong>Attention!</strong> You are about to change your verified date of birth.
                     </p>
                     <p className={styles.modalDescription}>
                         After changing your date of birth, you will need to verify it again at the cinema cash desk to access bonus for birthday.
