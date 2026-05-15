@@ -1,5 +1,7 @@
 Complete feature descriptions, technical details, and project structure.
 
+> For a quick overview and system architecture diagram, see [README.md](../README.md).
+
 ---
 
 ## Contents
@@ -456,6 +458,46 @@ Three tabs for complete movie content management:
 - **Modern Frontend:** Responsive and interactive UI built with React and TypeScript
 
 ---
+
+## Engineering Details
+
+### Concurrency Control
+
+The seat booking system uses a two-phase locking mechanism to prevent double bookings:
+
+- **Phase 1 (5-minute lock):** When a user selects a seat, a temporary lock is acquired
+- **Phase 2 (30-minute reservation):** After confirming the booking, seats are reserved for payment
+- **Cleanup:** A scheduled job releases expired locks and cancels unpaid bookings
+
+### Payment Flow
+
+External payment handled via LiqPay:
+
+- User redirected to LiqPay payment page
+- LiqPay sends async callback on payment completion
+- System uses idempotency checks to prevent duplicate updates
+- Scheduler polls for payment status as fallback
+
+### Refund Calculation
+
+Refund amount depends on time remaining before the session:
+
+| Time Before Session | Refund |
+| ------------------- | ------ |
+| > 24 hours          | 100%   |
+| 6-24 hours          | 85%    |
+| < 6 hours           | 50%    |
+
+### Bonus Rules
+
+Four configurable rules control the loyalty program:
+
+| Rule            | Description                      | Default |
+| --------------- | -------------------------------- | ------- |
+| Welcome Bonus   | Points after email verification  | 100     |
+| Birthday Bonus  | Points on verified birthday      | 200     |
+| Booking Spend   | Min/max points per booking       | 10/50%  |
+| Payment Accrual | % of purchase returned as points | 5%      |
 
 ## Tech Stack
 
