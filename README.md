@@ -1,141 +1,176 @@
 # Cinema Management System
 
-> Designed as a backend-focused system to explore concurrency, asynchronous workflows, and real-world business constraints.
+> A concurrency-safe cinema booking system designed to handle real-world race conditions, asynchronous payment workflows, and complex business rules such as refunds and loyalty systems.
 
 ![Booking Demo](docs/images/booking.gif)
 
-Production-like full-stack cinema booking platform focused on real-world backend challenges: concurrency control, asynchronous workflows, and complex business rules.
-
-**Backend:** Java Spring Boot  
-**Frontend:** React (TypeScript)  
-**Database:** PostgreSQL
-
----
-
 ## Overview
 
-Cinema Management System simulates real cinema operations with a focus on consistency, concurrency, and complex domain logic:
+This project simulates a real-world cinema platform with a focus on backend engineering challenges rather than simple CRUD operations.
 
-- Concurrency-safe seat booking
-- Role-based access control (RBAC)
-- Async payment & refund workflows
-- Configurable bonus & loyalty system
-- Admin panel with audit logging
+It models the full lifecycle of a booking system:
+**seat selection → reservation → payment → refund → audit logging**
 
 ---
 
-## Key Engineering Features
+## Engineering Focus
+
+The system is designed to solve non-trivial backend problems:
+
+- Preventing **double booking under concurrency**
+- Handling **async payment callbacks** safely (idempotency)
+- Managing **time-based reservations and expirations**
+- Designing a **flexible bonus/loyalty rule system**
+- Ensuring **data consistency across distributed flows**
+
+---
+
+## Key Features
 
 - **Concurrency-safe booking**
-  - Temporary seat locking (5 min)
-  - Booking reservation window (30 min)
+  - Two-phase reservation system (5-min lock + 30-min booking window)
   - Prevents race conditions and overselling
-
-- **RBAC (4 roles)**
-  - USER, CASHIER, CONTENT_MANAGER, ADMIN
-  - Secured API + UI
 
 - **Async payment integration**
   - External provider (LiqPay)
-  - Callback-based status updates
-  - Idempotent handling
+  - Callback-based updates
+  - Idempotent state handling
+
+- **RBAC (4 roles)**
+  - USER, CASHIER, CONTENT_MANAGER, ADMIN
+  - Secured API and UI
 
 - **Scheduler-driven automation**
-  - Session/movie status updates
-  - Promotion lifecycle management
+  - Expired lock cleanup
+  - Session & promotion lifecycle management
 
-- **Flexible business rules**
-  - Bonus system (welcome, birthday, accrual)
-  - Dynamic refund calculation
+- **Bonus system**
+  - Configurable rule engine (no code changes required)
 
 - **Audit logging**
-  - Tracks all admin actions
+  - Full trace of admin actions
 
 ---
 
 ## Architecture
+
+### High-Level System Overview
+
+```mermaid
+flowchart TD
+
+%% ========== CLIENT ==========
+A[React Frontend]
+
+%% ========== BACKEND ==========
+A --> B[Spring Boot API]
+
+B --> C[Auth / Security Layer]
+B --> D[Booking Service]
+B --> E[Payment Service]
+B --> F[Bonus Service]
+B --> G[Refund Service]
+B --> H[Admin Services]
+
+%% ========== DATABASE ==========
+C --> DB[(PostgreSQL)]
+D --> DB
+E --> DB
+F --> DB
+G --> DB
+H --> DB
+
+%% ========== CONCURRENCY FLOW ==========
+D --> L[Seat Lock Manager<br/>5 min temporary lock]
+L --> R[Reservation Window<br/>30 min hold]
+
+%% ========== PAYMENT FLOW ==========
+E --> P[LiqPay API]
+P --> E
+
+E --> CB[Async Callback Handler]
+CB --> E
+
+%% ========== SCHEDULER ==========
+S[Scheduler Jobs]
+
+S --> SL[Release expired locks]
+S --> SB[Cancel unpaid bookings]
+S --> SS[Update session status]
+
+SL --> DB
+SB --> DB
+SS --> DB
+
+%% ========== CROSS-CUTTING ==========
+C --> AUDIT[Audit Logging]
+D --> AUDIT
+E --> AUDIT
+H --> AUDIT
+```
 
 **Backend**
 
 - Layered architecture (Controller → Service → Repository)
 - DTO + MapStruct
 - Stateless authentication (JWT)
-- Scheduled jobs
 
 **Frontend**
 
-- Component-based architecture
+- React (TypeScript)
 - Feature-based structure
-- Context API for state management
+
+**Infrastructure**
+
+- PostgreSQL
+- Docker / Docker Compose
 
 ---
 
-## System Architecture
-
-```mermaid
-C4Context
-    title System Context Diagram for Cinema Management System
-
-    Person(user, "User", "Cinema visitor")
-    Person(admin, "Admin/Staff", "Cinema employee")
-
-    System(cinema, "Cinema Management System", "Handles bookings, payments, and cinema operations")
-
-    System_Ext(liqpay, "LiqPay", "Payment provider")
-    System_Ext(google, "Google OAuth", "Authentication")
-    System_Ext(smtp, "Email Service", "Notifications")
-
-    Rel(user, cinema, "Browse movies, book tickets, make payments", "HTTPS")
-    Rel(admin, cinema, "Manage content, process tickets", "HTTPS")
-    Rel(cinema, liqpay, "Process payments and refunds", "REST API")
-    Rel(cinema, google, "OAuth2 authentication", "OAuth2")
-    Rel(cinema, smtp, "Send confirmation emails", "SMTP")
-
-    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
-```
-
 ## Engineering Decisions
 
-### Seat Booking Concurrency
+### Concurrency Control
 
-To prevent double booking, a temporary seat lock mechanism is used:
+To prevent double booking, a two-phase locking mechanism is used:
 
-- First-level lock (5 minutes) on seat selection
-- Second-level reservation (30 minutes) before payment
-- Expired locks are released via scheduler
+- **Phase 1:** Temporary seat lock (5 minutes) during selection
+- **Phase 2:** Reservation window (30 minutes) before payment
+- **Cleanup:** Expired locks are released via scheduled jobs
+
+This approach prevents race conditions during concurrent seat selection while balancing consistency guarantees with user experience.
+
+---
 
 ### Payment Flow
 
-- External payment handled via LiqPay
-- System processes async callbacks
-- Booking updates are idempotent to avoid duplicate state changes
+- External payments handled via LiqPay
+- System processes **async callbacks**
+- Updates are **idempotent** to prevent duplicate state transitions
+- Scheduler acts as a fallback for missed callbacks
+
+---
 
 ### Bonus System
 
-- Implemented as a configurable rule engine
-- Allows dynamic adjustment without code changes
+Implemented as a **configurable rule engine**, allowing dynamic updates without code changes.
 
 ---
 
 ## Tech Stack
 
-### Backend
+**Backend**
 
 - Java 21, Spring Boot 3
 - Spring Security, JPA
-- PostgreSQL
-- Flyway
-- Bucket4j (rate limiting)
-- Caffeine (caching)
+- PostgreSQL, Flyway
+- Bucket4j, Caffeine
 
-### Frontend
+**Frontend**
 
 - React + TypeScript
-- Vite
-- Axios
-- Styled Components
+- Vite, Axios
 
-### DevOps
+**DevOps**
 
 - Docker / Docker Compose
 
@@ -158,28 +193,11 @@ docker-compose up -d
 
 ---
 
-## Demo
-
-Video walkthrough — coming soon
-
----
-
 ## Documentation
 
-Full feature documentation, flows, and technical details:
+Detailed flows, UI behavior, and full feature descriptions:
 
 [docs/DOCS.md](docs/DOCS.md)
-
----
-
-## Test Accounts
-
-| Email            | Password | Role            |
-| ---------------- | -------- | --------------- |
-| admin@test.com   | admin    | ADMIN           |
-| manager@test.com | manager  | CONTENT_MANAGER |
-| cashier@test.com | cashier  | CASHIER         |
-| user@test.com    | user     | USER            |
 
 ---
 
