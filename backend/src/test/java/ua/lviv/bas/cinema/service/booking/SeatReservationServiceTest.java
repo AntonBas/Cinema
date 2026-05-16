@@ -19,6 +19,7 @@ import ua.lviv.bas.cinema.domain.cinema.enums.SeatType;
 import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.booking.response.SeatReservationResponse;
+import ua.lviv.bas.cinema.dto.booking.response.SeatStatusResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.hall.SeatNotFoundException;
@@ -225,11 +226,11 @@ public class SeatReservationServiceTest {
     void getAvailabilityShouldSucceed() {
         List<Seat> seats = Collections.singletonList(testSeat);
         List<TicketType> ticketTypes = Collections.singletonList(ticketType);
-        List<Object[]> bookedSeatData = Collections.emptyList();
+        List<SeatStatusResponse> bookedSeatData = Collections.emptyList();
 
         when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
         when(seatRepository.findByHallId(HALL_ID)).thenReturn(seats);
-        when(seatReservationRepository.findBookedSeatIds(HALL_ID, SESSION_ID, ReservationStatus.ACTIVE_STATUSES))
+        when(seatReservationRepository.findBookedSeatStatuses(HALL_ID, SESSION_ID, ReservationStatus.ACTIVE_STATUSES))
                 .thenReturn(bookedSeatData);
         when(ticketTypeRepository.findByActiveTrue()).thenReturn(ticketTypes);
         when(priceCalculator.calculateSeatPrice(testSession, testSeat, ticketType)).thenReturn(BigDecimal.TEN);
