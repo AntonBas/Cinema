@@ -53,7 +53,7 @@ cd Cinema
 **2. Configure environment variables**
 
 ```bash
-cp .env.docker.example .env.docker
+cp .env.docker.example .env
 ```
 
 Fill in the required values. See [.env.docker.example](https://github.com/AntonBas/Cinema/blob/develop/.env.docker.example) for all available variables.
@@ -463,10 +463,10 @@ Three tabs for complete movie content management:
 
 ### Concurrency Control
 
-The seat booking system uses a two-phase locking mechanism to prevent double bookings:
+The seat booking system uses a two-stage reservation protocol to prevent double bookings:
 
-- **Phase 1 (5-minute lock):** When a user selects a seat, a temporary lock is acquired
-- **Phase 2 (30-minute reservation):** After confirming the booking, seats are reserved for payment
+- **Stage 1 (5-minute lock):** When a user selects a seat, a temporary lock is acquired
+- **Stage 2 (30-minute reservation):** After confirming the booking, seats are reserved for payment
 - **Cleanup:** A scheduled job releases expired locks and cancels unpaid bookings
 
 ### Payment Flow
