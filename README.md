@@ -2,7 +2,27 @@
 
 > A concurrency-safe cinema booking system designed to handle real-world race conditions, asynchronous payment workflows, and complex business rules such as refunds and loyalty systems.
 
+![Java](https://img.shields.io/badge/Java-21-orange)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.4.7-green)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)
+![React](https://img.shields.io/badge/React-19.1.1-61DAFB)
+![Docker](https://img.shields.io/badge/Docker-✓-blue)
+
 ![Booking Demo](docs/images/booking.gif)
+
+## 📑 Table of Contents
+
+- [Overview](#overview)
+- [Engineering Focus](#engineering-focus)
+- [Key Features](#key-features)
+- [Architecture](#architecture)
+- [Engineering Decisions](#engineering-decisions)
+- [Tech Stack](#tech-stack)
+- [Quick Start](#quick-start)
+- [Documentation](#documentation)
+- [Highlights](#highlights)
+
+---
 
 ## Overview
 
@@ -54,76 +74,99 @@ The system is designed to solve non-trivial backend problems:
 
 ## Architecture
 
-### High-Level System Overview
-
 ```mermaid
 flowchart TD
+    %% Стилі
+    classDef client fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+    classDef backend fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+    classDef db fill:#fff3e0,stroke:#ef6c00,color:#e65100
+    classDef external fill:#fce4ec,stroke:#c62828,color:#b71c1c
+    classDef scheduler fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
 
-%% ========== CLIENT ==========
-A[React Frontend]
+    %% ========== CLIENT ==========
+    A[React Frontend]:::client
 
-%% ========== BACKEND ==========
-A --> B[Spring Boot API]
+    %% ========== BACKEND ==========
+    A --> B[Spring Boot API]:::backend
 
-B --> C[Auth / Security Layer]
-B --> D[Booking Service]
-B --> E[Payment Service]
-B --> F[Bonus Service]
-B --> G[Refund Service]
-B --> H[Admin Services]
+    B --> C[Auth / Security Layer]:::backend
+    B --> D[Booking Service]:::backend
+    B --> E[Payment Service]:::backend
+    B --> F[Bonus Service]:::backend
+    B --> G[Refund Service]:::backend
+    B --> H[Admin Services]:::backend
 
-%% ========== DATABASE ==========
-C --> DB[(PostgreSQL)]
-D --> DB
-E --> DB
-F --> DB
-G --> DB
-H --> DB
+    %% ========== DATABASE ==========
+    C --> DB[(PostgreSQL)]:::db
+    D --> DB
+    E --> DB
+    F --> DB
+    G --> DB
+    H --> DB
 
-%% ========== CONCURRENCY FLOW ==========
-D --> L[Seat Lock Manager<br/>5 min temporary lock]
-L --> R[Reservation Window<br/>30 min hold]
+    %% ========== CONCURRENCY FLOW ==========
+    D --> L[Seat Lock Manager<br/>5 min temporary lock]:::backend
+    L --> R[Reservation Window<br/>30 min hold]:::backend
 
-%% ========== PAYMENT FLOW ==========
-E --> P[LiqPay API]
-P --> E
+    %% ========== PAYMENT FLOW ==========
+    E --> P[LiqPay API]:::external
+    P --> E
 
-E --> CB[Async Callback Handler]
-CB --> E
+    E --> CB[Async Callback Handler]:::backend
+    CB --> E
 
-%% ========== SCHEDULER ==========
-S[Scheduler Jobs]
+    %% ========== SCHEDULER ==========
+    S[Scheduler Jobs]:::scheduler
 
-S --> SL[Release expired locks]
-S --> SB[Cancel unpaid bookings]
-S --> SS[Update session status]
+    S --> SL[Release expired locks]:::scheduler
+    S --> SB[Cancel unpaid bookings]:::scheduler
+    S --> SS[Update session status]:::scheduler
 
-SL --> DB
-SB --> DB
-SS --> DB
+    SL --> DB
+    SB --> DB
+    SS --> DB
 
-%% ========== CROSS-CUTTING ==========
-C --> AUDIT[Audit Logging]
-D --> AUDIT
-E --> AUDIT
-H --> AUDIT
+    %% ========== CROSS-CUTTING ==========
+    C --> AUDIT[Audit Logging]:::backend
+    D --> AUDIT
+    E --> AUDIT
+    H --> AUDIT
 ```
 
-**Backend**
+### Architecture Layers
 
-- Layered architecture (Controller → Service → Repository)
-- DTO + MapStruct
-- Stateless authentication (JWT)
+| Layer              | Description                                 | Key Components                       |
+| ------------------ | ------------------------------------------- | ------------------------------------ |
+| **Presentation**   | REST API endpoints, DTO validation, JWT     | Controllers, DTOs, Security Filters  |
+| **Application**    | Business logic, orchestration, transactions | Services (Booking, Payment, Bonus)   |
+| **Domain**         | Core entities and business rules            | Entities (Order, Ticket, Seat, User) |
+| **Persistence**    | Data access and database operations         | Repositories, JPA, Flyway            |
+| **Infrastructure** | External integrations, scheduling, caching  | LiqPay client, Scheduler, Cache      |
 
-**Frontend**
+---
 
-- React (TypeScript)
-- Feature-based structure
+## 🔄 Key Flows
 
-**Infrastructure**
+### Booking Flow (Two-Phase Locking)
 
-- PostgreSQL
-- Docker / Docker Compose
+1. **Seat Selection** → User selects seats → Temporary lock (5 min)
+2. **Reservation** → User confirms booking → Permanent reservation (30 min)
+3. **Payment** → User pays via LiqPay → Order status updated
+4. **Completion** → Email sent with QR code → Bonus points awarded
+
+### Refund Flow
+
+1. **Request** → User initiates refund from My Tickets
+2. **Calculation** → System calculates refundable amount based on time
+3. **Processing** → Refund sent to LiqPay → Status updated to REFUNDED
+4. **Bonus Adjustment** → Used bonus points deducted from balance
+
+### Bonus Flow
+
+1. **Earning** → Points earned on purchase (5% accrual)
+2. **Claiming** → User claims promotion → Points added
+3. **Redeeming** → User applies points at checkout → Discount applied
+4. **Rules** → Configurable via admin panel (min/max, multiplier)
 
 ---
 
