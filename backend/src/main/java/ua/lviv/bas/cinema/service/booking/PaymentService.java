@@ -119,6 +119,11 @@ public class PaymentService {
     }
 
     public void processSuccess(Payment payment, Map<String, String> callbackData) {
+        if (payment.getStatus() == PaymentStatus.SUCCESS) {
+            log.warn("Payment {} already processed as SUCCESS, ignoring duplicate callback", payment.getId());
+            return;
+        }
+
         var oldStatus = payment.getStatus();
 
         payment.setStatus(PaymentStatus.SUCCESS);
@@ -142,6 +147,11 @@ public class PaymentService {
     }
 
     public void processFailure(Payment payment, Map<String, String> callbackData) {
+        if (payment.getStatus() == PaymentStatus.FAILED) {
+            log.warn("Payment {} already processed as FAILED, ignoring duplicate callback", payment.getId());
+            return;
+        }
+
         var oldStatus = payment.getStatus();
 
         payment.setStatus(PaymentStatus.FAILED);

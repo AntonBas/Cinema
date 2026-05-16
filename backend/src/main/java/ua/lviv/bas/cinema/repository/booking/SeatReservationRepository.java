@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ua.lviv.bas.cinema.domain.booking.SeatReservation;
 import ua.lviv.bas.cinema.domain.booking.status.ReservationStatus;
+import ua.lviv.bas.cinema.dto.booking.response.SeatStatusResponse;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,13 +31,14 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
                                                                                    ReservationStatus status, Long userId);
 
     @Query("""
-            SELECT s.id, sr.status
+            SELECT new ua.lviv.bas.cinema.dto.booking.response.SeatStatusResponse(s.id, sr.status)
             FROM Seat s
             LEFT JOIN SeatReservation sr ON sr.seat.id = s.id AND sr.session.id = :sessionId AND sr.status IN :statuses
             WHERE s.hall.id = :hallId
             """)
-    List<Object[]> findBookedSeatIds(@Param("hallId") Long hallId, @Param("sessionId") Long sessionId,
-                                     @Param("statuses") List<ReservationStatus> statuses);
+    List<SeatStatusResponse> findBookedSeatStatuses(@Param("hallId") Long hallId,
+                                                    @Param("sessionId") Long sessionId,
+                                                    @Param("statuses") List<ReservationStatus> statuses);
 
     @Query("SELECT s.id, (SELECT COUNT(seat) FROM Seat seat WHERE seat.hall.id = s.hall.id) " +
             "FROM Session s WHERE s.id IN :sessionIds")
