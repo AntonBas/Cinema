@@ -10,7 +10,7 @@
 
 ![Booking Demo](docs/images/booking.gif)
 
-## 📑 Table of Contents
+## Table of Contents
 
 - [Overview](#overview)
 - [Engineering Focus](#engineering-focus)
@@ -76,7 +76,7 @@ The system is designed to solve non-trivial backend problems:
 
 ```mermaid
 flowchart TD
-    %% Стилі
+    %% Styles
     classDef client fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
     classDef backend fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
     classDef db fill:#fff3e0,stroke:#ef6c00,color:#e65100
@@ -145,7 +145,7 @@ flowchart TD
 
 ---
 
-## 🔄 Key Flows
+## Key Flows
 
 ### Booking Flow (Two-Phase Locking)
 
@@ -153,6 +153,41 @@ flowchart TD
 2. **Reservation** → User confirms booking → Permanent reservation (30 min)
 3. **Payment** → User pays via LiqPay → Order status updated
 4. **Completion** → Email sent with QR code → Bonus points awarded
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant Backend
+    participant DB
+    participant LiqPay
+
+    User->>Frontend: Select seats
+    Frontend->>Backend: POST /api/booking/reserve
+    Backend->>DB: Lock seats (5 min)
+    DB-->>Backend: Locked
+    Backend-->>Frontend: Success
+
+    User->>Frontend: Confirm booking
+    Frontend->>Backend: POST /api/booking/confirm
+    Backend->>DB: Create order (PENDING)
+    Backend->>DB: Reserve seats (30 min)
+    DB-->>Backend: Reserved
+    Backend-->>Frontend: Redirect to payment
+
+    User->>Frontend: Proceed to payment
+    Frontend->>Backend: POST /api/payment/initiate
+    Backend->>LiqPay: Create payment session
+    LiqPay-->>Backend: Payment URL
+    Backend-->>Frontend: Redirect to LiqPay
+    User->>LiqPay: Confirm payment
+
+    LiqPay->>Backend: POST /api/payment/callback
+    Backend->>DB: Update order to PAID
+    Backend->>DB: Generate QR tickets
+    Backend->>User: Send email with tickets
+    Backend-->>Frontend: Booking complete
+```
 
 ### Refund Flow
 
@@ -221,10 +256,22 @@ Implemented as a **configurable rule engine**, allowing dynamic updates without 
 
 ## Quick Start
 
+Clone the repository
+
 ```bash
 git clone https://github.com/AntonBas/Cinema.git
 cd Cinema
-cp .env.docker.example .env.docker
+```
+
+Copy [`.env.docker.example`](.env.docker.example) to `.env` and fill in the required values.
+
+```bash
+cp .env.docker.example .env
+```
+
+Start all services
+
+```bash
 docker-compose up -d
 ```
 
