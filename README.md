@@ -26,6 +26,8 @@ This system is intentionally designed to replicate problems typically found in r
 - Managing **time-based resource locking and expiration**
 - Supporting **dynamic business rules without code changes**
 
+> **For complete feature descriptions, user guides, and detailed setup instructions, see the [full documentation](docs/DOCS.md).**
+
 ---
 
 ## Key Engineering Highlights
@@ -69,6 +71,7 @@ flowchart TD
     classDef db fill:#fff3e0,stroke:#ef6c00,color:#e65100
     classDef external fill:#fce4ec,stroke:#c62828,color:#b71c1c
     classDef scheduler fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
+    classDef tunnel fill:#e8eaf6,stroke:#3949ab,color:#1a237e
 
     %% ========== CLIENT ==========
     A[React Frontend]:::client
@@ -97,9 +100,8 @@ flowchart TD
 
     %% ========== PAYMENT FLOW ==========
     E --> P[LiqPay API]:::external
-    P --> E
-
-    E --> CB[Async Callback Handler]:::backend
+    P --> N[Ngrok Tunnel]:::tunnel
+    N --> CB[Async Callback Handler]:::backend
     CB --> E
 
     %% ========== SCHEDULER ==========
@@ -122,13 +124,13 @@ flowchart TD
 
 ### Architecture Layers
 
-| Layer              | Description                                 | Key Components                       |
-| ------------------ | ------------------------------------------- | ------------------------------------ |
-| **Presentation**   | REST API endpoints, DTO validation, JWT     | Controllers, DTOs, Security Filters  |
-| **Application**    | Business logic, orchestration, transactions | Services (Booking, Payment, Bonus)   |
-| **Domain**         | Core entities and business rules            | Entities (Order, Ticket, Seat, User) |
-| **Persistence**    | Data access and database operations         | Repositories, JPA, Flyway            |
-| **Infrastructure** | External integrations, scheduling, caching  | LiqPay client, Scheduler, Cache      |
+| Layer              | Description                                 | Key Components                         |
+| ------------------ | ------------------------------------------- | -------------------------------------- |
+| **Presentation**   | REST API endpoints, DTO validation, JWT     | Controllers, DTOs, Security Filters    |
+| **Application**    | Business logic, orchestration, transactions | Services (Booking, Payment, Bonus)     |
+| **Domain**         | Core entities and business rules            | Entities (Order, Ticket, Seat, User)   |
+| **Persistence**    | Data access and database operations         | Repositories, JPA, Flyway              |
+| **Infrastructure** | External integrations, scheduling, caching  | LiqPay client, Ngrok, Scheduler, Cache |
 
 ---
 
@@ -172,6 +174,7 @@ sequenceDiagram
     participant Backend
     participant DB
     participant LiqPay
+    participant Ngrok
 
     User->>Frontend: Select seats
     Frontend->>Backend: POST /api/booking/reserve
@@ -193,7 +196,8 @@ sequenceDiagram
     Backend-->>Frontend: Redirect to LiqPay
     User->>LiqPay: Confirm payment
 
-    LiqPay->>Backend: POST /api/payment/callback
+    LiqPay->>Ngrok: POST /api/payment/callback
+    Ngrok->>Backend: Forward callback
     Backend->>DB: Update order to PAID
     Backend->>DB: Generate QR tickets
     Backend->>User: Send email with tickets
@@ -205,6 +209,8 @@ sequenceDiagram
 - No double booking under concurrent requests
 - Seats are eventually released if payment is not completed
 - Payment callbacks are safe to retry (idempotent)
+
+> See [full documentation](docs/DOCS.md#booking-process) for detailed step-by-step user flow with screenshots.
 
 ### Refund Flow
 
@@ -233,31 +239,6 @@ A dynamic reward system decoupled from core booking logic.
 - Avoided pessimistic DB locking to reduce contention under load
 - Avoided introducing Redis or message queues to keep the system simpler and self-contained (trade-off: reduced scalability)
 - Used scheduler instead of event-driven architecture as a trade-off between complexity and reliability
-
-### Concurrency Control
-
-To prevent double booking, a two-phase locking protocol is used:
-
-- **Phase 1:** Temporary seat lock (5 minutes) during selection
-- **Phase 2:** Reservation window (30 minutes) before payment
-- **Cleanup:** Expired locks are released via scheduled jobs
-
-This approach prevents race conditions during concurrent seat selection while balancing consistency guarantees with user experience.
-
----
-
-### Payment Flow
-
-- External payments handled via LiqPay
-- System processes **async callbacks**
-- Updates are **idempotent** to prevent duplicate state transitions
-- Scheduler acts as a fallback for missed callbacks
-
----
-
-### Bonus System
-
-Implemented as a **configurable rule engine**, allowing dynamic updates without code changes.
 
 ---
 
@@ -312,11 +293,14 @@ cp .env.docker.example .env
 docker-compose up -d
 ```
 
-| Service     | URL                                   |
-| ----------- | ------------------------------------- |
-| Frontend    | http://localhost:5173                 |
-| Backend API | http://localhost:8080/api             |
-| Swagger UI  | http://localhost:8080/swagger-ui.html |
+| Service         | URL                                   |
+| --------------- | ------------------------------------- |
+| Frontend        | http://localhost:5173                 |
+| Backend API     | http://localhost:8080/api             |
+| Swagger UI      | http://localhost:8080/swagger-ui.html |
+| Ngrok Dashboard | http://localhost:4040                 |
+
+> **Ngrok** creates a public tunnel to your local server, enabling LiqPay to send payment callbacks during development.
 
 ---
 
@@ -326,14 +310,6 @@ docker-compose up -d
 cd backend
 ./mvnw test
 ```
-
----
-
-## Documentation
-
-Detailed flows, UI behavior, and full feature descriptions:
-
-[docs/DOCS.md](docs/DOCS.md)
 
 ---
 
