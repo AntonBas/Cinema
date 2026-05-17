@@ -61,8 +61,8 @@ services:
     networks:
       - cinema-net
     volumes:
-      - ./backend/logs:/app/logs:z
-      - ./backend/uploads:/app/uploads
+      - backend_logs:/app/logs
+      - backend_uploads:/app/uploads
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
@@ -120,3 +120,7 @@ networks:
 volumes:
   pgdata:
     name: cinema-pgdata
+  backend_logs:
+    name: cinema-backend-logs
+  backend_uploads:
+    name: cinema-backend-uploads
