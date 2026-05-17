@@ -71,7 +71,9 @@ docker-compose up -d
 | Frontend        | http://localhost:5173                 |
 | Backend API     | http://localhost:8080/api             |
 | Swagger UI      | http://localhost:8080/swagger-ui.html |
-| Ngrok Inspector | http://localhost:4040                 |
+| Ngrok Dashboard | http://localhost:4040                 |
+
+> **Ngrok Dashboard** shows incoming webhook requests from LiqPay during local development.
 
 **5. Stop services**
 
@@ -319,7 +321,7 @@ Step-by-step ticket booking with seat reservation and secure payment.
 
 - View personal details: first name, last name, birth date, phone, email, city
 - Edit first name, last name, birth date, phone, city
-- **Birth Date Verification Warning:** If birth date is already verified and user attempts to change it, system warns that verification will be lost
+- **Birth Date Verification Warning:** If birth date is already verified and user attempts to change it, system warns that verification will be lost. Verified birth date is required to receive the automatic Birthday Bonus
 
 **My Tickets**
 
@@ -474,7 +476,7 @@ The seat booking system uses a two-stage reservation protocol to prevent double 
 External payment handled via LiqPay:
 
 - User redirected to LiqPay payment page
-- LiqPay sends async callback on payment completion
+- LiqPay sends async callback via Ngrok tunnel (local dev) or directly (production)
 - System uses idempotency checks to prevent duplicate updates
 - Scheduler polls for payment status as fallback
 
