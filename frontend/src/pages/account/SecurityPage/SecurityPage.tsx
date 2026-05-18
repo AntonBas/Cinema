@@ -8,8 +8,8 @@ import styles from "./SecurityPage.module.css";
 type SecuritySection = "password" | "email";
 
 const SECTIONS = [
-  { id: "password" as SecuritySection, label: "Change Password", icon: "🔑" },
-  { id: "email" as SecuritySection, label: "Change Email", icon: "📧" },
+  { id: "password" as SecuritySection, label: "Change Password" },
+  { id: "email" as SecuritySection, label: "Change Email" },
 ];
 
 export const SecurityPage: React.FC = () => {
@@ -37,7 +37,6 @@ export const SecurityPage: React.FC = () => {
                   className={`${styles.mobileTab} ${activeSection === section.id ? styles.mobileTabActive : ""}`}
                   onClick={() => setActiveSection(section.id)}
                 >
-                  <span className={styles.mobileTabIcon}>{section.icon}</span>
                   <span className={styles.mobileTabLabel}>{section.label}</span>
                 </button>
               ))}
@@ -52,7 +51,6 @@ export const SecurityPage: React.FC = () => {
                       className={`${styles.navButton} ${activeSection === section.id ? styles.active : ""}`}
                       onClick={() => setActiveSection(section.id)}
                     >
-                      <span className={styles.navIcon}>{section.icon}</span>
                       <span className={styles.navLabel}>{section.label}</span>
                     </button>
                   ))}

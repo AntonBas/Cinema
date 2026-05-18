@@ -70,8 +70,7 @@ export const Header: React.FC = () => {
       <nav className={styles.headerNavbar}>
         <div className={styles.logo}>
           <Link to="/" onClick={closeMobileMenu}>
-            <span className={styles.logoIcon}>🎬</span>
-            Cinema
+            Bas Cinema
           </Link>
         </div>
 

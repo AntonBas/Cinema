@@ -42,10 +42,6 @@
   transform: translateY(-1px);
 }
 
-.logoIcon {
-  font-size: 1.5rem;
-}
-
 .navLinks {
   display: flex;
   list-style: none;
@@ -380,10 +376,6 @@
     font-size: var(--font-size-lg);
   }
 
-  .logoIcon {
-    font-size: 1.25rem;
-  }
-
   .mobileMenu {
     top: 60px;
     max-height: calc(100vh - 60px);
@@ -421,10 +413,6 @@
 @media (max-width: 360px) {
   .logo a {
     font-size: var(--font-size-md);
-  }
-
-  .logoIcon {
-    font-size: 1.1rem;
   }
 
   .mobileMenuContent {

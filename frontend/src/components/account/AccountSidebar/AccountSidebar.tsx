@@ -7,14 +7,13 @@ interface SidebarItem {
   id: string;
   label: string;
   path: string;
-  icon: string;
 }
 
 const SIDEBAR_ITEMS: SidebarItem[] = [
-  { id: "overview", label: "Overview", path: "/account", icon: "🏠" },
-  { id: "tickets", label: "My Tickets", path: "/account/tickets", icon: "🎫" },
-  { id: "bonuses", label: "Bonuses", path: "/account/bonuses", icon: "🎁" },
-  { id: "security", label: "Security", path: "/account/security", icon: "🔒" },
+  { id: "overview", label: "Overview", path: "/account" },
+  { id: "tickets", label: "My Tickets", path: "/account/tickets" },
+  { id: "bonuses", label: "Bonuses", path: "/account/bonuses" },
+  { id: "security", label: "Security", path: "/account/security" },
 ];
 
 export const AccountSidebar: React.FC = () => {
@@ -49,26 +48,12 @@ export const AccountSidebar: React.FC = () => {
                   className={`${styles.sidebarLink} ${location.pathname === item.path ? styles.active : ""}`}
                   onClick={closeMobileMenu}
                 >
-                  <span className={styles.sidebarIcon}>{item.icon}</span>
                   <span className={styles.sidebarLabel}>{item.label}</span>
                 </Link>
               </li>
             ))}
           </ul>
         </nav>
-
-        {/* <div className={styles.sidebarFooter}>
-          <div className={styles.userSupport}>
-            <p>Need help?</p>
-            <Link
-              to="/support"
-              className={styles.supportLink}
-              onClick={closeMobileMenu}
-            >
-              Contact Support
-            </Link>
-          </div>
-        </div> */}
       </aside>
     </>
   );

@@ -31,18 +31,18 @@ export const Footer: React.FC = () => {
         <div className={styles.footerSection}>
           <h4>Contact</h4>
           <ul>
-            <li>📧 basantonoleg@gmail.com</li>
-            <li>📞 +380 (96) 179-4151</li>
-            <li>📍 Lviv, Ukraine</li>
+            <li>basantonoleg@gmail.com</li>
+            <li>+380 (96) 179-4151</li>
+            <li>Lviv, Ukraine</li>
           </ul>
         </div>
 
         <div className={styles.footerSection}>
           <h4>Follow Us</h4>
           {/* <div className={styles.socialIcons}>
-                        <a href="#" className={styles.socialIcon} aria-label="Facebook">📘</a>
-                        <a href="#" className={styles.socialIcon} aria-label="Instagram">📸</a>
-                        <a href="#" className={styles.socialIcon} aria-label="Twitter">🐦</a>
+                        <a href="#" className={styles.socialIcon} aria-label="Facebook"></a>
+                        <a href="#" className={styles.socialIcon} aria-label="Instagram"></a>
+                        <a href="#" className={styles.socialIcon} aria-label="Twitter"></a>
                     </div> */}
         </div>
 

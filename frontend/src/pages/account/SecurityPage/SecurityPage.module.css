@@ -67,10 +67,6 @@
   color: #ffffff;
 }
 
-.mobileTabIcon {
-  font-size: var(--font-size-md);
-}
-
 .mobileTabLabel {
   font-size: var(--font-size-sm);
 }
@@ -117,10 +113,6 @@
 .navButton.active {
   background: var(--color-primary);
   color: #ffffff;
-}
-
-.navIcon {
-  font-size: var(--font-size-lg);
 }
 
 .navLabel {

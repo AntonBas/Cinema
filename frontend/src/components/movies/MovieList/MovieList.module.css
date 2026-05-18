@@ -25,12 +25,6 @@
     width: 100%;
 }
 
-.emptyIcon {
-    font-size: 4rem;
-    margin-bottom: var(--space-4);
-    opacity: 0.6;
-}
-
 .empty h3 {
     color: var(--color-text-primary);
     margin-bottom: var(--space-2);
@@ -53,10 +47,6 @@
 
     .grid>* {
         width: 240px;
-    }
-
-    .emptyIcon {
-        font-size: 3rem;
     }
 
     .empty h3 {
