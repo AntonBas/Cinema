@@ -1,149 +1,136 @@
 .tabs {
-    display: flex;
-    background: var(--color-bg-secondary);
-    border-radius: var(--radius-lg);
-    padding: var(--space-2);
-    border: 1px solid var(--color-border-medium);
-    margin-bottom: var(--space-8);
-    gap: var(--space-2);
-    box-shadow: var(--shadow-sm);
+  display: flex;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-2);
+  border: 1px solid var(--color-border-medium);
+  margin-bottom: var(--space-8);
+  gap: var(--space-2);
+  box-shadow: var(--shadow-sm);
 }
 
 .tab {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-3) var(--space-4);
-    border: none;
-    border-radius: var(--radius-md);
-    background: transparent;
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-sm);
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    flex: 1;
-    justify-content: center;
-    position: relative;
-    outline: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  flex: 1;
+  justify-content: center;
+  position: relative;
+  outline: none;
 }
 
 .tab:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .tab:hover {
-    background: rgba(var(--color-primary-rgb), 0.1);
-    color: var(--color-primary);
-    transform: translateY(-1px);
+  background: rgba(var(--color-primary-rgb), 0.1);
+  color: var(--color-primary);
+  transform: translateY(-1px);
 }
 
 .tab:active {
-    transform: translateY(0);
+  transform: translateY(0);
 }
 
 .tabActive {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
-    color: var(--color-text-primary);
-    box-shadow: 0 4px 12px rgba(var(--color-primary-rgb), 0.3);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary),
+    var(--color-primary-hover)
+  );
+  color: var(--color-text-primary);
+  box-shadow: 0 4px 12px rgba(var(--color-primary-rgb), 0.3);
 }
 
 .tabActive:hover {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
-    color: var(--color-text-primary);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(var(--color-primary-rgb), 0.4);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary),
+    var(--color-primary-hover)
+  );
+  color: var(--color-text-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(var(--color-primary-rgb), 0.4);
 }
 
-.tabIcon {
-    font-size: 1.125rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    transition: transform var(--transition-normal);
+.tab:hover {
+  transform: scale(1.1);
 }
 
-.tab:hover .tabIcon {
-    transform: scale(1.1);
-}
-
-.tabActive .tabIcon {
-    transform: scale(1.05);
+.tabActive {
+  transform: scale(1.05);
 }
 
 .tabLabel {
-    white-space: nowrap;
-    font-size: var(--font-size-sm);
+  white-space: nowrap;
+  font-size: var(--font-size-sm);
 }
 
 .tabBadge {
-    min-width: 1.5rem;
-    text-align: center;
-    transition: all var(--transition-normal);
+  min-width: 1.5rem;
+  text-align: center;
+  transition: all var(--transition-normal);
 }
 
 .tab:hover .tabBadge {
-    transform: scale(1.05);
+  transform: scale(1.05);
 }
 
 @media (prefers-reduced-motion: reduce) {
-
-    .tab,
-    .tabIcon,
-    .tabBadge,
-    .tab:hover,
-    .tabActive:hover {
-        transition: none;
-        transform: none;
-    }
+  .tab,
+  .tabBadge,
+  .tab:hover,
+  .tabActive:hover {
+    transition: none;
+    transform: none;
+  }
 }
 
 @media (max-width: 768px) {
-    .tabs {
-        flex-direction: column;
-        gap: var(--space-1);
-        padding: var(--space-1);
-    }
+  .tabs {
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-1);
+  }
 
-    .tab {
-        padding: var(--space-3) var(--space-3);
-        justify-content: flex-start;
-    }
+  .tab {
+    padding: var(--space-3) var(--space-3);
+    justify-content: flex-start;
+  }
 
-    .tabLabel {
-        flex: 1;
-        text-align: left;
-    }
-
-    .tabIcon {
-        width: 24px;
-    }
+  .tabLabel {
+    flex: 1;
+    text-align: left;
+  }
 }
 
 @media (max-width: 480px) {
-    .tabs {
-        margin-bottom: var(--space-4);
-    }
+  .tabs {
+    margin-bottom: var(--space-4);
+  }
 
-    .tab {
-        padding: var(--space-2) var(--space-2);
-        gap: var(--space-1);
-    }
+  .tab {
+    padding: var(--space-2) var(--space-2);
+    gap: var(--space-1);
+  }
 
-    .tabIcon {
-        font-size: 1rem;
-        width: 20px;
-    }
+  .tabLabel {
+    font-size: var(--font-size-xs);
+  }
 
-    .tabLabel {
-        font-size: var(--font-size-xs);
-    }
-
-    .tabBadge {
-        min-width: 1.25rem;
-        font-size: var(--font-size-xs);
-    }
+  .tabBadge {
+    min-width: 1.25rem;
+    font-size: var(--font-size-xs);
+  }
 }
