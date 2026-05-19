@@ -137,20 +137,6 @@
   justify-content: flex-end;
 }
 
-.empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: var(--space-12) var(--space-8);
-  color: var(--color-text-secondary);
-  background: var(--color-bg-quaternary);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border-medium);
-  box-shadow: var(--shadow-lg);
-  min-height: 300px;
-}
-
 .loading {
   display: flex;
   align-items: center;
@@ -317,11 +303,6 @@
     margin-top: var(--space-2);
   }
 
-  .empty {
-    padding: var(--space-8) var(--space-4);
-    min-height: 250px;
-  }
-
   .loading {
     min-height: 300px;
   }
@@ -377,11 +358,6 @@
   .actions button {
     font-size: 10px;
     padding: 4px 6px;
-  }
-
-  .empty {
-    padding: var(--space-6) var(--space-3);
-    min-height: 200px;
   }
 
   .loading {

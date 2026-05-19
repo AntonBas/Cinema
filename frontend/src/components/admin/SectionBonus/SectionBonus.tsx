@@ -136,12 +136,6 @@ const SectionBonus = () => {
         </table>
       </div>
 
-      {!rules.length && !loading && (
-        <div className={styles.empty}>
-          <p>No bonus rules found</p>
-        </div>
-      )}
-
       {editingRule && (
         <EditRuleModal
           isOpen={!!editingRule}
