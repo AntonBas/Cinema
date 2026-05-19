@@ -158,10 +158,6 @@ ticket:
 logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-  file:
-    name: logs/cinema.log
-    max-size: 10MB
-    max-history: 7
   level:
     root: INFO
     ua.lviv.bas.cinema: INFO
