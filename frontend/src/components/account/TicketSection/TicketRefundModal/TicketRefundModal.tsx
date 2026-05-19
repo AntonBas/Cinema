@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Modal, Button } from "@/components/ui";
 import { useRefund } from "@/hooks/features/refund/useRefund";
+import { AlertTriangle } from "lucide-react";
 import type { TicketResponse } from "@/types/ticket";
 import styles from "./TicketRefundModal.module.css";
 
@@ -67,7 +68,7 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
       >
         <div className={styles.modalBody}>
           <div className={styles.errorMessage}>
-            <span>⚠️</span>
+            <AlertTriangle size={20} />
             <div>
               <h4>Refund Not Available</h4>
               <p>

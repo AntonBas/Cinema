@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Modal, Button } from "@/components/ui";
+import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { useTickets } from "@/hooks/features/tickets/useTickets";
 import styles from "./TicketQRModal.module.css";
 
@@ -70,10 +71,7 @@ export const TicketQRModal: React.FC<TicketQRModalProps> = ({
 
         <div className={styles.qrContainer}>
           {loading ? (
-            <div className={styles.loadingQR}>
-              <div className={styles.spinner}></div>
-              <p>Generating QR code...</p>
-            </div>
+            <LoadingSpinner text="Generating QR code..." />
           ) : qrImage ? (
             <img
               src={qrImage}

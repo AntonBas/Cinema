@@ -1,297 +1,302 @@
 .ticketCardGrid {
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-xl);
-    overflow: hidden;
-    transition: var(--transition-normal);
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  transition: var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .ticketCardGrid:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
-    border-color: var(--color-primary);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-primary);
 }
 
 .cardHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--space-4);
-    background: var(--color-bg-tertiary);
-    border-bottom: 1px solid var(--color-border);
-}
-
-.statusBadge {
-    padding: var(--space-1) var(--space-3);
-    border-radius: var(--radius-full);
-    font-size: var(--font-size-xs);
-    font-weight: 600;
-    color: white;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.ticketTypeBadge {
-    padding: var(--space-1) var(--space-2);
-    border-radius: var(--radius-sm);
-    font-size: var(--font-size-xs);
-    font-weight: 600;
-    color: white;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    background-color: var(--color-primary);
-}
-
-.ticketCode {
-    font-family: 'Courier New', monospace;
-    font-size: var(--font-size-xs);
-    color: var(--color-text-secondary);
-    font-weight: 500;
-}
-
-.cardContent {
-    padding: var(--space-6);
-    flex: 1;
-}
-
-.movieTitle {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin: 0 0 var(--space-4) 0;
-    line-height: 1.4;
-}
-
-.detailsGrid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-4);
-}
-
-.detailItem {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--space-3);
-}
-
-.detailIcon {
-    color: var(--color-primary);
-    flex-shrink: 0;
-    margin-top: 2px;
-}
-
-.detailLabel {
-    font-size: var(--font-size-xs);
-    color: var(--color-text-secondary);
-    margin-bottom: 2px;
-}
-
-.detailValue {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-primary);
-    font-weight: 500;
-}
-
-.cardFooter {
-    padding: var(--space-6);
-    background: var(--color-bg-tertiary);
-    border-top: 1px solid var(--color-border);
-}
-
-.priceSection {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--space-4);
-}
-
-.priceLabel {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
-}
-
-.priceValue {
-    font-size: var(--font-size-xl);
-    font-weight: 700;
-    color: var(--color-primary);
-}
-
-.actionButtons {
-    display: flex;
-    gap: var(--space-3);
-}
-
-.actionButtons button {
-    flex: 1;
-}
-
-.ticketCardList {
-    background: var(--color-bg-secondary);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    padding: var(--space-6);
-    transition: var(--transition-normal);
-}
-
-.ticketCardList:hover {
-    transform: translateX(4px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--color-primary);
-}
-
-.listHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: var(--space-4);
-}
-
-.listMovieInfo {
-    flex: 1;
-}
-
-.listMovieTitle {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin: 0 0 var(--space-2) 0;
-}
-
-.listMeta {
-    display: flex;
-    gap: var(--space-4);
-    font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
-}
-
-.listHall,
-.listSeat {
-    display: flex;
-    align-items: center;
-    gap: var(--space-1);
-}
-
-.listStatus {
-    font-size: var(--font-size-xs);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding: var(--space-1) var(--space-3);
-    border-radius: var(--radius-full);
-    color: white;
-}
-
-.listDetails {
-    display: flex;
-    align-items: center;
-    gap: var(--space-8);
-    margin-bottom: var(--space-4);
-    padding: var(--space-4) 0;
-    border-top: 1px solid var(--color-border);
-    border-bottom: 1px solid var(--color-border);
-}
-
-.listDetailItem {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-sm);
-}
-
-.listDetailItem svg {
-    color: var(--color-primary);
-}
-
-.listPrice {
-    font-size: var(--font-size-xl);
-    font-weight: 700;
-    color: var(--color-primary);
-    margin-left: auto;
-}
-
-.listActions {
-    display: flex;
-    gap: var(--space-3);
-    justify-content: flex-end;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4);
+  background: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .headerLeft {
-    display: flex;
-    gap: var(--space-2);
-    align-items: center;
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.statusBadge {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ticketTypeBadge {
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--color-primary);
+}
+
+.ticketCode {
+  font-family: "Courier New", monospace;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.cardContent {
+  background: linear-gradient(
+    135deg,
+    var(--color-bg-tertiary) 0%,
+    var(--color-bg-quaternary) 100%
+  );
+  padding: var(--space-6);
+  flex: 1;
+}
+
+.movieTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-4) 0;
+  line-height: 1.4;
+}
+
+.detailsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+}
+
+.detailItem {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.detailIcon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.detailLabel {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin-bottom: 2px;
+}
+
+.detailValue {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.cardFooter {
+  padding: var(--space-6);
+  background: var(--color-bg-tertiary);
+  border-top: 1px solid var(--color-border);
+}
+
+.priceSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.priceLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.priceValue {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.actionButtons {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.actionButtons button {
+  flex: 1;
+}
+
+.ticketCardList {
+  background: linear-gradient(
+    135deg,
+    var(--color-bg-tertiary) 0%,
+    var(--color-bg-quaternary) 100%
+  );
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  transition: var(--transition-normal);
+}
+
+.ticketCardList:hover {
+  transform: translateX(4px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-primary);
+}
+
+.listHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-4);
+}
+
+.listMovieInfo {
+  flex: 1;
+}
+
+.listMovieTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.listMeta {
+  display: flex;
+  gap: var(--space-4);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  flex-wrap: wrap;
+}
+
+.listMetaItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.listStatus {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  color: white;
+}
+
+.listDetails {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin-bottom: var(--space-4);
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.listDetailItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.listPrice {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-left: auto;
+}
+
+.listActions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: flex-end;
 }
 
 @media (max-width: 1024px) {
-    .detailsGrid {
-        grid-template-columns: 1fr;
-        gap: var(--space-3);
-    }
+  .detailsGrid {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
 
-    .listDetails {
-        gap: var(--space-4);
-        flex-wrap: wrap;
-    }
+  .listDetails {
+    gap: var(--space-4);
+    flex-wrap: wrap;
+  }
 
-    .listPrice {
-        margin-left: 0;
-        width: 100%;
-        text-align: right;
-    }
+  .listPrice {
+    margin-left: 0;
+    width: 100%;
+    text-align: right;
+  }
 }
 
 @media (max-width: 768px) {
-    .ticketCardList {
-        padding: var(--space-4);
-    }
+  .ticketCardList {
+    padding: var(--space-4);
+  }
 
-    .listHeader {
-        flex-direction: column;
-        gap: var(--space-3);
-    }
+  .listHeader {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
 
-    .listStatus {
-        align-self: flex-start;
-    }
+  .listStatus {
+    align-self: flex-start;
+  }
 
-    .listMeta {
-        flex-direction: column;
-        gap: var(--space-2);
-    }
+  .listMeta {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
 
-    .listDetails {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--space-3);
-    }
+  .listDetails {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
 
-    .listPrice {
-        align-self: flex-end;
-    }
+  .listPrice {
+    align-self: flex-end;
+  }
 
-    .listActions {
-        flex-direction: column;
-    }
+  .listActions {
+    flex-direction: column;
+  }
 
-    .listActions button {
-        width: 100%;
-    }
+  .listActions button {
+    width: 100%;
+  }
 
-    .actionButtons {
-        flex-direction: column;
-    }
+  .actionButtons {
+    flex-direction: column;
+  }
 }
 
 @media (max-width: 480px) {
-    .cardContent {
-        padding: var(--space-4);
-    }
+  .cardContent {
+    padding: var(--space-4);
+  }
 
-    .cardFooter {
-        padding: var(--space-4);
-    }
+  .cardFooter {
+    padding: var(--space-4);
+  }
 }

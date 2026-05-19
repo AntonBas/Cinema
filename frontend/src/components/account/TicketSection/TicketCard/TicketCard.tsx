@@ -1,5 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/Button/Button";
+import { Calendar, Clock, MapPin, Armchair } from "lucide-react";
 import type { TicketResponse } from "@/types/ticket";
 import { TicketStatusDisplay } from "@/types/ticket";
 import styles from "./TicketCard.module.css";
@@ -62,8 +63,14 @@ export const TicketCard: React.FC<TicketCardProps> = ({
           <div className={styles.listMovieInfo}>
             <h3 className={styles.listMovieTitle}>{ticket.movieTitle}</h3>
             <div className={styles.listMeta}>
-              <span>{ticket.hallName}</span>
-              <span>{getSeatInfo(ticket)}</span>
+              <span className={styles.listMetaItem}>
+                <MapPin size={14} />
+                {ticket.hallName}
+              </span>
+              <span className={styles.listMetaItem}>
+                <Armchair size={14} />
+                {getSeatInfo(ticket)}
+              </span>
               <span className={styles.ticketTypeBadge}>
                 {ticket.ticketType}
               </span>
@@ -78,15 +85,20 @@ export const TicketCard: React.FC<TicketCardProps> = ({
         </div>
 
         <div className={styles.listDetails}>
-          <span>{formatDate(ticket.sessionTime)}</span>
-          <span>{formatTime(ticket.sessionTime)}</span>
-          <span>{ticket.ticketType}</span>
+          <span className={styles.listDetailItem}>
+            <Calendar size={14} />
+            {formatDate(ticket.sessionTime)}
+          </span>
+          <span className={styles.listDetailItem}>
+            <Clock size={14} />
+            {formatTime(ticket.sessionTime)}
+          </span>
           <span className={styles.listPrice}>{ticket.price} UAH</span>
         </div>
 
         <div className={styles.listActions}>
           <Button
-            variant="secondary"
+            variant="primary"
             size="small"
             onClick={() => onShowQR(ticket.ticketCode)}
             disabled={ticket.status !== "ACTIVE"}
@@ -95,7 +107,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
           </Button>
           {canRefund && onRequestRefund && (
             <Button
-              variant="outline"
+              variant="secondary"
               size="small"
               onClick={() => onRequestRefund(ticket)}
             >
@@ -104,7 +116,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
           )}
           {onViewDetails && (
             <Button
-              variant="outline"
+              variant="secondary"
               size="small"
               onClick={() => onViewDetails(ticket)}
             >
@@ -136,24 +148,36 @@ export const TicketCard: React.FC<TicketCardProps> = ({
 
         <div className={styles.detailsGrid}>
           <div className={styles.detailItem}>
-            <div className={styles.detailLabel}>Date</div>
-            <div className={styles.detailValue}>
-              {formatDate(ticket.sessionTime)}
+            <Calendar size={16} className={styles.detailIcon} />
+            <div>
+              <div className={styles.detailLabel}>Date</div>
+              <div className={styles.detailValue}>
+                {formatDate(ticket.sessionTime)}
+              </div>
             </div>
           </div>
           <div className={styles.detailItem}>
-            <div className={styles.detailLabel}>Time</div>
-            <div className={styles.detailValue}>
-              {formatTime(ticket.sessionTime)}
+            <Clock size={16} className={styles.detailIcon} />
+            <div>
+              <div className={styles.detailLabel}>Time</div>
+              <div className={styles.detailValue}>
+                {formatTime(ticket.sessionTime)}
+              </div>
             </div>
           </div>
           <div className={styles.detailItem}>
-            <div className={styles.detailLabel}>Hall</div>
-            <div className={styles.detailValue}>{ticket.hallName}</div>
+            <MapPin size={16} className={styles.detailIcon} />
+            <div>
+              <div className={styles.detailLabel}>Hall</div>
+              <div className={styles.detailValue}>{ticket.hallName}</div>
+            </div>
           </div>
           <div className={styles.detailItem}>
-            <div className={styles.detailLabel}>Seat</div>
-            <div className={styles.detailValue}>{getSeatInfo(ticket)}</div>
+            <Armchair size={16} className={styles.detailIcon} />
+            <div>
+              <div className={styles.detailLabel}>Seat</div>
+              <div className={styles.detailValue}>{getSeatInfo(ticket)}</div>
+            </div>
           </div>
         </div>
       </div>
