@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Info } from "lucide-react";
 import { Tooltip } from "@/components/ui/Tooltip/Tooltip";
 import { useBonus } from "@/hooks/features/bonus/useBonus";
 import { TicketTypeSelect } from "../TicketTypeSelect/TicketTypeSelect";
@@ -131,7 +132,9 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
         <div className={styles.bonusHeader}>
           <h4>Use Bonus Points</h4>
           <Tooltip content={bonusRules} position="left">
-            <button className={styles.infoButton}>ℹ️</button>
+            <button className={styles.infoButton}>
+              <Info size={18} />
+            </button>
           </Tooltip>
         </div>
         <div className={styles.bonusInfo}>

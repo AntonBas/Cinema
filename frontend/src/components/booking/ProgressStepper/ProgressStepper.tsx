@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Check, ChevronDown } from "lucide-react";
 import styles from "./ProgressStepper.module.css";
 import clsx from "clsx";
 
@@ -24,7 +25,6 @@ export const ProgressStepper: React.FC<ProgressStepperProps> = ({
 }) => {
   const [showAllSteps, setShowAllSteps] = useState(false);
   const currentStepData = steps.find((step) => step.id === currentStep);
-  const completedSteps = steps.filter((step) => step.id < currentStep).length;
 
   return (
     <div className={clsx(styles.stepper, className)}>
@@ -49,7 +49,7 @@ export const ProgressStepper: React.FC<ProgressStepperProps> = ({
                   )}
                 >
                   {isCompleted ? (
-                    <span className={styles.checkIcon}>✓</span>
+                    <Check size={16} className={styles.checkIcon} />
                   ) : (
                     showStepNumbers && (
                       <span className={styles.stepNumber}>{step.id}</span>
@@ -102,14 +102,13 @@ export const ProgressStepper: React.FC<ProgressStepperProps> = ({
               </span>
             </div>
           </div>
-          <span
+          <ChevronDown
+            size={16}
             className={clsx(
               styles.mobileChevron,
               showAllSteps && styles.mobileChevronOpen,
             )}
-          >
-            ▼
-          </span>
+          />
         </button>
 
         {showAllSteps && (
@@ -135,7 +134,7 @@ export const ProgressStepper: React.FC<ProgressStepperProps> = ({
                       isActive && styles.active,
                     )}
                   >
-                    {isCompleted ? "✓" : step.id}
+                    {isCompleted ? <Check size={14} /> : step.id}
                   </div>
                   <span className={styles.mobileStepItemTitle}>
                     {step.title}
