@@ -94,13 +94,6 @@
   box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
 }
 
-.emptyIcon {
-  font-size: 4rem;
-  margin-bottom: var(--space-4);
-  opacity: 0.5;
-  color: var(--color-text-secondary);
-}
-
 .empty h3 {
   color: #f1f5f9;
   margin: 0 0 var(--space-2) 0;
@@ -168,10 +161,6 @@
   .empty {
     padding: 2rem 1rem;
     margin: var(--space-4) 0;
-  }
-
-  .emptyIcon {
-    font-size: 2.5rem;
   }
 
   .empty h3 {

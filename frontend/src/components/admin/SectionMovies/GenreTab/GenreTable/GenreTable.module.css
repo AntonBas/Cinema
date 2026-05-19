@@ -1,123 +1,112 @@
 .table {
-    width: 100%;
-    background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
-    border-radius: var(--radius-xl);
-    border: 1px solid #334155;
-    overflow: hidden;
-    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
-    animation: fadeIn var(--transition-normal);
-    border-collapse: collapse;
+  width: 100%;
+  background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+  border-radius: var(--radius-xl);
+  border: 1px solid #334155;
+  overflow: hidden;
+  box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+  animation: fadeIn var(--transition-normal);
+  border-collapse: collapse;
 }
 
 .table thead {
-    background: #1e293b;
-    border-bottom: 1px solid #334155;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
 }
 
 .table th {
-    padding: var(--space-6) var(--space-8);
-    font-weight: 600;
-    color: #f1f5f9;
-    font-size: var(--font-size-sm);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    text-align: left;
+  padding: var(--space-6) var(--space-8);
+  font-weight: 600;
+  color: #f1f5f9;
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: left;
 }
 
 .table td {
-    padding: var(--space-6) var(--space-8);
-    border-bottom: 1px solid #334155;
-    background: rgba(30, 41, 59, 0.3);
+  padding: var(--space-6) var(--space-8);
+  border-bottom: 1px solid #334155;
+  background: rgba(30, 41, 59, 0.3);
 }
 
 .table tr:last-child td {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 .table tr:hover td {
-    background: rgba(253, 95, 0, 0.15);
+  background: rgba(253, 95, 0, 0.15);
 }
 
 .name {
-    font-weight: 600;
-    color: #f1f5f9;
-    font-size: var(--font-size-md);
+  font-weight: 600;
+  color: #f1f5f9;
+  font-size: var(--font-size-md);
 }
 
 .actions {
-    display: flex;
-    gap: var(--space-2);
-    flex-wrap: wrap;
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
 }
 
 .empty {
-    text-align: center;
-    padding: var(--space-12) var(--space-8);
-    color: var(--color-text-secondary);
-    background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
-    border-radius: var(--radius-xl);
-    border: 1px solid #334155;
-    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
-}
-
-.emptyIcon {
-    font-size: 3.5rem;
-    margin-bottom: var(--space-6);
-    opacity: 0.6;
-    display: block;
-    animation: float 3s ease-in-out infinite;
-    color: var(--color-text-secondary);
+  text-align: center;
+  padding: var(--space-12) var(--space-8);
+  color: var(--color-text-secondary);
+  background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+  border-radius: var(--radius-xl);
+  border: 1px solid #334155;
+  box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
 }
 
 .empty h3 {
-    color: #f1f5f9;
-    margin: 0 0 var(--space-2) 0;
-    font-size: var(--font-size-xl);
-    font-weight: 600;
+  color: #f1f5f9;
+  margin: 0 0 var(--space-2) 0;
+  font-size: var(--font-size-xl);
+  font-weight: 600;
 }
 
 .empty p {
-    margin: 0;
-    font-size: var(--font-size-md);
-    line-height: 1.6;
-    max-width: 400px;
-    margin-left: auto;
-    margin-right: auto;
-    color: var(--color-text-secondary);
+  margin: 0;
+  font-size: var(--font-size-md);
+  line-height: 1.6;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+  color: var(--color-text-secondary);
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
 
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(-8px);
-    }
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
 @media (max-width: 768px) {
+  .table th,
+  .table td {
+    padding: var(--space-4);
+  }
 
-    .table th,
-    .table td {
-        padding: var(--space-4);
-    }
-
-    .actions {
-        flex-direction: column;
-    }
+  .actions {
+    flex-direction: column;
+  }
 }

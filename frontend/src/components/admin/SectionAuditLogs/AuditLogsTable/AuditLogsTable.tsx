@@ -103,8 +103,9 @@ const getBadgeVariant = (
 export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({ logs }) => {
   if (logs.length === 0) {
     return (
-      <div className={styles.emptyContainer}>
-        <p className={styles.emptyText}>No audit logs found</p>
+      <div className={styles.empty}>
+        <h3>No audit logs found</h3>
+        <p>Actions will appear here once changes are made.</p>
       </div>
     );
   }

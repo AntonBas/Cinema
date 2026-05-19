@@ -22,44 +22,37 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     {
       path: "/admin/movies",
       label: "Movies",
-      icon: "🎬",
       roles: ["ROLE_ADMIN", "ROLE_CONTENT_MANAGER"],
     },
     {
       path: "/admin/schedule",
       label: "Schedule",
-      icon: "⏰",
       roles: ["ROLE_ADMIN", "ROLE_CONTENT_MANAGER"],
     },
     {
       path: "/admin/halls",
       label: "Halls",
-      icon: "🎭",
       roles: ["ROLE_ADMIN", "ROLE_CONTENT_MANAGER"],
     },
     {
       path: "/admin/users",
       label: "Users",
-      icon: "👥",
       roles: ["ROLE_ADMIN", "ROLE_CASHIER"],
     },
-    { path: "/admin/bonus", label: "Bonus", icon: "🎁", roles: ["ROLE_ADMIN"] },
+    { path: "/admin/bonus", label: "Bonus", roles: ["ROLE_ADMIN"] },
     {
       path: "/admin/promotion",
       label: "Promotion",
-      icon: "📢",
       roles: ["ROLE_ADMIN", "ROLE_CONTENT_MANAGER"],
     },
     {
       path: "/admin/ticket-type",
       label: "Ticket Types",
-      icon: "🎫",
       roles: ["ROLE_ADMIN"],
     },
     {
       path: "/admin/audit-logs",
       label: "Audit Logs",
-      icon: "📋",
       roles: ["ROLE_ADMIN"],
     },
   ];
@@ -126,7 +119,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
               )}
               onClick={handleItemClick}
             >
-              <span className={styles.icon}>{item.icon}</span>
               <span className={styles.label}>{item.label}</span>
               {location.pathname === item.path && (
                 <div className={styles.activeIndicator}></div>

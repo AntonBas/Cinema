@@ -54,8 +54,9 @@ const PromotionTable: React.FC<PromotionTableProps> = ({
 }) => {
   if (promotions.length === 0) {
     return (
-      <div className={styles.emptyContainer}>
-        <p className={styles.emptyText}>No promotions found</p>
+      <div className={styles.empty}>
+        <h3>No promotions found</h3>
+        <p>Create your first promotion to get started!</p>
       </div>
     );
   }

@@ -1,28 +1,28 @@
-import React, { useState } from 'react';
-import { MovieTab } from './MovieTab/MovieTab';
-import { GenreTab } from './GenreTab/GenreTab';
-import { PersonTab } from './PersonTab/PersonTab';
-import styles from './SectionMovies.module.css';
-import clsx from 'clsx';
+import React, { useState } from "react";
+import { MovieTab } from "./MovieTab/MovieTab";
+import { GenreTab } from "./GenreTab/GenreTab";
+import { PersonTab } from "./PersonTab/PersonTab";
+import styles from "./SectionMovies.module.css";
+import clsx from "clsx";
 
-type TabType = 'movies' | 'genres' | 'persons';
+type TabType = "movies" | "genres" | "persons";
 
 export const SectionMovies: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabType>('movies');
+  const [activeTab, setActiveTab] = useState<TabType>("movies");
 
   const tabs = [
-    { id: 'movies' as TabType, label: 'Movies', icon: '🎬' },
-    { id: 'genres' as TabType, label: 'Genres', icon: '📚' },
-    { id: 'persons' as TabType, label: 'People', icon: '👥' }
+    { id: "movies" as TabType, label: "Movies" },
+    { id: "genres" as TabType, label: "Genres" },
+    { id: "persons" as TabType, label: "People" },
   ];
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'movies':
+      case "movies":
         return <MovieTab />;
-      case 'genres':
+      case "genres":
         return <GenreTab />;
-      case 'persons':
+      case "persons":
         return <PersonTab />;
       default:
         return <MovieTab />;
@@ -33,16 +33,15 @@ export const SectionMovies: React.FC = () => {
     <div className={styles.container}>
       <div className={styles.tabsContainer}>
         <div className={styles.navigation}>
-          {tabs.map(tab => (
+          {tabs.map((tab) => (
             <button
               key={tab.id}
               className={clsx(
                 styles.button,
-                activeTab === tab.id && styles.active
+                activeTab === tab.id && styles.active,
               )}
               onClick={() => setActiveTab(tab.id)}
             >
-              <span className={styles.icon}>{tab.icon}</span>
               <span className={styles.label}>{tab.label}</span>
               <div className={styles.indicator}></div>
             </button>
@@ -50,9 +49,7 @@ export const SectionMovies: React.FC = () => {
         </div>
 
         <div className={styles.contentWrapper}>
-          <div className={styles.content}>
-            {renderTabContent()}
-          </div>
+          <div className={styles.content}>{renderTabContent()}</div>
         </div>
       </div>
     </div>

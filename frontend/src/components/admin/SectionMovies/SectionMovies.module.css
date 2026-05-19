@@ -44,16 +44,15 @@
 
 .button.active {
   color: var(--color-text-primary);
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
+  background: linear-gradient(
+    135deg,
+    var(--color-primary),
+    var(--color-primary-hover)
+  );
   box-shadow: 0 4px 15px rgba(var(--color-primary-rgb), 0.3);
 }
 
-.icon {
-  font-size: 1.3rem;
-  transition: transform var(--transition-normal);
-}
-
-.button.active .icon {
+.button.active {
   transform: scale(1.1);
 }
 
