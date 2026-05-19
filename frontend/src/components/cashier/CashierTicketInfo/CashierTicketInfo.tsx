@@ -1,4 +1,5 @@
 import React from "react";
+import { IdCard } from "lucide-react";
 import styles from "./CashierTicketInfo.module.css";
 import type { TicketCashierResponse } from "@/types/ticket";
 
@@ -52,7 +53,8 @@ export const CashierTicketInfo: React.FC<CashierTicketInfoProps> = ({
 
       {ticket.requiresDocument && (
         <div className={styles.documentWarning}>
-          🆔 Check: {ticket.documentType}
+          <IdCard size={18} />
+          Check: {ticket.documentType}
         </div>
       )}
     </div>

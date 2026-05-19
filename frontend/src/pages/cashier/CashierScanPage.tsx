@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { XCircle } from "lucide-react";
 import { Layout } from "@/components/layout/Layout/Layout";
 import { useTickets } from "@/hooks/features/tickets/useTickets";
 import { CashierStatusBadge } from "@/components/cashier/CashierStatusBadge/CashierStatusBadge";
@@ -48,7 +49,7 @@ export const CashierScanPage: React.FC = () => {
       <Layout>
         <div className={styles.container}>
           <div className={styles.errorCard}>
-            <span className={styles.errorIcon}>❌</span>
+            <XCircle size={48} className={styles.errorIcon} />
             <h2 className={styles.errorTitle}>Ticket Not Found</h2>
             <p className={styles.errorMessage}>
               {getErrorMessage(cashierTicketError)}
