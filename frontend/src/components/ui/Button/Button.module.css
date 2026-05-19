@@ -1,155 +1,160 @@
 .button {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    border: none;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    font-weight: 600;
-    transition: all var(--transition-normal);
-    font-family: inherit;
-    text-decoration: none;
-    justify-content: center;
-    position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-weight: 600;
+  transition: all var(--transition-normal);
+  font-family: inherit;
+  text-decoration: none;
+  justify-content: center;
+  position: relative;
 }
 
 .primary {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
-    color: var(--color-text-primary);
-    border: 1px solid var(--color-primary);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary),
+    var(--color-primary-hover)
+  );
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-primary);
 }
 
 .primary:hover:not(:disabled) {
-    background: linear-gradient(135deg, var(--color-primary-hover), #e57a2e);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
+  background: linear-gradient(135deg, var(--color-primary-hover), #e57a2e);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 .secondary {
-    background: rgba(var(--color-primary-rgb), var(--opacity-low));
-    color: var(--color-primary);
-    border: 1px solid var(--color-primary);
+  background: rgba(var(--color-primary-rgb), var(--opacity-low));
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
 }
 
 .secondary:hover:not(:disabled) {
-    background: var(--color-primary);
-    color: var(--color-text-primary);
-    transform: translateY(-2px);
+  background: var(--color-primary);
+  color: var(--color-text-primary);
+  transform: translateY(-2px);
 }
 
 .cancel {
-    background: var(--color-text-muted);
-    color: var(--color-text-primary);
-    border: 1px solid var(--color-text-muted);
+  background: var(--color-text-muted);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-text-muted);
 }
 
 .cancel:hover:not(:disabled) {
-    background: var(--color-text-disabled);
-    transform: translateY(-2px);
+  background: var(--color-text-disabled);
+  transform: translateY(-2px);
 }
 
 .success {
-    background: rgba(var(--color-success-rgb), var(--opacity-low));
-    color: var(--color-success);
-    border: 1px solid var(--color-success);
+  background: rgba(var(--color-success-rgb), var(--opacity-low));
+  color: var(--color-success);
+  border: 1px solid var(--color-success);
 }
 
 .success:hover:not(:disabled) {
-    background: var(--color-success);
-    color: var(--color-text-primary);
-    transform: translateY(-2px);
+  background: var(--color-success);
+  color: var(--color-text-primary);
+  transform: translateY(-2px);
 }
 
 .error {
-    background: rgba(var(--color-error-rgb), var(--opacity-low));
-    color: var(--color-error);
-    border: 1px solid rgba(var(--color-error-rgb), var(--opacity-high));
+  background: rgba(var(--color-error-rgb), var(--opacity-low));
+  color: var(--color-error);
+  border: 1px solid rgba(var(--color-error-rgb), var(--opacity-high));
 }
 
 .error:hover:not(:disabled) {
-    background: rgba(var(--color-error-rgb), var(--opacity-medium));
-    border-color: rgba(var(--color-error-rgb), 0.5);
+  background: rgba(var(--color-error-rgb), var(--opacity-medium));
+  border-color: rgba(var(--color-error-rgb), 0.5);
 }
 
 .outline {
-    background: transparent;
-    color: var(--color-text-primary);
-    border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
 }
 
 .outline:hover:not(:disabled) {
-    background: rgba(var(--color-primary-rgb), var(--opacity-low));
-    border-color: var(--color-primary);
-    transform: translateY(-2px);
+  background: rgba(var(--color-primary-rgb), var(--opacity-low));
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
 }
 
 .small {
-    padding: var(--space-2) var(--space-4);
-    font-size: var(--font-size-sm);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-sm);
 }
 
 .medium {
-    padding: var(--space-3) var(--space-6);
-    font-size: var(--font-size-md);
+  padding: var(--space-3) var(--space-6);
+  font-size: var(--font-size-md);
 }
 
 .large {
-    padding: var(--space-4) var(--space-8);
-    font-size: var(--font-size-lg);
+  padding: var(--space-4) var(--space-8);
+  font-size: var(--font-size-lg);
 }
 
 .disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none !important;
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
 }
 
 .loading {
-    opacity: 0.8;
-    cursor: wait;
+  opacity: 0.8;
+  cursor: wait;
 }
 
 .icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1em;
 }
 
 .sortIcon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9em;
-    margin-left: var(--space-1);
-    font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9em;
+  margin-left: var(--space-1);
+  font-weight: bold;
 }
 
 .hasSortIcon {
-    padding-right: var(--space-3);
+  padding-right: var(--space-3);
 }
 
 .button:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), var(--opacity-high));
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), var(--opacity-high));
 }
 
 .button:active:not(:disabled) {
-    transform: translateY(0);
+  transform: translateY(0);
 }
 
 .spinner {
-    display: inline-block;
-    animation: spin 1s linear infinite;
-    margin-right: var(--space-2);
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-right: var(--space-2);
 }
 
 @keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-
-    to {
-        transform: rotate(360deg);
-    }
+  to {
+    transform: rotate(360deg);
+  }
 }
