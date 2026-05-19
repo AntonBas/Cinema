@@ -1,100 +1,100 @@
 .profileCard {
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-xl);
-    overflow: hidden;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
 }
 
 .cardHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--space-6) var(--space-8);
-    border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-6) var(--space-8);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .cardTitle {
-    font-size: var(--font-size-xl);
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
 }
 
 .cardContent {
-    padding: var(--space-8);
+  padding: var(--space-8);
 }
 
 .profileSection {
-    margin-bottom: var(--space-8);
+  margin-bottom: var(--space-8);
 }
 
 .userInfo {
-    text-align: center;
+  text-align: center;
 }
 
 .userName {
-    font-size: var(--font-size-xl);
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin: 0 0 var(--space-1) 0;
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-1) 0;
 }
 
 .userEmail {
-    color: var(--color-text-secondary);
-    margin: 0;
-    font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+  font-size: var(--font-size-sm);
 }
 
 .detailsGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: var(--space-6);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--space-6);
 }
 
 .detailItem {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
 .detailLabel {
-    font-size: var(--font-size-xs);
-    color: var(--color-text-secondary);
-    font-weight: 500;
-    text-transform: none;
-    letter-spacing: 0.5px;
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .tooltipIcon {
-    font-size: 0.7rem;
-    opacity: 0.7;
-    transition: opacity var(--transition-normal);
-    cursor: help;
+  color: var(--color-text-muted);
+  transition: color var(--transition-normal);
+  cursor: help;
+  flex-shrink: 0;
 }
 
 .tooltipIcon:hover {
-    opacity: 1;
+  color: var(--color-text-secondary);
 }
 
 .detailValue {
-    font-size: var(--font-size-md);
-    color: var(--color-text-primary);
-    font-weight: 500;
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
+  font-weight: 500;
 }
 
 @media (max-width: 768px) {
-    .cardHeader {
-        padding: var(--space-4) var(--space-6);
-    }
+  .cardHeader {
+    padding: var(--space-4) var(--space-6);
+  }
 
-    .cardContent {
-        padding: var(--space-6);
-    }
+  .cardContent {
+    padding: var(--space-6);
+  }
 
-    .detailsGrid {
-        grid-template-columns: 1fr;
-        gap: var(--space-4);
-    }
+  .detailsGrid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
 }

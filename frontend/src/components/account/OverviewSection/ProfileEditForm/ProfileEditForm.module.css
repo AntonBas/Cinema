@@ -1,188 +1,174 @@
 .profileForm {
-    width: 100%;
+  width: 100%;
 }
 
 .form {
-    width: 100%;
+  width: 100%;
 }
 
 .notification {
-    padding: 12px 16px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    font-size: 14px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
 }
 
 .notification[data-type="error"] {
-    background-color: rgba(220, 53, 69, 0.1);
-    color: #dc3545;
-    border: 1px solid rgba(220, 53, 69, 0.3);
+  background-color: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  border: 1px solid rgba(220, 53, 69, 0.3);
 }
 
 .notification[data-type="success"] {
-    background-color: rgba(40, 167, 69, 0.1);
-    color: #28a745;
-    border: 1px solid rgba(40, 167, 69, 0.3);
+  background-color: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+  border: 1px solid rgba(40, 167, 69, 0.3);
 }
 
 .verificationAlert {
-    display: flex;
-    gap: 12px;
-    padding: 16px;
-    border-radius: 8px;
-    margin-bottom: 24px;
-    border-left: 4px solid;
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  border-left: 4px solid;
 }
 
 .verificationAlert.verified {
-    background-color: #d4edda;
-    border-color: #28a745;
-    color: #155724;
+  background-color: #d4edda;
+  border-color: #28a745;
+  color: #155724;
 }
 
 .verificationAlert.not_verified {
-    background-color: #fff3cd;
-    border-color: #ffc107;
-    color: #856404;
-}
-
-.alertIcon {
-    font-size: 20px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
+  background-color: #fff3cd;
+  border-color: #ffc107;
+  color: #856404;
 }
 
 .alertContent {
-    flex: 1;
+  flex: 1;
 }
 
 .alertTitle {
-    font-weight: 600;
-    margin-bottom: 4px;
-    font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  font-size: 16px;
 }
 
 .alertMessage {
-    margin-bottom: 8px;
-    font-size: 14px;
-    line-height: 1.5;
+  margin-bottom: 8px;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .alertNote {
-    font-size: 13px;
-    opacity: 0.8;
-    margin: 0;
-    font-style: italic;
+  font-size: 13px;
+  opacity: 0.8;
+  margin: 0;
+  font-style: italic;
 }
 
 .formSection {
-    margin-bottom: 32px;
+  margin-bottom: 32px;
 }
 
 .sectionTitle {
-    font-size: 18px;
-    font-weight: 600;
-    margin-bottom: 16px;
-    color: #343a40;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #343a40;
 }
 
 .formRow {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
 .dateOfBirthField {
-    position: relative;
+  position: relative;
 }
 
 .dateChangeNote {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    color: #dc3545;
-    margin-top: 4px;
-    padding: 4px 8px;
-    background-color: rgba(220, 53, 69, 0.1);
-    border-radius: 4px;
-    animation: fadeIn 0.3s ease;
-}
-
-.warningIcon {
-    font-size: 14px;
+  font-size: 12px;
+  color: #dc3545;
+  margin-top: 4px;
+  padding: 4px 8px;
+  background-color: rgba(220, 53, 69, 0.1);
+  border-radius: 4px;
+  animation: fadeIn 0.3s ease;
 }
 
 .formActions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    margin-top: 32px;
-    padding-top: 20px;
-    border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid #e9ecef;
 }
 
 .modalContent {
-    padding: 16px 0;
+  padding: 16px 0;
 }
 
 .warningText {
-    font-size: 16px;
-    margin-bottom: 16px;
-    color: #dc3545;
+  font-size: 16px;
+  margin-bottom: 16px;
+  color: #dc3545;
 }
 
 .modalDescription {
-    font-size: 14px;
-    line-height: 1.5;
-    margin-bottom: 24px;
-    color: #6c757d;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 24px;
+  color: #6c757d;
 }
 
 .modalActions {
-    display: flex;
-    gap: 12px;
-    justify-content: flex-end;
-    margin-top: 24px;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-5px);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 768px) {
-    .formRow {
-        grid-template-columns: 1fr;
-    }
+  .formRow {
+    grid-template-columns: 1fr;
+  }
 
-    .verificationAlert {
-        flex-direction: column;
-        gap: 8px;
-    }
+  .verificationAlert {
+    flex-direction: column;
+    gap: 8px;
+  }
 
-    .modalActions {
-        flex-direction: column;
-    }
+  .modalActions {
+    flex-direction: column;
+  }
 
-    .modalActions button {
-        width: 100%;
-    }
+  .modalActions button {
+    width: 100%;
+  }
 
-    .formActions {
-        flex-direction: column;
-    }
+  .formActions {
+    flex-direction: column;
+  }
 
-    .formActions button {
-        width: 100%;
-    }
+  .formActions button {
+    width: 100%;
+  }
 }
