@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { MovieCard } from "@/components/movies/MovieCard/MovieCard";
 import { Button } from "@/components/ui/Button/Button";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
@@ -99,7 +100,7 @@ export const ComingSoon: React.FC<ComingSoonProps> = ({ movies, loading }) => {
               className={styles.navButton}
               onClick={prevSlide}
             >
-              &#10094;
+              <ChevronLeft size={20} />
             </Button>
           )}
 
@@ -122,7 +123,7 @@ export const ComingSoon: React.FC<ComingSoonProps> = ({ movies, loading }) => {
               className={styles.navButton}
               onClick={nextSlide}
             >
-              &#10095;
+              <ChevronRight size={20} />
             </Button>
           )}
         </div>

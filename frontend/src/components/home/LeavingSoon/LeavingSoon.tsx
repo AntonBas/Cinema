@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { MovieCard } from "@/components/movies/MovieCard/MovieCard";
 import { Button } from "@/components/ui/Button/Button";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
@@ -93,7 +94,7 @@ export const LeavingSoon: React.FC<LeavingSoonProps> = ({
               className={styles.navButton}
               onClick={prevSlide}
             >
-              &#10094;
+              <ChevronLeft size={20} />
             </Button>
           )}
 
@@ -116,7 +117,7 @@ export const LeavingSoon: React.FC<LeavingSoonProps> = ({
               className={styles.navButton}
               onClick={nextSlide}
             >
-              &#10095;
+              <ChevronRight size={20} />
             </Button>
           )}
         </div>

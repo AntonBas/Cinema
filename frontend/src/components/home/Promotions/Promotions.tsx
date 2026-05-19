@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/Button/Button";
 import { useAuth } from "@/context/AuthContext";
 import type { PromotionResponse } from "@/types/promotion";
@@ -124,7 +125,7 @@ export const Promotions: React.FC<PromotionsProps> = ({
               className={styles.navButton}
               onClick={prevSlide}
             >
-              &#10094;
+              <ChevronLeft size={20} />
             </Button>
           )}
 
@@ -170,11 +171,8 @@ export const Promotions: React.FC<PromotionsProps> = ({
                           disabled={expired || claimed || isClaiming}
                           loading={isClaiming}
                         >
-                          {claimed
-                            ? "✓ Claimed"
-                            : expired
-                              ? "Expired"
-                              : "Claim"}
+                          {claimed && <Check size={16} />}
+                          {claimed ? "Claimed" : expired ? "Expired" : "Claim"}
                         </Button>
                       )}
                       {!isAuthenticated && (
@@ -200,7 +198,7 @@ export const Promotions: React.FC<PromotionsProps> = ({
               className={styles.navButton}
               onClick={nextSlide}
             >
-              &#10095;
+              <ChevronRight size={20} />
             </Button>
           )}
         </div>

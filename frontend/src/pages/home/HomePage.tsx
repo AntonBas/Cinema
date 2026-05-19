@@ -91,11 +91,6 @@ export const HomePage: React.FC = () => {
           claimedPromotionIds={claimedIds}
         />
       )}
-      {!hasContent && (
-        <div className={styles.empty}>
-          <p>No movies available at the moment.</p>
-        </div>
-      )}
     </Layout>
   );
 };
