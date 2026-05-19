@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { CheckCircle2 } from "lucide-react";
 import { useAuthActions } from "@/hooks/features/auth/useAuthActions";
 import { Input, Button, Modal } from "@/components/ui";
 import styles from "./ResetPasswordForm.module.css";
@@ -16,7 +17,7 @@ const PasswordResetSuccessModal: React.FC<SuccessModalProps> = ({
   <Modal isOpen={isOpen} onClose={onClose} size="small">
     <div className={styles.successContent}>
       <div className={styles.successAnimation}>
-        <div className={styles.successIcon}>✅</div>
+        <CheckCircle2 size={64} className={styles.successIcon} />
       </div>
       <div className={styles.successText}>
         <h3 className={styles.successTitle}>Password Reset!</h3>

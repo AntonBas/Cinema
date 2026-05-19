@@ -28,9 +28,16 @@
 }
 
 .icon {
-  font-size: 4rem;
   margin-bottom: var(--space-6);
   animation: scaleIn var(--transition-normal);
+}
+
+.verificationCard.error .icon {
+  color: var(--color-error);
+}
+
+.verificationCard.success .icon {
+  color: var(--color-success);
 }
 
 .verificationCard h2 {
@@ -98,6 +105,6 @@
   }
 
   .icon {
-    font-size: 3rem;
+    margin-bottom: var(--space-4);
   }
 }

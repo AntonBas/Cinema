@@ -33,10 +33,10 @@
 }
 
 .icon {
-  font-size: 4rem;
   margin-bottom: var(--space-6);
   animation: bounceIn 0.6s ease;
   display: inline-block;
+  color: var(--color-error);
 }
 
 .message {

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { Mail } from "lucide-react";
 import { useAuthActions } from "@/hooks/features/auth/useAuthActions";
 import { Input, Button, Modal } from "@/components/ui";
 import styles from "./ForgotPasswordForm.module.css";
@@ -73,7 +74,7 @@ export const ForgotPasswordForm: React.FC = () => {
       >
         <div className={styles.successContent}>
           <div className={styles.successAnimation}>
-            <div className={styles.successIcon}>📧</div>
+            <Mail size={64} className={styles.successIcon} />
           </div>
           <div className={styles.successText}>
             <h3 className={styles.successTitle}>Check your email!</h3>

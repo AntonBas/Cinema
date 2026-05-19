@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { PartyPopper } from "lucide-react";
 import { useAuthActions } from "@/hooks/features/auth/useAuthActions";
 import { Input, Button, Modal } from "@/components/ui";
 import type { RegisterRequest } from "@/types/auth";
@@ -19,7 +20,7 @@ const RegistrationSuccessModal: React.FC<SuccessModalProps> = ({
   <Modal isOpen={isOpen} onClose={onClose} size="small">
     <div className={styles.successContent}>
       <div className={styles.successAnimation}>
-        <div className={styles.successIcon}>🎉</div>
+        <PartyPopper size={64} className={styles.successIcon} />
       </div>
       <div className={styles.successText}>
         <h3 className={styles.successTitle}>Registration Successful!</h3>

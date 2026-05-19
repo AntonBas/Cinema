@@ -5,6 +5,7 @@ import {
   useNavigate,
   Link,
 } from "react-router-dom";
+import { XCircle, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/services/api";
 import { Button } from "@/components/ui/Button/Button";
@@ -67,7 +68,7 @@ export const ConfirmEmailChangePage: React.FC = () => {
       <section className={styles.container}>
         <div className={styles.card}>
           <h1 className={styles.title}>Confirmation Failed</h1>
-          <div className={styles.icon}>❌</div>
+          <XCircle size={64} className={styles.icon} />
           <p className={styles.message}>{errorMessage}</p>
           <div className={styles.actions}>
             <Button
@@ -90,7 +91,7 @@ export const ConfirmEmailChangePage: React.FC = () => {
     <section className={styles.container}>
       <div className={styles.card}>
         <h1 className={styles.title}>Email Changed!</h1>
-        <div className={styles.icon}>✅</div>
+        <CheckCircle2 size={64} className={styles.icon} />
         <p className={styles.message}>
           Your email address has been successfully updated.
         </p>

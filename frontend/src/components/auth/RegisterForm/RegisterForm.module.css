@@ -102,9 +102,7 @@
 }
 
 .successIcon {
-  font-size: 4rem;
-  animation: bounceIn 0.6s ease;
-  display: inline-block;
+  color: var(--color-primary);
 }
 
 .successText {
