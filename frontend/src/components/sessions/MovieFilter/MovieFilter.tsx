@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { movieApi } from "@/api/movieApi";
+import { Check } from "lucide-react";
 import type { MovieSessionSearchResponse } from "@/types/movie";
 import styles from "./MovieFilter.module.css";
 
@@ -149,7 +150,7 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({
                 </span>
               </div>
               {selectedMovieId === movie.id && (
-                <span className={styles.checkmark}>✓</span>
+                <Check size={16} className={styles.checkmark} />
               )}
             </button>
           ))}
