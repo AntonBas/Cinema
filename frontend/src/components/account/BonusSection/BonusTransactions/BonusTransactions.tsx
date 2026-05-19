@@ -1,6 +1,7 @@
 import React from "react";
 import { Badge } from "@/components/ui/Badge/Badge";
 import { Pagination } from "@/components/ui/Pagination/Pagination";
+import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 import type {
   BonusTransactionResponse,
@@ -64,10 +65,7 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
   if (showLoading) {
     return (
       <div className={styles.transactions}>
-        <div className={styles.loadingContainer}>
-          <div className={styles.spinner}></div>
-          <span>Loading transactions...</span>
-        </div>
+        <LoadingSpinner text="Loading transactions..." />
       </div>
     );
   }
@@ -76,7 +74,6 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
     return (
       <div className={styles.transactions}>
         <div className={styles.noData}>
-          <span className={styles.noDataIcon}>📋</span>
           <p>No transactions found</p>
         </div>
       </div>

@@ -1,340 +1,267 @@
 .balanceCard {
-    background: linear-gradient(135deg, var(--color-bg-tertiary) 0%, var(--color-bg-quaternary) 100%);
-    border-radius: var(--radius-xl);
-    padding: var(--space-8);
-    color: var(--color-text-primary);
-    box-shadow: var(--shadow-xl);
-    border: 1px solid var(--color-border-medium);
-    position: relative;
-    overflow: hidden;
-    transition: box-shadow var(--transition-normal);
+  background: linear-gradient(
+    135deg,
+    var(--color-bg-tertiary) 0%,
+    var(--color-bg-quaternary) 100%
+  );
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--color-border-medium);
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow var(--transition-normal);
 }
 
 .balanceCard:hover {
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-}
-
-.balanceCard::after {
-    position: absolute;
-    bottom: -20px;
-    right: -20px;
-    font-size: 120px;
-    opacity: 0.03;
-    transform: rotate(-10deg);
-    pointer-events: none;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
 }
 
 .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--space-6);
-    position: relative;
-    z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-6);
+  position: relative;
+  z-index: 1;
 }
 
 .title {
-    font-size: var(--font-size-2xl);
-    font-weight: 700;
-    margin: 0;
-    color: var(--color-text-primary);
-    letter-spacing: 0.5px;
-    position: relative;
-    display: inline-block;
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-text-primary);
+  letter-spacing: 0.5px;
+  position: relative;
+  display: inline-block;
 }
 
 .title::after {
-    content: '';
-    position: absolute;
-    bottom: -8px;
-    left: 0;
-    width: 40px;
-    height: 3px;
-    background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
-    border-radius: var(--radius-full);
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 40px;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--color-primary),
+    var(--color-primary-light)
+  );
+  border-radius: var(--radius-full);
 }
 
 .mainBalance {
-    text-align: center;
-    margin-bottom: var(--space-8);
-    position: relative;
-    z-index: 1;
-    background: var(--color-bg-secondary);
-    border-radius: var(--radius-lg);
-    padding: var(--space-6);
-    border: 1px solid var(--color-border);
+  text-align: center;
+  margin-bottom: var(--space-8);
+  position: relative;
+  z-index: 1;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
 }
 
 .points {
-    font-size: 4rem;
-    font-weight: 800;
-    line-height: 1;
-    margin-bottom: var(--space-2);
-    color: var(--color-primary);
-    text-shadow: 0 4px 15px rgba(var(--color-primary-rgb), 0.2);
+  font-size: 4rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: var(--space-2);
+  color: var(--color-primary);
+  text-shadow: 0 4px 15px rgba(var(--color-primary-rgb), 0.2);
 }
 
 .pointsLabel {
-    font-size: var(--font-size-lg);
-    color: var(--color-text-secondary);
-    font-weight: 500;
-    letter-spacing: 1px;
-    text-transform: uppercase;
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
 .valueInfo {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-4);
-    margin-bottom: var(--space-8);
-    position: relative;
-    z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+  position: relative;
+  z-index: 1;
 }
 
 .valueItem {
-    text-align: center;
-    padding: var(--space-4);
-    background: var(--color-bg-secondary);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--color-border);
-    transition: border-color var(--transition-fast);
+  text-align: center;
+  padding: var(--space-4);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  transition: border-color var(--transition-fast);
 }
 
 .valueItem:hover {
-    border-color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 .valueLabel {
-    font-size: var(--font-size-xs);
-    color: var(--color-text-secondary);
-    margin-bottom: var(--space-2);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .valueAmount {
-    font-size: var(--font-size-xl);
-    font-weight: 700;
-    color: var(--color-text-primary);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text-primary);
 }
 
 .usageLimits {
-    background: var(--color-bg-secondary);
-    border-radius: var(--radius-lg);
-    padding: var(--space-6);
-    position: relative;
-    z-index: 1;
-    border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  position: relative;
+  z-index: 1;
+  border: 1px solid var(--color-border);
 }
 
 .limitsTitle {
-    font-size: var(--font-size-lg);
-    font-weight: 600;
-    margin: 0 0 var(--space-4) 0;
-    text-align: center;
-    color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  margin: 0 0 var(--space-4) 0;
+  text-align: center;
+  color: var(--color-text-primary);
 }
 
 .limitsGrid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-3);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
 }
 
 .limitItem {
-    text-align: center;
-    padding: var(--space-3);
-    background: var(--color-bg-tertiary);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-border);
-    transition: border-color var(--transition-fast);
+  text-align: center;
+  padding: var(--space-3);
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  transition: border-color var(--transition-fast);
 }
 
 .limitItem:hover {
-    border-color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 .limitLabel {
-    font-size: var(--font-size-xs);
-    color: var(--color-text-secondary);
-    margin-bottom: var(--space-1);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-1);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .limitValue {
-    font-size: var(--font-size-md);
-    font-weight: 600;
-    color: var(--color-text-primary);
-}
-
-.loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 300px;
-    position: relative;
-    z-index: 1;
-    gap: var(--space-4);
-}
-
-.spinner {
-    width: 50px;
-    height: 50px;
-    border: 3px solid var(--color-border);
-    border-top-color: var(--color-primary);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-.loading span {
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-lg);
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text-primary);
 }
 
 .noData {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 300px;
-    position: relative;
-    z-index: 1;
-    gap: var(--space-4);
-}
-
-.noDataIcon {
-    font-size: 4rem;
-    opacity: 0.5;
-    animation: bounce 2s ease infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  position: relative;
+  z-index: 1;
 }
 
 .noData p {
-    margin: 0;
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-lg);
-}
-
-@keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-@keyframes bounce {
-
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(-10px);
-    }
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-lg);
 }
 
 @media (max-width: 768px) {
-    .balanceCard {
-        padding: var(--space-6);
-    }
+  .balanceCard {
+    padding: var(--space-6);
+  }
 
-    .title {
-        font-size: var(--font-size-xl);
-    }
+  .title {
+    font-size: var(--font-size-xl);
+  }
 
-    .points {
-        font-size: 3rem;
-    }
+  .points {
+    font-size: 3rem;
+  }
 
-    .pointsLabel {
-        font-size: var(--font-size-md);
-    }
+  .pointsLabel {
+    font-size: var(--font-size-md);
+  }
 
-    .valueInfo {
-        grid-template-columns: 1fr;
-        gap: var(--space-3);
-    }
+  .valueInfo {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
 
-    .valueItem {
-        padding: var(--space-3);
-    }
+  .valueItem {
+    padding: var(--space-3);
+  }
 
-    .valueAmount {
-        font-size: var(--font-size-lg);
-    }
+  .valueAmount {
+    font-size: var(--font-size-lg);
+  }
 
-    .limitsGrid {
-        grid-template-columns: 1fr;
-    }
+  .limitsGrid {
+    grid-template-columns: 1fr;
+  }
 
-    .balanceCard::after {
-        font-size: 100px;
-        bottom: -10px;
-        right: -10px;
-    }
-
-    .loading span,
-    .noData p {
-        font-size: var(--font-size-md);
-    }
+  .noData p {
+    font-size: var(--font-size-md);
+  }
 }
 
 @media (max-width: 480px) {
-    .balanceCard {
-        padding: var(--space-4);
-    }
+  .balanceCard {
+    padding: var(--space-4);
+  }
 
-    .title {
-        font-size: var(--font-size-lg);
-    }
+  .title {
+    font-size: var(--font-size-lg);
+  }
 
-    .points {
-        font-size: 2.5rem;
-    }
+  .points {
+    font-size: 2.5rem;
+  }
 
-    .pointsLabel {
-        font-size: var(--font-size-sm);
-    }
+  .pointsLabel {
+    font-size: var(--font-size-sm);
+  }
 
-    .valueItem {
-        padding: var(--space-2);
-    }
+  .valueItem {
+    padding: var(--space-2);
+  }
 
-    .valueLabel {
-        font-size: 0.7rem;
-    }
+  .valueLabel {
+    font-size: 0.7rem;
+  }
 
-    .valueAmount {
-        font-size: var(--font-size-md);
-    }
+  .valueAmount {
+    font-size: var(--font-size-md);
+  }
 
-    .limitItem {
-        padding: var(--space-2);
-    }
+  .limitItem {
+    padding: var(--space-2);
+  }
 
-    .limitLabel {
-        font-size: 0.7rem;
-    }
+  .limitLabel {
+    font-size: 0.7rem;
+  }
 
-    .limitValue {
-        font-size: var(--font-size-sm);
-    }
+  .limitValue {
+    font-size: var(--font-size-sm);
+  }
 
-    .balanceCard::after {
-        font-size: 80px;
-    }
-
-    .loading {
-        min-height: 250px;
-    }
-
-    .spinner {
-        width: 40px;
-        height: 40px;
-    }
+  .noData {
+    min-height: 250px;
+  }
 }

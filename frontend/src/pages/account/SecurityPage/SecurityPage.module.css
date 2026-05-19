@@ -78,7 +78,11 @@
 }
 
 .sidebar {
-  background: var(--color-bg-primary);
+  background: linear-gradient(
+    135deg,
+    var(--color-bg-tertiary) 0%,
+    var(--color-bg-quaternary) 100%
+  );
   border-radius: var(--radius-lg);
   padding: var(--space-6);
   height: fit-content;
@@ -121,7 +125,7 @@
 }
 
 .mainContent {
-  background: var(--color-bg-primary);
+  background: var(--color-bg-quaternary);
   border-radius: var(--radius-lg);
   padding: var(--space-8);
   box-shadow: var(--shadow-md);
