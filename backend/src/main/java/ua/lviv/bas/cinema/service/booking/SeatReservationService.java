@@ -14,7 +14,6 @@ import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.booking.response.SeatReservationResponse;
-import ua.lviv.bas.cinema.dto.booking.response.SeatStatusResponse;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.hall.SeatNotFoundException;
@@ -26,6 +25,7 @@ import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
 import ua.lviv.bas.cinema.service.common.PriceCalculatorService;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -58,11 +58,8 @@ public class SeatReservationService {
         var bookedSeatData = seatReservationRepository.findBookedSeatStatuses(session.getHall().getId(), sessionId,
                 ReservationStatus.ACTIVE_STATUSES);
 
-        Map<Long, ReservationStatus> seatStatusMap = bookedSeatData.stream()
-                .collect(Collectors.toMap(
-                        SeatStatusResponse::seatId,
-                        SeatStatusResponse::status,
-                        (existing, replacement) -> existing));
+        Map<Long, ReservationStatus> seatStatusMap = new HashMap<>();
+        bookedSeatData.forEach(data -> seatStatusMap.put(data.seatId(), data.status()));
 
         var seatInfos = allSeats.stream().map(seat -> buildSeatInfo(seat, seatStatusMap, session, activeTicketTypes))
                 .toList();
