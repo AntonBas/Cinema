@@ -57,7 +57,7 @@ export const MovieList: React.FC<MovieListProps> = React.memo(
       return (
         <div className={styles.empty}>
           <h3>{emptyMessage}</h3>
-          <p>Try checking back later for new releases.</p>
+          <p>Check back soon for new movies.</p>
         </div>
       );
     }

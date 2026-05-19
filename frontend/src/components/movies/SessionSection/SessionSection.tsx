@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { SessionMovieInfoResponse } from "@/types/session";
 import styles from "./SessionSection.module.css";
 
@@ -80,7 +81,7 @@ export const SessionSection: React.FC<SessionSectionProps> = ({
             onClick={() => onScrollDates("left")}
             disabled={dateScrollIndex === 0}
           >
-            &#10094;
+            <ChevronLeft size={18} />
           </button>
         )}
 
@@ -109,7 +110,7 @@ export const SessionSection: React.FC<SessionSectionProps> = ({
             onClick={() => onScrollDates("right")}
             disabled={dateScrollIndex >= dateList.length - datesPerView}
           >
-            &#10095;
+            <ChevronRight size={18} />
           </button>
         )}
       </div>

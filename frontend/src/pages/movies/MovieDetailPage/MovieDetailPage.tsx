@@ -9,6 +9,7 @@ import {
 } from "@/types/movie";
 import { Button } from "@/components/ui/Button/Button";
 import { Tooltip } from "@/components/ui/Tooltip/Tooltip";
+import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { Layout } from "@/components/layout/Layout/Layout";
 import { SessionSection } from "@/components/movies/SessionSection/SessionSection";
 import styles from "./MovieDetailPage.module.css";
@@ -87,10 +88,7 @@ export const MovieDetailPage: React.FC = () => {
   if (loading) {
     return (
       <Layout>
-        <div className={styles.loadingContainer}>
-          <div className={styles.loadingSpinner}></div>
-          <p>Loading movie details...</p>
-        </div>
+        <LoadingSpinner text="Loading movie details..." />
       </Layout>
     );
   }
