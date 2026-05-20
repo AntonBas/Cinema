@@ -5,6 +5,7 @@ services:
     env_file:
       - .env
     environment:
+      TZ: ${TZ:-UTC}
       POSTGRES_USER: ${DB_USER:-cinema}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME:-cinema_db}
@@ -38,6 +39,8 @@ services:
     env_file:
       - .env
     environment:
+      TZ: ${TZ:-UTC}
+      JAVA_TOOL_OPTIONS: "-Duser.timezone=${TZ:-UTC}"
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:-cinema_db}
@@ -85,6 +88,7 @@ services:
     networks:
       - cinema-net
     environment:
+      TZ: ${TZ:-UTC}
       VITE_PROXY_TARGET: http://backend:8080
       CHOKIDAR_USEPOLLING: "true"
     volumes:
