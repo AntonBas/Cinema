@@ -1,8 +1,13 @@
-import { api } from '@/services/api';
-import type { PersonResponse, PersonRequest, PersonListResponse, PersonRole } from '@/types/person';
-import type { PageResponse, SearchParams } from '@/types/pagination';
+import { api } from "@/services/api";
+import type {
+  PersonResponse,
+  PersonRequest,
+  PersonListResponse,
+  PersonRole,
+} from "@/types/person";
+import type { PageResponse, SearchParams } from "@/types/pagination";
 
-const ADMIN_BASE_URL = '/api/admin/persons';
+const ADMIN_BASE_URL = "/api/admin/persons";
 
 export const personApi = {
   admin: {
@@ -15,7 +20,6 @@ export const personApi = {
     update: (id: number, request: PersonRequest) =>
       api.put<PersonResponse>(`${ADMIN_BASE_URL}/${id}`, request),
 
-    delete: (id: number) =>
-      api.delete<void>(`${ADMIN_BASE_URL}/${id}`),
-  }
+    delete: (id: number) => api.delete<void>(`${ADMIN_BASE_URL}/${id}`),
+  },
 };
