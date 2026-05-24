@@ -75,7 +75,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  color: #fff;
   box-shadow: 0 4px 12px rgba(var(--color-primary-rgb), 0.3);
 }
 
@@ -138,9 +138,8 @@
 }
 
 .icon {
-  font-size: 1.25rem;
-  width: 24px;
-  text-align: center;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
 }
 
@@ -199,10 +198,6 @@
   color: var(--color-primary);
   border-color: rgba(var(--color-primary-rgb), var(--opacity-high));
   transform: translateY(-2px);
-}
-
-.backIcon {
-  font-size: 1.2rem;
 }
 
 .backText {
@@ -274,7 +269,6 @@
   .logoIcon {
     width: 36px;
     height: 36px;
-    font-size: 1.25rem;
   }
 
   .logoTitle {
@@ -296,18 +290,14 @@
   }
 
   .icon {
-    font-size: 1.1rem;
-    width: 20px;
+    width: 18px;
+    height: 18px;
   }
 
   .backButton {
     min-height: 44px;
     padding: var(--space-2);
     font-size: var(--font-size-xs);
-  }
-
-  .backIcon {
-    font-size: 1rem;
   }
 
   .sidebarFooter {

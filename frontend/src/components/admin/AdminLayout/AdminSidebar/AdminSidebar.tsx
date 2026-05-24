@@ -1,6 +1,18 @@
 import React, { useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import {
+  Film,
+  Calendar,
+  Building2,
+  Users,
+  Gift,
+  Tag,
+  Ticket,
+  ScrollText,
+  Clapperboard,
+  ArrowLeft,
+} from "lucide-react";
 import styles from "./AdminSidebar.module.css";
 import clsx from "clsx";
 
@@ -18,41 +30,54 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+
   const allMenuItems = [
     {
       path: "/admin/movies",
       label: "Movies",
+      icon: Film,
       roles: ["ROLE_ADMIN", "ROLE_CONTENT_MANAGER"],
     },
     {
       path: "/admin/schedule",
       label: "Schedule",
+      icon: Calendar,
       roles: ["ROLE_ADMIN", "ROLE_CONTENT_MANAGER"],
     },
     {
       path: "/admin/halls",
       label: "Halls",
+      icon: Building2,
       roles: ["ROLE_ADMIN", "ROLE_CONTENT_MANAGER"],
     },
     {
       path: "/admin/users",
       label: "Users",
+      icon: Users,
       roles: ["ROLE_ADMIN", "ROLE_CASHIER"],
     },
-    { path: "/admin/bonus", label: "Bonus", roles: ["ROLE_ADMIN"] },
+    {
+      path: "/admin/bonus",
+      label: "Bonus",
+      icon: Gift,
+      roles: ["ROLE_ADMIN"],
+    },
     {
       path: "/admin/promotion",
       label: "Promotion",
+      icon: Tag,
       roles: ["ROLE_ADMIN", "ROLE_CONTENT_MANAGER"],
     },
     {
       path: "/admin/ticket-type",
       label: "Ticket Types",
+      icon: Ticket,
       roles: ["ROLE_ADMIN"],
     },
     {
       path: "/admin/audit-logs",
       label: "Audit Logs",
+      icon: ScrollText,
       roles: ["ROLE_ADMIN"],
     },
   ];
@@ -100,7 +125,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       >
         <div className={styles.sidebarHeader}>
           <div className={styles.logoSection}>
-            <div className={styles.logoIcon}>🎬</div>
+            <div className={styles.logoIcon}>
+              <Clapperboard size={24} />
+            </div>
             <div className={styles.logoText}>
               <h2 className={styles.logoTitle}>Cinema</h2>
               <p className={styles.logoSubtitle}>Admin Panel</p>
@@ -109,27 +136,31 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         </div>
 
         <nav className={styles.nav}>
-          {menuItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={clsx(
-                styles.item,
-                location.pathname === item.path && styles.active,
-              )}
-              onClick={handleItemClick}
-            >
-              <span className={styles.label}>{item.label}</span>
-              {location.pathname === item.path && (
-                <div className={styles.activeIndicator}></div>
-              )}
-            </Link>
-          ))}
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={clsx(
+                  styles.item,
+                  location.pathname === item.path && styles.active,
+                )}
+                onClick={handleItemClick}
+              >
+                <Icon size={20} className={styles.icon} />
+                <span className={styles.label}>{item.label}</span>
+                {location.pathname === item.path && (
+                  <div className={styles.activeIndicator}></div>
+                )}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className={styles.sidebarFooter}>
           <button className={styles.backButton} onClick={handleBackToWebsite}>
-            <span className={styles.backIcon}>←</span>
+            <ArrowLeft size={18} />
             <span className={styles.backText}>Back to Website</span>
           </button>
         </div>
