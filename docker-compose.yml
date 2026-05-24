@@ -65,7 +65,7 @@ services:
       - cinema-net
     volumes:
       - backend_logs:/app/logs
-      - /Users/basanton/Cinema/backend/uploads/posters:/app/uploads/posters
+      - posters_data:/app/uploads/posters
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
@@ -126,3 +126,5 @@ volumes:
     name: cinema-pgdata
   backend_logs:
     name: cinema-backend-logs
+  posters_data:
+    name: cinema-posters-data
