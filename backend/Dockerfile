@@ -16,7 +16,7 @@ RUN mkdir -p logs uploads/posters && \
     apt-get update && apt-get install -y curl && \
     rm -rf /var/lib/apt/lists/* && \
     groupadd -r spring && useradd -r -g spring spring && \
-    chown -R spring:spring logs uploads
+    chown -R spring:spring /app
 
 USER spring:spring
 

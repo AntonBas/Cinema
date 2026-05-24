@@ -65,7 +65,7 @@ services:
       - cinema-net
     volumes:
       - backend_logs:/app/logs
-      - posters_data:/app/uploads/posters
+      - posters_data:/app/uploads
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
