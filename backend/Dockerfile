@@ -12,17 +12,11 @@ FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
 
-RUN mkdir -p logs
-RUN mkdir -p uploads/posters
-
-COPY uploads/posters /app/uploads/posters
-
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-
-RUN groupadd -r spring && useradd -r -g spring spring
-
-RUN chown -R spring:spring logs
-RUN chown -R spring:spring uploads
+RUN mkdir -p logs uploads/posters && \
+    apt-get update && apt-get install -y curl && \
+    rm -rf /var/lib/apt/lists/* && \
+    groupadd -r spring && useradd -r -g spring spring && \
+    chown -R spring:spring logs uploads
 
 USER spring:spring
 
