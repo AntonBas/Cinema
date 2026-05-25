@@ -61,7 +61,7 @@ public class MovieService {
     private final SessionRepository sessionRepository;
     private final MovieSpecification movieSpecification;
 
-    @CacheEvict(value = "movies", allEntries = true)
+    @CacheEvict(value = "movieLists", allEntries = true)
     @Transactional
     public MovieAdminResponse createMovie(MovieCreateRequest request) {
         log.info("Creating movie: {}", request.getTitle());
@@ -93,12 +93,13 @@ public class MovieService {
         }
     }
 
-    @Cacheable(value = "movies", key = "#id")
+    @Cacheable(value = "singleMovies", key = "#id")
     public MovieAdminResponse getMovie(Long id) {
         return movieRepository.findMovieById(id).map(movieMapper::toMovieAdminResponse)
                 .orElseThrow(() -> new MovieNotFoundException(id));
     }
 
+    @Cacheable(value = "movieDetails", key = "#slug")
     public MovieDetailResponse getMovieBySlug(String slug) {
         Movie movie = movieRepository.findMovieBySlug(slug)
                 .orElseThrow(() -> new MovieNotFoundException(slug));
@@ -113,7 +114,7 @@ public class MovieService {
         return movieMapper.toMovieDetailResponse(movie);
     }
 
-    @Cacheable(value = "movies", key = "'list-' + #query + '-' + #status + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+    @Cacheable(value = "movieLists", key = "'list-' + #query + '-' + #status + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
     public Page<MovieCardResponse> getMovies(String query, MovieStatus status, Pageable pageable) {
         log.info("Getting movies: query='{}', status={}, page={}, size={}", query, status, pageable.getPageNumber(),
                 pageable.getPageSize());
@@ -121,19 +122,19 @@ public class MovieService {
         return movieRepository.findAll(spec, pageable).map(movieMapper::toMovieCardResponse);
     }
 
-    @Cacheable(value = "movies", key = "'current-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+    @Cacheable(value = "movieLists", key = "'current-' + #pageable.pageNumber + '-' + #pageable.pageSize")
     public List<MovieCardResponse> getCurrentMovies(Pageable pageable) {
         Specification<Movie> spec = movieSpecification.currentMovies();
         return movieRepository.findAll(spec, pageable).map(movieMapper::toMovieCardResponse).getContent();
     }
 
-    @Cacheable(value = "movies", key = "'upcoming-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+    @Cacheable(value = "movieLists", key = "'upcoming-' + #pageable.pageNumber + '-' + #pageable.pageSize")
     public List<MovieCardResponse> getUpcomingMovies(Pageable pageable) {
         Specification<Movie> spec = movieSpecification.upcomingMovies();
         return movieRepository.findAll(spec, pageable).map(movieMapper::toMovieCardResponse).getContent();
     }
 
-    @Cacheable(value = "movies", key = "'leaving-soon-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+    @Cacheable(value = "movieLists", key = "'leaving-soon-' + #pageable.pageNumber + '-' + #pageable.pageSize")
     public List<MovieCardResponse> getLeavingSoonMovies(Pageable pageable) {
         Specification<Movie> spec = movieSpecification.leavingSoonMovies();
         return movieRepository.findAll(spec, pageable).map(movieMapper::toMovieCardResponse).getContent();
@@ -167,7 +168,7 @@ public class MovieService {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @CacheEvict(value = "movies", allEntries = true)
+    @CacheEvict(value = {"singleMovies", "movieDetails", "movieLists"}, allEntries = true)
     @Transactional
     public MovieAdminResponse updateMovie(Long id, MovieUpdateRequest request) {
         log.info("Updating movie with id: {}", id);
@@ -197,7 +198,7 @@ public class MovieService {
         return movieMapper.toMovieAdminResponse(updated);
     }
 
-    @CacheEvict(value = "movies", allEntries = true)
+    @CacheEvict(value = {"singleMovies", "movieDetails", "movieLists"}, allEntries = true)
     @Transactional
     public void deleteMovie(Long id) {
         log.info("Deleting movie with id: {}", id);
