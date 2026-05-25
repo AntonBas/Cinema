@@ -37,9 +37,10 @@ public class SessionController {
             @ApiResponse(responseCode = "200", description = "Sessions retrieved successfully")
     })
     public ResponseEntity<List<SessionScheduleResponse>> getSchedule(@RequestParam(required = false) String searchTerm,
-                                                                     @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        log.info("Getting schedule sessions for date: {}, search: {}", date, searchTerm);
-        var sessions = sessionService.getSchedule(searchTerm, date);
+                                                                     @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                                                                     @RequestParam(required = false) Long movieId) {
+        log.info("Getting schedule sessions for date: {}, search: {}, movieId: {}", date, searchTerm, movieId);
+        var sessions = sessionService.getSchedule(searchTerm, date, movieId);
         return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES)).body(sessions);
     }
 }

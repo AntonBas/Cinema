@@ -75,9 +75,9 @@ public class SessionService {
         return sessionMapper.toSessionResponse(saved);
     }
 
-    @Cacheable(value = "sessions", key = "'schedule:' + #searchTerm + ':' + #date")
-    public List<SessionScheduleResponse> getSchedule(String searchTerm, LocalDate date) {
-        Specification<Session> spec = sessionSpecification.forSchedule(searchTerm, date);
+    @Cacheable(value = "sessions", key = "'schedule:' + #searchTerm + ':' + #date + ':' + #movieId")
+    public List<SessionScheduleResponse> getSchedule(String searchTerm, LocalDate date, Long movieId) {
+        Specification<Session> spec = sessionSpecification.forSchedule(searchTerm, date, movieId);
         var sessions = sessionRepository.findAll(spec);
 
         if (sessions.isEmpty()) {

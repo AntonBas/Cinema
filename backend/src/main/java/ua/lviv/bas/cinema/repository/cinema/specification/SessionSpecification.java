@@ -14,12 +14,16 @@ import java.util.List;
 @Component
 public class SessionSpecification {
 
-    public Specification<Session> forSchedule(String searchTerm, LocalDate date) {
+    public Specification<Session> forSchedule(String searchTerm, LocalDate date, Long movieId) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             predicates.add(cb.equal(root.get("status"), CinemaSessionStatus.SCHEDULED));
             predicates.add(cb.greaterThan(root.get("startTime"), LocalDateTime.now()));
+
+            if (movieId != null) {
+                predicates.add(cb.equal(root.join("movie").get("id"), movieId));
+            }
 
             if (searchTerm != null && !searchTerm.isBlank()) {
                 predicates
