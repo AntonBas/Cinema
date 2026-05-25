@@ -38,32 +38,32 @@ public class SessionControllerTest {
     void getScheduleWithoutFiltersShouldReturnSessions() {
         List<SessionScheduleResponse> sessionList = List.of(createSessionScheduleResponse());
 
-        when(sessionService.getSchedule(null, null)).thenReturn(sessionList);
+        when(sessionService.getSchedule(null, null, null)).thenReturn(sessionList);
 
-        ResponseEntity<List<SessionScheduleResponse>> response = sessionController.getSchedule(null, null);
+        ResponseEntity<List<SessionScheduleResponse>> response = sessionController.getSchedule(null, null, null);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         List<SessionScheduleResponse> body = response.getBody();
         assertThat(body).isNotNull().hasSize(1);
         assertThat(body.getFirst().movieTitle()).isEqualTo("Test Movie");
 
-        verify(sessionService).getSchedule(null, null);
+        verify(sessionService).getSchedule(null, null, null);
     }
 
     @Test
     void getScheduleWithSearchTermShouldReturnFilteredSessions() {
         List<SessionScheduleResponse> sessionList = List.of(createSessionScheduleResponse());
 
-        when(sessionService.getSchedule("Test", null)).thenReturn(sessionList);
+        when(sessionService.getSchedule("Test", null, null)).thenReturn(sessionList);
 
-        ResponseEntity<List<SessionScheduleResponse>> response = sessionController.getSchedule("Test", null);
+        ResponseEntity<List<SessionScheduleResponse>> response = sessionController.getSchedule("Test", null, null);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         List<SessionScheduleResponse> body = response.getBody();
         assertThat(body).isNotNull().hasSize(1);
         assertThat(body.getFirst().movieTitle()).isEqualTo("Test Movie");
 
-        verify(sessionService).getSchedule("Test", null);
+        verify(sessionService).getSchedule("Test", null, null);
     }
 
     @Test
@@ -71,16 +71,16 @@ public class SessionControllerTest {
         LocalDate date = LocalDate.of(2024, 1, 15);
         List<SessionScheduleResponse> sessionList = List.of(createSessionScheduleResponse());
 
-        when(sessionService.getSchedule(null, date)).thenReturn(sessionList);
+        when(sessionService.getSchedule(null, date, null)).thenReturn(sessionList);
 
-        ResponseEntity<List<SessionScheduleResponse>> response = sessionController.getSchedule(null, date);
+        ResponseEntity<List<SessionScheduleResponse>> response = sessionController.getSchedule(null, date, null);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         List<SessionScheduleResponse> body = response.getBody();
         assertThat(body).isNotNull().hasSize(1);
         assertThat(body.getFirst().startTime()).isEqualTo(LocalDateTime.of(2024, 1, 15, 18, 0));
 
-        verify(sessionService).getSchedule(null, date);
+        verify(sessionService).getSchedule(null, date, null);
     }
 
     @Test
@@ -88,9 +88,9 @@ public class SessionControllerTest {
         LocalDate date = LocalDate.of(2024, 1, 15);
         List<SessionScheduleResponse> sessionList = List.of(createSessionScheduleResponse());
 
-        when(sessionService.getSchedule("Test", date)).thenReturn(sessionList);
+        when(sessionService.getSchedule("Test", date, 1L)).thenReturn(sessionList);
 
-        ResponseEntity<List<SessionScheduleResponse>> response = sessionController.getSchedule("Test", date);
+        ResponseEntity<List<SessionScheduleResponse>> response = sessionController.getSchedule("Test", date, 1L);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         List<SessionScheduleResponse> body = response.getBody();
@@ -98,21 +98,37 @@ public class SessionControllerTest {
         assertThat(body.getFirst().movieTitle()).isEqualTo("Test Movie");
         assertThat(body.getFirst().startTime()).isEqualTo(LocalDateTime.of(2024, 1, 15, 18, 0));
 
-        verify(sessionService).getSchedule("Test", date);
+        verify(sessionService).getSchedule("Test", date, 1L);
     }
 
     @Test
     void getScheduleWhenNoResultsShouldReturnEmptyList() {
         List<SessionScheduleResponse> emptyList = List.of();
 
-        when(sessionService.getSchedule(null, null)).thenReturn(emptyList);
+        when(sessionService.getSchedule(null, null, null)).thenReturn(emptyList);
 
-        ResponseEntity<List<SessionScheduleResponse>> response = sessionController.getSchedule(null, null);
+        ResponseEntity<List<SessionScheduleResponse>> response = sessionController.getSchedule(null, null, null);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         List<SessionScheduleResponse> body = response.getBody();
         assertThat(body).isNotNull().isEmpty();
 
-        verify(sessionService).getSchedule(null, null);
+        verify(sessionService).getSchedule(null, null, null);
+    }
+
+    @Test
+    void getScheduleWithMovieIdShouldReturnFilteredSessions() {
+        List<SessionScheduleResponse> sessionList = List.of(createSessionScheduleResponse());
+
+        when(sessionService.getSchedule(null, null, 1L)).thenReturn(sessionList);
+
+        ResponseEntity<List<SessionScheduleResponse>> response = sessionController.getSchedule(null, null, 1L);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        List<SessionScheduleResponse> body = response.getBody();
+        assertThat(body).isNotNull().hasSize(1);
+        assertThat(body.getFirst().movieId()).isEqualTo(1L);
+
+        verify(sessionService).getSchedule(null, null, 1L);
     }
 }
