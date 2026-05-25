@@ -42,7 +42,10 @@ export const sessionApi = {
   },
 
   public: {
-    getSchedule: (params?: { searchTerm?: string; date?: string }) =>
-      api.get<SessionScheduleResponse[]>(BASE_URL, { params }),
+    getSchedule: (params?: {
+      searchTerm?: string;
+      date?: string;
+      movieId?: number;
+    }) => api.get<SessionScheduleResponse[]>(BASE_URL, { params }),
   },
 };

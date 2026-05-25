@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { sessionApi } from "@/api/sessionApi";
+import { useSession } from "@/hooks/features/sessions/useSession";
 import type { SessionScheduleResponse } from "@/types/session";
 import { Layout } from "@/components/layout/Layout/Layout";
 import { DateFilter } from "@/components/sessions/DateFilter/DateFilter";
@@ -12,9 +12,10 @@ import styles from "./SessionsPage.module.css";
 
 const SessionsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { loading, getSchedule } = useSession();
+
   const [sessions, setSessions] = useState<SessionScheduleResponse[]>([]);
   const [allSessionDates, setAllSessionDates] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const dateParam = searchParams.get("date");
@@ -27,8 +28,8 @@ const SessionsPage: React.FC = () => {
   useEffect(() => {
     const fetchAllDates = async () => {
       try {
-        const response = await sessionApi.public.getSchedule({});
-        const data = response?.data || [];
+        const response = await getSchedule({ movieId: selectedMovieId });
+        const data = response || [];
         const dates = data
           .map((s) => s.startTime.split("T")[0])
           .filter((date, i, arr) => arr.indexOf(date) === i)
@@ -39,33 +40,27 @@ const SessionsPage: React.FC = () => {
       }
     };
     fetchAllDates();
-  }, []);
+  }, [getSchedule, selectedMovieId]);
 
   useEffect(() => {
     const fetchSessions = async () => {
-      setLoading(true);
       setError(null);
 
       try {
-        const response = await sessionApi.public.getSchedule({
+        const response = await getSchedule({
           date: selectedDate,
+          movieId: selectedMovieId,
         });
-        const data = response?.data || [];
-        const filteredData = selectedMovieId
-          ? data.filter((s) => s.movieId === selectedMovieId)
-          : data;
-        setSessions(filteredData);
+        setSessions(response || []);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to load sessions",
         );
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchSessions();
-  }, [selectedDate, selectedMovieId]);
+  }, [selectedDate, selectedMovieId, getSchedule]);
 
   const handleDateChange = (date: string) => {
     const params = new URLSearchParams(searchParams);
