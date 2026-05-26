@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useMovies } from "@/hooks/features/movies/useMovies";
 import type { SessionMovieInfoResponse } from "@/types/session";
@@ -23,6 +23,39 @@ const AGE_RATING_COLORS: Record<string, string> = {
 };
 
 const DEFAULT_POSTER = "/images/default-movie-poster.svg";
+const DATES_PER_VIEW = 5;
+
+const formatDate = (dateString: string): string => {
+  return new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
+const getAgeRatingClass = (ageRating: string): string => {
+  return AGE_RATING_COLORS[ageRating] || styles.ageRatingRed;
+};
+
+const groupSessionsByDate = (
+  sessions: SessionMovieInfoResponse[],
+): { dates: string[]; grouped: Record<string, SessionMovieInfoResponse[]> } => {
+  const grouped: Record<string, SessionMovieInfoResponse[]> = {};
+
+  sessions.forEach((session) => {
+    const date = session.startTime.split("T")[0];
+    if (!grouped[date]) grouped[date] = [];
+    grouped[date].push(session);
+  });
+
+  const dates = Object.keys(grouped).sort();
+  return { dates, grouped };
+};
+
+const getPosterUrl = (url: string | undefined | null): string => {
+  if (!url || url.trim() === "") return DEFAULT_POSTER;
+  return url;
+};
 
 export const MovieDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -35,55 +68,37 @@ export const MovieDetailPage: React.FC = () => {
     Record<string, SessionMovieInfoResponse[]>
   >({});
   const [dateScrollIndex, setDateScrollIndex] = useState(0);
-  const datesPerView = 5;
 
   useEffect(() => {
     if (slug) {
       getBySlug(slug);
     }
-  }, [slug]);
+  }, [slug, getBySlug]);
 
   useEffect(() => {
     if (movieDetail?.sessions?.length) {
-      const grouped: Record<string, SessionMovieInfoResponse[]> = {};
-      movieDetail.sessions.forEach((session) => {
-        const date = session.startTime.split("T")[0];
-        if (!grouped[date]) grouped[date] = [];
-        grouped[date].push(session);
-      });
-
-      const sortedDates = Object.keys(grouped).sort();
-      setDateList(sortedDates);
+      const { dates, grouped } = groupSessionsByDate(movieDetail.sessions);
+      setDateList(dates);
       setSessionsByDate(grouped);
-      setSelectedDate(sortedDates[0]);
+      setSelectedDate(dates[0]);
     }
   }, [movieDetail]);
 
-  const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
+  const handleScrollDates = useCallback(
+    (direction: "left" | "right") => {
+      const maxIndex = Math.max(0, dateList.length - DATES_PER_VIEW);
+      setDateScrollIndex((prev) => {
+        if (direction === "left") return Math.max(0, prev - 1);
+        return Math.min(maxIndex, prev + 1);
+      });
+    },
+    [dateList.length],
+  );
 
-  const scrollDates = (direction: "left" | "right") => {
-    const maxIndex = Math.max(0, dateList.length - datesPerView);
-    if (direction === "left") {
-      setDateScrollIndex(Math.max(0, dateScrollIndex - 1));
-    } else {
-      setDateScrollIndex(Math.min(maxIndex, dateScrollIndex + 1));
-    }
-  };
-
-  const getAgeRatingClass = (ageRating: string) => {
-    return AGE_RATING_COLORS[ageRating] || styles.ageRatingRed;
-  };
-
-  const posterUrl =
-    movieDetail?.posterUrl && movieDetail.posterUrl.trim() !== ""
-      ? movieDetail.posterUrl
-      : DEFAULT_POSTER;
+  const posterUrl = useMemo(
+    () => getPosterUrl(movieDetail?.posterUrl),
+    [movieDetail?.posterUrl],
+  );
 
   if (loading) {
     return (
@@ -109,6 +124,9 @@ export const MovieDetailPage: React.FC = () => {
       </Layout>
     );
   }
+
+  const ageDescriptionKey =
+    movieDetail.ageRating as keyof typeof AgeRatingDescription;
 
   return (
     <Layout>
@@ -156,8 +174,7 @@ export const MovieDetailPage: React.FC = () => {
                 <div className={styles.metaInfo}>
                   <Tooltip
                     content={
-                      AgeRatingDescription[movieDetail.ageRating] ||
-                      "Age rating"
+                      AgeRatingDescription[ageDescriptionKey] || "Age rating"
                     }
                     position="top"
                   >
@@ -266,8 +283,8 @@ export const MovieDetailPage: React.FC = () => {
               selectedDate={selectedDate}
               onDateSelect={setSelectedDate}
               dateScrollIndex={dateScrollIndex}
-              datesPerView={datesPerView}
-              onScrollDates={scrollDates}
+              datesPerView={DATES_PER_VIEW}
+              onScrollDates={handleScrollDates}
             />
           </div>
         </div>

@@ -14,32 +14,38 @@ export const CurrentMoviesPage: React.FC = () => {
 
   const { getCurrentlyShowing, loading } = useMovies();
 
-  const loadMovies = useCallback(async (page: number) => {
-    try {
-      const response = await getCurrentlyShowing({ page, size: 12 });
-      if (response) {
-        if (page === 0) {
-          setMovies(response.content);
-        } else {
-          setMovies((prev) => [...prev, ...response.content]);
+  const loadMovies = useCallback(
+    async (page: number) => {
+      setError(null);
+
+      try {
+        const response = await getCurrentlyShowing({ page, size: 12 });
+        if (response) {
+          setMovies((prev) =>
+            page === 0 ? response.content : [...prev, ...response.content],
+          );
+          setPagination(response);
         }
-        setPagination(response);
-        setError(null);
+      } catch (err) {
+        setError(err as Error);
       }
-    } catch (err) {
-      setError(err as Error);
-    }
-  }, []);
+    },
+    [getCurrentlyShowing],
+  );
 
   useEffect(() => {
     loadMovies(0);
-  }, []);
+  }, [loadMovies]);
 
-  const handleLoadMore = () => {
+  const handleLoadMore = useCallback(() => {
     if (pagination && pagination.number < pagination.totalPages - 1) {
       loadMovies(pagination.number + 1);
     }
-  };
+  }, [pagination, loadMovies]);
+
+  const handleRetry = useCallback(() => {
+    loadMovies(0);
+  }, [loadMovies]);
 
   return (
     <div className={styles.page}>
@@ -49,7 +55,7 @@ export const CurrentMoviesPage: React.FC = () => {
         loading={loading}
         error={error}
         emptyMessage="No movies currently playing"
-        onRetry={() => loadMovies(0)}
+        onRetry={handleRetry}
         onLoadMore={handleLoadMore}
         variant="load-more"
       />

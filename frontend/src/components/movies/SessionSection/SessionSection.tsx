@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { SessionMovieInfoResponse } from "@/types/session";
@@ -14,10 +14,11 @@ interface SessionSectionProps {
   onScrollDates: (direction: "left" | "right") => void;
 }
 
+const today = new Date();
+today.setHours(0, 0, 0, 0);
+
 const getDayInfo = (dateString: string) => {
   const date = new Date(dateString);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
   const dateOnly = new Date(
     date.getFullYear(),
     date.getMonth(),
@@ -25,10 +26,11 @@ const getDayInfo = (dateString: string) => {
   );
 
   if (dateOnly.getTime() === today.getTime()) {
-    return { shortLabel: "Today" };
+    return { shortLabel: "Today", dayNumber: date.getDate() };
   }
   return {
     shortLabel: date.toLocaleDateString("en-US", { weekday: "short" }),
+    dayNumber: date.getDate(),
   };
 };
 
@@ -50,13 +52,20 @@ export const SessionSection: React.FC<SessionSectionProps> = ({
   onScrollDates,
 }) => {
   const navigate = useNavigate();
-  const visibleDates = dateList.slice(
-    dateScrollIndex,
-    dateScrollIndex + datesPerView,
+
+  const visibleDates = useMemo(
+    () => dateList.slice(dateScrollIndex, dateScrollIndex + datesPerView),
+    [dateList, dateScrollIndex, datesPerView],
   );
-  const currentSessions = selectedDate
-    ? sessionsByDate[selectedDate] || []
-    : [];
+
+  const currentSessions = useMemo(
+    () => (selectedDate ? sessionsByDate[selectedDate] || [] : []),
+    [selectedDate, sessionsByDate],
+  );
+
+  const canScrollLeft = dateScrollIndex > 0;
+  const canScrollRight = dateScrollIndex < dateList.length - datesPerView;
+  const showScrollButtons = dateList.length > datesPerView;
 
   if (dateList.length === 0) {
     return (
@@ -75,11 +84,11 @@ export const SessionSection: React.FC<SessionSectionProps> = ({
       <h2 className={styles.sectionTitle}>Showtimes</h2>
 
       <div className={styles.dateCarousel}>
-        {dateList.length > datesPerView && (
+        {showScrollButtons && (
           <button
             className={styles.dateNavButton}
             onClick={() => onScrollDates("left")}
-            disabled={dateScrollIndex === 0}
+            disabled={!canScrollLeft}
           >
             <ChevronLeft size={18} />
           </button>
@@ -87,7 +96,7 @@ export const SessionSection: React.FC<SessionSectionProps> = ({
 
         <div className={styles.dateList}>
           {visibleDates.map((date) => {
-            const { shortLabel } = getDayInfo(date);
+            const { shortLabel, dayNumber } = getDayInfo(date);
             const isSelected = selectedDate === date;
             return (
               <button
@@ -96,19 +105,17 @@ export const SessionSection: React.FC<SessionSectionProps> = ({
                 onClick={() => onDateSelect(date)}
               >
                 <span className={styles.dateButtonDay}>{shortLabel}</span>
-                <span className={styles.dateButtonNumber}>
-                  {new Date(date).getDate()}
-                </span>
+                <span className={styles.dateButtonNumber}>{dayNumber}</span>
               </button>
             );
           })}
         </div>
 
-        {dateList.length > datesPerView && (
+        {showScrollButtons && (
           <button
             className={styles.dateNavButton}
             onClick={() => onScrollDates("right")}
-            disabled={dateScrollIndex >= dateList.length - datesPerView}
+            disabled={!canScrollRight}
           >
             <ChevronRight size={18} />
           </button>
