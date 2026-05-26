@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useSession } from "@/hooks/features/sessions/useSession";
 import type { SessionScheduleResponse } from "@/types/session";
@@ -10,6 +10,13 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { Button } from "@/components/ui/Button/Button";
 import styles from "./SessionsPage.module.css";
 
+const getTodayString = (): string => new Date().toISOString().split("T")[0];
+
+const extractUniqueDates = (sessions: SessionScheduleResponse[]): string[] => {
+  const dates = sessions.map((s) => s.startTime.split("T")[0]);
+  return [...new Set(dates)].sort();
+};
+
 const SessionsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { loading, getSchedule } = useSession();
@@ -18,69 +25,68 @@ const SessionsPage: React.FC = () => {
   const [allSessionDates, setAllSessionDates] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  const today = useMemo(() => getTodayString(), []);
   const dateParam = searchParams.get("date");
   const movieIdParam = searchParams.get("movieId");
-
-  const today = new Date().toISOString().split("T")[0];
   const selectedDate = dateParam || today;
   const selectedMovieId = movieIdParam ? parseInt(movieIdParam) : undefined;
 
   useEffect(() => {
-    const fetchAllDates = async () => {
-      try {
-        const response = await getSchedule({ movieId: selectedMovieId });
-        const data = response || [];
-        const dates = data
-          .map((s) => s.startTime.split("T")[0])
-          .filter((date, i, arr) => arr.indexOf(date) === i)
-          .sort();
-        setAllSessionDates(dates);
-      } catch {
-        setAllSessionDates([]);
-      }
-    };
-    fetchAllDates();
-  }, [getSchedule, selectedMovieId]);
-
-  useEffect(() => {
-    const fetchSessions = async () => {
+    const fetchData = async () => {
       setError(null);
 
       try {
-        const response = await getSchedule({
+        const data = await getSchedule({
           date: selectedDate,
           movieId: selectedMovieId,
         });
-        setSessions(response || []);
+
+        const sessionList = data || [];
+        setSessions(sessionList);
+
+        if (selectedMovieId) {
+          const dates = extractUniqueDates(sessionList);
+          setAllSessionDates((prev) => (prev.length === 0 ? dates : prev));
+        } else {
+          const dates = extractUniqueDates(sessionList);
+          setAllSessionDates(dates);
+        }
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to load sessions",
         );
+        setSessions([]);
       }
     };
 
-    fetchSessions();
+    fetchData();
   }, [selectedDate, selectedMovieId, getSchedule]);
 
-  const handleDateChange = (date: string) => {
-    const params = new URLSearchParams(searchParams);
-    params.set("date", date);
-    setSearchParams(params);
-  };
+  const handleDateChange = useCallback(
+    (date: string) => {
+      const params = new URLSearchParams(searchParams);
+      params.set("date", date);
+      setSearchParams(params);
+    },
+    [searchParams, setSearchParams],
+  );
 
-  const handleMovieChange = (movieId: number | undefined) => {
-    const params = new URLSearchParams(searchParams);
-    if (movieId) {
-      params.set("movieId", movieId.toString());
-    } else {
-      params.delete("movieId");
-    }
-    setSearchParams(params);
-  };
+  const handleMovieChange = useCallback(
+    (movieId: number | undefined) => {
+      const params = new URLSearchParams(searchParams);
+      if (movieId) {
+        params.set("movieId", movieId.toString());
+      } else {
+        params.delete("movieId");
+      }
+      setSearchParams(params);
+    },
+    [searchParams, setSearchParams],
+  );
 
-  const handleClearFilters = () => {
+  const handleClearFilters = useCallback(() => {
     setSearchParams(new URLSearchParams());
-  };
+  }, [setSearchParams]);
 
   const hasFilters = selectedMovieId !== undefined || selectedDate !== today;
   const uniqueMoviesCount = new Set(sessions.map((s) => s.movieId)).size;

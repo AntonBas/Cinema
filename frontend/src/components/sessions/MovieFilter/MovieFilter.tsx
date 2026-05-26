@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { movieApi } from "@/api/movieApi";
 import { Check } from "lucide-react";
 import type { MovieSessionSearchResponse } from "@/types/movie";
@@ -10,15 +10,19 @@ interface MovieFilterProps {
 }
 
 const MIN_SEARCH_LENGTH = 2;
+const DEBOUNCE_MS = 300;
+
+type SearchStatus = "idle" | "loading" | "results" | "empty";
 
 export const MovieFilter: React.FC<MovieFilterProps> = ({
   selectedMovieId,
   onMovieChange,
 }) => {
   const [movies, setMovies] = useState<MovieSessionSearchResponse[]>([]);
-  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [status, setStatus] = useState<SearchStatus>("idle");
   const [showDropdown, setShowDropdown] = useState(false);
+
   const timeoutRef = useRef<number | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -35,45 +39,58 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, []);
-
-  const searchMovies = async (query: string) => {
-    if (!query.trim() || query.trim().length < MIN_SEARCH_LENGTH) {
+  const searchMovies = useCallback(async (query: string) => {
+    if (query.trim().length < MIN_SEARCH_LENGTH) {
       setMovies([]);
+      setStatus("idle");
       return;
     }
 
-    setLoading(true);
+    setStatus("loading");
     try {
       const response = await movieApi.public.search(query);
-      setMovies(response?.data || []);
+      const data = response?.data || [];
+      setMovies(data);
+      setStatus(data.length > 0 ? "results" : "empty");
       setShowDropdown(true);
     } catch {
       setMovies([]);
-    } finally {
-      setLoading(false);
+      setStatus("empty");
     }
-  };
+  }, []);
+
+  const debouncedSearch = useCallback(
+    (query: string) => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = window.setTimeout(
+        () => searchMovies(query),
+        DEBOUNCE_MS,
+      );
+    },
+    [searchMovies],
+  );
+
+  const resetSearch = useCallback(() => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setSearchTerm("");
+    setMovies([]);
+    setStatus("idle");
+    setShowDropdown(false);
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
     setShowDropdown(true);
 
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-
     if (!value.trim()) {
-      setMovies([]);
+      resetSearch();
       onMovieChange(undefined);
-      setShowDropdown(false);
     } else if (value.trim().length >= MIN_SEARCH_LENGTH) {
-      timeoutRef.current = window.setTimeout(() => searchMovies(value), 300);
+      debouncedSearch(value);
     } else {
       setMovies([]);
+      setStatus("idle");
     }
   };
 
@@ -82,25 +99,17 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({
     onMovieChange(movie.id);
     setShowDropdown(false);
     setMovies([]);
+    setStatus("idle");
   };
 
   const handleClearSelection = () => {
-    setSearchTerm("");
+    resetSearch();
     onMovieChange(undefined);
-    setShowDropdown(false);
-    setMovies([]);
   };
 
-  const showResults =
-    showDropdown &&
-    searchTerm.length >= MIN_SEARCH_LENGTH &&
-    !loading &&
-    movies.length > 0;
-  const showNoResults =
-    showDropdown &&
-    searchTerm.length >= MIN_SEARCH_LENGTH &&
-    !loading &&
-    movies.length === 0;
+  const isLoading = status === "loading";
+  const showResults = showDropdown && status === "results" && movies.length > 0;
+  const showNoResults = showDropdown && status === "empty";
 
   return (
     <div className={styles.container} ref={dropdownRef}>
@@ -126,7 +135,7 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({
             placeholder="Search for a movie..."
             className={styles.searchInput}
           />
-          {loading && (
+          {isLoading && (
             <div className={styles.loadingIndicator}>
               <div className={styles.spinner} />
             </div>
@@ -141,7 +150,9 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({
               key={movie.id}
               type="button"
               onClick={() => handleMovieSelect(movie)}
-              className={`${styles.movieOption} ${selectedMovieId === movie.id ? styles.selected : ""}`}
+              className={`${styles.movieOption} ${
+                selectedMovieId === movie.id ? styles.selected : ""
+              }`}
             >
               <div className={styles.movieContent}>
                 <span className={styles.movieTitle}>{movie.title}</span>
