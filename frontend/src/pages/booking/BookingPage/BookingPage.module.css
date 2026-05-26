@@ -76,13 +76,6 @@
   height: fit-content;
 }
 
-.loading {
-  text-align: center;
-  padding: 100px 20px;
-  font-size: 18px;
-  color: var(--color-text-secondary);
-}
-
 .error {
   text-align: center;
   padding: 100px 20px;
