@@ -17,11 +17,18 @@ const extractUniqueDates = (sessions: SessionScheduleResponse[]): string[] => {
   return [...new Set(dates)].sort();
 };
 
+const filterByDate = (
+  sessions: SessionScheduleResponse[],
+  date: string,
+): SessionScheduleResponse[] => {
+  return sessions.filter((s) => s.startTime.startsWith(date));
+};
+
 const SessionsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { loading, getSchedule } = useSession();
 
-  const [sessions, setSessions] = useState<SessionScheduleResponse[]>([]);
+  const [allSessions, setAllSessions] = useState<SessionScheduleResponse[]>([]);
   const [allSessionDates, setAllSessionDates] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,35 +39,30 @@ const SessionsPage: React.FC = () => {
   const selectedMovieId = movieIdParam ? parseInt(movieIdParam) : undefined;
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchSessions = async () => {
       setError(null);
 
       try {
-        const data = await getSchedule({
-          date: selectedDate,
-          movieId: selectedMovieId,
-        });
-
+        const data = await getSchedule({ movieId: selectedMovieId });
         const sessionList = data || [];
-        setSessions(sessionList);
-
-        if (selectedMovieId) {
-          const dates = extractUniqueDates(sessionList);
-          setAllSessionDates((prev) => (prev.length === 0 ? dates : prev));
-        } else {
-          const dates = extractUniqueDates(sessionList);
-          setAllSessionDates(dates);
-        }
+        setAllSessions(sessionList);
+        setAllSessionDates(extractUniqueDates(sessionList));
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to load sessions",
         );
-        setSessions([]);
+        setAllSessions([]);
+        setAllSessionDates([]);
       }
     };
 
-    fetchData();
-  }, [selectedDate, selectedMovieId, getSchedule]);
+    fetchSessions();
+  }, [selectedMovieId]);
+
+  const sessions = useMemo(
+    () => filterByDate(allSessions, selectedDate),
+    [allSessions, selectedDate],
+  );
 
   const handleDateChange = useCallback(
     (date: string) => {
