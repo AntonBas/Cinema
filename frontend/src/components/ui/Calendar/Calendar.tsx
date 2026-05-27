@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import styles from "./CustomCalendar.module.css";
+import styles from "./Calendar.module.css";
 
-interface CustomCalendarProps {
+interface CalendarProps {
   selectedDate: string;
   onDateChange: (date: string) => void;
-  sessionDates?: string[];
+  highlightedDates?: string[];
 }
 
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -26,26 +26,26 @@ const getFirstDayOfMonth = (year: number, month: number): number => {
   return day === 0 ? 6 : day - 1;
 };
 
-export const CustomCalendar: React.FC<CustomCalendarProps> = ({
+export const Calendar: React.FC<CalendarProps> = ({
   selectedDate,
   onDateChange,
-  sessionDates = [],
+  highlightedDates = [],
 }) => {
   const initialDate = selectedDate ? new Date(selectedDate) : new Date();
   const [currentMonth, setCurrentMonth] = useState(
     new Date(initialDate.getFullYear(), initialDate.getMonth(), 1),
   );
 
-  const availableDatesSet = useMemo(() => {
+  const highlightedSet = useMemo(() => {
     const dates = new Set<string>();
-    sessionDates.forEach((dateStr) => {
+    highlightedDates.forEach((dateStr) => {
       const date = new Date(dateStr);
       if (!isNaN(date.getTime())) {
         dates.add(formatDate(date));
       }
     });
     return dates;
-  }, [sessionDates]);
+  }, [highlightedDates]);
 
   const handlePrevMonth = () => {
     setCurrentMonth(
@@ -90,7 +90,7 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
     const dateString = formatDate(date);
     const isSelected = dateString === selectedDate;
     const isToday = dateString === today;
-    const hasSession = availableDatesSet.has(dateString);
+    const isHighlighted = highlightedSet.has(dateString);
     const isPast = date < todayDate && !isToday;
 
     days.push(
@@ -101,11 +101,11 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
         className={`${styles.day} 
                     ${isSelected ? styles.selected : ""} 
                     ${isToday ? styles.today : ""} 
-                    ${hasSession ? styles.hasSession : ""} 
+                    ${isHighlighted ? styles.highlighted : ""} 
                     ${isPast ? styles.disabled : ""}`}
       >
         <span className={styles.dayNumber}>{day}</span>
-        {hasSession && <div className={styles.sessionDot} />}
+        {isHighlighted && <div className={styles.highlightedDot} />}
       </button>,
     );
   }
@@ -127,12 +127,14 @@ export const CustomCalendar: React.FC<CustomCalendarProps> = ({
         </button>
       </div>
       <div className={styles.daysGrid}>{days}</div>
-      <div className={styles.legend}>
-        <div className={styles.legendItem}>
-          <div className={styles.legendDot} />
-          <span>Available sessions</span>
+      {highlightedDates.length > 0 && (
+        <div className={styles.legend}>
+          <div className={styles.legendItem}>
+            <div className={styles.legendDot} />
+            <span>Available sessions</span>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
