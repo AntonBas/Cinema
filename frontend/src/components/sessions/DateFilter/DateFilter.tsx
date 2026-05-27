@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
-import { CustomCalendar } from "../CustomCalendar/CustomCalendar";
+import { Calendar } from "@/components/ui/Calendar/Calendar";
 import styles from "./DateFilter.module.css";
 
 interface DateFilterProps {
@@ -95,10 +95,10 @@ export const DateFilter: React.FC<DateFilterProps> = ({
 
       {isCalendarOpen && (
         <div className={styles.calendarWrapper}>
-          <CustomCalendar
+          <Calendar
             selectedDate={selectedDate}
             onDateChange={handleDateSelect}
-            sessionDates={sessionDates}
+            highlightedDates={sessionDates}
           />
         </div>
       )}
