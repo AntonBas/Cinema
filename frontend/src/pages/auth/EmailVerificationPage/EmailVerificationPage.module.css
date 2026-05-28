@@ -28,7 +28,8 @@
 }
 
 .icon {
-  margin-bottom: var(--space-6);
+  margin: 0 auto;
+  padding-bottom: var(--space-6);
   animation: scaleIn var(--transition-normal);
 }
 

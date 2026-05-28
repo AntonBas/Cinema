@@ -19,9 +19,6 @@ const RegistrationSuccessModal: React.FC<SuccessModalProps> = ({
 }) => (
   <Modal isOpen={isOpen} onClose={onClose} size="small">
     <div className={styles.successContent}>
-      <div className={styles.successAnimation}>
-        <PartyPopper size={64} className={styles.successIcon} />
-      </div>
       <div className={styles.successText}>
         <h3 className={styles.successTitle}>Registration Successful!</h3>
         <p className={styles.successMessage}>

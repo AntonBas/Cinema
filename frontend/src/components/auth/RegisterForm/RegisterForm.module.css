@@ -97,10 +97,6 @@
   padding: var(--space-2) 0;
 }
 
-.successAnimation {
-  margin-bottom: var(--space-6);
-}
-
 .successIcon {
   color: var(--color-primary);
 }
