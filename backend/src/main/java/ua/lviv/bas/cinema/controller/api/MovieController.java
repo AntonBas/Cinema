@@ -12,7 +12,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
@@ -26,7 +25,6 @@ import ua.lviv.bas.cinema.service.cinema.MovieService;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @RestController
@@ -53,7 +51,7 @@ public class MovieController {
             throw new MovieNotFoundException(slug);
         }
 
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(1, TimeUnit.HOURS)).body(movie);
+        return ResponseEntity.ok().body(movie);
     }
 
     @RateLimit(value = 20, duration = 1)
@@ -66,8 +64,7 @@ public class MovieController {
             @PageableDefault(size = 12, sort = "releaseDate", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("GET /api/movies/currently-showing - Getting currently showing movies");
         var result = movieService.getMovies(null, MovieStatus.CURRENT, pageable);
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES))
-                .body(PageResponse.from(result));
+        return ResponseEntity.ok().body(PageResponse.from(result));
     }
 
     @RateLimit(value = 20, duration = 1)
@@ -80,8 +77,7 @@ public class MovieController {
             @PageableDefault(size = 12, sort = "releaseDate", direction = Sort.Direction.ASC) Pageable pageable) {
         log.info("GET /api/movies/upcoming - Getting upcoming movies");
         var result = movieService.getMovies(null, MovieStatus.UPCOMING, pageable);
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES))
-                .body(PageResponse.from(result));
+        return ResponseEntity.ok().body(PageResponse.from(result));
     }
 
     @RateLimit(value = 20, duration = 1)
@@ -94,7 +90,7 @@ public class MovieController {
         log.info("GET /api/movies/current/home - Getting current movies for home page");
         var pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.DESC, "releaseDate"));
         var movies = movieService.getCurrentMovies(pageable);
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES)).body(movies);
+        return ResponseEntity.ok().body(movies);
     }
 
     @RateLimit(value = 20, duration = 1)
@@ -107,7 +103,7 @@ public class MovieController {
         log.info("GET /api/movies/upcoming/home - Getting upcoming movies for home page");
         var pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.ASC, "releaseDate"));
         var movies = movieService.getUpcomingMovies(pageable);
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES)).body(movies);
+        return ResponseEntity.ok().body(movies);
     }
 
     @RateLimit(value = 20, duration = 1)
@@ -120,7 +116,7 @@ public class MovieController {
         log.info("GET /api/movies/leaving-soon/home - Getting leaving soon movies for home page");
         var pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.ASC, "endShowingDate"));
         var movies = movieService.getLeavingSoonMovies(pageable);
-        return ResponseEntity.ok().cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES)).body(movies);
+        return ResponseEntity.ok().body(movies);
     }
 
     @RateLimit(value = 50, duration = 1)
