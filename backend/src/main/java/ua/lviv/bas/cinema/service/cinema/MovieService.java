@@ -99,7 +99,6 @@ public class MovieService {
                 .orElseThrow(() -> new MovieNotFoundException(id));
     }
 
-    @Cacheable(value = "movieDetails", key = "#slug")
     public MovieDetailResponse getMovieBySlug(String slug) {
         Movie movie = movieRepository.findMovieBySlug(slug)
                 .orElseThrow(() -> new MovieNotFoundException(slug));
