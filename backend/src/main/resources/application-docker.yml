@@ -7,6 +7,9 @@ spring:
     hikari:
       maximum-pool-size: 10
 
+booking:
+  expiration-minutes: 20
+
 scheduler:
   birthday-bonus:
     cron: "0 0 9 * * *"
@@ -18,7 +21,7 @@ scheduler:
   session-status:
     cron: "0 */5 * * * *"
   booking:
-    expiration-interval: 180000
+    expiration-interval: 60000
     cleanup-cron: "0 0 4 * * *"
     reminder-cron: "0 */10 * * * *"
   payment:
