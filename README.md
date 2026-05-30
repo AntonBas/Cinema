@@ -1,10 +1,10 @@
 # Cinema Management System
 
-> A production-style cinema booking system designed to handle real-world backend challenges:
+> A cinema booking system built to handle real backend challenges:
 >
-> - high-concurrency seat booking without double reservations
-> - async payment flows with idempotent callbacks
-> - distributed consistency across booking, payment, and refunds
+> - How to sell tickets without selling the same seat twice
+> - How to safely handle payments when the payment gateway is unreliable
+> - How to keep data consistent when things go wrong
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.4.7-green)
@@ -12,52 +12,55 @@
 ![React](https://img.shields.io/badge/React-19.1.1-61DAFB)
 ![Docker](https://img.shields.io/badge/Docker-✓-blue)
 
+### Watch the demo
+
+[![Cinema System Demo](https://img.youtube.com/vi/yTqxdIm_VAo/maxresdefault.jpg)](https://www.youtube.com/watch?v=yTqxdIm_VAo)
 ![Booking Demo](docs/images/booking.gif)
 
 ---
 
-## Why this project is not trivial
+## Why this isn't just another CRUD app
 
-This system is intentionally designed to replicate problems typically found in real-world backend systems:
+I intentionally built this to tackle problems that happen in real production systems:
 
-- Preventing **race conditions** during concurrent seat selection
-- Handling **eventual consistency** between booking and payment
-- Ensuring **idempotent state transitions** under unreliable external callbacks
-- Managing **time-based resource locking and expiration**
-- Supporting **dynamic business rules without code changes**
+- **Race conditions** — two people click the same seat at the same time. Who gets it?
+- **Unreliable callbacks** — the payment gateway might send the same response twice, or not at all
+- **Stuck resources** — someone picks seats, walks away, and never pays. Seats must free up automatically
+- **Changing business rules** — bonus program rules you can tweak without touching the code
 
-> **For complete feature descriptions, user guides, and detailed setup instructions, see the [full documentation](docs/DOCS.md).**
+> For complete feature descriptions, user guides, and detailed setup instructions, see the [full documentation](docs/DOCS.md).
 
 ---
 
 ## Key Engineering Highlights
 
-The system is designed to ensure correctness under concurrency, external failures, and eventual consistency requirements.
+The system is built to stay correct even when things go wrong — concurrent requests, failed payments, or missed callbacks.
 
-- **Two-phase locking (optimistic + time-bound reservation)**
-  - prevents overbooking under concurrent seat selection
-  - reduces database contention compared to pessimistic locking
-  - ensures safe allocation under race conditions
+- **Two-phase locking**
+  - Stage 1: seat is temporarily locked for 5 minutes while you decide
+  - Stage 2: once you confirm, it's reserved for 20 minutes to give you time to pay
+  - Prevents double booking without locking the whole database
 
-- **Idempotent payment processing (LiqPay callbacks)**
-  - guarantees single transition to `PAID` state
-  - safely handles duplicate or delayed webhook requests
-  - prevents inconsistent order state updates
+- **Idempotent payment handling**
+  - LiqPay may send the same callback multiple times — the system handles it safely
+  - Order only moves to `PAID` once, no matter how many callbacks arrive
+  - No duplicate charges, no broken order states
 
-- **Scheduler-based consistency recovery**
-  - releases expired seat locks and abandoned reservations
-  - restores correct order state after missed callbacks
-  - ensures eventual consistency of booking lifecycle
+- **Scheduler-based recovery**
+  - A background job runs regularly to clean up expired seat locks
+  - Cancels bookings that were never paid for
+  - Updates session statuses (upcoming → completed)
+  - Acts as a safety net when external callbacks fail
 
-- **Configurable rule engine (bonus system)**
-  - allows runtime changes of business rules without redeploy
-  - decouples promotion logic from core services
-  - supports flexible discount and reward strategies
+- **Configurable bonus engine**
+  - Business rules live in the database, not the code
+  - Change bonus amounts, min/max spend limits, or accrual percentages anytime
+  - No redeploy needed
 
 - **Audit logging**
-  - tracks all financial and administrative actions
-  - provides full lifecycle traceability per order
-  - supports debugging and operational audits
+  - Every important action is tracked: who did what, when
+  - Full traceability per order from booking to refund
+  - Makes debugging and operational audits straightforward
 
 ---
 
@@ -96,7 +99,7 @@ flowchart TD
 
     %% ========== CONCURRENCY FLOW ==========
     D --> L[Seat Lock Manager<br/>5 min temporary lock]:::backend
-    L --> R[Reservation Window<br/>30 min hold]:::backend
+    L --> R[Reservation Window<br/>20 min hold]:::backend
 
     %% ========== PAYMENT FLOW ==========
     E --> P[LiqPay API]:::external
@@ -136,36 +139,22 @@ flowchart TD
 
 ## Key Flows
 
-### Booking Flow (Two-Phase Locking)
+### Booking Flow — How we prevent double booking
 
-This flow ensures correctness under concurrent requests and partial system failures.
+The system uses two time-limited locks to make sure the same seat can't be sold twice.
 
-### Process
+**Step by step**
 
-1. **Seat Selection**
-   - user selects seats
-   - system creates temporary lock (5 minutes)
+1. **You pick seats** — the system locks them for 5 minutes so nobody else can take them while you decide
+2. **You confirm** — seats are now held for 20 minutes, giving you time to pay. If you don't pay in time, they're automatically released
+3. **You pay** — LiqPay handles the payment, then notifies our system
+4. **Done** — QR ticket is generated, email is sent, bonus points are added
 
-2. **Reservation**
-   - booking is confirmed
-   - seats are reserved for 30-minute payment window
-   - if payment is not completed within 30 minutes, seats are automatically released
+**What's guaranteed**
 
-3. **Payment**
-   - LiqPay processes payment
-   - system updates order state
-
-4. **Completion**
-   - QR ticket generated
-   - confirmation email sent
-   - bonus points applied
-
-### Guarantees
-
-- prevents double booking under concurrent requests
-- safe handling of parallel seat selection
-- idempotent payment callback processing
-- automatic cleanup of expired locks
+- No two people can book the same seat, even if they click at the exact same time
+- If you walk away without paying, seats free up automatically
+- If LiqPay sends the payment confirmation twice, nothing breaks — the order stays consistent
 
 ```mermaid
 sequenceDiagram
@@ -185,7 +174,7 @@ sequenceDiagram
     User->>Frontend: Confirm booking
     Frontend->>Backend: POST /api/booking/confirm
     Backend->>DB: Create order (PENDING)
-    Backend->>DB: Reserve seats (30 min)
+    Backend->>DB: Reserve seats (20 min)
     DB-->>Backend: Reserved
     Backend-->>Frontend: Redirect to payment
 
@@ -204,51 +193,75 @@ sequenceDiagram
     Backend-->>Frontend: Booking complete
 ```
 
-**Key guarantees:**
-
-- No double booking under concurrent requests
-- Seats are eventually released if payment is not completed
-- Payment callbacks are safe to retry (idempotent)
-
 > See [full documentation](docs/DOCS.md#booking-process) for detailed step-by-step user flow with screenshots.
 
-### Refund Flow
+### Refund Flow — How refunds work
 
-1. User requests refund from “My Tickets”
-2. System validates refund eligibility
-3. Refund request is sent to payment provider
-4. Order state is updated to `REFUNDED`
-5. Bonus balance is adjusted if required
+Users can get their money back, but the amount depends on how early they cancel.
 
-### Bonus Flow (Configurable Rules Engine)
+**Step by step**
 
-A dynamic reward system decoupled from core booking logic.
+1. **You request a refund** — go to "My Tickets", pick a ticket, click "Refund"
+2. **System checks eligibility** — refund percentage depends on how much time is left until the session starts
+3. **Refund is processed** — the money goes back to your card via LiqPay
+4. **Everything updates** — ticket status changes to `REFUNDED`, bonus points used in the booking are taken back
 
-### Process
+**Refund rules**
 
-1. User earns points after successful payment
-2. Points are added to user balance
-3. User applies points during checkout
-4. Discount is calculated during payment
-5. Final amount is sent to payment provider
+| Time Before Session | Refund |
+| ------------------- | ------ |
+| More than 24 hours  | 100%   |
+| 6 to 24 hours       | 85%    |
+| Less than 6 hours   | 50%    |
+
+**What's guaranteed**
+
+- Refund amount is always calculated based on the rules, no manual fiddling
+- If bonus points were used, they're correctly deducted from your balance
+- The seat becomes available again for other users
+
+### Bonus Flow
+
+A simple loyalty system that runs independently from bookings.
+
+**Step by step**
+
+1. You earn points after each successful payment — the percentage is configurable by admin
+2. Points land in your bonus balance automatically
+3. During checkout, you can spend points to lower the price
+4. There are min/max limits on how many points you can use per booking
+5. The final discounted amount goes to LiqPay
+
+**Bonus rules (configurable by admin without touching code)**
+
+| Rule            | What it does                              | Default  |
+| --------------- | ----------------------------------------- | -------- |
+| Welcome Bonus   | Points you get after verifying your email | 100      |
+| Birthday Bonus  | Points awarded on your birthday           | 200      |
+| Booking Spend   | Min/max points you can use per booking    | 10 / 50% |
+| Payment Accrual | % of ticket price returned as points      | 5%       |
 
 ---
 
 ## Engineering Decisions & Trade-offs
 
-- Avoided pessimistic DB locking to reduce contention under load
-- Avoided introducing Redis or message queues to keep the system simpler and self-contained (trade-off: reduced scalability)
-- Used scheduler instead of event-driven architecture as a trade-off between complexity and reliability
+Every choice has a reason. Here's what I did and why.
+
+- **Optimistic locking, not pessimistic** — keeps the database fast under load. Instead of locking rows for everyone, the system only checks for conflicts at the last moment
+- **No Redis, no message queues** — the whole thing runs on just PostgreSQL and a scheduler. This keeps it simple to run and debug. Trade-off: it wouldn't scale to millions of users, but it's rock-solid for smaller audiences
+- **Scheduler instead of event-driven architecture** — a background job that runs every few seconds is simpler than setting up Kafka or RabbitMQ. It's predictable, easy to monitor, and does the job
 
 ---
 
 ## Testing & Validation
 
-- Simulated concurrent booking requests to verify no double booking
-- Replayed payment callbacks to validate idempotency
-- Tested lock expiration and cleanup via scheduler
-- Verified refund edge cases based on time windows
-- Confirmed seat auto-release after 30 minutes without payment
+Here's how I made sure the system actually works under stress.
+
+- Simulated 10 users clicking the same seat at once — only one got it
+- Sent the same LiqPay callback 5 times — order only moved to `PAID` once
+- Booked a seat and waited 20 minutes — it auto-released on schedule
+- Tested refunds at different time windows — 100%, 85%, 50% all calculated correctly
+- Killed the app mid-payment and restarted — scheduler recovered all stuck orders
 
 ---
 
@@ -316,5 +329,5 @@ cd backend
 ## Highlights
 
 - Designed as a real-world backend system, not just CRUD
-- Focus on consistency, concurrency, and scalability
+- Focus on data consistency, safe concurrency, and fault tolerance
 - Covers full lifecycle: booking → payment → refund → audit
