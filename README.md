@@ -228,6 +228,15 @@ The system was tested against real failure scenarios:
 
 ---
 
+## What I Learned
+
+- **Pessimistic vs Optimistic locking** — row-level locks for high-collision operations, `@Version` for everything else. Knowing which to use is the real skill.
+- **Idempotency in payment systems** — conditional state updates (`WHERE status = 'PENDING'`) are simpler and safer than distributed locks.
+- **Scheduler as a safety net** — a polling job that cleans up expired state is predictable, monitorable, and needs zero extra infrastructure.
+- **Trade-off communication** — being explicit about what the system doesn't do builds more trust than pretending it scales infinitely.
+
+---
+
 ## Tech Stack
 
 **Backend**
