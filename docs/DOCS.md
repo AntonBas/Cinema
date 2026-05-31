@@ -254,7 +254,7 @@ Step-by-step ticket booking with seat reservation and secure payment.
 **4. Booking Confirmation**
 
 - Click **"Book Now"** to confirm selection
-- **Second-level reservation:** Seats are booked for **30 minutes** (time to complete payment)
+- **Second-level reservation:** Seats are booked for **20 minutes** (time to complete payment)
 - Redirect to booking summary page
 
 **5. Booking Summary**
