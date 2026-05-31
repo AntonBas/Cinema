@@ -465,11 +465,12 @@ Three tabs for complete movie content management:
 
 ### Concurrency Control
 
-The seat booking system uses a two-stage reservation protocol to prevent double bookings:
+The seat booking system uses a two-stage reservation protocol with mixed locking strategies:
 
-- **Stage 1 (5-minute lock):** When a user selects a seat, a temporary lock is acquired
-- **Stage 2 (30-minute reservation):** After confirming the booking, seats are reserved for payment
-- **Cleanup:** A scheduled job releases expired locks and cancels unpaid bookings
+- **Stage 1 (5-minute pessimistic lock):** When a user selects a seat, a row-level lock (`SELECT ... FOR UPDATE`) is acquired. Other users immediately see the seat as taken and cannot select it.
+- **Stage 2 (20-minute reservation):** After confirming the booking, seats are reserved for payment. If unpaid, they are released automatically.
+- **Optimistic locking (`@Version`)** is used for Booking, BonusAccount, and other entities where conflicts are rare.
+- **Cleanup:** A scheduled job releases expired locks, cancels unpaid bookings, and updates session statuses.
 
 ### Payment Flow
 
@@ -477,8 +478,18 @@ External payment handled via LiqPay:
 
 - User redirected to LiqPay payment page
 - LiqPay sends async callback via Ngrok tunnel (local dev) or directly (production)
-- System uses idempotency checks to prevent duplicate updates
-- Scheduler polls for payment status as fallback
+- System uses **idempotent state transitions** (`UPDATE ... WHERE status = 'PENDING'`) to prevent duplicate updates
+- Duplicate callbacks are safely ignored — order moves to PAID exactly once
+- Scheduler acts as fallback when callbacks are lost
+
+### Self-Healing Recovery
+
+A background scheduler ensures system consistency when things go wrong:
+
+- Releases expired seat locks (users who closed the browser)
+- Cancels unpaid bookings past their expiration window
+- Updates session statuses (SCHEDULED → COMPLETED)
+- All state lives in PostgreSQL — if the app crashes mid-flow, scheduler recovers on restart with no data loss
 
 ### Refund Calculation
 
