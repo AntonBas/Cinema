@@ -28,6 +28,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @EntityGraph(attributePaths = {"bonusCard"})
     @Override
     @NonNull
+    @SuppressWarnings("deprecation")
     Optional<User> findById(@NonNull Long id);
 
     @Query("""
