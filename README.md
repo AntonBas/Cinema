@@ -21,7 +21,7 @@
 
 ---
 
-**[Full Documentation](docs/DOCUMENTATION.md)** — complete feature descriptions, technical details, and project structure.
+**[Full Documentation](docs/DOCS.md)** — complete feature descriptions, technical details, and project structure.
 
 ---
 
