@@ -21,6 +21,10 @@
 
 ---
 
+**[Full Documentation](docs/DOCUMENTATION.md)** — complete feature descriptions, technical details, and project structure.
+
+---
+
 ## What this project demonstrates
 
 This project is intentionally built to showcase backend engineering skills beyond CRUD:
