@@ -36,8 +36,8 @@ public class FileStorageService {
 
             String fileName = UUID.randomUUID() + extension;
 
-            Path basePath = Paths.get(uploadDir).toRealPath();
-            Path uploadPath = basePath.resolve(sanitize(subDirectory));
+            Path basePath = Paths.get(uploadDir).toRealPath().normalize().toAbsolutePath();
+            Path uploadPath = basePath.resolve(sanitize(subDirectory)).normalize().toAbsolutePath();
 
             if (!uploadPath.startsWith(basePath)) {
                 log.error("Path traversal attempt detected during store: {}", subDirectory);
@@ -46,7 +46,14 @@ public class FileStorageService {
             }
 
             Files.createDirectories(uploadPath);
-            Path filePath = uploadPath.resolve(sanitize(fileName));
+            Path filePath = uploadPath.resolve(sanitize(fileName)).normalize().toAbsolutePath();
+
+            if (!filePath.startsWith(uploadPath)) {
+                log.error("Path traversal attempt detected during store: {}", fileName);
+                throw new ExternalServiceException("File Storage",
+                        new SecurityException("Invalid file path"));
+            }
+
             Files.write(filePath, file.getBytes());
 
             log.info("File stored successfully: {}", fileName);
