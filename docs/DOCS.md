@@ -519,24 +519,25 @@ Four configurable rules control the loyalty program:
 | Technology           | Version |
 | :------------------- | :------ |
 | Java                 | 21      |
-| Spring Boot          | 3.4.7   |
-| Spring Security      | 6.4.7   |
-| Spring Data JPA      | 3.4.7   |
-| Spring OAuth2 Client | 3.4.7   |
-| Spring Mail          | 3.4.7   |
-| Spring Cache         | 3.4.7   |
-| Spring Actuator      | 3.4.7   |
-| PostgreSQL           | 15+     |
-| Flyway               | 11.7.0+ |
+| Spring Boot          | 4.0.6   |
+| Spring Security      | 7.0.5   |
+| Spring Data JPA      | 4.0.5   |
+| Spring OAuth2 Client | 4.0.6   |
+| Spring Mail          | 4.0.6   |
+| Spring Cache         | 4.0.6   |
+| Spring Actuator      | 4.0.6   |
+| PostgreSQL           | 16      |
+| Flyway               | 11.14.1 |
 | JWT (jjwt)           | 0.12.6  |
 | MapStruct            | 1.6.3   |
-| Lombok               | 1.18.38 |
+| Lombok               | 1.18.46 |
 | Bucket4j             | 8.10.1  |
-| Caffeine Cache       | 3.1.8   |
+| Redis                | 7       |
 | ZXing (QR Code)      | 3.5.3   |
 | Gson                 | 2.11.0  |
 | SpringDoc OpenAPI    | 2.8.7   |
 | Dotenv               | 4.0.0   |
+| Testcontainers       | 1.20.6  |
 
 ### Frontend
 
@@ -560,6 +561,7 @@ Four configurable rules control the loyalty program:
 | Docker Compose | Multi-container orchestration |
 | Flyway         | Database migrations           |
 | Maven          | Build automation              |
+| GitHub Actions | CI/CD pipeline                |
 
 ---
 
