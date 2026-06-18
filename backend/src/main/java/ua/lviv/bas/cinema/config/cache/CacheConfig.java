@@ -1,77 +1,50 @@
 package ua.lviv.bas.cinema.config.cache;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
-import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
-import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.cache.RedisCacheConfiguration;
+import org.springframework.data.redis.cache.RedisCacheManager;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.serializer.RedisSerializationContext;
+import org.springframework.data.redis.serializer.RedisSerializer;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 @EnableCaching
 public class CacheConfig {
 
     @Bean
-    CacheManager cacheManager() {
-        CaffeineCacheManager cacheManager = new CaffeineCacheManager();
+    RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+        RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(Duration.ofMinutes(30))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair
+                        .fromSerializer(RedisSerializer.json()));
 
-        cacheManager.registerCustomCache("seats",
-                Caffeine.newBuilder().expireAfterWrite(30, TimeUnit.MINUTES).maximumSize(1000).recordStats().build());
+        Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
+        cacheConfigurations.put("seats", defaultConfig.entryTtl(Duration.ofMinutes(30)));
+        cacheConfigurations.put("cinemaHalls", defaultConfig.entryTtl(Duration.ofHours(1)));
+        cacheConfigurations.put("sessions", defaultConfig.entryTtl(Duration.ofMinutes(10)));
+        cacheConfigurations.put("genres", defaultConfig.entryTtl(Duration.ofHours(24)));
+        cacheConfigurations.put("persons", defaultConfig.entryTtl(Duration.ofHours(24)));
+        cacheConfigurations.put("movies", defaultConfig.entryTtl(Duration.ofHours(24)));
+        cacheConfigurations.put("seatAvailability", defaultConfig.entryTtl(Duration.ofMinutes(5)));
+        cacheConfigurations.put("availableSeatsCount", defaultConfig.entryTtl(Duration.ofMinutes(1)));
+        cacheConfigurations.put("bookings", defaultConfig.entryTtl(Duration.ofMinutes(30)));
+        cacheConfigurations.put("tickets", defaultConfig.entryTtl(Duration.ofMinutes(30)));
+        cacheConfigurations.put("ticket-types", defaultConfig.entryTtl(Duration.ofHours(1)));
+        cacheConfigurations.put("users", defaultConfig.entryTtl(Duration.ofMinutes(30)));
+        cacheConfigurations.put("adminUsers", defaultConfig.entryTtl(Duration.ofMinutes(30)));
+        cacheConfigurations.put("bonusRules", defaultConfig.entryTtl(Duration.ofHours(1)));
+        cacheConfigurations.put("bonus", defaultConfig.entryTtl(Duration.ofMinutes(30)));
+        cacheConfigurations.put("promotions", defaultConfig.entryTtl(Duration.ofHours(1)));
 
-        cacheManager.registerCustomCache("cinemaHalls",
-                Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.HOURS).maximumSize(100).recordStats().build());
-
-        cacheManager.registerCustomCache("sessions",
-                Caffeine.newBuilder().expireAfterWrite(10, TimeUnit.MINUTES).maximumSize(500).recordStats().build());
-
-        cacheManager.registerCustomCache("genres",
-                Caffeine.newBuilder().expireAfterWrite(24, TimeUnit.HOURS).maximumSize(50).recordStats().build());
-
-        cacheManager.registerCustomCache("persons",
-                Caffeine.newBuilder().expireAfterWrite(24, TimeUnit.HOURS).maximumSize(500).recordStats().build());
-
-        cacheManager.registerCustomCache("movies",
-                Caffeine.newBuilder().expireAfterWrite(24, TimeUnit.HOURS).maximumSize(200).recordStats().build());
-
-        cacheManager.registerCustomCache("seatAvailability",
-                Caffeine.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).maximumSize(500).recordStats().build());
-
-        cacheManager.registerCustomCache("availableSeatsCount",
-                Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.MINUTES).maximumSize(500).recordStats().build());
-
-        cacheManager.registerCustomCache("bookings",
-                Caffeine.newBuilder().expireAfterWrite(30, TimeUnit.MINUTES).maximumSize(1000).recordStats().build());
-
-        cacheManager.registerCustomCache("tickets",
-                Caffeine.newBuilder().expireAfterWrite(30, TimeUnit.MINUTES).maximumSize(1000).recordStats().build());
-
-        cacheManager.registerCustomCache("ticket-types",
-                Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.HOURS).maximumSize(100).recordStats().build());
-
-        cacheManager.registerCustomCache("users",
-                Caffeine.newBuilder().expireAfterWrite(30, TimeUnit.MINUTES).maximumSize(1000).recordStats().build());
-
-        cacheManager.registerCustomCache("adminUsers",
-                Caffeine.newBuilder().expireAfterWrite(30, TimeUnit.MINUTES).maximumSize(500).recordStats().build());
-
-        cacheManager.registerCustomCache("bonusRules",
-                Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.HOURS).maximumSize(50).recordStats().build());
-
-        cacheManager.registerCustomCache("bonus",
-                Caffeine.newBuilder().expireAfterWrite(30, TimeUnit.MINUTES).maximumSize(1000).recordStats().build());
-
-        cacheManager.registerCustomCache("promotions",
-                Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.HOURS).maximumSize(200).recordStats().build());
-
-        cacheManager.setCaffeine(defaultCaffeineConfig());
-
-        return cacheManager;
-    }
-
-    private Caffeine<Object, Object> defaultCaffeineConfig() {
-        return Caffeine.newBuilder().initialCapacity(100).maximumSize(500).expireAfterWrite(30, TimeUnit.MINUTES)
-                .recordStats();
+        return RedisCacheManager.builder(connectionFactory)
+                .cacheDefaults(defaultConfig)
+                .withInitialCacheConfigurations(cacheConfigurations)
+                .build();
     }
 }
