@@ -3,19 +3,47 @@ spring:
     activate:
       on-profile: ci
   datasource:
-    url: jdbc:postgresql://localhost:5432/cinema_test
-    username: cinema
-    password: test
+    url: jdbc:h2:mem:cinema_test;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
   jpa:
     hibernate:
       ddl-auto: create-drop
     show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
   flyway:
     enabled: false
-  data:
-    redis:
-      host: localhost
-      port: 6379
+  cache:
+    type: none
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: test
+            client-secret: test
+
+app:
+  jwt:
+    secret: test_secret_key_for_ci
+  frontend:
+    url: http://localhost:5173
+  email:
+    from: test@test.com
+  upload:
+    dir: /tmp
+
+payment:
+  liqpay:
+    public_key: test_public_key
+    private_key: test_private_key
+    sandbox_mode: true
+    callback_url: http://localhost:8080/api/payment/callback
+    result_url: http://localhost:5173
+    api_url: https://www.liqpay.ua/api/
 
 logging:
   level:
