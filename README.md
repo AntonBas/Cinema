@@ -3,10 +3,11 @@
 > A concurrency-safe cinema booking system designed to handle real-world backend failures: race conditions, unreliable payments, and data consistency under stress.
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.4.7-green)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.0.6-green)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)
 ![React](https://img.shields.io/badge/React-19.1.1-61DAFB)
 ![Docker](https://img.shields.io/badge/Docker-✓-blue)
+![CI](https://github.com/AntonBas/Cinema/workflows/CI/badge.svg)
 
 ---
 
@@ -15,7 +16,7 @@
 - Prevents double booking under concurrent requests
 - Handles unreliable payment callbacks safely (idempotent design)
 - Self-recovers from failures using scheduler-based cleanup
-- Runs without Redis or queues — PostgreSQL only
+- Redis-powered caching with configurable TTL per entity
 - Designed with explicit data consistency guarantees
 
 ---
@@ -136,11 +137,12 @@ This acts as a **self-healing mechanism** when:
 
 ### Simplicity over Scalability
 
-No Redis, no Kafka.
+Redis for caching, PostgreSQL for everything else.
 
 Everything runs on:
 
 - PostgreSQL
+- Redis
 - Application-level scheduler
 
 Trade-off:
@@ -241,17 +243,22 @@ The system was tested against real failure scenarios:
 
 **Backend**
 
-- Java 21, Spring Boot
-- Spring Security, JPA
-- PostgreSQL, Flyway
+- Java 21, Spring Boot 4.0.6
+- Spring Security, JPA, Hibernate 7
+- PostgreSQL 16, Flyway
+- Redis (caching)
+- JWT + Google OAuth2
+- Testcontainers (integration tests)
+- GitHub Actions (CI)
 
 **Frontend**
 
-- React + TypeScript
+- React 19 + TypeScript
 
 **DevOps**
 
 - Docker / Docker Compose
+- GitHub Actions CI
 
 ---
 
