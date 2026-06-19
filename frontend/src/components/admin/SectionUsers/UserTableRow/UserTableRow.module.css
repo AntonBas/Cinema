@@ -1,0 +1,302 @@
+.row {
+  transition: background-color var(--transition-fast);
+}
+
+.row:hover {
+  background: rgba(var(--color-primary-rgb), 0.05);
+}
+
+.row:hover td {
+  color: var(--color-text-primary);
+}
+
+.row:last-child td {
+  border-bottom: none;
+}
+
+.userCell {
+  min-width: 200px;
+  max-width: 250px;
+  white-space: normal;
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.userName {
+  color: var(--color-text-primary);
+  font-weight: 600;
+  font-size: var(--font-size-md);
+  white-space: normal;
+  word-break: break-word;
+}
+
+.userEmail {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  word-break: break-all;
+  white-space: normal;
+}
+
+.roleCell {
+  min-width: 150px;
+}
+
+.roleSelect {
+  width: 100%;
+  min-width: 120px;
+}
+
+.roleSelect select {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-border-medium);
+  color: var(--color-text-primary);
+}
+
+.verificationCell {
+  min-width: 200px;
+  max-width: 220px;
+}
+
+.verificationInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.verificationDate {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-style: italic;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.statusCell {
+  min-width: 100px;
+}
+
+.ticketsCell {
+  min-width: 80px;
+  text-align: center;
+}
+
+.ticketsCount {
+  color: var(--color-text-primary);
+  font-weight: 600;
+  padding: var(--space-1) var(--space-2);
+  background: rgba(var(--color-primary-rgb), 0.15);
+  border-radius: var(--radius-sm);
+  display: inline-block;
+}
+
+.activityCell {
+  min-width: 120px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.actionsCell {
+  min-width: 140px;
+  text-align: right;
+}
+
+@media (max-width: 1024px) {
+  .userCell {
+    min-width: 160px;
+    max-width: 200px;
+  }
+
+  .roleCell {
+    min-width: 130px;
+  }
+
+  .verificationCell {
+    min-width: 160px;
+    max-width: 180px;
+  }
+
+  .roleSelect {
+    min-width: 100px;
+  }
+
+  .actionsCell {
+    min-width: 130px;
+  }
+}
+
+@media (max-width: 768px) {
+  .row {
+    display: block;
+    padding: var(--space-4);
+    border-bottom: 1px solid #334155;
+    background: rgba(30, 41, 59, 0.3);
+    position: relative;
+  }
+
+  .row:last-child {
+    border-bottom: none;
+  }
+
+  .userCell,
+  .roleCell,
+  .verificationCell,
+  .statusCell,
+  .ticketsCell,
+  .activityCell,
+  .actionsCell {
+    display: block;
+    min-width: auto;
+    max-width: none;
+    padding: 0;
+    margin-bottom: var(--space-3);
+    text-align: left;
+  }
+
+  .actionsCell {
+    margin-bottom: 0;
+    margin-top: var(--space-4);
+    padding-top: var(--space-3);
+    border-top: 1px dashed #334155;
+  }
+
+  .userInfo {
+    padding-bottom: var(--space-2);
+    border-bottom: 1px dashed #334155;
+    margin-bottom: var(--space-2);
+  }
+
+  .userName {
+    font-size: var(--font-size-md);
+  }
+
+  .userEmail {
+    font-size: var(--font-size-xs);
+  }
+
+  .roleCell {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .roleCell::before {
+    content: "Role:";
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+  }
+
+  .roleSelect {
+    width: auto;
+    min-width: 140px;
+  }
+
+  .verificationCell {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .verificationInfo {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .verificationDate {
+    display: none;
+  }
+
+  .statusCell {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .statusCell::before {
+    content: "Status:";
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+  }
+
+  .ticketsCell {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .ticketsCell::before {
+    content: "Tickets:";
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+  }
+
+  .activityCell {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .activityCell::before {
+    content: "Last Activity:";
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+  }
+
+  .actionsCell {
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 480px) {
+  .row {
+    padding: var(--space-3);
+  }
+
+  .userName {
+    font-size: var(--font-size-sm);
+  }
+
+  .userEmail {
+    font-size: 10px;
+  }
+
+  .roleSelect {
+    min-width: 120px;
+  }
+
+  .roleSelect select {
+    font-size: 11px;
+    padding: 4px 6px;
+  }
+
+  .verificationInfo {
+    gap: var(--space-2);
+  }
+
+  .ticketsCount {
+    padding: 2px 4px;
+    font-size: 10px;
+  }
+
+  .activityCell {
+    font-size: 11px;
+  }
+
+  .row td::before {
+    font-size: 10px;
+  }
+}

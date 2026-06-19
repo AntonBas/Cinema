@@ -1,0 +1,150 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: cinema_postgres
+    env_file:
+      - .env
+    environment:
+      TZ: ${TZ:-UTC}
+      POSTGRES_USER: ${DB_USER:-cinema}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-cinema_db}
+    ports:
+      - "${DB_HOST_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - cinema-net
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_USER:-cinema} -d ${DB_NAME:-cinema_db}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: cinema_redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - cinema-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        BUILD_PROFILE: docker
+    container_name: cinema_backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      TZ: ${TZ:-UTC}
+      JAVA_TOOL_OPTIONS: "-Duser.timezone=${TZ:-UTC}"
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-cinema_db}
+      DB_USER: ${DB_USER:-cinema}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SERVER_PORT: 8080
+      SPRING_PROFILES_ACTIVE: docker
+      JWT_SECRET: ${JWT_SECRET}
+      EMAIL_USERNAME: ${EMAIL_USERNAME}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+      LIQPAY_PUBLIC_KEY: ${LIQPAY_PUBLIC_KEY}
+      LIQPAY_PRIVATE_KEY: ${LIQPAY_PRIVATE_KEY}
+      LIQPAY_SANDBOX_MODE: ${LIQPAY_SANDBOX_MODE:-true}
+      PAYMENT_LIQPAY_CALLBACK_URL: ${PAYMENT_LIQPAY_CALLBACK_URL}
+      PAYMENT_LIQPAY_RESULT_URL: ${PAYMENT_LIQPAY_RESULT_URL}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+    ports:
+      - "${BACKEND_HOST_PORT:-8080}:8080"
+    networks:
+      - cinema-net
+    volumes:
+      - backend_logs:/app/logs
+      - ./backend/uploads:/app/uploads
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cinema_frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    env_file:
+      - .env
+    ports:
+      - "${FRONTEND_HOST_PORT:-5173}:5173"
+    networks:
+      - cinema-net
+    environment:
+      TZ: ${TZ:-UTC}
+      VITE_PROXY_TARGET: http://backend:8080
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - ./frontend/src:/app/src:delegated
+      - ./frontend/public:/app/public:delegated
+      - ./frontend/vite.config.js:/app/vite.config.js:delegated
+      - /app/node_modules
+      - ./frontend/index.html:/app/index.html:delegated
+    stdin_open: true
+    tty: true
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: cinema_ngrok
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTH_TOKEN}
+    command: http backend:8080 --log=stdout --log-level=info
+    ports:
+      - "4040:4040"
+    networks:
+      - cinema-net
+    restart: unless-stopped
+
+networks:
+  cinema-net:
+    driver: bridge
+    name: cinema-network
+
+volumes:
+  pgdata:
+    name: cinema-pgdata
+  backend_logs:
+    name: cinema-backend-logs
+  redis_data:
+    name: cinema-redis-data

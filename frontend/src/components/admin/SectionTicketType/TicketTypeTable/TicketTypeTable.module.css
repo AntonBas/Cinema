@@ -1,0 +1,352 @@
+.tableWrapper {
+  width: 100%;
+  overflow: hidden;
+}
+
+.tableContainer {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  border-radius: var(--radius-lg);
+  border: 1px solid #334155;
+  background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+  box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.tableContainer::-webkit-scrollbar {
+  height: 6px;
+}
+
+.tableContainer::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.tableContainer::-webkit-scrollbar-thumb {
+  background: rgba(var(--color-primary-rgb), 0.5);
+  border-radius: 3px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 850px;
+  background: transparent;
+  position: relative;
+}
+
+.table th {
+  font-weight: 600;
+  padding: var(--space-4) var(--space-3);
+  text-align: left;
+  border-bottom: 1px solid #334155;
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #f1f5f9;
+  background: #1e293b;
+  white-space: nowrap;
+}
+
+.table th:first-child {
+  padding-left: var(--space-6);
+}
+
+.table th:nth-child(5),
+.table th:nth-child(6) {
+  text-align: center;
+}
+
+.table th:last-child {
+  padding-right: var(--space-6);
+  text-align: right;
+}
+
+.table td {
+  padding: var(--space-4) var(--space-3);
+  border-bottom: 1px solid #334155;
+  color: var(--color-text-secondary);
+  transition: background-color var(--transition-normal);
+  white-space: nowrap;
+}
+
+.table td:first-child {
+  padding-left: var(--space-6);
+}
+
+.table td:last-child {
+  padding-right: var(--space-6);
+}
+
+.table tbody tr {
+  background: rgba(30, 41, 59, 0.3);
+}
+
+.table tbody tr:nth-child(even) {
+  background: rgba(30, 41, 59, 0.6);
+}
+
+.table tbody tr:hover {
+  background: rgba(253, 95, 0, 0.15);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover td {
+  color: #f1f5f9;
+}
+
+.nameCell {
+  min-width: 160px;
+  max-width: 200px;
+  white-space: normal;
+}
+
+.displayName {
+  color: #f1f5f9;
+  font-weight: 600;
+  font-size: var(--font-size-md);
+  white-space: normal;
+  word-break: break-word;
+}
+
+.categoryCell {
+  min-width: 110px;
+}
+
+.priceCell {
+  min-width: 100px;
+}
+
+.price {
+  font-family: "Monaco", "Courier New", monospace;
+  font-weight: 600;
+  color: var(--color-success);
+  background: rgba(var(--color-success-rgb), 0.1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.ageCell {
+  min-width: 110px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.ageRange {
+  white-space: nowrap;
+}
+
+.documentCell {
+  min-width: 110px;
+  text-align: center;
+}
+
+.statusCell {
+  min-width: 100px;
+  text-align: center;
+}
+
+.actionsCell {
+  min-width: 90px;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: flex-end;
+}
+
+.actionButton {
+  min-width: 80px;
+  font-size: var(--font-size-xs);
+  padding: var(--space-1) var(--space-2);
+  white-space: nowrap;
+  justify-content: center;
+}
+
+.empty {
+  text-align: center;
+  padding: var(--space-12) var(--space-8);
+  color: var(--color-text-secondary);
+  background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+  border-radius: var(--radius-lg);
+  border: 1px solid #334155;
+  box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.empty h3 {
+  color: #f1f5f9;
+  margin: 0 0 var(--space-2) 0;
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+}
+
+.empty p {
+  color: var(--color-text-secondary);
+  margin: 0;
+  font-size: var(--font-size-md);
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .tableContainer {
+    overflow-x: visible;
+    border-radius: var(--radius-md);
+    background: transparent;
+    box-shadow: none;
+    border: none;
+  }
+
+  .table {
+    min-width: auto;
+    display: block;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .table tbody tr {
+    display: block;
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    border: 1px solid #334155;
+    background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-2) 0;
+    border-bottom: 1px dashed #334155;
+    white-space: normal;
+  }
+
+  .table td:first-child {
+    padding-left: 0;
+    border-bottom: 1px solid #334155;
+    margin-bottom: var(--space-2);
+  }
+
+  .table td:last-child {
+    padding-right: 0;
+    border-bottom: none;
+    text-align: left;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  .table td:first-child::before {
+    display: none;
+  }
+
+  .table td:first-child {
+    justify-content: flex-start;
+  }
+
+  .displayName {
+    font-size: var(--font-size-md);
+  }
+
+  .nameCell {
+    min-width: auto;
+    max-width: none;
+  }
+
+  .actions {
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    margin-top: var(--space-2);
+  }
+
+  .actionButton {
+    min-width: auto;
+    flex: 1;
+  }
+
+  .empty {
+    padding: var(--space-8) var(--space-4);
+  }
+
+  .empty h3 {
+    font-size: var(--font-size-xl);
+  }
+}
+
+@media (max-width: 480px) {
+  .table tbody {
+    gap: var(--space-3);
+  }
+
+  .table tbody tr {
+    padding: var(--space-3);
+  }
+
+  .table td {
+    padding: var(--space-1) 0;
+    font-size: var(--font-size-xs);
+  }
+
+  .table td::before {
+    font-size: 10px;
+  }
+
+  .displayName {
+    font-size: var(--font-size-sm);
+  }
+
+  .price {
+    font-size: 11px;
+    padding: 2px 6px;
+  }
+
+  .ageRange {
+    font-size: 11px;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-1);
+  }
+
+  .actionButton {
+    min-width: auto;
+    width: 100%;
+    font-size: 10px;
+    padding: 4px;
+  }
+
+  .empty {
+    padding: var(--space-6) var(--space-3);
+  }
+
+  .empty h3 {
+    font-size: var(--font-size-lg);
+  }
+}

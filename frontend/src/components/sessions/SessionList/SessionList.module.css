@@ -1,0 +1,326 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+}
+
+.movieGroup {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    transition: all 0.2s ease;
+}
+
+.movieGroup:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-md);
+}
+
+.movieHeader {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.posterContainer {
+    flex-shrink: 0;
+}
+
+.poster {
+    width: 100px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.movieInfo {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.movieHeaderRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+    gap: 1rem;
+}
+
+.movieTitle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0;
+    line-height: 1.2;
+}
+
+.movieButton {
+    padding: 0.375rem 0.875rem;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+.movieMeta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.ageRating {
+    padding: 0.375rem 0.875rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: white;
+}
+
+.ageRatingGreen {
+    background: var(--color-success);
+}
+
+.ageRatingBlue {
+    background: var(--color-info);
+}
+
+.ageRatingYellow {
+    background: #eab308;
+    color: black;
+}
+
+.ageRatingOrange {
+    background: #f97316;
+}
+
+.ageRatingRed {
+    background: var(--color-error);
+}
+
+.duration {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+}
+
+.sessionCount {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    background: var(--color-bg-tertiary);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+}
+
+.sessionsContainer {
+    width: 100%;
+}
+
+.sessionsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.sessionCard {
+    background-color: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.sessionCard.available:hover {
+    border-color: var(--color-primary);
+    background: var(--color-bg-secondary);
+    transform: translateY(-2px);
+}
+
+.sessionCard.unavailable {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.sessionTime {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.timeRange {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+}
+
+.startTime,
+.endTime {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.timeSeparator {
+    font-size: 1.25rem;
+    font-weight: 400;
+    color: var(--color-text-secondary);
+    margin: 0 0.125rem;
+}
+
+.hall {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    background: var(--color-bg-tertiary);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+}
+
+.sessionInfo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    flex-shrink: 0;
+}
+
+.seats {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.125rem;
+    flex-shrink: 0;
+}
+
+.seatsCount {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+}
+
+.seatsTotal {
+    font-size: 0.75rem;
+    color: var(--color-text-tertiary);
+}
+
+.sessionStatus {
+    flex-shrink: 0;
+}
+
+.statusBadge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: var(--color-primary);
+    color: white;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.statusBadge.disabled {
+    background: var(--color-text-disabled);
+    cursor: not-allowed;
+}
+
+.sessionCard.available:hover .statusBadge:not(.disabled) {
+    background: var(--color-primary-dark);
+}
+
+@media (max-width: 768px) {
+    .movieHeader {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .movieHeaderRow {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .movieMeta {
+        justify-content: center;
+    }
+
+    .sessionsGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .sessionTime {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .timeRange {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.125rem;
+    }
+
+    .startTime,
+    .endTime {
+        font-size: 1rem;
+    }
+
+    .timeSeparator {
+        display: none;
+    }
+
+    .endTime::before {
+        content: "to ";
+        color: var(--color-text-tertiary);
+    }
+
+    .sessionInfo {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: flex-start;
+    }
+
+    .statusBadge {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .movieGroup {
+        padding: 1rem;
+    }
+
+    .movieTitle {
+        font-size: 1.25rem;
+    }
+
+    .sessionCard {
+        padding: 0.875rem;
+    }
+
+    .startTime,
+    .endTime {
+        font-size: 1.125rem;
+    }
+
+    .price {
+        font-size: 1.25rem;
+    }
+}

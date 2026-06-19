@@ -1,0 +1,111 @@
+.verificationContainer {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--color-bg-primary);
+  padding: var(--space-8);
+}
+
+.verificationCard {
+  background: var(--color-bg-modal);
+  border-radius: var(--radius-lg);
+  padding: var(--space-12);
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--color-border);
+  animation: slideUp var(--transition-normal);
+}
+
+.verificationCard.success {
+  border-color: rgba(var(--color-success-rgb), var(--opacity-medium));
+}
+
+.verificationCard.error {
+  border-color: rgba(var(--color-error-rgb), var(--opacity-medium));
+}
+
+.icon {
+  margin: 0 auto;
+  padding-bottom: var(--space-6);
+  animation: scaleIn var(--transition-normal);
+}
+
+.verificationCard.error .icon {
+  color: var(--color-error);
+}
+
+.verificationCard.success .icon {
+  color: var(--color-success);
+}
+
+.verificationCard h2 {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-4);
+  font-weight: 600;
+}
+
+.message {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-lg);
+  line-height: 1.6;
+  margin-bottom: var(--space-8);
+}
+
+.redirectText {
+  color: var(--color-primary);
+  font-size: var(--font-size-md);
+  margin-bottom: var(--space-6);
+}
+
+.successActions,
+.errorActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .verificationContainer {
+    padding: var(--space-4);
+  }
+
+  .verificationCard {
+    padding: var(--space-8);
+  }
+
+  .verificationCard h2 {
+    font-size: var(--font-size-xl);
+  }
+
+  .icon {
+    margin-bottom: var(--space-4);
+  }
+}

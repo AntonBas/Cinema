@@ -1,0 +1,160 @@
+.pagination {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: var(--space-6) 0;
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.navButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.navButton:hover:not(:disabled) {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.navButton:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.pages {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.pageButton {
+    min-width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.pageButton:hover {
+    background: rgba(var(--color-primary-rgb), 0.1);
+    color: var(--color-primary);
+}
+
+.pageButton.active {
+    background: var(--color-primary);
+    color: white;
+    font-weight: 500;
+}
+
+.dots {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    padding: 0 var(--space-1);
+    letter-spacing: 1px;
+}
+
+.loadMoreButton {
+    padding: var(--space-3) var(--space-6);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-md);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    margin: 0 auto;
+    min-width: 160px;
+}
+
+.loadMoreButton:hover:not(:disabled) {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background: rgba(var(--color-primary-rgb), 0.05);
+    transform: translateY(-1px);
+}
+
+.loadMoreButton:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.loadMoreButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.loadMoreButton.loading {
+    position: relative;
+    color: transparent;
+}
+
+.loadMoreButton.loading::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    top: 50%;
+    left: 50%;
+    margin-left: -9px;
+    margin-top: -9px;
+    border: 2px solid rgba(var(--color-primary-rgb), 0.2);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 768px) {
+    .pagination {
+        justify-content: center;
+    }
+
+    .navButton {
+        width: 32px;
+        height: 32px;
+    }
+
+    .pageButton {
+        min-width: 32px;
+        height: 32px;
+        font-size: var(--font-size-xs);
+    }
+
+    .dots {
+        font-size: var(--font-size-xs);
+        padding: 0 var(--space-0);
+    }
+
+    .loadMoreButton {
+        width: 100%;
+        max-width: 240px;
+        padding: var(--space-2) var(--space-4);
+        font-size: var(--font-size-sm);
+    }
+}

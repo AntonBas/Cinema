@@ -1,0 +1,91 @@
+package ua.lviv.bas.cinema.domain.booking;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import ua.lviv.bas.cinema.domain.audit.AuditableEntity;
+import ua.lviv.bas.cinema.domain.bonus.BonusTransaction;
+import ua.lviv.bas.cinema.domain.booking.status.RefundStatus;
+import ua.lviv.bas.cinema.domain.user.User;
+
+@Entity
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString(exclude = { "payment", "items", "bonusTransactions" })
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
+@Table(name = "refunds", indexes = { @Index(name = "idx_refund_payment", columnList = "payment_id"),
+		@Index(name = "idx_refund_status", columnList = "status"),
+		@Index(name = "idx_refund_user", columnList = "user_id"),
+		@Index(name = "idx_refund_user_status", columnList = "user_id, status") })
+public class Refund extends AuditableEntity {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@EqualsAndHashCode.Include
+	private Long id;
+
+	@NotNull
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "payment_id", nullable = false)
+	private Payment payment;
+
+	@NotNull
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "user_id", nullable = false)
+	private User user;
+
+	@OneToMany(mappedBy = "refund", cascade = CascadeType.ALL, orphanRemoval = true)
+	@Builder.Default
+	private List<RefundItem> items = new ArrayList<>();
+
+	@OneToMany(mappedBy = "refund", fetch = FetchType.LAZY, orphanRemoval = true)
+	@Builder.Default
+	private List<BonusTransaction> bonusTransactions = new ArrayList<>();
+
+	@NotNull
+	@Positive
+	@Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
+	private BigDecimal totalAmount;
+
+	@Column(name = "total_bonus_points_to_deduct")
+	@Builder.Default
+	private Integer totalBonusPointsToDeduct = 0;
+
+	@Size(max = 500)
+	@Column(name = "reason", length = 500)
+	private String reason;
+
+	@NotNull
+	@Enumerated(EnumType.STRING)
+	@Column(name = "status", nullable = false, length = 20)
+	@Builder.Default
+	private RefundStatus status = RefundStatus.PENDING;
+}

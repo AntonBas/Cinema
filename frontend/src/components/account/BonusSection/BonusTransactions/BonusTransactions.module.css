@@ -1,0 +1,317 @@
+.transactions {
+  width: 100%;
+  background: linear-gradient(
+    135deg,
+    var(--color-bg-tertiary) 0%,
+    var(--color-bg-quaternary) 100%
+  );
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-6);
+}
+
+.title {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+  position: relative;
+  display: inline-block;
+}
+
+.title::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 40px;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--color-primary),
+    var(--color-primary-light)
+  );
+  border-radius: var(--radius-full);
+}
+
+.count {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  background: var(--color-bg-tertiary);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+}
+
+.countNumber {
+  color: var(--color-primary);
+  font-weight: 600;
+  margin-right: var(--space-1);
+}
+
+.table {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: var(--space-6);
+}
+
+.tableHeader {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1.2fr 1.2fr;
+  background: var(--color-bg-secondary);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.headerCell {
+  padding: var(--space-4);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tableBody {
+  background: var(--color-bg-tertiary);
+}
+
+.tableRow {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1.2fr 1.2fr;
+  border-bottom: 1px solid var(--color-border);
+  transition: all var(--transition-fast);
+}
+
+.tableRow:hover {
+  background: var(--color-bg-quaternary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.tableCell {
+  padding: var(--space-4);
+  display: flex;
+  align-items: center;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.tableCell:first-child {
+  font-family: monospace;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.tableCell:nth-child(2) {
+  justify-content: flex-start;
+}
+
+.tableCell:nth-child(3),
+.tableCell:nth-child(4) {
+  justify-content: flex-end;
+}
+
+.balance {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.positive {
+  color: var(--color-success);
+  font-weight: 600;
+  background: rgba(var(--color-success-rgb), 0.1);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  min-width: 60px;
+  text-align: center;
+}
+
+.negative {
+  color: var(--color-error);
+  font-weight: 600;
+  background: rgba(var(--color-error-rgb), 0.1);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  min-width: 60px;
+  text-align: center;
+}
+
+.paginationWrapper {
+  margin-top: var(--space-6);
+  display: flex;
+  justify-content: center;
+}
+
+.noData {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-lg);
+  text-align: center;
+}
+
+.noData p {
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .transactions {
+    padding: var(--space-4);
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+
+  .title {
+    font-size: var(--font-size-lg);
+  }
+
+  .title::after {
+    width: 30px;
+    bottom: -6px;
+  }
+
+  .count {
+    font-size: var(--font-size-xs);
+    padding: var(--space-1) var(--space-3);
+  }
+
+  .table {
+    overflow: visible;
+    border: none;
+    background: transparent;
+  }
+
+  .tableHeader {
+    display: none;
+  }
+
+  .tableBody {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    background: transparent;
+  }
+
+  .tableRow {
+    display: block;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .tableRow:hover {
+    transform: none;
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary);
+  }
+
+  .tableCell {
+    padding: 0;
+  }
+
+  .tableCell:first-child {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-3);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px dashed var(--color-border);
+  }
+
+  .tableCell:nth-child(2) {
+    margin-bottom: var(--space-3);
+  }
+
+  .tableCell:nth-child(3),
+  .tableCell:nth-child(4) {
+    justify-content: space-between;
+    padding: var(--space-2) 0;
+  }
+
+  .tableCell:nth-child(3)::before {
+    content: "Points:";
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+  }
+
+  .tableCell:nth-child(4)::before {
+    content: "Balance:";
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+  }
+
+  .positive,
+  .negative {
+    min-width: auto;
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--font-size-sm);
+  }
+
+  .balance {
+    font-size: var(--font-size-sm);
+  }
+
+  .noData {
+    min-height: 200px;
+    font-size: var(--font-size-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .transactions {
+    padding: var(--space-3);
+  }
+
+  .title {
+    font-size: var(--font-size-md);
+  }
+
+  .tableRow {
+    padding: var(--space-3);
+  }
+
+  .tableCell:first-child {
+    font-size: 11px;
+    margin-bottom: var(--space-2);
+    padding-bottom: var(--space-2);
+  }
+
+  .positive,
+  .negative {
+    font-size: var(--font-size-xs);
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .balance {
+    font-size: var(--font-size-xs);
+  }
+
+  .noData {
+    min-height: 150px;
+    font-size: var(--font-size-sm);
+  }
+}

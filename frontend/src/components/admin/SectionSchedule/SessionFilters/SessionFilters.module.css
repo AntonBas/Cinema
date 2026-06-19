@@ -1,0 +1,349 @@
+.filters {
+    background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+    border-radius: var(--radius-lg);
+    border: 1px solid #334155;
+    margin-bottom: var(--space-8);
+    overflow: visible;
+    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+    position: relative;
+}
+
+.filterGrid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: var(--space-6);
+    padding: var(--space-6);
+    position: relative;
+    z-index: 10;
+}
+
+.filterGroup {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-width: 0;
+}
+
+.label {
+    color: #f1f5f9;
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-bottom: var(--space-1);
+    white-space: nowrap;
+}
+
+.filterInput {
+    height: 40px;
+    padding: 8px 12px;
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    box-sizing: border-box;
+    width: 100%;
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid #334155;
+    color: #f1f5f9;
+    border-radius: var(--radius-md);
+    font-family: var(--font-family);
+}
+
+.filterSelectWrapper {
+    width: 100%;
+    height: 40px;
+}
+
+.filterSelectWrapper :global(.select) {
+    height: 40px;
+    padding: 8px 12px;
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    box-sizing: border-box;
+}
+
+.filterSelectWrapper :global(.selectWrapper) {
+    height: 40px;
+}
+
+.filterSelectWrapper select {
+    height: 40px;
+    padding: 8px 12px;
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid #334155;
+    color: #f1f5f9;
+    border-radius: var(--radius-md);
+}
+
+.movieFilterRow {
+    padding: 0 var(--space-6) var(--space-4);
+    position: relative;
+    z-index: 5;
+}
+
+.movieFilterGroup {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    position: relative;
+}
+
+.movieSearch {
+    position: relative;
+    width: 100%;
+}
+
+.movieInputWrapper {
+    position: relative;
+    width: 100%;
+}
+
+.movieInput {
+    width: 100%;
+    cursor: pointer;
+    padding-right: 40px;
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid #334155;
+    height: 40px;
+    padding: 8px 12px;
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    box-sizing: border-box;
+    color: #f1f5f9;
+    border-radius: var(--radius-md);
+    font-family: var(--font-family);
+}
+
+.clearMovieButton {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+    border-radius: 50%;
+    background: var(--color-error);
+    color: white;
+    border: none;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.clearMovieButton:hover {
+    background: var(--color-error-alt);
+}
+
+.movieResults {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: var(--radius-md);
+    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+    z-index: 20;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.movieOption {
+    padding: var(--space-3);
+    cursor: pointer;
+    border-bottom: 1px solid #334155;
+    transition: background-color var(--transition-fast);
+}
+
+.movieOption:hover {
+    background: rgba(30, 41, 59, 0.8);
+}
+
+.movieOption.selected {
+    background: rgba(253, 95, 0, 0.15);
+    border-left: 3px solid var(--color-primary);
+}
+
+.movieOption:last-child {
+    border-bottom: none;
+}
+
+.movieTitle {
+    color: #f1f5f9;
+    font-weight: 500;
+    margin-bottom: var(--space-1);
+    font-size: 0.95rem;
+}
+
+.movieDetails {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+}
+
+.movieOption.selected .movieTitle {
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+.movieOption.selected .movieDetails {
+    color: rgba(var(--color-primary-rgb), 0.8);
+}
+
+.loadingResults {
+    padding: var(--space-4);
+    color: var(--color-text-secondary);
+    text-align: center;
+}
+
+.noResults {
+    padding: var(--space-4);
+    color: var(--color-text-secondary);
+    font-style: italic;
+    text-align: center;
+}
+
+.clearFiltersContainer {
+    padding: var(--space-4) var(--space-6);
+    border-top: 1px solid #334155;
+    background: rgba(30, 41, 59, 0.3);
+    position: relative;
+    z-index: 1;
+}
+
+.filterInfo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    width: 100%;
+    justify-content: space-between;
+}
+
+.countBadge {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+    color: white;
+    font-weight: 600;
+    font-size: var(--font-size-xs);
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    min-width: 20px;
+    text-align: center;
+}
+
+.clearButton {
+    min-width: 100px;
+    height: 36px;
+}
+
+@media (max-width: 1200px) {
+    .filterGrid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .filterGrid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-4);
+        padding: var(--space-4);
+    }
+
+    .filterInput,
+    .movieInput,
+    .filterSelectWrapper,
+    .filterSelectWrapper :global(.select),
+    .filterSelectWrapper select {
+        height: 38px;
+    }
+
+    .filterInput,
+    .movieInput {
+        padding: 6px 10px;
+        font-size: var(--font-size-xs);
+    }
+
+    .movieFilterRow {
+        padding: 0 var(--space-4) var(--space-4);
+    }
+
+    .clearFiltersContainer {
+        padding: var(--space-4);
+    }
+
+    .filterInfo {
+        width: 100%;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-3);
+    }
+
+    .movieResults {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: calc(100% - 40px);
+        max-width: 400px;
+        max-height: 60vh;
+        z-index: 1000;
+    }
+
+    .clearButton {
+        width: 100%;
+        min-width: unset;
+        height: 38px;
+    }
+}
+
+@media (max-width: 480px) {
+    .filterGrid {
+        grid-template-columns: 1fr;
+        gap: var(--space-3);
+        padding: var(--space-3);
+    }
+
+    .filterInput,
+    .movieInput,
+    .filterSelectWrapper,
+    .filterSelectWrapper :global(.select),
+    .filterSelectWrapper select {
+        height: 36px;
+    }
+
+    .filterInput,
+    .movieInput {
+        padding: 6px 10px;
+        font-size: var(--font-size-xs);
+    }
+
+    .movieFilterRow {
+        padding: 0 var(--space-3) var(--space-3);
+    }
+
+    .clearFiltersContainer {
+        padding: var(--space-3);
+    }
+
+    .label {
+        font-size: 0.85rem;
+    }
+
+    .countBadge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.4rem;
+    }
+
+    .clearButton {
+        font-size: var(--font-size-sm);
+        height: 36px;
+    }
+
+    .clearMovieButton {
+        width: 22px;
+        height: 22px;
+        font-size: 16px;
+    }
+}

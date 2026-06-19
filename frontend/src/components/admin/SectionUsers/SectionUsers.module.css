@@ -1,0 +1,221 @@
+.container {
+    padding: var(--space-8);
+    max-width: 1400px;
+    margin: 0 auto;
+    background: var(--color-bg-quaternary);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--color-border-medium);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 0.4s ease;
+    min-height: 600px;
+}
+
+.header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: var(--space-8);
+    padding-bottom: var(--space-6);
+    border-bottom: 1px solid var(--color-border-medium);
+}
+
+.header h1 {
+    color: var(--color-text-primary);
+    margin: 0 0 var(--space-2) 0;
+    font-size: var(--font-size-3xl);
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.header p {
+    color: var(--color-text-secondary);
+    margin: 0;
+    font-size: var(--font-size-lg);
+    line-height: 1.4;
+}
+
+.searchSection {
+    margin-bottom: var(--space-8);
+}
+
+.searchSection>div {
+    background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+    border: 1px solid #334155;
+    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.content {
+    margin-bottom: var(--space-8);
+    overflow-x: auto;
+    border-radius: var(--radius-lg);
+}
+
+.resultsInfo {
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-4);
+    font-size: 0.9rem;
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid #334155;
+    text-align: left;
+}
+
+.paginationWrapper {
+    margin-top: var(--space-8);
+    padding-top: var(--space-8);
+    border-top: 1px solid var(--color-border-medium);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.loadingContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 600px;
+    background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+    border-radius: var(--radius-xl);
+    border: 1px solid #334155;
+    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 1200px) {
+    .container {
+        padding: var(--space-6);
+    }
+}
+
+@media (max-width: 1024px) {
+    .container {
+        padding: var(--space-5);
+        min-height: 550px;
+    }
+
+    .header h1 {
+        font-size: var(--font-size-2xl);
+    }
+
+    .header p {
+        font-size: var(--font-size-md);
+    }
+
+    .loadingContainer {
+        min-height: 550px;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: var(--space-4);
+        margin: 0 var(--space-2);
+        min-height: 500px;
+    }
+
+    .header {
+        margin-bottom: var(--space-6);
+        padding-bottom: var(--space-4);
+    }
+
+    .header h1 {
+        font-size: var(--font-size-xl);
+        margin-bottom: var(--space-1);
+    }
+
+    .header p {
+        font-size: var(--font-size-sm);
+    }
+
+    .searchSection {
+        margin-bottom: var(--space-6);
+    }
+
+    .content {
+        margin-bottom: var(--space-6);
+    }
+
+    .paginationWrapper {
+        flex-direction: column;
+        gap: var(--space-4);
+        margin-top: var(--space-6);
+        padding-top: var(--space-4);
+        justify-content: center;
+    }
+
+    .resultsInfo {
+        margin-bottom: var(--space-2);
+        font-size: var(--font-size-xs);
+    }
+
+    .loadingContainer {
+        min-height: 500px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: var(--space-3);
+        margin: 0 var(--space-1);
+        min-height: 450px;
+    }
+
+    .header {
+        margin-bottom: var(--space-4);
+        padding-bottom: var(--space-3);
+    }
+
+    .header h1 {
+        font-size: var(--font-size-lg);
+    }
+
+    .header p {
+        font-size: var(--font-size-xs);
+    }
+
+    .searchSection {
+        margin-bottom: var(--space-4);
+    }
+
+    .content {
+        margin-bottom: var(--space-4);
+    }
+
+    .paginationWrapper {
+        gap: var(--space-3);
+        margin-top: var(--space-4);
+        padding-top: var(--space-3);
+    }
+
+    .loadingContainer {
+        min-height: 450px;
+    }
+}
+
+@media (max-width: 360px) {
+    .container {
+        padding: var(--space-2);
+        min-height: 400px;
+    }
+
+    .header h1 {
+        font-size: var(--font-size-md);
+    }
+
+    .header p {
+        font-size: var(--font-size-2xs);
+    }
+
+    .loadingContainer {
+        min-height: 400px;
+    }
+}

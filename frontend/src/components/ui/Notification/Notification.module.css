@@ -1,0 +1,158 @@
+.notification {
+  background: var(--color-bg-modal);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  min-width: 300px;
+  max-width: 400px;
+  box-shadow: var(--shadow-xl);
+  opacity: 0;
+  transition: all var(--transition-normal);
+  margin-bottom: var(--space-2);
+  backdrop-filter: blur(10px);
+}
+
+.notification:not(.static) {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  transform: translateX(400px) translateY(0);
+}
+
+.notification:not(.static).show {
+  transform: translateX(0) translateY(var(--offset, 0));
+  opacity: 1;
+}
+
+.notification.static {
+  position: static;
+  transform: none !important;
+  width: 100%;
+  margin-bottom: var(--space-4);
+  border: 1px solid;
+  max-width: none;
+}
+
+.notification.static.show {
+  opacity: 1;
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.message {
+  color: var(--color-text-primary);
+  flex: 1;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.close {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-normal);
+  flex-shrink: 0;
+}
+
+.close:hover {
+  color: var(--color-text-primary);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  background: currentColor;
+  animation: progress linear;
+  transform-origin: left;
+  opacity: 0.7;
+}
+
+.success {
+  border-color: rgba(var(--color-success-rgb), var(--opacity-high));
+  color: var(--color-success);
+  background: rgba(var(--color-success-rgb), var(--opacity-low));
+}
+
+.error {
+  border-color: rgba(var(--color-error-rgb), var(--opacity-high));
+  color: var(--color-error);
+  background: rgba(var(--color-error-rgb), var(--opacity-low));
+}
+
+.warning {
+  border-color: rgba(var(--color-warning-rgb), var(--opacity-high));
+  color: var(--color-warning);
+  background: rgba(var(--color-warning-rgb), var(--opacity-low));
+}
+
+.info {
+  border-color: rgba(var(--color-info-rgb), var(--opacity-high));
+  color: var(--color-info);
+  background: rgba(var(--color-info-rgb), var(--opacity-low));
+}
+
+.notification.static .progress {
+  display: none;
+}
+
+@keyframes progress {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .notification:not(.static) {
+    right: 10px;
+    left: 10px;
+    min-width: auto;
+    max-width: none;
+  }
+
+  .notification.static {
+    min-width: auto;
+    max-width: none;
+  }
+
+  .content {
+    gap: var(--space-2);
+  }
+
+  .message {
+    font-size: var(--font-size-sm);
+  }
+}

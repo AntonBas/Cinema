@@ -1,0 +1,228 @@
+.registration {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--space-8);
+}
+
+.registrationContainer {
+  background-color: var(--color-bg-modal);
+  border-radius: var(--radius-lg);
+  padding: 3rem;
+  box-shadow: var(--shadow-xl);
+  transition: var(--transition-normal);
+  animation: fadeIn 0.6s ease-out forwards;
+  width: 100%;
+  max-width: 600px;
+}
+
+.registrationContainer:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.registrationTitle {
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-4);
+  color: var(--color-primary);
+  text-align: center;
+  font-weight: 600;
+}
+
+.registrationTop {
+  text-align: center;
+  margin-bottom: var(--space-8);
+  color: var(--color-text-secondary);
+}
+
+.registrationTop a {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--transition-normal);
+  margin-left: var(--space-2);
+}
+
+.registrationTop a:hover {
+  color: var(--color-primary-light);
+  text-decoration: underline;
+}
+
+.registrationForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.formSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.sectionTitle {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  margin: 0;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-4);
+}
+
+.notification {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid;
+  animation: slideDown var(--transition-fast);
+}
+
+.notification[data-type="error"] {
+  background: rgba(var(--color-error-rgb), var(--opacity-low));
+  color: var(--color-error);
+  border-color: rgba(var(--color-error-rgb), var(--opacity-medium));
+}
+
+.successContent {
+  text-align: center;
+  padding: var(--space-2) 0;
+}
+
+.successIcon {
+  color: var(--color-primary);
+}
+
+.successText {
+  margin-bottom: var(--space-8);
+}
+
+.successTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--color-primary) 0%, #ff8a00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 var(--space-4) 0;
+  line-height: 1.2;
+}
+
+.successMessage {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+  margin: 0 0 var(--space-2) 0;
+  line-height: 1.5;
+}
+
+.emailHighlight {
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: var(--font-size-lg);
+  background: rgba(var(--color-primary-rgb), var(--opacity-low));
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  display: inline-block;
+  margin: 0;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-6);
+}
+
+.helpText {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary) !important;
+  margin-bottom: 0 !important;
+  text-align: center;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .registration {
+    padding: var(--space-6);
+  }
+
+  .registrationContainer {
+    padding: 2rem 1.5rem;
+  }
+
+  .registrationTitle {
+    font-size: var(--font-size-xl);
+  }
+
+  .inputGroup {
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .successTitle {
+    font-size: var(--font-size-xl);
+  }
+
+  .successIcon {
+    font-size: 3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .registrationContainer {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .registrationTitle {
+    font-size: var(--font-size-lg);
+  }
+
+  .registrationForm {
+    gap: var(--space-4);
+  }
+}

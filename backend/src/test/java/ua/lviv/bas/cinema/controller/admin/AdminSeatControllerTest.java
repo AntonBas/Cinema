@@ -1,0 +1,131 @@
+package ua.lviv.bas.cinema.controller.admin;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import ua.lviv.bas.cinema.domain.cinema.enums.SeatType;
+import ua.lviv.bas.cinema.dto.hall.response.SeatResponse;
+import ua.lviv.bas.cinema.exception.domain.hall.SeatNotFoundException;
+import ua.lviv.bas.cinema.service.cinema.SeatService;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+public class AdminSeatControllerTest {
+
+    @Mock
+    private SeatService seatService;
+
+    @InjectMocks
+    private AdminSeatController seatController;
+
+    private final Long HALL_ID = 1L;
+
+    private SeatResponse createSeatResponse(Long id, SeatType seatType, boolean active) {
+        return new SeatResponse(id, 1, 1, seatType, active);
+    }
+
+    @Test
+    void updateSeatTypeShouldReturnUpdatedSeat() {
+        Long seatId = 1L;
+        SeatResponse updatedSeat = createSeatResponse(seatId, SeatType.VIP, true);
+
+        when(seatService.updateSeatType(seatId, SeatType.VIP)).thenReturn(updatedSeat);
+
+        SeatResponse response = seatController.updateSeatType(HALL_ID, seatId, SeatType.VIP);
+
+        assertThat(response).isNotNull();
+        assertThat(response.seatType()).isEqualTo(SeatType.VIP);
+        assertThat(response.id()).isEqualTo(seatId);
+        assertThat(response.active()).isTrue();
+
+        verify(seatService).updateSeatType(seatId, SeatType.VIP);
+    }
+
+    @Test
+    void updateSeatTypeWhenNotFoundShouldThrowException() {
+        Long seatId = 999L;
+        when(seatService.updateSeatType(seatId, SeatType.VIP)).thenThrow(new SeatNotFoundException(seatId));
+
+        assertThrows(SeatNotFoundException.class, () -> seatController.updateSeatType(HALL_ID, seatId, SeatType.VIP));
+
+        verify(seatService).updateSeatType(seatId, SeatType.VIP);
+    }
+
+    @Test
+    void setSeatActiveStatusShouldReturnActivatedSeat() {
+        Long seatId = 1L;
+        SeatResponse activatedSeat = createSeatResponse(seatId, SeatType.STANDARD, true);
+
+        when(seatService.setSeatActiveStatus(seatId, true)).thenReturn(activatedSeat);
+
+        SeatResponse response = seatController.setSeatActiveStatus(HALL_ID, seatId, true);
+
+        assertThat(response).isNotNull();
+        assertThat(response.id()).isEqualTo(seatId);
+        assertThat(response.active()).isTrue();
+
+        verify(seatService).setSeatActiveStatus(seatId, true);
+    }
+
+    @Test
+    void setSeatActiveStatusShouldReturnDeactivatedSeat() {
+        Long seatId = 1L;
+        SeatResponse deactivatedSeat = createSeatResponse(seatId, SeatType.STANDARD, false);
+
+        when(seatService.setSeatActiveStatus(seatId, false)).thenReturn(deactivatedSeat);
+
+        SeatResponse response = seatController.setSeatActiveStatus(HALL_ID, seatId, false);
+
+        assertThat(response).isNotNull();
+        assertThat(response.id()).isEqualTo(seatId);
+        assertThat(response.active()).isFalse();
+
+        verify(seatService).setSeatActiveStatus(seatId, false);
+    }
+
+    @Test
+    void setSeatActiveStatusWhenNotFoundShouldThrowException() {
+        Long seatId = 999L;
+        when(seatService.setSeatActiveStatus(seatId, true)).thenThrow(new SeatNotFoundException(seatId));
+
+        assertThrows(SeatNotFoundException.class, () -> seatController.setSeatActiveStatus(HALL_ID, seatId, true));
+
+        verify(seatService).setSeatActiveStatus(seatId, true);
+    }
+
+    @Test
+    void updateSeatTypeToStandardShouldSucceed() {
+        Long seatId = 1L;
+        SeatResponse updatedSeat = createSeatResponse(seatId, SeatType.STANDARD, true);
+
+        when(seatService.updateSeatType(seatId, SeatType.STANDARD)).thenReturn(updatedSeat);
+
+        SeatResponse response = seatController.updateSeatType(HALL_ID, seatId, SeatType.STANDARD);
+
+        assertThat(response).isNotNull();
+        assertThat(response.seatType()).isEqualTo(SeatType.STANDARD);
+
+        verify(seatService).updateSeatType(seatId, SeatType.STANDARD);
+    }
+
+    @Test
+    void updateSeatTypeToCoupleShouldSucceed() {
+        Long seatId = 1L;
+        SeatResponse updatedSeat = createSeatResponse(seatId, SeatType.COUPLE, true);
+
+        when(seatService.updateSeatType(seatId, SeatType.COUPLE)).thenReturn(updatedSeat);
+
+        SeatResponse response = seatController.updateSeatType(HALL_ID, seatId, SeatType.COUPLE);
+
+        assertThat(response).isNotNull();
+        assertThat(response.seatType()).isEqualTo(SeatType.COUPLE);
+
+        verify(seatService).updateSeatType(seatId, SeatType.COUPLE);
+    }
+}

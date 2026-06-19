@@ -1,0 +1,231 @@
+.container {
+    padding: var(--space-8);
+    max-width: 1400px;
+    margin: 0 auto;
+    animation: fadeIn var(--transition-normal) ease;
+    background: var(--color-bg-quaternary);
+    border-radius: var(--radius-xl);
+    border: 1px solid #334155;
+    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+    min-height: auto;
+}
+
+.header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2.5rem;
+    padding-bottom: var(--space-6);
+    border-bottom: 1px solid #334155;
+}
+
+.headerContent {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1;
+}
+
+.titleContainer {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin-bottom: var(--space-2);
+    flex-wrap: wrap;
+}
+
+.title {
+    color: #f1f5f9;
+    margin: 0 0 var(--space-2) 0;
+    font-size: 2.2rem;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+}
+
+.filterIndicator {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-primary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0.25rem 0.75rem;
+    background: rgba(253, 95, 0, 0.1);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(253, 95, 0, 0.3);
+}
+
+.filterDot {
+    width: 8px;
+    height: 8px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.resultsInfo {
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-4);
+    font-size: 0.9rem;
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid #334155;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.subtitle {
+    color: var(--color-text-secondary);
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.5;
+    font-weight: 400;
+}
+
+.stats {
+    display: flex;
+    gap: var(--space-8);
+    margin-top: var(--space-2);
+}
+
+.statItem {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.statValue {
+    color: #f1f5f9;
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.statLabel {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.createButton {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+    border: none;
+    box-shadow: 0 4px 15px rgba(253, 95, 0, 0.4);
+    font-weight: 600;
+    transition: all var(--transition-normal);
+    min-width: 180px;
+}
+
+.createButton:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(253, 95, 0, 0.5);
+}
+
+.createButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.tableSection {
+    margin-bottom: var(--space-8);
+}
+
+.paginationSection {
+    margin-top: var(--space-4);
+    padding-top: var(--space-6);
+    border-top: 1px solid #334155;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: var(--space-5);
+        min-height: calc(100vh - 2.5rem);
+    }
+
+    .header {
+        flex-direction: column;
+        gap: var(--space-4);
+        align-items: stretch;
+        margin-bottom: var(--space-8);
+    }
+
+    .titleContainer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-3);
+    }
+
+    .title {
+        font-size: 1.8rem;
+        margin-bottom: var(--space-1);
+    }
+
+    .subtitle {
+        font-size: var(--font-size-md);
+    }
+
+    .stats {
+        gap: var(--space-6);
+    }
+
+    .statValue {
+        font-size: 1.75rem;
+    }
+
+    .statLabel {
+        font-size: 0.85rem;
+    }
+
+    .createButton {
+        width: 100%;
+        justify-content: center;
+        min-width: unset;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: var(--space-4);
+    }
+
+    .title {
+        font-size: 1.6rem;
+    }
+
+    .subtitle {
+        font-size: 0.95rem;
+    }
+
+    .stats {
+        flex-direction: column;
+        gap: var(--space-4);
+    }
+
+    .filterIndicator {
+        font-size: 0.8rem;
+        padding: 0.2rem 0.6rem;
+    }
+}

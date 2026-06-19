@@ -1,0 +1,56 @@
+.filtersContainer {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: var(--space-4);
+    margin-bottom: var(--space-8);
+    background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+    padding: var(--space-6);
+    border-radius: var(--radius-xl);
+    border: 1px solid #334155;
+    align-items: flex-end;
+    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.filtersContainer:has(:not(.clearButton)) {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.searchWrapper {
+    width: 100%;
+}
+
+.clearButton {
+    align-self: flex-end;
+    height: 40px;
+    white-space: nowrap;
+}
+
+@media (max-width: 1024px) {
+    .filtersContainer {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .filtersContainer:has(:not(.clearButton)) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .clearButton {
+        grid-column: span 2;
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .filtersContainer {
+        grid-template-columns: 1fr;
+    }
+
+    .filtersContainer:has(:not(.clearButton)) {
+        grid-template-columns: 1fr;
+    }
+
+    .clearButton {
+        grid-column: span 1;
+        width: 100%;
+    }
+}

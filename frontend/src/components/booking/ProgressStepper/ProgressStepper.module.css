@@ -1,0 +1,240 @@
+.stepper {
+  width: 100%;
+  padding: 24px 0;
+  margin-bottom: 32px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.stepperContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  gap: 8px;
+}
+
+.stepWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  flex: 1;
+  min-width: 120px;
+  z-index: 1;
+}
+
+.stepContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  width: 100%;
+}
+
+.stepCircle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: var(--font-size-md);
+  transition: all var(--transition-normal);
+  border: 2px solid var(--color-border-medium);
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-muted);
+  position: relative;
+  z-index: 2;
+}
+
+.stepCircle.active {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  color: white;
+  box-shadow: 0 0 0 4px rgba(var(--color-primary-rgb), 0.2);
+}
+
+.stepCircle.completed {
+  border-color: var(--color-success);
+  background-color: var(--color-success);
+  color: white;
+}
+
+.stepCircle.upcoming {
+  border-color: var(--color-border-medium);
+  background-color: transparent;
+  color: var(--color-text-muted);
+}
+
+.checkIcon {
+  color: white;
+}
+
+.stepNumber {
+  font-weight: 600;
+}
+
+.stepContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  max-width: 140px;
+}
+
+.stepTitle {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  transition: color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.stepTitle.active {
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+.stepTitle.completed {
+  color: var(--color-success);
+}
+
+.stepTitle.upcoming {
+  color: var(--color-text-muted);
+}
+
+.connector {
+  flex: 1;
+  height: 2px;
+  background-color: var(--color-border-medium);
+  margin: 0 8px;
+  position: relative;
+  top: -18px;
+  z-index: 1;
+  transition: background-color var(--transition-normal);
+}
+
+.connector.completed {
+  background-color: var(--color-success);
+}
+
+.mobileStepper {
+  display: none;
+}
+
+.mobileStepperHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.mobileStepperHeader:hover {
+  border-color: var(--color-primary);
+  background: var(--color-bg-quaternary);
+}
+
+.mobileCurrentStep {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobileStepInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.mobileStepLabel {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.mobileStepTitle {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.mobileChevron {
+  color: var(--color-text-secondary);
+  transition: transform var(--transition-fast);
+}
+
+.mobileChevronOpen {
+  transform: rotate(180deg);
+}
+
+.mobileStepsList {
+  margin-top: 8px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.mobileStepItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+  transition: background var(--transition-fast);
+}
+
+.mobileStepItem:last-child {
+  border-bottom: none;
+}
+
+.mobileStepItemActive {
+  background: rgba(var(--color-primary-rgb), 0.1);
+}
+
+.mobileStepItemCompleted {
+  opacity: 0.7;
+}
+
+.mobileStepCircle {
+  width: 28px;
+  height: 28px;
+  font-size: var(--font-size-xs);
+  flex-shrink: 0;
+}
+
+.mobileStepItemTitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 768px) {
+  .stepper {
+    padding: 0;
+    margin-bottom: 24px;
+    border-bottom: none;
+  }
+
+  .stepperContainer {
+    display: none;
+  }
+
+  .mobileStepper {
+    display: block;
+  }
+}
+
+@media (min-width: 769px) {
+  .desktopOnly {
+    display: flex;
+  }
+}

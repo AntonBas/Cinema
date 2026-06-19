@@ -1,0 +1,168 @@
+spring:
+  profiles:
+    active: local
+  application:
+    name: cinema
+  cache:
+    type: redis
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+    web:
+      pageable:
+        max-page-size: 50
+        default-page-size: 12
+        one-indexed-parameters: false
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:cinema_db}
+    username: ${DB_USER:cinema}
+    password: ${DB_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      connection-timeout: 30000
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    show-sql: false
+    properties:
+      hibernate:
+        "[format_sql]": false
+        jdbc:
+          "[batch_size]": 20
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:/db/migration
+    validate-on-migrate: true
+    validate-migration-naming: true
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${EMAIL_USERNAME:}
+    password: ${EMAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+  task:
+    execution:
+      pool:
+        core-size: 3
+        max-size: 5
+        queue-capacity: 50
+      thread-name-prefix: "scheduler-"
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  mvc:
+    log-request-details: false
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - email
+              - profile
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            authorization-grant-type: authorization_code
+            client-name: Google
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            user-name-attribute: sub
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:local_fallback_secret_key_for_dev_only}
+    expiration: 86400000
+  qr:
+    margin: 1
+    format: PNG
+  company:
+    name: "Bas Cinema"
+  frontend:
+    url: ${FRONTEND_URL:http://localhost:5173}
+  email:
+    from: ${EMAIL_FROM:noreply@bascinema.com}
+  upload:
+    dir: ${UPLOAD_DIR:uploads}
+  refund-policy:
+    processing-time: "5-7 business days"
+    contact-email: "support@bascinema.com"
+    rules:
+      - name: "Full Refund"
+        description: "100% refund — 48+ hours before the session"
+        percentage: 100
+        condition: "More than 48 hours before session start"
+      - name: "Standard Refund"
+        description: "85% refund — 24-48 hours before the session"
+        percentage: 85
+        condition: "24 to 48 hours before session start"
+      - name: "Last Minute Refund"
+        description: "50% refund — 2-24 hours before the session"
+        percentage: 50
+        condition: "2 to 24 hours before session start"
+      - name: "No Refund"
+        description: "Refund not available — less than 2 hours before the session"
+        percentage: 0
+        condition: "Less than 2 hours before session start"
+
+booking:
+  expiration-minutes: 30
+  temp-hold-minutes: 5
+  session-too-close-minutes: 30
+  max-seats-per-booking: 10
+
+payment:
+  expiration-minutes: 15
+  liqpay:
+    public_key: ${LIQPAY_PUBLIC_KEY}
+    private_key: ${LIQPAY_PRIVATE_KEY}
+    sandbox_mode: ${LIQPAY_SANDBOX_MODE:true}
+    currency: ${LIQPAY_CURRENCY:UAH}
+    language: ${LIQPAY_LANGUAGE:uk}
+    callback_url: ${PAYMENT_LIQPAY_CALLBACK_URL}
+    result_url: ${PAYMENT_LIQPAY_RESULT_URL}
+    api_url: ${LIQPAY_API_URL:https://www.liqpay.ua/api/}
+
+bonus:
+  point-value: 1.00
+  max-discount-percentage: 0.5
+  defaults:
+    "[WELCOME_BONUS]":
+      points: 150
+    "[BIRTHDAY_BONUS]":
+      points: 200
+    "[PROMOTION_BONUS]":
+      points: 100
+    "[BOOKING_SPEND]":
+      min-points: 100
+      max-points: 1000
+    "[PAYMENT_ACCRUAL]":
+      money-ratio: 0.05
+      min-points: 10
+
+ticket:
+  validation:
+    max-hours-after-session: 2
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  level:
+    root: INFO
+    ua.lviv.bas.cinema: INFO

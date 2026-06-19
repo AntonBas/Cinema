@@ -1,0 +1,240 @@
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    animation: fadeIn var(--transition-normal);
+}
+
+.formRow {
+    display: flex;
+    gap: var(--space-4);
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    flex: 1;
+}
+
+.label {
+    color: var(--color-text-primary);
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+}
+
+.required {
+    color: var(--color-error);
+    margin-left: var(--space-1);
+}
+
+.input,
+.select,
+.textarea {
+    width: 100%;
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border-medium);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    font-family: var(--font-family);
+    transition: all var(--transition-fast);
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
+}
+
+.input::placeholder,
+.textarea::placeholder {
+    color: var(--color-text-muted);
+}
+
+.textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.select {
+    cursor: pointer;
+}
+
+.charCount {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    text-align: right;
+    transition: color var(--transition-fast);
+}
+
+.charCount.warning {
+    color: var(--color-warning);
+    font-weight: 500;
+}
+
+.fileUpload {
+    border: 2px dashed var(--color-border-medium);
+    border-radius: var(--radius-md);
+    padding: var(--space-8);
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    position: relative;
+    min-height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-bg-tertiary);
+}
+
+.fileUpload:hover {
+    border-color: var(--color-primary);
+    background: rgba(var(--color-primary-rgb), 0.02);
+}
+
+.fileUpload:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
+}
+
+.fileInput {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.uploadPlaceholder {
+    color: var(--color-text-secondary);
+    text-align: center;
+}
+
+.uploadPlaceholder span {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: var(--space-2);
+    opacity: 0.7;
+}
+
+.uploadPlaceholder p {
+    margin: var(--space-2) 0;
+    font-weight: 600;
+}
+
+.uploadPlaceholder small {
+    opacity: 0.8;
+    font-size: var(--font-size-xs);
+}
+
+.posterPreview {
+    width: 100%;
+    max-width: 200px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.posterPreview img {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+}
+
+.posterActions {
+    margin-top: var(--space-4);
+    display: flex;
+    justify-content: center;
+}
+
+.actions {
+    display: flex;
+    gap: var(--space-4);
+    justify-content: flex-end;
+    margin-top: var(--space-8);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--color-border-medium);
+}
+
+.loading {
+    text-align: center;
+    padding: var(--space-8);
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: 200px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .form {
+        animation: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .form {
+        gap: var(--space-4);
+    }
+
+    .formRow {
+        flex-direction: column;
+        gap: var(--space-4);
+    }
+
+    .actions {
+        flex-direction: column-reverse;
+        gap: var(--space-3);
+    }
+
+    .actions button {
+        width: 100%;
+    }
+
+    .fileUpload {
+        padding: var(--space-6);
+        min-height: 200px;
+    }
+
+    .posterPreview {
+        max-width: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    .fileUpload {
+        padding: var(--space-4);
+        min-height: 150px;
+    }
+
+    .uploadPlaceholder span {
+        font-size: 2rem;
+    }
+
+    .uploadPlaceholder p {
+        font-size: var(--font-size-sm);
+    }
+
+    .posterPreview {
+        max-width: 120px;
+    }
+}
