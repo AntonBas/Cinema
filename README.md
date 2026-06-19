@@ -272,7 +272,7 @@ The system was tested against real failure scenarios:
 git clone https://github.com/AntonBas/Cinema.git
 cd Cinema
 cp .env.docker.example .env
-docker-compose up -d
+docker compose up -d
 ```
 
 | Service     | URL                                   |

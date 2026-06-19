@@ -61,7 +61,7 @@ Fill in the required values. See [.env.docker.example](https://github.com/AntonB
 **3. Start all services**
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 **4. Access the application**
@@ -78,7 +78,7 @@ docker-compose up -d
 **5. Stop services**
 
 ```bash
-docker-compose down
+docker compose down
 ```
 
 ---
@@ -98,7 +98,7 @@ Edit `.env` with your local values. See [backend/.env.local.example](https://git
 
 ```bash
 cd ..
-docker-compose up -d postgres
+docker compose up -d postgres redis
 cd backend
 ./mvnw spring-boot:run
 ```
@@ -130,8 +130,8 @@ backend/src/main/resources/db/migration/
 To reset the database:
 
 ```bash
-docker-compose down -v postgres
-docker-compose up -d postgres
+docker compose down -v postgres
+docker compose up -d postgres
 ```
 
 ---
