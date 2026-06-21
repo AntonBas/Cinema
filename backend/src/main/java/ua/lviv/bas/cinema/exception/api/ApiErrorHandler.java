@@ -10,7 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.lang.NonNull;
+import jakarta.annotation.Nonnull;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -38,18 +38,18 @@ import static org.springframework.http.HttpStatus.*;
 public class ApiErrorHandler extends ResponseEntityExceptionHandler {
 
     @Override
-    @NonNull
-    protected ResponseEntity<Object> handleHttpMessageNotReadable(@NonNull HttpMessageNotReadableException ex,
-                                                                  @NonNull HttpHeaders headers, @NonNull HttpStatusCode status, @NonNull WebRequest request) {
+    @Nonnull
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(@Nonnull HttpMessageNotReadableException ex,
+                                                                  @Nonnull HttpHeaders headers, @Nonnull HttpStatusCode status, @Nonnull WebRequest request) {
         String error = "Malformed JSON request";
         log.warn("Malformed JSON request: {}", ex.getMessage());
         return buildResponseEntity(new ApiError(BAD_REQUEST, error, ex), request);
     }
 
     @Override
-    @NonNull
-    protected ResponseEntity<Object> handleMethodArgumentNotValid(@NonNull MethodArgumentNotValidException ex,
-                                                                  @NonNull HttpHeaders headers, @NonNull HttpStatusCode status, @NonNull WebRequest request) {
+    @Nonnull
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(@Nonnull MethodArgumentNotValidException ex,
+                                                                  @Nonnull HttpHeaders headers, @Nonnull HttpStatusCode status, @Nonnull WebRequest request) {
         ApiError apiError = new ApiError(BAD_REQUEST);
         apiError.setMessage("Validation error");
         apiError.addValidationErrors(ex.getBindingResult().getFieldErrors());
@@ -61,9 +61,9 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
     }
 
     @Override
-    @NonNull
-    protected ResponseEntity<Object> handleNoHandlerFoundException(@NonNull NoHandlerFoundException ex,
-                                                                   @NonNull HttpHeaders headers, @NonNull HttpStatusCode status, @NonNull WebRequest request) {
+    @Nonnull
+    protected ResponseEntity<Object> handleNoHandlerFoundException(@Nonnull NoHandlerFoundException ex,
+                                                                   @Nonnull HttpHeaders headers, @Nonnull HttpStatusCode status, @Nonnull WebRequest request) {
         ApiError apiError = new ApiError(BAD_REQUEST);
         apiError.setMessage(
                 String.format("Could not find the %s method for URL %s", ex.getHttpMethod(), ex.getRequestURL()));
@@ -75,8 +75,8 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
-    protected ResponseEntity<Object> handleEntityNotFound(@NonNull EntityNotFoundException ex,
-                                                          @NonNull WebRequest request) {
+    protected ResponseEntity<Object> handleEntityNotFound(@Nonnull EntityNotFoundException ex,
+                                                          @Nonnull WebRequest request) {
         ApiError apiError = new ApiError(NOT_FOUND);
         apiError.setMessage(ex.getMessage());
 
@@ -86,8 +86,8 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(BusinessException.class)
-    protected ResponseEntity<Object> handleBusinessException(@NonNull BusinessException ex,
-                                                             @NonNull WebRequest request) {
+    protected ResponseEntity<Object> handleBusinessException(@Nonnull BusinessException ex,
+                                                             @Nonnull WebRequest request) {
         ApiError apiError = new ApiError(ex.getStatus());
         apiError.setMessage(ex.getMessage());
         apiError.setDebugMessage(ex.getDebugMessage());
@@ -98,8 +98,8 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(NotFoundException.class)
-    protected ResponseEntity<Object> handleNotFoundException(@NonNull NotFoundException ex,
-                                                             @NonNull WebRequest request) {
+    protected ResponseEntity<Object> handleNotFoundException(@Nonnull NotFoundException ex,
+                                                             @Nonnull WebRequest request) {
         ApiError apiError = new ApiError(NOT_FOUND);
         apiError.setMessage(ex.getMessage());
         apiError.setDebugMessage(ex.getDebugMessage());
@@ -110,8 +110,8 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    protected ResponseEntity<Object> handleDataIntegrityViolation(@NonNull DataIntegrityViolationException ex,
-                                                                  @NonNull WebRequest request) {
+    protected ResponseEntity<Object> handleDataIntegrityViolation(@Nonnull DataIntegrityViolationException ex,
+                                                                  @Nonnull WebRequest request) {
         if (ex.getCause() instanceof ConstraintViolationException) {
             ApiError apiError = new ApiError(CONFLICT, "Database constraint violation", ex.getCause());
             log.warn("Database constraint violation: {}", ex.getMessage());
@@ -124,8 +124,8 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    protected ResponseEntity<Object> handleMethodArgumentTypeMismatch(@NonNull MethodArgumentTypeMismatchException ex,
-                                                                      @NonNull WebRequest request) {
+    protected ResponseEntity<Object> handleMethodArgumentTypeMismatch(@Nonnull MethodArgumentTypeMismatchException ex,
+                                                                      @Nonnull WebRequest request) {
         ApiError apiError = new ApiError(BAD_REQUEST);
 
         String requiredType = Optional.ofNullable(ex.getRequiredType()).map(Class::getSimpleName).orElse("unknown");
@@ -140,8 +140,8 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    protected ResponseEntity<Object> handleConstraintViolation(@NonNull ConstraintViolationException ex,
-                                                               @NonNull WebRequest request) {
+    protected ResponseEntity<Object> handleConstraintViolation(@Nonnull ConstraintViolationException ex,
+                                                               @Nonnull WebRequest request) {
         ApiError apiError = new ApiError(BAD_REQUEST);
         apiError.setMessage("Validation error");
 
@@ -154,44 +154,44 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler(BadCredentialsException.class)
-    protected ResponseEntity<Object> handleBadCredentials(@NonNull BadCredentialsException ex,
-                                                          @NonNull WebRequest request) {
+    protected ResponseEntity<Object> handleBadCredentials(@Nonnull BadCredentialsException ex,
+                                                          @Nonnull WebRequest request) {
         ApiError apiError = new ApiError(UNAUTHORIZED, "Invalid email or password");
         log.warn("Authentication failed: {}", ex.getMessage());
         return buildResponseEntity(apiError, request);
     }
 
     @ExceptionHandler(DisabledException.class)
-    protected ResponseEntity<Object> handleDisabled(@NonNull DisabledException ex, @NonNull WebRequest request) {
+    protected ResponseEntity<Object> handleDisabled(@Nonnull DisabledException ex, @Nonnull WebRequest request) {
         ApiError apiError = new ApiError(UNAUTHORIZED, "Account is disabled");
         log.warn("Disabled account attempt: {}", ex.getMessage());
         return buildResponseEntity(apiError, request);
     }
 
     @ExceptionHandler(LockedException.class)
-    protected ResponseEntity<Object> handleLocked(@NonNull LockedException ex, @NonNull WebRequest request) {
+    protected ResponseEntity<Object> handleLocked(@Nonnull LockedException ex, @Nonnull WebRequest request) {
         ApiError apiError = new ApiError(UNAUTHORIZED, "Account is locked");
         log.warn("Locked account attempt: {}", ex.getMessage());
         return buildResponseEntity(apiError, request);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    protected ResponseEntity<Object> handleAccessDenied(@NonNull AccessDeniedException ex,
-                                                        @NonNull WebRequest request) {
+    protected ResponseEntity<Object> handleAccessDenied(@Nonnull AccessDeniedException ex,
+                                                        @Nonnull WebRequest request) {
         ApiError apiError = new ApiError(FORBIDDEN, "Access denied");
         log.warn("Access denied: {}", ex.getMessage());
         return buildResponseEntity(apiError, request);
     }
 
     @ExceptionHandler(Exception.class)
-    protected ResponseEntity<Object> handleAllExceptions(@NonNull Exception ex, @NonNull WebRequest request) {
+    protected ResponseEntity<Object> handleAllExceptions(@Nonnull Exception ex, @Nonnull WebRequest request) {
         ApiError apiError = new ApiError(INTERNAL_SERVER_ERROR, "Unexpected error occurred", ex);
         log.error("Unexpected error: ", ex);
         return buildResponseEntity(apiError, request);
     }
 
-    @NonNull
-    private ResponseEntity<Object> buildResponseEntity(@NonNull ApiError apiError, @NonNull WebRequest request) {
+    @Nonnull
+    private ResponseEntity<Object> buildResponseEntity(@Nonnull ApiError apiError, @Nonnull WebRequest request) {
         if (request instanceof ServletWebRequest servletWebRequest) {
             apiError.setPath(servletWebRequest.getRequest().getRequestURI());
         } else {
