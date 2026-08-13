@@ -1,8 +1,8 @@
 package ua.lviv.bas.cinema.exception.core;
 
+import jakarta.annotation.Nullable;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
-import org.springframework.lang.Nullable;
 
 import java.io.Serial;
 
