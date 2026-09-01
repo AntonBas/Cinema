@@ -82,7 +82,7 @@ public class SessionServiceTest {
         LocalDateTime startTime = LocalDateTime.now().plusHours(2);
         SessionRequest request = new SessionRequest(startTime, BASE_PRICE, MOVIE_ID, HALL_ID);
 
-        when(movieRepository.getReferenceById(MOVIE_ID)).thenReturn(movie);
+        when(movieRepository.findById(MOVIE_ID)).thenReturn(Optional.of(movie));
         when(cinemaHallService.getHallEntity(HALL_ID)).thenReturn(hall);
         when(sessionRepository.existsConflictingSession(eq(HALL_ID), any(), any(), isNull())).thenReturn(false);
         when(sessionMapper.toEntity(request)).thenReturn(session);
@@ -100,7 +100,7 @@ public class SessionServiceTest {
         LocalDateTime startTime = LocalDateTime.now().plusHours(2);
         SessionRequest request = new SessionRequest(startTime, BASE_PRICE, MOVIE_ID, HALL_ID);
 
-        when(movieRepository.getReferenceById(MOVIE_ID)).thenReturn(movie);
+        when(movieRepository.findById(MOVIE_ID)).thenReturn(Optional.of(movie));
         when(cinemaHallService.getHallEntity(HALL_ID)).thenReturn(hall);
         when(sessionRepository.existsConflictingSession(eq(HALL_ID), any(), any(), isNull())).thenReturn(true);
 

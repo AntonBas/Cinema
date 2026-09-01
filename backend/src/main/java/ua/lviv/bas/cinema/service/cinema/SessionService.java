@@ -18,6 +18,7 @@ import ua.lviv.bas.cinema.dto.session.request.SessionRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
+import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionOperationException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
@@ -57,7 +58,8 @@ public class SessionService {
     public SessionResponse createSession(SessionRequest request) {
         validateStartTime(request.startTime());
 
-        var movie = movieRepository.getReferenceById(request.movieId());
+        var movie = movieRepository.findById(request.movieId())
+                .orElseThrow(() -> new MovieNotFoundException(request.movieId()));
         var hall = cinemaHallService.getHallEntity(request.hallId());
 
         validateMovieAvailability(movie, request.startTime());
