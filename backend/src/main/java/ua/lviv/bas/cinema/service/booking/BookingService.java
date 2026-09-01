@@ -116,6 +116,7 @@ public class BookingService {
         return bookingMapper.toResponse(booking);
     }
 
+    @CacheEvict(value = {"seatAvailability", "availableSeatsCount"}, allEntries = true)
     public void cancelBooking(Long bookingId, User user) {
         var booking = bookingRepository.findByIdAndUserId(bookingId, user.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Booking", bookingId));
