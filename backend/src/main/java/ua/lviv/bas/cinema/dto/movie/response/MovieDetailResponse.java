@@ -40,9 +40,6 @@ public record MovieDetailResponse(
         @Schema(description = "Current status of the movie", example = "CURRENT")
         MovieStatus status,
 
-        @Schema(description = "File name of the movie poster", example = "inception-poster.jpg")
-        String posterFileName,
-
         @Schema(description = "URL to the movie poster image", example = "/api/movies/1/poster")
         String posterUrl,
 

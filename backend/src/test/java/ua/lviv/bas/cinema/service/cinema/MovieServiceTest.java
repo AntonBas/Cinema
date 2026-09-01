@@ -104,11 +104,11 @@ public class MovieServiceTest {
 
         adminResponse = new MovieAdminResponse(MOVIE_ID, MOVIE_TITLE, "trailer.mp4", "Description", 120,
                 LocalDate.now().plusDays(1), LocalDate.now().plusDays(30), AgeRating.PEGI_12, MovieStatus.UPCOMING,
-                "poster.jpg", "/api/movies/1/poster", List.of(), List.of(), List.of(), List.of());
+                "/api/movies/1/poster", List.of(), List.of(), List.of(), List.of());
 
         detailResponse = new MovieDetailResponse(MOVIE_ID, MOVIE_TITLE, SLUG, "trailer.mp4", "Description", 120,
                 LocalDate.now().plusDays(1), LocalDate.now().plusDays(30), AgeRating.PEGI_12, MovieStatus.UPCOMING,
-                "poster.jpg", "/api/movies/1/poster", List.of(), List.of(), List.of(), List.of(), List.of());
+                "/api/movies/1/poster", List.of(), List.of(), List.of(), List.of(), List.of());
 
         cardResponse = new MovieCardResponse(MOVIE_ID, SLUG, MOVIE_TITLE, "/api/movies/1/poster", 120,
                 AgeRating.PEGI_12, MovieStatus.UPCOMING);

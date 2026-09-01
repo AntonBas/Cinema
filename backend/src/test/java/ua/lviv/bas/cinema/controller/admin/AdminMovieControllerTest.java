@@ -41,7 +41,7 @@ public class AdminMovieControllerTest {
 
     private MovieAdminResponse createMovieAdminResponse(String title) {
         return new MovieAdminResponse(1L, title, "trailer.mp4", "Description", 120, LocalDate.now().plusDays(1),
-                LocalDate.now().plusDays(30), AgeRating.PEGI_12, MovieStatus.UPCOMING, "poster.jpg",
+                LocalDate.now().plusDays(30), AgeRating.PEGI_12, MovieStatus.UPCOMING,
                 "/api/movies/" + 1L + "/poster", List.of(), List.of(), List.of(), List.of());
     }
 

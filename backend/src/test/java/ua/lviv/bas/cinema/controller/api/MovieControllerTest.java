@@ -42,7 +42,7 @@ public class MovieControllerTest {
     private MovieDetailResponse createMovieDetailResponse(MovieStatus status) {
         String TITLE = "Test Movie";
         return new MovieDetailResponse(MOVIE_ID, TITLE, SLUG, "https://trailer.url", "Description", 120,
-                LocalDate.now().plusDays(1), LocalDate.now().plusDays(30), AgeRating.PEGI_12, status, "poster.jpg",
+                LocalDate.now().plusDays(1), LocalDate.now().plusDays(30), AgeRating.PEGI_12, status,
                 "/api/movies/" + MOVIE_ID + "/poster", List.of(), List.of(), List.of(), List.of(), List.of());
     }
 
