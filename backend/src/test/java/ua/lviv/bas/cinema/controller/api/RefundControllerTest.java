@@ -7,7 +7,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
 import ua.lviv.bas.cinema.domain.user.User;
+import ua.lviv.bas.cinema.dto.refund.request.RefundPreviewRequest;
 import ua.lviv.bas.cinema.dto.refund.request.RefundRequest;
+import ua.lviv.bas.cinema.dto.refund.response.RefundPreviewResponse;
 import ua.lviv.bas.cinema.dto.refund.response.RefundResponse;
 import ua.lviv.bas.cinema.service.booking.RefundService;
 
@@ -39,6 +41,15 @@ public class RefundControllerTest {
         return new RefundResponse(id, "RF-2024-0001", "PROCESSING", new BigDecimal("200.00"), 90, "Change of plans",
                 "AUTO_SYSTEM", LocalDateTime.now(), LocalDateTime.now().minusMinutes(5), 456L, "CARD", null,
                 "Refund processed successfully", "3-5 business days");
+    }
+
+    private RefundPreviewResponse createPreviewResponse(Long ticketId) {
+        return new RefundPreviewResponse(ticketId, "TK2024000123", "Interstellar", LocalDateTime.now().plusHours(3),
+                "Hall 1", "Row 5, Seat 12", new BigDecimal("200.00"), new BigDecimal("200.00"),
+                new BigDecimal("180.00"), new BigDecimal("90.00"), new BigDecimal("20.00"), new BigDecimal("10.00"),
+                100, 90, "Standard Refund", "90% refund 2-24 hours before session", true, null,
+                LocalDateTime.now().plusHours(1), "3 hours", LocalDateTime.now().minusHours(1).toString(),
+                "Standard");
     }
 
     @Test
@@ -74,5 +85,39 @@ public class RefundControllerTest {
 
         assertThat(response).isNotNull();
         assertThat(response.id()).isEqualTo(2L);
+    }
+
+    @Test
+    void previewShouldReturnCalculatedPreview() {
+        User user = createUser(1L, "user@example.com");
+        CustomUserDetails userDetails = new CustomUserDetails(user);
+        RefundPreviewRequest request = new RefundPreviewRequest(100L);
+
+        RefundPreviewResponse previewResponse = createPreviewResponse(100L);
+
+        when(refundService.getPreview(any(RefundPreviewRequest.class), eq(user.getId()))).thenReturn(previewResponse);
+
+        RefundPreviewResponse response = refundController.preview(request, userDetails);
+
+        assertThat(response).isNotNull();
+        assertThat(response.ticketId()).isEqualTo(100L);
+        assertThat(response.refundAmount()).isEqualTo(new BigDecimal("180.00"));
+        assertThat(response.isRefundable()).isTrue();
+    }
+
+    @Test
+    void previewShouldCallServiceWithCorrectParameters() {
+        User user = createUser(2L, "another@example.com");
+        CustomUserDetails userDetails = new CustomUserDetails(user);
+        RefundPreviewRequest request = new RefundPreviewRequest(200L);
+
+        RefundPreviewResponse previewResponse = createPreviewResponse(200L);
+
+        when(refundService.getPreview(eq(request), eq(2L))).thenReturn(previewResponse);
+
+        RefundPreviewResponse response = refundController.preview(request, userDetails);
+
+        assertThat(response).isNotNull();
+        assertThat(response.ticketId()).isEqualTo(200L);
     }
 }

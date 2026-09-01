@@ -15,7 +15,9 @@ import org.springframework.web.bind.annotation.*;
 import ua.lviv.bas.cinema.config.properties.RefundPolicyConfig;
 import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
+import ua.lviv.bas.cinema.dto.refund.request.RefundPreviewRequest;
 import ua.lviv.bas.cinema.dto.refund.request.RefundRequest;
+import ua.lviv.bas.cinema.dto.refund.response.RefundPreviewResponse;
 import ua.lviv.bas.cinema.dto.refund.response.RefundResponse;
 import ua.lviv.bas.cinema.service.booking.RefundService;
 
@@ -47,6 +49,22 @@ public class RefundController {
         var user = userDetails.getUser();
         log.info("POST /api/refunds - user: {}, ticket: {}", user.getId(), request.ticketId());
         return refundService.refund(request, user.getId());
+    }
+
+    @PostMapping("/preview")
+    @Operation(summary = "Preview a ticket refund",
+            description = "Calculates the refund amount, fee and policy details without processing the refund")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Refund preview calculated successfully"),
+            @ApiResponse(responseCode = "401", description = "User not authenticated"),
+            @ApiResponse(responseCode = "404", description = "Ticket not found")
+    })
+    @PreAuthorize("isAuthenticated()")
+    public RefundPreviewResponse preview(@Valid @RequestBody RefundPreviewRequest request,
+                                         @AuthenticationPrincipal CustomUserDetails userDetails) {
+        var user = userDetails.getUser();
+        log.info("POST /api/refunds/preview - user: {}, ticket: {}", user.getId(), request.ticketId());
+        return refundService.getPreview(request, user.getId());
     }
 
     @GetMapping("/policy")
