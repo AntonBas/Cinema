@@ -239,6 +239,27 @@ public class PaymentServiceTest {
     }
 
     @Test
+    void processSuccessWhenAlreadySuccessShouldIgnoreDuplicateCallback() {
+        testPayment.setStatus(PaymentStatus.SUCCESS);
+        testPayment.setLiqpayPaymentId("PAY_ORIGINAL");
+        testPayment.setLiqpayTransactionId("TXN_ORIGINAL");
+
+        Map<String, String> callbackData = new HashMap<>();
+        callbackData.put("payment_id", "PAY_DUPLICATE");
+        callbackData.put("transaction_id", "TXN_DUPLICATE");
+        callbackData.put("sender_card_mask", "****9999");
+
+        paymentService.processSuccess(testPayment, callbackData);
+
+        assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
+        assertThat(testPayment.getLiqpayPaymentId()).isEqualTo("PAY_ORIGINAL");
+        assertThat(testPayment.getLiqpayTransactionId()).isEqualTo("TXN_ORIGINAL");
+
+        verify(paymentSuccessOrchestrator, never()).handle(any(Payment.class));
+        verify(auditService, never()).logChange(anyString(), anyLong(), anyString(), any(), any(), any());
+    }
+
+    @Test
     void processFailureShouldSucceed() {
         Map<String, String> callbackData = new HashMap<>();
         callbackData.put("err_code", "ERR_001");
@@ -252,6 +273,26 @@ public class PaymentServiceTest {
         assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.FAILED);
         assertThat(testPayment.getLiqpayErrorCode()).isEqualTo("ERR_001");
         assertThat(testPayment.getLiqpayErrorDescription()).isEqualTo("Insufficient funds");
+    }
+
+    @Test
+    void processFailureWhenAlreadyFailedShouldIgnoreDuplicateCallback() {
+        testPayment.setStatus(PaymentStatus.FAILED);
+        testPayment.setLiqpayErrorCode("ERR_ORIGINAL");
+        testPayment.setLiqpayErrorDescription("Original error");
+
+        Map<String, String> callbackData = new HashMap<>();
+        callbackData.put("err_code", "ERR_DUPLICATE");
+        callbackData.put("err_description", "Duplicate error");
+
+        paymentService.processFailure(testPayment, callbackData);
+
+        assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.FAILED);
+        assertThat(testPayment.getLiqpayErrorCode()).isEqualTo("ERR_ORIGINAL");
+        assertThat(testPayment.getLiqpayErrorDescription()).isEqualTo("Original error");
+
+        verify(emailService, never()).sendSafely(any(String.class), any(), any());
+        verify(auditService, never()).logChange(anyString(), anyLong(), anyString(), any(), any(), any());
     }
 
     @Test
