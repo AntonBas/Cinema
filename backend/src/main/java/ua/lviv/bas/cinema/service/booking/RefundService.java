@@ -107,13 +107,9 @@ public class RefundService {
 
     private RefundPreviewResponse createPreview(Ticket ticket) {
         var sessionTime = ticket.getBooking().getSession().getStartTime();
-        var percentage = refundRules.getRefundPercentage(sessionTime);
         var booking = ticket.getBooking();
-        var totalSeats = booking.getSeatReservations().size();
-        var cashAmount = refundCalculator.calculateCashAmount(ticket);
-        var refundAmount = refundCalculator.calculateRefundAmount(cashAmount, percentage);
-        var feeAmount = cashAmount.subtract(refundAmount);
-        var bonusPerTicket = totalSeats > 0 ? booking.getBonusPointsUsed() / totalSeats : 0;
+        var calculation = refundCalculator.calculate(ticket);
+        var feeAmount = calculation.cashAmount().subtract(calculation.refundAmount());
 
         String seatInfo = "N/A";
         var seatReservations = booking.getSeatReservations();
@@ -126,9 +122,9 @@ public class RefundService {
         return new RefundPreviewResponse(ticket.getId(), ticket.getUniqueCode(),
                 booking.getSession().getMovie().getTitle(), sessionTime,
                 booking.getSession().getHall().getName(), seatInfo, ticket.getOriginalPrice(),
-                ticket.getFinalPrice(), refundAmount, percentage, feeAmount,
-                BigDecimal.valueOf(100).subtract(percentage), bonusPerTicket,
-                refundCalculator.calculateBonusRefund(bonusPerTicket, percentage), refundRules.getPolicyName(sessionTime),
+                ticket.getFinalPrice(), calculation.refundAmount(), calculation.percentage(), feeAmount,
+                BigDecimal.valueOf(100).subtract(calculation.percentage()), calculation.bonusPointsUsed(),
+                calculation.bonusPointsToRefund(), refundRules.getPolicyName(sessionTime),
                 refundRules.getPolicyDescription(sessionTime), true, null, sessionTime.minusMinutes(30),
                 formatRemainingTime(sessionTime), ticket.getPurchaseTime().toString(),
                 ticket.getTicketType().getDisplayName());

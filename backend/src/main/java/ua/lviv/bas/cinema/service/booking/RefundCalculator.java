@@ -40,9 +40,9 @@ public class RefundCalculator {
         var totalSeats = booking.getSeatReservations().size();
         var cashAmount = calculateCashAmount(ticket);
         var refundAmount = calculateRefundAmount(cashAmount, percentage);
-        var bonusPerTicket = totalSeats > 0 ? booking.getBonusPointsUsed() / totalSeats : 0;
-        var bonusPointsToRefund = calculateBonusRefund(bonusPerTicket, percentage);
-        return new RefundCalculation(percentage, refundAmount, bonusPointsToRefund);
+        var bonusPointsUsed = totalSeats > 0 ? booking.getBonusPointsUsed() / totalSeats : 0;
+        var bonusPointsToRefund = calculateBonusRefund(bonusPointsUsed, percentage);
+        return new RefundCalculation(percentage, cashAmount, refundAmount, bonusPointsUsed, bonusPointsToRefund);
     }
 
     public BigDecimal calculateCashAmount(Ticket ticket) {
@@ -69,6 +69,7 @@ public class RefundCalculator {
         return (int) (bonusPointsUsed * percentage.doubleValue() / 100);
     }
 
-    public record RefundCalculation(BigDecimal percentage, BigDecimal refundAmount, Integer bonusPointsToRefund) {
+    public record RefundCalculation(BigDecimal percentage, BigDecimal cashAmount, BigDecimal refundAmount,
+                                    Integer bonusPointsUsed, Integer bonusPointsToRefund) {
     }
 }

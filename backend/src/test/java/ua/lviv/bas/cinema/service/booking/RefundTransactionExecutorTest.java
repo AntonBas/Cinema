@@ -108,7 +108,8 @@ public class RefundTransactionExecutorTest {
         when(refundCalculator.validate(testTicket)).thenReturn(null);
         when(refundRepository.existsByItemsTicketIdAndStatus(TICKET_ID, RefundStatus.PROCESSING)).thenReturn(false);
         when(refundCalculator.calculate(testTicket))
-                .thenReturn(new RefundCalculator.RefundCalculation(PERCENTAGE, REFUND_AMOUNT, BONUS_POINTS_TO_REFUND));
+                .thenReturn(new RefundCalculator.RefundCalculation(PERCENTAGE, REFUND_AMOUNT, REFUND_AMOUNT,
+                        BONUS_POINTS_TO_REFUND, BONUS_POINTS_TO_REFUND));
         when(refundRepository.save(any(Refund.class))).thenAnswer(i -> {
             Refund r = i.getArgument(0);
             r.setId(REFUND_ID);
