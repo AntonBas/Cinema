@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { PartyPopper } from "lucide-react";
 import { useAuthActions } from "@/hooks/features/auth/useAuthActions";
 import { Input, Button, Modal } from "@/components/ui";
 import type { RegisterRequest } from "@/types/auth";

@@ -69,11 +69,6 @@ export const HomePage: React.FC = () => {
     );
   }
 
-  const hasContent =
-    currentMoviesHome.length > 0 ||
-    upcomingMoviesHome.length > 0 ||
-    leavingSoonHome.length > 0;
-
   return (
     <Layout>
       <HeroSection />
