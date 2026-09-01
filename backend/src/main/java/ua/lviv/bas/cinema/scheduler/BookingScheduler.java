@@ -20,7 +20,7 @@ import ua.lviv.bas.cinema.domain.booking.status.ReservationStatus;
 import ua.lviv.bas.cinema.repository.booking.BookingRepository;
 import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
 import ua.lviv.bas.cinema.repository.booking.SeatReservationRepository;
-import ua.lviv.bas.cinema.service.bonus.BonusService;
+import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
 
 @Slf4j
 @Component
@@ -29,7 +29,7 @@ public class BookingScheduler {
 	private final BookingRepository bookingRepository;
 	private final PaymentRepository paymentRepository;
 	private final SeatReservationRepository seatReservationRepository;
-	private final BonusService bonusService;
+	private final BonusLedgerService bonusLedgerService;
 	private final CacheManager cacheManager;
 
 	@Scheduled(fixedRateString = "${scheduler.booking.expiration-interval:60000}")
@@ -58,7 +58,7 @@ public class BookingScheduler {
 					"Booking seat reservations must not be null"));
 
 			if (booking.getBonusPointsUsed() != null && booking.getBonusPointsUsed() > 0) {
-				bonusService.refundPoints(booking);
+				bonusLedgerService.refundPoints(booking);
 			}
 
 			evictCacheIfPresent("seatAvailability", booking.getSession().getId());

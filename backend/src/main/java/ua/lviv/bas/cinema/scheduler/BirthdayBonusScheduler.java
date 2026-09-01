@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.domain.user.VerificationStatus;
 import ua.lviv.bas.cinema.repository.user.UserRepository;
-import ua.lviv.bas.cinema.service.bonus.BonusService;
+import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
 
 @Slf4j
 @Component
@@ -20,7 +20,7 @@ import ua.lviv.bas.cinema.service.bonus.BonusService;
 public class BirthdayBonusScheduler {
 
 	private final UserRepository userRepository;
-	private final BonusService bonusService;
+	private final BonusLedgerService bonusLedgerService;
 
 	@Scheduled(cron = "${scheduler.birthday-bonus.cron:0 0 9 * * *}")
 	@Transactional
@@ -46,7 +46,7 @@ public class BirthdayBonusScheduler {
 
 		for (User user : birthdayUsers) {
 			try {
-				bonusService.awardBirthdayBonus(user);
+				bonusLedgerService.awardBirthdayBonus(user);
 				awardedCount++;
 				log.info("Awarded birthday bonus to user {} ({})", user.getId(), user.getEmail());
 			} catch (Exception e) {

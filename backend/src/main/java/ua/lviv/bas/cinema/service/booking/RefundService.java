@@ -24,7 +24,7 @@ import ua.lviv.bas.cinema.mapper.booking.RefundItemMapper;
 import ua.lviv.bas.cinema.mapper.booking.RefundMapper;
 import ua.lviv.bas.cinema.repository.booking.RefundRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
-import ua.lviv.bas.cinema.service.bonus.BonusService;
+import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
 import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.ticket.TicketService;
@@ -44,7 +44,7 @@ public class RefundService {
     private final TicketRepository ticketRepository;
     private final RefundRepository refundRepository;
     private final PaymentService paymentService;
-    private final BonusService bonusService;
+    private final BonusLedgerService bonusLedgerService;
     private final RefundRules refundRules;
     private final RefundMapper refundMapper;
     private final RefundItemMapper refundItemMapper;
@@ -93,7 +93,7 @@ public class RefundService {
             paymentService.refund(refund.getPayment(), refundAmount, "Refund for ticket #" + ticket.getUniqueCode(), ticket);
 
             if (bonusPointsToRefund != null && bonusPointsToRefund > 0) {
-                bonusService.refundPointsForTicket(refund.getUser().getId(), bonusPointsToRefund, "REFUND_TICKET_" + ticket.getId());
+                bonusLedgerService.refundPointsForTicket(refund.getUser().getId(), bonusPointsToRefund, "REFUND_TICKET_" + ticket.getId());
             }
 
             ticketService.markAsRefunded(ticket, refund);

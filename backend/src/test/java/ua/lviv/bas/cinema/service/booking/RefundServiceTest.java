@@ -30,7 +30,7 @@ import ua.lviv.bas.cinema.mapper.booking.RefundItemMapper;
 import ua.lviv.bas.cinema.mapper.booking.RefundMapper;
 import ua.lviv.bas.cinema.repository.booking.RefundRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
-import ua.lviv.bas.cinema.service.bonus.BonusService;
+import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
 import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.ticket.TicketService;
@@ -55,7 +55,7 @@ public class RefundServiceTest {
     @Mock
     private PaymentService paymentService;
     @Mock
-    private BonusService bonusService;
+    private BonusLedgerService bonusLedgerService;
     @Mock
     private RefundRules refundRules;
     @Mock
@@ -187,7 +187,7 @@ public class RefundServiceTest {
         when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(true);
         when(refundRules.getRefundPercentage(testSession.getStartTime())).thenReturn(PERCENTAGE);
         when(refundRepository.save(any(Refund.class))).thenReturn(testRefund);
-        doNothing().when(bonusService).refundPointsForTicket(eq(USER_ID), eq(BONUS_POINTS_TO_REFUND), any(String.class));
+        doNothing().when(bonusLedgerService).refundPointsForTicket(eq(USER_ID), eq(BONUS_POINTS_TO_REFUND), any(String.class));
         when(numberGenerator.generateRefundNumber(testRefund)).thenReturn("RF-2024-00001");
 
         RefundResponse mockResponse = new RefundResponse(1L, "RF-2024-00001", "PROCESSED", REFUND_AMOUNT,

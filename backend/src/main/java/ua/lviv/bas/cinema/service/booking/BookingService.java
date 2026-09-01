@@ -26,7 +26,8 @@ import ua.lviv.bas.cinema.repository.booking.SeatReservationRepository;
 import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
 import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
-import ua.lviv.bas.cinema.service.bonus.BonusService;
+import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
+import ua.lviv.bas.cinema.service.bonus.BonusQueryService;
 import ua.lviv.bas.cinema.service.common.PriceCalculatorService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
@@ -46,7 +47,8 @@ public class BookingService {
     private final TicketTypeRepository ticketTypeRepository;
     private final SeatReservationRepository seatReservationRepository;
     private final BookingMapper bookingMapper;
-    private final BonusService bonusService;
+    private final BonusLedgerService bonusLedgerService;
+    private final BonusQueryService bonusQueryService;
     private final PriceCalculatorService priceCalculator;
     private final SeatReservationService seatReservationService;
     private final AuditService auditService;
@@ -97,7 +99,7 @@ public class BookingService {
         seatReservationRepository.saveAll(seatReservations);
 
         if (priceResult.bonusPointsUsed() > 0) {
-            bonusService.spendPoints(user.getId(), priceResult.bonusPointsUsed(), saved);
+            bonusLedgerService.spendPoints(user.getId(), priceResult.bonusPointsUsed(), saved);
         }
 
         log.info("Created booking {} for user {} with {} bonus points used", saved.getId(), user.getId(),
@@ -133,7 +135,7 @@ public class BookingService {
         seatReservationRepository.saveAll(booking.getSeatReservations());
 
         if (booking.getBonusPointsUsed() != null && booking.getBonusPointsUsed() > 0) {
-            bonusService.refundPoints(booking);
+            bonusLedgerService.refundPoints(booking);
         }
 
         bookingRepository.save(booking);
@@ -161,7 +163,7 @@ public class BookingService {
         Integer bonusPointsUsed = 0;
 
         if (bonusPointsToUse != null && bonusPointsToUse > 0) {
-            bonusService.validatePointsForBooking(userId, bonusPointsToUse, totalPrice);
+            bonusQueryService.validatePointsForBooking(userId, bonusPointsToUse, totalPrice);
             bonusDiscount = priceCalculator.calculateBonusDiscount(bonusPointsToUse);
             bonusPointsUsed = bonusPointsToUse;
         }

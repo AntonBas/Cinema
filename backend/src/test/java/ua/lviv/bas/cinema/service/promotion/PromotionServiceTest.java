@@ -24,7 +24,7 @@ import ua.lviv.bas.cinema.repository.promotion.PromotionRepository;
 import ua.lviv.bas.cinema.repository.promotion.UserPromotionRepository;
 import ua.lviv.bas.cinema.repository.promotion.projection.PromotionListProjection;
 import ua.lviv.bas.cinema.repository.promotion.projection.PromotionResponseProjection;
-import ua.lviv.bas.cinema.service.bonus.BonusService;
+import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 import java.time.LocalDate;
@@ -47,7 +47,7 @@ public class PromotionServiceTest {
     @Mock
     private PromotionMapper promotionMapper;
     @Mock
-    private BonusService bonusService;
+    private BonusLedgerService bonusLedgerService;
     @Mock
     private AuditService auditService;
 
@@ -259,7 +259,7 @@ public class PromotionServiceTest {
         PromotionResponse result = promotionService.claimPromotion(claimRequest, user);
 
         assertThat(result).isEqualTo(promotionResponse);
-        verify(bonusService).addPromotionPoints(user, BONUS_POINTS, PROMOTION_TITLE);
+        verify(bonusLedgerService).addPromotionPoints(user, BONUS_POINTS, PROMOTION_TITLE);
         verify(userPromotionRepository).save(any(UserPromotion.class));
     }
 
@@ -273,7 +273,7 @@ public class PromotionServiceTest {
         assertThatThrownBy(() -> promotionService.claimPromotion(claimRequest, user))
                 .isInstanceOf(PromotionNotActiveException.class);
 
-        verify(bonusService, never()).addPromotionPoints(any(), any(), any());
+        verify(bonusLedgerService, never()).addPromotionPoints(any(), any(), any());
         verify(userPromotionRepository, never()).save(any());
     }
 
@@ -285,7 +285,7 @@ public class PromotionServiceTest {
         assertThatThrownBy(() -> promotionService.claimPromotion(claimRequest, user))
                 .isInstanceOf(AlreadyClaimedException.class);
 
-        verify(bonusService, never()).addPromotionPoints(any(), any(), any());
+        verify(bonusLedgerService, never()).addPromotionPoints(any(), any(), any());
         verify(userPromotionRepository, never()).save(any());
     }
 

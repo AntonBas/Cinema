@@ -28,7 +28,8 @@ import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentAccessDenied
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 import ua.lviv.bas.cinema.repository.booking.BookingRepository;
 import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
-import ua.lviv.bas.cinema.service.bonus.BonusService;
+import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
+import ua.lviv.bas.cinema.service.bonus.BonusQueryService;
 import ua.lviv.bas.cinema.service.common.DateTimeFormatterService;
 import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
@@ -60,7 +61,9 @@ public class PaymentServiceTest {
     @Mock
     private TicketService ticketService;
     @Mock
-    private BonusService bonusService;
+    private BonusLedgerService bonusLedgerService;
+    @Mock
+    private BonusQueryService bonusQueryService;
     @Mock
     private NumberGeneratorService numberGenerator;
     @Mock
@@ -234,7 +237,7 @@ public class PaymentServiceTest {
         callbackData.put("transaction_id", "TXN123");
         callbackData.put("sender_card_mask", "****1234");
 
-        when(bonusService.calculateAccrualPoints(AMOUNT)).thenReturn(20);
+        when(bonusQueryService.calculateAccrualPoints(AMOUNT)).thenReturn(20);
         when(dateTimeFormatter.formatStandard(any(LocalDateTime.class))).thenReturn("2024-01-01 14:00");
         when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
 
@@ -247,7 +250,7 @@ public class PaymentServiceTest {
 
         verify(bookingService).confirmBooking(BOOKING_ID);
         verify(ticketService).createTicketsForBooking(testBooking, testPayment);
-        verify(bonusService).accruePointsForPayment(USER_ID, 20, testBooking, testPayment);
+        verify(bonusLedgerService).accruePointsForPayment(USER_ID, 20, testBooking, testPayment);
     }
 
     @Test

@@ -3,12 +3,8 @@ package ua.lviv.bas.cinema.service.bonus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ua.lviv.bas.cinema.config.properties.BonusProperties;
 import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.bonus.BonusCard;
 import ua.lviv.bas.cinema.domain.bonus.BonusRules;
@@ -18,47 +14,27 @@ import ua.lviv.bas.cinema.domain.booking.Booking;
 import ua.lviv.bas.cinema.domain.booking.Payment;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.domain.user.VerificationStatus;
-import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
-import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusRuleNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusValidationException;
-import ua.lviv.bas.cinema.exception.domain.financial.bonus.InsufficientPointsException;
-import ua.lviv.bas.cinema.mapper.bonus.BonusMapper;
 import ua.lviv.bas.cinema.repository.bonus.BonusCardRepository;
 import ua.lviv.bas.cinema.repository.bonus.BonusRulesRepository;
 import ua.lviv.bas.cinema.repository.bonus.BonusTransactionRepository;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Map;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class BonusService {
+public class BonusLedgerService {
 
     private final BonusCardRepository bonusCardRepository;
     private final BonusRulesRepository bonusRulesRepository;
     private final BonusTransactionRepository bonusTransactionRepository;
-    private final BonusMapper bonusMapper;
-    private final BonusProperties bonusProperties;
+    private final BonusQueryService bonusQueryService;
     private final AuditService auditService;
-
-    @Cacheable(value = "bonus", key = "'balance:' + #userId")
-    @Transactional(readOnly = true)
-    public BonusBalanceResponse getBalance(Long userId) {
-        var card = getCardByUserId(userId);
-        return buildBalanceResponse(card);
-    }
-
-    @Cacheable(value = "bonus", key = "'transactions:' + #userId + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
-    @Transactional(readOnly = true)
-    public Page<BonusTransactionResponse> getTransactions(Long userId, Pageable pageable) {
-        var page = bonusTransactionRepository.findProjectionsByUserId(userId, pageable);
-        return page.map(bonusMapper::toResponse);
-    }
 
     @CacheEvict(value = "bonus", allEntries = true)
     @Transactional
@@ -105,7 +81,7 @@ public class BonusService {
     @CacheEvict(value = "bonus", allEntries = true)
     @Transactional
     public void spendPoints(Long userId, Integer points, Booking booking) {
-        validateRedemption(userId, points);
+        bonusQueryService.validateRedemption(userId, points);
         var card = getCardByUserId(userId);
         int oldBalance = card.getPointsBalance();
         subtractPointsFromCard(card, points);
@@ -160,58 +136,8 @@ public class BonusService {
         createTransaction(card, points, BonusTransactionType.REFUND_RETURN, referenceId);
     }
 
-    @Transactional(readOnly = true)
-    public Integer calculateAccrualPoints(BigDecimal amount) {
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            return 0;
-        }
-        var ruleOpt = bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.PAYMENT_ACCRUAL);
-        if (ruleOpt.isEmpty() || ruleOpt.get().getMoneyRatio() == null) {
-            return 0;
-        }
-        var rule = ruleOpt.get();
-        int points = amount.multiply(rule.getMoneyRatio()).intValue();
-        points = applyMinMaxLimits(points, rule.getMinPointsPerTransaction(), rule.getMaxPointsPerTransaction());
-        return points;
-    }
-
-    @Transactional(readOnly = true)
-    public void validatePointsForBooking(Long userId, Integer points, BigDecimal totalPrice) {
-        validateRedemption(userId, points);
-        var discount = bonusProperties.getPointValue().multiply(BigDecimal.valueOf(points));
-        var maxDiscount = totalPrice.multiply(bonusProperties.getMaxDiscountPercentage());
-        if (discount.compareTo(maxDiscount) > 0) {
-            throw BonusValidationException.discountExceedsMax(discount, maxDiscount);
-        }
-    }
-
-    @Transactional(readOnly = true)
-    public void validateRedemption(Long userId, Integer points) {
-        var card = getCardByUserId(userId);
-        validatePositivePoints(points);
-        if (card.getPointsBalance() < points) {
-            throw new InsufficientPointsException(card.getPointsBalance(), points);
-        }
-
-        var spendRule = bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.BOOKING_SPEND);
-        if (spendRule.isPresent()) {
-            var rule = spendRule.get();
-            if (rule.getMinPointsPerTransaction() != null && points < rule.getMinPointsPerTransaction()) {
-                throw BonusValidationException.minPointsRequired(rule.getMinPointsPerTransaction());
-            }
-            if (rule.getMaxPointsPerTransaction() != null && points > rule.getMaxPointsPerTransaction()) {
-                throw BonusValidationException.maxPointsExceeded(rule.getMaxPointsPerTransaction());
-            }
-        }
-    }
-
     public BonusCard getOrCreateCard(User user) {
         return bonusCardRepository.findByUserId(user.getId()).orElseGet(() -> createBonusCard(user));
-    }
-
-    public void createTransaction(BonusCard card, Integer points, BonusTransactionType type,
-                                  String referenceId) {
-        createTransaction(card, points, type, referenceId, null);
     }
 
     private BonusCard createBonusCard(User user) {
@@ -238,6 +164,11 @@ public class BonusService {
     }
 
     private void createTransaction(BonusCard card, Integer points, BonusTransactionType type,
+                                   String referenceId) {
+        createTransaction(card, points, type, referenceId, null);
+    }
+
+    private void createTransaction(BonusCard card, Integer points, BonusTransactionType type,
                                    String referenceId, Booking booking) {
         if (points > 0) {
             validatePositivePoints(points);
@@ -245,32 +176,6 @@ public class BonusService {
         var transaction = BonusTransaction.builder().bonusCard(card).booking(booking).type(type).pointsChange(points)
                 .referenceId(referenceId).build();
         bonusTransactionRepository.save(transaction);
-    }
-
-    private BonusBalanceResponse buildBalanceResponse(BonusCard card) {
-        var pointValue = bonusProperties.getPointValue();
-        var balanceValue = pointValue.multiply(BigDecimal.valueOf(card.getPointsBalance()));
-        var spendRuleOpt = bonusRulesRepository.findByBonusTypeAndActiveTrue(BonusTransactionType.BOOKING_SPEND);
-
-        Integer minPoints = spendRuleOpt.map(BonusRules::getMinPointsPerTransaction).orElse(null);
-        Integer maxPoints = spendRuleOpt.map(BonusRules::getMaxPointsPerTransaction).orElse(null);
-        BigDecimal minValue = calculateValue(pointValue, minPoints);
-        BigDecimal maxValue = calculateValue(pointValue, maxPoints);
-
-        return new BonusBalanceResponse(card.getPointsBalance(), pointValue, balanceValue, minPoints, maxPoints,
-                minValue, maxValue);
-    }
-
-    private BigDecimal calculateValue(BigDecimal pointValue, Integer points) {
-        return points != null && points > 0 ? pointValue.multiply(BigDecimal.valueOf(points)) : null;
-    }
-
-    private int applyMinMaxLimits(int points, Integer min, Integer max) {
-        if (min != null && points < min)
-            return min;
-        if (max != null && points > max)
-            return max;
-        return points;
     }
 
     private boolean canReceiveBirthdayBonus(User user) {

@@ -11,7 +11,7 @@ import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.exception.domain.auth.*;
 import ua.lviv.bas.cinema.repository.token.EmailTokenRepository;
 import ua.lviv.bas.cinema.repository.user.UserRepository;
-import ua.lviv.bas.cinema.service.bonus.BonusService;
+import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
 
 import java.time.LocalDateTime;
 
@@ -23,7 +23,7 @@ public class EmailTokenService {
     private final EmailTokenRepository tokenRepository;
     private final EmailService emailService;
     private final UserRepository userRepository;
-    private final BonusService bonusService;
+    private final BonusLedgerService bonusLedgerService;
 
     @CacheEvict(value = "users", allEntries = true)
     @Transactional
@@ -36,8 +36,8 @@ public class EmailTokenService {
         user.setEnabled(true);
         var updatedUser = userRepository.save(user);
 
-        bonusService.getOrCreateCard(updatedUser);
-        bonusService.awardWelcomeBonus(updatedUser);
+        bonusLedgerService.getOrCreateCard(updatedUser);
+        bonusLedgerService.awardWelcomeBonus(updatedUser);
 
         emailToken.setConfirmed(true);
         emailToken.setConfirmedAt(LocalDateTime.now());

@@ -19,7 +19,7 @@ import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
-import ua.lviv.bas.cinema.service.bonus.BonusService;
+import ua.lviv.bas.cinema.service.bonus.BonusQueryService;
 
 @RestController
 @RequestMapping("/api/bonus")
@@ -28,7 +28,7 @@ import ua.lviv.bas.cinema.service.bonus.BonusService;
 @SecurityRequirement(name = "bearerAuth")
 public class BonusController {
 
-    private final BonusService bonusService;
+    private final BonusQueryService bonusQueryService;
 
     @RateLimit(value = 20, duration = 1, key = "user")
     @GetMapping("/balance")
@@ -41,7 +41,7 @@ public class BonusController {
     @PreAuthorize("isAuthenticated()")
     public BonusBalanceResponse getBalance(
             @Parameter(hidden = true) @AuthenticationPrincipal(expression = "userId") Long userId) {
-        return bonusService.getBalance(userId);
+        return bonusQueryService.getBalance(userId);
     }
 
     @RateLimit(value = 30, duration = 1, key = "user")
@@ -55,7 +55,7 @@ public class BonusController {
     public PageResponse<BonusTransactionResponse> getTransactions(
             @Parameter(hidden = true) @AuthenticationPrincipal(expression = "userId") Long userId,
             @PageableDefault(size = 20) Pageable pageable) {
-        var page = bonusService.getTransactions(userId, pageable);
+        var page = bonusQueryService.getTransactions(userId, pageable);
         return PageResponse.from(page);
     }
 }

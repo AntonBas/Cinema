@@ -14,7 +14,7 @@ import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.domain.user.UserRole;
 import ua.lviv.bas.cinema.domain.user.VerificationStatus;
 import ua.lviv.bas.cinema.repository.user.UserRepository;
-import ua.lviv.bas.cinema.service.bonus.BonusService;
+import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
 
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -32,7 +32,7 @@ public class CustomOAuth2UserServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private BonusService bonusService;
+    private BonusLedgerService bonusLedgerService;
 
     @Mock
     private OAuth2User oAuth2User;
@@ -80,8 +80,8 @@ public class CustomOAuth2UserServiceTest {
         assertThat(savedUser.getPassword()).isNotBlank();
         assertThat(result).isEqualTo(oAuth2User);
 
-        verify(bonusService).getOrCreateCard(savedUser);
-        verify(bonusService).awardWelcomeBonus(savedUser);
+        verify(bonusLedgerService).getOrCreateCard(savedUser);
+        verify(bonusLedgerService).awardWelcomeBonus(savedUser);
     }
 
     @Test
@@ -99,8 +99,8 @@ public class CustomOAuth2UserServiceTest {
         verify(userRepository).save(existingUser);
         assertThat(result).isEqualTo(oAuth2User);
 
-        verify(bonusService, never()).getOrCreateCard(any());
-        verify(bonusService, never()).awardWelcomeBonus(any());
+        verify(bonusLedgerService, never()).getOrCreateCard(any());
+        verify(bonusLedgerService, never()).awardWelcomeBonus(any());
     }
 
     @Test
@@ -116,8 +116,8 @@ public class CustomOAuth2UserServiceTest {
         verify(userRepository, never()).save(any());
         assertThat(result).isEqualTo(oAuth2User);
 
-        verify(bonusService, never()).getOrCreateCard(any());
-        verify(bonusService, never()).awardWelcomeBonus(any());
+        verify(bonusLedgerService, never()).getOrCreateCard(any());
+        verify(bonusLedgerService, never()).awardWelcomeBonus(any());
     }
 
     @Test
@@ -137,8 +137,8 @@ public class CustomOAuth2UserServiceTest {
         assertThat(savedUser.getFirstName()).isEqualTo("John");
         assertThat(savedUser.getLastName()).isEqualTo("Michael Doe");
 
-        verify(bonusService).getOrCreateCard(savedUser);
-        verify(bonusService).awardWelcomeBonus(savedUser);
+        verify(bonusLedgerService).getOrCreateCard(savedUser);
+        verify(bonusLedgerService).awardWelcomeBonus(savedUser);
     }
 
     @Test
@@ -158,8 +158,8 @@ public class CustomOAuth2UserServiceTest {
         assertThat(savedUser.getFirstName()).isEqualTo("John");
         assertThat(savedUser.getLastName()).isEmpty();
 
-        verify(bonusService).getOrCreateCard(savedUser);
-        verify(bonusService).awardWelcomeBonus(savedUser);
+        verify(bonusLedgerService).getOrCreateCard(savedUser);
+        verify(bonusLedgerService).awardWelcomeBonus(savedUser);
     }
 
     @Test
@@ -178,7 +178,7 @@ public class CustomOAuth2UserServiceTest {
         assertThat(savedUser.getPassword()).isNotBlank();
         assertThat(UUID.fromString(savedUser.getPassword())).isNotNull();
 
-        verify(bonusService).getOrCreateCard(savedUser);
-        verify(bonusService).awardWelcomeBonus(savedUser);
+        verify(bonusLedgerService).getOrCreateCard(savedUser);
+        verify(bonusLedgerService).awardWelcomeBonus(savedUser);
     }
 }

@@ -12,7 +12,7 @@ import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.domain.user.UserRole;
 import ua.lviv.bas.cinema.domain.user.VerificationStatus;
 import ua.lviv.bas.cinema.repository.user.UserRepository;
-import ua.lviv.bas.cinema.service.bonus.BonusService;
+import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
 
 import java.time.LocalDate;
 import java.util.Map;
@@ -25,7 +25,7 @@ import java.util.UUID;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
-    private final BonusService bonusService;
+    private final BonusLedgerService bonusLedgerService;
 
     @Override
     @Transactional
@@ -63,8 +63,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             user = userRepository.save(user);
             log.info("Created new OAuth2 user: {}", email);
 
-            bonusService.getOrCreateCard(user);
-            bonusService.awardWelcomeBonus(user);
+            bonusLedgerService.getOrCreateCard(user);
+            bonusLedgerService.awardWelcomeBonus(user);
             log.info("Created bonus card and awarded welcome bonus for OAuth2 user: {}", email);
         }
 

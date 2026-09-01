@@ -22,7 +22,8 @@ import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentAccessDenied
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 import ua.lviv.bas.cinema.repository.booking.BookingRepository;
 import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
-import ua.lviv.bas.cinema.service.bonus.BonusService;
+import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
+import ua.lviv.bas.cinema.service.bonus.BonusQueryService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.integration.payment.PaymentGatewayService;
 import ua.lviv.bas.cinema.service.notification.EmailService;
@@ -47,7 +48,8 @@ public class PaymentService {
     private final BookingRepository bookingRepository;
     private final PaymentGatewayService paymentGatewayService;
     private final TicketService ticketService;
-    private final BonusService bonusService;
+    private final BonusLedgerService bonusLedgerService;
+    private final BonusQueryService bonusQueryService;
     private final NumberGeneratorService numberGenerator;
     private final BookingService bookingService;
     private final AuditService auditService;
@@ -135,9 +137,9 @@ public class PaymentService {
         bookingService.confirmBooking(payment.getBooking().getId());
         ticketService.createTicketsForBooking(payment.getBooking(), payment);
 
-        var pointsToAccrue = bonusService.calculateAccrualPoints(payment.getBooking().getFinalPrice());
+        var pointsToAccrue = bonusQueryService.calculateAccrualPoints(payment.getBooking().getFinalPrice());
         if (pointsToAccrue != null && pointsToAccrue > 0) {
-            bonusService.accruePointsForPayment(payment.getBooking().getUser().getId(), pointsToAccrue,
+            bonusLedgerService.accruePointsForPayment(payment.getBooking().getUser().getId(), pointsToAccrue,
                     payment.getBooking(), payment);
         }
 

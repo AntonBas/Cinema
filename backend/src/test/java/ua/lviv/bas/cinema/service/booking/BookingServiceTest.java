@@ -32,7 +32,8 @@ import ua.lviv.bas.cinema.repository.booking.SeatReservationRepository;
 import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
 import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
-import ua.lviv.bas.cinema.service.bonus.BonusService;
+import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
+import ua.lviv.bas.cinema.service.bonus.BonusQueryService;
 import ua.lviv.bas.cinema.service.common.PriceCalculatorService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
@@ -64,7 +65,9 @@ public class BookingServiceTest {
     @Mock
     private BookingMapper bookingMapper;
     @Mock
-    private BonusService bonusService;
+    private BonusLedgerService bonusLedgerService;
+    @Mock
+    private BonusQueryService bonusQueryService;
     @Mock
     private PriceCalculatorService priceCalculator;
     @Mock
@@ -168,7 +171,7 @@ public class BookingServiceTest {
         when(ticketTypeRepository.findById(TICKET_TYPE_CHILD_ID)).thenReturn(Optional.of(childTicketType));
         when(priceCalculator.calculateSeatPrice(testSession, testSeat1, adultTicketType)).thenReturn(SEAT_1_PRICE);
         when(priceCalculator.calculateSeatPrice(testSession, testSeat2, childTicketType)).thenReturn(SEAT_2_PRICE);
-        doNothing().when(bonusService).validatePointsForBooking(USER_ID, BONUS_POINTS_USED, TOTAL_PRICE);
+        doNothing().when(bonusQueryService).validatePointsForBooking(USER_ID, BONUS_POINTS_USED, TOTAL_PRICE);
         when(priceCalculator.calculateBonusDiscount(BONUS_POINTS_USED)).thenReturn(DISCOUNT_AMOUNT);
 
         when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
@@ -181,7 +184,7 @@ public class BookingServiceTest {
         assertThat(result.id()).isEqualTo(BOOKING_ID);
         verify(bookingRepository).save(bookingCaptor.capture());
         verify(seatReservationRepository).saveAll(seatReservationsCaptor.capture());
-        verify(bonusService).spendPoints(eq(USER_ID), eq(BONUS_POINTS_USED), any(Booking.class));
+        verify(bonusLedgerService).spendPoints(eq(USER_ID), eq(BONUS_POINTS_USED), any(Booking.class));
 
         Booking capturedBooking = bookingCaptor.getValue();
         assertThat(capturedBooking.getUser()).isEqualTo(testUser);
@@ -204,7 +207,7 @@ public class BookingServiceTest {
         when(ticketTypeRepository.findById(TICKET_TYPE_CHILD_ID)).thenReturn(Optional.of(childTicketType));
         when(priceCalculator.calculateSeatPrice(testSession, testSeat1, adultTicketType)).thenReturn(SEAT_1_PRICE);
         when(priceCalculator.calculateSeatPrice(testSession, testSeat2, childTicketType)).thenReturn(SEAT_2_PRICE);
-        doNothing().when(bonusService).validatePointsForBooking(USER_ID, BONUS_POINTS_USED, TOTAL_PRICE);
+        doNothing().when(bonusQueryService).validatePointsForBooking(USER_ID, BONUS_POINTS_USED, TOTAL_PRICE);
         when(priceCalculator.calculateBonusDiscount(BONUS_POINTS_USED)).thenReturn(DISCOUNT_AMOUNT);
 
         when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
@@ -274,7 +277,7 @@ public class BookingServiceTest {
         bookingService.cancelBooking(BOOKING_ID, testUser);
 
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
-        verify(bonusService).refundPoints(booking);
+        verify(bonusLedgerService).refundPoints(booking);
         verify(seatReservationRepository).saveAll(anyList());
     }
 

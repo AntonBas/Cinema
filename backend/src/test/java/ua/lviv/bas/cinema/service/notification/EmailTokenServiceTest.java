@@ -11,7 +11,7 @@ import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.exception.domain.auth.*;
 import ua.lviv.bas.cinema.repository.token.EmailTokenRepository;
 import ua.lviv.bas.cinema.repository.user.UserRepository;
-import ua.lviv.bas.cinema.service.bonus.BonusService;
+import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -34,7 +34,7 @@ public class EmailTokenServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private BonusService bonusUserService;
+    private BonusLedgerService bonusUserService;
 
     @InjectMocks
     private EmailTokenService emailTokenService;

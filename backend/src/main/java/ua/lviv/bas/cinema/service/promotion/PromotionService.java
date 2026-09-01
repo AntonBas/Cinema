@@ -21,7 +21,7 @@ import ua.lviv.bas.cinema.exception.domain.financial.promotion.*;
 import ua.lviv.bas.cinema.mapper.promotion.PromotionMapper;
 import ua.lviv.bas.cinema.repository.promotion.PromotionRepository;
 import ua.lviv.bas.cinema.repository.promotion.UserPromotionRepository;
-import ua.lviv.bas.cinema.service.bonus.BonusService;
+import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 import java.time.LocalDate;
@@ -39,7 +39,7 @@ public class PromotionService {
     private final PromotionRepository promotionRepository;
     private final UserPromotionRepository userPromotionRepository;
     private final PromotionMapper promotionMapper;
-    private final BonusService bonusService;
+    private final BonusLedgerService bonusLedgerService;
     private final AuditService auditService;
 
     @CacheEvict(value = "promotions", allEntries = true)
@@ -139,7 +139,7 @@ public class PromotionService {
                 .pointsAwarded(promotion.getBonusPoints()).build();
 
         userPromotionRepository.save(userPromotion);
-        bonusService.addPromotionPoints(user, promotion.getBonusPoints(), promotion.getTitle());
+        bonusLedgerService.addPromotionPoints(user, promotion.getBonusPoints(), promotion.getTitle());
 
         log.info("Promotion claimed successfully. User received {} points", promotion.getBonusPoints());
         auditClaim(promotion, user);

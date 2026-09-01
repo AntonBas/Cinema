@@ -14,7 +14,7 @@ import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.service.bonus.BonusService;
+import ua.lviv.bas.cinema.service.bonus.BonusQueryService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -30,7 +30,7 @@ import static org.mockito.Mockito.when;
 public class BonusControllerTest {
 
     @Mock
-    private BonusService bonusService;
+    private BonusQueryService bonusQueryService;
 
     @InjectMocks
     private BonusController bonusController;
@@ -42,7 +42,7 @@ public class BonusControllerTest {
         BonusBalanceResponse balanceResponse = new BonusBalanceResponse(250, new BigDecimal("1.00"),
                 new BigDecimal("250.00"), 100, 1000, new BigDecimal("100.00"), new BigDecimal("1000.00"));
 
-        when(bonusService.getBalance(userId)).thenReturn(balanceResponse);
+        when(bonusQueryService.getBalance(userId)).thenReturn(balanceResponse);
 
         BonusBalanceResponse response = bonusController.getBalance(userId);
 
@@ -55,7 +55,7 @@ public class BonusControllerTest {
     @Test
     void getBalanceShouldThrowWhenCardNotFound() {
         Long userId = 1L;
-        when(bonusService.getBalance(userId)).thenThrow(new EntityNotFoundException("Bonus card", userId));
+        when(bonusQueryService.getBalance(userId)).thenThrow(new EntityNotFoundException("Bonus card", userId));
 
         assertThrows(EntityNotFoundException.class, () -> bonusController.getBalance(userId));
     }
@@ -73,7 +73,7 @@ public class BonusControllerTest {
 
         Page<BonusTransactionResponse> page = new PageImpl<>(List.of(transaction1, transaction2), pageable, 2);
 
-        when(bonusService.getTransactions(eq(userId), any(Pageable.class))).thenReturn(page);
+        when(bonusQueryService.getTransactions(eq(userId), any(Pageable.class))).thenReturn(page);
 
         PageResponse<BonusTransactionResponse> response = bonusController.getTransactions(userId, pageable);
 
@@ -97,7 +97,7 @@ public class BonusControllerTest {
 
         Page<BonusTransactionResponse> emptyPage = new PageImpl<>(List.of(), pageable, 0);
 
-        when(bonusService.getTransactions(eq(userId), any(Pageable.class))).thenReturn(emptyPage);
+        when(bonusQueryService.getTransactions(eq(userId), any(Pageable.class))).thenReturn(emptyPage);
 
         PageResponse<BonusTransactionResponse> response = bonusController.getTransactions(userId, pageable);
 
@@ -117,7 +117,7 @@ public class BonusControllerTest {
 
         Page<BonusTransactionResponse> page = new PageImpl<>(List.of(transaction), pageable, 10);
 
-        when(bonusService.getTransactions(eq(userId), eq(pageable))).thenReturn(page);
+        when(bonusQueryService.getTransactions(eq(userId), eq(pageable))).thenReturn(page);
 
         PageResponse<BonusTransactionResponse> response = bonusController.getTransactions(userId, pageable);
 
