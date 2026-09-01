@@ -23,7 +23,6 @@ import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
 import ua.lviv.bas.cinema.mapper.booking.BookingMapper;
 import ua.lviv.bas.cinema.repository.booking.BookingRepository;
 import ua.lviv.bas.cinema.repository.booking.SeatReservationRepository;
-import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
 import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
 import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
@@ -43,7 +42,6 @@ public class BookingService {
 
     private final BookingRepository bookingRepository;
     private final SessionRepository sessionRepository;
-    private final SeatRepository seatRepository;
     private final TicketTypeRepository ticketTypeRepository;
     private final SeatReservationRepository seatReservationRepository;
     private final BookingMapper bookingMapper;
@@ -210,16 +208,7 @@ public class BookingService {
             return reservation;
         }
 
-        var seat = seatRepository.findById(seatId)
-                .orElseThrow(() -> new SeatNotAvailableException("Seat not found: " + seatId));
-
-        seatReservationService.validateAvailability(session.getId(), seatId);
-
-        var newReservation = SeatReservation.builder().seat(seat).session(session).ticketType(null).seatPrice(null)
-                .status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(tempHoldMinutes))
-                .reservedByUser(user).build();
-
-        return seatReservationRepository.save(newReservation);
+        return seatReservationService.hold(session.getId(), seatId, user);
     }
 
     private void updateReservationWithTicketType(SeatReservation reservation,

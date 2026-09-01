@@ -65,7 +65,6 @@ public class SeatReservationControllerTest {
 
         when(customUserDetails.getUser()).thenReturn(user);
         when(customUserDetails.getUserId()).thenReturn(userId);
-        doNothing().when(seatReservationService).hold(sessionId, seatId, user);
 
         seatReservationController.hold(sessionId, seatId, customUserDetails);
 

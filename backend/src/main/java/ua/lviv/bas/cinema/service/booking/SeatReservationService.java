@@ -71,7 +71,7 @@ public class SeatReservationService {
 
     @CacheEvict(value = {"seatAvailability", "availableSeatsCount"}, key = "#sessionId")
     @Transactional
-    public void hold(Long sessionId, Long seatId, User user) {
+    public SeatReservation hold(Long sessionId, Long seatId, User user) {
         log.info("Creating temporary hold for seat {} in session {} by user {}", seatId, sessionId, user.getId());
 
         var session = sessionRepository.findById(sessionId)
@@ -86,8 +86,9 @@ public class SeatReservationService {
                 .status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(tempHoldMinutes))
                 .reservedByUser(user).build();
 
-        seatReservationRepository.save(reservation);
+        var saved = seatReservationRepository.save(reservation);
         log.info("Temporary hold created for seat {} in session {} by user {}", seatId, sessionId, user.getId());
+        return saved;
     }
 
     @CacheEvict(value = {"seatAvailability", "availableSeatsCount"}, key = "#sessionId")

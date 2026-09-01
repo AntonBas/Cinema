@@ -29,7 +29,6 @@ import ua.lviv.bas.cinema.exception.domain.booking.BookingValidationException;
 import ua.lviv.bas.cinema.mapper.booking.BookingMapper;
 import ua.lviv.bas.cinema.repository.booking.BookingRepository;
 import ua.lviv.bas.cinema.repository.booking.SeatReservationRepository;
-import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
 import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
 import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
@@ -56,8 +55,6 @@ public class BookingServiceTest {
     private BookingRepository bookingRepository;
     @Mock
     private SessionRepository sessionRepository;
-    @Mock
-    private SeatRepository seatRepository;
     @Mock
     private TicketTypeRepository ticketTypeRepository;
     @Mock
@@ -194,15 +191,20 @@ public class BookingServiceTest {
 
     @Test
     void createBookingWhenNoExistingReservationShouldCreateNewOne() {
+        SeatReservation newReservation1 = SeatReservation.builder().id(1L).seat(testSeat1).session(testSession)
+                .status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(TEMP_HOLD_MINUTES))
+                .reservedByUser(testUser).build();
+        SeatReservation newReservation2 = SeatReservation.builder().id(2L).seat(testSeat2).session(testSession)
+                .status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(TEMP_HOLD_MINUTES))
+                .reservedByUser(testUser).build();
+
         when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
         when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_1,
                 ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.empty());
         when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_2,
                 ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.empty());
-        when(seatRepository.findById(SEAT_ID_1)).thenReturn(Optional.of(testSeat1));
-        when(seatRepository.findById(SEAT_ID_2)).thenReturn(Optional.of(testSeat2));
-        when(seatReservationRepository.save(any(SeatReservation.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(seatReservationService.hold(SESSION_ID, SEAT_ID_1, testUser)).thenReturn(newReservation1);
+        when(seatReservationService.hold(SESSION_ID, SEAT_ID_2, testUser)).thenReturn(newReservation2);
         when(ticketTypeRepository.findById(TICKET_TYPE_ADULT_ID)).thenReturn(Optional.of(adultTicketType));
         when(ticketTypeRepository.findById(TICKET_TYPE_CHILD_ID)).thenReturn(Optional.of(childTicketType));
         when(priceCalculator.calculateSeatPrice(testSession, testSeat1, adultTicketType)).thenReturn(SEAT_1_PRICE);
@@ -217,8 +219,8 @@ public class BookingServiceTest {
         BookingResponse result = bookingService.createBooking(createRequest, testUser);
 
         assertThat(result).isNotNull();
-        verify(seatReservationService).validateAvailability(SESSION_ID, SEAT_ID_1);
-        verify(seatReservationService).validateAvailability(SESSION_ID, SEAT_ID_2);
+        verify(seatReservationService).hold(SESSION_ID, SEAT_ID_1, testUser);
+        verify(seatReservationService).hold(SESSION_ID, SEAT_ID_2, testUser);
     }
 
     @Test
