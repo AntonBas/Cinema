@@ -66,16 +66,6 @@ public class MovieControllerTest {
     }
 
     @Test
-    void getMovieBySlugWhenArchivedShouldThrowException() {
-        MovieDetailResponse movie = createMovieDetailResponse(MovieStatus.ARCHIVED);
-
-        when(movieService.getMovieBySlug(SLUG)).thenReturn(movie);
-
-        assertThatThrownBy(() -> movieController.getMovieBySlug(SLUG)).isInstanceOf(MovieNotFoundException.class);
-        verify(movieService).getMovieBySlug(SLUG);
-    }
-
-    @Test
     void getMovieBySlugWhenNotFoundShouldThrowException() {
         when(movieService.getMovieBySlug(SLUG)).thenThrow(new MovieNotFoundException(SLUG));
 

@@ -103,6 +103,10 @@ public class MovieService {
         Movie movie = movieRepository.findMovieBySlug(slug)
                 .orElseThrow(() -> new MovieNotFoundException(slug));
 
+        if (movie.getStatus() == MovieStatus.ARCHIVED) {
+            throw new MovieNotFoundException(slug);
+        }
+
         List<Session> sessions = movieRepository.findSessionsByMovieSlug(slug);
 
         LocalDateTime now = LocalDateTime.now();

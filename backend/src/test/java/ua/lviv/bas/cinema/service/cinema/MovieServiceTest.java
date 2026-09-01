@@ -200,6 +200,14 @@ public class MovieServiceTest {
     }
 
     @Test
+    void getMovieBySlugWhenArchivedShouldThrowException() {
+        movie.setStatus(MovieStatus.ARCHIVED);
+        when(movieRepository.findMovieBySlug(SLUG)).thenReturn(Optional.of(movie));
+
+        assertThatThrownBy(() -> movieService.getMovieBySlug(SLUG)).isInstanceOf(MovieNotFoundException.class);
+    }
+
+    @Test
     void getMovieBySlugWhenNotFoundShouldThrowException() {
         when(movieRepository.findMovieBySlug(SLUG)).thenReturn(Optional.empty());
 

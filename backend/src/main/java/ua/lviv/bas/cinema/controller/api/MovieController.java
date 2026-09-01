@@ -20,7 +20,6 @@ import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
-import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.service.cinema.MovieService;
 
 import java.time.LocalDate;
@@ -45,12 +44,6 @@ public class MovieController {
     public ResponseEntity<MovieDetailResponse> getMovieBySlug(@PathVariable String slug) {
         log.info("GET /api/movies/slug/{} - Getting movie by slug", slug);
         var movie = movieService.getMovieBySlug(slug);
-
-        if (movie.status() == MovieStatus.ARCHIVED) {
-            log.warn("Movie with slug {} is archived and not available publicly", slug);
-            throw new MovieNotFoundException(slug);
-        }
-
         return ResponseEntity.ok().body(movie);
     }
 
