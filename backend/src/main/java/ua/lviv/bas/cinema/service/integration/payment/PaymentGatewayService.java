@@ -66,23 +66,7 @@ public class PaymentGatewayService {
 
     private String createPayment(Payment payment) {
         try {
-            Map<String, Object> paymentParams = new LinkedHashMap<>();
-            paymentParams.put("public_key", liqpayPublicKey);
-            paymentParams.put("version", "3");
-            paymentParams.put("action", "pay");
-            paymentParams.put("amount", payment.getAmount().setScale(2, RoundingMode.HALF_UP).toString());
-            paymentParams.put("currency", "UAH");
-            paymentParams.put("description", buildPaymentDescription(payment));
-            paymentParams.put("order_id", payment.getLiqpayOrderId());
-            paymentParams.put("result_url", buildResultUrl(payment));
-            paymentParams.put("server_url", liqpayCallbackUrl);
-            paymentParams.put("language", "uk");
-            paymentParams.put("email", payment.getBooking().getUser().getEmail());
-
-            if (sandboxMode) {
-                paymentParams.put("sandbox", "1");
-            }
-
+            var paymentParams = buildPaymentParams(payment);
             var data = LiqPayDecoder.encodeToBase64(paymentParams);
             var signature = LiqPayDecoder.generateSignature(data, liqpayPrivateKey);
 
