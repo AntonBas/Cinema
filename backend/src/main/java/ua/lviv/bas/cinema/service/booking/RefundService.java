@@ -8,18 +8,16 @@ import ua.lviv.bas.cinema.config.properties.RefundRules;
 import ua.lviv.bas.cinema.domain.booking.Refund;
 import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
 import ua.lviv.bas.cinema.domain.ticket.Ticket;
-import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
 import ua.lviv.bas.cinema.dto.refund.request.RefundPreviewRequest;
 import ua.lviv.bas.cinema.dto.refund.request.RefundRequest;
 import ua.lviv.bas.cinema.dto.refund.response.RefundPreviewResponse;
 import ua.lviv.bas.cinema.dto.refund.response.RefundResponse;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 import ua.lviv.bas.cinema.exception.domain.financial.refund.RefundProcessingException;
-import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;
 import ua.lviv.bas.cinema.mapper.booking.RefundItemMapper;
 import ua.lviv.bas.cinema.mapper.booking.RefundMapper;
-import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
+import ua.lviv.bas.cinema.service.ticket.TicketService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -32,7 +30,7 @@ public class RefundService {
 
     private static final int MAX_APPLY_SUCCESS_ATTEMPTS = 2;
 
-    private final TicketRepository ticketRepository;
+    private final TicketService ticketService;
     private final PaymentService paymentService;
     private final RefundCalculator refundCalculator;
     private final RefundTransactionExecutor refundTransactionExecutor;
@@ -43,7 +41,7 @@ public class RefundService {
 
     @Transactional(readOnly = true)
     public RefundPreviewResponse getPreview(RefundPreviewRequest request, Long userId) {
-        var ticket = findActiveTicket(request.ticketId(), userId);
+        var ticket = ticketService.findActiveTicketForUser(request.ticketId(), userId);
         var validationError = refundCalculator.validate(ticket);
 
         if (validationError != null) {
@@ -128,11 +126,6 @@ public class RefundService {
                 refundRules.getPolicyDescription(sessionTime), true, null, sessionTime.minusMinutes(30),
                 formatRemainingTime(sessionTime), ticket.getPurchaseTime().toString(),
                 ticket.getTicketType().getDisplayName());
-    }
-
-    private Ticket findActiveTicket(Long ticketId, Long userId) {
-        return ticketRepository.findByIdAndUserIdAndStatus(ticketId, userId, TicketStatus.ACTIVE).orElseThrow(
-                () -> new TicketNotFoundException("Ticket not found or not active. Ticket ID: " + ticketId));
     }
 
     private RefundPreviewResponse createNonRefundablePreview(Ticket ticket, String reason) {

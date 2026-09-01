@@ -30,13 +30,12 @@ import ua.lviv.bas.cinema.exception.domain.financial.refund.TicketNotRefundableE
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;
 import ua.lviv.bas.cinema.mapper.booking.RefundItemMapper;
 import ua.lviv.bas.cinema.mapper.booking.RefundMapper;
-import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
+import ua.lviv.bas.cinema.service.ticket.TicketService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -47,7 +46,7 @@ import static org.mockito.Mockito.*;
 public class RefundServiceTest {
 
     @Mock
-    private TicketRepository ticketRepository;
+    private TicketService ticketService;
     @Mock
     private PaymentService paymentService;
     @Mock
@@ -83,7 +82,7 @@ public class RefundServiceTest {
     @BeforeEach
     void setUp() {
         refundCalculator = new RefundCalculator(refundRules);
-        refundService = new RefundService(ticketRepository, paymentService, refundCalculator,
+        refundService = new RefundService(ticketService, paymentService, refundCalculator,
                 refundTransactionExecutor, refundRules, refundMapper, refundItemMapper, numberGenerator);
 
         testUser = User.builder().id(USER_ID).email("test@example.com").build();
@@ -112,8 +111,7 @@ public class RefundServiceTest {
 
     @Test
     void getPreviewShouldSucceed() {
-        when(ticketRepository.findByIdAndUserIdAndStatus(TICKET_ID, USER_ID, TicketStatus.ACTIVE))
-                .thenReturn(Optional.of(testTicket));
+        when(ticketService.findActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
         when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(true);
         when(refundRules.getRefundPercentage(testSession.getStartTime())).thenReturn(PERCENTAGE);
         when(refundRules.getPolicyName(testSession.getStartTime())).thenReturn("Standard Refund");
@@ -131,8 +129,7 @@ public class RefundServiceTest {
     @Test
     void getPreviewWhenPaymentNotSuccessShouldReturnNonRefundable() {
         testPayment.setStatus(PaymentStatus.PENDING);
-        when(ticketRepository.findByIdAndUserIdAndStatus(TICKET_ID, USER_ID, TicketStatus.ACTIVE))
-                .thenReturn(Optional.of(testTicket));
+        when(ticketService.findActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
         when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(true);
 
         RefundPreviewResponse response = refundService.getPreview(previewRequest, USER_ID);
@@ -145,8 +142,7 @@ public class RefundServiceTest {
     @Test
     void getPreviewWhenTicketNotActiveShouldReturnNonRefundable() {
         testTicket.setStatus(TicketStatus.REFUNDED);
-        when(ticketRepository.findByIdAndUserIdAndStatus(TICKET_ID, USER_ID, TicketStatus.ACTIVE))
-                .thenReturn(Optional.of(testTicket));
+        when(ticketService.findActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
 
         RefundPreviewResponse response = refundService.getPreview(previewRequest, USER_ID);
 
@@ -157,8 +153,7 @@ public class RefundServiceTest {
 
     @Test
     void getPreviewWhenRefundNotAvailableShouldReturnNonRefundable() {
-        when(ticketRepository.findByIdAndUserIdAndStatus(TICKET_ID, USER_ID, TicketStatus.ACTIVE))
-                .thenReturn(Optional.of(testTicket));
+        when(ticketService.findActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
         when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(false);
 
         RefundPreviewResponse response = refundService.getPreview(previewRequest, USER_ID);
@@ -170,8 +165,8 @@ public class RefundServiceTest {
 
     @Test
     void getPreviewWhenTicketNotFoundShouldThrowException() {
-        when(ticketRepository.findByIdAndUserIdAndStatus(TICKET_ID, USER_ID, TicketStatus.ACTIVE))
-                .thenReturn(Optional.empty());
+        when(ticketService.findActiveTicketForUser(TICKET_ID, USER_ID))
+                .thenThrow(new TicketNotFoundException("Ticket not found or not active. Ticket ID: " + TICKET_ID));
 
         assertThatThrownBy(() -> refundService.getPreview(previewRequest, USER_ID))
                 .isInstanceOf(TicketNotFoundException.class);

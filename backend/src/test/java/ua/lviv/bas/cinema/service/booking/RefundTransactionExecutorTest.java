@@ -103,8 +103,7 @@ public class RefundTransactionExecutorTest {
 
     @Test
     void markProcessingShouldCreateProcessingRefund() {
-        when(ticketRepository.findByIdAndUserIdAndStatus(TICKET_ID, USER_ID, TicketStatus.ACTIVE))
-                .thenReturn(Optional.of(testTicket));
+        when(ticketService.findActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
         when(refundCalculator.validate(testTicket)).thenReturn(null);
         when(refundRepository.existsByItemsTicketIdAndStatus(TICKET_ID, RefundStatus.PROCESSING)).thenReturn(false);
         when(refundCalculator.calculate(testTicket))
@@ -132,8 +131,7 @@ public class RefundTransactionExecutorTest {
 
     @Test
     void markProcessingWhenTicketNotRefundableShouldThrow() {
-        when(ticketRepository.findByIdAndUserIdAndStatus(TICKET_ID, USER_ID, TicketStatus.ACTIVE))
-                .thenReturn(Optional.of(testTicket));
+        when(ticketService.findActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
         when(refundCalculator.validate(testTicket)).thenReturn("Ticket is not active. Current status: REFUNDED");
 
         assertThatThrownBy(() -> refundTransactionExecutor.markProcessing(TICKET_ID, USER_ID, "Test reason"))
@@ -144,8 +142,7 @@ public class RefundTransactionExecutorTest {
 
     @Test
     void markProcessingWhenAlreadyProcessingShouldThrowGuard() {
-        when(ticketRepository.findByIdAndUserIdAndStatus(TICKET_ID, USER_ID, TicketStatus.ACTIVE))
-                .thenReturn(Optional.of(testTicket));
+        when(ticketService.findActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
         when(refundCalculator.validate(testTicket)).thenReturn(null);
         when(refundRepository.existsByItemsTicketIdAndStatus(TICKET_ID, RefundStatus.PROCESSING)).thenReturn(true);
 

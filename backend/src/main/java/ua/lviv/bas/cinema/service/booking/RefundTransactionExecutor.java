@@ -12,7 +12,6 @@ import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
 import ua.lviv.bas.cinema.domain.booking.status.RefundItemStatus;
 import ua.lviv.bas.cinema.domain.booking.status.RefundStatus;
 import ua.lviv.bas.cinema.domain.ticket.Ticket;
-import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.refund.TicketNotRefundableException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;
@@ -42,7 +41,7 @@ public class RefundTransactionExecutor {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public RefundProcessingContext markProcessing(Long ticketId, Long userId, String reason) {
-        var ticket = findActiveTicket(ticketId, userId);
+        var ticket = ticketService.findActiveTicketForUser(ticketId, userId);
 
         var validationError = refundCalculator.validate(ticket);
         if (validationError != null) {
@@ -120,11 +119,6 @@ public class RefundTransactionExecutor {
         refund.setStatus(RefundStatus.REJECTED);
         refundRepository.save(refund);
         auditRejected(refund, cause);
-    }
-
-    private Ticket findActiveTicket(Long ticketId, Long userId) {
-        return ticketRepository.findByIdAndUserIdAndStatus(ticketId, userId, TicketStatus.ACTIVE).orElseThrow(
-                () -> new TicketNotFoundException("Ticket not found or not active. Ticket ID: " + ticketId));
     }
 
     private void auditCreated(Refund refund, Ticket ticket, RefundCalculator.RefundCalculation calculation) {

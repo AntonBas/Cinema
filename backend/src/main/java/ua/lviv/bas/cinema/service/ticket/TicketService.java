@@ -76,6 +76,11 @@ public class TicketService {
                 .status(TicketStatus.ACTIVE).purchaseTime(LocalDateTime.now()).build();
     }
 
+    public Ticket findActiveTicketForUser(Long ticketId, Long userId) {
+        return ticketRepository.findByIdAndUserIdAndStatus(ticketId, userId, TicketStatus.ACTIVE).orElseThrow(
+                () -> new TicketNotFoundException("Ticket not found or not active. Ticket ID: " + ticketId));
+    }
+
     public TicketCashierResponse getTicketForCashier(String uniqueCode) {
         var ticket = ticketRepository.findByUniqueCode(uniqueCode).orElseThrow(() -> new TicketNotFoundException("Ticket not found with code: " + uniqueCode));
         return ticketMapper.toTicketCashierResponse(ticket);
