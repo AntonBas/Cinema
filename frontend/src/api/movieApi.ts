@@ -101,10 +101,5 @@ export const movieApi = {
 
     getById: (id: number) =>
       api.get<MovieAdminResponse>(`${ADMIN_BASE_URL}/${id}`),
-
-    search: (query?: string) =>
-      api.get<MovieSessionSearchResponse[]>(`${ADMIN_BASE_URL}/search`, {
-        params: query ? { query } : undefined,
-      }),
   },
 };
