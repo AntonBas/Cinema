@@ -19,10 +19,10 @@ import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.domain.user.UserRole;
 import ua.lviv.bas.cinema.domain.user.VerificationStatus;
 import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.user.LastAdminException;
 import ua.lviv.bas.cinema.exception.domain.user.SelfBlockException;
 import ua.lviv.bas.cinema.exception.domain.user.SelfRoleChangeException;
-import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.user.UserMapper;
 import ua.lviv.bas.cinema.repository.user.UserRepository;
 import ua.lviv.bas.cinema.repository.user.projection.AdminUserProjection;
@@ -111,7 +111,7 @@ public class AdminUserService {
 	}
 
 	private User findById(Long id) {
-		return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
+		return userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User", id));
 	}
 
 	private boolean isCurrentUser(User user) {

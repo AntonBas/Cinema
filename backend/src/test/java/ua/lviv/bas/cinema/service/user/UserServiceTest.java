@@ -15,8 +15,8 @@ import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.auth.*;
-import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.user.UserMapper;
 import ua.lviv.bas.cinema.repository.user.UserRepository;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
@@ -129,7 +129,7 @@ public class UserServiceTest {
     void getUserByIdShouldThrowExceptionWhenNotFound() {
         when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> userService.getUser(USER_ID)).isInstanceOf(UserNotFoundException.class);
+        assertThatThrownBy(() -> userService.getUser(USER_ID)).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -147,7 +147,7 @@ public class UserServiceTest {
     void getUserByEmailShouldThrowExceptionWhenNotFound() {
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> userService.getUser(EMAIL)).isInstanceOf(UserNotFoundException.class);
+        assertThatThrownBy(() -> userService.getUser(EMAIL)).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test

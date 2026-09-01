@@ -20,9 +20,8 @@ import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.booking.response.SeatReservationResponse;
 import ua.lviv.bas.cinema.dto.booking.response.SeatStatusResponse;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
-import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
-import ua.lviv.bas.cinema.exception.domain.hall.SeatNotFoundException;
 import ua.lviv.bas.cinema.mapper.booking.SeatReservationMapper;
 import ua.lviv.bas.cinema.repository.booking.SeatReservationRepository;
 import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
@@ -110,7 +109,7 @@ public class SeatReservationServiceTest {
     void holdWhenSessionNotFoundShouldThrowException() {
         when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> seatReservationService.hold(SESSION_ID, SEAT_ID, testUser))
-                .isInstanceOf(SessionNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -118,7 +117,7 @@ public class SeatReservationServiceTest {
         when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
         when(seatRepository.findByIdWithLock(SEAT_ID)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> seatReservationService.hold(SESSION_ID, SEAT_ID, testUser))
-                .isInstanceOf(SeatNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -173,7 +172,7 @@ public class SeatReservationServiceTest {
     void validateAvailabilityWhenSeatNotFoundShouldThrowException() {
         when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> seatReservationService.validateAvailability(SESSION_ID, SEAT_ID))
-                .isInstanceOf(SeatNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -258,6 +257,6 @@ public class SeatReservationServiceTest {
     void getAvailabilityWhenSessionNotFoundShouldThrowException() {
         when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> seatReservationService.getAvailability(SESSION_ID))
-                .isInstanceOf(SessionNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 }

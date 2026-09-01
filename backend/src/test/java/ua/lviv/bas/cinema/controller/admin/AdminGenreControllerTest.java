@@ -14,7 +14,7 @@ import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
 import ua.lviv.bas.cinema.dto.movie.response.GenreListResponse;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
-import ua.lviv.bas.cinema.exception.domain.cinema.GenreNotFoundException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.service.cinema.GenreService;
 
 import java.util.List;
@@ -112,9 +112,10 @@ public class AdminGenreControllerTest {
     void updateGenreShouldThrowExceptionWhenNotFound() {
         GenreRequest request = new GenreRequest("Updated");
 
-        when(genreService.updateGenre(eq(999L), any(GenreRequest.class))).thenThrow(new GenreNotFoundException(999L));
+        when(genreService.updateGenre(eq(999L), any(GenreRequest.class)))
+                .thenThrow(new EntityNotFoundException("Genre", 999L));
 
-        assertThatThrownBy(() -> controller.updateGenre(999L, request)).isInstanceOf(GenreNotFoundException.class);
+        assertThatThrownBy(() -> controller.updateGenre(999L, request)).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -126,8 +127,8 @@ public class AdminGenreControllerTest {
 
     @Test
     void deleteGenreShouldThrowExceptionWhenNotFound() {
-        doThrow(new GenreNotFoundException(999L)).when(genreService).deleteGenre(999L);
+        doThrow(new EntityNotFoundException("Genre", 999L)).when(genreService).deleteGenre(999L);
 
-        assertThatThrownBy(() -> controller.deleteGenre(999L)).isInstanceOf(GenreNotFoundException.class);
+        assertThatThrownBy(() -> controller.deleteGenre(999L)).isInstanceOf(EntityNotFoundException.class);
     }
 }

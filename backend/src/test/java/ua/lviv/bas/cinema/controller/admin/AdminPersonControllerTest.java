@@ -12,7 +12,7 @@ import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonListResponse;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
-import ua.lviv.bas.cinema.exception.domain.cinema.PersonNotFoundException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.service.cinema.PersonService;
 
 import java.util.List;
@@ -150,9 +150,9 @@ public class AdminPersonControllerTest {
         PersonRequest request = createPersonRequest("Updated Person", PersonRole.ACTOR);
 
         when(personService.updatePerson(eq(999L), any(PersonRequest.class)))
-                .thenThrow(new PersonNotFoundException(999L));
+                .thenThrow(new EntityNotFoundException("Person", 999L));
 
-        assertThrows(PersonNotFoundException.class, () -> personController.updatePerson(999L, request));
+        assertThrows(EntityNotFoundException.class, () -> personController.updatePerson(999L, request));
     }
 
     @Test
@@ -166,8 +166,8 @@ public class AdminPersonControllerTest {
     void deletePersonWhenNotFoundShouldThrowException() {
         Long nonExistentId = 999L;
 
-        doThrow(new PersonNotFoundException(nonExistentId)).when(personService).deletePerson(nonExistentId);
+        doThrow(new EntityNotFoundException("Person", nonExistentId)).when(personService).deletePerson(nonExistentId);
 
-        assertThrows(PersonNotFoundException.class, () -> personController.deletePerson(nonExistentId));
+        assertThrows(EntityNotFoundException.class, () -> personController.deletePerson(nonExistentId));
     }
 }

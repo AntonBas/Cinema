@@ -14,7 +14,7 @@ import ua.lviv.bas.cinema.dto.user.request.UserEmailChangeRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserPasswordUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
-import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.service.user.UserService;
 
 import java.time.LocalDate;
@@ -68,9 +68,9 @@ public class UserControllerTest {
 		Long userId = 999L;
 		CustomUserDetails userDetails = createMockUserDetails(userId);
 
-		when(userService.getProfile(userId)).thenThrow(new UserNotFoundException(userId));
+		when(userService.getProfile(userId)).thenThrow(new EntityNotFoundException("User", userId));
 
-		assertThrows(UserNotFoundException.class, () -> userController.getProfile(userDetails));
+		assertThrows(EntityNotFoundException.class, () -> userController.getProfile(userDetails));
 		verify(userService).getProfile(userId);
 	}
 
@@ -106,9 +106,10 @@ public class UserControllerTest {
 		UserUpdateRequest request = new UserUpdateRequest("Updated", "Name", LocalDate.of(1995, 5, 5), "Lviv",
 				"+987654321");
 
-		when(userService.update(eq(userId), any(UserUpdateRequest.class))).thenThrow(new UserNotFoundException(userId));
+		when(userService.update(eq(userId), any(UserUpdateRequest.class)))
+				.thenThrow(new EntityNotFoundException("User", userId));
 
-		assertThrows(UserNotFoundException.class, () -> userController.updateProfile(userDetails, request));
+		assertThrows(EntityNotFoundException.class, () -> userController.updateProfile(userDetails, request));
 		verify(userService).update(userId, request);
 	}
 
@@ -195,9 +196,9 @@ public class UserControllerTest {
 		UserPasswordUpdateRequest request = new UserPasswordUpdateRequest("oldPassword123", "newPassword123",
 				"newPassword123");
 
-		doThrow(new UserNotFoundException(userId)).when(userService).updatePassword(userId, request);
+		doThrow(new EntityNotFoundException("User", userId)).when(userService).updatePassword(userId, request);
 
-		assertThrows(UserNotFoundException.class, () -> userController.updatePassword(userDetails, request));
+		assertThrows(EntityNotFoundException.class, () -> userController.updatePassword(userDetails, request));
 		verify(userService).updatePassword(userId, request);
 	}
 }

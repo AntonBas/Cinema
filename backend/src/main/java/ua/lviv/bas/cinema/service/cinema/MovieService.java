@@ -23,8 +23,8 @@ import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieHasSessionsException;
-import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.mapper.cinema.MovieMapper;
 import ua.lviv.bas.cinema.repository.cinema.GenreRepository;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
@@ -96,15 +96,15 @@ public class MovieService {
     @Cacheable(value = "singleMovies", key = "#id")
     public MovieAdminResponse getMovie(Long id) {
         return movieRepository.findMovieById(id).map(movieMapper::toMovieAdminResponse)
-                .orElseThrow(() -> new MovieNotFoundException(id));
+                .orElseThrow(() -> new EntityNotFoundException("Movie", id));
     }
 
     public MovieDetailResponse getMovieBySlug(String slug) {
         Movie movie = movieRepository.findMovieBySlug(slug)
-                .orElseThrow(() -> new MovieNotFoundException(slug));
+                .orElseThrow(() -> new EntityNotFoundException("Movie", slug));
 
         if (movie.getStatus() == MovieStatus.ARCHIVED) {
-            throw new MovieNotFoundException(slug);
+            throw new EntityNotFoundException("Movie", slug);
         }
 
         List<Session> sessions = movieRepository.findSessionsByMovieSlug(slug);
@@ -176,7 +176,7 @@ public class MovieService {
     public MovieAdminResponse updateMovie(Long id, MovieUpdateRequest request) {
         log.info("Updating movie with id: {}", id);
 
-        var movie = movieRepository.findMovieById(id).orElseThrow(() -> new MovieNotFoundException(id));
+        var movie = movieRepository.findMovieById(id).orElseThrow(() -> new EntityNotFoundException("Movie", id));
         String oldTitle = movie.getTitle();
 
         if (!request.getTitle().equals(oldTitle) && movieRepository.existsByTitle(request.getTitle())) {
@@ -206,7 +206,7 @@ public class MovieService {
     public void deleteMovie(Long id) {
         log.info("Deleting movie with id: {}", id);
 
-        var movie = movieRepository.findMovieById(id).orElseThrow(() -> new MovieNotFoundException(id));
+        var movie = movieRepository.findMovieById(id).orElseThrow(() -> new EntityNotFoundException("Movie", id));
 
         checkMovieUsageInSessions(movie);
 

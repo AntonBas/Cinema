@@ -14,7 +14,7 @@ import ua.lviv.bas.cinema.domain.cinema.Movie;
 import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
-import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentNotFoundException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
 import ua.lviv.bas.cinema.service.integration.payment.PaymentGatewayService;
 
@@ -85,7 +85,7 @@ public class PaymentStatusServiceTest {
         when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> paymentStatusService.preparePaymentData(PAYMENT_ID))
-                .isInstanceOf(PaymentNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -201,6 +201,6 @@ public class PaymentStatusServiceTest {
         when(paymentRepository.findByLiqpayOrderId("ORD_NONEXISTENT")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> paymentStatusService.handleCallback(data, signature))
-                .isInstanceOf(PaymentNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 }

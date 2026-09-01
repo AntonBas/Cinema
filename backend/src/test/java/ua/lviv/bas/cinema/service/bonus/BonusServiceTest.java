@@ -17,7 +17,7 @@ import ua.lviv.bas.cinema.domain.booking.Booking;
 import ua.lviv.bas.cinema.domain.booking.Payment;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.domain.user.VerificationStatus;
-import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusCardNotFoundException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusValidationException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.InsufficientPointsException;
 import ua.lviv.bas.cinema.repository.bonus.BonusCardRepository;
@@ -90,7 +90,7 @@ public class BonusServiceTest {
     void getBalanceShouldThrowExceptionWhenCardNotFound() {
         when(bonusCardRepository.findByUserId(USER_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> bonusService.getBalance(USER_ID)).isInstanceOf(BonusCardNotFoundException.class);
+        assertThatThrownBy(() -> bonusService.getBalance(USER_ID)).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test

@@ -22,10 +22,9 @@ import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.payment.request.PaymentCreateRequest;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
-import ua.lviv.bas.cinema.exception.domain.booking.BookingNotFoundException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.InvalidPaymentStatusException;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentAccessDeniedException;
-import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 import ua.lviv.bas.cinema.repository.booking.BookingRepository;
 import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
@@ -142,7 +141,7 @@ public class PaymentServiceTest {
         when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> paymentService.createPayment(createRequest, testUser))
-                .isInstanceOf(BookingNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -178,7 +177,7 @@ public class PaymentServiceTest {
         when(paymentRepository.findByIdWithDetails(PAYMENT_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> paymentService.getPayment(PAYMENT_ID, testUser))
-                .isInstanceOf(PaymentNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -211,7 +210,7 @@ public class PaymentServiceTest {
         when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> paymentService.retryPayment(PAYMENT_ID, testUser))
-                .isInstanceOf(PaymentNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test

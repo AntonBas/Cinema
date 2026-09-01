@@ -18,8 +18,7 @@ import ua.lviv.bas.cinema.dto.session.request.SessionRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
-import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
-import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionOperationException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionValidationException;
@@ -59,7 +58,7 @@ public class SessionService {
         validateStartTime(request.startTime());
 
         var movie = movieRepository.findById(request.movieId())
-                .orElseThrow(() -> new MovieNotFoundException(request.movieId()));
+                .orElseThrow(() -> new EntityNotFoundException("Movie", request.movieId()));
         var hall = cinemaHallService.getHallEntity(request.hallId());
 
         validateMovieAvailability(movie, request.startTime());
@@ -120,13 +119,14 @@ public class SessionService {
     @Cacheable(value = "sessions", key = "#id")
     public SessionResponse getSession(Long id) {
         return sessionRepository.findById(id).map(sessionMapper::toSessionResponse)
-                .orElseThrow(() -> new SessionNotFoundException(id));
+                .orElseThrow(() -> new EntityNotFoundException("Session", id));
     }
 
     @CacheEvict(value = {"sessions", "seatAvailability", "movieDetails"}, allEntries = true)
     @Transactional
     public SessionResponse updateSession(Long id, SessionRequest request) {
-        var session = sessionRepository.findByIdWithLock(id).orElseThrow(() -> new SessionNotFoundException(id));
+        var session = sessionRepository.findByIdWithLock(id)
+                .orElseThrow(() -> new EntityNotFoundException("Session", id));
 
         Map<String, Object> oldDetails = new HashMap<>();
         oldDetails.put("startTime", session.getStartTime());
@@ -164,7 +164,7 @@ public class SessionService {
     @CacheEvict(value = {"sessions", "seatAvailability", "movieDetails"}, allEntries = true)
     @Transactional
     public void deleteSession(Long id) {
-        var session = sessionRepository.findById(id).orElseThrow(() -> new SessionNotFoundException(id));
+        var session = sessionRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Session", id));
 
         sessionRepository.deleteById(id);
         log.info("Session deleted with ID: {}", id);
@@ -175,7 +175,7 @@ public class SessionService {
     @Transactional
     public void cancelSession(Long sessionId) {
         var session = sessionRepository.findByIdWithLock(sessionId)
-                .orElseThrow(() -> new SessionNotFoundException(sessionId));
+                .orElseThrow(() -> new EntityNotFoundException("Session", sessionId));
 
         if (session.getStatus() == CinemaSessionStatus.CANCELLED) {
             return;
@@ -207,7 +207,7 @@ public class SessionService {
     @Transactional
     public void reactivateSession(Long sessionId) {
         var session = sessionRepository.findByIdWithLock(sessionId)
-                .orElseThrow(() -> new SessionNotFoundException(sessionId));
+                .orElseThrow(() -> new EntityNotFoundException("Session", sessionId));
 
         if (session.getStatus() != CinemaSessionStatus.CANCELLED) {
             throw SessionOperationException.onlyCancelledCanBeReactivated();

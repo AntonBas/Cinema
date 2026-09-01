@@ -14,8 +14,8 @@ import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
 import ua.lviv.bas.cinema.dto.movie.response.GenreListResponse;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.GenreHasMoviesException;
-import ua.lviv.bas.cinema.exception.domain.cinema.GenreNotFoundException;
 import ua.lviv.bas.cinema.mapper.cinema.GenreMapper;
 import ua.lviv.bas.cinema.repository.cinema.GenreRepository;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
@@ -55,7 +55,7 @@ public class GenreService {
     public GenreResponse updateGenre(Long id, GenreRequest request) {
         log.info("Updating genre with id: {}, new name: {}", id, request.name());
 
-        var genre = genreRepository.findById(id).orElseThrow(() -> new GenreNotFoundException(id));
+        var genre = genreRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Genre", id));
         validateGenreUniqueness(request.name(), id);
 
         genreMapper.updateGenreFromRequest(request, genre);
@@ -70,7 +70,7 @@ public class GenreService {
     public void deleteGenre(Long id) {
         log.info("Deleting genre with id: {}", id);
 
-        var genre = genreRepository.findById(id).orElseThrow(() -> new GenreNotFoundException(id));
+        var genre = genreRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Genre", id));
         checkGenreUsageInMovies(genre);
         genreRepository.deleteById(id);
 

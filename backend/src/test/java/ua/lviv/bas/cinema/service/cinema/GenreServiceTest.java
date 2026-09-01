@@ -14,8 +14,8 @@ import ua.lviv.bas.cinema.dto.movie.request.GenreRequest;
 import ua.lviv.bas.cinema.dto.movie.response.GenreListResponse;
 import ua.lviv.bas.cinema.dto.movie.response.GenreResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.GenreHasMoviesException;
-import ua.lviv.bas.cinema.exception.domain.cinema.GenreNotFoundException;
 import ua.lviv.bas.cinema.mapper.cinema.GenreMapper;
 import ua.lviv.bas.cinema.repository.cinema.GenreRepository;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
@@ -140,7 +140,7 @@ public class GenreServiceTest {
         when(genreRepository.findById(GENRE_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> genreService.updateGenre(GENRE_ID, request))
-                .isInstanceOf(GenreNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -178,7 +178,7 @@ public class GenreServiceTest {
         when(genreRepository.findById(GENRE_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> genreService.deleteGenre(GENRE_ID))
-                .isInstanceOf(GenreNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
 
         verify(genreRepository, never()).deleteById(any());
     }

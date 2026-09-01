@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.token.EmailToken;
 import ua.lviv.bas.cinema.domain.token.TokenType;
 import ua.lviv.bas.cinema.domain.user.User;
-import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.repository.token.EmailTokenRepository;
 import ua.lviv.bas.cinema.repository.user.UserRepository;
 
@@ -31,7 +31,8 @@ public class EmailTokenGeneratorService {
 
 	@Transactional
 	public void generatePasswordResetToken(String email) {
-		User user = userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException(email));
+		User user = userRepository.findByEmail(email)
+				.orElseThrow(() -> new EntityNotFoundException("User", email));
 		generateAndSendTokenForUser(user, TokenType.PASSWORD_RESET, null);
 	}
 

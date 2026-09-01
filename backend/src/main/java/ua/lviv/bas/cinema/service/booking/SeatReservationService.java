@@ -14,9 +14,8 @@ import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.booking.response.SeatReservationResponse;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
-import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
-import ua.lviv.bas.cinema.exception.domain.hall.SeatNotFoundException;
 import ua.lviv.bas.cinema.mapper.booking.SeatReservationMapper;
 import ua.lviv.bas.cinema.repository.booking.SeatReservationRepository;
 import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
@@ -50,7 +49,8 @@ public class SeatReservationService {
     public SeatReservationResponse getAvailability(Long sessionId) {
         log.debug("Fetching seat availability for session: {}", sessionId);
 
-        var session = sessionRepository.findById(sessionId).orElseThrow(() -> new SessionNotFoundException(sessionId));
+        var session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new EntityNotFoundException("Session", sessionId));
 
         var allSeats = seatRepository.findByHallId(session.getHall().getId());
         var activeTicketTypes = ticketTypeRepository.findByActiveTrue();
@@ -74,9 +74,11 @@ public class SeatReservationService {
     public void hold(Long sessionId, Long seatId, User user) {
         log.info("Creating temporary hold for seat {} in session {} by user {}", seatId, sessionId, user.getId());
 
-        var session = sessionRepository.findById(sessionId).orElseThrow(() -> new SessionNotFoundException(sessionId));
+        var session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new EntityNotFoundException("Session", sessionId));
 
-        var seat = seatRepository.findByIdWithLock(seatId).orElseThrow(() -> new SeatNotFoundException(seatId));
+        var seat = seatRepository.findByIdWithLock(seatId)
+                .orElseThrow(() -> new EntityNotFoundException("Seat", seatId));
 
         validateSeat(sessionId, seatId);
 
@@ -151,7 +153,7 @@ public class SeatReservationService {
     }
 
     private void validateSeat(Long sessionId, Long seatId) {
-        var seat = seatRepository.findById(seatId).orElseThrow(() -> new SeatNotFoundException(seatId));
+        var seat = seatRepository.findById(seatId).orElseThrow(() -> new EntityNotFoundException("Seat", seatId));
 
         if (!seat.isActive()) {
             throw SeatNotAvailableException.seatInactive(seatId);

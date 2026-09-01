@@ -17,6 +17,7 @@ import ua.lviv.bas.cinema.dto.promotion.request.ClaimPromotionRequest;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionListResponse;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.promotion.*;
 import ua.lviv.bas.cinema.mapper.promotion.PromotionMapper;
 import ua.lviv.bas.cinema.repository.promotion.PromotionRepository;
@@ -160,7 +161,7 @@ public class PromotionServiceTest {
         when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> promotionService.getPromotion(PROMOTION_ID))
-                .isInstanceOf(PromotionNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -216,7 +217,7 @@ public class PromotionServiceTest {
         when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> promotionService.updatePromotion(PROMOTION_ID, updateRequest))
-                .isInstanceOf(PromotionNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -245,7 +246,7 @@ public class PromotionServiceTest {
         when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> promotionService.deletePromotion(PROMOTION_ID))
-                .isInstanceOf(PromotionNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test

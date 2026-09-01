@@ -16,8 +16,8 @@ import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonListResponse;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.PersonHasMoviesException;
-import ua.lviv.bas.cinema.exception.domain.cinema.PersonNotFoundException;
 import ua.lviv.bas.cinema.mapper.cinema.PersonMapper;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
@@ -138,7 +138,7 @@ public class PersonServiceTest {
         when(personRepository.findById(PERSON_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> personService.updatePerson(PERSON_ID, request))
-                .isInstanceOf(PersonNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -164,7 +164,7 @@ public class PersonServiceTest {
     void deletePersonWhenNotFoundShouldThrowException() {
         when(personRepository.findById(PERSON_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> personService.deletePerson(PERSON_ID)).isInstanceOf(PersonNotFoundException.class);
+        assertThatThrownBy(() -> personService.deletePerson(PERSON_ID)).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test

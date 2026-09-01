@@ -16,7 +16,7 @@ import ua.lviv.bas.cinema.domain.cinema.status.MovieStatus;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
-import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.service.cinema.MovieService;
 
 import java.time.LocalDate;
@@ -67,9 +67,9 @@ public class MovieControllerTest {
 
     @Test
     void getMovieBySlugWhenNotFoundShouldThrowException() {
-        when(movieService.getMovieBySlug(SLUG)).thenThrow(new MovieNotFoundException(SLUG));
+        when(movieService.getMovieBySlug(SLUG)).thenThrow(new EntityNotFoundException("Movie", SLUG));
 
-        assertThatThrownBy(() -> movieController.getMovieBySlug(SLUG)).isInstanceOf(MovieNotFoundException.class);
+        assertThatThrownBy(() -> movieController.getMovieBySlug(SLUG)).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -170,8 +170,8 @@ public class MovieControllerTest {
 
     @Test
     void getPosterWhenNotFoundShouldThrowException() {
-        when(movieService.getPoster(MOVIE_ID)).thenThrow(new MovieNotFoundException(MOVIE_ID));
+        when(movieService.getPoster(MOVIE_ID)).thenThrow(new EntityNotFoundException("Movie", MOVIE_ID));
 
-        assertThatThrownBy(() -> movieController.getPoster(MOVIE_ID)).isInstanceOf(MovieNotFoundException.class);
+        assertThatThrownBy(() -> movieController.getPoster(MOVIE_ID)).isInstanceOf(EntityNotFoundException.class);
     }
 }

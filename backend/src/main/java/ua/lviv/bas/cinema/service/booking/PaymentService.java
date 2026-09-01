@@ -15,11 +15,10 @@ import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.payment.request.PaymentCreateRequest;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
-import ua.lviv.bas.cinema.exception.domain.booking.BookingNotFoundException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.booking.SessionTooCloseException;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.InvalidPaymentStatusException;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentAccessDeniedException;
-import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 import ua.lviv.bas.cinema.repository.booking.BookingRepository;
 import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
@@ -62,7 +61,7 @@ public class PaymentService {
         log.info("Creating payment for booking {} by user {}", request.bookingId(), user.getId());
 
         var booking = bookingRepository.findByIdAndUserId(request.bookingId(), user.getId())
-                .orElseThrow(() -> new BookingNotFoundException(request.bookingId()));
+                .orElseThrow(() -> new EntityNotFoundException("Booking", request.bookingId()));
 
         validateBookingForPayment(booking);
 
@@ -86,7 +85,7 @@ public class PaymentService {
     @Transactional(readOnly = true)
     public PaymentResponse getPayment(Long paymentId, User user) {
         var payment = paymentRepository.findByIdWithDetails(paymentId)
-                .orElseThrow(() -> new PaymentNotFoundException(paymentId));
+                .orElseThrow(() -> new EntityNotFoundException("Payment", paymentId));
 
         if (!payment.getBooking().getUser().getId().equals(user.getId())) {
             throw new PaymentAccessDeniedException(paymentId, user.getId());
@@ -96,7 +95,8 @@ public class PaymentService {
     }
 
     public PaymentResponse retryPayment(Long paymentId, User user) {
-        var payment = paymentRepository.findById(paymentId).orElseThrow(() -> new PaymentNotFoundException(paymentId));
+        var payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new EntityNotFoundException("Payment", paymentId));
 
         if (!payment.getBooking().getUser().getId().equals(user.getId())) {
             throw new PaymentAccessDeniedException(paymentId, user.getId());

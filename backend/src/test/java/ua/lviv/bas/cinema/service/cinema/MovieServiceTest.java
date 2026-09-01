@@ -25,8 +25,8 @@ import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieHasSessionsException;
-import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
 import ua.lviv.bas.cinema.mapper.cinema.MovieMapper;
 import ua.lviv.bas.cinema.repository.cinema.GenreRepository;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
@@ -185,7 +185,7 @@ public class MovieServiceTest {
     void getMovieWhenNotFoundShouldThrowException() {
         when(movieRepository.findMovieById(MOVIE_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> movieService.getMovie(MOVIE_ID)).isInstanceOf(MovieNotFoundException.class);
+        assertThatThrownBy(() -> movieService.getMovie(MOVIE_ID)).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -204,14 +204,14 @@ public class MovieServiceTest {
         movie.setStatus(MovieStatus.ARCHIVED);
         when(movieRepository.findMovieBySlug(SLUG)).thenReturn(Optional.of(movie));
 
-        assertThatThrownBy(() -> movieService.getMovieBySlug(SLUG)).isInstanceOf(MovieNotFoundException.class);
+        assertThatThrownBy(() -> movieService.getMovieBySlug(SLUG)).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
     void getMovieBySlugWhenNotFoundShouldThrowException() {
         when(movieRepository.findMovieBySlug(SLUG)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> movieService.getMovieBySlug(SLUG)).isInstanceOf(MovieNotFoundException.class);
+        assertThatThrownBy(() -> movieService.getMovieBySlug(SLUG)).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -393,7 +393,7 @@ public class MovieServiceTest {
     void deleteMovieWhenNotFoundShouldThrowException() {
         when(movieRepository.findMovieById(MOVIE_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> movieService.deleteMovie(MOVIE_ID)).isInstanceOf(MovieNotFoundException.class);
+        assertThatThrownBy(() -> movieService.deleteMovie(MOVIE_ID)).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test

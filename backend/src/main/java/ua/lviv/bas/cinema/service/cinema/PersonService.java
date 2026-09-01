@@ -15,8 +15,8 @@ import ua.lviv.bas.cinema.dto.movie.request.PersonRequest;
 import ua.lviv.bas.cinema.dto.movie.response.PersonListResponse;
 import ua.lviv.bas.cinema.dto.movie.response.PersonResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.PersonHasMoviesException;
-import ua.lviv.bas.cinema.exception.domain.cinema.PersonNotFoundException;
 import ua.lviv.bas.cinema.mapper.cinema.PersonMapper;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
@@ -56,7 +56,7 @@ public class PersonService {
     public PersonResponse updatePerson(Long id, PersonRequest request) {
         log.info("Updating person with id: {}", id);
 
-        var person = personRepository.findById(id).orElseThrow(() -> new PersonNotFoundException(id));
+        var person = personRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Person", id));
         validatePersonUniqueness(request.name(), request.role(), id);
 
         personMapper.updatePersonFromRequest(request, person);
@@ -71,7 +71,7 @@ public class PersonService {
     public void deletePerson(Long id) {
         log.info("Deleting person with id: {}", id);
 
-        var person = personRepository.findById(id).orElseThrow(() -> new PersonNotFoundException(id));
+        var person = personRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Person", id));
         checkPersonUsageInMovies(person);
         personRepository.delete(person);
 

@@ -17,10 +17,10 @@ import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.domain.user.UserRole;
 import ua.lviv.bas.cinema.domain.user.VerificationStatus;
 import ua.lviv.bas.cinema.dto.user.response.AdminUserListResponse;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.user.LastAdminException;
 import ua.lviv.bas.cinema.exception.domain.user.SelfBlockException;
 import ua.lviv.bas.cinema.exception.domain.user.SelfRoleChangeException;
-import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.user.UserMapper;
 import ua.lviv.bas.cinema.repository.user.UserRepository;
 import ua.lviv.bas.cinema.repository.user.projection.AdminUserProjection;
@@ -144,7 +144,7 @@ public class AdminUserServiceTest {
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> adminUserService.updateRole(999L, UserRole.ROLE_ADMIN))
-                .isInstanceOf(UserNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -196,7 +196,7 @@ public class AdminUserServiceTest {
     void updateStatusUserNotFoundShouldThrowException() {
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> adminUserService.updateStatus(999L, true)).isInstanceOf(UserNotFoundException.class);
+        assertThatThrownBy(() -> adminUserService.updateStatus(999L, true)).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -238,7 +238,7 @@ public class AdminUserServiceTest {
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> adminUserService.updateVerification(999L, VerificationStatus.VERIFIED))
-                .isInstanceOf(UserNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test

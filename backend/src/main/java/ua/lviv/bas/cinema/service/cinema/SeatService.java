@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.cinema.enums.SeatType;
 import ua.lviv.bas.cinema.dto.hall.response.SeatResponse;
-import ua.lviv.bas.cinema.exception.domain.hall.SeatNotFoundException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.mapper.cinema.SeatMapper;
 import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
 
@@ -25,7 +25,7 @@ public class SeatService {
     @Transactional
     public SeatResponse updateSeatType(Long seatId, SeatType seatType) {
         log.info("Updating seat type for seat id: {} to {}", seatId, seatType);
-        var seat = seatRepository.findById(seatId).orElseThrow(() -> new SeatNotFoundException(seatId));
+        var seat = seatRepository.findById(seatId).orElseThrow(() -> new EntityNotFoundException("Seat", seatId));
         seat.setSeatType(seatType);
         var updated = seatRepository.save(seat);
         return seatMapper.toSeatResponse(updated);
@@ -35,7 +35,7 @@ public class SeatService {
     @Transactional
     public SeatResponse setSeatActiveStatus(Long seatId, boolean active) {
         log.info("Setting seat active status: seatId={}, active={}", seatId, active);
-        var seat = seatRepository.findById(seatId).orElseThrow(() -> new SeatNotFoundException(seatId));
+        var seat = seatRepository.findById(seatId).orElseThrow(() -> new EntityNotFoundException("Seat", seatId));
         seat.setActive(active);
         var updated = seatRepository.save(seat);
         return seatMapper.toSeatResponse(updated);

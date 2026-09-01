@@ -20,7 +20,7 @@ import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.domain.user.VerificationStatus;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
-import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusCardNotFoundException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusRuleNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusValidationException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.InsufficientPointsException;
@@ -220,7 +220,8 @@ public class BonusService {
     }
 
     private BonusCard getCardByUserId(Long userId) {
-        return bonusCardRepository.findByUserId(userId).orElseThrow(() -> new BonusCardNotFoundException(userId));
+        return bonusCardRepository.findByUserId(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Bonus card", userId));
     }
 
     private BonusRules getActiveRule(BonusTransactionType type) {

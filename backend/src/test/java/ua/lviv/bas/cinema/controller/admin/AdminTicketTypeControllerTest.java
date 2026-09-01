@@ -20,9 +20,9 @@ import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeRequest;
 import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeResponse;
 import ua.lviv.bas.cinema.exception.api.ApiErrorHandler;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeDuplicateException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeInUseException;
-import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeNotFoundException;
 import ua.lviv.bas.cinema.service.ticket.TicketTypeService;
 
 import java.math.BigDecimal;
@@ -153,7 +153,7 @@ public class AdminTicketTypeControllerTest {
                 true, TicketTypeCategory.STANDARD);
 
         when(ticketTypeService.updateTicketType(eq(999L), any(TicketTypeRequest.class)))
-                .thenThrow(new TicketTypeNotFoundException(999L));
+                .thenThrow(new EntityNotFoundException("Ticket type", 999L));
 
         mockMvc.perform(put("/api/admin/ticket-types/999").contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request))).andExpect(status().isNotFound());
@@ -170,7 +170,7 @@ public class AdminTicketTypeControllerTest {
 
     @Test
     void deleteTicketTypeShouldReturnNotFound() throws Exception {
-        doThrow(new TicketTypeNotFoundException(999L)).when(ticketTypeService).deleteTicketType(999L);
+        doThrow(new EntityNotFoundException("Ticket type", 999L)).when(ticketTypeService).deleteTicketType(999L);
 
         mockMvc.perform(delete("/api/admin/ticket-types/999")).andExpect(status().isNotFound());
 
@@ -201,7 +201,7 @@ public class AdminTicketTypeControllerTest {
 
     @Test
     void toggleActiveShouldReturnNotFound() throws Exception {
-        when(ticketTypeService.toggleActiveStatus(999L)).thenThrow(new TicketTypeNotFoundException(999L));
+        when(ticketTypeService.toggleActiveStatus(999L)).thenThrow(new EntityNotFoundException("Ticket type", 999L));
 
         mockMvc.perform(patch("/api/admin/ticket-types/999/toggle")).andExpect(status().isNotFound());
 

@@ -11,7 +11,7 @@ import ua.lviv.bas.cinema.dto.hall.response.CinemaHallListResponse;
 import ua.lviv.bas.cinema.dto.hall.response.CinemaHallResponse;
 import ua.lviv.bas.cinema.dto.hall.response.HallLayoutResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
-import ua.lviv.bas.cinema.exception.domain.hall.CinemaHallNotFoundException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.service.cinema.CinemaHallService;
 
 import java.util.List;
@@ -84,9 +84,9 @@ public class AdminCinemaHallControllerTest {
 
     @Test
     void getHallShouldThrowExceptionWhenNotFound() {
-        when(cinemaHallService.getHall(999L)).thenThrow(new CinemaHallNotFoundException(999L));
+        when(cinemaHallService.getHall(999L)).thenThrow(new EntityNotFoundException("Cinema hall", 999L));
 
-        assertThatThrownBy(() -> controller.getHall(999L)).isInstanceOf(CinemaHallNotFoundException.class);
+        assertThatThrownBy(() -> controller.getHall(999L)).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -108,9 +108,9 @@ public class AdminCinemaHallControllerTest {
         CinemaHallRequest request = new CinemaHallRequest(null, null, null, null, null);
 
         when(cinemaHallService.updateHall(eq(999L), any(CinemaHallRequest.class)))
-                .thenThrow(new CinemaHallNotFoundException(999L));
+                .thenThrow(new EntityNotFoundException("Cinema hall", 999L));
 
-        assertThatThrownBy(() -> controller.updateHall(999L, request)).isInstanceOf(CinemaHallNotFoundException.class);
+        assertThatThrownBy(() -> controller.updateHall(999L, request)).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -122,9 +122,9 @@ public class AdminCinemaHallControllerTest {
 
     @Test
     void deleteHallShouldThrowExceptionWhenNotFound() {
-        doThrow(new CinemaHallNotFoundException(999L)).when(cinemaHallService).deleteHall(999L);
+        doThrow(new EntityNotFoundException("Cinema hall", 999L)).when(cinemaHallService).deleteHall(999L);
 
-        assertThatThrownBy(() -> controller.deleteHall(999L)).isInstanceOf(CinemaHallNotFoundException.class);
+        assertThatThrownBy(() -> controller.deleteHall(999L)).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -141,8 +141,8 @@ public class AdminCinemaHallControllerTest {
 
     @Test
     void getHallLayoutShouldThrowExceptionWhenNotFound() {
-        when(cinemaHallService.getHallLayout(999L)).thenThrow(new CinemaHallNotFoundException(999L));
+        when(cinemaHallService.getHallLayout(999L)).thenThrow(new EntityNotFoundException("Cinema hall", 999L));
 
-        assertThatThrownBy(() -> controller.getHallLayout(999L)).isInstanceOf(CinemaHallNotFoundException.class);
+        assertThatThrownBy(() -> controller.getHallLayout(999L)).isInstanceOf(EntityNotFoundException.class);
     }
 }

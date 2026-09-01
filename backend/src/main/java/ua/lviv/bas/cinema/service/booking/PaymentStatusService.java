@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
-import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentNotFoundException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
 import ua.lviv.bas.cinema.service.integration.payment.PaymentGatewayService;
 
@@ -22,7 +22,8 @@ public class PaymentStatusService {
 
 	@Transactional(readOnly = true)
 	public PaymentLiqPayDataResponse preparePaymentData(Long paymentId) {
-		var payment = paymentRepository.findById(paymentId).orElseThrow(() -> new PaymentNotFoundException(paymentId));
+		var payment = paymentRepository.findById(paymentId)
+				.orElseThrow(() -> new EntityNotFoundException("Payment", paymentId));
 		return paymentGatewayService.prepareLiqPayPaymentData(payment);
 	}
 
@@ -34,7 +35,7 @@ public class PaymentStatusService {
 		var status = decodedData.get("status");
 
 		var payment = paymentRepository.findByLiqpayOrderId(orderId)
-				.orElseThrow(() -> new PaymentNotFoundException(orderId));
+				.orElseThrow(() -> new EntityNotFoundException("Payment", orderId));
 
 		switch (status.toLowerCase()) {
 		case "success":

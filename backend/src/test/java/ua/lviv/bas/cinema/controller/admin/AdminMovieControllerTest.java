@@ -16,7 +16,7 @@ import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
 import ua.lviv.bas.cinema.dto.movie.response.MovieAdminResponse;
 import ua.lviv.bas.cinema.dto.movie.response.MovieCardResponse;
-import ua.lviv.bas.cinema.exception.domain.cinema.MovieNotFoundException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.service.cinema.MovieService;
 
 import java.time.LocalDate;
@@ -99,9 +99,9 @@ public class AdminMovieControllerTest {
 
     @Test
     void getMovieWhenNotFoundShouldThrowException() {
-        when(movieService.getMovie(999L)).thenThrow(new MovieNotFoundException(999L));
+        when(movieService.getMovie(999L)).thenThrow(new EntityNotFoundException("Movie", 999L));
 
-        assertThrows(MovieNotFoundException.class, () -> movieController.getMovie(999L));
+        assertThrows(EntityNotFoundException.class, () -> movieController.getMovie(999L));
         verify(movieService).getMovie(999L);
     }
 
@@ -242,8 +242,8 @@ public class AdminMovieControllerTest {
 
     @Test
     void deleteMovieWhenNotFoundShouldThrowException() {
-        doThrow(new MovieNotFoundException(999L)).when(movieService).deleteMovie(999L);
+        doThrow(new EntityNotFoundException("Movie", 999L)).when(movieService).deleteMovie(999L);
 
-        assertThrows(MovieNotFoundException.class, () -> movieController.deleteMovie(999L));
+        assertThrows(EntityNotFoundException.class, () -> movieController.deleteMovie(999L));
     }
 }

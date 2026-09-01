@@ -13,7 +13,7 @@ import ua.lviv.bas.cinema.domain.bonus.BonusTransactionType;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
-import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusCardNotFoundException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.service.bonus.BonusService;
 
 import java.math.BigDecimal;
@@ -55,9 +55,9 @@ public class BonusControllerTest {
     @Test
     void getBalanceShouldThrowWhenCardNotFound() {
         Long userId = 1L;
-        when(bonusService.getBalance(userId)).thenThrow(new BonusCardNotFoundException(userId));
+        when(bonusService.getBalance(userId)).thenThrow(new EntityNotFoundException("Bonus card", userId));
 
-        assertThrows(BonusCardNotFoundException.class, () -> bonusController.getBalance(userId));
+        assertThrows(EntityNotFoundException.class, () -> bonusController.getBalance(userId));
     }
 
     @Test

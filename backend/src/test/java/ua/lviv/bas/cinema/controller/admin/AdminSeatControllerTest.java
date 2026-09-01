@@ -7,7 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.domain.cinema.enums.SeatType;
 import ua.lviv.bas.cinema.dto.hall.response.SeatResponse;
-import ua.lviv.bas.cinema.exception.domain.hall.SeatNotFoundException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.service.cinema.SeatService;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,9 +50,9 @@ public class AdminSeatControllerTest {
     @Test
     void updateSeatTypeWhenNotFoundShouldThrowException() {
         Long seatId = 999L;
-        when(seatService.updateSeatType(seatId, SeatType.VIP)).thenThrow(new SeatNotFoundException(seatId));
+        when(seatService.updateSeatType(seatId, SeatType.VIP)).thenThrow(new EntityNotFoundException("Seat", seatId));
 
-        assertThrows(SeatNotFoundException.class, () -> seatController.updateSeatType(HALL_ID, seatId, SeatType.VIP));
+        assertThrows(EntityNotFoundException.class, () -> seatController.updateSeatType(HALL_ID, seatId, SeatType.VIP));
 
         verify(seatService).updateSeatType(seatId, SeatType.VIP);
     }
@@ -92,9 +92,9 @@ public class AdminSeatControllerTest {
     @Test
     void setSeatActiveStatusWhenNotFoundShouldThrowException() {
         Long seatId = 999L;
-        when(seatService.setSeatActiveStatus(seatId, true)).thenThrow(new SeatNotFoundException(seatId));
+        when(seatService.setSeatActiveStatus(seatId, true)).thenThrow(new EntityNotFoundException("Seat", seatId));
 
-        assertThrows(SeatNotFoundException.class, () -> seatController.setSeatActiveStatus(HALL_ID, seatId, true));
+        assertThrows(EntityNotFoundException.class, () -> seatController.setSeatActiveStatus(HALL_ID, seatId, true));
 
         verify(seatService).setSeatActiveStatus(seatId, true);
     }

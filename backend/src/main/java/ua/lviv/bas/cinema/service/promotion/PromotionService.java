@@ -16,6 +16,7 @@ import ua.lviv.bas.cinema.dto.promotion.request.ClaimPromotionRequest;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionListResponse;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.promotion.*;
 import ua.lviv.bas.cinema.mapper.promotion.PromotionMapper;
 import ua.lviv.bas.cinema.repository.promotion.PromotionRepository;
@@ -69,7 +70,7 @@ public class PromotionService {
 
     public PromotionResponse getPromotion(Long id) {
         return promotionRepository.findById(id).map(promotionMapper::toPromotionResponse)
-                .orElseThrow(() -> new PromotionNotFoundException(id));
+                .orElseThrow(() -> new EntityNotFoundException("Promotion", id));
     }
 
     public List<PromotionResponse> getAvailablePromotions(User user) {
@@ -151,7 +152,7 @@ public class PromotionService {
     }
 
     private Promotion findByIdOrThrow(Long id) {
-        return promotionRepository.findById(id).orElseThrow(() -> new PromotionNotFoundException(id));
+        return promotionRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Promotion", id));
     }
 
     private boolean isPromotionActive(Promotion promotion) {

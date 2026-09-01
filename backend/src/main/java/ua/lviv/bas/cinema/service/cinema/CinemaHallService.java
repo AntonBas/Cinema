@@ -15,6 +15,7 @@ import ua.lviv.bas.cinema.dto.hall.response.CinemaHallListResponse;
 import ua.lviv.bas.cinema.dto.hall.response.CinemaHallResponse;
 import ua.lviv.bas.cinema.dto.hall.response.HallLayoutResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.hall.*;
 import ua.lviv.bas.cinema.mapper.cinema.CinemaHallMapper;
 import ua.lviv.bas.cinema.repository.cinema.CinemaHallRepository;
@@ -66,7 +67,7 @@ public class CinemaHallService {
     public CinemaHallResponse getHall(Long id) {
         log.debug("Retrieving cinema hall by id: {}", id);
         return hallRepository.findByIdWithSeats(id).map(hallMapper::toCinemaHallResponse)
-                .orElseThrow(() -> new CinemaHallNotFoundException(id));
+                .orElseThrow(() -> new EntityNotFoundException("Cinema hall", id));
     }
 
     @Cacheable(value = "cinemaHalls", key = "'list'")
@@ -79,13 +80,14 @@ public class CinemaHallService {
     @Cacheable(value = "cinemaHalls", key = "'layout:' + #hallId")
     public HallLayoutResponse getHallLayout(Long hallId) {
         log.debug("Retrieving hall layout for id: {}", hallId);
-        var hall = hallRepository.findByIdWithSeats(hallId).orElseThrow(() -> new CinemaHallNotFoundException(hallId));
+        var hall = hallRepository.findByIdWithSeats(hallId)
+                .orElseThrow(() -> new EntityNotFoundException("Cinema hall", hallId));
         return hallMapper.toHallLayoutResponse(hall);
     }
 
     public CinemaHall getHallEntity(Long id) {
         log.debug("Retrieving cinema hall entity by id: {}", id);
-        return hallRepository.findById(id).orElseThrow(() -> new CinemaHallNotFoundException(id));
+        return hallRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Cinema hall", id));
     }
 
     @CacheEvict(value = {"cinemaHalls", "seats"}, allEntries = true)
@@ -93,7 +95,8 @@ public class CinemaHallService {
     public CinemaHallResponse updateHall(Long id, CinemaHallRequest request) {
         log.info("Updating cinema hall with id: {}", id);
 
-        var hall = hallRepository.findByIdWithSeats(id).orElseThrow(() -> new CinemaHallNotFoundException(id));
+        var hall = hallRepository.findByIdWithSeats(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cinema hall", id));
         String oldName = hall.getName();
 
         validateHallHasNoFutureSessions(hall);
@@ -125,7 +128,8 @@ public class CinemaHallService {
     public void deleteHall(Long id) {
         log.info("Deleting cinema hall with id: {}", id);
 
-        var hall = hallRepository.findByIdWithSeats(id).orElseThrow(() -> new CinemaHallNotFoundException(id));
+        var hall = hallRepository.findByIdWithSeats(id)
+                .orElseThrow(() -> new EntityNotFoundException("Cinema hall", id));
         String hallName = hall.getName();
 
         validateHallHasNoFutureSessions(hall);

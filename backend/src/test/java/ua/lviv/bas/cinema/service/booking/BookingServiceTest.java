@@ -23,11 +23,9 @@ import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
-import ua.lviv.bas.cinema.exception.domain.booking.BookingNotFoundException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingOperationException;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingValidationException;
-import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
-import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeNotFoundException;
 import ua.lviv.bas.cinema.mapper.booking.BookingMapper;
 import ua.lviv.bas.cinema.repository.booking.BookingRepository;
 import ua.lviv.bas.cinema.repository.booking.SeatReservationRepository;
@@ -225,7 +223,7 @@ public class BookingServiceTest {
         when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> bookingService.createBooking(createRequest, testUser))
-                .isInstanceOf(SessionNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -240,7 +238,7 @@ public class BookingServiceTest {
         when(ticketTypeRepository.findById(TICKET_TYPE_ADULT_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> bookingService.createBooking(createRequest, testUser))
-                .isInstanceOf(TicketTypeNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -259,7 +257,7 @@ public class BookingServiceTest {
         when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> bookingService.getBooking(BOOKING_ID, testUser))
-                .isInstanceOf(BookingNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -285,7 +283,7 @@ public class BookingServiceTest {
         when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> bookingService.cancelBooking(BOOKING_ID, testUser))
-                .isInstanceOf(BookingNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -319,7 +317,7 @@ public class BookingServiceTest {
         when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> bookingService.confirmBooking(BOOKING_ID))
-                .isInstanceOf(BookingNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test

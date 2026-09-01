@@ -12,7 +12,7 @@ import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.dto.session.request.SessionRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
-import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionOperationException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
 import ua.lviv.bas.cinema.mapper.cinema.SessionMapper;
@@ -124,7 +124,7 @@ public class SessionServiceTest {
     void getSessionWhenNotFoundShouldThrowException() {
         when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> sessionService.getSession(SESSION_ID)).isInstanceOf(SessionNotFoundException.class);
+        assertThatThrownBy(() -> sessionService.getSession(SESSION_ID)).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -149,7 +149,7 @@ public class SessionServiceTest {
         when(sessionRepository.findByIdWithLock(SESSION_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> sessionService.updateSession(SESSION_ID, new SessionRequest(null, null, null, null)))
-                .isInstanceOf(SessionNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -165,7 +165,7 @@ public class SessionServiceTest {
     void deleteSessionWhenNotFoundShouldThrowException() {
         when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> sessionService.deleteSession(SESSION_ID)).isInstanceOf(SessionNotFoundException.class);
+        assertThatThrownBy(() -> sessionService.deleteSession(SESSION_ID)).isInstanceOf(EntityNotFoundException.class);
 
         verify(sessionRepository, never()).deleteById(any());
     }

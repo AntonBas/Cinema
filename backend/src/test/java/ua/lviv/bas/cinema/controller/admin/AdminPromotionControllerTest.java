@@ -10,7 +10,7 @@ import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionListResponse;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;
-import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionNotFoundException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.service.promotion.PromotionService;
 
 import java.time.LocalDate;
@@ -76,9 +76,9 @@ public class AdminPromotionControllerTest {
 
     @Test
     void getPromotionShouldThrowWhenNotFound() {
-        when(promotionService.getPromotion(999L)).thenThrow(new PromotionNotFoundException(999L));
+        when(promotionService.getPromotion(999L)).thenThrow(new EntityNotFoundException("Promotion", 999L));
 
-        assertThatThrownBy(() -> controller.getPromotion(999L)).isInstanceOf(PromotionNotFoundException.class);
+        assertThatThrownBy(() -> controller.getPromotion(999L)).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -155,10 +155,10 @@ public class AdminPromotionControllerTest {
                 LocalDate.now().plusDays(1), LocalDate.now().plusDays(10));
 
         when(promotionService.updatePromotion(eq(999L), any(PromotionRequest.class)))
-                .thenThrow(new PromotionNotFoundException(999L));
+                .thenThrow(new EntityNotFoundException("Promotion", 999L));
 
         assertThatThrownBy(() -> controller.updatePromotion(999L, request))
-                .isInstanceOf(PromotionNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -170,8 +170,8 @@ public class AdminPromotionControllerTest {
 
     @Test
     void deletePromotionShouldThrowWhenNotFound() {
-        doThrow(new PromotionNotFoundException(999L)).when(promotionService).deletePromotion(999L);
+        doThrow(new EntityNotFoundException("Promotion", 999L)).when(promotionService).deletePromotion(999L);
 
-        assertThatThrownBy(() -> controller.deletePromotion(999L)).isInstanceOf(PromotionNotFoundException.class);
+        assertThatThrownBy(() -> controller.deletePromotion(999L)).isInstanceOf(EntityNotFoundException.class);
     }
 }

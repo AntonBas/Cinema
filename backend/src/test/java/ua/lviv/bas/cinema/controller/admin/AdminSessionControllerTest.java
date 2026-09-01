@@ -11,7 +11,7 @@ import ua.lviv.bas.cinema.dto.common.PageResponse;
 import ua.lviv.bas.cinema.dto.session.request.SessionRequest;
 import ua.lviv.bas.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.dto.session.response.SessionResponse;
-import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
 import ua.lviv.bas.cinema.service.cinema.SessionService;
 
@@ -90,9 +90,9 @@ public class AdminSessionControllerTest {
 
     @Test
     void getSessionWhenNotFoundShouldThrowException() {
-        when(sessionService.getSession(999L)).thenThrow(new SessionNotFoundException(999L));
+        when(sessionService.getSession(999L)).thenThrow(new EntityNotFoundException("Session", 999L));
 
-        assertThrows(SessionNotFoundException.class, () -> adminSessionController.getSessionById(999L));
+        assertThrows(EntityNotFoundException.class, () -> adminSessionController.getSessionById(999L));
         verify(sessionService).getSession(999L);
     }
 
@@ -158,9 +158,9 @@ public class AdminSessionControllerTest {
     void updateSessionWhenNotFoundShouldThrowException() {
         SessionRequest request = new SessionRequest(null, BigDecimal.valueOf(300), null, null);
 
-        when(sessionService.updateSession(999L, request)).thenThrow(new SessionNotFoundException(999L));
+        when(sessionService.updateSession(999L, request)).thenThrow(new EntityNotFoundException("Session", 999L));
 
-        assertThrows(SessionNotFoundException.class, () -> adminSessionController.updateSession(999L, request));
+        assertThrows(EntityNotFoundException.class, () -> adminSessionController.updateSession(999L, request));
         verify(sessionService).updateSession(999L, request);
     }
 
@@ -185,9 +185,9 @@ public class AdminSessionControllerTest {
 
     @Test
     void cancelSessionWhenNotFoundShouldThrowException() {
-        doThrow(new SessionNotFoundException(1L)).when(sessionService).cancelSession(1L);
+        doThrow(new EntityNotFoundException("Session", 1L)).when(sessionService).cancelSession(1L);
 
-        assertThrows(SessionNotFoundException.class, () -> adminSessionController.cancelSession(1L));
+        assertThrows(EntityNotFoundException.class, () -> adminSessionController.cancelSession(1L));
         verify(sessionService).cancelSession(1L);
     }
 
@@ -200,9 +200,9 @@ public class AdminSessionControllerTest {
 
     @Test
     void reactivateSessionWhenNotFoundShouldThrowException() {
-        doThrow(new SessionNotFoundException(1L)).when(sessionService).reactivateSession(1L);
+        doThrow(new EntityNotFoundException("Session", 1L)).when(sessionService).reactivateSession(1L);
 
-        assertThrows(SessionNotFoundException.class, () -> adminSessionController.reactivateSession(1L));
+        assertThrows(EntityNotFoundException.class, () -> adminSessionController.reactivateSession(1L));
         verify(sessionService).reactivateSession(1L);
     }
 
@@ -215,9 +215,9 @@ public class AdminSessionControllerTest {
 
     @Test
     void deleteSessionWhenNotFoundShouldThrowException() {
-        doThrow(new SessionNotFoundException(1L)).when(sessionService).deleteSession(1L);
+        doThrow(new EntityNotFoundException("Session", 1L)).when(sessionService).deleteSession(1L);
 
-        assertThrows(SessionNotFoundException.class, () -> adminSessionController.deleteSession(1L));
+        assertThrows(EntityNotFoundException.class, () -> adminSessionController.deleteSession(1L));
         verify(sessionService).deleteSession(1L);
     }
 }

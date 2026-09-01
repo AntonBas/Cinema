@@ -16,12 +16,10 @@ import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
-import ua.lviv.bas.cinema.exception.domain.booking.BookingNotFoundException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingOperationException;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingValidationException;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
-import ua.lviv.bas.cinema.exception.domain.cinema.SessionNotFoundException;
-import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeNotFoundException;
 import ua.lviv.bas.cinema.mapper.booking.BookingMapper;
 import ua.lviv.bas.cinema.repository.booking.BookingRepository;
 import ua.lviv.bas.cinema.repository.booking.SeatReservationRepository;
@@ -65,7 +63,7 @@ public class BookingService {
     @CacheEvict(value = {"seatAvailability", "availableSeatsCount", "sessions"}, allEntries = true)
     public BookingResponse createBooking(BookingCreateRequest request, User user) {
         var session = sessionRepository.findById(request.sessionId())
-                .orElseThrow(() -> new SessionNotFoundException(request.sessionId()));
+                .orElseThrow(() -> new EntityNotFoundException("Session", request.sessionId()));
 
         validateSession(session);
 
@@ -112,13 +110,13 @@ public class BookingService {
     @Transactional(readOnly = true)
     public BookingResponse getBooking(Long bookingId, User user) {
         var booking = bookingRepository.findByIdAndUserId(bookingId, user.getId())
-                .orElseThrow(() -> new BookingNotFoundException(bookingId));
+                .orElseThrow(() -> new EntityNotFoundException("Booking", bookingId));
         return bookingMapper.toResponse(booking);
     }
 
     public void cancelBooking(Long bookingId, User user) {
         var booking = bookingRepository.findByIdAndUserId(bookingId, user.getId())
-                .orElseThrow(() -> new BookingNotFoundException(bookingId));
+                .orElseThrow(() -> new EntityNotFoundException("Booking", bookingId));
 
         if (!canCancel(booking)) {
             throw BookingValidationException.cannotCancel();
@@ -144,7 +142,8 @@ public class BookingService {
     }
 
     public void confirmBooking(Long bookingId) {
-        var booking = bookingRepository.findById(bookingId).orElseThrow(() -> new BookingNotFoundException(bookingId));
+        var booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new EntityNotFoundException("Booking", bookingId));
 
         if (booking.getStatus() != BookingStatus.PENDING) {
             throw BookingOperationException.onlyPendingCanBeConfirmed();
@@ -223,7 +222,7 @@ public class BookingService {
     private void updateReservationWithTicketType(SeatReservation reservation,
                                                  BookingCreateRequest.SeatSelectionRequest seatSelection) {
         var ticketType = ticketTypeRepository.findById(seatSelection.ticketTypeId())
-                .orElseThrow(() -> new TicketTypeNotFoundException(seatSelection.ticketTypeId()));
+                .orElseThrow(() -> new EntityNotFoundException("Ticket type", seatSelection.ticketTypeId()));
 
         var seatPrice = priceCalculator.calculateSeatPrice(reservation.getSession(), reservation.getSeat(), ticketType);
 

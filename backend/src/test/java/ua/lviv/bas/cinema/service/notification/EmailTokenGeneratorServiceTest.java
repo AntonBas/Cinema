@@ -8,7 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.domain.token.EmailToken;
 import ua.lviv.bas.cinema.domain.token.TokenType;
 import ua.lviv.bas.cinema.domain.user.User;
-import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.repository.token.EmailTokenRepository;
 import ua.lviv.bas.cinema.repository.user.UserRepository;
 
@@ -86,7 +86,7 @@ public class EmailTokenGeneratorServiceTest {
         when(userRepository.findByEmail(USER_EMAIL)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> tokenGeneratorService.generatePasswordResetToken(USER_EMAIL))
-                .isInstanceOf(UserNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     private User createUser() {

@@ -20,12 +20,12 @@ import ua.lviv.bas.cinema.dto.user.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.dto.user.request.UserUpdateRequest;
 import ua.lviv.bas.cinema.dto.user.response.UserProfileResponse;
 import ua.lviv.bas.cinema.dto.user.response.UserResponse;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyExistsException;
 import ua.lviv.bas.cinema.exception.domain.auth.InvalidCurrentPasswordException;
 import ua.lviv.bas.cinema.exception.domain.auth.PasswordMismatchException;
 import ua.lviv.bas.cinema.exception.domain.auth.SameEmailException;
 import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
-import ua.lviv.bas.cinema.exception.domain.user.UserNotFoundException;
 import ua.lviv.bas.cinema.mapper.user.UserMapper;
 import ua.lviv.bas.cinema.repository.user.UserRepository;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
@@ -63,7 +63,7 @@ public class UserService {
 	@CacheEvict(value = "users", allEntries = true)
 	@Transactional
 	public UserProfileResponse update(Long userId, UserUpdateRequest request) {
-		var user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
+		var user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
 		var oldDetails = captureDetails(user);
 
 		userMapper.updateUserFromRequest(request, user);
@@ -111,12 +111,12 @@ public class UserService {
 
 	@Cacheable(value = "users", key = "#id")
 	public User getUser(Long id) {
-		return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
+		return userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User", id));
 	}
 
 	@Cacheable(value = "users", key = "#email")
 	public User getUser(String email) {
-		return userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException(email));
+		return userRepository.findByEmail(email).orElseThrow(() -> new EntityNotFoundException("User", email));
 	}
 
 	public boolean emailExists(String email) {

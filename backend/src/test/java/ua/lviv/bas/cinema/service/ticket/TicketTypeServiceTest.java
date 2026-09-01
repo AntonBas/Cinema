@@ -15,9 +15,9 @@ import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
 import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeRequest;
 import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeResponse;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeDuplicateException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeInUseException;
-import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeValidationException;
 import ua.lviv.bas.cinema.mapper.ticket.TicketTypeMapper;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
@@ -235,7 +235,7 @@ public class TicketTypeServiceTest {
         when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> ticketTypeService.toggleActiveStatus(TICKET_TYPE_ID))
-                .isInstanceOf(TicketTypeNotFoundException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     private TicketTypeRequest createTicketTypeRequest() {

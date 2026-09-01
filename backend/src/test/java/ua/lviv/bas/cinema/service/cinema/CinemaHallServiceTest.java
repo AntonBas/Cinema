@@ -14,8 +14,8 @@ import ua.lviv.bas.cinema.dto.hall.response.CinemaHallListResponse;
 import ua.lviv.bas.cinema.dto.hall.response.CinemaHallResponse;
 import ua.lviv.bas.cinema.dto.hall.response.HallLayoutResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.hall.CinemaHallHasSessionsException;
-import ua.lviv.bas.cinema.exception.domain.hall.CinemaHallNotFoundException;
 import ua.lviv.bas.cinema.mapper.cinema.CinemaHallMapper;
 import ua.lviv.bas.cinema.repository.cinema.CinemaHallRepository;
 import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
@@ -93,7 +93,7 @@ public class CinemaHallServiceTest {
     void getHallShouldThrowExceptionWhenNotFound() {
         when(hallRepository.findByIdWithSeats(HALL_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> cinemaHallService.getHall(HALL_ID)).isInstanceOf(CinemaHallNotFoundException.class);
+        assertThatThrownBy(() -> cinemaHallService.getHall(HALL_ID)).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
@@ -214,7 +214,7 @@ public class CinemaHallServiceTest {
     void deleteHallShouldThrowExceptionWhenNotFound() {
         when(hallRepository.findByIdWithSeats(HALL_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> cinemaHallService.deleteHall(HALL_ID)).isInstanceOf(CinemaHallNotFoundException.class);
+        assertThatThrownBy(() -> cinemaHallService.deleteHall(HALL_ID)).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
