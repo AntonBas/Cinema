@@ -188,6 +188,14 @@ public class EmailService {
                 %s""", companyName, oldEmail, newEmail, getCompanySignature()));
     }
 
+    public void sendSafely(String action, Long referenceId, Runnable emailAction) {
+        try {
+            emailAction.run();
+        } catch (Exception e) {
+            log.error("Failed to {} for id {}", action, referenceId, e);
+        }
+    }
+
     private void sendCriticalEmail(String toEmail, String subject, EmailContentSupplier contentSupplier) {
         try {
             sendSimpleEmail(toEmail, subject, contentSupplier.get());

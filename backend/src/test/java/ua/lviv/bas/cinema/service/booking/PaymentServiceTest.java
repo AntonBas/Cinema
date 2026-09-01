@@ -114,6 +114,12 @@ public class PaymentServiceTest {
                 .seatReservation(seatReservation).build();
 
         createRequest = new PaymentCreateRequest(BOOKING_ID);
+
+        lenient().doAnswer(invocation -> {
+            Runnable emailAction = invocation.getArgument(2);
+            emailAction.run();
+            return null;
+        }).when(emailService).sendSafely(any(String.class), any(), any());
     }
 
     @Test

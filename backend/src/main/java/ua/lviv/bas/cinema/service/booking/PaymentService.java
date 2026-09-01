@@ -221,7 +221,7 @@ public class PaymentService {
     }
 
     private void sendSuccessEmail(Payment payment, Booking booking) {
-        try {
+        emailService.sendSafely("send payment success email", booking.getId(), () -> {
             var sessionTime = dateTimeFormatter.formatStandard(booking.getSession().getStartTime());
             var seatsInfo = extractSeatsInfo(booking);
             var bookingNumber = numberGenerator.generateBookingNumber(booking);
@@ -231,13 +231,11 @@ public class PaymentService {
                     payment.getAmount(), "Credit card", seatsInfo);
 
             log.debug("Sent payment success email to {}", booking.getUser().getEmail());
-        } catch (Exception e) {
-            log.error("Failed to send payment success email for booking {}", booking.getId(), e);
-        }
+        });
     }
 
     private void sendFailureEmail(Payment payment, Booking booking) {
-        try {
+        emailService.sendSafely("send payment failed email", booking.getId(), () -> {
             var sessionTime = dateTimeFormatter.formatStandard(booking.getSession().getStartTime());
             var errorDescription = payment.getLiqpayErrorDescription() != null ? payment.getLiqpayErrorDescription()
                     : "Payment error";
@@ -247,13 +245,11 @@ public class PaymentService {
                     booking.getSession().getMovie().getTitle(), sessionTime, errorDescription);
 
             log.debug("Sent payment failed email to {}", booking.getUser().getEmail());
-        } catch (Exception e) {
-            log.error("Failed to send payment failed email for booking {}", booking.getId(), e);
-        }
+        });
     }
 
     private void sendRefundEmail(Payment payment, BigDecimal amount, String description, Ticket ticket) {
-        try {
+        emailService.sendSafely("send refund email", payment.getId(), () -> {
             var booking = payment.getBooking();
             var sessionTime = dateTimeFormatter.formatStandard(booking.getSession().getStartTime());
             var seat = ticket.getSeatReservation().getSeat();
@@ -265,9 +261,7 @@ public class PaymentService {
                     amount, seatsInfo, description);
 
             log.debug("Sent refund email to {}", booking.getUser().getEmail());
-        } catch (Exception e) {
-            log.error("Failed to send refund email for payment {}", payment.getId(), e);
-        }
+        });
     }
 
     private PaymentResponse buildPaymentResponse(Payment payment) {
