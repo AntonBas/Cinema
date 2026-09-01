@@ -255,50 +255,74 @@ public class PaymentServiceTest {
     }
 
     @Test
-    void refundShouldSucceed() {
+    void validateRefundEligibilityWhenPaymentNotSuccessShouldThrowException() {
+        testPayment.setStatus(PaymentStatus.PENDING);
+        BigDecimal refundAmount = new BigDecimal("100.00");
+
+        assertThatThrownBy(() -> paymentService.validateRefundEligibility(testPayment, refundAmount))
+                .isInstanceOf(PaymentProcessingException.class);
+    }
+
+    @Test
+    void validateRefundEligibilityWhenEligibleShouldNotThrow() {
         testPayment.setStatus(PaymentStatus.SUCCESS);
         testPayment.setLiqpayPaymentId("PAY123");
         testPayment.setLiqpayOrderId("ORD_123");
+
+        paymentService.validateRefundEligibility(testPayment, new BigDecimal("100.00"));
+    }
+
+    @Test
+    void callLiqPayRefundShouldInvokeGateway() {
         BigDecimal refundAmount = new BigDecimal("100.00");
         String description = "Test refund";
 
         when(paymentGatewayService.prepareRefundData("PAY123", "ORD_123", refundAmount, description))
                 .thenReturn("refund_data");
-        when(paymentRepository.save(testPayment)).thenReturn(testPayment);
-        when(dateTimeFormatter.formatStandard(any(LocalDateTime.class))).thenReturn("2024-01-01 14:00");
-        when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
 
-        paymentService.refund(testPayment, refundAmount, description, testTicket);
+        paymentService.callLiqPayRefund("PAY123", "ORD_123", refundAmount, description);
 
-        assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.PARTIALLY_REFUNDED);
         verify(paymentGatewayService).processRefund("refund_data");
     }
 
     @Test
-    void refundWhenPaymentNotSuccessShouldThrowException() {
-        testPayment.setStatus(PaymentStatus.PENDING);
-        BigDecimal refundAmount = new BigDecimal("100.00");
-
-        assertThatThrownBy(() -> paymentService.refund(testPayment, refundAmount, "Test", testTicket))
-                .isInstanceOf(PaymentProcessingException.class);
-    }
-
-    @Test
-    void refundWhenFullRefundShouldMarkAsFullyRefunded() {
+    void applyRefundSuccessShouldMarkPartiallyRefunded() {
         testPayment.setStatus(PaymentStatus.SUCCESS);
-        testPayment.setLiqpayPaymentId("PAY123");
-        testPayment.setLiqpayOrderId("ORD_123");
-        BigDecimal refundAmount = AMOUNT;
-        String description = "Full refund";
+        BigDecimal refundAmount = new BigDecimal("100.00");
+        String description = "Test refund";
 
-        when(paymentGatewayService.prepareRefundData("PAY123", "ORD_123", refundAmount, description))
-                .thenReturn("refund_data");
         when(paymentRepository.save(testPayment)).thenReturn(testPayment);
         when(dateTimeFormatter.formatStandard(any(LocalDateTime.class))).thenReturn("2024-01-01 14:00");
         when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
 
-        paymentService.refund(testPayment, refundAmount, description, testTicket);
+        paymentService.applyRefundSuccess(testPayment, refundAmount, description, testTicket);
+
+        assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.PARTIALLY_REFUNDED);
+        verify(paymentRepository).save(testPayment);
+    }
+
+    @Test
+    void applyRefundSuccessWhenFullRefundShouldMarkAsFullyRefunded() {
+        testPayment.setStatus(PaymentStatus.SUCCESS);
+        BigDecimal refundAmount = AMOUNT;
+        String description = "Full refund";
+
+        when(paymentRepository.save(testPayment)).thenReturn(testPayment);
+        when(dateTimeFormatter.formatStandard(any(LocalDateTime.class))).thenReturn("2024-01-01 14:00");
+        when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
+
+        paymentService.applyRefundSuccess(testPayment, refundAmount, description, testTicket);
 
         assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.REFUNDED);
+    }
+
+    @Test
+    void applyRefundSuccessWhenAlreadyAppliedShouldSkip() {
+        testPayment.setStatus(PaymentStatus.REFUNDED);
+        BigDecimal refundAmount = AMOUNT;
+
+        paymentService.applyRefundSuccess(testPayment, refundAmount, "Full refund", testTicket);
+
+        verify(paymentRepository, never()).save(any());
     }
 }

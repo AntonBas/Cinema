@@ -8,6 +8,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.domain.booking.Booking;
+import ua.lviv.bas.cinema.domain.booking.Refund;
 import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
 import ua.lviv.bas.cinema.domain.cinema.Movie;
 import ua.lviv.bas.cinema.domain.cinema.Session;
@@ -271,6 +272,32 @@ public class TicketServiceTest {
 
             assertThatThrownBy(() -> ticketService.getTicketForCashier(TICKET_CODE))
                     .isInstanceOf(TicketNotFoundException.class);
+        }
+    }
+
+    @Nested
+    class MarkAsRefundedTests {
+
+        @Test
+        void markAsRefundedShouldSetStatusAndRefund() {
+            var refund = Refund.builder().id(5L).build();
+
+            ticketService.markAsRefunded(testTicket, refund);
+
+            assertThat(testTicket.getStatus()).isEqualTo(TicketStatus.REFUNDED);
+            assertThat(testTicket.getRefund()).isEqualTo(refund);
+            verify(ticketRepository).save(testTicket);
+        }
+
+        @Test
+        void markAsRefundedWhenAlreadyRefundedShouldSkip() {
+            testTicket.setStatus(TicketStatus.REFUNDED);
+            var refund = Refund.builder().id(5L).build();
+
+            ticketService.markAsRefunded(testTicket, refund);
+
+            assertThat(testTicket.getRefund()).isNull();
+            verify(ticketRepository, never()).save(any());
         }
     }
 }

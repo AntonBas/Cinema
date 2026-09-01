@@ -271,6 +271,33 @@ public class BonusLedgerServiceTest {
     }
 
     @Test
+    void refundPointsForTicketShouldSucceed() {
+        BonusCard card = BonusCard.builder().id(1L).pointsBalance(100).build();
+
+        when(bonusTransactionRepository.existsByReferenceId("REFUND_TICKET_1")).thenReturn(false);
+        when(bonusCardRepository.findByUserId(USER_ID)).thenReturn(Optional.of(card));
+        when(bonusCardRepository.save(any(BonusCard.class))).thenAnswer(i -> i.getArgument(0));
+        when(bonusTransactionRepository.save(any(BonusTransaction.class))).thenAnswer(i -> i.getArgument(0));
+
+        bonusLedgerService.refundPointsForTicket(USER_ID, 30, "REFUND_TICKET_1");
+
+        assertThat(card.getPointsBalance()).isEqualTo(130);
+        verify(bonusCardRepository).save(any(BonusCard.class));
+        verify(bonusTransactionRepository).save(any(BonusTransaction.class));
+    }
+
+    @Test
+    void refundPointsForTicketWhenAlreadyAppliedShouldSkip() {
+        when(bonusTransactionRepository.existsByReferenceId("REFUND_TICKET_1")).thenReturn(true);
+
+        bonusLedgerService.refundPointsForTicket(USER_ID, 30, "REFUND_TICKET_1");
+
+        verify(bonusCardRepository, never()).findByUserId(any());
+        verify(bonusCardRepository, never()).save(any());
+        verify(bonusTransactionRepository, never()).save(any());
+    }
+
+    @Test
     void getOrCreateCardWhenExistsShouldReturnCard() {
         BonusCard card = new BonusCard();
         User user = User.builder().id(USER_ID).build();

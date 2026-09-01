@@ -127,6 +127,10 @@ public class BonusLedgerService {
         if (points == null || points <= 0) {
             return;
         }
+        if (bonusTransactionRepository.existsByReferenceId(referenceId)) {
+            log.debug("Bonus refund for reference {} already applied, skipping", referenceId);
+            return;
+        }
         var card = getCardByUserId(userId);
         int oldBalance = card.getPointsBalance();
         addPointsToCard(card, points);

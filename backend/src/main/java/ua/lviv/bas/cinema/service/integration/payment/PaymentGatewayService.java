@@ -12,6 +12,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import ua.lviv.bas.cinema.domain.booking.Payment;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
+import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentGatewayUnavailableException;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 
 import java.math.BigDecimal;
@@ -128,12 +129,13 @@ public class PaymentGatewayService {
     }
 
     public void processRefund(String refundData) {
-        try {
-            if (sandboxMode) {
-                processSandboxRefund(refundData);
-                return;
-            }
+        if (sandboxMode) {
+            processSandboxRefund(refundData);
+            return;
+        }
 
+        ResponseEntity<String> response;
+        try {
             var signature = LiqPayDecoder.generateSignature(refundData, liqpayPrivateKey);
             var requestBody = "data=" + URLEncoder.encode(refundData, StandardCharsets.UTF_8) + "&signature="
                     + URLEncoder.encode(signature, StandardCharsets.UTF_8);
@@ -143,35 +145,37 @@ public class PaymentGatewayService {
             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
 
             HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
-            ResponseEntity<String> response = restTemplate.postForEntity(liqpayApiUrl + "request", request,
-                    String.class);
-
-            if (response.getStatusCode().is2xxSuccessful()) {
-                var responseBody = response.getBody();
-                if (responseBody == null) {
-                    throw new PaymentProcessingException("Empty response from LiqPay API");
-                }
-
-                Map<String, Object> responseMap = LiqPayDecoder.decodeToMap(responseBody);
-                var result = (String) responseMap.get("result");
-                var status = (String) responseMap.get("status");
-
-                var isSuccess = "ok".equals(result) || "success".equals(status);
-
-                if (!isSuccess) {
-                    var errorCode = (String) responseMap.get("err_code");
-                    var errorDescription = (String) responseMap.get("err_description");
-                    throw new PaymentProcessingException(
-                            String.format("LiqPay refund failed: %s - %s - %s", result, errorCode, errorDescription));
-                }
-            } else {
-                throw new PaymentProcessingException("LiqPay API request failed");
-            }
-
+            response = restTemplate.postForEntity(liqpayApiUrl + "request", request, String.class);
         } catch (RestClientException e) {
-            throw new PaymentProcessingException("Network error during refund: " + e.getMessage());
+            throw new PaymentGatewayUnavailableException("Network error during refund: " + e.getMessage(), e);
+        }
+
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new PaymentGatewayUnavailableException(
+                    "LiqPay API request failed with status " + response.getStatusCode(), null);
+        }
+
+        var responseBody = response.getBody();
+        if (responseBody == null) {
+            throw new PaymentGatewayUnavailableException("Empty response from LiqPay API", null);
+        }
+
+        Map<String, Object> responseMap;
+        try {
+            responseMap = LiqPayDecoder.decodeToMap(responseBody);
         } catch (Exception e) {
-            throw new PaymentProcessingException("Failed to process refund: " + e.getMessage());
+            throw new PaymentGatewayUnavailableException("Failed to decode LiqPay response: " + e.getMessage(), e);
+        }
+
+        var result = (String) responseMap.get("result");
+        var status = (String) responseMap.get("status");
+        var isSuccess = "ok".equals(result) || "success".equals(status);
+
+        if (!isSuccess) {
+            var errorCode = (String) responseMap.get("err_code");
+            var errorDescription = (String) responseMap.get("err_description");
+            throw new PaymentProcessingException(
+                    String.format("LiqPay refund failed: %s - %s - %s", result, errorCode, errorDescription));
         }
     }
 

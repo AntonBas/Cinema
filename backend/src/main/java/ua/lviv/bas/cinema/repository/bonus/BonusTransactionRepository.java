@@ -15,4 +15,6 @@ public interface BonusTransactionRepository extends JpaRepository<BonusTransacti
             + "(SELECT SUM(t.pointsChange) FROM BonusTransaction t WHERE t.bonusCard = bt.bonusCard AND t.id <= bt.id) as newBalance "
             + "FROM BonusTransaction bt " + "WHERE bt.bonusCard.user.id = :userId " + "ORDER BY bt.createdDate DESC")
     Page<BonusTransactionProjection> findProjectionsByUserId(@Param("userId") Long userId, Pageable pageable);
+
+    boolean existsByReferenceId(String referenceId);
 }

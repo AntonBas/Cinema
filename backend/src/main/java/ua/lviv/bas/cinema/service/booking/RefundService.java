@@ -5,57 +5,46 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.config.properties.RefundRules;
-import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.booking.Refund;
-import ua.lviv.bas.cinema.domain.booking.RefundItem;
 import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
-import ua.lviv.bas.cinema.domain.booking.status.RefundItemStatus;
-import ua.lviv.bas.cinema.domain.booking.status.RefundStatus;
 import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
 import ua.lviv.bas.cinema.dto.refund.request.RefundPreviewRequest;
 import ua.lviv.bas.cinema.dto.refund.request.RefundRequest;
 import ua.lviv.bas.cinema.dto.refund.response.RefundPreviewResponse;
 import ua.lviv.bas.cinema.dto.refund.response.RefundResponse;
+import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 import ua.lviv.bas.cinema.exception.domain.financial.refund.RefundProcessingException;
-import ua.lviv.bas.cinema.exception.domain.financial.refund.TicketNotRefundableException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;
 import ua.lviv.bas.cinema.mapper.booking.RefundItemMapper;
 import ua.lviv.bas.cinema.mapper.booking.RefundMapper;
-import ua.lviv.bas.cinema.repository.booking.RefundRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
-import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
 import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
-import ua.lviv.bas.cinema.service.integration.audit.AuditService;
-import ua.lviv.bas.cinema.service.ticket.TicketService;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class RefundService {
 
+    private static final int MAX_APPLY_SUCCESS_ATTEMPTS = 2;
+
     private final TicketRepository ticketRepository;
-    private final RefundRepository refundRepository;
     private final PaymentService paymentService;
-    private final BonusLedgerService bonusLedgerService;
+    private final RefundCalculator refundCalculator;
+    private final RefundTransactionExecutor refundTransactionExecutor;
     private final RefundRules refundRules;
     private final RefundMapper refundMapper;
     private final RefundItemMapper refundItemMapper;
     private final NumberGeneratorService numberGenerator;
-    private final AuditService auditService;
-    private final TicketService ticketService;
 
     @Transactional(readOnly = true)
     public RefundPreviewResponse getPreview(RefundPreviewRequest request, Long userId) {
         var ticket = findActiveTicket(request.ticketId(), userId);
-        var validationError = validate(ticket);
+        var validationError = refundCalculator.validate(ticket);
 
         if (validationError != null) {
             return createNonRefundablePreview(ticket, validationError);
@@ -66,107 +55,41 @@ public class RefundService {
         return createPreview(ticket);
     }
 
-    @Transactional
     public RefundResponse refund(RefundRequest request, Long userId) {
-        var ticket = findActiveTicket(request.ticketId(), userId);
-        validateRefundable(ticket);
+        var context = refundTransactionExecutor.markProcessing(request.ticketId(), userId, request.reason());
+        var description = "Refund for ticket #" + context.ticketUniqueCode();
 
-        var calculation = calculateRefundAmounts(ticket);
-        var refund = createRefund(ticket, calculation.refundAmount(), calculation.percentage(),
-                calculation.bonusPointsToRefund(), request.reason());
-
-        return processRefund(refund, ticket, calculation);
-    }
-
-    private void validateRefundable(Ticket ticket) {
-        var validationError = validate(ticket);
-        if (validationError != null) {
-            throw new TicketNotRefundableException(validationError);
-        }
-        if (ticket.getPayment().getStatus() != PaymentStatus.SUCCESS
-                && ticket.getPayment().getStatus() != PaymentStatus.PARTIALLY_REFUNDED) {
-            throw new TicketNotRefundableException("Payment cannot be refunded via API. Contact support.");
-        }
-    }
-
-    private RefundCalculation calculateRefundAmounts(Ticket ticket) {
-        var sessionTime = ticket.getBooking().getSession().getStartTime();
-        var percentage = refundRules.getRefundPercentage(sessionTime);
-        var booking = ticket.getBooking();
-        var totalSeats = booking.getSeatReservations().size();
-        var cashAmount = calculateCashAmount(ticket);
-        var refundAmount = calculateRefundAmount(cashAmount, percentage);
-        var bonusPerTicket = totalSeats > 0 ? booking.getBonusPointsUsed() / totalSeats : 0;
-        var bonusPointsToRefund = calculateBonusRefund(bonusPerTicket, percentage);
-        return new RefundCalculation(percentage, refundAmount, bonusPointsToRefund);
-    }
-
-    private record RefundCalculation(BigDecimal percentage, BigDecimal refundAmount, Integer bonusPointsToRefund) {
-    }
-
-    private RefundResponse processRefund(Refund refund, Ticket ticket, RefundCalculation calculation) {
         try {
-            paymentService.refund(refund.getPayment(), calculation.refundAmount(),
-                    "Refund for ticket #" + ticket.getUniqueCode(), ticket);
-
-            if (calculation.bonusPointsToRefund() != null && calculation.bonusPointsToRefund() > 0) {
-                bonusLedgerService.refundPointsForTicket(refund.getUser().getId(), calculation.bonusPointsToRefund(),
-                        "REFUND_TICKET_" + ticket.getId());
-            }
-
-            ticketService.markAsRefunded(ticket, refund);
-
-            auditRefund(refund, ticket, calculation.refundAmount(), calculation.percentage(),
-                    calculation.bonusPointsToRefund());
-            return buildResponse(refund);
-
+            paymentService.callLiqPayRefund(context.liqpayPaymentId(), context.liqpayOrderId(),
+                    context.refundAmount(), description);
+        } catch (PaymentProcessingException e) {
+            refundTransactionExecutor.markFailed(context.refundId(), e);
+            throw new RefundProcessingException("Refund was rejected by the payment provider", e);
         } catch (Exception e) {
-            refund.setStatus(RefundStatus.REJECTED);
-            refundRepository.save(refund);
-            auditRejected(refund, e);
-            throw new RefundProcessingException("Refund processing failed", e);
+            log.error("LiqPay refund outcome could not be confirmed for refund {} (ticket {}): {}",
+                    context.refundId(), context.ticketId(), e.getMessage(), e);
+            throw new RefundProcessingException(
+                    "Refund could not be confirmed and is pending review, please contact support", e);
         }
+
+        var refund = applySuccessWithRetry(context.refundId(), context.ticketId());
+        return buildResponse(refund);
     }
 
-    private String validate(Ticket ticket) {
-        if (ticket.getStatus() != TicketStatus.ACTIVE) {
-            return "Ticket is not active. Current status: " + ticket.getStatus();
+    private Refund applySuccessWithRetry(Long refundId, Long ticketId) {
+        RuntimeException lastError = null;
+        for (int attempt = 1; attempt <= MAX_APPLY_SUCCESS_ATTEMPTS; attempt++) {
+            try {
+                return refundTransactionExecutor.applySuccess(refundId, ticketId);
+            } catch (RuntimeException e) {
+                lastError = e;
+                log.error("Attempt {}/{} to finalize refund {} failed", attempt, MAX_APPLY_SUCCESS_ATTEMPTS,
+                        refundId, e);
+            }
         }
-        var sessionTime = ticket.getBooking().getSession().getStartTime();
-        if (!refundRules.isRefundable(sessionTime)) {
-            return "Refund is not available for this session";
-        }
-        if (ticket.getRefund() != null) {
-            return "Ticket has already been refunded";
-        }
-        if (sessionTime.isBefore(LocalDateTime.now())) {
-            return "Session has already started or finished";
-        }
-        return null;
-    }
-
-    private BigDecimal calculateCashAmount(Ticket ticket) {
-        var paymentAmount = ticket.getPayment().getAmount();
-        var totalBookingPrice = ticket.getBooking().getTotalPrice();
-        if (totalBookingPrice.compareTo(BigDecimal.ZERO) > 0) {
-            return ticket.getFinalPrice().multiply(paymentAmount)
-                    .divide(totalBookingPrice, 2, RoundingMode.HALF_UP);
-        }
-        var totalSeats = ticket.getBooking().getSeatReservations().size();
-        return totalSeats > 0
-                ? paymentAmount.divide(BigDecimal.valueOf(totalSeats), 2, RoundingMode.HALF_UP)
-                : paymentAmount;
-    }
-
-    private BigDecimal calculateRefundAmount(BigDecimal price, BigDecimal percentage) {
-        return price.multiply(percentage).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-    }
-
-    private Integer calculateBonusRefund(Integer bonusPointsUsed, BigDecimal percentage) {
-        if (bonusPointsUsed == null || bonusPointsUsed == 0) {
-            return 0;
-        }
-        return (int) (bonusPointsUsed * percentage.doubleValue() / 100);
+        log.error("Refund {} left in PROCESSING after {} failed attempts; RefundScheduler will retry", refundId,
+                MAX_APPLY_SUCCESS_ATTEMPTS);
+        throw new RefundProcessingException("Refund is still being finalized, please check back shortly", lastError);
     }
 
     private String formatRemainingTime(LocalDateTime sessionTime) {
@@ -187,8 +110,8 @@ public class RefundService {
         var percentage = refundRules.getRefundPercentage(sessionTime);
         var booking = ticket.getBooking();
         var totalSeats = booking.getSeatReservations().size();
-        var cashAmount = calculateCashAmount(ticket);
-        var refundAmount = calculateRefundAmount(cashAmount, percentage);
+        var cashAmount = refundCalculator.calculateCashAmount(ticket);
+        var refundAmount = refundCalculator.calculateRefundAmount(cashAmount, percentage);
         var feeAmount = cashAmount.subtract(refundAmount);
         var bonusPerTicket = totalSeats > 0 ? booking.getBonusPointsUsed() / totalSeats : 0;
 
@@ -205,7 +128,7 @@ public class RefundService {
                 booking.getSession().getHall().getName(), seatInfo, ticket.getOriginalPrice(),
                 ticket.getFinalPrice(), refundAmount, percentage, feeAmount,
                 BigDecimal.valueOf(100).subtract(percentage), bonusPerTicket,
-                calculateBonusRefund(bonusPerTicket, percentage), refundRules.getPolicyName(sessionTime),
+                refundCalculator.calculateBonusRefund(bonusPerTicket, percentage), refundRules.getPolicyName(sessionTime),
                 refundRules.getPolicyDescription(sessionTime), true, null, sessionTime.minusMinutes(30),
                 formatRemainingTime(sessionTime), ticket.getPurchaseTime().toString(),
                 ticket.getTicketType().getDisplayName());
@@ -223,19 +146,6 @@ public class RefundService {
                 null);
     }
 
-    private Refund createRefund(Ticket ticket, BigDecimal refundAmount, BigDecimal percentage,
-                                Integer bonusPointsToRefund, String reason) {
-        var refund = Refund.builder().payment(ticket.getPayment()).user(ticket.getUser()).totalAmount(refundAmount)
-                .totalBonusPointsToDeduct(bonusPointsToRefund).reason(reason).status(RefundStatus.PENDING).build();
-
-        var refundItem = RefundItem.builder().refund(refund).ticket(ticket).ticketPrice(ticket.getFinalPrice())
-                .refundPercentage(percentage.setScale(2, RoundingMode.HALF_UP)).refundAmount(refundAmount)
-                .bonusPointsToDeduct(bonusPointsToRefund).status(RefundItemStatus.PENDING).build();
-
-        refund.getItems().add(refundItem);
-        return refundRepository.save(refund);
-    }
-
     private RefundResponse buildResponse(Refund refund) {
         var response = refundMapper.toResponse(refund);
         return new RefundResponse(response.id(), numberGenerator.generateRefundNumber(refund), response.status(),
@@ -244,23 +154,5 @@ public class RefundService {
                 refund.getItems() != null ? refund.getItems().stream().map(refundItemMapper::toResponse).toList()
                         : null,
                 "Refund processed successfully", "3-5 business days");
-    }
-
-    private void auditRefund(Refund refund, Ticket ticket, BigDecimal refundAmount, BigDecimal percentage,
-                             Integer bonusPointsToRefund) {
-        Map<String, Object> details = new HashMap<>();
-        details.put("ticketId", ticket.getId());
-        details.put("refundAmount", refundAmount);
-        details.put("percentage", percentage);
-        details.put("bonusPointsToRefund", bonusPointsToRefund);
-        auditService.logChange("Refund", refund.getId(), "Refund #" + refund.getId(), AuditAction.CREATED, null,
-                details);
-    }
-
-    private void auditRejected(Refund refund, Exception e) {
-        Map<String, Object> errorDetails = new HashMap<>();
-        errorDetails.put("error", e.getMessage());
-        auditService.logChange("Refund", refund.getId(), "Refund #" + refund.getId(), AuditAction.REJECTED, null,
-                errorDetails);
     }
 }

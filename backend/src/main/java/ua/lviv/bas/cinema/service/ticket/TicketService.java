@@ -161,6 +161,11 @@ public class TicketService {
     })
     @Transactional
     public void markAsRefunded(Ticket ticket, Refund refund) {
+        if (ticket.getStatus() == TicketStatus.REFUNDED) {
+            log.debug("Ticket {} already marked as refunded, skipping", ticket.getId());
+            return;
+        }
+
         ticket.setStatus(TicketStatus.REFUNDED);
         ticket.setRefund(refund);
         ticketRepository.save(ticket);

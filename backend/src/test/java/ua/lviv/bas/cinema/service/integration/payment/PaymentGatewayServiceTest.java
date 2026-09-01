@@ -4,8 +4,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 import ua.lviv.bas.cinema.domain.booking.Booking;
 import ua.lviv.bas.cinema.domain.booking.Payment;
 import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
@@ -14,6 +19,8 @@ import ua.lviv.bas.cinema.domain.cinema.Movie;
 import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
+import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentGatewayUnavailableException;
+import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -21,9 +28,15 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentGatewayServiceTest {
+
+    @Mock
+    private RestTemplate restTemplate;
 
     @InjectMocks
     private PaymentGatewayService paymentGatewayService;
@@ -38,6 +51,7 @@ class PaymentGatewayServiceTest {
         ReflectionTestUtils.setField(paymentGatewayService, "sandboxMode", true);
         ReflectionTestUtils.setField(paymentGatewayService, "frontendUrl", "https://example.com");
         ReflectionTestUtils.setField(paymentGatewayService, "liqpayApiUrl", "https://www.liqpay.ua/api/");
+        ReflectionTestUtils.setField(paymentGatewayService, "restTemplate", restTemplate);
 
         User user = User.builder().id(1L).email("test@example.com").build();
         Movie movie = Movie.builder().id(1L).title("Test Movie").durationMinutes(120).build();
@@ -81,5 +95,65 @@ class PaymentGatewayServiceTest {
                 "Test refund");
 
         assertThat(result).isNotBlank();
+    }
+
+    @Test
+    void processRefundInSandboxModeShouldNotThrow() {
+        String refundData = paymentGatewayService.prepareRefundData("payment_123", "order_123",
+                new BigDecimal("50.00"), "Test refund");
+
+        paymentGatewayService.processRefund(refundData);
+    }
+
+    @Test
+    void processRefundWhenLiqPaySuccessShouldNotThrow() {
+        ReflectionTestUtils.setField(paymentGatewayService, "sandboxMode", false);
+        String responseBody = LiqPayDecoder.encodeToBase64(Map.of("result", "ok"));
+        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
+                .thenReturn(ResponseEntity.ok(responseBody));
+
+        paymentGatewayService.processRefund("refund_data");
+    }
+
+    @Test
+    void processRefundWhenLiqPayExplicitlyRejectsShouldThrowPaymentProcessingException() {
+        ReflectionTestUtils.setField(paymentGatewayService, "sandboxMode", false);
+        String responseBody = LiqPayDecoder
+                .encodeToBase64(Map.of("result", "error", "err_code", "1", "err_description", "insufficient funds"));
+        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
+                .thenReturn(ResponseEntity.ok(responseBody));
+
+        assertThatThrownBy(() -> paymentGatewayService.processRefund("refund_data"))
+                .isInstanceOf(PaymentProcessingException.class);
+    }
+
+    @Test
+    void processRefundWhenHttpStatusNot2xxShouldThrowPaymentGatewayUnavailableException() {
+        ReflectionTestUtils.setField(paymentGatewayService, "sandboxMode", false);
+        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
+                .thenReturn(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
+
+        assertThatThrownBy(() -> paymentGatewayService.processRefund("refund_data"))
+                .isInstanceOf(PaymentGatewayUnavailableException.class);
+    }
+
+    @Test
+    void processRefundWhenResponseBodyNullShouldThrowPaymentGatewayUnavailableException() {
+        ReflectionTestUtils.setField(paymentGatewayService, "sandboxMode", false);
+        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
+                .thenReturn(ResponseEntity.ok().build());
+
+        assertThatThrownBy(() -> paymentGatewayService.processRefund("refund_data"))
+                .isInstanceOf(PaymentGatewayUnavailableException.class);
+    }
+
+    @Test
+    void processRefundWhenNetworkErrorShouldThrowPaymentGatewayUnavailableException() {
+        ReflectionTestUtils.setField(paymentGatewayService, "sandboxMode", false);
+        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
+                .thenThrow(new RestClientException("Connection timed out"));
+
+        assertThatThrownBy(() -> paymentGatewayService.processRefund("refund_data"))
+                .isInstanceOf(PaymentGatewayUnavailableException.class);
     }
 }

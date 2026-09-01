@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.booking.Booking;
@@ -150,7 +151,7 @@ public class PaymentService {
         auditFailure(payment, oldStatus, callbackData);
     }
 
-    public void refund(Payment payment, BigDecimal amount, String description, Ticket ticket) {
+    public void validateRefundEligibility(Payment payment, BigDecimal amount) {
         if (payment.getStatus() != PaymentStatus.SUCCESS && payment.getStatus() != PaymentStatus.PARTIALLY_REFUNDED) {
             throw PaymentProcessingException.refundFailed("Cannot refund payment with status: " + payment.getStatus());
         }
@@ -171,18 +172,30 @@ public class PaymentService {
         if (payment.getLiqpayOrderId() == null || payment.getLiqpayOrderId().isEmpty()) {
             throw PaymentProcessingException.refundFailed("Missing LiqPay order ID for refund");
         }
+    }
 
-        var refundData = paymentGatewayService.prepareRefundData(payment.getLiqpayPaymentId(),
-                payment.getLiqpayOrderId(), amount, description);
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void callLiqPayRefund(String liqpayPaymentId, String liqpayOrderId, BigDecimal amount,
+                                 String description) {
+        var refundData = paymentGatewayService.prepareRefundData(liqpayPaymentId, liqpayOrderId, amount, description);
 
         paymentGatewayService.processRefund(refundData);
 
-        log.info("Refund initiated for payment {}: amount={}, description={}", payment.getId(), amount, description);
+        log.info("Refund initiated for liqpayOrderId={}: amount={}, description={}", liqpayOrderId, amount,
+                description);
+    }
 
-        var oldStatus = payment.getStatus();
+    @Transactional
+    public void applyRefundSuccess(Payment payment, BigDecimal amount, String description, Ticket ticket) {
         var newStatus = amount.compareTo(payment.getAmount()) == 0 ? PaymentStatus.REFUNDED
                 : PaymentStatus.PARTIALLY_REFUNDED;
 
+        if (payment.getStatus() == newStatus) {
+            log.debug("Payment {} already marked as {}, skipping", payment.getId(), newStatus);
+            return;
+        }
+
+        var oldStatus = payment.getStatus();
         payment.setStatus(newStatus);
         paymentRepository.save(payment);
 

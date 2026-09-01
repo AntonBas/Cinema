@@ -3,7 +3,6 @@ package ua.lviv.bas.cinema.service.booking;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.config.properties.RefundRules;
@@ -24,16 +23,15 @@ import ua.lviv.bas.cinema.dto.refund.request.RefundPreviewRequest;
 import ua.lviv.bas.cinema.dto.refund.request.RefundRequest;
 import ua.lviv.bas.cinema.dto.refund.response.RefundPreviewResponse;
 import ua.lviv.bas.cinema.dto.refund.response.RefundResponse;
+import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentGatewayUnavailableException;
+import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
+import ua.lviv.bas.cinema.exception.domain.financial.refund.RefundProcessingException;
 import ua.lviv.bas.cinema.exception.domain.financial.refund.TicketNotRefundableException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;
 import ua.lviv.bas.cinema.mapper.booking.RefundItemMapper;
 import ua.lviv.bas.cinema.mapper.booking.RefundMapper;
-import ua.lviv.bas.cinema.repository.booking.RefundRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
-import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
 import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
-import ua.lviv.bas.cinema.service.integration.audit.AuditService;
-import ua.lviv.bas.cinema.service.ticket.TicketService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -51,11 +49,9 @@ public class RefundServiceTest {
     @Mock
     private TicketRepository ticketRepository;
     @Mock
-    private RefundRepository refundRepository;
-    @Mock
     private PaymentService paymentService;
     @Mock
-    private BonusLedgerService bonusLedgerService;
+    private RefundTransactionExecutor refundTransactionExecutor;
     @Mock
     private RefundRules refundRules;
     @Mock
@@ -64,11 +60,8 @@ public class RefundServiceTest {
     private RefundItemMapper refundItemMapper;
     @Mock
     private NumberGeneratorService numberGenerator;
-    @Mock
-    private AuditService auditService;
-    @Mock
-    private TicketService ticketService;
-    @InjectMocks
+
+    private RefundCalculator refundCalculator;
     private RefundService refundService;
 
     private User testUser;
@@ -80,6 +73,7 @@ public class RefundServiceTest {
 
     private static final Long USER_ID = 1L;
     private static final Long TICKET_ID = 2L;
+    private static final Long REFUND_ID = 1L;
     private static final BigDecimal TICKET_PRICE = new BigDecimal("100.00");
     private static final BigDecimal REFUND_AMOUNT = new BigDecimal("70.00");
     private static final BigDecimal PERCENTAGE = new BigDecimal("70.00");
@@ -88,6 +82,10 @@ public class RefundServiceTest {
 
     @BeforeEach
     void setUp() {
+        refundCalculator = new RefundCalculator(refundRules);
+        refundService = new RefundService(ticketRepository, paymentService, refundCalculator,
+                refundTransactionExecutor, refundRules, refundMapper, refundItemMapper, numberGenerator);
+
         testUser = User.builder().id(USER_ID).email("test@example.com").build();
         Movie movie = Movie.builder().title("Test Movie").build();
         CinemaHall hall = CinemaHall.builder().name("Hall 1").build();
@@ -100,13 +98,14 @@ public class RefundServiceTest {
                 .totalPrice(TICKET_PRICE)
                 .bonusPointsUsed(BONUS_POINTS_USED)
                 .build();
-        testPayment = Payment.builder().id(1L).amount(TICKET_PRICE).liqpayPaymentId("PAY123").status(PaymentStatus.SUCCESS).build();
+        testPayment = Payment.builder().id(1L).amount(TICKET_PRICE).liqpayPaymentId("PAY123")
+                .liqpayOrderId("ORD_123").status(PaymentStatus.SUCCESS).build();
         TicketType ticketType = TicketType.builder().displayName("Standard").build();
         testTicket = Ticket.builder().id(TICKET_ID).user(testUser).booking(booking).ticketType(ticketType)
                 .finalPrice(TICKET_PRICE).originalPrice(TICKET_PRICE).uniqueCode("TKT-123456")
                 .status(TicketStatus.ACTIVE).payment(testPayment).bonusPointsUsed(BONUS_POINTS_USED)
                 .purchaseTime(LocalDateTime.now().minusHours(1)).seatReservation(seatReservation).build();
-        testRefund = Refund.builder().id(1L).user(testUser).payment(testPayment).totalAmount(REFUND_AMOUNT)
+        testRefund = Refund.builder().id(REFUND_ID).user(testUser).payment(testPayment).totalAmount(REFUND_AMOUNT)
                 .totalBonusPointsToDeduct(BONUS_POINTS_TO_REFUND).build();
         previewRequest = new RefundPreviewRequest(TICKET_ID);
     }
@@ -178,41 +177,93 @@ public class RefundServiceTest {
                 .isInstanceOf(TicketNotFoundException.class);
     }
 
+    private RefundTransactionExecutor.RefundProcessingContext defaultContext() {
+        return new RefundTransactionExecutor.RefundProcessingContext(REFUND_ID, TICKET_ID, "TKT-123456", "PAY123",
+                "ORD_123", REFUND_AMOUNT);
+    }
+
     @Test
     void refundShouldSucceed() {
         RefundRequest refundRequest = new RefundRequest(TICKET_ID, "Test reason");
 
-        when(ticketRepository.findByIdAndUserIdAndStatus(TICKET_ID, USER_ID, TicketStatus.ACTIVE))
-                .thenReturn(Optional.of(testTicket));
-        when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(true);
-        when(refundRules.getRefundPercentage(testSession.getStartTime())).thenReturn(PERCENTAGE);
-        when(refundRepository.save(any(Refund.class))).thenReturn(testRefund);
-        doNothing().when(bonusLedgerService).refundPointsForTicket(eq(USER_ID), eq(BONUS_POINTS_TO_REFUND), any(String.class));
+        when(refundTransactionExecutor.markProcessing(TICKET_ID, USER_ID, "Test reason"))
+                .thenReturn(defaultContext());
+        when(refundTransactionExecutor.applySuccess(REFUND_ID, TICKET_ID)).thenReturn(testRefund);
         when(numberGenerator.generateRefundNumber(testRefund)).thenReturn("RF-2024-00001");
 
         RefundResponse mockResponse = new RefundResponse(1L, "RF-2024-00001", "PROCESSED", REFUND_AMOUNT,
                 BONUS_POINTS_TO_REFUND, "Test reason", "System", LocalDateTime.now(), LocalDateTime.now(), 1L, "CARD",
                 null, "Refund processed successfully", "3-5 business days");
-
         when(refundMapper.toResponse(testRefund)).thenReturn(mockResponse);
 
         RefundResponse response = refundService.refund(refundRequest, USER_ID);
 
         assertThat(response).isNotNull();
         assertThat(response.id()).isEqualTo(1L);
-        verify(paymentService).refund(eq(testPayment), eq(REFUND_AMOUNT), any(String.class), eq(testTicket));
-        verify(ticketService).markAsRefunded(testTicket, testRefund);
+        verify(paymentService).callLiqPayRefund(eq("PAY123"), eq("ORD_123"), eq(REFUND_AMOUNT), any(String.class));
+        verify(refundTransactionExecutor).applySuccess(REFUND_ID, TICKET_ID);
+        verify(refundTransactionExecutor, never()).markFailed(any(), any());
     }
 
     @Test
     void refundWhenTicketNotRefundableShouldThrowException() {
         RefundRequest refundRequest = new RefundRequest(TICKET_ID, "Test reason");
-        testTicket.setStatus(TicketStatus.REFUNDED);
 
-        when(ticketRepository.findByIdAndUserIdAndStatus(TICKET_ID, USER_ID, TicketStatus.ACTIVE))
-                .thenReturn(Optional.of(testTicket));
+        when(refundTransactionExecutor.markProcessing(TICKET_ID, USER_ID, "Test reason"))
+                .thenThrow(new TicketNotRefundableException("Ticket is not active. Current status: REFUNDED"));
 
         assertThatThrownBy(() -> refundService.refund(refundRequest, USER_ID))
                 .isInstanceOf(TicketNotRefundableException.class);
+
+        verify(paymentService, never()).callLiqPayRefund(any(), any(), any(), any());
+    }
+
+    @Test
+    void refundWhenLiqPayExplicitlyRejectsShouldMarkFailedAndNotApplySuccess() {
+        RefundRequest refundRequest = new RefundRequest(TICKET_ID, "Test reason");
+
+        when(refundTransactionExecutor.markProcessing(TICKET_ID, USER_ID, "Test reason"))
+                .thenReturn(defaultContext());
+        doThrow(new PaymentProcessingException("LiqPay refund failed: error - 1 - insufficient funds"))
+                .when(paymentService).callLiqPayRefund(eq("PAY123"), eq("ORD_123"), eq(REFUND_AMOUNT), any());
+
+        assertThatThrownBy(() -> refundService.refund(refundRequest, USER_ID))
+                .isInstanceOf(RefundProcessingException.class);
+
+        verify(refundTransactionExecutor).markFailed(eq(REFUND_ID), any(PaymentProcessingException.class));
+        verify(refundTransactionExecutor, never()).applySuccess(any(), any());
+    }
+
+    @Test
+    void refundWhenLiqPayOutcomeIsAmbiguousShouldNotMarkFailedAndLeaveProcessing() {
+        RefundRequest refundRequest = new RefundRequest(TICKET_ID, "Test reason");
+
+        when(refundTransactionExecutor.markProcessing(TICKET_ID, USER_ID, "Test reason"))
+                .thenReturn(defaultContext());
+        doThrow(new PaymentGatewayUnavailableException("Network error during refund: timeout", null))
+                .when(paymentService).callLiqPayRefund(eq("PAY123"), eq("ORD_123"), eq(REFUND_AMOUNT), any());
+
+        assertThatThrownBy(() -> refundService.refund(refundRequest, USER_ID))
+                .isInstanceOf(RefundProcessingException.class);
+
+        verify(refundTransactionExecutor, never()).markFailed(any(), any());
+        verify(refundTransactionExecutor, never()).applySuccess(any(), any());
+    }
+
+    @Test
+    void refundWhenApplySuccessFailsAfterSuccessfulLiqPayShouldRetryOnceThenLeaveProcessing() {
+        RefundRequest refundRequest = new RefundRequest(TICKET_ID, "Test reason");
+
+        when(refundTransactionExecutor.markProcessing(TICKET_ID, USER_ID, "Test reason"))
+                .thenReturn(defaultContext());
+        when(refundTransactionExecutor.applySuccess(REFUND_ID, TICKET_ID))
+                .thenThrow(new RuntimeException("DB connection lost"));
+
+        assertThatThrownBy(() -> refundService.refund(refundRequest, USER_ID))
+                .isInstanceOf(RefundProcessingException.class);
+
+        verify(paymentService, times(1)).callLiqPayRefund(eq("PAY123"), eq("ORD_123"), eq(REFUND_AMOUNT), any());
+        verify(refundTransactionExecutor, times(2)).applySuccess(REFUND_ID, TICKET_ID);
+        verify(refundTransactionExecutor, never()).markFailed(any(), any());
     }
 }
