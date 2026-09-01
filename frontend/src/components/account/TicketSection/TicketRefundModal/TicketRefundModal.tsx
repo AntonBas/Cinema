@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Modal, Button } from "@/components/ui";
 import { useRefund } from "@/hooks/features/refund/useRefund";
 import { AlertTriangle } from "lucide-react";
@@ -36,7 +36,20 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
 }) => {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [selectedReason, setSelectedReason] = useState<string>("");
-  const { processRefund, loading, refundResult } = useRefund();
+  const {
+    processRefund,
+    loading,
+    refundResult,
+    getPreview,
+    previewResult,
+    previewLoading,
+  } = useRefund();
+
+  useEffect(() => {
+    if (ticket) {
+      getPreview({ ticketId: ticket.id });
+    }
+  }, [ticket, getPreview]);
 
   if (!ticket) return null;
 
@@ -185,10 +198,20 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
           </svg>
           <div>
             <span className={styles.estimateLabel}>Estimated Refund</span>
-            <span className={styles.estimateValue}>{ticket.price} UAH</span>
-            <span className={styles.estimateNote}>
-              Processing fee may apply based on refund policy
-            </span>
+            {previewLoading || !previewResult ? (
+              <span className={styles.estimateValue}>Calculating...</span>
+            ) : (
+              <>
+                <span className={styles.estimateValue}>
+                  {previewResult.refundAmount} UAH (
+                  {previewResult.refundPercentage}%)
+                </span>
+                <span className={styles.estimateNote}>
+                  {previewResult.policyName}: fee {previewResult.feeAmount}{" "}
+                  UAH ({previewResult.feePercentage}%)
+                </span>
+              </>
+            )}
           </div>
         </div>
 
