@@ -14,6 +14,7 @@ import jakarta.annotation.Nonnull;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -172,6 +173,14 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleLocked(@Nonnull LockedException ex, @Nonnull WebRequest request) {
         ApiError apiError = new ApiError(UNAUTHORIZED, "Account is locked");
         log.warn("Locked account attempt: {}", ex.getMessage());
+        return buildResponseEntity(apiError, request);
+    }
+
+    @ExceptionHandler(InsufficientAuthenticationException.class)
+    protected ResponseEntity<Object> handleInsufficientAuthentication(@Nonnull InsufficientAuthenticationException ex,
+                                                                       @Nonnull WebRequest request) {
+        ApiError apiError = new ApiError(UNAUTHORIZED, "Not authenticated");
+        log.warn("Unauthenticated request: {}", ex.getMessage());
         return buildResponseEntity(apiError, request);
     }
 

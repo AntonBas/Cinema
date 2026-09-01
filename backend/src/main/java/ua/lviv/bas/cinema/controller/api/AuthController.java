@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.controller.api;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -105,8 +106,7 @@ public class AuthController {
     })
     public UserResponse getCurrentUser(@AuthenticationPrincipal CustomUserDetails userDetails) {
         if (userDetails == null) {
-            throw new org.springframework.security.core.AuthenticationException("Not authenticated") {
-            };
+            throw new InsufficientAuthenticationException("Not authenticated");
         }
         log.info("GET /api/auth/me - user: {}", userDetails.getUsername());
         return userMapper.toUserResponse(userDetails.getUser());
