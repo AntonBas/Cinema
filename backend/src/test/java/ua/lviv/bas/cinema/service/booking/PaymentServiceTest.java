@@ -28,14 +28,11 @@ import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentAccessDenied
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 import ua.lviv.bas.cinema.repository.booking.BookingRepository;
 import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
-import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
-import ua.lviv.bas.cinema.service.bonus.BonusQueryService;
 import ua.lviv.bas.cinema.service.common.DateTimeFormatterService;
 import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.integration.payment.PaymentGatewayService;
 import ua.lviv.bas.cinema.service.notification.EmailService;
-import ua.lviv.bas.cinema.service.ticket.TicketService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -59,15 +56,9 @@ public class PaymentServiceTest {
     @Mock
     private PaymentGatewayService paymentGatewayService;
     @Mock
-    private TicketService ticketService;
-    @Mock
-    private BonusLedgerService bonusLedgerService;
-    @Mock
-    private BonusQueryService bonusQueryService;
-    @Mock
     private NumberGeneratorService numberGenerator;
     @Mock
-    private BookingService bookingService;
+    private PaymentSuccessOrchestrator paymentSuccessOrchestrator;
     @Mock
     private DateTimeFormatterService dateTimeFormatter;
     @Mock
@@ -237,10 +228,6 @@ public class PaymentServiceTest {
         callbackData.put("transaction_id", "TXN123");
         callbackData.put("sender_card_mask", "****1234");
 
-        when(bonusQueryService.calculateAccrualPoints(AMOUNT)).thenReturn(20);
-        when(dateTimeFormatter.formatStandard(any(LocalDateTime.class))).thenReturn("2024-01-01 14:00");
-        when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
-
         paymentService.processSuccess(testPayment, callbackData);
 
         assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
@@ -248,9 +235,7 @@ public class PaymentServiceTest {
         assertThat(testPayment.getLiqpaySenderCardMask()).isEqualTo("****1234");
         assertThat(testPayment.getPaymentTime()).isNotNull();
 
-        verify(bookingService).confirmBooking(BOOKING_ID);
-        verify(ticketService).createTicketsForBooking(testBooking, testPayment);
-        verify(bonusLedgerService).accruePointsForPayment(USER_ID, 20, testBooking, testPayment);
+        verify(paymentSuccessOrchestrator).handle(testPayment);
     }
 
     @Test

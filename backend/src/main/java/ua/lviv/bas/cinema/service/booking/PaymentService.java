@@ -22,21 +22,17 @@ import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentAccessDenied
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 import ua.lviv.bas.cinema.repository.booking.BookingRepository;
 import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
-import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
-import ua.lviv.bas.cinema.service.bonus.BonusQueryService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.integration.payment.PaymentGatewayService;
 import ua.lviv.bas.cinema.service.notification.EmailService;
 import ua.lviv.bas.cinema.service.common.DateTimeFormatterService;
 import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
-import ua.lviv.bas.cinema.service.ticket.TicketService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -47,11 +43,8 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
     private final PaymentGatewayService paymentGatewayService;
-    private final TicketService ticketService;
-    private final BonusLedgerService bonusLedgerService;
-    private final BonusQueryService bonusQueryService;
     private final NumberGeneratorService numberGenerator;
-    private final BookingService bookingService;
+    private final PaymentSuccessOrchestrator paymentSuccessOrchestrator;
     private final AuditService auditService;
     private final EmailService emailService;
     private final DateTimeFormatterService dateTimeFormatter;
@@ -134,16 +127,8 @@ public class PaymentService {
         payment.setLiqpayTransactionId(callbackData.get("transaction_id"));
         payment.setLiqpaySenderCardMask(callbackData.get("sender_card_mask"));
 
-        bookingService.confirmBooking(payment.getBooking().getId());
-        ticketService.createTicketsForBooking(payment.getBooking(), payment);
+        paymentSuccessOrchestrator.handle(payment);
 
-        var pointsToAccrue = bonusQueryService.calculateAccrualPoints(payment.getBooking().getFinalPrice());
-        if (pointsToAccrue != null && pointsToAccrue > 0) {
-            bonusLedgerService.accruePointsForPayment(payment.getBooking().getUser().getId(), pointsToAccrue,
-                    payment.getBooking(), payment);
-        }
-
-        sendSuccessEmail(payment, payment.getBooking());
         log.info("Payment {} completed successfully", payment.getId());
         auditSuccess(payment, oldStatus);
     }
@@ -222,20 +207,6 @@ public class PaymentService {
         }
     }
 
-    private void sendSuccessEmail(Payment payment, Booking booking) {
-        emailService.sendSafely("send payment success email", booking.getId(), () -> {
-            var sessionTime = dateTimeFormatter.formatStandard(booking.getSession().getStartTime());
-            var seatsInfo = extractSeatsInfo(booking);
-            var bookingNumber = numberGenerator.generateBookingNumber(booking);
-
-            emailService.sendTicketsEmail(booking.getUser().getEmail(), bookingNumber,
-                    booking.getSession().getMovie().getTitle(), sessionTime, booking.getSession().getHall().getName(),
-                    payment.getAmount(), "Credit card", seatsInfo);
-
-            log.debug("Sent payment success email to {}", booking.getUser().getEmail());
-        });
-    }
-
     private void sendFailureEmail(Payment payment, Booking booking) {
         emailService.sendSafely("send payment failed email", booking.getId(), () -> {
             var sessionTime = dateTimeFormatter.formatStandard(booking.getSession().getStartTime());
@@ -272,12 +243,6 @@ public class PaymentService {
                 booking.getSession().getMovie().getTitle(), booking.getSession().getStartTime(),
                 booking.getSession().getHall().getName(), payment.getAmount(), payment.getStatus(),
                 payment.getPaymentTime(), payment.getLiqpaySenderCardMask(), payment.getLiqpayErrorDescription());
-    }
-
-    private String extractSeatsInfo(Booking booking) {
-        return booking.getSeatReservations().stream()
-                .map(seat -> String.format("Row %d, Seat %d", seat.getSeat().getRow(), seat.getSeat().getNumber()))
-                .collect(Collectors.joining(", "));
     }
 
     private void auditCreate(Payment payment, Booking booking) {
