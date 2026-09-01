@@ -105,21 +105,4 @@ public class FileStorageServiceTest {
         assertThat(fileStorageService.determineContentType("test.unknown")).isEqualTo("application/octet-stream");
     }
 
-    @Test
-    void fileExists_Success() throws IOException {
-        Path subDir = tempDir.resolve("test");
-        Files.createDirectories(subDir);
-        Files.write(subDir.resolve("test.txt"), "content".getBytes());
-
-        boolean result = fileStorageService.fileExists("test.txt", "test");
-
-        assertThat(result).isTrue();
-    }
-
-    @Test
-    void fileExists_WhenFileNotFound_ShouldReturnFalse() {
-        boolean result = fileStorageService.fileExists("nonexistent.txt", "test");
-
-        assertThat(result).isFalse();
-    }
 }

@@ -131,20 +131,6 @@ public class FileStorageService {
         }
     }
 
-    public boolean fileExists(String fileName, String subDirectory) {
-        if (fileName == null || fileName.isBlank()) {
-            return false;
-        }
-
-        try {
-            Path basePath = Paths.get(uploadDir).toRealPath();
-            Path filePath = basePath.resolve(sanitize(subDirectory)).resolve(sanitize(fileName));
-            return filePath.startsWith(basePath) && Files.exists(filePath);
-        } catch (IOException e) {
-            return false;
-        }
-    }
-
     private String sanitize(String input) {
         if (input == null) {
             return "";
