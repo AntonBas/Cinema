@@ -5,6 +5,7 @@ import styles from "./AuditLogsTable.module.css";
 
 interface AuditLogsTableProps {
   logs: AuditLogResponse[];
+  onViewHistory?: (entityType: string, entityId: number) => void;
 }
 
 const truncateText = (text: string, maxLength: number = 40): string => {
@@ -100,7 +101,10 @@ const getBadgeVariant = (
   return "secondary";
 };
 
-export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({ logs }) => {
+export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({
+  logs,
+  onViewHistory,
+}) => {
   if (logs.length === 0) {
     return (
       <div className={styles.empty}>
@@ -135,11 +139,25 @@ export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({ logs }) => {
                   {log.changedBy}
                 </td>
                 <td className={styles.td} data-label="Target">
-                  <Tooltip content={log.targetInfo}>
-                    <span className={styles.targetInfo}>
-                      {truncateText(log.targetInfo, 30)}
-                    </span>
-                  </Tooltip>
+                  {onViewHistory ? (
+                    <button
+                      type="button"
+                      className={styles.targetButton}
+                      onClick={() => onViewHistory(log.entityType, log.entityId)}
+                    >
+                      <Tooltip content={log.targetInfo}>
+                        <span className={styles.targetInfo}>
+                          {truncateText(log.targetInfo, 30)}
+                        </span>
+                      </Tooltip>
+                    </button>
+                  ) : (
+                    <Tooltip content={log.targetInfo}>
+                      <span className={styles.targetInfo}>
+                        {truncateText(log.targetInfo, 30)}
+                      </span>
+                    </Tooltip>
+                  )}
                 </td>
                 <td className={styles.td} data-label="Action">
                   <Badge
