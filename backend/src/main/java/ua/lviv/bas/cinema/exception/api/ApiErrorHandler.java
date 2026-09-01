@@ -154,6 +154,16 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
         return buildResponseEntity(apiError, request);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    protected ResponseEntity<Object> handleIllegalArgument(@Nonnull IllegalArgumentException ex,
+                                                            @Nonnull WebRequest request) {
+        ApiError apiError = new ApiError(BAD_REQUEST, "Invalid request data", ex);
+
+        log.warn("Illegal argument: {}", ex.getMessage());
+
+        return buildResponseEntity(apiError, request);
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
     protected ResponseEntity<Object> handleBadCredentials(@Nonnull BadCredentialsException ex,
                                                           @Nonnull WebRequest request) {
