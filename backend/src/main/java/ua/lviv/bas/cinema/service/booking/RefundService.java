@@ -69,36 +69,55 @@ public class RefundService {
     @Transactional
     public RefundResponse refund(RefundRequest request, Long userId) {
         var ticket = findActiveTicket(request.ticketId(), userId);
-        var validationError = validate(ticket);
+        validateRefundable(ticket);
 
+        var calculation = calculateRefundAmounts(ticket);
+        var refund = createRefund(ticket, calculation.refundAmount(), calculation.percentage(),
+                calculation.bonusPointsToRefund(), request.reason());
+
+        return processRefund(refund, ticket, calculation);
+    }
+
+    private void validateRefundable(Ticket ticket) {
+        var validationError = validate(ticket);
         if (validationError != null) {
             throw new TicketNotRefundableException(validationError);
         }
-        if (ticket.getPayment().getStatus() != PaymentStatus.SUCCESS && ticket.getPayment().getStatus() != PaymentStatus.PARTIALLY_REFUNDED) {
+        if (ticket.getPayment().getStatus() != PaymentStatus.SUCCESS
+                && ticket.getPayment().getStatus() != PaymentStatus.PARTIALLY_REFUNDED) {
             throw new TicketNotRefundableException("Payment cannot be refunded via API. Contact support.");
         }
+    }
 
+    private RefundCalculation calculateRefundAmounts(Ticket ticket) {
         var sessionTime = ticket.getBooking().getSession().getStartTime();
         var percentage = refundRules.getRefundPercentage(sessionTime);
         var booking = ticket.getBooking();
         var totalSeats = booking.getSeatReservations().size();
         var cashAmount = calculateCashAmount(ticket);
         var refundAmount = calculateRefundAmount(cashAmount, percentage);
-        var bookingBonusPointsUsed = booking.getBonusPointsUsed();
-        var bonusPerTicket = totalSeats > 0 ? bookingBonusPointsUsed / totalSeats : 0;
+        var bonusPerTicket = totalSeats > 0 ? booking.getBonusPointsUsed() / totalSeats : 0;
         var bonusPointsToRefund = calculateBonusRefund(bonusPerTicket, percentage);
-        var refund = createRefund(ticket, refundAmount, percentage, bonusPointsToRefund, request.reason());
+        return new RefundCalculation(percentage, refundAmount, bonusPointsToRefund);
+    }
 
+    private record RefundCalculation(BigDecimal percentage, BigDecimal refundAmount, Integer bonusPointsToRefund) {
+    }
+
+    private RefundResponse processRefund(Refund refund, Ticket ticket, RefundCalculation calculation) {
         try {
-            paymentService.refund(refund.getPayment(), refundAmount, "Refund for ticket #" + ticket.getUniqueCode(), ticket);
+            paymentService.refund(refund.getPayment(), calculation.refundAmount(),
+                    "Refund for ticket #" + ticket.getUniqueCode(), ticket);
 
-            if (bonusPointsToRefund != null && bonusPointsToRefund > 0) {
-                bonusLedgerService.refundPointsForTicket(refund.getUser().getId(), bonusPointsToRefund, "REFUND_TICKET_" + ticket.getId());
+            if (calculation.bonusPointsToRefund() != null && calculation.bonusPointsToRefund() > 0) {
+                bonusLedgerService.refundPointsForTicket(refund.getUser().getId(), calculation.bonusPointsToRefund(),
+                        "REFUND_TICKET_" + ticket.getId());
             }
 
             ticketService.markAsRefunded(ticket, refund);
 
-            auditRefund(refund, ticket, refundAmount, percentage, bonusPointsToRefund);
+            auditRefund(refund, ticket, calculation.refundAmount(), calculation.percentage(),
+                    calculation.bonusPointsToRefund());
             return buildResponse(refund);
 
         } catch (Exception e) {
