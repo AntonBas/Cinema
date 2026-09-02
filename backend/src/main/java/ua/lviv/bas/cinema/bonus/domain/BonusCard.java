@@ -16,6 +16,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -40,6 +41,10 @@ public class BonusCard {
     @EqualsAndHashCode.Include
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", unique = true, nullable = false)

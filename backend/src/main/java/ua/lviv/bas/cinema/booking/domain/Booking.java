@@ -14,6 +14,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -55,6 +56,10 @@ public class Booking extends AuditableEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
     private Long id;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
