@@ -74,7 +74,7 @@ public class BookingScheduler {
 	}
 
 	private void expireBooking(Long bookingId) {
-		Booking booking = bookingRepository.findById(bookingId)
+		Booking booking = bookingRepository.findByIdWithSeatReservations(bookingId)
 				.orElseThrow(() -> new EntityNotFoundException("Booking", bookingId));
 
 		booking.setStatus(BookingStatus.EXPIRED);

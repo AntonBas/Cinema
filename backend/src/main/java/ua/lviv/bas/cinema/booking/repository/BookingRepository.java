@@ -17,6 +17,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     Optional<Booking> findByIdAndUserId(Long id, Long userId);
 
+    @Query("SELECT DISTINCT b FROM Booking b LEFT JOIN FETCH b.seatReservations WHERE b.id = :id")
+    Optional<Booking> findByIdWithSeatReservations(@Param("id") Long id);
+
     List<Booking> findByStatusAndExpiresAtBefore(BookingStatus status, LocalDateTime expiresAt);
 
     @Modifying
