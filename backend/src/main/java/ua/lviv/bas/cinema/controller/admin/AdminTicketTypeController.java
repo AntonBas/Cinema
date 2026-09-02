@@ -26,8 +26,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
-import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeRequest;
-import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeResponse;
+import ua.lviv.bas.cinema.dto.tickettype.request.TicketTypeRequest;
+import ua.lviv.bas.cinema.dto.tickettype.response.TicketTypeResponse;
 import ua.lviv.bas.cinema.service.ticket.TicketTypeService;
 
 @Slf4j

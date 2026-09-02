@@ -8,8 +8,8 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.domain.ticket.TicketType;
-import ua.lviv.bas.cinema.dto.ticketType.request.TicketTypeRequest;
-import ua.lviv.bas.cinema.dto.ticketType.response.TicketTypeResponse;
+import ua.lviv.bas.cinema.dto.tickettype.request.TicketTypeRequest;
+import ua.lviv.bas.cinema.dto.tickettype.response.TicketTypeResponse;
 import ua.lviv.bas.cinema.repository.ticket.projection.TicketTypeProjection;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
