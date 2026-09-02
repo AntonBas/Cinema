@@ -13,12 +13,15 @@ import org.springframework.stereotype.Repository;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecificationExecutor<Ticket> {
 
     Optional<Ticket> findByUniqueCode(String uniqueCode);
+
+    List<Ticket> findByBookingId(Long bookingId);
 
     Optional<Ticket> findByIdAndUserIdAndStatus(Long ticketId, Long userId, TicketStatus status);
 
