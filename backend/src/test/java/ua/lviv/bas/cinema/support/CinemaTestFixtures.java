@@ -1,7 +1,7 @@
 package ua.lviv.bas.cinema.support;
 
 import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
-import ua.lviv.bas.cinema.domain.cinema.Movie;
+import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.domain.cinema.Session;
 
 import java.time.LocalDateTime;

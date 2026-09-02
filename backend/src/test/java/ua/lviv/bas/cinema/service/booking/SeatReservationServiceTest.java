@@ -12,7 +12,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import ua.lviv.bas.cinema.domain.booking.SeatReservation;
 import ua.lviv.bas.cinema.domain.booking.status.ReservationStatus;
 import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
-import ua.lviv.bas.cinema.domain.cinema.Movie;
+import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.domain.cinema.Seat;
 import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.cinema.enums.SeatType;

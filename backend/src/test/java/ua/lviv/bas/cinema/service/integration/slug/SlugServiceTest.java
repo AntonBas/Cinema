@@ -5,9 +5,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ua.lviv.bas.cinema.domain.cinema.Movie;
+import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.exception.domain.technical.SlugGenerationException;
-import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
+import ua.lviv.bas.cinema.movie.repository.MovieRepository;
 
 import java.util.Optional;
 

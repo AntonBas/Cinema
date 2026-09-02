@@ -31,6 +31,7 @@ import ua.lviv.bas.cinema.domain.audit.AuditableEntity;
 import ua.lviv.bas.cinema.domain.booking.Booking;
 import ua.lviv.bas.cinema.domain.booking.SeatReservation;
 import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
+import ua.lviv.bas.cinema.movie.domain.Movie;
 
 @Entity
 @Getter
