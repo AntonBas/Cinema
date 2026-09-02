@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.notification;
+package ua.lviv.bas.cinema.service.user;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +12,7 @@ import ua.lviv.bas.cinema.exception.domain.auth.*;
 import ua.lviv.bas.cinema.repository.token.EmailTokenRepository;
 import ua.lviv.bas.cinema.repository.user.UserRepository;
 import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
+import ua.lviv.bas.cinema.service.notification.EmailService;
 
 import java.time.LocalDateTime;
 
