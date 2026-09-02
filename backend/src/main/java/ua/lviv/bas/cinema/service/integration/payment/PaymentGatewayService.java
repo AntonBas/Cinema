@@ -49,7 +49,7 @@ public class PaymentGatewayService {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     public PaymentLiqPayDataResponse prepareLiqPayPaymentData(Payment payment) {
         try {
