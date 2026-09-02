@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.booking;
+package ua.lviv.bas.cinema.payment.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,10 +8,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.booking.service.BookingService;
-import ua.lviv.bas.cinema.domain.booking.Payment;
+import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.booking.domain.SeatReservation;
 import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
-import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
+import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.booking.domain.status.ReservationStatus;
 import ua.lviv.bas.cinema.cinema.domain.Seat;
 import ua.lviv.bas.cinema.user.domain.User;

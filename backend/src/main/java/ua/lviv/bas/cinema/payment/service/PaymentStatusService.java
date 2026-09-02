@@ -1,15 +1,15 @@
-package ua.lviv.bas.cinema.service.booking;
+package ua.lviv.bas.cinema.payment.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
-import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
+import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
+import ua.lviv.bas.cinema.payment.dto.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
-import ua.lviv.bas.cinema.service.integration.payment.PaymentGatewayService;
+import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
+import ua.lviv.bas.cinema.payment.service.PaymentGatewayService;
 
 @Slf4j
 @Service

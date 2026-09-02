@@ -11,7 +11,7 @@ import ua.lviv.bas.cinema.bonus.domain.BonusRules;
 import ua.lviv.bas.cinema.bonus.domain.BonusTransaction;
 import ua.lviv.bas.cinema.bonus.domain.BonusTransactionType;
 import ua.lviv.bas.cinema.booking.domain.Booking;
-import ua.lviv.bas.cinema.domain.booking.Payment;
+import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.user.domain.VerificationStatus;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;

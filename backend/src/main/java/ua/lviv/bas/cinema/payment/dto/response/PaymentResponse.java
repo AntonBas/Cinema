@@ -1,7 +1,7 @@
-package ua.lviv.bas.cinema.dto.payment.response;
+package ua.lviv.bas.cinema.payment.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
+import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

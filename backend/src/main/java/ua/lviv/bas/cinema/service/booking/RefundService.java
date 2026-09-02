@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.config.properties.RefundRules;
 import ua.lviv.bas.cinema.domain.booking.Refund;
-import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
+import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.dto.refund.request.RefundPreviewRequest;
 import ua.lviv.bas.cinema.dto.refund.request.RefundRequest;
@@ -16,6 +16,7 @@ import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingEx
 import ua.lviv.bas.cinema.exception.domain.financial.refund.RefundProcessingException;
 import ua.lviv.bas.cinema.mapper.booking.RefundItemMapper;
 import ua.lviv.bas.cinema.mapper.booking.RefundMapper;
+import ua.lviv.bas.cinema.payment.service.PaymentRefundService;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.ticket.service.TicketService;
 

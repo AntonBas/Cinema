@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.booking;
+package ua.lviv.bas.cinema.payment.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -6,16 +6,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.domain.audit.AuditAction;
-import ua.lviv.bas.cinema.domain.booking.Payment;
-import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
+import ua.lviv.bas.cinema.payment.domain.Payment;
+import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
-import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
+import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
 import ua.lviv.bas.cinema.common.DateTimeFormatterService;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditDetails;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
-import ua.lviv.bas.cinema.service.integration.payment.PaymentGatewayService;
+import ua.lviv.bas.cinema.payment.service.PaymentGatewayService;
 import ua.lviv.bas.cinema.service.notification.EmailService;
 
 import java.math.BigDecimal;

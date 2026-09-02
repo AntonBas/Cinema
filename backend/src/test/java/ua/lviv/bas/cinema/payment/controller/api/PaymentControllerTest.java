@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.controller.api;
+package ua.lviv.bas.cinema.payment.controller.api;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -7,13 +7,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
-import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
+import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.user.domain.User;
-import ua.lviv.bas.cinema.dto.payment.request.PaymentCreateRequest;
-import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
-import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
-import ua.lviv.bas.cinema.service.booking.PaymentService;
-import ua.lviv.bas.cinema.service.booking.PaymentStatusService;
+import ua.lviv.bas.cinema.payment.dto.request.PaymentCreateRequest;
+import ua.lviv.bas.cinema.payment.dto.response.PaymentLiqPayDataResponse;
+import ua.lviv.bas.cinema.payment.dto.response.PaymentResponse;
+import ua.lviv.bas.cinema.payment.service.PaymentService;
+import ua.lviv.bas.cinema.payment.service.PaymentStatusService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

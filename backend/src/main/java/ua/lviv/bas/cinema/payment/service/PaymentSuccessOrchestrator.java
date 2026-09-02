@@ -1,11 +1,11 @@
-package ua.lviv.bas.cinema.service.booking;
+package ua.lviv.bas.cinema.payment.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.booking.service.BookingService;
-import ua.lviv.bas.cinema.domain.booking.Payment;
+import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.bonus.service.BonusQueryService;
 import ua.lviv.bas.cinema.common.DateTimeFormatterService;

@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.booking;
+package ua.lviv.bas.cinema.payment.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -7,16 +7,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.booking.domain.Booking;
-import ua.lviv.bas.cinema.domain.booking.Payment;
-import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
+import ua.lviv.bas.cinema.payment.domain.Payment;
+import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.user.domain.User;
-import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
+import ua.lviv.bas.cinema.payment.dto.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
-import ua.lviv.bas.cinema.service.integration.payment.PaymentGatewayService;
+import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
+import ua.lviv.bas.cinema.payment.service.PaymentGatewayService;
 
 import java.util.HashMap;
 import java.util.Map;

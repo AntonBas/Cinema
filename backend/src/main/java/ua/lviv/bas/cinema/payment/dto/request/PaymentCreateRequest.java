@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto.payment.request;
+package ua.lviv.bas.cinema.payment.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;

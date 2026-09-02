@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.domain.booking;
+package ua.lviv.bas.cinema.payment.domain;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -30,7 +30,8 @@ import lombok.Setter;
 import lombok.ToString;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.domain.audit.AuditableEntity;
-import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
+import ua.lviv.bas.cinema.domain.booking.Refund;
+import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 
 @Entity
 @Getter

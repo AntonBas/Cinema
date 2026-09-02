@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.dto.payment.response;
+package ua.lviv.bas.cinema.payment.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

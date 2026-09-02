@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.integration.payment;
+package ua.lviv.bas.cinema.payment.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,8 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import ua.lviv.bas.cinema.domain.booking.Payment;
-import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
+import ua.lviv.bas.cinema.payment.domain.Payment;
+import ua.lviv.bas.cinema.payment.dto.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentGatewayUnavailableException;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 

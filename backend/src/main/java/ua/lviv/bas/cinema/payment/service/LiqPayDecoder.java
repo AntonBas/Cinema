@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.integration.payment;
+package ua.lviv.bas.cinema.payment.service;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;

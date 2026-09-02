@@ -1,7 +1,7 @@
 package ua.lviv.bas.cinema.mapper.booking;
 
 import org.junit.jupiter.api.Test;
-import ua.lviv.bas.cinema.domain.booking.Payment;
+import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.domain.booking.Refund;
 import ua.lviv.bas.cinema.domain.booking.status.RefundStatus;
 import ua.lviv.bas.cinema.user.domain.User;

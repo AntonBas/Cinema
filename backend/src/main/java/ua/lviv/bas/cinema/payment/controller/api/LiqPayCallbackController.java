@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.controller.api;
+package ua.lviv.bas.cinema.payment.controller.api;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import ua.lviv.bas.cinema.service.booking.PaymentStatusService;
+import ua.lviv.bas.cinema.payment.service.PaymentStatusService;
 
 @Slf4j
 @RestController

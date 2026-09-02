@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.domain.booking.status;
+package ua.lviv.bas.cinema.payment.domain.status;
 
 public enum PaymentStatus {
     PENDING, PROCESSING, SUCCESS, FAILED, CANCELLED, EXPIRED, REFUNDED, PARTIALLY_REFUNDED;

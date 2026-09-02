@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.integration.payment;
+package ua.lviv.bas.cinema.payment.service;
 
 import org.junit.jupiter.api.Test;
 

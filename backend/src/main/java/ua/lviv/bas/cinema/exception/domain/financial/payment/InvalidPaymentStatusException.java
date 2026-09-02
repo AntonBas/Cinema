@@ -1,6 +1,6 @@
 package ua.lviv.bas.cinema.exception.domain.financial.payment;
 
-import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
+import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.exception.core.ValidationException;
 
 import java.io.Serial;
