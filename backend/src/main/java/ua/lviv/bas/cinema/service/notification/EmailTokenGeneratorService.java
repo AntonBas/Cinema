@@ -8,11 +8,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.token.EmailToken;
-import ua.lviv.bas.cinema.domain.token.TokenType;
+import ua.lviv.bas.cinema.domain.user.EmailToken;
+import ua.lviv.bas.cinema.domain.user.TokenType;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.repository.token.EmailTokenRepository;
+import ua.lviv.bas.cinema.repository.user.EmailTokenRepository;
 import ua.lviv.bas.cinema.repository.user.UserRepository;
 
 @Slf4j

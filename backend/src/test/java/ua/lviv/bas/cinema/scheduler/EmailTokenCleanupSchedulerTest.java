@@ -5,7 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ua.lviv.bas.cinema.repository.token.EmailTokenRepository;
+import ua.lviv.bas.cinema.repository.user.EmailTokenRepository;
 
 import java.time.LocalDateTime;
 

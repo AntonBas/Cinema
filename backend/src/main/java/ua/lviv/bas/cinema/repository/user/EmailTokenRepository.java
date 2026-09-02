@@ -1,11 +1,11 @@
-package ua.lviv.bas.cinema.repository.token;
+package ua.lviv.bas.cinema.repository.user;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import ua.lviv.bas.cinema.domain.token.EmailToken;
-import ua.lviv.bas.cinema.domain.token.TokenType;
+import ua.lviv.bas.cinema.domain.user.EmailToken;
+import ua.lviv.bas.cinema.domain.user.TokenType;
 import ua.lviv.bas.cinema.domain.user.User;
 
 import java.time.LocalDateTime;

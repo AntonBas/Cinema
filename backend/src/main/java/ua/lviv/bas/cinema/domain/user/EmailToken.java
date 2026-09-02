@@ -1,9 +1,8 @@
-package ua.lviv.bas.cinema.domain.token;
+package ua.lviv.bas.cinema.domain.user;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import ua.lviv.bas.cinema.domain.user.User;
 
 import java.time.LocalDateTime;
 

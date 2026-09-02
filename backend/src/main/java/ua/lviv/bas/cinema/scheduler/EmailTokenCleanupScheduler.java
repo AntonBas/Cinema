@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.repository.token.EmailTokenRepository;
+import ua.lviv.bas.cinema.repository.user.EmailTokenRepository;
 
 @Slf4j
 @Service
