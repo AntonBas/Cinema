@@ -18,7 +18,7 @@ import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.repository.booking.BookingRepository;
 import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
 import ua.lviv.bas.cinema.repository.booking.SeatReservationRepository;
-import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
+import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 
 import java.time.LocalDateTime;
 import java.util.List;

@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Past;
 import lombok.*;
 import ua.lviv.bas.cinema.domain.audit.AuditableEntity;
-import ua.lviv.bas.cinema.domain.bonus.BonusCard;
+import ua.lviv.bas.cinema.bonus.domain.BonusCard;
 import ua.lviv.bas.cinema.domain.booking.Booking;
 import ua.lviv.bas.cinema.domain.promotion.UserPromotion;
 import ua.lviv.bas.cinema.domain.ticket.Ticket;

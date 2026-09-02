@@ -1,6 +1,6 @@
 package ua.lviv.bas.cinema.exception.domain.financial.bonus;
 
-import ua.lviv.bas.cinema.domain.bonus.BonusTransactionType;
+import ua.lviv.bas.cinema.bonus.domain.BonusTransactionType;
 import ua.lviv.bas.cinema.exception.core.ValidationException;
 
 import java.io.Serial;
