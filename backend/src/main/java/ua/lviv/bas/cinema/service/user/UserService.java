@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.service.user;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.cache.annotation.CacheEvict;
@@ -28,6 +27,7 @@ import ua.lviv.bas.cinema.exception.domain.auth.SameEmailException;
 import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
 import ua.lviv.bas.cinema.mapper.user.UserMapper;
 import ua.lviv.bas.cinema.repository.user.UserRepository;
+import ua.lviv.bas.cinema.service.integration.audit.AuditDetails;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.notification.EmailTokenGeneratorService;
 
@@ -170,20 +170,14 @@ public class UserService {
 	}
 
 	private Map<String, Object> captureDetails(User user) {
-		Map<String, Object> details = new HashMap<>();
-		details.put("firstName", user.getFirstName());
-		details.put("lastName", user.getLastName());
-		details.put("city", user.getCity());
-		details.put("phoneNumber", user.getPhoneNumber());
-		details.put("dateOfBirth", user.getDateOfBirth());
-		return details;
+		return AuditDetails.of().put("firstName", user.getFirstName()).put("lastName", user.getLastName())
+				.put("city", user.getCity()).put("phoneNumber", user.getPhoneNumber())
+				.put("dateOfBirth", user.getDateOfBirth()).build();
 	}
 
 	private void auditRegister(User user) {
-		Map<String, Object> details = new HashMap<>();
-		details.put("email", user.getEmail());
-		details.put("firstName", user.getFirstName());
-		details.put("lastName", user.getLastName());
+		var details = AuditDetails.of().put("email", user.getEmail()).put("firstName", user.getFirstName())
+				.put("lastName", user.getLastName()).build();
 		auditService.logChange("User", user.getId(), user.getEmail(), AuditAction.REGISTER, null, details);
 	}
 
@@ -193,16 +187,13 @@ public class UserService {
 	}
 
 	private void auditEmailChangeRequested(Long userId, String oldEmail, String newEmail) {
-		Map<String, Object> oldDetails = new HashMap<>();
-		oldDetails.put("email", oldEmail);
-		Map<String, Object> newDetails = new HashMap<>();
-		newDetails.put("email", newEmail);
+		var oldDetails = AuditDetails.of().put("email", oldEmail).build();
+		var newDetails = AuditDetails.of().put("email", newEmail).build();
 		auditService.logChange("User", userId, oldEmail, AuditAction.EMAIL_CHANGE_REQUESTED, oldDetails, newDetails);
 	}
 
 	private void auditPasswordChanged(Long userId, String email) {
-		Map<String, Object> oldDetails = new HashMap<>();
-		oldDetails.put("passwordChanged", true);
+		var oldDetails = AuditDetails.of().put("passwordChanged", true).build();
 		auditService.logChange("User", userId, email, AuditAction.PASSWORD_CHANGED, oldDetails, null);
 	}
 }

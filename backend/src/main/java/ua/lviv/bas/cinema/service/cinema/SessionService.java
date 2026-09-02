@@ -29,13 +29,12 @@ import ua.lviv.bas.cinema.repository.cinema.projection.SessionAdminProjection;
 import ua.lviv.bas.cinema.repository.cinema.projection.SessionScheduleProjection;
 import ua.lviv.bas.cinema.repository.cinema.specification.SessionSpecification;
 import ua.lviv.bas.cinema.service.booking.SeatReservationService;
+import ua.lviv.bas.cinema.service.integration.audit.AuditDetails;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -128,11 +127,9 @@ public class SessionService {
         var session = sessionRepository.findByIdWithLock(id)
                 .orElseThrow(() -> new EntityNotFoundException("Session", id));
 
-        Map<String, Object> oldDetails = new HashMap<>();
-        oldDetails.put("startTime", session.getStartTime());
-        oldDetails.put("basePrice", session.getBasePrice());
-        oldDetails.put("movieId", session.getMovie().getId());
-        oldDetails.put("hallId", session.getHall().getId());
+        var oldDetails = AuditDetails.of().put("startTime", session.getStartTime())
+                .put("basePrice", session.getBasePrice()).put("movieId", session.getMovie().getId())
+                .put("hallId", session.getHall().getId()).build();
 
         if (request.startTime() != null && !request.startTime().equals(session.getStartTime())) {
             validateStartTime(request.startTime());
@@ -150,11 +147,9 @@ public class SessionService {
         session = sessionRepository.save(session);
         log.info("Session updated with ID: {}", session.getId());
 
-        Map<String, Object> newDetails = new HashMap<>();
-        newDetails.put("startTime", session.getStartTime());
-        newDetails.put("basePrice", session.getBasePrice());
-        newDetails.put("movieId", session.getMovie().getId());
-        newDetails.put("hallId", session.getHall().getId());
+        var newDetails = AuditDetails.of().put("startTime", session.getStartTime())
+                .put("basePrice", session.getBasePrice()).put("movieId", session.getMovie().getId())
+                .put("hallId", session.getHall().getId()).build();
 
         auditService.logChange("Session", id, "Session #" + id, AuditAction.UPDATED, oldDetails, newDetails);
 
@@ -194,10 +189,8 @@ public class SessionService {
         sessionRepository.save(session);
         log.info("Session cancelled with ID: {}", sessionId);
 
-        Map<String, Object> oldDetails = new HashMap<>();
-        oldDetails.put("status", oldStatus);
-        Map<String, Object> newDetails = new HashMap<>();
-        newDetails.put("status", CinemaSessionStatus.CANCELLED);
+        var oldDetails = AuditDetails.of().put("status", oldStatus).build();
+        var newDetails = AuditDetails.of().put("status", CinemaSessionStatus.CANCELLED).build();
 
         auditService.logChange("Session", sessionId, "Session #" + sessionId, AuditAction.CANCELLED, oldDetails,
                 newDetails);
@@ -225,10 +218,8 @@ public class SessionService {
         sessionRepository.save(session);
         log.info("Session reactivated with ID: {}", sessionId);
 
-        Map<String, Object> oldDetails = new HashMap<>();
-        oldDetails.put("status", oldStatus);
-        Map<String, Object> newDetails = new HashMap<>();
-        newDetails.put("status", CinemaSessionStatus.SCHEDULED);
+        var oldDetails = AuditDetails.of().put("status", oldStatus).build();
+        var newDetails = AuditDetails.of().put("status", CinemaSessionStatus.SCHEDULED).build();
 
         auditService.logChange("Session", sessionId, "Session #" + sessionId, AuditAction.REACTIVATED, oldDetails,
                 newDetails);
@@ -260,22 +251,17 @@ public class SessionService {
     }
 
     private void auditCreate(Session session) {
-        var details = new HashMap<String, Object>();
-        details.put("movieId", session.getMovie().getId());
-        details.put("movieTitle", session.getMovie().getTitle());
-        details.put("hallId", session.getHall().getId());
-        details.put("hallName", session.getHall().getName());
-        details.put("startTime", session.getStartTime());
-        details.put("basePrice", session.getBasePrice());
+        var details = AuditDetails.of().put("movieId", session.getMovie().getId())
+                .put("movieTitle", session.getMovie().getTitle()).put("hallId", session.getHall().getId())
+                .put("hallName", session.getHall().getName()).put("startTime", session.getStartTime())
+                .put("basePrice", session.getBasePrice()).build();
         auditService.logChange("Session", session.getId(), "Session #" + session.getId(), AuditAction.CREATED, null,
                 details);
     }
 
     private void auditDelete(Session session) {
-        var details = new HashMap<String, Object>();
-        details.put("movieTitle", session.getMovie().getTitle());
-        details.put("hallName", session.getHall().getName());
-        details.put("startTime", session.getStartTime());
+        var details = AuditDetails.of().put("movieTitle", session.getMovie().getTitle())
+                .put("hallName", session.getHall().getName()).put("startTime", session.getStartTime()).build();
         auditService.logChange("Session", session.getId(), "Session #" + session.getId(), AuditAction.DELETED, details,
                 null);
     }

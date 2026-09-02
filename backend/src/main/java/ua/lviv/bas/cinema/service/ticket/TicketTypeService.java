@@ -24,10 +24,10 @@ import ua.lviv.bas.cinema.mapper.ticket.TicketTypeMapper;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
 import ua.lviv.bas.cinema.repository.ticket.specification.TicketSpecification;
+import ua.lviv.bas.cinema.service.integration.audit.AuditDetails;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
@@ -174,20 +174,14 @@ public class TicketTypeService {
     }
 
     private Map<String, Object> captureDetails(TicketType ticketType) {
-        Map<String, Object> details = new HashMap<>();
-        details.put("displayName", ticketType.getDisplayName());
-        details.put("priceMultiplier", ticketType.getPriceMultiplier());
-        details.put("minAge", ticketType.getMinAge());
-        details.put("maxAge", ticketType.getMaxAge());
-        details.put("active", ticketType.isActive());
-        return details;
+        return AuditDetails.of().put("displayName", ticketType.getDisplayName())
+                .put("priceMultiplier", ticketType.getPriceMultiplier()).put("minAge", ticketType.getMinAge())
+                .put("maxAge", ticketType.getMaxAge()).put("active", ticketType.isActive()).build();
     }
 
     private void auditCreate(TicketType ticketType, TicketTypeRequest request) {
-        Map<String, Object> details = new HashMap<>();
-        details.put("displayName", request.displayName());
-        details.put("category", request.category());
-        details.put("priceMultiplier", request.priceMultiplier());
+        var details = AuditDetails.of().put("displayName", request.displayName())
+                .put("category", request.category()).put("priceMultiplier", request.priceMultiplier()).build();
         auditService.logChange("TicketType", ticketType.getId(), ticketType.getDisplayName(), AuditAction.CREATED, null,
                 details);
     }
@@ -198,16 +192,13 @@ public class TicketTypeService {
     }
 
     private void auditDelete(Long id, String name) {
-        Map<String, Object> details = new HashMap<>();
-        details.put("deleted", name);
+        var details = AuditDetails.of().put("deleted", name).build();
         auditService.logChange("TicketType", id, name, AuditAction.DELETED, details, null);
     }
 
     private void auditToggleStatus(Long id, String name, boolean oldStatus, boolean newStatus) {
-        Map<String, Object> oldDetails = new HashMap<>();
-        oldDetails.put("active", oldStatus);
-        Map<String, Object> newDetails = new HashMap<>();
-        newDetails.put("active", newStatus);
+        var oldDetails = AuditDetails.of().put("active", oldStatus).build();
+        var newDetails = AuditDetails.of().put("active", newStatus).build();
         auditService.logChange("TicketType", id, name, AuditAction.TOGGLE_STATUS, oldDetails, newDetails);
     }
 }

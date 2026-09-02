@@ -22,13 +22,12 @@ import ua.lviv.bas.cinema.mapper.promotion.PromotionMapper;
 import ua.lviv.bas.cinema.repository.promotion.PromotionRepository;
 import ua.lviv.bas.cinema.repository.promotion.UserPromotionRepository;
 import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
+import ua.lviv.bas.cinema.service.integration.audit.AuditDetails;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -167,38 +166,30 @@ public class PromotionService {
     }
 
     private void auditCreate(Promotion promotion) {
-        Map<String, Object> details = new HashMap<>();
-        details.put("title", promotion.getTitle());
-        details.put("bonusPoints", promotion.getBonusPoints());
+        var details = AuditDetails.of().put("title", promotion.getTitle())
+                .put("bonusPoints", promotion.getBonusPoints()).build();
         auditService.logChange("Promotion", promotion.getId(), promotion.getTitle(), AuditAction.CREATED, null,
                 details);
     }
 
     private void auditUpdate(Long id, String oldTitle, Promotion updated) {
-        Map<String, Object> oldDetails = new HashMap<>();
-        oldDetails.put("title", oldTitle);
-        oldDetails.put("bonusPoints", updated.getBonusPoints());
-
-        Map<String, Object> newDetails = new HashMap<>();
-        newDetails.put("title", updated.getTitle());
-        newDetails.put("bonusPoints", updated.getBonusPoints());
+        var oldDetails = AuditDetails.of().put("title", oldTitle).put("bonusPoints", updated.getBonusPoints())
+                .build();
+        var newDetails = AuditDetails.of().put("title", updated.getTitle())
+                .put("bonusPoints", updated.getBonusPoints()).build();
 
         auditService.logChange("Promotion", id, oldTitle, AuditAction.UPDATED, oldDetails, newDetails);
     }
 
     private void auditDelete(Long id, String title) {
-        Map<String, Object> details = new HashMap<>();
-        details.put("deleted", title);
+        var details = AuditDetails.of().put("deleted", title).build();
         auditService.logChange("Promotion", id, title, AuditAction.DELETED, details, null);
     }
 
     private void auditClaim(Promotion promotion, User user) {
-        Map<String, Object> details = new HashMap<>();
-        details.put("userId", user.getId());
-        details.put("userEmail", user.getEmail());
-        details.put("promotionId", promotion.getId());
-        details.put("promotionTitle", promotion.getTitle());
-        details.put("pointsAwarded", promotion.getBonusPoints());
+        var details = AuditDetails.of().put("userId", user.getId()).put("userEmail", user.getEmail())
+                .put("promotionId", promotion.getId()).put("promotionTitle", promotion.getTitle())
+                .put("pointsAwarded", promotion.getBonusPoints()).build();
         auditService.logChange("Promotion", promotion.getId(), promotion.getTitle(), AuditAction.CLAIMED, null,
                 details);
     }

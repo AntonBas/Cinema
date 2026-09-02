@@ -15,12 +15,11 @@ import ua.lviv.bas.cinema.exception.domain.auth.TokenExpiredException;
 import ua.lviv.bas.cinema.exception.domain.user.EmailNotVerifiedException;
 import ua.lviv.bas.cinema.repository.token.EmailTokenRepository;
 import ua.lviv.bas.cinema.repository.user.UserRepository;
+import ua.lviv.bas.cinema.service.integration.audit.AuditDetails;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.notification.EmailTokenGeneratorService;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -86,19 +85,14 @@ public class UserPasswordResetService {
     }
 
     private void auditRequestReset(User user) {
-        Map<String, Object> details = new HashMap<>();
-        details.put("email", user.getEmail());
-        details.put("userId", user.getId());
+        var details = AuditDetails.of().put("email", user.getEmail()).put("userId", user.getId()).build();
         auditService.logChange("User", user.getId(), user.getEmail(), AuditAction.PASSWORD_RESET_REQUESTED, null,
                 details);
     }
 
     private void auditReset(User user) {
-        Map<String, Object> oldDetails = new HashMap<>();
-        oldDetails.put("userId", user.getId());
-        Map<String, Object> newDetails = new HashMap<>();
-        newDetails.put("userId", user.getId());
-        newDetails.put("userEmail", user.getEmail());
+        var oldDetails = AuditDetails.of().put("userId", user.getId()).build();
+        var newDetails = AuditDetails.of().put("userId", user.getId()).put("userEmail", user.getEmail()).build();
         auditService.logChange("User", user.getId(), user.getEmail(), AuditAction.PASSWORD_RESET_COMPLETED, oldDetails,
                 newDetails);
     }

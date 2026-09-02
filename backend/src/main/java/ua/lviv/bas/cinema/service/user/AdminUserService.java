@@ -1,8 +1,6 @@
 package ua.lviv.bas.cinema.service.user;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -26,6 +24,7 @@ import ua.lviv.bas.cinema.exception.domain.user.SelfRoleChangeException;
 import ua.lviv.bas.cinema.mapper.user.UserMapper;
 import ua.lviv.bas.cinema.repository.user.UserRepository;
 import ua.lviv.bas.cinema.repository.user.projection.AdminUserProjection;
+import ua.lviv.bas.cinema.service.integration.audit.AuditDetails;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 @Slf4j
@@ -132,27 +131,21 @@ public class AdminUserService {
 	}
 
 	private void auditRoleChange(Long userId, String email, UserRole oldRole, UserRole newRole) {
-		Map<String, Object> oldDetails = new HashMap<>();
-		oldDetails.put("role", oldRole);
-		Map<String, Object> newDetails = new HashMap<>();
-		newDetails.put("role", newRole);
+		var oldDetails = AuditDetails.of().put("role", oldRole).build();
+		var newDetails = AuditDetails.of().put("role", newRole).build();
 		auditService.logChange("User", userId, email, AuditAction.ROLE_CHANGED, oldDetails, newDetails);
 	}
 
 	private void auditStatusChange(Long userId, String email, boolean oldStatus, boolean newStatus) {
-		Map<String, Object> oldDetails = new HashMap<>();
-		oldDetails.put("enabled", oldStatus);
-		Map<String, Object> newDetails = new HashMap<>();
-		newDetails.put("enabled", newStatus);
+		var oldDetails = AuditDetails.of().put("enabled", oldStatus).build();
+		var newDetails = AuditDetails.of().put("enabled", newStatus).build();
 		auditService.logChange("User", userId, email, AuditAction.STATUS_CHANGED, oldDetails, newDetails);
 	}
 
 	private void auditVerificationChange(Long userId, String email, VerificationStatus oldStatus,
 			VerificationStatus newStatus) {
-		Map<String, Object> oldDetails = new HashMap<>();
-		oldDetails.put("verificationStatus", oldStatus);
-		Map<String, Object> newDetails = new HashMap<>();
-		newDetails.put("verificationStatus", newStatus);
+		var oldDetails = AuditDetails.of().put("verificationStatus", oldStatus).build();
+		var newDetails = AuditDetails.of().put("verificationStatus", newStatus).build();
 		auditService.logChange("User", userId, email, AuditAction.VERIFICATION_CHANGED, oldDetails, newDetails);
 	}
 }

@@ -20,13 +20,12 @@ import ua.lviv.bas.cinema.exception.domain.hall.*;
 import ua.lviv.bas.cinema.mapper.cinema.CinemaHallMapper;
 import ua.lviv.bas.cinema.repository.cinema.CinemaHallRepository;
 import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
+import ua.lviv.bas.cinema.service.integration.audit.AuditDetails;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -212,24 +211,19 @@ public class CinemaHallService {
     }
 
     private void auditCreate(CinemaHall hall, CinemaHallRequest request) {
-        Map<String, Object> details = new HashMap<>();
-        details.put("name", hall.getName());
-        details.put("rows", request.rows());
-        details.put("seatsPerRow", request.seatsPerRow());
+        var details = AuditDetails.of().put("name", hall.getName()).put("rows", request.rows())
+                .put("seatsPerRow", request.seatsPerRow()).build();
         auditService.logChange("CinemaHall", hall.getId(), hall.getName(), AuditAction.CREATED, null, details);
     }
 
     private void auditUpdate(Long id, String oldName, CinemaHall updated) {
-        Map<String, Object> oldDetails = new HashMap<>();
-        oldDetails.put("name", oldName);
-        Map<String, Object> newDetails = new HashMap<>();
-        newDetails.put("name", updated.getName());
+        var oldDetails = AuditDetails.of().put("name", oldName).build();
+        var newDetails = AuditDetails.of().put("name", updated.getName()).build();
         auditService.logChange("CinemaHall", id, oldName, AuditAction.UPDATED, oldDetails, newDetails);
     }
 
     private void auditDelete(Long id, String hallName) {
-        Map<String, Object> details = new HashMap<>();
-        details.put("deleted", hallName);
+        var details = AuditDetails.of().put("deleted", hallName).build();
         auditService.logChange("CinemaHall", id, hallName, AuditAction.DELETED, details, null);
     }
 }

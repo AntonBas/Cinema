@@ -32,6 +32,7 @@ import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
 import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
 import ua.lviv.bas.cinema.repository.cinema.specification.MovieSpecification;
 import ua.lviv.bas.cinema.scheduler.MovieScheduler;
+import ua.lviv.bas.cinema.service.integration.audit.AuditDetails;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.integration.file.PosterService;
 import ua.lviv.bas.cinema.service.integration.slug.SlugService;
@@ -42,7 +43,6 @@ import java.time.format.DateTimeParseException;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -276,16 +276,19 @@ public class MovieService {
     }
 
     private void auditCreate(Movie movie) {
-        auditService.logChange("Movie", movie.getId(), movie.getTitle(), AuditAction.CREATED, null, Map.of("title",
-                movie.getTitle(), "slug", movie.getSlug(), "durationMinutes", movie.getDurationMinutes()));
+        auditService.logChange("Movie", movie.getId(), movie.getTitle(), AuditAction.CREATED, null,
+                AuditDetails.of().put("title", movie.getTitle()).put("slug", movie.getSlug())
+                        .put("durationMinutes", movie.getDurationMinutes()).build());
     }
 
     private void auditUpdate(Long id, String oldTitle, Movie updated) {
-        auditService.logChange("Movie", id, oldTitle, AuditAction.UPDATED, Map.of("title", oldTitle),
-                Map.of("title", updated.getTitle(), "slug", updated.getSlug()));
+        auditService.logChange("Movie", id, oldTitle, AuditAction.UPDATED,
+                AuditDetails.of().put("title", oldTitle).build(),
+                AuditDetails.of().put("title", updated.getTitle()).put("slug", updated.getSlug()).build());
     }
 
     private void auditDelete(Long id, String title) {
-        auditService.logChange("Movie", id, title, AuditAction.DELETED, Map.of("deleted", title), null);
+        auditService.logChange("Movie", id, title, AuditAction.DELETED,
+                AuditDetails.of().put("deleted", title).build(), null);
     }
 }

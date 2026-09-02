@@ -29,12 +29,11 @@ import ua.lviv.bas.cinema.mapper.ticket.TicketMapper;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.repository.ticket.specification.TicketSpecification;
 import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
+import ua.lviv.bas.cinema.service.integration.audit.AuditDetails;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.integration.qr.QRCodeService;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -182,21 +181,17 @@ public class TicketService {
     }
 
     private void auditCreate(Ticket ticket, Long bookingId) {
-        Map<String, Object> details = new HashMap<>();
-        details.put("ticketCode", ticket.getUniqueCode());
-        details.put("seatNumber", ticket.getSeatReservation().getSeat().getNumber());
-        details.put("price", ticket.getFinalPrice());
-        details.put("bookingId", bookingId);
+        var details = AuditDetails.of().put("ticketCode", ticket.getUniqueCode())
+                .put("seatNumber", ticket.getSeatReservation().getSeat().getNumber())
+                .put("price", ticket.getFinalPrice()).put("bookingId", bookingId).build();
         auditService.logChange("Ticket", ticket.getId(), "Ticket #" + ticket.getUniqueCode(), AuditAction.CREATED, null,
                 details);
     }
 
     private void auditValidate(Ticket ticket, TicketStatus oldStatus) {
-        Map<String, Object> oldDetails = new HashMap<>();
-        oldDetails.put("status", oldStatus);
-        Map<String, Object> newDetails = new HashMap<>();
-        newDetails.put("status", TicketStatus.USED);
-        newDetails.put("validatedAt", LocalDateTime.now());
+        var oldDetails = AuditDetails.of().put("status", oldStatus).build();
+        var newDetails = AuditDetails.of().put("status", TicketStatus.USED).put("validatedAt", LocalDateTime.now())
+                .build();
         auditService.logChange("Ticket", ticket.getId(), "Ticket #" + ticket.getUniqueCode(), AuditAction.VALIDATED,
                 oldDetails, newDetails);
     }
