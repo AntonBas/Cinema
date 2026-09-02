@@ -14,7 +14,10 @@ import java.util.List;
 @Repository
 public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
 
-    List<AuditLog> findByEntityTypeAndEntityIdOrderByChangedAtDesc(String entityType, Long entityId);
+    @Query("SELECT DISTINCT a FROM AuditLog a LEFT JOIN FETCH a.details " +
+            "WHERE a.entityType = :entityType AND a.entityId = :entityId ORDER BY a.changedAt DESC")
+    List<AuditLog> findByEntityTypeAndEntityIdOrderByChangedAtDesc(@Param("entityType") String entityType,
+                                                                    @Param("entityId") Long entityId);
 
     @Query("SELECT a FROM AuditLog a WHERE " +
             "(:entityType IS NULL OR a.entityType = :entityType) AND " +
