@@ -31,6 +31,7 @@ import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
 import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
 import ua.lviv.bas.cinema.repository.cinema.specification.MovieSpecification;
+import ua.lviv.bas.cinema.service.common.UniquenessValidator;
 import ua.lviv.bas.cinema.service.integration.audit.AuditDetails;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.integration.file.PosterService;
@@ -220,12 +221,9 @@ public class MovieService {
 
     private String generateUniqueSlug(String title, Long excludeId) {
         String slug = slugService.generateUniqueSlug(title);
-        boolean exists = excludeId != null ? !slugService.isSlugAvailableForMovie(slug, excludeId)
-                : movieRepository.findBySlug(slug).isPresent();
-
-        if (exists) {
-            throw new DuplicateEntityException("Movie", "slug " + slug);
-        }
+        UniquenessValidator.validate(excludeId, () -> movieRepository.findBySlug(slug).isPresent(),
+                id -> !slugService.isSlugAvailableForMovie(slug, id),
+                () -> new DuplicateEntityException("Movie", "slug " + slug));
         return slug;
     }
 

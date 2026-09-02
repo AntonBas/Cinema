@@ -20,6 +20,7 @@ import ua.lviv.bas.cinema.exception.domain.hall.*;
 import ua.lviv.bas.cinema.mapper.cinema.CinemaHallMapper;
 import ua.lviv.bas.cinema.repository.cinema.CinemaHallRepository;
 import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
+import ua.lviv.bas.cinema.service.common.UniquenessValidator;
 import ua.lviv.bas.cinema.service.integration.audit.AuditDetails;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
@@ -139,11 +140,9 @@ public class CinemaHallService {
     }
 
     private void validateHallNameUniqueness(String name, Long excludeId) {
-        boolean exists = excludeId != null ? hallRepository.existsByNameAndIdNot(name, excludeId)
-                : hallRepository.existsByName(name);
-        if (exists) {
-            throw new DuplicateEntityException("CinemaHall", name);
-        }
+        UniquenessValidator.validate(excludeId, () -> hallRepository.existsByName(name),
+                id -> hallRepository.existsByNameAndIdNot(name, id),
+                () -> new DuplicateEntityException("CinemaHall", name));
     }
 
     private void validateHallHasNoFutureSessions(CinemaHall hall) {

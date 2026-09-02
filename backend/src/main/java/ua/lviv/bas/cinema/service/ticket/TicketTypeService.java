@@ -24,6 +24,7 @@ import ua.lviv.bas.cinema.mapper.ticket.TicketTypeMapper;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
 import ua.lviv.bas.cinema.repository.ticket.specification.TicketSpecification;
+import ua.lviv.bas.cinema.service.common.UniquenessValidator;
 import ua.lviv.bas.cinema.service.integration.audit.AuditDetails;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
@@ -141,11 +142,9 @@ public class TicketTypeService {
     }
 
     private void validateTicketTypeUniqueness(String displayName, Long excludeId) {
-        boolean exists = excludeId != null ? ticketTypeRepository.existsByDisplayNameAndIdNot(displayName, excludeId)
-                : ticketTypeRepository.existsByDisplayName(displayName);
-        if (exists) {
-            throw new TicketTypeDuplicateException(displayName);
-        }
+        UniquenessValidator.validate(excludeId, () -> ticketTypeRepository.existsByDisplayName(displayName),
+                id -> ticketTypeRepository.existsByDisplayNameAndIdNot(displayName, id),
+                () -> new TicketTypeDuplicateException(displayName));
     }
 
     private void validateAgeRange(Integer minAge, Integer maxAge) {

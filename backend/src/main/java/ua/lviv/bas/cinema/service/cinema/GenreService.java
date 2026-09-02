@@ -19,6 +19,7 @@ import ua.lviv.bas.cinema.exception.domain.cinema.GenreHasMoviesException;
 import ua.lviv.bas.cinema.mapper.cinema.GenreMapper;
 import ua.lviv.bas.cinema.repository.cinema.GenreRepository;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
+import ua.lviv.bas.cinema.service.common.UniquenessValidator;
 
 @Slf4j
 @Service
@@ -78,12 +79,9 @@ public class GenreService {
     }
 
     private void validateGenreUniqueness(String name, Long excludeId) {
-        boolean exists = excludeId != null ? genreRepository.existsByNameIgnoreCaseAndIdNot(name, excludeId)
-                : genreRepository.existsByNameIgnoreCase(name);
-
-        if (exists) {
-            throw new DuplicateEntityException("Genre", name);
-        }
+        UniquenessValidator.validate(excludeId, () -> genreRepository.existsByNameIgnoreCase(name),
+                id -> genreRepository.existsByNameIgnoreCaseAndIdNot(name, id),
+                () -> new DuplicateEntityException("Genre", name));
     }
 
     private void checkGenreUsageInMovies(Genre genre) {

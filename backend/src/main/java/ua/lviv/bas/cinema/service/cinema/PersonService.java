@@ -20,6 +20,7 @@ import ua.lviv.bas.cinema.exception.domain.cinema.PersonHasMoviesException;
 import ua.lviv.bas.cinema.mapper.cinema.PersonMapper;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
+import ua.lviv.bas.cinema.service.common.UniquenessValidator;
 
 @Slf4j
 @Service
@@ -79,12 +80,9 @@ public class PersonService {
     }
 
     private void validatePersonUniqueness(String name, PersonRole role, Long excludeId) {
-        boolean exists = excludeId != null ? personRepository.existsByNameAndRoleAndIdNot(name, role, excludeId)
-                : personRepository.existsByNameAndRole(name, role);
-
-        if (exists) {
-            throw new DuplicateEntityException("Person", name + " (" + role + ")");
-        }
+        UniquenessValidator.validate(excludeId, () -> personRepository.existsByNameAndRole(name, role),
+                id -> personRepository.existsByNameAndRoleAndIdNot(name, role, id),
+                () -> new DuplicateEntityException("Person", name + " (" + role + ")"));
     }
 
     private void checkPersonUsageInMovies(Person person) {
