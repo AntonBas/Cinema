@@ -36,28 +36,28 @@ import ua.lviv.bas.cinema.domain.user.User;
 @Table(name = "bonus_cards", indexes = @Index(name = "idx_bonus_card_user", columnList = "user_id"))
 public class BonusCard {
 
-	@Id
-	@EqualsAndHashCode.Include
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @EqualsAndHashCode.Include
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@OneToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_id", unique = true, nullable = false)
-	private User user;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", unique = true, nullable = false)
+    private User user;
 
-	@Column(name = "points_balance", nullable = false)
-	@Builder.Default
-	private int pointsBalance = 0;
+    @Column(name = "points_balance", nullable = false)
+    @Builder.Default
+    private int pointsBalance = 0;
 
-	@Column(name = "last_birthday_bonus_date")
-	private LocalDate lastBirthdayBonusDate;
+    @Column(name = "last_birthday_bonus_date")
+    private LocalDate lastBirthdayBonusDate;
 
-	@Column(name = "welcome_bonus_received", nullable = false)
-	@Builder.Default
-	private boolean welcomeBonusReceived = false;
+    @Column(name = "welcome_bonus_received", nullable = false)
+    @Builder.Default
+    private boolean welcomeBonusReceived = false;
 
-	@OneToMany(mappedBy = "bonusCard", fetch = FetchType.LAZY, orphanRemoval = true)
-	@OrderBy("createdAt DESC")
-	@Builder.Default
-	private List<BonusTransaction> transactions = new ArrayList<>();
+    @OneToMany(mappedBy = "bonusCard", fetch = FetchType.LAZY, orphanRemoval = true)
+    @OrderBy("createdAt DESC")
+    @Builder.Default
+    private List<BonusTransaction> transactions = new ArrayList<>();
 }

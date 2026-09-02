@@ -40,52 +40,52 @@ import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
 @ToString(exclude = { "booking", "refunds" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @Table(name = "payments", indexes = { @Index(name = "idx_payment_booking", columnList = "booking_id"),
-		@Index(name = "idx_payment_status", columnList = "status"),
-		@Index(name = "idx_payment_status_created", columnList = "status, created_date"),
-		@Index(name = "idx_payment_liqpay_order", columnList = "liqpay_order_id") })
+        @Index(name = "idx_payment_status", columnList = "status"),
+        @Index(name = "idx_payment_status_created", columnList = "status, created_date"),
+        @Index(name = "idx_payment_liqpay_order", columnList = "liqpay_order_id") })
 public class Payment extends AuditableEntity {
 
-	@Id
-	@EqualsAndHashCode.Include
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @EqualsAndHashCode.Include
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@NotNull
-	@Positive
-	@Column(name = "amount", nullable = false, precision = 10, scale = 2)
-	private BigDecimal amount;
+    @NotNull
+    @Positive
+    @Column(name = "amount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal amount;
 
-	@Enumerated(EnumType.STRING)
-	@Column(name = "status", nullable = false, length = 20)
-	@Builder.Default
-	private PaymentStatus status = PaymentStatus.PENDING;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    @Builder.Default
+    private PaymentStatus status = PaymentStatus.PENDING;
 
-	@Column(name = "liqpay_order_id", unique = true, length = 50)
-	private String liqpayOrderId;
+    @Column(name = "liqpay_order_id", unique = true, length = 50)
+    private String liqpayOrderId;
 
-	@Column(name = "liqpay_payment_id", length = 50)
-	private String liqpayPaymentId;
+    @Column(name = "liqpay_payment_id", length = 50)
+    private String liqpayPaymentId;
 
-	@Column(name = "liqpay_transaction_id", length = 100)
-	private String liqpayTransactionId;
+    @Column(name = "liqpay_transaction_id", length = 100)
+    private String liqpayTransactionId;
 
-	@Column(name = "payment_time")
-	private LocalDateTime paymentTime;
+    @Column(name = "payment_time")
+    private LocalDateTime paymentTime;
 
-	@OneToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "booking_id", nullable = false)
-	private Booking booking;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "booking_id", nullable = false)
+    private Booking booking;
 
-	@OneToMany(mappedBy = "payment", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-	@Builder.Default
-	private List<Refund> refunds = new ArrayList<>();
+    @OneToMany(mappedBy = "payment", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Refund> refunds = new ArrayList<>();
 
-	@Column(name = "liqpay_error_code", length = 50)
-	private String liqpayErrorCode;
+    @Column(name = "liqpay_error_code", length = 50)
+    private String liqpayErrorCode;
 
-	@Column(name = "liqpay_error_description", length = 500)
-	private String liqpayErrorDescription;
+    @Column(name = "liqpay_error_description", length = 500)
+    private String liqpayErrorDescription;
 
-	@Column(name = "liqpay_sender_card_mask", length = 20)
-	private String liqpaySenderCardMask;
+    @Column(name = "liqpay_sender_card_mask", length = 20)
+    private String liqpaySenderCardMask;
 }

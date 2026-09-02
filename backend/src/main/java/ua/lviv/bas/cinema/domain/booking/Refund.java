@@ -42,50 +42,50 @@ import ua.lviv.bas.cinema.domain.user.User;
 @ToString(exclude = { "payment", "items", "bonusTransactions" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @Table(name = "refunds", indexes = { @Index(name = "idx_refund_payment", columnList = "payment_id"),
-		@Index(name = "idx_refund_status", columnList = "status"),
-		@Index(name = "idx_refund_user", columnList = "user_id"),
-		@Index(name = "idx_refund_user_status", columnList = "user_id, status") })
+        @Index(name = "idx_refund_status", columnList = "status"),
+        @Index(name = "idx_refund_user", columnList = "user_id"),
+        @Index(name = "idx_refund_user_status", columnList = "user_id, status") })
 public class Refund extends AuditableEntity {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@EqualsAndHashCode.Include
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
+    private Long id;
 
-	@NotNull
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "payment_id", nullable = false)
-	private Payment payment;
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payment_id", nullable = false)
+    private Payment payment;
 
-	@NotNull
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_id", nullable = false)
-	private User user;
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-	@OneToMany(mappedBy = "refund", cascade = CascadeType.ALL, orphanRemoval = true)
-	@Builder.Default
-	private List<RefundItem> items = new ArrayList<>();
+    @OneToMany(mappedBy = "refund", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<RefundItem> items = new ArrayList<>();
 
-	@OneToMany(mappedBy = "refund", fetch = FetchType.LAZY, orphanRemoval = true)
-	@Builder.Default
-	private List<BonusTransaction> bonusTransactions = new ArrayList<>();
+    @OneToMany(mappedBy = "refund", fetch = FetchType.LAZY, orphanRemoval = true)
+    @Builder.Default
+    private List<BonusTransaction> bonusTransactions = new ArrayList<>();
 
-	@NotNull
-	@Positive
-	@Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
-	private BigDecimal totalAmount;
+    @NotNull
+    @Positive
+    @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal totalAmount;
 
-	@Column(name = "total_bonus_points_to_deduct")
-	@Builder.Default
-	private Integer totalBonusPointsToDeduct = 0;
+    @Column(name = "total_bonus_points_to_deduct")
+    @Builder.Default
+    private Integer totalBonusPointsToDeduct = 0;
 
-	@Size(max = 500)
-	@Column(name = "reason", length = 500)
-	private String reason;
+    @Size(max = 500)
+    @Column(name = "reason", length = 500)
+    private String reason;
 
-	@NotNull
-	@Enumerated(EnumType.STRING)
-	@Column(name = "status", nullable = false, length = 20)
-	@Builder.Default
-	private RefundStatus status = RefundStatus.PENDING;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    @Builder.Default
+    private RefundStatus status = RefundStatus.PENDING;
 }
