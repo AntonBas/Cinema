@@ -30,6 +30,8 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
     Optional<SeatReservation> findBySessionIdAndSeatIdAndStatusAndReservedByUserId(Long sessionId, Long seatId,
                                                                                    ReservationStatus status, Long userId);
 
+    List<SeatReservation> findBySessionIdAndSeatId(Long sessionId, Long seatId);
+
     @Query("""
             SELECT new ua.lviv.bas.cinema.booking.dto.response.SeatStatusResponse(s.id, sr.status)
             FROM Seat s
