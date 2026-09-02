@@ -291,7 +291,8 @@ Step-by-step ticket booking with seat reservation and secure payment.
 
 - Select refund reason from dropdown
 - System calculates refundable amount based on time until session start
-- Preview shows refundable amount
+- Preview shows refundable amount (`POST /api/refunds/preview` — same calculation logic the
+  actual refund uses, so the preview and the executed refund can never disagree)
 
 **3. Confirm Refund**
 
@@ -449,6 +450,7 @@ Three tabs for complete movie content management:
 - Filter by entity type and action type
 - Search by admin email
 - Pagination
+- **Full entity history:** view every audit entry for one specific entity (`GET /admin/audit-logs/entity/{entityType}/{entityId}`)
 
 ---
 
@@ -569,60 +571,47 @@ Four configurable rules control the loyalty program:
 
 ### Backend (Spring Boot)
 
+**Package by Feature + Layer.** Each business domain is a self-contained package with its own
+`controller/`, `service/`, `repository/`, `domain/`, `dto/`, `mapper/` — only the layers that
+domain actually needs. `config/` and `exception/` stay global (shared by every domain); `common/`
+holds small cross-cutting utilities.
+
     backend/src/main/java/ua/lviv/bas/cinema/
-    ├── config/
-    │   ├── api/
-    │   ├── audit/
-    │   ├── cache/
-    │   ├── jackson/
-    │   ├── properties/
-    │   ├── ratelimit/
-    │   ├── scheduling/
-    │   └── security/
-    ├── controller/
-    │   ├── admin/
-    │   └── api/
-    ├── domain/
-    │   ├── audit/
-    │   ├── bonus/
-    │   ├── booking/
-    │   ├── cinema/
-    │   ├── promotion/
-    │   ├── ticket/
-    │   ├── token/
-    │   └── user/
-    ├── dto/
-    │   ├── audit/
-    │   ├── bonus/
-    │   ├── booking/
-    │   ├── common/
-    │   ├── hall/
-    │   ├── movie/
-    │   ├── payment/
-    │   ├── promotion/
-    │   ├── refund/
-    │   ├── session/
-    │   ├── ticket/
-    │   ├── ticketType/
-    │   └── user/
-    ├── exception/
-    │   ├── api/
-    │   ├── core/
-    │   ├── domain/
-    │   └── infrastructure/
-    ├── mapper/
-    ├── repository/
-    ├── scheduler/
-    └── service/
-        ├── bonus/
-        ├── booking/
-        ├── cinema/
-        ├── common/
-        ├── integration/
-        ├── notification/
-        ├── promotion/
-        ├── ticket/
-        └── user/
+    ├── <domain>/                  # one package per business domain, see table below
+    │   ├── controller/
+    │   │   ├── admin/             # role-gated endpoints
+    │   │   └── api/               # public / user-facing endpoints
+    │   ├── service/
+    │   ├── repository/
+    │   ├── domain/                # JPA entities, enums, statuses
+    │   ├── dto/                   # request/response payloads
+    │   └── mapper/                # MapStruct entity <-> DTO mapping
+    ├── config/                    # global — security, cache, jackson, ratelimit, scheduling, api, http, properties
+    ├── exception/                 # global — api/, core/, domain/<domain>/, infrastructure/
+    └── common/                    # cross-cutting utilities (PageResponse, price/number/date formatting, uniqueness checks)
+
+**Domain packages:**
+
+| Package         | Responsibility                                                          |
+| ---------------- | ------------------------------------------------------------------------ |
+| `movie/`         | Movies, genres, cast (actors/directors/screenwriters)                   |
+| `cinema/`        | Cinema halls, seats, sessions                                            |
+| `user/`          | Users, authentication, email verification tokens                        |
+| `booking/`       | Booking creation, seat reservation (two-stage locking)                  |
+| `payment/`       | Payment processing, LiqPay gateway integration and callback handling    |
+| `refund/`        | Refund eligibility/calculation, refund execution, LiqPay refund calls   |
+| `bonus/`         | Bonus card, loyalty points ledger, configurable bonus rules              |
+| `ticket/`        | Tickets, ticket types                                                    |
+| `promotion/`     | Promotions, promo claims                                                 |
+| `audit/`         | Admin change audit log (write path + query/history)                     |
+| `notification/`  | Outbound email sending, email verification token generation             |
+| `integration/`   | File storage, poster images, QR code generation, slug generation        |
+| `common/`        | Stateless cross-cutting utilities shared across every domain             |
+
+A scheduled job in each domain that needs one (`booking/`, `payment/`, `refund/`, `bonus/`,
+`movie/`, `cinema/`, `ticket/`, `user/`) handles self-healing recovery — releasing expired seat
+locks, cancelling unpaid bookings, reconciling stuck refunds, updating session/movie statuses,
+awarding birthday bonuses, cleaning up expired email tokens.
 
 ### Frontend (React)
 
