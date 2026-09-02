@@ -5,8 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import ua.lviv.bas.cinema.domain.user.User;
-import ua.lviv.bas.cinema.domain.user.UserRole;
+import ua.lviv.bas.cinema.user.domain.User;
+import ua.lviv.bas.cinema.user.domain.UserRole;
 
 import java.io.Serial;
 import java.util.Collection;

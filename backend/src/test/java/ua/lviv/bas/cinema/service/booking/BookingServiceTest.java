@@ -20,7 +20,7 @@ import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.cinema.enums.SeatType;
 import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.domain.ticket.TicketType;
-import ua.lviv.bas.cinema.domain.user.User;
+import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.dto.booking.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.dto.booking.response.BookingResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;

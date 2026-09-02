@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ua.lviv.bas.cinema.domain.promotion.Promotion;
-import ua.lviv.bas.cinema.domain.user.User;
+import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.repository.promotion.projection.PromotionListProjection;
 import ua.lviv.bas.cinema.repository.promotion.projection.PromotionResponseProjection;
 

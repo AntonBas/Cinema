@@ -16,7 +16,7 @@ import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
 import ua.lviv.bas.cinema.domain.ticket.TicketType;
-import ua.lviv.bas.cinema.domain.user.User;
+import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.dto.refund.request.RefundPreviewRequest;
 import ua.lviv.bas.cinema.dto.refund.request.RefundRequest;
 import ua.lviv.bas.cinema.dto.refund.response.RefundPreviewResponse;

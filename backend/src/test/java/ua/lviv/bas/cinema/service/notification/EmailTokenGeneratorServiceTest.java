@@ -5,12 +5,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ua.lviv.bas.cinema.domain.user.EmailToken;
-import ua.lviv.bas.cinema.domain.user.TokenType;
-import ua.lviv.bas.cinema.domain.user.User;
+import ua.lviv.bas.cinema.user.domain.EmailToken;
+import ua.lviv.bas.cinema.user.domain.TokenType;
+import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.repository.user.EmailTokenRepository;
-import ua.lviv.bas.cinema.repository.user.UserRepository;
+import ua.lviv.bas.cinema.user.repository.EmailTokenRepository;
+import ua.lviv.bas.cinema.user.repository.UserRepository;
 
 import java.util.Optional;
 

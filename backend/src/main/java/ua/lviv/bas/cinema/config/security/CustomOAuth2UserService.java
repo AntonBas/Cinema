@@ -8,10 +8,10 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ua.lviv.bas.cinema.domain.user.User;
-import ua.lviv.bas.cinema.domain.user.UserRole;
-import ua.lviv.bas.cinema.domain.user.VerificationStatus;
-import ua.lviv.bas.cinema.repository.user.UserRepository;
+import ua.lviv.bas.cinema.user.domain.User;
+import ua.lviv.bas.cinema.user.domain.UserRole;
+import ua.lviv.bas.cinema.user.domain.VerificationStatus;
+import ua.lviv.bas.cinema.user.repository.UserRepository;
 import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
 
 import java.time.LocalDate;

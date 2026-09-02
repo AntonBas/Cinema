@@ -29,7 +29,7 @@ import ua.lviv.bas.cinema.domain.booking.Booking;
 import ua.lviv.bas.cinema.domain.booking.Payment;
 import ua.lviv.bas.cinema.domain.booking.Refund;
 import ua.lviv.bas.cinema.domain.booking.SeatReservation;
-import ua.lviv.bas.cinema.domain.user.User;
+import ua.lviv.bas.cinema.user.domain.User;
 
 @Entity
 @Getter

@@ -18,7 +18,7 @@ import ua.lviv.bas.cinema.domain.cinema.Seat;
 import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
 import ua.lviv.bas.cinema.domain.ticket.TicketType;
-import ua.lviv.bas.cinema.domain.user.User;
+import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.exception.domain.financial.refund.TicketNotRefundableException;
 import ua.lviv.bas.cinema.repository.booking.RefundRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;

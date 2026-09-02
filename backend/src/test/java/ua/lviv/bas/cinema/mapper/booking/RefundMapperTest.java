@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import ua.lviv.bas.cinema.domain.booking.Payment;
 import ua.lviv.bas.cinema.domain.booking.Refund;
 import ua.lviv.bas.cinema.domain.booking.status.RefundStatus;
-import ua.lviv.bas.cinema.domain.user.User;
+import ua.lviv.bas.cinema.user.domain.User;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

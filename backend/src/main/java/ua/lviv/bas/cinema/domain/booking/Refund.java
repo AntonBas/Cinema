@@ -31,7 +31,7 @@ import lombok.ToString;
 import ua.lviv.bas.cinema.domain.audit.AuditableEntity;
 import ua.lviv.bas.cinema.domain.bonus.BonusTransaction;
 import ua.lviv.bas.cinema.domain.booking.status.RefundStatus;
-import ua.lviv.bas.cinema.domain.user.User;
+import ua.lviv.bas.cinema.user.domain.User;
 
 @Entity
 @Getter

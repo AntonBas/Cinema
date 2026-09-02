@@ -11,7 +11,7 @@ import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.domain.cinema.Seat;
 import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.ticket.TicketType;
-import ua.lviv.bas.cinema.domain.user.User;
+import ua.lviv.bas.cinema.user.domain.User;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

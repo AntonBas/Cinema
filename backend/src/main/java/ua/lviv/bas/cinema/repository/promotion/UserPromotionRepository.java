@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import ua.lviv.bas.cinema.domain.promotion.Promotion;
 import ua.lviv.bas.cinema.domain.promotion.UserPromotion;
-import ua.lviv.bas.cinema.domain.user.User;
+import ua.lviv.bas.cinema.user.domain.User;
 
 @Repository
 public interface UserPromotionRepository extends JpaRepository<UserPromotion, Long> {

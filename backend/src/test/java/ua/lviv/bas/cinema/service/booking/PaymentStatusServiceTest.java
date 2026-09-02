@@ -12,7 +12,7 @@ import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
 import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
 import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.domain.cinema.Session;
-import ua.lviv.bas.cinema.domain.user.User;
+import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.repository.booking.PaymentRepository;

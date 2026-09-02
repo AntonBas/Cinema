@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.promotion.Promotion;
 import ua.lviv.bas.cinema.domain.promotion.UserPromotion;
-import ua.lviv.bas.cinema.domain.user.User;
+import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.dto.promotion.request.ClaimPromotionRequest;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionListResponse;

@@ -12,15 +12,15 @@ import ua.lviv.bas.cinema.domain.cinema.Seat;
 import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.movie.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.movie.domain.status.MovieStatus;
-import ua.lviv.bas.cinema.domain.user.User;
-import ua.lviv.bas.cinema.domain.user.UserRole;
+import ua.lviv.bas.cinema.user.domain.User;
+import ua.lviv.bas.cinema.user.domain.UserRole;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
 import ua.lviv.bas.cinema.repository.booking.SeatReservationRepository;
 import ua.lviv.bas.cinema.repository.cinema.CinemaHallRepository;
 import ua.lviv.bas.cinema.movie.repository.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
 import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
-import ua.lviv.bas.cinema.repository.user.UserRepository;
+import ua.lviv.bas.cinema.user.repository.UserRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

@@ -13,7 +13,7 @@ import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
 import ua.lviv.bas.cinema.domain.cinema.Seat;
 import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.domain.ticket.TicketType;
-import ua.lviv.bas.cinema.domain.user.User;
+import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
 import ua.lviv.bas.cinema.common.DateTimeFormatterService;

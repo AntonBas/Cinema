@@ -15,7 +15,7 @@ import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
-import ua.lviv.bas.cinema.domain.user.User;
+import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketCashierResponse;
 import ua.lviv.bas.cinema.dto.ticket.response.TicketResponse;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;

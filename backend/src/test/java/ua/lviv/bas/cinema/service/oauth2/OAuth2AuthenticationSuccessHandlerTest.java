@@ -13,8 +13,8 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.test.util.ReflectionTestUtils;
 import ua.lviv.bas.cinema.config.security.JwtTokenProvider;
 import ua.lviv.bas.cinema.config.security.OAuth2AuthenticationSuccessHandler;
-import ua.lviv.bas.cinema.domain.user.User;
-import ua.lviv.bas.cinema.repository.user.UserRepository;
+import ua.lviv.bas.cinema.user.domain.User;
+import ua.lviv.bas.cinema.user.repository.UserRepository;
 
 import java.io.IOException;
 import java.util.Map;

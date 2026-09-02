@@ -5,9 +5,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ua.lviv.bas.cinema.domain.user.User;
-import ua.lviv.bas.cinema.domain.user.VerificationStatus;
-import ua.lviv.bas.cinema.repository.user.UserRepository;
+import ua.lviv.bas.cinema.user.domain.User;
+import ua.lviv.bas.cinema.user.domain.VerificationStatus;
+import ua.lviv.bas.cinema.user.repository.UserRepository;
 import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
 
 import java.util.List;
