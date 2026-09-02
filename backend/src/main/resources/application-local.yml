@@ -26,16 +26,12 @@ scheduler:
   booking:
     expiration-interval: 300000
     cleanup-cron: "0 */5 * * * *"
-    reminder-cron: "0 */5 * * * *"
   payment:
     expiration-interval: 300000
     cleanup-cron: "0 */5 * * * *"
-    daily-stats: "0 */5 * * * *"
   ticket:
     mark-as-used: 300000
     cleanup-cron: "0 */5 * * * *"
-    daily-stats: "0 */5 * * * *"
-    upcoming-reminder: "0 */5 * * * *"
   seat-reservation:
     expiration-interval: 300000
     cleanup-expired-interval: 60000

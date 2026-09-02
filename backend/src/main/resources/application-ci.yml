@@ -29,8 +29,6 @@ spring:
 app:
   jwt:
     secret: test_secret_key_for_ci
-  frontend:
-    url: http://localhost:5173
   email:
     from: test@test.com
   upload:
