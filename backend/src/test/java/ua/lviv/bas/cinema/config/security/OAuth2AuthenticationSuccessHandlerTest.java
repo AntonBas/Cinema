@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.oauth2;
+package ua.lviv.bas.cinema.config.security;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

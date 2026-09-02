@@ -44,8 +44,6 @@ logging:
   level:
     root: INFO
     ua.lviv.bas.cinema: DEBUG
-    ua.lviv.bas.cinema.controller: DEBUG
-    ua.lviv.bas.cinema.service: DEBUG
     ua.lviv.bas.cinema.config.security: DEBUG
     org.springframework.web: DEBUG
     org.springframework.security: DEBUG

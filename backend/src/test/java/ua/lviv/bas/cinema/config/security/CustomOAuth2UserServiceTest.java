@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.oauth2;
+package ua.lviv.bas.cinema.config.security;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
