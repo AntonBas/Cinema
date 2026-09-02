@@ -101,6 +101,8 @@ public class TicketServiceTest {
         @Test
         void validateShouldSucceed() {
             when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
+            when(ticketRepository.updateStatusIfCurrent(eq(1L), eq(TicketStatus.ACTIVE), eq(TicketStatus.USED)))
+                    .thenReturn(1);
             when(ticketRepository.save(any())).thenReturn(testTicket);
             when(ticketMapper.toTicketCashierResponse(any())).thenReturn(cashierResponse);
 
@@ -176,6 +178,8 @@ public class TicketServiceTest {
             testTicket.setStatus(TicketStatus.ACTIVE);
 
             when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
+            when(ticketRepository.updateStatusIfCurrent(eq(1L), eq(TicketStatus.ACTIVE), eq(TicketStatus.USED)))
+                    .thenReturn(1);
             when(ticketRepository.save(any())).thenReturn(testTicket);
             when(ticketMapper.toTicketCashierResponse(any())).thenReturn(cashierResponse);
 

@@ -112,6 +112,11 @@ public class TicketService {
         var oldStatus = ticket.getStatus();
         validateForEntry(ticket);
 
+        int updated = ticketRepository.updateStatusIfCurrent(ticket.getId(), TicketStatus.ACTIVE, TicketStatus.USED);
+        if (updated == 0) {
+            throw TicketValidationException.alreadyUsed();
+        }
+
         ticket.setStatus(TicketStatus.USED);
         ticketRepository.save(ticket);
         log.info("Ticket {} validated and marked as used", ticketCode);
