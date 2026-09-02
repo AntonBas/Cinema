@@ -11,7 +11,7 @@ import org.springframework.data.domain.*;
 import org.springframework.mock.web.MockMultipartFile;
 import ua.lviv.bas.cinema.domain.cinema.enums.AgeRating;
 import ua.lviv.bas.cinema.domain.cinema.status.MovieStatus;
-import ua.lviv.bas.cinema.dto.common.PageResponse;
+import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.dto.movie.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.dto.movie.request.MovieUpdateRequest;
 import ua.lviv.bas.cinema.dto.movie.response.MovieAdminResponse;

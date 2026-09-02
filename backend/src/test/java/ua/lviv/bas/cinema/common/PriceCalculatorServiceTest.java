@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.common;
+package ua.lviv.bas.cinema.common;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

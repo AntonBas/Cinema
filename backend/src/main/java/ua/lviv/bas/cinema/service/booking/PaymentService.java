@@ -23,8 +23,8 @@ import ua.lviv.bas.cinema.repository.booking.BookingRepository;
 import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.notification.EmailService;
-import ua.lviv.bas.cinema.service.common.DateTimeFormatterService;
-import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
+import ua.lviv.bas.cinema.common.DateTimeFormatterService;
+import ua.lviv.bas.cinema.common.NumberGeneratorService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

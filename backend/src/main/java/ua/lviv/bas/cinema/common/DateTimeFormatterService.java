@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.common;
+package ua.lviv.bas.cinema.common;
 
 import org.springframework.stereotype.Component;
 

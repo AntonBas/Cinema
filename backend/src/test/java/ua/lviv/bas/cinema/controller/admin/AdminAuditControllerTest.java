@@ -13,7 +13,7 @@ import org.springframework.http.ResponseEntity;
 import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.audit.AuditLog;
 import ua.lviv.bas.cinema.dto.audit.AuditLogResponse;
-import ua.lviv.bas.cinema.dto.common.PageResponse;
+import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.exception.domain.audit.AuditHistoryNotFoundException;
 import ua.lviv.bas.cinema.mapper.audit.AuditLogMapper;
 import ua.lviv.bas.cinema.service.integration.audit.AuditQueryService;

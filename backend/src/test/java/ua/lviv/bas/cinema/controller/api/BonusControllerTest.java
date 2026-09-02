@@ -12,7 +12,7 @@ import org.springframework.data.domain.Pageable;
 import ua.lviv.bas.cinema.domain.bonus.BonusTransactionType;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusBalanceResponse;
 import ua.lviv.bas.cinema.dto.bonus.response.BonusTransactionResponse;
-import ua.lviv.bas.cinema.dto.common.PageResponse;
+import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.service.bonus.BonusQueryService;
 

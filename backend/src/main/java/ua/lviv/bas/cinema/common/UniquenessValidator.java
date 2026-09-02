@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.service.common;
+package ua.lviv.bas.cinema.common;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;

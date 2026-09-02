@@ -16,7 +16,7 @@ import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingEx
 import ua.lviv.bas.cinema.exception.domain.financial.refund.RefundProcessingException;
 import ua.lviv.bas.cinema.mapper.booking.RefundItemMapper;
 import ua.lviv.bas.cinema.mapper.booking.RefundMapper;
-import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
+import ua.lviv.bas.cinema.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.service.ticket.TicketService;
 
 import java.math.BigDecimal;

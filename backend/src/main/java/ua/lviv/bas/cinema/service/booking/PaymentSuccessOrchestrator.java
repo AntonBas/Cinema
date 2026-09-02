@@ -7,8 +7,8 @@ import ua.lviv.bas.cinema.domain.booking.Booking;
 import ua.lviv.bas.cinema.domain.booking.Payment;
 import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
 import ua.lviv.bas.cinema.service.bonus.BonusQueryService;
-import ua.lviv.bas.cinema.service.common.DateTimeFormatterService;
-import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
+import ua.lviv.bas.cinema.common.DateTimeFormatterService;
+import ua.lviv.bas.cinema.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.service.notification.EmailService;
 import ua.lviv.bas.cinema.service.ticket.TicketService;
 

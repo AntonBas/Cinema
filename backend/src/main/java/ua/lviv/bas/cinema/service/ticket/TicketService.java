@@ -28,7 +28,7 @@ import ua.lviv.bas.cinema.exception.domain.ticket.TicketValidationException;
 import ua.lviv.bas.cinema.mapper.ticket.TicketMapper;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.repository.ticket.specification.TicketSpecification;
-import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
+import ua.lviv.bas.cinema.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditDetails;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.integration.qr.QRCodeService;

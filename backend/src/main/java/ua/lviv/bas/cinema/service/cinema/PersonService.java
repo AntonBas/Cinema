@@ -20,7 +20,7 @@ import ua.lviv.bas.cinema.exception.domain.cinema.PersonHasMoviesException;
 import ua.lviv.bas.cinema.mapper.cinema.PersonMapper;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
-import ua.lviv.bas.cinema.service.common.UniquenessValidator;
+import ua.lviv.bas.cinema.common.UniquenessValidator;
 
 @Slf4j
 @Service

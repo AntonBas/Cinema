@@ -6,7 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
-import ua.lviv.bas.cinema.dto.common.PageResponse;
+import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.dto.promotion.request.PromotionRequest;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionListResponse;
 import ua.lviv.bas.cinema.dto.promotion.response.PromotionResponse;

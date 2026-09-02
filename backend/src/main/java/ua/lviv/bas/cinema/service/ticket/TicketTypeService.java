@@ -24,7 +24,7 @@ import ua.lviv.bas.cinema.mapper.ticket.TicketTypeMapper;
 import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
 import ua.lviv.bas.cinema.repository.ticket.specification.TicketSpecification;
-import ua.lviv.bas.cinema.service.common.UniquenessValidator;
+import ua.lviv.bas.cinema.common.UniquenessValidator;
 import ua.lviv.bas.cinema.service.integration.audit.AuditDetails;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 

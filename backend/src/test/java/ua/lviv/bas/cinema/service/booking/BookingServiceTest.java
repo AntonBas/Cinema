@@ -33,7 +33,7 @@ import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
 import ua.lviv.bas.cinema.service.bonus.BonusLedgerService;
 import ua.lviv.bas.cinema.service.bonus.BonusQueryService;
-import ua.lviv.bas.cinema.service.common.PriceCalculatorService;
+import ua.lviv.bas.cinema.common.PriceCalculatorService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 
 import java.math.BigDecimal;

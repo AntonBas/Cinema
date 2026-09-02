@@ -16,7 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import ua.lviv.bas.cinema.domain.ticket.TicketTypeCategory;
-import ua.lviv.bas.cinema.dto.common.PageResponse;
+import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.dto.tickettype.request.TicketTypeRequest;
 import ua.lviv.bas.cinema.dto.tickettype.response.TicketTypeResponse;
 import ua.lviv.bas.cinema.exception.api.ApiErrorHandler;

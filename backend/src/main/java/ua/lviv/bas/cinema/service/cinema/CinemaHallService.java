@@ -23,7 +23,7 @@ import ua.lviv.bas.cinema.exception.domain.hall.InvalidSeatsPerRowForCoupleRowsE
 import ua.lviv.bas.cinema.mapper.cinema.CinemaHallMapper;
 import ua.lviv.bas.cinema.repository.cinema.CinemaHallRepository;
 import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
-import ua.lviv.bas.cinema.service.common.UniquenessValidator;
+import ua.lviv.bas.cinema.common.UniquenessValidator;
 import ua.lviv.bas.cinema.service.integration.audit.AuditDetails;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 

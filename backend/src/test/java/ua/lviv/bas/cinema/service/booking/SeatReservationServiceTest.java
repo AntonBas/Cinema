@@ -27,7 +27,7 @@ import ua.lviv.bas.cinema.repository.booking.SeatReservationRepository;
 import ua.lviv.bas.cinema.repository.cinema.SeatRepository;
 import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
 import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
-import ua.lviv.bas.cinema.service.common.PriceCalculatorService;
+import ua.lviv.bas.cinema.common.PriceCalculatorService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

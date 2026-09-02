@@ -31,7 +31,7 @@ import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
 import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
 import ua.lviv.bas.cinema.repository.cinema.specification.MovieSpecification;
-import ua.lviv.bas.cinema.service.common.UniquenessValidator;
+import ua.lviv.bas.cinema.common.UniquenessValidator;
 import ua.lviv.bas.cinema.service.integration.audit.AuditDetails;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.integration.file.PosterService;

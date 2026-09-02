@@ -19,7 +19,7 @@ import ua.lviv.bas.cinema.exception.domain.cinema.GenreHasMoviesException;
 import ua.lviv.bas.cinema.mapper.cinema.GenreMapper;
 import ua.lviv.bas.cinema.repository.cinema.GenreRepository;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
-import ua.lviv.bas.cinema.service.common.UniquenessValidator;
+import ua.lviv.bas.cinema.common.UniquenessValidator;
 
 @Slf4j
 @Service
