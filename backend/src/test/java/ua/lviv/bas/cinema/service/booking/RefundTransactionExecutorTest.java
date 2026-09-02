@@ -47,7 +47,7 @@ public class RefundTransactionExecutorTest {
     @Mock
     private RefundRepository refundRepository;
     @Mock
-    private PaymentService paymentService;
+    private PaymentRefundService paymentRefundService;
     @Mock
     private BonusLedgerService bonusLedgerService;
     @Mock
@@ -123,7 +123,7 @@ public class RefundTransactionExecutorTest {
         assertThat(context.liqpayOrderId()).isEqualTo("ORD_123");
         assertThat(context.refundAmount()).isEqualTo(REFUND_AMOUNT);
 
-        verify(paymentService).validateRefundEligibility(testPayment, REFUND_AMOUNT);
+        verify(paymentRefundService).validateRefundEligibility(testPayment, REFUND_AMOUNT);
         var refundCaptor = org.mockito.ArgumentCaptor.forClass(Refund.class);
         verify(refundRepository).save(refundCaptor.capture());
         assertThat(refundCaptor.getValue().getStatus()).isEqualTo(RefundStatus.PROCESSING);
@@ -150,7 +150,7 @@ public class RefundTransactionExecutorTest {
                 .isInstanceOf(TicketNotRefundableException.class)
                 .hasMessageContaining("already being processed");
 
-        verify(paymentService, never()).validateRefundEligibility(any(), any());
+        verify(paymentRefundService, never()).validateRefundEligibility(any(), any());
         verify(refundRepository, never()).save(any());
     }
 
@@ -163,7 +163,7 @@ public class RefundTransactionExecutorTest {
         var result = refundTransactionExecutor.applySuccess(REFUND_ID, TICKET_ID);
 
         assertThat(result.getStatus()).isEqualTo(RefundStatus.PROCESSED);
-        verify(paymentService).applyRefundSuccess(eq(testPayment), eq(REFUND_AMOUNT), any(String.class), eq(testTicket));
+        verify(paymentRefundService).applyRefundSuccess(eq(testPayment), eq(REFUND_AMOUNT), any(String.class), eq(testTicket));
         verify(bonusLedgerService).refundPointsForTicket(USER_ID, BONUS_POINTS_TO_REFUND, "REFUND_TICKET_" + TICKET_ID);
         verify(ticketService).markAsRefunded(testTicket, testRefund);
     }
@@ -176,7 +176,7 @@ public class RefundTransactionExecutorTest {
         var result = refundTransactionExecutor.applySuccess(REFUND_ID, TICKET_ID);
 
         assertThat(result.getStatus()).isEqualTo(RefundStatus.PROCESSED);
-        verifyNoInteractions(paymentService, bonusLedgerService, ticketService);
+        verifyNoInteractions(paymentRefundService, bonusLedgerService, ticketService);
         verify(refundRepository, never()).save(any());
     }
 

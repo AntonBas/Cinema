@@ -48,7 +48,7 @@ public class RefundServiceTest {
     @Mock
     private TicketService ticketService;
     @Mock
-    private PaymentService paymentService;
+    private PaymentRefundService paymentRefundService;
     @Mock
     private RefundTransactionExecutor refundTransactionExecutor;
     @Mock
@@ -82,7 +82,7 @@ public class RefundServiceTest {
     @BeforeEach
     void setUp() {
         refundCalculator = new RefundCalculator(refundRules);
-        refundService = new RefundService(ticketService, paymentService, refundCalculator,
+        refundService = new RefundService(ticketService, paymentRefundService, refundCalculator,
                 refundTransactionExecutor, refundRules, refundMapper, refundItemMapper, numberGenerator);
 
         testUser = User.builder().id(USER_ID).email("test@example.com").build();
@@ -195,7 +195,7 @@ public class RefundServiceTest {
 
         assertThat(response).isNotNull();
         assertThat(response.id()).isEqualTo(1L);
-        verify(paymentService).callLiqPayRefund(eq("PAY123"), eq("ORD_123"), eq(REFUND_AMOUNT), any(String.class));
+        verify(paymentRefundService).callLiqPayRefund(eq("PAY123"), eq("ORD_123"), eq(REFUND_AMOUNT), any(String.class));
         verify(refundTransactionExecutor).applySuccess(REFUND_ID, TICKET_ID);
         verify(refundTransactionExecutor, never()).markFailed(any(), any());
     }
@@ -210,7 +210,7 @@ public class RefundServiceTest {
         assertThatThrownBy(() -> refundService.refund(refundRequest, USER_ID))
                 .isInstanceOf(TicketNotRefundableException.class);
 
-        verify(paymentService, never()).callLiqPayRefund(any(), any(), any(), any());
+        verify(paymentRefundService, never()).callLiqPayRefund(any(), any(), any(), any());
     }
 
     @Test
@@ -220,7 +220,7 @@ public class RefundServiceTest {
         when(refundTransactionExecutor.markProcessing(TICKET_ID, USER_ID, "Test reason"))
                 .thenReturn(defaultContext());
         doThrow(new PaymentProcessingException("LiqPay refund failed: error - 1 - insufficient funds"))
-                .when(paymentService).callLiqPayRefund(eq("PAY123"), eq("ORD_123"), eq(REFUND_AMOUNT), any());
+                .when(paymentRefundService).callLiqPayRefund(eq("PAY123"), eq("ORD_123"), eq(REFUND_AMOUNT), any());
 
         assertThatThrownBy(() -> refundService.refund(refundRequest, USER_ID))
                 .isInstanceOf(RefundProcessingException.class);
@@ -236,7 +236,7 @@ public class RefundServiceTest {
         when(refundTransactionExecutor.markProcessing(TICKET_ID, USER_ID, "Test reason"))
                 .thenReturn(defaultContext());
         doThrow(new PaymentGatewayUnavailableException("Network error during refund: timeout", null))
-                .when(paymentService).callLiqPayRefund(eq("PAY123"), eq("ORD_123"), eq(REFUND_AMOUNT), any());
+                .when(paymentRefundService).callLiqPayRefund(eq("PAY123"), eq("ORD_123"), eq(REFUND_AMOUNT), any());
 
         assertThatThrownBy(() -> refundService.refund(refundRequest, USER_ID))
                 .isInstanceOf(RefundProcessingException.class);
@@ -257,7 +257,7 @@ public class RefundServiceTest {
         assertThatThrownBy(() -> refundService.refund(refundRequest, USER_ID))
                 .isInstanceOf(RefundProcessingException.class);
 
-        verify(paymentService, times(1)).callLiqPayRefund(eq("PAY123"), eq("ORD_123"), eq(REFUND_AMOUNT), any());
+        verify(paymentRefundService, times(1)).callLiqPayRefund(eq("PAY123"), eq("ORD_123"), eq(REFUND_AMOUNT), any());
         verify(refundTransactionExecutor, times(2)).applySuccess(REFUND_ID, TICKET_ID);
         verify(refundTransactionExecutor, never()).markFailed(any(), any());
     }

@@ -31,7 +31,7 @@ public class RefundService {
     private static final int MAX_APPLY_SUCCESS_ATTEMPTS = 2;
 
     private final TicketService ticketService;
-    private final PaymentService paymentService;
+    private final PaymentRefundService paymentRefundService;
     private final RefundCalculator refundCalculator;
     private final RefundTransactionExecutor refundTransactionExecutor;
     private final RefundRules refundRules;
@@ -58,7 +58,7 @@ public class RefundService {
         var description = "Refund for ticket #" + context.ticketUniqueCode();
 
         try {
-            paymentService.callLiqPayRefund(context.liqpayPaymentId(), context.liqpayOrderId(),
+            paymentRefundService.callLiqPayRefund(context.liqpayPaymentId(), context.liqpayOrderId(),
                     context.refundAmount(), description);
         } catch (PaymentProcessingException e) {
             refundTransactionExecutor.markFailed(context.refundId(), e);

@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.booking.Booking;
@@ -12,7 +11,6 @@ import ua.lviv.bas.cinema.domain.booking.Payment;
 import ua.lviv.bas.cinema.domain.booking.status.BookingStatus;
 import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
 import ua.lviv.bas.cinema.domain.booking.status.ReservationStatus;
-import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.domain.user.User;
 import ua.lviv.bas.cinema.dto.payment.request.PaymentCreateRequest;
 import ua.lviv.bas.cinema.dto.payment.response.PaymentResponse;
@@ -24,7 +22,6 @@ import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingEx
 import ua.lviv.bas.cinema.repository.booking.BookingRepository;
 import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
-import ua.lviv.bas.cinema.service.integration.payment.PaymentGatewayService;
 import ua.lviv.bas.cinema.service.notification.EmailService;
 import ua.lviv.bas.cinema.service.common.DateTimeFormatterService;
 import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
@@ -43,7 +40,6 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
-    private final PaymentGatewayService paymentGatewayService;
     private final NumberGeneratorService numberGenerator;
     private final PaymentSuccessOrchestrator paymentSuccessOrchestrator;
     private final AuditService auditService;
@@ -151,58 +147,6 @@ public class PaymentService {
         auditFailure(payment, oldStatus, callbackData);
     }
 
-    public void validateRefundEligibility(Payment payment, BigDecimal amount) {
-        if (payment.getStatus() != PaymentStatus.SUCCESS && payment.getStatus() != PaymentStatus.PARTIALLY_REFUNDED) {
-            throw PaymentProcessingException.refundFailed("Cannot refund payment with status: " + payment.getStatus());
-        }
-
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw PaymentProcessingException.refundFailed("Refund amount must be positive");
-        }
-
-        if (amount.compareTo(payment.getAmount()) > 0) {
-            throw PaymentProcessingException.refundFailed(
-                    String.format("Refund amount %s exceeds payment amount %s", amount, payment.getAmount()));
-        }
-
-        if (payment.getLiqpayPaymentId() == null || payment.getLiqpayPaymentId().isEmpty()) {
-            throw PaymentProcessingException.refundFailed("Missing LiqPay payment ID for refund");
-        }
-
-        if (payment.getLiqpayOrderId() == null || payment.getLiqpayOrderId().isEmpty()) {
-            throw PaymentProcessingException.refundFailed("Missing LiqPay order ID for refund");
-        }
-    }
-
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public void callLiqPayRefund(String liqpayPaymentId, String liqpayOrderId, BigDecimal amount,
-                                 String description) {
-        var refundData = paymentGatewayService.prepareRefundData(liqpayPaymentId, liqpayOrderId, amount, description);
-
-        paymentGatewayService.processRefund(refundData);
-
-        log.info("Refund initiated for liqpayOrderId={}: amount={}, description={}", liqpayOrderId, amount,
-                description);
-    }
-
-    @Transactional
-    public void applyRefundSuccess(Payment payment, BigDecimal amount, String description, Ticket ticket) {
-        var newStatus = amount.compareTo(payment.getAmount()) == 0 ? PaymentStatus.REFUNDED
-                : PaymentStatus.PARTIALLY_REFUNDED;
-
-        if (payment.getStatus() == newStatus) {
-            log.debug("Payment {} already marked as {}, skipping", payment.getId(), newStatus);
-            return;
-        }
-
-        var oldStatus = payment.getStatus();
-        payment.setStatus(newStatus);
-        paymentRepository.save(payment);
-
-        sendRefundEmail(payment, amount, description, ticket);
-        auditRefund(payment, oldStatus, newStatus, amount, description);
-    }
-
     private void validateBookingForPayment(Booking booking) {
         if (booking.getStatus() != BookingStatus.PENDING) {
             throw PaymentProcessingException.bookingNotPending();
@@ -231,22 +175,6 @@ public class PaymentService {
                     booking.getSession().getMovie().getTitle(), sessionTime, errorDescription);
 
             log.debug("Sent payment failed email to {}", booking.getUser().getEmail());
-        });
-    }
-
-    private void sendRefundEmail(Payment payment, BigDecimal amount, String description, Ticket ticket) {
-        emailService.sendSafely("send refund email", payment.getId(), () -> {
-            var booking = payment.getBooking();
-            var sessionTime = dateTimeFormatter.formatStandard(booking.getSession().getStartTime());
-            var seat = ticket.getSeatReservation().getSeat();
-            var seatsInfo = String.format("Row %d, Seat %d", seat.getRow(), seat.getNumber());
-            var bookingNumber = numberGenerator.generateBookingNumber(booking);
-
-            emailService.sendRefundEmail(booking.getUser().getEmail(), bookingNumber,
-                    booking.getSession().getMovie().getTitle(), sessionTime, booking.getSession().getHall().getName(),
-                    amount, seatsInfo, description);
-
-            log.debug("Sent refund email to {}", booking.getUser().getEmail());
         });
     }
 
@@ -291,18 +219,6 @@ public class PaymentService {
         newDetails.put("errorCode", callbackData.get("err_code"));
         newDetails.put("errorDescription", callbackData.get("err_description"));
         auditService.logChange("Payment", payment.getId(), "Payment #" + payment.getId(), AuditAction.FAILED,
-                oldDetails, newDetails);
-    }
-
-    private void auditRefund(Payment payment, PaymentStatus oldStatus, PaymentStatus newStatus, BigDecimal amount,
-                             String description) {
-        Map<String, Object> oldDetails = new HashMap<>();
-        oldDetails.put("status", oldStatus);
-        Map<String, Object> newDetails = new HashMap<>();
-        newDetails.put("status", newStatus);
-        newDetails.put("refundAmount", amount);
-        newDetails.put("description", description);
-        auditService.logChange("Payment", payment.getId(), "Payment #" + payment.getId(), AuditAction.REFUND,
                 oldDetails, newDetails);
     }
 }

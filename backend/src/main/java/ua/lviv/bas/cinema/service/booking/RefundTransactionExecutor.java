@@ -33,7 +33,7 @@ public class RefundTransactionExecutor {
 
     private final TicketRepository ticketRepository;
     private final RefundRepository refundRepository;
-    private final PaymentService paymentService;
+    private final PaymentRefundService paymentRefundService;
     private final BonusLedgerService bonusLedgerService;
     private final TicketService ticketService;
     private final RefundCalculator refundCalculator;
@@ -56,7 +56,7 @@ public class RefundTransactionExecutor {
         }
 
         var calculation = refundCalculator.calculate(ticket);
-        paymentService.validateRefundEligibility(ticket.getPayment(), calculation.refundAmount());
+        paymentRefundService.validateRefundEligibility(ticket.getPayment(), calculation.refundAmount());
 
         var refund = Refund.builder().payment(ticket.getPayment()).user(ticket.getUser())
                 .totalAmount(calculation.refundAmount()).totalBonusPointsToDeduct(calculation.bonusPointsToRefund())
@@ -96,7 +96,7 @@ public class RefundTransactionExecutor {
         var bonusPointsToRefund = refund.getTotalBonusPointsToDeduct();
         var description = "Refund for ticket #" + ticket.getUniqueCode();
 
-        paymentService.applyRefundSuccess(refund.getPayment(), amount, description, ticket);
+        paymentRefundService.applyRefundSuccess(refund.getPayment(), amount, description, ticket);
 
         if (bonusPointsToRefund != null && bonusPointsToRefund > 0) {
             bonusLedgerService.refundPointsForTicket(refund.getUser().getId(), bonusPointsToRefund,
