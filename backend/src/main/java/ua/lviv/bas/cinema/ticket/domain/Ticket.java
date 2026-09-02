@@ -25,10 +25,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import ua.lviv.bas.cinema.domain.audit.AuditableEntity;
-import ua.lviv.bas.cinema.domain.booking.Booking;
+import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.domain.booking.Payment;
 import ua.lviv.bas.cinema.domain.booking.Refund;
-import ua.lviv.bas.cinema.domain.booking.SeatReservation;
+import ua.lviv.bas.cinema.booking.domain.SeatReservation;
 import ua.lviv.bas.cinema.user.domain.User;
 
 @Entity

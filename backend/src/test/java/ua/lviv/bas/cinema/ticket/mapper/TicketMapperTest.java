@@ -2,8 +2,8 @@ package ua.lviv.bas.cinema.ticket.mapper;
 
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
-import ua.lviv.bas.cinema.domain.booking.Booking;
-import ua.lviv.bas.cinema.domain.booking.SeatReservation;
+import ua.lviv.bas.cinema.booking.domain.Booking;
+import ua.lviv.bas.cinema.booking.domain.SeatReservation;
 import ua.lviv.bas.cinema.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.cinema.domain.Seat;

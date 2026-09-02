@@ -28,7 +28,7 @@ import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.cinema.repository.projection.SessionAdminProjection;
 import ua.lviv.bas.cinema.cinema.repository.projection.SessionScheduleProjection;
 import ua.lviv.bas.cinema.cinema.repository.specification.SessionSpecification;
-import ua.lviv.bas.cinema.service.booking.SeatReservationService;
+import ua.lviv.bas.cinema.booking.service.SeatReservationService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditDetails;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 

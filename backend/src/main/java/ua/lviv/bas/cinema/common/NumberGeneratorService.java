@@ -1,7 +1,7 @@
 package ua.lviv.bas.cinema.common;
 
 import org.springframework.stereotype.Service;
-import ua.lviv.bas.cinema.domain.booking.Booking;
+import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.domain.booking.Refund;
 
 import java.time.LocalDateTime;
