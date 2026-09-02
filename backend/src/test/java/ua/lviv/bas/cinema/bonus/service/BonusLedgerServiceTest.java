@@ -20,7 +20,7 @@ import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusValidationExcept
 import ua.lviv.bas.cinema.bonus.repository.BonusCardRepository;
 import ua.lviv.bas.cinema.bonus.repository.BonusRulesRepository;
 import ua.lviv.bas.cinema.bonus.repository.BonusTransactionRepository;
-import ua.lviv.bas.cinema.service.integration.audit.AuditService;
+import ua.lviv.bas.cinema.audit.service.AuditService;
 
 import java.time.LocalDate;
 import java.util.Optional;

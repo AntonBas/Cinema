@@ -11,7 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ua.lviv.bas.cinema.domain.audit.AuditAction;
+import ua.lviv.bas.cinema.audit.domain.AuditAction;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.refund.domain.Refund;
@@ -29,9 +29,9 @@ import ua.lviv.bas.cinema.ticket.mapper.TicketMapper;
 import ua.lviv.bas.cinema.ticket.repository.TicketRepository;
 import ua.lviv.bas.cinema.ticket.repository.specification.TicketSpecification;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
-import ua.lviv.bas.cinema.service.integration.audit.AuditDetails;
-import ua.lviv.bas.cinema.service.integration.audit.AuditService;
-import ua.lviv.bas.cinema.service.integration.qr.QRCodeService;
+import ua.lviv.bas.cinema.audit.service.AuditDetails;
+import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.integration.service.QRCodeService;
 
 import java.time.LocalDateTime;
 

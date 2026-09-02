@@ -19,8 +19,8 @@ import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.auth.*;
 import ua.lviv.bas.cinema.user.mapper.UserMapper;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
-import ua.lviv.bas.cinema.service.integration.audit.AuditService;
-import ua.lviv.bas.cinema.service.notification.EmailTokenGeneratorService;
+import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.notification.service.EmailTokenGeneratorService;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

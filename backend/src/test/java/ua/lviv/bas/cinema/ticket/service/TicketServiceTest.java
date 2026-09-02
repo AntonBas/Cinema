@@ -22,7 +22,7 @@ import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketValidationException;
 import ua.lviv.bas.cinema.ticket.mapper.TicketMapper;
 import ua.lviv.bas.cinema.ticket.repository.TicketRepository;
-import ua.lviv.bas.cinema.service.integration.audit.AuditService;
+import ua.lviv.bas.cinema.audit.service.AuditService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

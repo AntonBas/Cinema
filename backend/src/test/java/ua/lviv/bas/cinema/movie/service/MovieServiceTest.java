@@ -33,9 +33,9 @@ import ua.lviv.bas.cinema.movie.repository.MovieRepository;
 import ua.lviv.bas.cinema.movie.repository.PersonRepository;
 import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.movie.repository.specification.MovieSpecification;
-import ua.lviv.bas.cinema.service.integration.audit.AuditService;
-import ua.lviv.bas.cinema.service.integration.file.PosterService;
-import ua.lviv.bas.cinema.service.integration.slug.SlugService;
+import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.integration.service.PosterService;
+import ua.lviv.bas.cinema.integration.service.SlugService;
 
 import java.time.LocalDate;
 import java.util.ArrayList;

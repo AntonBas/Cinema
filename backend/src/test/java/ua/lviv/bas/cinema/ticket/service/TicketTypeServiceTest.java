@@ -24,7 +24,7 @@ import ua.lviv.bas.cinema.ticket.repository.TicketRepository;
 import ua.lviv.bas.cinema.ticket.repository.TicketTypeRepository;
 import ua.lviv.bas.cinema.ticket.repository.projection.TicketTypeProjection;
 import ua.lviv.bas.cinema.ticket.repository.specification.TicketSpecification;
-import ua.lviv.bas.cinema.service.integration.audit.AuditService;
+import ua.lviv.bas.cinema.audit.service.AuditService;
 
 import java.math.BigDecimal;
 import java.util.Optional;

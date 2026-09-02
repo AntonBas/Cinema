@@ -24,7 +24,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import ua.lviv.bas.cinema.domain.audit.AuditableEntity;
+import ua.lviv.bas.cinema.audit.domain.AuditableEntity;
 
 @Entity
 @Getter

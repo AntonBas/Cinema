@@ -25,7 +25,7 @@ import ua.lviv.bas.cinema.promotion.repository.UserPromotionRepository;
 import ua.lviv.bas.cinema.promotion.repository.projection.PromotionListProjection;
 import ua.lviv.bas.cinema.promotion.repository.projection.PromotionResponseProjection;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
-import ua.lviv.bas.cinema.service.integration.audit.AuditService;
+import ua.lviv.bas.cinema.audit.service.AuditService;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
