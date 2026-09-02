@@ -1,0 +1,25 @@
+package ua.lviv.bas.cinema.support;
+
+import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
+import ua.lviv.bas.cinema.domain.cinema.Movie;
+import ua.lviv.bas.cinema.domain.cinema.Session;
+
+import java.time.LocalDateTime;
+
+public final class CinemaTestFixtures {
+
+    private CinemaTestFixtures() {
+    }
+
+    public static Movie movie() {
+        return Movie.builder().title("Test Movie").build();
+    }
+
+    public static CinemaHall hall() {
+        return CinemaHall.builder().name("Hall A").build();
+    }
+
+    public static Session session(Movie movie, CinemaHall hall) {
+        return Session.builder().movie(movie).hall(hall).startTime(LocalDateTime.now().plusHours(2)).build();
+    }
+}

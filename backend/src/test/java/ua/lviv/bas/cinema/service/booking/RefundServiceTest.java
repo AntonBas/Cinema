@@ -11,8 +11,6 @@ import ua.lviv.bas.cinema.domain.booking.Payment;
 import ua.lviv.bas.cinema.domain.booking.Refund;
 import ua.lviv.bas.cinema.domain.booking.SeatReservation;
 import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
-import ua.lviv.bas.cinema.domain.cinema.CinemaHall;
-import ua.lviv.bas.cinema.domain.cinema.Movie;
 import ua.lviv.bas.cinema.domain.cinema.Seat;
 import ua.lviv.bas.cinema.domain.cinema.Session;
 import ua.lviv.bas.cinema.domain.ticket.Ticket;
@@ -32,6 +30,7 @@ import ua.lviv.bas.cinema.mapper.booking.RefundItemMapper;
 import ua.lviv.bas.cinema.mapper.booking.RefundMapper;
 import ua.lviv.bas.cinema.service.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.service.ticket.TicketService;
+import ua.lviv.bas.cinema.support.CinemaTestFixtures;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -86,9 +85,9 @@ public class RefundServiceTest {
                 refundTransactionExecutor, refundRules, refundMapper, refundItemMapper, numberGenerator);
 
         testUser = User.builder().id(USER_ID).email("test@example.com").build();
-        Movie movie = Movie.builder().title("Test Movie").build();
-        CinemaHall hall = CinemaHall.builder().name("Hall 1").build();
-        testSession = Session.builder().startTime(LocalDateTime.now().plusHours(3)).movie(movie).hall(hall).build();
+        var movie = CinemaTestFixtures.movie();
+        var hall = CinemaTestFixtures.hall();
+        testSession = CinemaTestFixtures.session(movie, hall);
         Seat seat = Seat.builder().row(5).number(10).build();
         SeatReservation seatReservation = SeatReservation.builder().seat(seat).build();
         Booking booking = Booking.builder()
