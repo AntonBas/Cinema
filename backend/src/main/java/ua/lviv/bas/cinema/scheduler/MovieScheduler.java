@@ -31,20 +31,29 @@ public class MovieScheduler {
 		List<Movie> allMovies = movieRepository.findAll();
 		log.info("Found {} movies to check", allMovies.size());
 
+		var summary = applyStatusUpdates(allMovies, today);
+
+		if (summary.updatedCount() > 0) {
+			movieRepository.saveAll(allMovies);
+			log.info("Updated {} movie statuses", summary.updatedCount());
+		}
+
+		log.info("Movie status summary - CURRENT: {}, UPCOMING: {}, ARCHIVED: {}", summary.currentCount(),
+				summary.upcomingCount(), summary.archivedCount());
+		log.info("Movie status update completed");
+	}
+
+	private StatusUpdateSummary applyStatusUpdates(List<Movie> movies, LocalDate referenceDate) {
 		int updatedCount = 0;
 		int currentCount = 0;
 		int upcomingCount = 0;
 		int archivedCount = 0;
 
-		for (Movie movie : allMovies) {
-			MovieStatus currentStatus = movie.getStatus();
-			MovieStatus newStatus = movieStatusCalculator.calculate(movie, today);
+		for (Movie movie : movies) {
+			MovieStatus newStatus = movieStatusCalculator.calculate(movie, referenceDate);
 
-			if (currentStatus != newStatus) {
-				movie.setStatus(newStatus);
+			if (updateStatusIfChanged(movie, newStatus)) {
 				updatedCount++;
-				log.info("Movie ID {} '{}': status changed from {} to {}", movie.getId(), movie.getTitle(),
-						currentStatus, newStatus);
 			}
 
 			switch (newStatus) {
@@ -56,13 +65,21 @@ public class MovieScheduler {
 			}
 		}
 
-		if (updatedCount > 0) {
-			movieRepository.saveAll(allMovies);
-			log.info("Updated {} movie statuses", updatedCount);
+		return new StatusUpdateSummary(updatedCount, currentCount, upcomingCount, archivedCount);
+	}
+
+	private boolean updateStatusIfChanged(Movie movie, MovieStatus newStatus) {
+		MovieStatus currentStatus = movie.getStatus();
+		if (currentStatus == newStatus) {
+			return false;
 		}
 
-		log.info("Movie status summary - CURRENT: {}, UPCOMING: {}, ARCHIVED: {}", currentCount, upcomingCount,
-				archivedCount);
-		log.info("Movie status update completed");
+		movie.setStatus(newStatus);
+		log.info("Movie ID {} '{}': status changed from {} to {}", movie.getId(), movie.getTitle(), currentStatus,
+				newStatus);
+		return true;
+	}
+
+	private record StatusUpdateSummary(int updatedCount, int currentCount, int upcomingCount, int archivedCount) {
 	}
 }

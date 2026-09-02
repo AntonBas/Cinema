@@ -54,7 +54,7 @@ public class RefundService {
     }
 
     public RefundResponse refund(RefundRequest request, Long userId) {
-        var context = refundTransactionExecutor.markProcessing(request.ticketId(), userId, request.reason());
+        var context = refundTransactionExecutor.createProcessingRefund(request.ticketId(), userId, request.reason());
         var description = "Refund for ticket #" + context.ticketUniqueCode();
 
         try {

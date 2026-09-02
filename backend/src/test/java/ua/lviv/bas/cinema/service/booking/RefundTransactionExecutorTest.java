@@ -102,7 +102,7 @@ public class RefundTransactionExecutorTest {
     }
 
     @Test
-    void markProcessingShouldCreateProcessingRefund() {
+    void createProcessingRefundShouldSucceed() {
         when(ticketService.findActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
         when(refundCalculator.validate(testTicket)).thenReturn(null);
         when(refundRepository.existsByItemsTicketIdAndStatus(TICKET_ID, RefundStatus.PROCESSING)).thenReturn(false);
@@ -115,7 +115,7 @@ public class RefundTransactionExecutorTest {
             return r;
         });
 
-        var context = refundTransactionExecutor.markProcessing(TICKET_ID, USER_ID, "Test reason");
+        var context = refundTransactionExecutor.createProcessingRefund(TICKET_ID, USER_ID, "Test reason");
 
         assertThat(context.refundId()).isEqualTo(REFUND_ID);
         assertThat(context.ticketId()).isEqualTo(TICKET_ID);
@@ -130,23 +130,23 @@ public class RefundTransactionExecutorTest {
     }
 
     @Test
-    void markProcessingWhenTicketNotRefundableShouldThrow() {
+    void createProcessingRefundWhenTicketNotRefundableShouldThrow() {
         when(ticketService.findActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
         when(refundCalculator.validate(testTicket)).thenReturn("Ticket is not active. Current status: REFUNDED");
 
-        assertThatThrownBy(() -> refundTransactionExecutor.markProcessing(TICKET_ID, USER_ID, "Test reason"))
+        assertThatThrownBy(() -> refundTransactionExecutor.createProcessingRefund(TICKET_ID, USER_ID, "Test reason"))
                 .isInstanceOf(TicketNotRefundableException.class);
 
         verify(refundRepository, never()).save(any());
     }
 
     @Test
-    void markProcessingWhenAlreadyProcessingShouldThrowGuard() {
+    void createProcessingRefundWhenAlreadyProcessingShouldThrowGuard() {
         when(ticketService.findActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
         when(refundCalculator.validate(testTicket)).thenReturn(null);
         when(refundRepository.existsByItemsTicketIdAndStatus(TICKET_ID, RefundStatus.PROCESSING)).thenReturn(true);
 
-        assertThatThrownBy(() -> refundTransactionExecutor.markProcessing(TICKET_ID, USER_ID, "Test reason"))
+        assertThatThrownBy(() -> refundTransactionExecutor.createProcessingRefund(TICKET_ID, USER_ID, "Test reason"))
                 .isInstanceOf(TicketNotRefundableException.class)
                 .hasMessageContaining("already being processed");
 

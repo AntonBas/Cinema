@@ -40,9 +40,25 @@ public class RefundTransactionExecutor {
     private final AuditService auditService;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public RefundProcessingContext markProcessing(Long ticketId, Long userId, String reason) {
+    public RefundProcessingContext createProcessingRefund(Long ticketId, Long userId, String reason) {
         var ticket = ticketService.findActiveTicketForUser(ticketId, userId);
 
+        validateRefundable(ticket);
+
+        var calculation = refundCalculator.calculate(ticket);
+        paymentRefundService.validateRefundEligibility(ticket.getPayment(), calculation.refundAmount());
+
+        var refund = buildRefund(ticket, calculation, reason);
+        var saved = refundRepository.save(refund);
+
+        auditCreated(saved, ticket, calculation);
+
+        return new RefundProcessingContext(saved.getId(), ticket.getId(), ticket.getUniqueCode(),
+                ticket.getPayment().getLiqpayPaymentId(), ticket.getPayment().getLiqpayOrderId(),
+                calculation.refundAmount());
+    }
+
+    private void validateRefundable(Ticket ticket) {
         var validationError = refundCalculator.validate(ticket);
         if (validationError != null) {
             throw new TicketNotRefundableException(validationError);
@@ -51,13 +67,12 @@ public class RefundTransactionExecutor {
                 && ticket.getPayment().getStatus() != PaymentStatus.PARTIALLY_REFUNDED) {
             throw new TicketNotRefundableException("Payment cannot be refunded via API. Contact support.");
         }
-        if (refundRepository.existsByItemsTicketIdAndStatus(ticketId, RefundStatus.PROCESSING)) {
+        if (refundRepository.existsByItemsTicketIdAndStatus(ticket.getId(), RefundStatus.PROCESSING)) {
             throw new TicketNotRefundableException("A refund for this ticket is already being processed");
         }
+    }
 
-        var calculation = refundCalculator.calculate(ticket);
-        paymentRefundService.validateRefundEligibility(ticket.getPayment(), calculation.refundAmount());
-
+    private Refund buildRefund(Ticket ticket, RefundCalculator.RefundCalculation calculation, String reason) {
         var refund = Refund.builder().payment(ticket.getPayment()).user(ticket.getUser())
                 .totalAmount(calculation.refundAmount()).totalBonusPointsToDeduct(calculation.bonusPointsToRefund())
                 .reason(reason).status(RefundStatus.PROCESSING).build();
@@ -68,13 +83,7 @@ public class RefundTransactionExecutor {
                 .status(RefundItemStatus.PENDING).build();
 
         refund.getItems().add(refundItem);
-        var saved = refundRepository.save(refund);
-
-        auditCreated(saved, ticket, calculation);
-
-        return new RefundProcessingContext(saved.getId(), ticket.getId(), ticket.getUniqueCode(),
-                ticket.getPayment().getLiqpayPaymentId(), ticket.getPayment().getLiqpayOrderId(),
-                calculation.refundAmount());
+        return refund;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

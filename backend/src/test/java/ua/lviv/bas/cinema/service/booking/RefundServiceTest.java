@@ -181,7 +181,7 @@ public class RefundServiceTest {
     void refundShouldSucceed() {
         RefundRequest refundRequest = new RefundRequest(TICKET_ID, "Test reason");
 
-        when(refundTransactionExecutor.markProcessing(TICKET_ID, USER_ID, "Test reason"))
+        when(refundTransactionExecutor.createProcessingRefund(TICKET_ID, USER_ID, "Test reason"))
                 .thenReturn(defaultContext());
         when(refundTransactionExecutor.applySuccess(REFUND_ID, TICKET_ID)).thenReturn(testRefund);
         when(numberGenerator.generateRefundNumber(testRefund)).thenReturn("RF-2024-00001");
@@ -204,7 +204,7 @@ public class RefundServiceTest {
     void refundWhenTicketNotRefundableShouldThrowException() {
         RefundRequest refundRequest = new RefundRequest(TICKET_ID, "Test reason");
 
-        when(refundTransactionExecutor.markProcessing(TICKET_ID, USER_ID, "Test reason"))
+        when(refundTransactionExecutor.createProcessingRefund(TICKET_ID, USER_ID, "Test reason"))
                 .thenThrow(new TicketNotRefundableException("Ticket is not active. Current status: REFUNDED"));
 
         assertThatThrownBy(() -> refundService.refund(refundRequest, USER_ID))
@@ -217,7 +217,7 @@ public class RefundServiceTest {
     void refundWhenLiqPayExplicitlyRejectsShouldMarkFailedAndNotApplySuccess() {
         RefundRequest refundRequest = new RefundRequest(TICKET_ID, "Test reason");
 
-        when(refundTransactionExecutor.markProcessing(TICKET_ID, USER_ID, "Test reason"))
+        when(refundTransactionExecutor.createProcessingRefund(TICKET_ID, USER_ID, "Test reason"))
                 .thenReturn(defaultContext());
         doThrow(new PaymentProcessingException("LiqPay refund failed: error - 1 - insufficient funds"))
                 .when(paymentRefundService).callLiqPayRefund(eq("PAY123"), eq("ORD_123"), eq(REFUND_AMOUNT), any());
@@ -233,7 +233,7 @@ public class RefundServiceTest {
     void refundWhenLiqPayOutcomeIsAmbiguousShouldNotMarkFailedAndLeaveProcessing() {
         RefundRequest refundRequest = new RefundRequest(TICKET_ID, "Test reason");
 
-        when(refundTransactionExecutor.markProcessing(TICKET_ID, USER_ID, "Test reason"))
+        when(refundTransactionExecutor.createProcessingRefund(TICKET_ID, USER_ID, "Test reason"))
                 .thenReturn(defaultContext());
         doThrow(new PaymentGatewayUnavailableException("Network error during refund: timeout", null))
                 .when(paymentRefundService).callLiqPayRefund(eq("PAY123"), eq("ORD_123"), eq(REFUND_AMOUNT), any());
@@ -249,7 +249,7 @@ public class RefundServiceTest {
     void refundWhenApplySuccessFailsAfterSuccessfulLiqPayShouldRetryOnceThenLeaveProcessing() {
         RefundRequest refundRequest = new RefundRequest(TICKET_ID, "Test reason");
 
-        when(refundTransactionExecutor.markProcessing(TICKET_ID, USER_ID, "Test reason"))
+        when(refundTransactionExecutor.createProcessingRefund(TICKET_ID, USER_ID, "Test reason"))
                 .thenReturn(defaultContext());
         when(refundTransactionExecutor.applySuccess(REFUND_ID, TICKET_ID))
                 .thenThrow(new RuntimeException("DB connection lost"));

@@ -118,7 +118,13 @@ public class PaymentGatewayService {
             return;
         }
 
-        ResponseEntity<String> response;
+        var response = sendRefundRequest(refundData);
+        var responseBody = extractResponseBody(response);
+        var responseMap = decodeRefundResponse(responseBody);
+        checkRefundResult(responseMap);
+    }
+
+    private ResponseEntity<String> sendRefundRequest(String refundData) {
         try {
             var signature = LiqPayDecoder.generateSignature(refundData, liqpayPrivateKey);
             var requestBody = "data=" + URLEncoder.encode(refundData, StandardCharsets.UTF_8) + "&signature="
@@ -129,11 +135,13 @@ public class PaymentGatewayService {
             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
 
             HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
-            response = restTemplate.postForEntity(liqpayApiUrl + "request", request, String.class);
+            return restTemplate.postForEntity(liqpayApiUrl + "request", request, String.class);
         } catch (RestClientException e) {
             throw new PaymentGatewayUnavailableException("Network error during refund: " + e.getMessage(), e);
         }
+    }
 
+    private String extractResponseBody(ResponseEntity<String> response) {
         if (!response.getStatusCode().is2xxSuccessful()) {
             throw new PaymentGatewayUnavailableException(
                     "LiqPay API request failed with status " + response.getStatusCode(), null);
@@ -144,13 +152,18 @@ public class PaymentGatewayService {
             throw new PaymentGatewayUnavailableException("Empty response from LiqPay API", null);
         }
 
-        Map<String, Object> responseMap;
+        return responseBody;
+    }
+
+    private Map<String, Object> decodeRefundResponse(String responseBody) {
         try {
-            responseMap = LiqPayDecoder.decodeToMap(responseBody);
+            return LiqPayDecoder.decodeToMap(responseBody);
         } catch (Exception e) {
             throw new PaymentGatewayUnavailableException("Failed to decode LiqPay response: " + e.getMessage(), e);
         }
+    }
 
+    private void checkRefundResult(Map<String, Object> responseMap) {
         var result = (String) responseMap.get("result");
         var status = (String) responseMap.get("status");
         var isSuccess = "ok".equals(result) || "success".equals(status);

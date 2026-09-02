@@ -67,34 +67,14 @@ public class BookingService {
 
         validateSession(session);
 
-        List<SeatReservation> seatReservations = new ArrayList<>();
-
-        for (var seatSelection : request.seats()) {
-            var reservation = findOrCreateReservation(session, user, seatSelection);
-
-            if (reservation.getStatus() == ReservationStatus.CONFIRMED) {
-                throw new SeatNotAvailableException("Seat already booked");
-            }
-
-            updateReservationWithTicketType(reservation, seatSelection);
-            seatReservations.add(reservation);
-        }
-
+        var seatReservations = buildSeatReservations(session, user, request.seats());
         var totalPrice = seatReservations.stream().map(SeatReservation::getSeatPrice).reduce(BigDecimal.ZERO,
                 BigDecimal::add);
 
         var priceResult = calculateFinalPrice(totalPrice, request.bonusPointsToUse(), user.getId());
         var expiresAt = LocalDateTime.now().plusMinutes(expirationMinutes);
         var booking = createBookingEntity(user, session, seatReservations, priceResult, expiresAt);
-
-        seatReservations.forEach(sr -> {
-            sr.setBooking(booking);
-            sr.setStatus(ReservationStatus.CONFIRMED);
-            sr.setReservedUntil(expiresAt);
-        });
-
-        var saved = bookingRepository.save(booking);
-        seatReservationRepository.saveAll(seatReservations);
+        var saved = confirmSeatsAndSaveBooking(booking, seatReservations, expiresAt);
 
         if (priceResult.bonusPointsUsed() > 0) {
             bonusLedgerService.spendPoints(user.getId(), priceResult.bonusPointsUsed(), saved);
@@ -105,6 +85,37 @@ public class BookingService {
         auditCreate(saved, user, session, totalPrice, priceResult);
 
         return bookingMapper.toResponse(saved);
+    }
+
+    private List<SeatReservation> buildSeatReservations(Session session, User user,
+                                                        List<BookingCreateRequest.SeatSelectionRequest> seatSelections) {
+        List<SeatReservation> seatReservations = new ArrayList<>();
+
+        for (var seatSelection : seatSelections) {
+            var reservation = findOrCreateReservation(session, user, seatSelection);
+
+            if (reservation.getStatus() == ReservationStatus.CONFIRMED) {
+                throw new SeatNotAvailableException("Seat already booked");
+            }
+
+            updateReservationWithTicketType(reservation, seatSelection);
+            seatReservations.add(reservation);
+        }
+
+        return seatReservations;
+    }
+
+    private Booking confirmSeatsAndSaveBooking(Booking booking, List<SeatReservation> seatReservations,
+                                               LocalDateTime expiresAt) {
+        seatReservations.forEach(sr -> {
+            sr.setBooking(booking);
+            sr.setStatus(ReservationStatus.CONFIRMED);
+            sr.setReservedUntil(expiresAt);
+        });
+
+        var saved = bookingRepository.save(booking);
+        seatReservationRepository.saveAll(seatReservations);
+        return saved;
     }
 
     @Transactional(readOnly = true)

@@ -35,6 +35,7 @@ import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -127,9 +128,7 @@ public class SessionService {
         var session = sessionRepository.findByIdWithLock(id)
                 .orElseThrow(() -> new EntityNotFoundException("Session", id));
 
-        var oldDetails = AuditDetails.of().put("startTime", session.getStartTime())
-                .put("basePrice", session.getBasePrice()).put("movieId", session.getMovie().getId())
-                .put("hallId", session.getHall().getId()).build();
+        var oldDetails = captureSessionDetails(session);
 
         if (request.startTime() != null && !request.startTime().equals(session.getStartTime())) {
             validateStartTime(request.startTime());
@@ -147,13 +146,15 @@ public class SessionService {
         session = sessionRepository.save(session);
         log.info("Session updated with ID: {}", session.getId());
 
-        var newDetails = AuditDetails.of().put("startTime", session.getStartTime())
-                .put("basePrice", session.getBasePrice()).put("movieId", session.getMovie().getId())
-                .put("hallId", session.getHall().getId()).build();
-
-        auditService.logChange("Session", id, "Session #" + id, AuditAction.UPDATED, oldDetails, newDetails);
+        auditService.logChange("Session", id, "Session #" + id, AuditAction.UPDATED, oldDetails,
+                captureSessionDetails(session));
 
         return sessionMapper.toSessionResponse(session);
+    }
+
+    private Map<String, Object> captureSessionDetails(Session session) {
+        return AuditDetails.of().put("startTime", session.getStartTime()).put("basePrice", session.getBasePrice())
+                .put("movieId", session.getMovie().getId()).put("hallId", session.getHall().getId()).build();
     }
 
     @CacheEvict(value = {"sessions", "seatAvailability", "movieDetails"}, allEntries = true)
