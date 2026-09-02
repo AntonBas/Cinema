@@ -1,10 +1,11 @@
 package ua.lviv.bas.cinema.bonus.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
 import ua.lviv.bas.cinema.bonus.domain.BonusCard;
 import ua.lviv.bas.cinema.bonus.domain.BonusRules;
@@ -15,6 +16,7 @@ import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.user.domain.VerificationStatus;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusCardConcurrentModificationException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusRuleNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusValidationException;
 import ua.lviv.bas.cinema.bonus.repository.BonusCardRepository;
@@ -24,124 +26,178 @@ import ua.lviv.bas.cinema.audit.service.AuditService;
 
 import java.time.LocalDate;
 import java.util.Map;
+import java.util.function.Supplier;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class BonusLedgerService {
+
+    private static final int MAX_OPTIMISTIC_LOCK_ATTEMPTS = 3;
 
     private final BonusCardRepository bonusCardRepository;
     private final BonusRulesRepository bonusRulesRepository;
     private final BonusTransactionRepository bonusTransactionRepository;
     private final BonusQueryService bonusQueryService;
     private final AuditService auditService;
+    private final TransactionTemplate transactionTemplate;
 
-    @CacheEvict(value = "bonus", allEntries = true)
-    @Transactional
-    public void awardWelcomeBonus(User user) {
-        var card = getOrCreateCard(user);
-        if (card.isWelcomeBonusReceived()) {
-            return;
-        }
-        var rule = getActiveRule(BonusTransactionType.WELCOME_BONUS);
-        addPointsToCard(card, rule.getPoints());
-        createTransaction(card, rule.getPoints(), BonusTransactionType.WELCOME_BONUS, "USER_" + user.getId());
-        card.setWelcomeBonusReceived(true);
-        bonusCardRepository.save(card);
+    public BonusLedgerService(BonusCardRepository bonusCardRepository, BonusRulesRepository bonusRulesRepository,
+            BonusTransactionRepository bonusTransactionRepository, BonusQueryService bonusQueryService,
+            AuditService auditService, PlatformTransactionManager transactionManager) {
+        this.bonusCardRepository = bonusCardRepository;
+        this.bonusRulesRepository = bonusRulesRepository;
+        this.bonusTransactionRepository = bonusTransactionRepository;
+        this.bonusQueryService = bonusQueryService;
+        this.auditService = auditService;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     @CacheEvict(value = "bonus", allEntries = true)
-    @Transactional
+    public void awardWelcomeBonus(User user) {
+        executeWithOptimisticLockRetry(() -> {
+            var card = getOrCreateCard(user);
+            if (card.isWelcomeBonusReceived()) {
+                return;
+            }
+            var rule = getActiveRule(BonusTransactionType.WELCOME_BONUS);
+            addPointsToCard(card, rule.getPoints());
+            createTransaction(card, rule.getPoints(), BonusTransactionType.WELCOME_BONUS, "USER_" + user.getId());
+            card.setWelcomeBonusReceived(true);
+            bonusCardRepository.save(card);
+        });
+    }
+
+    @CacheEvict(value = "bonus", allEntries = true)
     public void awardBirthdayBonus(User user) {
         if (!canReceiveBirthdayBonus(user)) {
             return;
         }
         var today = LocalDate.now();
-        var card = getOrCreateCard(user);
-        if (alreadyReceivedBirthdayBonus(card, today)) {
-            return;
-        }
-        var rule = getActiveRule(BonusTransactionType.BIRTHDAY_BONUS);
-        addPointsToCard(card, rule.getPoints());
-        createTransaction(card, rule.getPoints(), BonusTransactionType.BIRTHDAY_BONUS, "USER_" + user.getId());
-        card.setLastBirthdayBonusDate(today);
-        bonusCardRepository.save(card);
+        executeWithOptimisticLockRetry(() -> {
+            var card = getOrCreateCard(user);
+            if (alreadyReceivedBirthdayBonus(card, today)) {
+                return;
+            }
+            var rule = getActiveRule(BonusTransactionType.BIRTHDAY_BONUS);
+            addPointsToCard(card, rule.getPoints());
+            createTransaction(card, rule.getPoints(), BonusTransactionType.BIRTHDAY_BONUS, "USER_" + user.getId());
+            card.setLastBirthdayBonusDate(today);
+            bonusCardRepository.save(card);
+        });
     }
 
     @CacheEvict(value = "bonus", allEntries = true)
-    @Transactional
     public void addPromotionPoints(User user, Integer points, String promotionTitle) {
         validatePositivePoints(points);
-        var card = getOrCreateCard(user);
-        addPointsToCard(card, points);
-        createTransaction(card, points, BonusTransactionType.PROMOTION_BONUS, "PROMOTION_" + promotionTitle);
+        var card = executeWithOptimisticLockRetry(() -> {
+            var c = getOrCreateCard(user);
+            addPointsToCard(c, points);
+            createTransaction(c, points, BonusTransactionType.PROMOTION_BONUS, "PROMOTION_" + promotionTitle);
+            return c;
+        });
         auditPointsAdded(card, user, points, promotionTitle);
     }
 
     @CacheEvict(value = "bonus", allEntries = true)
-    @Transactional
     public void spendPoints(Long userId, Integer points, Booking booking) {
-        bonusQueryService.validateRedemption(userId, points);
-        var card = getCardByUserId(userId);
-        int oldBalance = card.getPointsBalance();
-        subtractPointsFromCard(card, points);
-        bonusCardRepository.save(card);
-        auditPointsSpent(card, booking, oldBalance);
-        createTransaction(card, -points, BonusTransactionType.BOOKING_SPEND, "BOOKING_" + booking.getId(),
-                booking);
+        var result = executeWithOptimisticLockRetry(() -> {
+            bonusQueryService.validateRedemption(userId, points);
+            var card = getCardByUserId(userId);
+            int oldBalance = card.getPointsBalance();
+            subtractPointsFromCard(card, points);
+            bonusCardRepository.save(card);
+            createTransaction(card, -points, BonusTransactionType.BOOKING_SPEND, "BOOKING_" + booking.getId(),
+                    booking);
+            return new CardBalanceChange(card, oldBalance);
+        });
+        auditPointsSpent(result.card(), booking, result.oldBalance());
     }
 
     @CacheEvict(value = "bonus", allEntries = true)
-    @Transactional
     public void accruePointsForPayment(Long userId, Integer points, Booking booking, Payment payment) {
         if (points == null || points <= 0) {
             return;
         }
-        var card = getCardByUserId(userId);
-        addPointsToCard(card, points);
-        bonusCardRepository.save(card);
+        var card = executeWithOptimisticLockRetry(() -> {
+            var c = getCardByUserId(userId);
+            addPointsToCard(c, points);
+            bonusCardRepository.save(c);
+            createTransaction(c, points, BonusTransactionType.PAYMENT_ACCRUAL, "PAYMENT_" + payment.getId(),
+                    booking);
+            return c;
+        });
         auditPointsAccrued(card, payment, points);
-        createTransaction(card, points, BonusTransactionType.PAYMENT_ACCRUAL, "PAYMENT_" + payment.getId(),
-                booking);
     }
 
     @CacheEvict(value = "bonus", allEntries = true)
-    @Transactional
     public void refundPoints(Booking booking) {
         if (booking.getBonusPointsUsed() == null || booking.getBonusPointsUsed() <= 0) {
             return;
         }
-        var card = getCardByUserId(booking.getUser().getId());
         var points = booking.getBonusPointsUsed();
-        int oldBalance = card.getPointsBalance();
-        addPointsToCard(card, points);
-        bonusCardRepository.save(card);
-        auditPointsRefunded(card, booking, oldBalance);
-        createTransaction(card, points, BonusTransactionType.REFUND_RETURN, "REFUND_BOOKING_" + booking.getId(),
-                booking);
+        var result = executeWithOptimisticLockRetry(() -> {
+            var card = getCardByUserId(booking.getUser().getId());
+            int oldBalance = card.getPointsBalance();
+            addPointsToCard(card, points);
+            bonusCardRepository.save(card);
+            createTransaction(card, points, BonusTransactionType.REFUND_RETURN, "REFUND_BOOKING_" + booking.getId(),
+                    booking);
+            return new CardBalanceChange(card, oldBalance);
+        });
+        auditPointsRefunded(result.card(), booking, result.oldBalance());
     }
 
     @CacheEvict(value = "bonus", allEntries = true)
-    @Transactional
     public void refundPointsForTicket(Long userId, Integer points, String referenceId) {
         if (points == null || points <= 0) {
             return;
         }
-        if (bonusTransactionRepository.existsByReferenceId(referenceId)) {
-            log.debug("Bonus refund for reference {} already applied, skipping", referenceId);
+        var result = executeWithOptimisticLockRetry(() -> {
+            if (bonusTransactionRepository.existsByReferenceId(referenceId)) {
+                log.debug("Bonus refund for reference {} already applied, skipping", referenceId);
+                return null;
+            }
+            var card = getCardByUserId(userId);
+            int oldBalance = card.getPointsBalance();
+            addPointsToCard(card, points);
+            bonusCardRepository.save(card);
+            createTransaction(card, points, BonusTransactionType.REFUND_RETURN, referenceId);
+            return new CardBalanceChange(card, oldBalance);
+        });
+
+        if (result == null) {
             return;
         }
-        var card = getCardByUserId(userId);
-        int oldBalance = card.getPointsBalance();
-        addPointsToCard(card, points);
-        bonusCardRepository.save(card);
-        auditBonusChange(card.getId(), "Ticket " + referenceId, AuditAction.POINTS_REFUNDED,
-                Map.of("points", oldBalance), Map.of("points", card.getPointsBalance()));
-        createTransaction(card, points, BonusTransactionType.REFUND_RETURN, referenceId);
+        auditBonusChange(result.card().getId(), "Ticket " + referenceId, AuditAction.POINTS_REFUNDED,
+                Map.of("points", result.oldBalance()), Map.of("points", result.card().getPointsBalance()));
     }
 
     public BonusCard getOrCreateCard(User user) {
         return bonusCardRepository.findByUserId(user.getId()).orElseGet(() -> createBonusCard(user));
+    }
+
+    private void executeWithOptimisticLockRetry(Runnable action) {
+        executeWithOptimisticLockRetry(() -> {
+            action.run();
+            return null;
+        });
+    }
+
+    private <T> T executeWithOptimisticLockRetry(Supplier<T> action) {
+        ObjectOptimisticLockingFailureException lastError = null;
+        for (int attempt = 1; attempt <= MAX_OPTIMISTIC_LOCK_ATTEMPTS; attempt++) {
+            try {
+                return transactionTemplate.execute(status -> action.get());
+            } catch (ObjectOptimisticLockingFailureException e) {
+                lastError = e;
+                log.warn("Attempt {}/{} to update bonus card failed due to concurrent update", attempt,
+                        MAX_OPTIMISTIC_LOCK_ATTEMPTS, e);
+            }
+        }
+        throw new BonusCardConcurrentModificationException(lastError);
+    }
+
+    private record CardBalanceChange(BonusCard card, int oldBalance) {
     }
 
     private BonusCard createBonusCard(User user) {

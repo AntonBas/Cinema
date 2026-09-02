@@ -8,6 +8,7 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.PlatformTransactionManager;
 import ua.lviv.bas.cinema.bonus.domain.BonusCard;
 import ua.lviv.bas.cinema.bonus.domain.BonusRules;
 import ua.lviv.bas.cinema.bonus.domain.BonusTransaction;
@@ -43,6 +44,8 @@ public class BonusLedgerServiceTest {
     private BonusQueryService bonusQueryService;
     @Mock
     private AuditService auditService;
+    @Mock
+    private PlatformTransactionManager transactionManager;
     @InjectMocks
     private BonusLedgerService bonusLedgerService;
     @Captor
