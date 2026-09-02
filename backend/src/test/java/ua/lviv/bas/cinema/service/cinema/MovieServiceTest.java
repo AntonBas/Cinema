@@ -33,7 +33,6 @@ import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
 import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
 import ua.lviv.bas.cinema.repository.cinema.specification.MovieSpecification;
-import ua.lviv.bas.cinema.scheduler.MovieScheduler;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.integration.file.PosterService;
 import ua.lviv.bas.cinema.service.integration.slug.SlugService;
@@ -63,7 +62,7 @@ public class MovieServiceTest {
     @Mock
     private SlugService slugService;
     @Mock
-    private MovieScheduler movieScheduler;
+    private MovieStatusCalculator movieStatusCalculator;
     @Mock
     private PosterService posterService;
     @Mock
@@ -139,7 +138,7 @@ public class MovieServiceTest {
         when(slugService.generateUniqueSlug(MOVIE_TITLE)).thenReturn(SLUG);
         when(movieRepository.findBySlug(SLUG)).thenReturn(Optional.empty());
         when(movieMapper.toMovie(createRequest)).thenReturn(movie);
-        when(movieScheduler.calculateMovieStatus(any(Movie.class), any(LocalDate.class)))
+        when(movieStatusCalculator.calculate(any(Movie.class), any(LocalDate.class)))
                 .thenReturn(MovieStatus.UPCOMING);
         when(posterService.uploadPoster(any())).thenReturn("poster.jpg");
         doNothing().when(auditService).logChange(anyString(), any(), anyString(), any(), any(), any());
@@ -282,7 +281,7 @@ public class MovieServiceTest {
 
         when(movieRepository.findMovieById(MOVIE_ID)).thenReturn(Optional.of(existingMovie));
         when(movieRepository.existsByTitle("Updated Title")).thenReturn(false);
-        when(movieScheduler.calculateMovieStatus(any(Movie.class), any(LocalDate.class)))
+        when(movieStatusCalculator.calculate(any(Movie.class), any(LocalDate.class)))
                 .thenReturn(MovieStatus.UPCOMING);
         doNothing().when(auditService).logChange(anyString(), any(), anyString(), any(), any(), any());
 
@@ -335,7 +334,7 @@ public class MovieServiceTest {
                 .build();
 
         when(movieRepository.findMovieById(MOVIE_ID)).thenReturn(Optional.of(existingMovie));
-        when(movieScheduler.calculateMovieStatus(any(Movie.class), any(LocalDate.class)))
+        when(movieStatusCalculator.calculate(any(Movie.class), any(LocalDate.class)))
                 .thenReturn(MovieStatus.UPCOMING);
         doNothing().when(auditService).logChange(anyString(), any(), anyString(), any(), any(), any());
         when(genreRepository.findAllById(anyList())).thenReturn(List.of());

@@ -31,7 +31,6 @@ import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 import ua.lviv.bas.cinema.repository.cinema.PersonRepository;
 import ua.lviv.bas.cinema.repository.cinema.SessionRepository;
 import ua.lviv.bas.cinema.repository.cinema.specification.MovieSpecification;
-import ua.lviv.bas.cinema.scheduler.MovieScheduler;
 import ua.lviv.bas.cinema.service.integration.audit.AuditDetails;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
 import ua.lviv.bas.cinema.service.integration.file.PosterService;
@@ -55,7 +54,7 @@ public class MovieService {
     private final PersonRepository personRepository;
     private final MovieMapper movieMapper;
     private final SlugService slugService;
-    private final MovieScheduler movieScheduler;
+    private final MovieStatusCalculator movieStatusCalculator;
     private final PosterService posterService;
     private final AuditService auditService;
     private final SessionRepository sessionRepository;
@@ -72,7 +71,7 @@ public class MovieService {
 
         var movie = movieMapper.toMovie(request);
         movie.setSlug(generateUniqueSlug(request.getTitle(), null));
-        movie.setStatus(movieScheduler.calculateMovieStatus(movie, LocalDate.now()));
+        movie.setStatus(movieStatusCalculator.calculate(movie, LocalDate.now()));
 
         String posterFileName = null;
         try {
@@ -190,7 +189,7 @@ public class MovieService {
         }
 
         handlePoster(movie, request.getPosterFile(), Boolean.TRUE.equals(request.getRemovePoster()));
-        movie.setStatus(movieScheduler.calculateMovieStatus(movie, LocalDate.now()));
+        movie.setStatus(movieStatusCalculator.calculate(movie, LocalDate.now()));
         setMovieRelations(movie, request.getGenreIds(), request.getActorIds(), request.getDirectorIds(),
                 request.getScreenwriterIds());
 

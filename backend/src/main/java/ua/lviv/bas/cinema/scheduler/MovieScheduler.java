@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.domain.cinema.Movie;
 import ua.lviv.bas.cinema.domain.cinema.status.MovieStatus;
 import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
+import ua.lviv.bas.cinema.service.cinema.MovieStatusCalculator;
 
 @Slf4j
 @Component
@@ -19,6 +20,7 @@ import ua.lviv.bas.cinema.repository.cinema.MovieRepository;
 public class MovieScheduler {
 
 	private final MovieRepository movieRepository;
+	private final MovieStatusCalculator movieStatusCalculator;
 
 	@Scheduled(cron = "${scheduler.movie-status.cron:0 */5 * * * *}")
 	@Transactional
@@ -36,7 +38,7 @@ public class MovieScheduler {
 
 		for (Movie movie : allMovies) {
 			MovieStatus currentStatus = movie.getStatus();
-			MovieStatus newStatus = calculateMovieStatus(movie, today);
+			MovieStatus newStatus = movieStatusCalculator.calculate(movie, today);
 
 			if (currentStatus != newStatus) {
 				movie.setStatus(newStatus);
@@ -62,19 +64,5 @@ public class MovieScheduler {
 		log.info("Movie status summary - CURRENT: {}, UPCOMING: {}, ARCHIVED: {}", currentCount, upcomingCount,
 				archivedCount);
 		log.info("Movie status update completed");
-	}
-
-	public MovieStatus calculateMovieStatus(Movie movie, LocalDate referenceDate) {
-		if (movie == null || movie.getReleaseDate() == null) {
-			return MovieStatus.UNKNOWN;
-		}
-
-		if (referenceDate.isBefore(movie.getReleaseDate())) {
-			return MovieStatus.UPCOMING;
-		} else if (movie.getEndShowingDate() != null && referenceDate.isAfter(movie.getEndShowingDate())) {
-			return MovieStatus.ARCHIVED;
-		} else {
-			return MovieStatus.CURRENT;
-		}
 	}
 }
