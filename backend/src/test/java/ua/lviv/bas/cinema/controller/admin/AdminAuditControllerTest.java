@@ -14,6 +14,7 @@ import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.audit.AuditLog;
 import ua.lviv.bas.cinema.dto.audit.AuditLogResponse;
 import ua.lviv.bas.cinema.dto.common.PageResponse;
+import ua.lviv.bas.cinema.exception.domain.audit.AuditHistoryNotFoundException;
 import ua.lviv.bas.cinema.mapper.audit.AuditLogMapper;
 import ua.lviv.bas.cinema.service.integration.audit.AuditQueryService;
 
@@ -21,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -120,17 +122,14 @@ public class AdminAuditControllerTest {
     }
 
     @Test
-    void getEntityHistory_WhenNoLogs_ShouldReturnNotFound() {
+    void getEntityHistory_WhenNoLogs_ShouldThrowNotFound() {
         String entityType = "BonusRules";
         Long entityId = 999L;
 
         when(auditQueryService.findByEntityTypeAndEntityId(entityType, entityId)).thenReturn(List.of());
 
-        ResponseEntity<List<AuditLogResponse>> result = adminAuditController.getEntityHistory(entityType, entityId);
-
-        assertThat(result.getStatusCode().is4xxClientError()).isTrue();
-        assertThat(result.getStatusCode().value()).isEqualTo(404);
-        assertThat(result.getBody()).isNull();
+        assertThatThrownBy(() -> adminAuditController.getEntityHistory(entityType, entityId))
+                .isInstanceOf(AuditHistoryNotFoundException.class);
     }
 
     @Test
