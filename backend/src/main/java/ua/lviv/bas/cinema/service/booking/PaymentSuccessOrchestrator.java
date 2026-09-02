@@ -10,7 +10,7 @@ import ua.lviv.bas.cinema.bonus.service.BonusQueryService;
 import ua.lviv.bas.cinema.common.DateTimeFormatterService;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.service.notification.EmailService;
-import ua.lviv.bas.cinema.service.ticket.TicketService;
+import ua.lviv.bas.cinema.ticket.service.TicketService;
 
 import java.util.stream.Collectors;
 

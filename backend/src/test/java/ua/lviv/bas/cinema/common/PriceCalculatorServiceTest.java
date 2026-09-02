@@ -8,7 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.cinema.domain.Seat;
 import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.cinema.domain.enums.SeatType;
-import ua.lviv.bas.cinema.domain.ticket.TicketType;
+import ua.lviv.bas.cinema.ticket.domain.TicketType;
 
 import java.math.BigDecimal;
 

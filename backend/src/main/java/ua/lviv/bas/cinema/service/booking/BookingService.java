@@ -24,7 +24,7 @@ import ua.lviv.bas.cinema.mapper.booking.BookingMapper;
 import ua.lviv.bas.cinema.repository.booking.BookingRepository;
 import ua.lviv.bas.cinema.repository.booking.SeatReservationRepository;
 import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
-import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
+import ua.lviv.bas.cinema.ticket.repository.TicketTypeRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.bonus.service.BonusQueryService;
 import ua.lviv.bas.cinema.common.PriceCalculatorService;

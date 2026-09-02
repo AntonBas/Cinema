@@ -9,7 +9,7 @@ import ua.lviv.bas.cinema.domain.audit.AuditableEntity;
 import ua.lviv.bas.cinema.bonus.domain.BonusCard;
 import ua.lviv.bas.cinema.domain.booking.Booking;
 import ua.lviv.bas.cinema.domain.promotion.UserPromotion;
-import ua.lviv.bas.cinema.domain.ticket.Ticket;
+import ua.lviv.bas.cinema.ticket.domain.Ticket;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

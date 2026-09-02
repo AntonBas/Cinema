@@ -11,15 +11,15 @@ import ua.lviv.bas.cinema.domain.booking.RefundItem;
 import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
 import ua.lviv.bas.cinema.domain.booking.status.RefundItemStatus;
 import ua.lviv.bas.cinema.domain.booking.status.RefundStatus;
-import ua.lviv.bas.cinema.domain.ticket.Ticket;
+import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.refund.TicketNotRefundableException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;
 import ua.lviv.bas.cinema.repository.booking.RefundRepository;
-import ua.lviv.bas.cinema.repository.ticket.TicketRepository;
+import ua.lviv.bas.cinema.ticket.repository.TicketRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.service.integration.audit.AuditService;
-import ua.lviv.bas.cinema.service.ticket.TicketService;
+import ua.lviv.bas.cinema.ticket.service.TicketService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

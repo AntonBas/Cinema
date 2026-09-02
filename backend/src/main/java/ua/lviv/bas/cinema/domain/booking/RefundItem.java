@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ua.lviv.bas.cinema.domain.audit.AuditableEntity;
 import ua.lviv.bas.cinema.domain.booking.status.RefundItemStatus;
-import ua.lviv.bas.cinema.domain.ticket.Ticket;
+import ua.lviv.bas.cinema.ticket.domain.Ticket;
 
 @Entity
 @Getter

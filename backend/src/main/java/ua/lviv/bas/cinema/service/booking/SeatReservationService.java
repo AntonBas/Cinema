@@ -11,7 +11,7 @@ import ua.lviv.bas.cinema.domain.booking.SeatReservation;
 import ua.lviv.bas.cinema.domain.booking.status.ReservationStatus;
 import ua.lviv.bas.cinema.cinema.domain.Seat;
 import ua.lviv.bas.cinema.cinema.domain.Session;
-import ua.lviv.bas.cinema.domain.ticket.TicketType;
+import ua.lviv.bas.cinema.ticket.domain.TicketType;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.dto.booking.response.SeatReservationResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
@@ -20,7 +20,7 @@ import ua.lviv.bas.cinema.mapper.booking.SeatReservationMapper;
 import ua.lviv.bas.cinema.repository.booking.SeatReservationRepository;
 import ua.lviv.bas.cinema.cinema.repository.SeatRepository;
 import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
-import ua.lviv.bas.cinema.repository.ticket.TicketTypeRepository;
+import ua.lviv.bas.cinema.ticket.repository.TicketTypeRepository;
 import ua.lviv.bas.cinema.common.PriceCalculatorService;
 
 import java.time.LocalDateTime;

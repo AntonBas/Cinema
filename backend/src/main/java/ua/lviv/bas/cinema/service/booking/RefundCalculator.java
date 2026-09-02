@@ -3,8 +3,8 @@ package ua.lviv.bas.cinema.service.booking;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ua.lviv.bas.cinema.config.properties.RefundRules;
-import ua.lviv.bas.cinema.domain.ticket.Ticket;
-import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
+import ua.lviv.bas.cinema.ticket.domain.Ticket;
+import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.domain.booking.Payment;
 import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
-import ua.lviv.bas.cinema.domain.ticket.Ticket;
+import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
 import ua.lviv.bas.cinema.common.DateTimeFormatterService;

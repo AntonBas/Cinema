@@ -3,7 +3,7 @@ package ua.lviv.bas.cinema.common;
 import org.springframework.stereotype.Service;
 import ua.lviv.bas.cinema.cinema.domain.Seat;
 import ua.lviv.bas.cinema.cinema.domain.Session;
-import ua.lviv.bas.cinema.domain.ticket.TicketType;
+import ua.lviv.bas.cinema.ticket.domain.TicketType;
 
 import java.math.BigDecimal;
 
