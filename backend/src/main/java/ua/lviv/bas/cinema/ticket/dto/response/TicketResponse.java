@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.ticket.dto.ticket.response;
+package ua.lviv.bas.cinema.ticket.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import ua.lviv.bas.cinema.ticket.domain.TicketStatus;

@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.integration.service;
+package ua.lviv.bas.cinema.integration;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;

@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.notification.service;
+package ua.lviv.bas.cinema.notification;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

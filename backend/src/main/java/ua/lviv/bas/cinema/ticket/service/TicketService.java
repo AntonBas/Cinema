@@ -21,8 +21,8 @@ import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
 import ua.lviv.bas.cinema.user.domain.User;
-import ua.lviv.bas.cinema.ticket.dto.ticket.response.TicketCashierResponse;
-import ua.lviv.bas.cinema.ticket.dto.ticket.response.TicketResponse;
+import ua.lviv.bas.cinema.ticket.dto.response.TicketCashierResponse;
+import ua.lviv.bas.cinema.ticket.dto.response.TicketResponse;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketValidationException;
 import ua.lviv.bas.cinema.ticket.mapper.TicketMapper;
@@ -31,7 +31,7 @@ import ua.lviv.bas.cinema.ticket.repository.specification.TicketSpecification;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
-import ua.lviv.bas.cinema.integration.service.QRCodeService;
+import ua.lviv.bas.cinema.integration.QRCodeService;
 
 import java.time.LocalDateTime;
 

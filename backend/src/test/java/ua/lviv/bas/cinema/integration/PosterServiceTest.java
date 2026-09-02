@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.integration.service;
+package ua.lviv.bas.cinema.integration;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

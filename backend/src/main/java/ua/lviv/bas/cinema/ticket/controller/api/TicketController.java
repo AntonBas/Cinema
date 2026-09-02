@@ -16,7 +16,7 @@ import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
 import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
 import ua.lviv.bas.cinema.common.PageResponse;
-import ua.lviv.bas.cinema.ticket.dto.ticket.response.TicketResponse;
+import ua.lviv.bas.cinema.ticket.dto.response.TicketResponse;
 import ua.lviv.bas.cinema.ticket.service.TicketService;
 
 @Slf4j

@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.notification.service;
+package ua.lviv.bas.cinema.notification;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

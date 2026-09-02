@@ -4,8 +4,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ua.lviv.bas.cinema.ticket.domain.TicketType;
 import ua.lviv.bas.cinema.ticket.domain.TicketTypeCategory;
-import ua.lviv.bas.cinema.ticket.dto.tickettype.request.TicketTypeRequest;
-import ua.lviv.bas.cinema.ticket.dto.tickettype.response.TicketTypeResponse;
+import ua.lviv.bas.cinema.ticket.dto.request.TicketTypeRequest;
+import ua.lviv.bas.cinema.ticket.dto.response.TicketTypeResponse;
 import ua.lviv.bas.cinema.ticket.repository.projection.TicketTypeProjection;
 
 import java.math.BigDecimal;

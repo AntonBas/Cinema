@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import ua.lviv.bas.cinema.ticket.dto.ticket.response.TicketCashierResponse;
+import ua.lviv.bas.cinema.ticket.dto.response.TicketCashierResponse;
 import ua.lviv.bas.cinema.ticket.service.TicketService;
 
 @Slf4j

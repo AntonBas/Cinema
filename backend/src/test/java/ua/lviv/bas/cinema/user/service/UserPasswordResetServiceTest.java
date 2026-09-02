@@ -17,7 +17,7 @@ import ua.lviv.bas.cinema.exception.domain.user.EmailNotVerifiedException;
 import ua.lviv.bas.cinema.user.repository.EmailTokenRepository;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
 import ua.lviv.bas.cinema.audit.service.AuditService;
-import ua.lviv.bas.cinema.notification.service.EmailTokenGeneratorService;
+import ua.lviv.bas.cinema.notification.EmailTokenGeneratorService;
 
 import java.time.LocalDateTime;
 import java.util.Optional;

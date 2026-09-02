@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.integration.service;
+package ua.lviv.bas.cinema.integration;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;

@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.notification.service;
+package ua.lviv.bas.cinema.notification;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

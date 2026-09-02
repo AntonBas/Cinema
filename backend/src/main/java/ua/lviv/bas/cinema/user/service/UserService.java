@@ -29,7 +29,7 @@ import ua.lviv.bas.cinema.user.mapper.UserMapper;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
-import ua.lviv.bas.cinema.notification.service.EmailTokenGeneratorService;
+import ua.lviv.bas.cinema.notification.EmailTokenGeneratorService;
 
 @Slf4j
 @Service

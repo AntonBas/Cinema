@@ -16,7 +16,7 @@ import ua.lviv.bas.cinema.exception.domain.auth.TokenExpiredException;
 import ua.lviv.bas.cinema.user.repository.EmailTokenRepository;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
-import ua.lviv.bas.cinema.notification.service.EmailService;
+import ua.lviv.bas.cinema.notification.EmailService;
 
 import java.time.LocalDateTime;
 

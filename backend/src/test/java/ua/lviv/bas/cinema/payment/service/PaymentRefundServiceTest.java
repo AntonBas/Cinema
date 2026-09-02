@@ -20,7 +20,7 @@ import ua.lviv.bas.cinema.common.DateTimeFormatterService;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 import ua.lviv.bas.cinema.payment.service.PaymentGatewayService;
-import ua.lviv.bas.cinema.notification.service.EmailService;
+import ua.lviv.bas.cinema.notification.EmailService;
 import ua.lviv.bas.cinema.support.CinemaTestFixtures;
 
 import java.math.BigDecimal;

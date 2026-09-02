@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.ticket.dto.tickettype.request;
+package ua.lviv.bas.cinema.ticket.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;

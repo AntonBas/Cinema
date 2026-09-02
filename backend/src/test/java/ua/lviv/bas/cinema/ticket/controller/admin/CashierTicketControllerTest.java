@@ -8,7 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
-import ua.lviv.bas.cinema.ticket.dto.ticket.response.TicketCashierResponse;
+import ua.lviv.bas.cinema.ticket.dto.response.TicketCashierResponse;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;
 import ua.lviv.bas.cinema.ticket.service.TicketService;
 

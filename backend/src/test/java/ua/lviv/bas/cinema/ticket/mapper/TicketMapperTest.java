@@ -12,8 +12,8 @@ import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
 import ua.lviv.bas.cinema.ticket.domain.TicketType;
 import ua.lviv.bas.cinema.user.domain.User;
-import ua.lviv.bas.cinema.ticket.dto.ticket.response.TicketCashierResponse;
-import ua.lviv.bas.cinema.ticket.dto.ticket.response.TicketResponse;
+import ua.lviv.bas.cinema.ticket.dto.response.TicketCashierResponse;
+import ua.lviv.bas.cinema.ticket.dto.response.TicketResponse;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
