@@ -158,34 +158,58 @@ Trade-off:
 
 ## Architecture
 
+Package by Feature + Layer: each business domain (`booking/`, `payment/`, `refund/`, `bonus/`, ...)
+is a self-contained package with its own controller/service/repository/domain/dto/mapper layers,
+instead of one global layer shared by the whole app.
+
 ```mermaid
 flowchart TD
     A[React Frontend] --> B[Spring Boot API]
 
-    B --> C[Booking Service]
-    B --> D[Payment Service]
-    B --> E[Bonus Service]
+    B --> BK["booking/"]
+    B --> PM["payment/"]
+    B --> RF["refund/"]
+    B --> BN["bonus/"]
+    B --> MV["movie/ · cinema/ · ticket/ · user/ · ..."]
 
-    C --> DB[(PostgreSQL)]
-    D --> DB
-    E --> DB
+    BK --> DB[(PostgreSQL)]
+    PM --> DB
+    RF --> DB
+    BN --> DB
+    MV --> DB
 
-    D --> P[LiqPay API]
+    PM --> P[LiqPay API]
     P --> CB[Callback Handler]
-    CB --> D
+    CB --> PM
+    RF --> P
 
-    S[Scheduler] --> DB
+    S["Schedulers (per domain)"] --> DB
 ```
 
-### Layers
+`payment/` and `refund/` used to live inside the booking package as a single "Payment Service" —
+they're now their own domains, connected in one direction only (`refund → payment → booking`, never
+back), which is what makes the split safe.
 
-| Layer          | Responsibility                 |
-| -------------- | ------------------------------ |
-| Presentation   | REST API, validation, auth     |
-| Application    | Business logic, orchestration  |
-| Domain         | Core entities and rules        |
-| Persistence    | JPA, DB access                 |
-| Infrastructure | Payment integration, scheduler |
+### Package Structure
+
+Every domain package carries the same internal layers:
+
+| Layer        | Responsibility                       |
+| ------------ | ------------------------------------- |
+| `controller/`| REST API, request validation          |
+| `service/`   | Business logic, orchestration         |
+| `domain/`    | JPA entities and business rules       |
+| `repository/`| Spring Data JPA access                |
+| `dto/`       | Request/response payloads             |
+| `mapper/`    | Entity ↔ DTO mapping (MapStruct)      |
+
+`config/` (security, cache, rate limiting, ...) and `exception/` stay global across every domain.
+`common/` holds small stateless utilities (pagination, price/date/number formatting) with no
+domain of their own.
+
+**13 domain packages:** `movie`, `cinema`, `user`, `booking`, `payment`, `refund`, `bonus`,
+`ticket`, `promotion`, `audit`, `notification`, `integration`, `common`. See
+[docs/DOCS.md](docs/DOCS.md#-project-structure) for what each one owns.
 
 ---
 
