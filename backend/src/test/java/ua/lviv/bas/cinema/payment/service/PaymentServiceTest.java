@@ -214,6 +214,9 @@ public class PaymentServiceTest {
         callbackData.put("transaction_id", "TXN123");
         callbackData.put("sender_card_mask", "****1234");
 
+        when(paymentRepository.updateStatusIfCurrentIn(eq(PAYMENT_ID), anyList(), eq(PaymentStatus.SUCCESS)))
+                .thenReturn(1);
+
         paymentService.processSuccess(testPayment, callbackData);
 
         assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
@@ -253,6 +256,8 @@ public class PaymentServiceTest {
 
         when(dateTimeFormatter.formatStandard(any(LocalDateTime.class))).thenReturn("2024-01-01 14:00");
         when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
+        when(paymentRepository.updateStatusIfCurrentIn(eq(PAYMENT_ID), anyList(), eq(PaymentStatus.FAILED)))
+                .thenReturn(1);
 
         paymentService.processFailure(testPayment, callbackData);
 

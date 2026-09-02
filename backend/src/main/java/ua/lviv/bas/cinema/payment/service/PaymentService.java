@@ -27,7 +27,9 @@ import ua.lviv.bas.cinema.common.DateTimeFormatterService;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -36,6 +38,9 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Transactional
 public class PaymentService {
+
+    private static final List<PaymentStatus> ACTIVE_STATUSES = Arrays.stream(PaymentStatus.values())
+            .filter(PaymentStatus::isActive).toList();
 
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
@@ -110,12 +115,15 @@ public class PaymentService {
     }
 
     public void processSuccess(Payment payment, Map<String, String> callbackData) {
-        if (payment.getStatus() == PaymentStatus.SUCCESS) {
-            log.warn("Payment {} already processed as SUCCESS, ignoring duplicate callback", payment.getId());
+        var oldStatus = payment.getStatus();
+
+        int updated = paymentRepository.updateStatusIfCurrentIn(payment.getId(), ACTIVE_STATUSES,
+                PaymentStatus.SUCCESS);
+        if (updated == 0) {
+            log.warn("Payment {} already processed (status={}), ignoring duplicate callback", payment.getId(),
+                    oldStatus);
             return;
         }
-
-        var oldStatus = payment.getStatus();
 
         payment.setStatus(PaymentStatus.SUCCESS);
         payment.setPaymentTime(LocalDateTime.now());
@@ -130,12 +138,15 @@ public class PaymentService {
     }
 
     public void processFailure(Payment payment, Map<String, String> callbackData) {
-        if (payment.getStatus() == PaymentStatus.FAILED) {
-            log.warn("Payment {} already processed as FAILED, ignoring duplicate callback", payment.getId());
+        var oldStatus = payment.getStatus();
+
+        int updated = paymentRepository.updateStatusIfCurrentIn(payment.getId(), ACTIVE_STATUSES,
+                PaymentStatus.FAILED);
+        if (updated == 0) {
+            log.warn("Payment {} already processed (status={}), ignoring duplicate callback", payment.getId(),
+                    oldStatus);
             return;
         }
-
-        var oldStatus = payment.getStatus();
 
         payment.setStatus(PaymentStatus.FAILED);
         payment.setLiqpayErrorCode(callbackData.get("err_code"));
