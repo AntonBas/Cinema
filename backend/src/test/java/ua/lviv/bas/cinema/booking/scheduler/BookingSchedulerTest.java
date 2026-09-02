@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.transaction.PlatformTransactionManager;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.booking.domain.SeatReservation;
@@ -22,6 +23,7 @@ import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -44,6 +46,8 @@ public class BookingSchedulerTest {
     private CacheManager cacheManager;
     @Mock
     private Cache cache;
+    @Mock
+    private PlatformTransactionManager transactionManager;
 
     @InjectMocks
     private BookingScheduler bookingScheduler;
@@ -76,6 +80,7 @@ public class BookingSchedulerTest {
 
         when(bookingRepository.findByStatusAndExpiresAtBefore(eq(BookingStatus.PENDING), any(LocalDateTime.class)))
                 .thenReturn(List.of(booking));
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
         when(cacheManager.getCache(anyString())).thenReturn(cache);
 
         bookingScheduler.processExpiredBookings();
@@ -89,7 +94,7 @@ public class BookingSchedulerTest {
         verify(cacheManager).getCache("seatAvailability");
         verify(cacheManager).getCache("availableSeatsCount");
         verify(cache, times(2)).evict(SESSION_ID);
-        verify(bookingRepository).saveAll(List.of(booking));
+        verify(bookingRepository).save(booking);
     }
 
     @Test
@@ -100,6 +105,7 @@ public class BookingSchedulerTest {
 
         when(bookingRepository.findByStatusAndExpiresAtBefore(eq(BookingStatus.PENDING), any(LocalDateTime.class)))
                 .thenReturn(List.of(booking));
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
         when(cacheManager.getCache(anyString())).thenReturn(cache);
 
         bookingScheduler.processExpiredBookings();

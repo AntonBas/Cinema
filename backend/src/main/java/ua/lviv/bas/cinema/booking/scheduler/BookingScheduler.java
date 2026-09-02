@@ -6,11 +6,13 @@ import java.util.Objects;
 
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.payment.domain.Payment;
@@ -18,22 +20,33 @@ import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.booking.domain.status.ReservationStatus;
 import ua.lviv.bas.cinema.booking.repository.BookingRepository;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
 import ua.lviv.bas.cinema.booking.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class BookingScheduler {
 	private final BookingRepository bookingRepository;
 	private final PaymentRepository paymentRepository;
 	private final SeatReservationRepository seatReservationRepository;
 	private final BonusLedgerService bonusLedgerService;
 	private final CacheManager cacheManager;
+	private final TransactionTemplate transactionTemplate;
+
+	public BookingScheduler(BookingRepository bookingRepository, PaymentRepository paymentRepository,
+			SeatReservationRepository seatReservationRepository, BonusLedgerService bonusLedgerService,
+			CacheManager cacheManager, PlatformTransactionManager transactionManager) {
+		this.bookingRepository = bookingRepository;
+		this.paymentRepository = paymentRepository;
+		this.seatReservationRepository = seatReservationRepository;
+		this.bonusLedgerService = bonusLedgerService;
+		this.cacheManager = cacheManager;
+		this.transactionTemplate = new TransactionTemplate(transactionManager);
+	}
 
 	@Scheduled(fixedRateString = "${scheduler.booking.expiration-interval:60000}")
-	@Transactional
 	public void processExpiredBookings() {
 		log.debug("Starting expired bookings processing");
 		LocalDateTime now = LocalDateTime.now();
@@ -46,27 +59,42 @@ public class BookingScheduler {
 
 		log.info("Found {} expired bookings to process", expiredBookings.size());
 
+		int expiredCount = 0;
 		for (Booking booking : expiredBookings) {
-			booking.setStatus(BookingStatus.EXPIRED);
-
-			booking.getSeatReservations().forEach(sr -> {
-				sr.setStatus(ReservationStatus.EXPIRED);
-				sr.setBooking(null);
-			});
-
-			seatReservationRepository.saveAll(Objects.requireNonNull(booking.getSeatReservations(),
-					"Booking seat reservations must not be null"));
-
-			if (booking.getBonusPointsUsed() != null && booking.getBonusPointsUsed() > 0) {
-				bonusLedgerService.refundPoints(booking);
+			Long bookingId = booking.getId();
+			try {
+				transactionTemplate.executeWithoutResult(status -> expireBooking(bookingId));
+				expiredCount++;
+			} catch (ObjectOptimisticLockingFailureException e) {
+				log.warn("Skipped expiring booking {} due to concurrent update, will retry on next run", bookingId);
 			}
-
-			evictCacheIfPresent("seatAvailability", booking.getSession().getId());
-			evictCacheIfPresent("availableSeatsCount", booking.getSession().getId());
 		}
 
-		bookingRepository.saveAll(expiredBookings);
-		log.info("Successfully expired {} bookings", expiredBookings.size());
+		log.info("Successfully expired {} of {} bookings", expiredCount, expiredBookings.size());
+	}
+
+	private void expireBooking(Long bookingId) {
+		Booking booking = bookingRepository.findById(bookingId)
+				.orElseThrow(() -> new EntityNotFoundException("Booking", bookingId));
+
+		booking.setStatus(BookingStatus.EXPIRED);
+
+		booking.getSeatReservations().forEach(sr -> {
+			sr.setStatus(ReservationStatus.EXPIRED);
+			sr.setBooking(null);
+		});
+
+		seatReservationRepository.saveAll(Objects.requireNonNull(booking.getSeatReservations(),
+				"Booking seat reservations must not be null"));
+
+		if (booking.getBonusPointsUsed() != null && booking.getBonusPointsUsed() > 0) {
+			bonusLedgerService.refundPoints(booking);
+		}
+
+		bookingRepository.save(booking);
+
+		evictCacheIfPresent("seatAvailability", booking.getSession().getId());
+		evictCacheIfPresent("availableSeatsCount", booking.getSession().getId());
 	}
 
 	@Scheduled(fixedRateString = "${scheduler.payment.expiration-interval:300000}")
