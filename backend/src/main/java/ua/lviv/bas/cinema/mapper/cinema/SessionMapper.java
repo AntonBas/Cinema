@@ -18,6 +18,8 @@ import ua.lviv.bas.cinema.dto.session.response.SessionScheduleResponse;
 import ua.lviv.bas.cinema.repository.cinema.projection.SessionAdminProjection;
 import ua.lviv.bas.cinema.repository.cinema.projection.SessionScheduleProjection;
 
+import java.time.LocalDateTime;
+
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface SessionMapper {
 
@@ -26,7 +28,11 @@ public interface SessionMapper {
 		return status != null ? CinemaSessionStatus.valueOf(status) : null;
 	}
 
-	@Mapping(target = "endTime", expression = "java(session.getMovie() != null ? session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes()) : null)")
+	default LocalDateTime calculateEndTime(LocalDateTime startTime, Integer durationMinutes) {
+		return startTime != null && durationMinutes != null ? startTime.plusMinutes(durationMinutes) : null;
+	}
+
+	@Mapping(target = "endTime", expression = "java(calculateEndTime(session.getStartTime(), session.getMovie() != null ? session.getMovie().getDurationMinutes() : null))")
 	@Mapping(target = "movieId", source = "movie.id")
 	@Mapping(target = "movieTitle", source = "movie.title")
 	@Mapping(target = "movieDuration", source = "movie.durationMinutes")
@@ -34,14 +40,14 @@ public interface SessionMapper {
 	@Mapping(target = "hallName", source = "hall.name")
 	SessionResponse toSessionResponse(Session session);
 
-	@Mapping(target = "endTime", expression = "java(projection.getStartTime().plusMinutes(projection.getMovieDuration()))")
+	@Mapping(target = "endTime", expression = "java(calculateEndTime(projection.getStartTime(), projection.getMovieDuration()))")
 	@Mapping(target = "status", source = "status", qualifiedByName = "stringToStatus")
 	@Mapping(target = "hallCapacity", source = "hallCapacity")
 	@Mapping(target = "ticketsSold", source = "ticketsSold")
 	@Mapping(target = "totalRevenue", source = "totalRevenue")
 	SessionAdminResponse toSessionAdminResponse(SessionAdminProjection projection);
 
-	@Mapping(target = "endTime", expression = "java(projection.getStartTime().plusMinutes(projection.getMovieDuration()))")
+	@Mapping(target = "endTime", expression = "java(calculateEndTime(projection.getStartTime(), projection.getMovieDuration()))")
 	@Mapping(target = "withAvailableSeats", ignore = true)
 	SessionScheduleResponse toSessionScheduleResponse(SessionScheduleProjection projection);
 
