@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.domain.audit.AuditAction;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.payment.domain.Payment;
-import ua.lviv.bas.cinema.domain.booking.Refund;
+import ua.lviv.bas.cinema.refund.domain.Refund;
 import ua.lviv.bas.cinema.booking.domain.SeatReservation;
 import ua.lviv.bas.cinema.booking.domain.status.ReservationStatus;
 import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
