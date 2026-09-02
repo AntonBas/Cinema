@@ -1,7 +1,7 @@
 package ua.lviv.bas.cinema.movie.mapper;
 
 import org.mapstruct.*;
-import ua.lviv.bas.cinema.mapper.cinema.SessionMapper;
+import ua.lviv.bas.cinema.cinema.mapper.SessionMapper;
 import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.movie.dto.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.movie.dto.request.MovieUpdateRequest;

@@ -6,7 +6,7 @@ import org.springframework.util.StringUtils;
 
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Order;
-import ua.lviv.bas.cinema.domain.cinema.status.CinemaSessionStatus;
+import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.domain.ticket.Ticket;
 import ua.lviv.bas.cinema.domain.ticket.TicketStatus;
 

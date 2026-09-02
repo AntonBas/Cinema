@@ -7,8 +7,8 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 
-import ua.lviv.bas.cinema.domain.cinema.Seat;
-import ua.lviv.bas.cinema.domain.cinema.Session;
+import ua.lviv.bas.cinema.cinema.domain.Seat;
+import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.domain.ticket.TicketType;
 import ua.lviv.bas.cinema.dto.booking.response.SeatReservationResponse;
 

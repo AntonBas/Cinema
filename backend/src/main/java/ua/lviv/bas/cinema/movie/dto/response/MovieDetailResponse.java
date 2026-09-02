@@ -3,7 +3,7 @@ package ua.lviv.bas.cinema.movie.dto.response;
 import io.swagger.v3.oas.annotations.media.Schema;
 import ua.lviv.bas.cinema.movie.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.movie.domain.status.MovieStatus;
-import ua.lviv.bas.cinema.dto.session.response.SessionMovieInfoResponse;
+import ua.lviv.bas.cinema.cinema.dto.session.response.SessionMovieInfoResponse;
 
 import java.time.LocalDate;
 import java.util.List;

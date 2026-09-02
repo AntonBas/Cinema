@@ -34,7 +34,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import ua.lviv.bas.cinema.domain.audit.AuditableEntity;
-import ua.lviv.bas.cinema.domain.cinema.Session;
+import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.movie.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.movie.domain.status.MovieStatus;
 

@@ -14,7 +14,7 @@ import ua.lviv.bas.cinema.domain.booking.SeatReservation;
 import ua.lviv.bas.cinema.domain.booking.status.BookingStatus;
 import ua.lviv.bas.cinema.domain.booking.status.PaymentStatus;
 import ua.lviv.bas.cinema.domain.booking.status.ReservationStatus;
-import ua.lviv.bas.cinema.domain.cinema.Session;
+import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.repository.booking.BookingRepository;
 import ua.lviv.bas.cinema.repository.booking.PaymentRepository;
 import ua.lviv.bas.cinema.repository.booking.SeatReservationRepository;
