@@ -3,19 +3,16 @@ spring:
     activate:
       on-profile: ci
   datasource:
-    url: jdbc:h2:mem:cinema_test;DB_CLOSE_DELAY=-1
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:cinema_test}
+    username: ${DB_USER:cinema}
+    password: ${DB_PASSWORD:test}
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: validate
     show-sql: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
   flyway:
-    enabled: false
+    enabled: true
   cache:
     type: none
   security:
