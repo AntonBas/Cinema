@@ -273,7 +273,7 @@ public class BookingServiceTest {
                 .build();
 
         when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(booking));
-        when(bookingRepository.save(booking)).thenReturn(booking);
+        when(bookingRepository.saveAndFlush(booking)).thenReturn(booking);
         when(seatReservationRepository.saveAll(anyList())).thenReturn(Collections.emptyList());
 
         bookingService.cancelBooking(BOOKING_ID, testUser);
@@ -308,7 +308,7 @@ public class BookingServiceTest {
                 .build();
 
         when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.of(booking));
-        when(bookingRepository.save(booking)).thenReturn(booking);
+        when(bookingRepository.saveAndFlush(booking)).thenReturn(booking);
 
         bookingService.confirmBooking(BOOKING_ID);
 

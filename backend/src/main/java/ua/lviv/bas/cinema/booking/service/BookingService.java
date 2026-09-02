@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
@@ -17,6 +18,7 @@ import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.booking.dto.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.booking.dto.response.BookingResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.booking.BookingConcurrentModificationException;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingOperationException;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingValidationException;
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
@@ -152,7 +154,11 @@ public class BookingService {
             bonusLedgerService.refundPoints(booking);
         }
 
-        bookingRepository.save(booking);
+        try {
+            bookingRepository.saveAndFlush(booking);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            throw new BookingConcurrentModificationException(bookingId);
+        }
         log.info("Cancelled booking {} for user {}", bookingId, user.getId());
         auditCancel(bookingId, oldStatus);
     }
@@ -168,7 +174,12 @@ public class BookingService {
         var oldStatus = booking.getStatus();
         booking.setStatus(BookingStatus.CONFIRMED);
         booking.getSeatReservations().forEach(sr -> sr.setStatus(ReservationStatus.CONFIRMED));
-        bookingRepository.save(booking);
+
+        try {
+            bookingRepository.saveAndFlush(booking);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            throw new BookingConcurrentModificationException(bookingId);
+        }
         auditConfirm(bookingId, oldStatus);
     }
 
