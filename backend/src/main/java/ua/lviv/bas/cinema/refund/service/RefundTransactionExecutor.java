@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.refund.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,7 +51,7 @@ public class RefundTransactionExecutor {
         paymentRefundService.validateRefundEligibility(ticket.getPayment(), calculation.refundAmount());
 
         var refund = buildRefund(ticket, calculation, reason);
-        var saved = refundRepository.save(refund);
+        var saved = saveOrThrowIfAlreadyProcessing(refund);
 
         auditCreated(saved, ticket, calculation);
 
@@ -73,8 +74,16 @@ public class RefundTransactionExecutor {
         }
     }
 
+    private Refund saveOrThrowIfAlreadyProcessing(Refund refund) {
+        try {
+            return refundRepository.save(refund);
+        } catch (DataIntegrityViolationException e) {
+            throw new TicketNotRefundableException("A refund for this ticket is already being processed");
+        }
+    }
+
     private Refund buildRefund(Ticket ticket, RefundCalculator.RefundCalculation calculation, String reason) {
-        var refund = Refund.builder().payment(ticket.getPayment()).user(ticket.getUser())
+        var refund = Refund.builder().payment(ticket.getPayment()).user(ticket.getUser()).ticket(ticket)
                 .totalAmount(calculation.refundAmount()).totalBonusPointsToDeduct(calculation.bonusPointsToRefund())
                 .reason(reason).status(RefundStatus.PROCESSING).build();
 

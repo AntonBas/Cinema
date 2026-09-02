@@ -32,6 +32,7 @@ import ua.lviv.bas.cinema.audit.domain.AuditableEntity;
 import ua.lviv.bas.cinema.bonus.domain.BonusTransaction;
 import ua.lviv.bas.cinema.refund.domain.status.RefundStatus;
 import ua.lviv.bas.cinema.payment.domain.Payment;
+import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.user.domain.User;
 
 @Entity
@@ -62,6 +63,10 @@ public class Refund extends AuditableEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ticket_id")
+    private Ticket ticket;
 
     @OneToMany(mappedBy = "refund", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

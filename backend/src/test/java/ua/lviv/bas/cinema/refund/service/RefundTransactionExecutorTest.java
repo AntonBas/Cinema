@@ -154,6 +154,22 @@ public class RefundTransactionExecutorTest {
     }
 
     @Test
+    void createProcessingRefundWhenConcurrentInsertViolatesConstraintShouldThrowGuard() {
+        when(ticketService.findActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
+        when(refundCalculator.validate(testTicket)).thenReturn(null);
+        when(refundRepository.existsByItemsTicketIdAndStatus(TICKET_ID, RefundStatus.PROCESSING)).thenReturn(false);
+        when(refundCalculator.calculate(testTicket))
+                .thenReturn(new RefundCalculator.RefundCalculation(PERCENTAGE, REFUND_AMOUNT, REFUND_AMOUNT,
+                        BONUS_POINTS_TO_REFUND, BONUS_POINTS_TO_REFUND));
+        when(refundRepository.save(any(Refund.class)))
+                .thenThrow(new org.springframework.dao.DataIntegrityViolationException("duplicate key"));
+
+        assertThatThrownBy(() -> refundTransactionExecutor.createProcessingRefund(TICKET_ID, USER_ID, "Test reason"))
+                .isInstanceOf(TicketNotRefundableException.class)
+                .hasMessageContaining("already being processed");
+    }
+
+    @Test
     void applySuccessShouldApplyAllDomainsAndMarkProcessed() {
         when(refundRepository.findById(REFUND_ID)).thenReturn(Optional.of(testRefund));
         when(ticketRepository.findById(TICKET_ID)).thenReturn(Optional.of(testTicket));
