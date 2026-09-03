@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.refund.domain.Refund;
 import ua.lviv.bas.cinema.cinema.domain.CinemaHall;
@@ -23,6 +24,7 @@ import ua.lviv.bas.cinema.exception.domain.ticket.TicketValidationException;
 import ua.lviv.bas.cinema.ticket.mapper.TicketMapper;
 import ua.lviv.bas.cinema.ticket.repository.TicketRepository;
 import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.integration.QRCodeService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -31,6 +33,9 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,6 +47,8 @@ public class TicketServiceTest {
     private TicketMapper ticketMapper;
     @Mock
     private AuditService auditService;
+    @Mock
+    private QRCodeService qrCodeService;
 
     @InjectMocks
     private TicketService ticketService;
@@ -93,6 +100,8 @@ public class TicketServiceTest {
         );
 
         lenient().doNothing().when(auditService).logChange(any(), any(), any(), any(), any(), any());
+        ReflectionTestUtils.setField(ticketService, "ticketBaseUrl", "http://localhost:5173");
+        ReflectionTestUtils.setField(ticketService, "qrCodeSize", 200);
     }
 
     @Nested
@@ -254,6 +263,43 @@ public class TicketServiceTest {
 
             assertThatThrownBy(() -> ticketService.getTicket(TICKET_CODE, otherUser))
                     .isInstanceOf(TicketValidationException.class);
+        }
+    }
+
+    @Nested
+    class GenerateQRTests {
+
+        @Test
+        void generateQRShouldSucceed() {
+            byte[] qrCode = new byte[]{1, 2, 3, 4, 5};
+
+            when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
+            when(qrCodeService.generateQRCode(anyString(), eq(200))).thenReturn(qrCode);
+
+            var result = ticketService.generateQR(TICKET_CODE, testUser);
+
+            assertThat(result).isEqualTo(qrCode);
+        }
+
+        @Test
+        void generateQRWhenNotFoundShouldThrowException() {
+            when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> ticketService.generateQR(TICKET_CODE, testUser))
+                    .isInstanceOf(TicketValidationException.class);
+        }
+
+        @Test
+        void generateQRWhenWrongUserShouldThrowException() {
+            User otherUser = new User();
+            otherUser.setId(999L);
+
+            when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
+
+            assertThatThrownBy(() -> ticketService.generateQR(TICKET_CODE, otherUser))
+                    .isInstanceOf(TicketValidationException.class);
+
+            verify(qrCodeService, never()).generateQRCode(anyString(), anyInt());
         }
     }
 

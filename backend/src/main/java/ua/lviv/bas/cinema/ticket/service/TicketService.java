@@ -125,7 +125,14 @@ public class TicketService {
         return ticketMapper.toTicketCashierResponse(ticket);
     }
 
-    public byte[] generateQR(String ticketCode) {
+    public byte[] generateQR(String ticketCode, User user) {
+        var ticket = ticketRepository.findByUniqueCode(ticketCode)
+                .orElseThrow(TicketValidationException::notFound);
+
+        if (!ticket.getUser().getId().equals(user.getId())) {
+            throw TicketValidationException.notFound();
+        }
+
         var qrContent = ticketBaseUrl + "/cashier/scan/" + ticketCode;
         return qrCodeService.generateQRCode(qrContent, qrCodeSize);
     }

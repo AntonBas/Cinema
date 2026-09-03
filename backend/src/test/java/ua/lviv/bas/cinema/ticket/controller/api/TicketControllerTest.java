@@ -161,13 +161,15 @@ public class TicketControllerTest {
 
     @Test
     void getQRShouldReturnImage() {
+        User user = createUser();
+        CustomUserDetails userDetails = new CustomUserDetails(user);
         byte[] qrCode = new byte[]{1, 2, 3, 4, 5};
 
-        when(ticketService.generateQR(TICKET_CODE)).thenReturn(qrCode);
+        when(ticketService.generateQR(TICKET_CODE, user)).thenReturn(qrCode);
 
-        byte[] response = ticketController.getQR(TICKET_CODE);
+        byte[] response = ticketController.getQR(TICKET_CODE, userDetails);
 
         assertThat(response).isEqualTo(qrCode);
-        verify(ticketService).generateQR(TICKET_CODE);
+        verify(ticketService).generateQR(TICKET_CODE, user);
     }
 }

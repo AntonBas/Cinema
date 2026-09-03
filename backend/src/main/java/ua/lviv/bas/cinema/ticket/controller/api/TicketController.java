@@ -68,10 +68,12 @@ public class TicketController {
     @Operation(summary = "Get ticket QR code")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "QR code retrieved successfully"),
+            @ApiResponse(responseCode = "401", description = "User not authenticated"),
             @ApiResponse(responseCode = "404", description = "Ticket not found")
     })
-    public byte[] getQR(@PathVariable String ticketCode) {
-        log.info("GET /api/tickets/code/{}/qr", ticketCode);
-        return ticketService.generateQR(ticketCode);
+    public byte[] getQR(@PathVariable String ticketCode, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        var user = userDetails.getUser();
+        log.info("GET /api/tickets/code/{}/qr - user: {}", ticketCode, user.getId());
+        return ticketService.generateQR(ticketCode, user);
     }
 }
