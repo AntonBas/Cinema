@@ -24,6 +24,11 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     List<Payment> findByStatusAndCreatedDateBefore(PaymentStatus status, LocalDateTime createdDate);
 
+    @Query("SELECT DISTINCT p FROM Payment p JOIN FETCH p.booking b LEFT JOIN FETCH b.seatReservations JOIN FETCH b.session "
+            + "WHERE p.status = :status AND p.createdDate < :createdDate")
+    List<Payment> findByStatusAndCreatedDateBeforeWithBookingDetails(@Param("status") PaymentStatus status,
+            @Param("createdDate") LocalDateTime createdDate);
+
     List<Payment> findByStatusInAndCreatedDateBefore(List<PaymentStatus> statuses, LocalDateTime createdDate);
 
     @Modifying

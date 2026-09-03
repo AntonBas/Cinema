@@ -102,8 +102,8 @@ public class BookingScheduler {
 	public void processExpiredPayments() {
 		log.debug("Starting expired payments processing");
 		LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(30);
-		List<Payment> expiredPayments = paymentRepository.findByStatusAndCreatedDateBefore(PaymentStatus.PENDING,
-				cutoffTime);
+		List<Payment> expiredPayments = paymentRepository
+				.findByStatusAndCreatedDateBeforeWithBookingDetails(PaymentStatus.PENDING, cutoffTime);
 
 		if (expiredPayments.isEmpty()) {
 			log.debug("No expired payments found");

@@ -115,7 +115,8 @@ public class BookingSchedulerTest {
 
     @Test
     void processExpiredPaymentsWhenNoneFoundShouldDoNothing() {
-        when(paymentRepository.findByStatusAndCreatedDateBefore(eq(PaymentStatus.PENDING), any(LocalDateTime.class)))
+        when(paymentRepository.findByStatusAndCreatedDateBeforeWithBookingDetails(eq(PaymentStatus.PENDING),
+                any(LocalDateTime.class)))
                 .thenReturn(List.of());
 
         bookingScheduler.processExpiredPayments();
@@ -131,7 +132,8 @@ public class BookingSchedulerTest {
                 .seatReservations(List.of(seat)).build();
         var payment = Payment.builder().id(2L).booking(booking).status(PaymentStatus.PENDING).build();
 
-        when(paymentRepository.findByStatusAndCreatedDateBefore(eq(PaymentStatus.PENDING), any(LocalDateTime.class)))
+        when(paymentRepository.findByStatusAndCreatedDateBeforeWithBookingDetails(eq(PaymentStatus.PENDING),
+                any(LocalDateTime.class)))
                 .thenReturn(List.of(payment));
         when(cacheManager.getCache(anyString())).thenReturn(cache);
 
@@ -154,7 +156,8 @@ public class BookingSchedulerTest {
                 .seatReservations(List.of(seat)).build();
         var payment = Payment.builder().id(2L).booking(booking).status(PaymentStatus.PENDING).build();
 
-        when(paymentRepository.findByStatusAndCreatedDateBefore(eq(PaymentStatus.PENDING), any(LocalDateTime.class)))
+        when(paymentRepository.findByStatusAndCreatedDateBeforeWithBookingDetails(eq(PaymentStatus.PENDING),
+                any(LocalDateTime.class)))
                 .thenReturn(List.of(payment));
 
         bookingScheduler.processExpiredPayments();
