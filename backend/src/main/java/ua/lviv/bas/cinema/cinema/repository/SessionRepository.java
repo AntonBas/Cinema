@@ -90,18 +90,23 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
                 m.duration_minutes as movieDuration,
                 h.id as hallId,
                 h.name as hallName,
-                (SELECT COUNT(seat.id) FROM seats seat WHERE seat.hall_id = h.id) as hallCapacity,
-                COALESCE((
-                    SELECT COUNT(b.id) FROM bookings b
-                    WHERE b.session_id = s.id AND b.status = 'CONFIRMED'
-                ), 0) as ticketsSold,
-                COALESCE((
-                    SELECT SUM(b.total_price) FROM bookings b
-                    WHERE b.session_id = s.id AND b.status = 'CONFIRMED'
-                ), 0) as totalRevenue
+                COALESCE(sc.seat_count, 0) as hallCapacity,
+                COALESCE(bs.tickets_sold, 0) as ticketsSold,
+                COALESCE(bs.total_revenue, 0) as totalRevenue
             FROM sessions s
             JOIN movies m ON m.id = s.movie_id
             JOIN cinema_halls h ON h.id = s.hall_id
+            LEFT JOIN (
+                SELECT hall_id, COUNT(*) as seat_count
+                FROM seats
+                GROUP BY hall_id
+            ) sc ON sc.hall_id = h.id
+            LEFT JOIN (
+                SELECT session_id, COUNT(id) as tickets_sold, SUM(total_price) as total_revenue
+                FROM bookings
+                WHERE status = 'CONFIRMED'
+                GROUP BY session_id
+            ) bs ON bs.session_id = s.id
             WHERE s.id IN (:ids)
             """, nativeQuery = true)
     List<SessionAdminProjection> findAdminProjectionsByIds(@Param("ids") List<Long> ids);
