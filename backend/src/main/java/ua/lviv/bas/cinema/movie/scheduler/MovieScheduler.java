@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.movie.scheduler;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ public class MovieScheduler {
 	private final MovieStatusCalculator movieStatusCalculator;
 
 	@Scheduled(cron = "${scheduler.movie-status.cron:0 */5 * * * *}")
+	@CacheEvict(value = {"singleMovies", "movieLists"}, allEntries = true)
 	@Transactional
 	public void updateMovieStatuses() {
 		LocalDate today = LocalDate.now();
