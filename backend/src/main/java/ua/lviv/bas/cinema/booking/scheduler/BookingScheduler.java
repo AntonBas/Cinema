@@ -94,7 +94,6 @@ public class BookingScheduler {
 	}
 
 	@Scheduled(fixedRateString = "${scheduler.payment.expiration-interval:300000}")
-	@Transactional
 	public void processExpiredPayments() {
 		log.debug("Starting expired payments processing");
 		LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(30);
@@ -108,24 +107,36 @@ public class BookingScheduler {
 
 		log.info("Found {} expired payments to process", expiredPayments.size());
 
+		int expiredCount = 0;
 		for (Payment payment : expiredPayments) {
-			payment.setStatus(PaymentStatus.EXPIRED);
-
-			if (payment.getBooking().getStatus() == BookingStatus.PENDING) {
-				payment.getBooking().setStatus(BookingStatus.EXPIRED);
-				payment.getBooking().getSeatReservations().forEach(sr -> {
-					sr.setStatus(ReservationStatus.EXPIRED);
-					sr.setBooking(null);
-				});
-				seatReservationRepository.saveAll(Objects.requireNonNull(payment.getBooking().getSeatReservations(),
-						"Payment booking seat reservations must not be null"));
-				evictCacheIfPresent("seatAvailability", payment.getBooking().getSession().getId());
-				evictCacheIfPresent("availableSeatsCount", payment.getBooking().getSession().getId());
+			Long paymentId = payment.getId();
+			try {
+				transactionTemplate.executeWithoutResult(status -> expirePayment(payment));
+				expiredCount++;
+			} catch (ObjectOptimisticLockingFailureException e) {
+				log.warn("Skipped expiring payment {} due to concurrent update, will retry on next run", paymentId);
 			}
 		}
 
-		paymentRepository.saveAll(expiredPayments);
-		log.info("Successfully expired {} payments", expiredPayments.size());
+		log.info("Successfully expired {} of {} payments", expiredCount, expiredPayments.size());
+	}
+
+	private void expirePayment(Payment payment) {
+		payment.setStatus(PaymentStatus.EXPIRED);
+		paymentRepository.save(payment);
+
+		if (payment.getBooking().getStatus() == BookingStatus.PENDING) {
+			payment.getBooking().setStatus(BookingStatus.EXPIRED);
+			payment.getBooking().getSeatReservations().forEach(sr -> {
+				sr.setStatus(ReservationStatus.EXPIRED);
+				sr.setBooking(null);
+			});
+			seatReservationRepository.saveAll(Objects.requireNonNull(payment.getBooking().getSeatReservations(),
+					"Payment booking seat reservations must not be null"));
+			bookingRepository.save(payment.getBooking());
+			evictCacheIfPresent("seatAvailability", payment.getBooking().getSession().getId());
+			evictCacheIfPresent("availableSeatsCount", payment.getBooking().getSession().getId());
+		}
 	}
 
 	@Scheduled(cron = "${scheduler.booking.cleanup-cron:0 0 4 * * *}")

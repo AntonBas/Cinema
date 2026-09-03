@@ -119,7 +119,7 @@ public class BookingSchedulerTest {
         bookingScheduler.processExpiredPayments();
 
         verifyNoInteractions(seatReservationRepository, cacheManager);
-        verify(paymentRepository, never()).saveAll(any());
+        verify(paymentRepository, never()).save(any());
     }
 
     @Test
@@ -143,7 +143,8 @@ public class BookingSchedulerTest {
 
         verify(seatReservationRepository).saveAll(List.of(seat));
         verify(cache, times(2)).evict(SESSION_ID);
-        verify(paymentRepository).saveAll(List.of(payment));
+        verify(paymentRepository).save(payment);
+        verify(bookingRepository).save(booking);
     }
 
     @Test
@@ -164,6 +165,7 @@ public class BookingSchedulerTest {
         assertThat(seat.getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
 
         verifyNoInteractions(seatReservationRepository, cacheManager);
-        verify(paymentRepository).saveAll(List.of(payment));
+        verify(paymentRepository).save(payment);
+        verify(bookingRepository, never()).save(any());
     }
 }
