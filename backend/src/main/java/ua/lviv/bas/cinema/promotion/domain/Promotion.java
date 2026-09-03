@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.annotations.BatchSize;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -64,6 +66,7 @@ public class Promotion extends AuditableEntity {
 	private LocalDate endDate;
 
 	@OneToMany(mappedBy = "promotion", fetch = FetchType.LAZY)
+	@BatchSize(size = 20)
 	@Builder.Default
 	private List<UserPromotion> userRedemptions = new ArrayList<>();
 }

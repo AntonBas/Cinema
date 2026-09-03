@@ -3,6 +3,8 @@ package ua.lviv.bas.cinema.cinema.domain;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.annotations.BatchSize;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -77,6 +79,7 @@ public class Seat extends AuditableEntity {
 	private boolean active = true;
 
 	@OneToMany(mappedBy = "seat", fetch = FetchType.LAZY)
+	@BatchSize(size = 20)
 	@Builder.Default
 	private List<SeatReservation> seatReservations = new ArrayList<>();
 }

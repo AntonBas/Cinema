@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.annotations.BatchSize;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -62,6 +64,7 @@ public class BonusCard {
     private boolean welcomeBonusReceived = false;
 
     @OneToMany(mappedBy = "bonusCard", fetch = FetchType.LAZY, orphanRemoval = true)
+    @BatchSize(size = 20)
     @OrderBy("createdAt DESC")
     @Builder.Default
     private List<BonusTransaction> transactions = new ArrayList<>();
