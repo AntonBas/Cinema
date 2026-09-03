@@ -25,6 +25,7 @@ import ua.lviv.bas.cinema.exception.domain.financial.bonus.InvalidMinMaxPointsEx
 import ua.lviv.bas.cinema.bonus.mapper.BonusMapper;
 import ua.lviv.bas.cinema.bonus.repository.BonusRulesRepository;
 import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.common.CacheableList;
 
 @Slf4j
 @Service
@@ -43,8 +44,9 @@ public class AdminBonusService {
 	@Cacheable(value = "bonusRules", key = "'list'")
 	@Transactional(readOnly = true)
 	public List<BonusRulesResponse> getRules() {
-		return bonusRulesRepository.findAll().stream().filter(rule -> RULE_TYPES.contains(rule.getBonusType()))
-				.sorted(Comparator.comparing(BonusRules::getBonusType)).map(bonusMapper::toResponse).toList();
+		return new CacheableList<>(bonusRulesRepository.findAll().stream()
+				.filter(rule -> RULE_TYPES.contains(rule.getBonusType()))
+				.sorted(Comparator.comparing(BonusRules::getBonusType)).map(bonusMapper::toResponse).toList());
 	}
 
 	@CacheEvict(value = "bonusRules", allEntries = true)

@@ -29,6 +29,7 @@ import ua.lviv.bas.cinema.cinema.repository.projection.SessionAdminProjection;
 import ua.lviv.bas.cinema.cinema.repository.projection.SessionScheduleProjection;
 import ua.lviv.bas.cinema.cinema.repository.specification.SessionSpecification;
 import ua.lviv.bas.cinema.booking.service.SeatReservationService;
+import ua.lviv.bas.cinema.common.CacheableList;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 
@@ -82,7 +83,7 @@ public class SessionService {
         var sessions = sessionRepository.findAll(spec);
 
         if (sessions.isEmpty()) {
-            return List.of();
+            return new CacheableList<>(List.of());
         }
 
         var sessionIds = sessions.stream().map(Session::getId).toList();
@@ -92,11 +93,11 @@ public class SessionService {
                 .stream()
                 .collect(Collectors.toMap(SessionScheduleProjection::getId, p -> p));
 
-        return sessions.stream().map(session -> {
+        return new CacheableList<>(sessions.stream().map(session -> {
             var proj = projections.get(session.getId());
             return sessionMapper.toSessionScheduleResponse(proj)
                     .withAvailableSeats(availableSeats.getOrDefault(session.getId(), 0));
-        }).toList();
+        }).toList());
     }
 
     @Cacheable(value = "sessions", key = "'admin:' + #hallId + ':' + #movieTitle + ':' + #status + ':' + #dateFrom + ':' + #dateTo + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")

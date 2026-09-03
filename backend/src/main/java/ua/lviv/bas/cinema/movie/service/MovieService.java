@@ -31,6 +31,7 @@ import ua.lviv.bas.cinema.movie.repository.MovieRepository;
 import ua.lviv.bas.cinema.movie.repository.PersonRepository;
 import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.movie.repository.specification.MovieSpecification;
+import ua.lviv.bas.cinema.common.CacheableList;
 import ua.lviv.bas.cinema.common.UniquenessValidator;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
@@ -128,19 +129,19 @@ public class MovieService {
     @Cacheable(value = "movieLists", key = "'current-' + #pageable.pageNumber + '-' + #pageable.pageSize")
     public List<MovieCardResponse> getCurrentMovies(Pageable pageable) {
         Specification<Movie> spec = movieSpecification.currentMovies();
-        return movieRepository.findAll(spec, pageable).map(movieMapper::toMovieCardResponse).getContent();
+        return new CacheableList<>(movieRepository.findAll(spec, pageable).map(movieMapper::toMovieCardResponse).getContent());
     }
 
     @Cacheable(value = "movieLists", key = "'upcoming-' + #pageable.pageNumber + '-' + #pageable.pageSize")
     public List<MovieCardResponse> getUpcomingMovies(Pageable pageable) {
         Specification<Movie> spec = movieSpecification.upcomingMovies();
-        return movieRepository.findAll(spec, pageable).map(movieMapper::toMovieCardResponse).getContent();
+        return new CacheableList<>(movieRepository.findAll(spec, pageable).map(movieMapper::toMovieCardResponse).getContent());
     }
 
     @Cacheable(value = "movieLists", key = "'leaving-soon-' + #pageable.pageNumber + '-' + #pageable.pageSize")
     public List<MovieCardResponse> getLeavingSoonMovies(Pageable pageable) {
         Specification<Movie> spec = movieSpecification.leavingSoonMovies();
-        return movieRepository.findAll(spec, pageable).map(movieMapper::toMovieCardResponse).getContent();
+        return new CacheableList<>(movieRepository.findAll(spec, pageable).map(movieMapper::toMovieCardResponse).getContent());
     }
 
     public List<MovieSessionSearchResponse> searchMovies(String query, LocalDate date) {

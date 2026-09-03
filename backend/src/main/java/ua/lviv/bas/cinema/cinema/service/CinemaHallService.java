@@ -23,6 +23,7 @@ import ua.lviv.bas.cinema.exception.domain.hall.InvalidSeatsPerRowForCoupleRowsE
 import ua.lviv.bas.cinema.cinema.mapper.CinemaHallMapper;
 import ua.lviv.bas.cinema.cinema.repository.CinemaHallRepository;
 import ua.lviv.bas.cinema.cinema.repository.SeatRepository;
+import ua.lviv.bas.cinema.common.CacheableList;
 import ua.lviv.bas.cinema.common.UniquenessValidator;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
@@ -77,7 +78,7 @@ public class CinemaHallService {
     public List<CinemaHallListResponse> getHalls() {
         log.debug("Retrieving all cinema halls");
         var projections = hallRepository.findAllProjected();
-        return projections.stream().map(hallMapper::toCinemaHallListResponse).toList();
+        return new CacheableList<>(projections.stream().map(hallMapper::toCinemaHallListResponse).toList());
     }
 
     @Cacheable(value = "cinemaHalls", key = "'layout:' + #hallId")
