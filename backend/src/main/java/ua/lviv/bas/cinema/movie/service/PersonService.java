@@ -49,7 +49,9 @@ public class PersonService {
     public Page<PersonListResponse> getPersons(String query, PersonRole role, Pageable pageable) {
         log.info("Getting persons: query='{}', role={}, page={}, size={}", query, role, pageable.getPageNumber(),
                 pageable.getPageSize());
-        return personRepository.findPersonsByFilters(query, role, pageable).map(personMapper::toPersonListResponse);
+        String roleStr = role != null ? role.name() : null;
+        return personRepository.findPersonsByFilters(query, roleStr, pageable)
+                .map(personMapper::toPersonListResponse);
     }
 
     @CacheEvict(value = "persons", allEntries = true)

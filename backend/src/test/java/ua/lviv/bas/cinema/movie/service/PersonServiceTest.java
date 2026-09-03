@@ -92,7 +92,8 @@ public class PersonServiceTest {
         PersonListProjection projection = createProjection();
         Page<PersonListProjection> projectionPage = new PageImpl<>(List.of(projection));
 
-        when(personRepository.findPersonsByFilters(PERSON_NAME, PERSON_ROLE, pageable)).thenReturn(projectionPage);
+        when(personRepository.findPersonsByFilters(PERSON_NAME, PERSON_ROLE.name(), pageable))
+                .thenReturn(projectionPage);
         when(personMapper.toPersonListResponse(projection)).thenReturn(listResponse);
 
         Page<PersonListResponse> result = personService.getPersons(PERSON_NAME, PERSON_ROLE, pageable);
@@ -107,7 +108,8 @@ public class PersonServiceTest {
         PersonListProjection projection = createProjection();
         Page<PersonListProjection> projectionPage = new PageImpl<>(List.of(projection));
 
-        when(personRepository.findPersonsByFilters(null, PERSON_ROLE, pageable)).thenReturn(projectionPage);
+        when(personRepository.findPersonsByFilters(null, PERSON_ROLE.name(), pageable))
+                .thenReturn(projectionPage);
         when(personMapper.toPersonListResponse(projection)).thenReturn(listResponse);
 
         Page<PersonListResponse> result = personService.getPersons(null, PERSON_ROLE, pageable);
