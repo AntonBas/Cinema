@@ -238,8 +238,7 @@ public class AuthControllerTest {
 
     @Test
     void oauth2SuccessShouldReturnOk() throws Exception {
-        when(userService.getUser(1L)).thenReturn(user);
-        when(userMapper.toUserResponse(user)).thenReturn(userResponse);
+        when(userService.getUserResponse(1L)).thenReturn(userResponse);
 
         mockMvc.perform(get("/api/auth/oauth2/success").param("token", "oauth2Token").param("userId", "1")
                         .param("email", "anton@example.com")).andExpect(status().isOk())

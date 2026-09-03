@@ -93,8 +93,7 @@ public class AuthController {
     public LoginResponse oauth2Success(@RequestParam String token, @RequestParam Long userId,
                                        @RequestParam String email) {
         log.info("GET /api/auth/oauth2/success - email: {}", email);
-        var user = userService.getUser(userId);
-        var userResponse = userMapper.toUserResponse(user);
+        var userResponse = userService.getUserResponse(userId);
         return new LoginResponse(token, "Bearer", userResponse);
     }
 
