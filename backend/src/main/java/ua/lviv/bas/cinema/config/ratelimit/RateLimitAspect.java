@@ -47,10 +47,6 @@ public class RateLimitAspect {
         }
 
         if ("ip".equals(keyExpression)) {
-            String xForwardedFor = request.getHeader("X-Forwarded-For");
-            if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-                return xForwardedFor.split(",")[0].trim();
-            }
             String remoteAddr = request.getRemoteAddr();
             return remoteAddr != null ? remoteAddr : "unknown";
         }
