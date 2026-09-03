@@ -41,14 +41,14 @@ public class CacheConfig {
         cacheConfigurations.put("sessions", defaultConfig.entryTtl(Duration.ofMinutes(10)));
         cacheConfigurations.put("genres", defaultConfig.entryTtl(Duration.ofHours(24)));
         cacheConfigurations.put("persons", defaultConfig.entryTtl(Duration.ofHours(24)));
-        cacheConfigurations.put("movies", defaultConfig.entryTtl(Duration.ofHours(24)));
+        cacheConfigurations.put("singleMovies", defaultConfig.entryTtl(Duration.ofHours(24)));
+        cacheConfigurations.put("movieLists", defaultConfig.entryTtl(Duration.ofHours(24)));
         cacheConfigurations.put("seatAvailability", defaultConfig.entryTtl(Duration.ofMinutes(5)));
         cacheConfigurations.put("availableSeatsCount", defaultConfig.entryTtl(Duration.ofMinutes(1)));
         cacheConfigurations.put("bookings", defaultConfig.entryTtl(Duration.ofMinutes(30)));
         cacheConfigurations.put("tickets", defaultConfig.entryTtl(Duration.ofMinutes(30)));
-        cacheConfigurations.put("ticket-types", defaultConfig.entryTtl(Duration.ofHours(1)));
+        cacheConfigurations.put("ticketTypes", defaultConfig.entryTtl(Duration.ofHours(1)));
         cacheConfigurations.put("users", defaultConfig.entryTtl(Duration.ofMinutes(30)));
-        cacheConfigurations.put("adminUsers", defaultConfig.entryTtl(Duration.ofMinutes(30)));
         cacheConfigurations.put("bonusRules", defaultConfig.entryTtl(Duration.ofHours(1)));
         cacheConfigurations.put("bonus", defaultConfig.entryTtl(Duration.ofMinutes(30)));
         cacheConfigurations.put("promotions", defaultConfig.entryTtl(Duration.ofHours(1)));
