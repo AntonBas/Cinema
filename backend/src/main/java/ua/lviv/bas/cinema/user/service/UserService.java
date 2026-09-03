@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.Map;
 
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -110,6 +111,11 @@ public class UserService {
 
 	public User getUser(Long id) {
 		return userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User", id));
+	}
+
+	@Cacheable(value = "users", key = "#id")
+	public UserResponse getUserResponse(Long id) {
+		return userMapper.toUserResponse(getUser(id));
 	}
 
 	public User getUser(String email) {
