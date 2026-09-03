@@ -15,6 +15,7 @@ import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.payment.dto.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentAccessDeniedException;
 import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
 import ua.lviv.bas.cinema.payment.service.PaymentGatewayService;
 
@@ -43,13 +44,14 @@ public class PaymentStatusServiceTest {
     private PaymentStatusService paymentStatusService;
 
     private Payment testPayment;
+    private User testUser;
 
     private static final Long PAYMENT_ID = 1L;
     private static final String ORDER_ID = "ORD_TEST123456789";
 
     @BeforeEach
     void setUp() {
-        User testUser = User.builder().id(1L).email("test@example.com").build();
+        testUser = User.builder().id(1L).email("test@example.com").build();
 
         Movie movie = Movie.builder().id(1L).title("Test Movie").build();
 
@@ -71,7 +73,7 @@ public class PaymentStatusServiceTest {
         when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
         when(paymentGatewayService.prepareLiqPayPaymentData(testPayment)).thenReturn(expectedResponse);
 
-        PaymentLiqPayDataResponse response = paymentStatusService.preparePaymentData(PAYMENT_ID);
+        PaymentLiqPayDataResponse response = paymentStatusService.preparePaymentData(PAYMENT_ID, testUser);
 
         assertThat(response).isNotNull();
         assertThat(response.data()).isEqualTo("test_data");
@@ -84,8 +86,18 @@ public class PaymentStatusServiceTest {
     void preparePaymentDataWhenPaymentNotFoundShouldThrowException() {
         when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> paymentStatusService.preparePaymentData(PAYMENT_ID))
+        assertThatThrownBy(() -> paymentStatusService.preparePaymentData(PAYMENT_ID, testUser))
                 .isInstanceOf(EntityNotFoundException.class);
+    }
+
+    @Test
+    void preparePaymentDataWhenUserNotAuthorizedShouldThrowException() {
+        User otherUser = User.builder().id(999L).build();
+
+        when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
+
+        assertThatThrownBy(() -> paymentStatusService.preparePaymentData(PAYMENT_ID, otherUser))
+                .isInstanceOf(PaymentAccessDeniedException.class);
     }
 
     @Test

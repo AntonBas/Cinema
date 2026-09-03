@@ -69,6 +69,11 @@ public class SeatReservationService {
         return seatReservationMapper.toResponse(session, seatInfos, availableSeatsCount);
     }
 
+    @Transactional
+    public void lockSeat(Long seatId) {
+        seatRepository.findByIdWithLock(seatId).orElseThrow(() -> new EntityNotFoundException("Seat", seatId));
+    }
+
     @CacheEvict(value = {"seatAvailability", "availableSeatsCount"}, key = "#sessionId")
     @Transactional
     public SeatReservation hold(Long sessionId, Long seatId, User user) {

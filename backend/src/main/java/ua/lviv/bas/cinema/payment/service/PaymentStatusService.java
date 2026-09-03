@@ -8,8 +8,10 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.payment.dto.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentAccessDeniedException;
 import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
 import ua.lviv.bas.cinema.payment.service.PaymentGatewayService;
+import ua.lviv.bas.cinema.user.domain.User;
 
 @Slf4j
 @Service
@@ -21,9 +23,14 @@ public class PaymentStatusService {
 	private final PaymentGatewayService paymentGatewayService;
 
 	@Transactional(readOnly = true)
-	public PaymentLiqPayDataResponse preparePaymentData(Long paymentId) {
+	public PaymentLiqPayDataResponse preparePaymentData(Long paymentId, User user) {
 		var payment = paymentRepository.findById(paymentId)
 				.orElseThrow(() -> new EntityNotFoundException("Payment", paymentId));
+
+		if (!payment.getBooking().getUser().getId().equals(user.getId())) {
+			throw new PaymentAccessDeniedException(paymentId, user.getId());
+		}
+
 		return paymentGatewayService.prepareLiqPayPaymentData(payment);
 	}
 

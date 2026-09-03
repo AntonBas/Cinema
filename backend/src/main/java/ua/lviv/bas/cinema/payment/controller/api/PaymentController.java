@@ -79,11 +79,16 @@ public class PaymentController {
     @Operation(summary = "Get LiqPay data")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Payment data retrieved"),
+            @ApiResponse(responseCode = "401", description = "User not authenticated"),
+            @ApiResponse(responseCode = "403", description = "Payment belongs to another user"),
             @ApiResponse(responseCode = "404", description = "Payment not found")
     })
-    public PaymentLiqPayDataResponse getLiqPayData(@PathVariable Long paymentId) {
-        log.info("GET /api/payments/{}/liqpay-data", paymentId);
-        return paymentStatusService.preparePaymentData(paymentId);
+    @PreAuthorize("isAuthenticated()")
+    public PaymentLiqPayDataResponse getLiqPayData(@PathVariable Long paymentId,
+                                                    @AuthenticationPrincipal CustomUserDetails userDetails) {
+        var user = userDetails.getUser();
+        log.info("GET /api/payments/{}/liqpay-data - user: {}", paymentId, user.getId());
+        return paymentStatusService.preparePaymentData(paymentId, user);
     }
 
     @RateLimit(value = 20, duration = 1, key = "user")

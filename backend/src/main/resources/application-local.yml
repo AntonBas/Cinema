@@ -33,8 +33,8 @@ scheduler:
     mark-as-used: 300000
     cleanup-cron: "0 */5 * * * *"
   seat-reservation:
-    expiration-interval: 300000
-    cleanup-expired-interval: 60000
+    expiration-interval: 60000
+    cleanup-expired-interval: 300000
 
 logging:
   level:

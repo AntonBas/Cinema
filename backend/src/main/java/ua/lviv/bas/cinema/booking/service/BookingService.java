@@ -221,6 +221,8 @@ public class BookingService {
                                                     BookingCreateRequest.SeatSelectionRequest seatSelection) {
         var seatId = seatSelection.seatId();
 
+        seatReservationService.lockSeat(seatId);
+
         Optional<SeatReservation> existingReservation = seatReservationRepository
                 .findBySessionIdAndSeatIdAndStatusAndReservedByUserId(session.getId(), seatId,
                         ReservationStatus.PENDING, user.getId());

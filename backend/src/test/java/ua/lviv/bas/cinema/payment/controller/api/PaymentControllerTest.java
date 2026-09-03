@@ -86,9 +86,9 @@ public class PaymentControllerTest {
 
         PaymentLiqPayDataResponse liqPayData = createLiqPayDataResponse();
 
-        when(paymentStatusService.preparePaymentData(paymentId)).thenReturn(liqPayData);
+        when(paymentStatusService.preparePaymentData(paymentId, testUser)).thenReturn(liqPayData);
 
-        PaymentLiqPayDataResponse response = paymentController.getLiqPayData(paymentId);
+        PaymentLiqPayDataResponse response = paymentController.getLiqPayData(paymentId, userDetails);
 
         assertThat(response).isNotNull();
         assertThat(response.data()).isEqualTo("encoded_data");
