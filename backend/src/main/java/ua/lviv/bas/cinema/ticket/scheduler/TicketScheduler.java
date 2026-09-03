@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.ticket.scheduler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -24,6 +25,7 @@ public class TicketScheduler {
     private final TicketSpecification ticketSpecification;
 
     @Scheduled(fixedRateString = "${scheduler.ticket.mark-as-used:60000}")
+    @CacheEvict(value = "tickets", allEntries = true)
     @Transactional
     public void markTicketsAsExpiredAfterSession() {
         log.debug("Starting to mark tickets as expired after sessions");
