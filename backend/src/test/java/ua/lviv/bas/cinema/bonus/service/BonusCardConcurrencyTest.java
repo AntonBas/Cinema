@@ -12,6 +12,7 @@ import ua.lviv.bas.cinema.config.TestcontainersConfig;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.user.domain.UserRole;
 import ua.lviv.bas.cinema.bonus.repository.BonusCardRepository;
+import ua.lviv.bas.cinema.bonus.repository.BonusTransactionRepository;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
 
 import java.time.LocalDate;
@@ -38,13 +39,15 @@ class BonusCardConcurrencyTest {
     @Autowired
     private BonusCardRepository bonusCardRepository;
     @Autowired
+    private BonusTransactionRepository bonusTransactionRepository;
+    @Autowired
     private UserRepository userRepository;
 
     private User user;
 
     @BeforeEach
     void setUp() {
-        user = userRepository.save(buildUser("bonus.concurrency@test.com"));
+        user = userRepository.save(buildUser("bonus.concurrency." + java.util.UUID.randomUUID() + "@test.com"));
         bonusCardRepository.save(BonusCard.builder().user(user).pointsBalance(0).welcomeBonusReceived(true).build());
     }
 
@@ -72,6 +75,46 @@ class BonusCardConcurrencyTest {
 
         var card = bonusCardRepository.findByUserId(user.getId()).orElseThrow();
         assertThat(card.getPointsBalance()).isEqualTo(POINTS_A + POINTS_B);
+    }
+
+    @Test
+    void concurrentTicketRefundsWithSameReferenceShouldApplyOnlyOnce() throws Exception {
+        String referenceId = "REFUND_TICKET_999";
+        var readyLatch = new CountDownLatch(2);
+        var startLatch = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+
+        Callable<Exception> refundA = () -> attemptRefundPoints(readyLatch, startLatch, 50, referenceId);
+        Callable<Exception> refundB = () -> attemptRefundPoints(readyLatch, startLatch, 50, referenceId);
+
+        Future<Exception> resultA = executor.submit(refundA);
+        Future<Exception> resultB = executor.submit(refundB);
+
+        readyLatch.await(5, TimeUnit.SECONDS);
+        startLatch.countDown();
+
+        Exception outcomeA = resultA.get(10, TimeUnit.SECONDS);
+        Exception outcomeB = resultB.get(10, TimeUnit.SECONDS);
+        executor.shutdown();
+
+        assertThat(outcomeA).isNull();
+        assertThat(outcomeB).isNull();
+
+        var card = bonusCardRepository.findByUserId(user.getId()).orElseThrow();
+        assertThat(card.getPointsBalance()).isEqualTo(50);
+        assertThat(bonusTransactionRepository.existsByReferenceId(referenceId)).isTrue();
+    }
+
+    private Exception attemptRefundPoints(CountDownLatch readyLatch, CountDownLatch startLatch, int points,
+                                          String referenceId) {
+        try {
+            readyLatch.countDown();
+            startLatch.await();
+            bonusLedgerService.refundPointsForTicket(user.getId(), points, referenceId);
+            return null;
+        } catch (Exception e) {
+            return e;
+        }
     }
 
     private Exception attemptAddPoints(CountDownLatch readyLatch, CountDownLatch startLatch, int points,

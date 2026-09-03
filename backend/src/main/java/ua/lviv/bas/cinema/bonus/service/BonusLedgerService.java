@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.bonus.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -152,18 +153,24 @@ public class BonusLedgerService {
         if (points == null || points <= 0) {
             return;
         }
-        var result = executeWithOptimisticLockRetry(() -> {
-            if (bonusTransactionRepository.existsByReferenceId(referenceId)) {
-                log.debug("Bonus refund for reference {} already applied, skipping", referenceId);
-                return null;
-            }
-            var card = getCardByUserId(userId);
-            int oldBalance = card.getPointsBalance();
-            addPointsToCard(card, points);
-            bonusCardRepository.save(card);
-            createTransaction(card, points, BonusTransactionType.REFUND_RETURN, referenceId);
-            return new CardBalanceChange(card, oldBalance);
-        });
+        CardBalanceChange result;
+        try {
+            result = executeWithOptimisticLockRetry(() -> {
+                if (bonusTransactionRepository.existsByReferenceId(referenceId)) {
+                    log.debug("Bonus refund for reference {} already applied, skipping", referenceId);
+                    return null;
+                }
+                var card = getCardByUserId(userId);
+                int oldBalance = card.getPointsBalance();
+                addPointsToCard(card, points);
+                bonusCardRepository.save(card);
+                createTransaction(card, points, BonusTransactionType.REFUND_RETURN, referenceId);
+                return new CardBalanceChange(card, oldBalance);
+            });
+        } catch (DataIntegrityViolationException e) {
+            log.debug("Bonus refund for reference {} already applied concurrently, skipping", referenceId);
+            return;
+        }
 
         if (result == null) {
             return;
