@@ -65,7 +65,7 @@ public class BonusCard {
 
     @OneToMany(mappedBy = "bonusCard", fetch = FetchType.LAZY, orphanRemoval = true)
     @BatchSize(size = 20)
-    @OrderBy("createdAt DESC")
+    @OrderBy("createdDate DESC")
     @Builder.Default
     private List<BonusTransaction> transactions = new ArrayList<>();
 }
