@@ -20,7 +20,6 @@ import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.booking.domain.status.ReservationStatus;
 import ua.lviv.bas.cinema.booking.repository.BookingRepository;
-import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
 import ua.lviv.bas.cinema.booking.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
@@ -63,7 +62,7 @@ public class BookingScheduler {
 		for (Booking booking : expiredBookings) {
 			Long bookingId = booking.getId();
 			try {
-				transactionTemplate.executeWithoutResult(status -> expireBooking(bookingId));
+				transactionTemplate.executeWithoutResult(status -> expireBooking(booking));
 				expiredCount++;
 			} catch (ObjectOptimisticLockingFailureException e) {
 				log.warn("Skipped expiring booking {} due to concurrent update, will retry on next run", bookingId);
@@ -73,10 +72,7 @@ public class BookingScheduler {
 		log.info("Successfully expired {} of {} bookings", expiredCount, expiredBookings.size());
 	}
 
-	private void expireBooking(Long bookingId) {
-		Booking booking = bookingRepository.findByIdWithSeatReservations(bookingId)
-				.orElseThrow(() -> new EntityNotFoundException("Booking", bookingId));
-
+	private void expireBooking(Booking booking) {
 		booking.setStatus(BookingStatus.EXPIRED);
 
 		booking.getSeatReservations().forEach(sr -> {

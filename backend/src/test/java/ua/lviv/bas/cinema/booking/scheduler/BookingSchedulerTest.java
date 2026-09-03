@@ -23,7 +23,6 @@ import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -80,7 +79,6 @@ public class BookingSchedulerTest {
 
         when(bookingRepository.findByStatusAndExpiresAtBefore(eq(BookingStatus.PENDING), any(LocalDateTime.class)))
                 .thenReturn(List.of(booking));
-        when(bookingRepository.findByIdWithSeatReservations(1L)).thenReturn(Optional.of(booking));
         when(cacheManager.getCache(anyString())).thenReturn(cache);
 
         bookingScheduler.processExpiredBookings();
@@ -105,7 +103,6 @@ public class BookingSchedulerTest {
 
         when(bookingRepository.findByStatusAndExpiresAtBefore(eq(BookingStatus.PENDING), any(LocalDateTime.class)))
                 .thenReturn(List.of(booking));
-        when(bookingRepository.findByIdWithSeatReservations(1L)).thenReturn(Optional.of(booking));
         when(cacheManager.getCache(anyString())).thenReturn(cache);
 
         bookingScheduler.processExpiredBookings();
