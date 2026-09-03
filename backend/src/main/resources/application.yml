@@ -87,7 +87,7 @@ spring:
 
 app:
   jwt:
-    secret: ${JWT_SECRET:local_fallback_secret_key_for_dev_only}
+    secret: ${JWT_SECRET}
     expiration: 86400000
   qr:
     margin: 1
