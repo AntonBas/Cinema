@@ -42,8 +42,8 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
                                                     @Param("sessionId") Long sessionId,
                                                     @Param("statuses") List<ReservationStatus> statuses);
 
-    @Query("SELECT s.id, (SELECT COUNT(seat) FROM Seat seat WHERE seat.hall.id = s.hall.id) " +
-            "FROM Session s WHERE s.id IN :sessionIds")
+    @Query("SELECT s.id, COUNT(seat) FROM Session s LEFT JOIN s.hall.seats seat " +
+            "WHERE s.id IN :sessionIds GROUP BY s.id")
     List<Object[]> findTotalSeatsBySessionIds(@Param("sessionIds") List<Long> sessionIds);
 
     @Query("SELECT sr.session.id, COUNT(sr) FROM SeatReservation sr " +
