@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.annotations.BatchSize;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -69,10 +71,12 @@ public class Refund extends AuditableEntity {
     private Ticket ticket;
 
     @OneToMany(mappedBy = "refund", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 20)
     @Builder.Default
     private List<RefundItem> items = new ArrayList<>();
 
     @OneToMany(mappedBy = "refund", fetch = FetchType.LAZY, orphanRemoval = true)
+    @BatchSize(size = 20)
     @Builder.Default
     private List<BonusTransaction> bonusTransactions = new ArrayList<>();
 

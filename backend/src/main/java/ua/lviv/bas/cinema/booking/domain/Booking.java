@@ -1,5 +1,7 @@
 package ua.lviv.bas.cinema.booking.domain;
 
+import org.hibernate.annotations.BatchSize;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
@@ -72,14 +74,17 @@ public class Booking extends AuditableEntity {
     private Session session;
 
     @OneToMany(mappedBy = "booking", fetch = FetchType.LAZY, orphanRemoval = true)
+    @BatchSize(size = 20)
     @Builder.Default
     private List<SeatReservation> seatReservations = new ArrayList<>();
 
     @OneToMany(mappedBy = "booking", fetch = FetchType.LAZY, orphanRemoval = true)
+    @BatchSize(size = 20)
     @Builder.Default
     private List<Ticket> tickets = new ArrayList<>();
 
     @OneToMany(mappedBy = "booking", fetch = FetchType.LAZY, orphanRemoval = true)
+    @BatchSize(size = 20)
     @Builder.Default
     private List<BonusTransaction> bonusTransactions = new ArrayList<>();
 

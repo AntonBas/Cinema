@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.annotations.BatchSize;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -53,6 +55,7 @@ public class AuditLog {
 	private LocalDateTime changedAt;
 
 	@OneToMany(mappedBy = "auditLog", cascade = CascadeType.ALL, orphanRemoval = true)
+	@BatchSize(size = 20)
 	@Builder.Default
 	private List<AuditLogDetail> details = new ArrayList<>();
 }

@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Past;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 import ua.lviv.bas.cinema.audit.domain.AuditableEntity;
 import ua.lviv.bas.cinema.bonus.domain.BonusCard;
 import ua.lviv.bas.cinema.booking.domain.Booking;
@@ -72,6 +73,7 @@ public class User extends AuditableEntity {
     private String password;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @BatchSize(size = 20)
     @Builder.Default
     private List<Ticket> tickets = new ArrayList<>();
 
@@ -88,10 +90,12 @@ public class User extends AuditableEntity {
     private BonusCard bonusCard;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @BatchSize(size = 20)
     @Builder.Default
     private List<UserPromotion> redeemedPromotions = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    @BatchSize(size = 20)
     @Builder.Default
     private List<Booking> bookings = new ArrayList<>();
 }
