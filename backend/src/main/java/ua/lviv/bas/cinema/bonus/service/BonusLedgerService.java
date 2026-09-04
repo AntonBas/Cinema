@@ -138,15 +138,29 @@ public class BonusLedgerService {
             return;
         }
         var points = booking.getBonusPointsUsed();
-        var result = executeWithOptimisticLockRetry(() -> {
-            var card = getCardByUserId(booking.getUser().getId());
-            int oldBalance = card.getPointsBalance();
-            addPointsToCard(card, points);
-            bonusCardRepository.save(card);
-            createTransaction(card, points, BonusTransactionType.REFUND_RETURN, "REFUND_BOOKING_" + booking.getId(),
-                    booking);
-            return new CardBalanceChange(card, oldBalance);
-        });
+        var referenceId = "REFUND_BOOKING_" + booking.getId();
+        CardBalanceChange result;
+        try {
+            result = executeWithOptimisticLockRetry(() -> {
+                if (bonusTransactionRepository.existsByReferenceId(referenceId)) {
+                    log.debug("Bonus refund for reference {} already applied, skipping", referenceId);
+                    return null;
+                }
+                var card = getCardByUserId(booking.getUser().getId());
+                int oldBalance = card.getPointsBalance();
+                addPointsToCard(card, points);
+                bonusCardRepository.save(card);
+                createTransaction(card, points, BonusTransactionType.REFUND_RETURN, referenceId, booking);
+                return new CardBalanceChange(card, oldBalance);
+            });
+        } catch (DataIntegrityViolationException e) {
+            log.debug("Bonus refund for reference {} already applied concurrently, skipping", referenceId);
+            return;
+        }
+
+        if (result == null) {
+            return;
+        }
         auditPointsRefunded(result.card(), booking, result.oldBalance());
     }
 
