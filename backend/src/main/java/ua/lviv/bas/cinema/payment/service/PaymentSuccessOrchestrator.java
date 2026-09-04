@@ -3,9 +3,13 @@ package ua.lviv.bas.cinema.payment.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.booking.service.BookingService;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.payment.domain.Payment;
+import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.bonus.service.BonusQueryService;
 import ua.lviv.bas.cinema.common.DateTimeFormatterService;
@@ -20,6 +24,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PaymentSuccessOrchestrator {
 
+    private final PaymentRepository paymentRepository;
     private final BookingService bookingService;
     private final TicketService ticketService;
     private final BonusQueryService bonusQueryService;
@@ -28,7 +33,10 @@ public class PaymentSuccessOrchestrator {
     private final DateTimeFormatterService dateTimeFormatter;
     private final NumberGeneratorService numberGenerator;
 
-    public void handle(Payment payment) {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handle(Long paymentId) {
+        var payment = paymentRepository.findByIdWithDetails(paymentId)
+                .orElseThrow(() -> new EntityNotFoundException("Payment", paymentId));
         var booking = payment.getBooking();
 
         bookingService.confirmBooking(booking.getId());

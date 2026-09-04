@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.booking.service.BookingService;
 import ua.lviv.bas.cinema.payment.domain.Payment;
+import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
 import ua.lviv.bas.cinema.booking.domain.SeatReservation;
 import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
@@ -26,6 +27,7 @@ import ua.lviv.bas.cinema.support.CinemaTestFixtures;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
@@ -36,6 +38,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class PaymentSuccessOrchestratorTest {
 
+    @Mock
+    private PaymentRepository paymentRepository;
     @Mock
     private BookingService bookingService;
     @Mock
@@ -87,6 +91,7 @@ public class PaymentSuccessOrchestratorTest {
             emailAction.run();
             return null;
         }).when(emailService).sendSafely(any(String.class), any(), any());
+        lenient().when(paymentRepository.findByIdWithDetails(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
     }
 
     @Test
@@ -95,7 +100,7 @@ public class PaymentSuccessOrchestratorTest {
         when(dateTimeFormatter.formatStandard(any(LocalDateTime.class))).thenReturn("2024-01-01 14:00");
         when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
 
-        paymentSuccessOrchestrator.handle(testPayment);
+        paymentSuccessOrchestrator.handle(PAYMENT_ID);
 
         verify(bookingService).confirmBooking(BOOKING_ID);
         verify(ticketService).createTicketsForBooking(testBooking, testPayment);
@@ -110,7 +115,7 @@ public class PaymentSuccessOrchestratorTest {
         when(dateTimeFormatter.formatStandard(any(LocalDateTime.class))).thenReturn("2024-01-01 14:00");
         when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
 
-        paymentSuccessOrchestrator.handle(testPayment);
+        paymentSuccessOrchestrator.handle(PAYMENT_ID);
 
         verify(bonusLedgerService, never()).accruePointsForPayment(any(), any(), any(), any());
     }

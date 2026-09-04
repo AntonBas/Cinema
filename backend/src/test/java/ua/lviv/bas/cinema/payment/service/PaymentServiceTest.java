@@ -227,7 +227,7 @@ public class PaymentServiceTest {
         assertThat(testPayment.getLiqpaySenderCardMask()).isEqualTo("****1234");
         assertThat(testPayment.getPaymentTime()).isNotNull();
 
-        verify(paymentSuccessOrchestrator).handle(testPayment);
+        verify(paymentSuccessOrchestrator).handle(testPayment.getId());
     }
 
     @Test
@@ -240,7 +240,7 @@ public class PaymentServiceTest {
         when(paymentRepository.updateStatusIfCurrentIn(eq(PAYMENT_ID), anyList(), eq(PaymentStatus.SUCCESS)))
                 .thenReturn(1);
         doThrow(new RuntimeException("booking already expired")).when(paymentSuccessOrchestrator)
-                .handle(testPayment);
+                .handle(testPayment.getId());
 
         paymentService.processSuccess(testPayment, callbackData);
 
@@ -266,7 +266,7 @@ public class PaymentServiceTest {
         assertThat(testPayment.getLiqpayPaymentId()).isEqualTo("PAY_ORIGINAL");
         assertThat(testPayment.getLiqpayTransactionId()).isEqualTo("TXN_ORIGINAL");
 
-        verify(paymentSuccessOrchestrator, never()).handle(any(Payment.class));
+        verify(paymentSuccessOrchestrator, never()).handle(any(Long.class));
         verify(auditService, never()).logChange(anyString(), anyLong(), anyString(), any(), any(), any());
     }
 

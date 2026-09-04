@@ -158,7 +158,7 @@ public class PaymentService {
         auditSuccess(payment, oldStatus);
 
         try {
-            paymentSuccessOrchestrator.handle(payment);
+            paymentSuccessOrchestrator.handle(payment.getId());
             log.info("Payment {} completed successfully", payment.getId());
         } catch (RuntimeException e) {
             log.error(
