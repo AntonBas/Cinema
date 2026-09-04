@@ -10,6 +10,7 @@ import ua.lviv.bas.cinema.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.booking.dto.response.SeatReservationResponse;
 import ua.lviv.bas.cinema.booking.service.SeatReservationService;
+import ua.lviv.bas.cinema.user.service.UserService;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -25,6 +26,9 @@ public class SeatReservationControllerTest {
 
     @Mock
     private CustomUserDetails customUserDetails;
+
+    @Mock
+    private UserService userService;
 
     @InjectMocks
     private SeatReservationController seatReservationController;
@@ -63,8 +67,8 @@ public class SeatReservationControllerTest {
         User user = new User();
         user.setId(userId);
 
-        when(customUserDetails.getUser()).thenReturn(user);
         when(customUserDetails.getUserId()).thenReturn(userId);
+        when(userService.getUser(userId)).thenReturn(user);
 
         seatReservationController.hold(sessionId, seatId, customUserDetails);
 
@@ -79,8 +83,8 @@ public class SeatReservationControllerTest {
         User user = new User();
         user.setId(userId);
 
-        when(customUserDetails.getUser()).thenReturn(user);
         when(customUserDetails.getUserId()).thenReturn(userId);
+        when(userService.getUser(userId)).thenReturn(user);
         doNothing().when(seatReservationService).cancel(sessionId, seatId, user);
 
         seatReservationController.cancel(sessionId, seatId, customUserDetails);

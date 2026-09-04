@@ -18,6 +18,7 @@ import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
 import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.ticket.dto.response.TicketResponse;
 import ua.lviv.bas.cinema.ticket.service.TicketService;
+import ua.lviv.bas.cinema.user.service.UserService;
 
 @Slf4j
 @RestController
@@ -28,6 +29,7 @@ import ua.lviv.bas.cinema.ticket.service.TicketService;
 public class TicketController {
 
     private final TicketService ticketService;
+    private final UserService userService;
 
     @RateLimit(value = 20, duration = 1, key = "user")
     @GetMapping
@@ -42,7 +44,7 @@ public class TicketController {
             @RequestParam(required = false) String movieTitle,
             @PageableDefault Pageable pageable
     ) {
-        var user = userDetails.getUser();
+        var user = userService.getUser(userDetails.getUserId());
         var page = ticketService.getTickets(user, status, movieTitle, pageable);
         return PageResponse.from(page);
     }
@@ -58,7 +60,7 @@ public class TicketController {
     public TicketResponse getTicket(@PathVariable String ticketCode,
                                     @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        var user = userDetails.getUser();
+        var user = userService.getUser(userDetails.getUserId());
         log.info("GET /api/tickets/code/{} - user: {}", ticketCode, user.getId());
         return ticketService.getTicket(ticketCode, user);
     }
@@ -72,7 +74,7 @@ public class TicketController {
             @ApiResponse(responseCode = "404", description = "Ticket not found")
     })
     public byte[] getQR(@PathVariable String ticketCode, @AuthenticationPrincipal CustomUserDetails userDetails) {
-        var user = userDetails.getUser();
+        var user = userService.getUser(userDetails.getUserId());
         log.info("GET /api/tickets/code/{}/qr - user: {}", ticketCode, user.getId());
         return ticketService.generateQR(ticketCode, user);
     }

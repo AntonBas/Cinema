@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import ua.lviv.bas.cinema.config.security.CustomUserDetailsService;
 import ua.lviv.bas.cinema.user.domain.EmailToken;
 import ua.lviv.bas.cinema.user.domain.TokenType;
 import ua.lviv.bas.cinema.user.domain.User;
@@ -36,6 +37,9 @@ public class EmailTokenServiceTest {
 
     @Mock
     private BonusLedgerService bonusUserService;
+
+    @Mock
+    private CustomUserDetailsService customUserDetailsService;
 
     @InjectMocks
     private EmailTokenService emailTokenService;

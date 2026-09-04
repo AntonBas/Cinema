@@ -46,6 +46,7 @@ public class CacheConfig {
         cacheConfigurations.put("tickets", defaultConfig.entryTtl(Duration.ofMinutes(30)));
         cacheConfigurations.put("ticketTypes", defaultConfig.entryTtl(Duration.ofHours(1)));
         cacheConfigurations.put("users", defaultConfig.entryTtl(Duration.ofMinutes(30)));
+        cacheConfigurations.put("userDetails", defaultConfig.entryTtl(Duration.ofMinutes(15)));
         cacheConfigurations.put("bonusRules", defaultConfig.entryTtl(Duration.ofHours(1)));
         cacheConfigurations.put("bonus", defaultConfig.entryTtl(Duration.ofMinutes(30)));
         cacheConfigurations.put("promotions", defaultConfig.entryTtl(Duration.ofHours(1)));

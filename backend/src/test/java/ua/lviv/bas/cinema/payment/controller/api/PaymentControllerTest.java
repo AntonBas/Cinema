@@ -14,6 +14,7 @@ import ua.lviv.bas.cinema.payment.dto.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.payment.dto.response.PaymentResponse;
 import ua.lviv.bas.cinema.payment.service.PaymentService;
 import ua.lviv.bas.cinema.payment.service.PaymentStatusService;
+import ua.lviv.bas.cinema.user.service.UserService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -32,6 +33,9 @@ public class PaymentControllerTest {
     @Mock
     private PaymentStatusService paymentStatusService;
 
+    @Mock
+    private UserService userService;
+
     @InjectMocks
     private PaymentController paymentController;
 
@@ -45,6 +49,8 @@ public class PaymentControllerTest {
         testUser.setEmail("user@example.com");
 
         userDetails = new CustomUserDetails(testUser);
+
+        when(userService.getUser(testUser.getId())).thenReturn(testUser);
     }
 
     private PaymentResponse createPaymentResponse() {

@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ua.lviv.bas.cinema.config.security.CustomUserDetailsService;
 import ua.lviv.bas.cinema.user.domain.EmailToken;
 import ua.lviv.bas.cinema.user.domain.TokenType;
 import ua.lviv.bas.cinema.user.domain.User;
@@ -29,6 +30,7 @@ public class EmailTokenService {
     private final EmailService emailService;
     private final UserRepository userRepository;
     private final BonusLedgerService bonusLedgerService;
+    private final CustomUserDetailsService customUserDetailsService;
 
     @CacheEvict(value = "users", allEntries = true)
     @Transactional
@@ -40,6 +42,7 @@ public class EmailTokenService {
 
         user.setEnabled(true);
         var updatedUser = userRepository.save(user);
+        customUserDetailsService.evict(user.getEmail());
 
         bonusLedgerService.getOrCreateCard(updatedUser);
         bonusLedgerService.awardWelcomeBonus(updatedUser);
@@ -77,6 +80,8 @@ public class EmailTokenService {
 
         user.setEmail(newEmail);
         var updatedUser = userRepository.save(user);
+        customUserDetailsService.evict(oldEmail);
+        customUserDetailsService.evict(newEmail);
 
         emailService.sendEmailChangeNotification(oldEmail, newEmail);
 

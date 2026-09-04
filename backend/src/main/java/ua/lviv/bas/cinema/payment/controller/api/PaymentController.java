@@ -26,6 +26,7 @@ import ua.lviv.bas.cinema.payment.dto.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.payment.dto.response.PaymentResponse;
 import ua.lviv.bas.cinema.payment.service.PaymentService;
 import ua.lviv.bas.cinema.payment.service.PaymentStatusService;
+import ua.lviv.bas.cinema.user.service.UserService;
 
 @Slf4j
 @RestController
@@ -37,6 +38,7 @@ public class PaymentController {
 
     private final PaymentService paymentService;
     private final PaymentStatusService paymentStatusService;
+    private final UserService userService;
 
     @RateLimit(duration = 5, key = "user")
     @PostMapping
@@ -52,7 +54,7 @@ public class PaymentController {
     @PreAuthorize("isAuthenticated()")
     public PaymentResponse createPayment(@Valid @RequestBody PaymentCreateRequest request,
                                          @AuthenticationPrincipal CustomUserDetails userDetails) {
-        var user = userDetails.getUser();
+        var user = userService.getUser(userDetails.getUserId());
         log.info("POST /api/payments - user: {}, booking: {}", user.getId(), request.bookingId());
         return paymentService.createPayment(request, user);
     }
@@ -69,7 +71,7 @@ public class PaymentController {
     @PreAuthorize("isAuthenticated()")
     public PaymentResponse retryPayment(@PathVariable Long paymentId,
                                         @AuthenticationPrincipal CustomUserDetails userDetails) {
-        var user = userDetails.getUser();
+        var user = userService.getUser(userDetails.getUserId());
         log.info("POST /api/payments/{}/retry - user: {}", paymentId, user.getId());
         return paymentService.retryPayment(paymentId, user);
     }
@@ -86,7 +88,7 @@ public class PaymentController {
     @PreAuthorize("isAuthenticated()")
     public PaymentLiqPayDataResponse getLiqPayData(@PathVariable Long paymentId,
                                                     @AuthenticationPrincipal CustomUserDetails userDetails) {
-        var user = userDetails.getUser();
+        var user = userService.getUser(userDetails.getUserId());
         log.info("GET /api/payments/{}/liqpay-data - user: {}", paymentId, user.getId());
         return paymentStatusService.preparePaymentData(paymentId, user);
     }
@@ -102,7 +104,7 @@ public class PaymentController {
     @PreAuthorize("isAuthenticated()")
     public PaymentResponse getPayment(@PathVariable Long paymentId,
                                       @AuthenticationPrincipal CustomUserDetails userDetails) {
-        var user = userDetails.getUser();
+        var user = userService.getUser(userDetails.getUserId());
         log.info("GET /api/payments/{} - user: {}", paymentId, user.getId());
         return paymentService.getPayment(paymentId, user);
     }

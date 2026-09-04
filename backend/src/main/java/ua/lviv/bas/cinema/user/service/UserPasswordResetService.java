@@ -6,6 +6,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
+import ua.lviv.bas.cinema.config.security.CustomUserDetailsService;
 import ua.lviv.bas.cinema.user.domain.EmailToken;
 import ua.lviv.bas.cinema.user.domain.TokenType;
 import ua.lviv.bas.cinema.user.domain.User;
@@ -30,6 +31,7 @@ public class UserPasswordResetService {
     private final PasswordEncoder passwordEncoder;
     private final EmailTokenRepository tokenRepository;
     private final AuditService auditService;
+    private final CustomUserDetailsService customUserDetailsService;
 
     @Transactional
     public void requestReset(String email) {
@@ -62,6 +64,7 @@ public class UserPasswordResetService {
 
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+        customUserDetailsService.evict(user.getEmail());
 
         resetToken.setConfirmed(true);
         resetToken.setConfirmedAt(LocalDateTime.now());

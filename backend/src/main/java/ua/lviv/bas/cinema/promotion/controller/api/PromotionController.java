@@ -17,6 +17,7 @@ import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.promotion.dto.request.ClaimPromotionRequest;
 import ua.lviv.bas.cinema.promotion.dto.response.PromotionResponse;
 import ua.lviv.bas.cinema.promotion.service.PromotionService;
+import ua.lviv.bas.cinema.user.service.UserService;
 
 import java.util.List;
 
@@ -29,6 +30,7 @@ import java.util.List;
 public class PromotionController {
 
     private final PromotionService promotionService;
+    private final UserService userService;
 
     @GetMapping
     @Operation(summary = "Get available promotions")
@@ -37,7 +39,7 @@ public class PromotionController {
     })
     @PreAuthorize("permitAll()")
     public List<PromotionResponse> getAvailablePromotions(@AuthenticationPrincipal CustomUserDetails currentUser) {
-        User user = currentUser != null ? currentUser.getUser() : null;
+        User user = currentUser != null ? userService.getUser(currentUser.getUserId()) : null;
         log.info("GET /api/promotions - user: {}", user != null ? user.getId() : "anonymous");
         return promotionService.getAvailablePromotions(user);
     }
@@ -54,7 +56,7 @@ public class PromotionController {
     @PreAuthorize("isAuthenticated()")
     public PromotionResponse claimPromotion(@Valid @RequestBody ClaimPromotionRequest request,
                                             @AuthenticationPrincipal CustomUserDetails currentUser) {
-        User user = currentUser.getUser();
+        User user = userService.getUser(currentUser.getUserId());
         log.info("POST /api/promotions/claim - user: {}, promotionId: {}", user.getId(), request.promotionId());
         return promotionService.claimPromotion(request, user);
     }
@@ -67,7 +69,7 @@ public class PromotionController {
     })
     @PreAuthorize("isAuthenticated()")
     public List<PromotionResponse> getClaimedPromotions(@AuthenticationPrincipal CustomUserDetails currentUser) {
-        User user = currentUser.getUser();
+        User user = userService.getUser(currentUser.getUserId());
         log.info("GET /api/promotions/claimed - user: {}", user.getId());
         return promotionService.getClaimedPromotions(user);
     }

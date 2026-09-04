@@ -78,7 +78,7 @@ public class AuthController {
 
         var token = jwtTokenProvider.generateToken(authentication);
         var userDetails = (CustomUserDetails) authentication.getPrincipal();
-        var userResponse = userMapper.toUserResponse(userDetails.getUser());
+        var userResponse = userService.getUserResponse(userDetails.getUserId());
 
         return new LoginResponse(token, "Bearer", userResponse);
     }
@@ -112,7 +112,7 @@ public class AuthController {
             throw new InsufficientAuthenticationException("Not authenticated");
         }
         log.info("GET /api/auth/me - user: {}", userDetails.getUsername());
-        return userMapper.toUserResponse(userDetails.getUser());
+        return userService.getUserResponse(userDetails.getUserId());
     }
 
     @RateLimit(value = 3, duration = 60)

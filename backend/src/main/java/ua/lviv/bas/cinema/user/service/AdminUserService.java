@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
+import ua.lviv.bas.cinema.config.security.CustomUserDetailsService;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.user.domain.UserRole;
 import ua.lviv.bas.cinema.user.domain.VerificationStatus;
@@ -36,6 +37,7 @@ public class AdminUserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final AuditService auditService;
+    private final CustomUserDetailsService customUserDetailsService;
 
     @CacheEvict(value = "users", allEntries = true)
     @Transactional
@@ -50,6 +52,7 @@ public class AdminUserService {
 
         user.setUserRole(newRole);
         var updated = userRepository.save(user);
+        customUserDetailsService.evict(user.getEmail());
         log.info("User role updated to {} for user {}", newRole, userId);
         auditRoleChange(userId, user.getEmail(), oldRole, newRole);
 
@@ -68,6 +71,7 @@ public class AdminUserService {
 
         user.setEnabled(enabled);
         var updated = userRepository.save(user);
+        customUserDetailsService.evict(user.getEmail());
         log.info("User status updated: enabled = {} for user {}", enabled, userId);
         auditStatusChange(userId, user.getEmail(), oldStatus, enabled);
 

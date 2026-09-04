@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
+import ua.lviv.bas.cinema.config.security.CustomUserDetailsService;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.user.domain.VerificationStatus;
 import ua.lviv.bas.cinema.user.dto.request.UserPasswordUpdateRequest;
@@ -41,6 +42,7 @@ public class UserService {
     private final UserMapper userMapper;
     private final EmailTokenGeneratorService emailTokenGeneratorService;
     private final AuditService auditService;
+    private final CustomUserDetailsService customUserDetailsService;
 
     @CacheEvict(value = "users", allEntries = true)
     @Transactional
@@ -104,6 +106,7 @@ public class UserService {
 
         user.setPassword(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
+        customUserDetailsService.evict(user.getEmail());
         log.info("Password updated for user {}", userId);
         auditPasswordChanged(userId, user.getEmail());
     }

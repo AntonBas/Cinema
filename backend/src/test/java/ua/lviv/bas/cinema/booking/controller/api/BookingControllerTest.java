@@ -11,6 +11,7 @@ import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.booking.dto.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.booking.dto.response.BookingResponse;
 import ua.lviv.bas.cinema.booking.service.BookingService;
+import ua.lviv.bas.cinema.user.service.UserService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -26,6 +27,9 @@ public class BookingControllerTest {
 
     @Mock
     private BookingService bookingService;
+
+    @Mock
+    private UserService userService;
 
     @InjectMocks
     private BookingController bookingController;
@@ -59,6 +63,7 @@ public class BookingControllerTest {
         BookingCreateRequest request = new BookingCreateRequest(SESSION_ID, Collections.emptyList(), null);
         BookingResponse response = createBookingResponse();
 
+        when(userService.getUser(user.getId())).thenReturn(user);
         when(bookingService.createBooking(any(BookingCreateRequest.class), any(User.class))).thenReturn(response);
 
         BookingResponse result = bookingController.createBooking(request, userDetails);
@@ -74,6 +79,7 @@ public class BookingControllerTest {
         CustomUserDetails userDetails = createUserDetails();
         BookingResponse response = createBookingResponse();
 
+        when(userService.getUser(user.getId())).thenReturn(user);
         when(bookingService.getBooking(BOOKING_ID, user)).thenReturn(response);
 
         BookingResponse result = bookingController.getBooking(BOOKING_ID, userDetails);
@@ -88,6 +94,7 @@ public class BookingControllerTest {
         User user = createUser();
         CustomUserDetails userDetails = createUserDetails();
 
+        when(userService.getUser(user.getId())).thenReturn(user);
         bookingController.cancelBooking(BOOKING_ID, userDetails);
 
         verify(bookingService).cancelBooking(BOOKING_ID, user);

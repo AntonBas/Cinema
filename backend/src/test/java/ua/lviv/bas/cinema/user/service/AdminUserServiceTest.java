@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import ua.lviv.bas.cinema.config.security.CustomUserDetailsService;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.user.domain.UserRole;
 import ua.lviv.bas.cinema.user.domain.VerificationStatus;
@@ -49,6 +50,8 @@ public class AdminUserServiceTest {
     private SecurityContext securityContext;
     @Mock
     private AuditService auditService;
+    @Mock
+    private CustomUserDetailsService customUserDetailsService;
     @InjectMocks
     private AdminUserService adminUserService;
 

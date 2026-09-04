@@ -15,6 +15,7 @@ import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.ticket.dto.response.TicketResponse;
 import ua.lviv.bas.cinema.ticket.service.TicketService;
+import ua.lviv.bas.cinema.user.service.UserService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -31,6 +32,9 @@ public class TicketControllerTest {
 
     @Mock
     private TicketService ticketService;
+
+    @Mock
+    private UserService userService;
 
     @InjectMocks
     private TicketController ticketController;
@@ -58,7 +62,8 @@ public class TicketControllerTest {
     @Test
     void getTicketsWithoutFiltersShouldReturnPage() {
         CustomUserDetails userDetails = createUserDetails();
-        User user = userDetails.getUser();
+        User user = createUser();
+        when(userService.getUser(user.getId())).thenReturn(user);
         Pageable pageable = PageRequest.of(0, 10);
         TicketResponse ticket = createTicketResponse();
         Page<TicketResponse> page = new PageImpl<>(List.of(ticket), pageable, 1);
@@ -75,7 +80,8 @@ public class TicketControllerTest {
     @Test
     void getTicketsWithStatusFilterShouldReturnPage() {
         CustomUserDetails userDetails = createUserDetails();
-        User user = userDetails.getUser();
+        User user = createUser();
+        when(userService.getUser(user.getId())).thenReturn(user);
         Pageable pageable = PageRequest.of(0, 10);
         TicketResponse ticket = createTicketResponse();
         Page<TicketResponse> page = new PageImpl<>(List.of(ticket), pageable, 1);
@@ -93,7 +99,8 @@ public class TicketControllerTest {
     @Test
     void getTicketsWithMovieTitleFilterShouldReturnPage() {
         CustomUserDetails userDetails = createUserDetails();
-        User user = userDetails.getUser();
+        User user = createUser();
+        when(userService.getUser(user.getId())).thenReturn(user);
         Pageable pageable = PageRequest.of(0, 10);
         TicketResponse ticket = createTicketResponse();
         Page<TicketResponse> page = new PageImpl<>(List.of(ticket), pageable, 1);
@@ -111,7 +118,8 @@ public class TicketControllerTest {
     @Test
     void getTicketsWithBothFiltersShouldReturnPage() {
         CustomUserDetails userDetails = createUserDetails();
-        User user = userDetails.getUser();
+        User user = createUser();
+        when(userService.getUser(user.getId())).thenReturn(user);
         Pageable pageable = PageRequest.of(0, 10);
         TicketResponse ticket = createTicketResponse();
         Page<TicketResponse> page = new PageImpl<>(List.of(ticket), pageable, 1);
@@ -130,7 +138,8 @@ public class TicketControllerTest {
     @Test
     void getTicketsWithEmptyPageShouldReturnEmptyPage() {
         CustomUserDetails userDetails = createUserDetails();
-        User user = userDetails.getUser();
+        User user = createUser();
+        when(userService.getUser(user.getId())).thenReturn(user);
         Pageable pageable = PageRequest.of(0, 10);
         Page<TicketResponse> emptyPage = new PageImpl<>(List.of(), pageable, 0);
 
@@ -147,7 +156,8 @@ public class TicketControllerTest {
     @Test
     void getTicketByCodeShouldReturnTicket() {
         CustomUserDetails userDetails = createUserDetails();
-        User user = userDetails.getUser();
+        User user = createUser();
+        when(userService.getUser(user.getId())).thenReturn(user);
         TicketResponse ticket = createTicketResponse();
 
         when(ticketService.getTicket(TICKET_CODE, user)).thenReturn(ticket);
@@ -165,6 +175,7 @@ public class TicketControllerTest {
         CustomUserDetails userDetails = new CustomUserDetails(user);
         byte[] qrCode = new byte[]{1, 2, 3, 4, 5};
 
+        when(userService.getUser(user.getId())).thenReturn(user);
         when(ticketService.generateQR(TICKET_CODE, user)).thenReturn(qrCode);
 
         byte[] response = ticketController.getQR(TICKET_CODE, userDetails);

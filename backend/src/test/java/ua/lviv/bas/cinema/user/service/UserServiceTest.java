@@ -7,6 +7,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import ua.lviv.bas.cinema.config.security.CustomUserDetailsService;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.user.domain.UserRole;
 import ua.lviv.bas.cinema.user.domain.VerificationStatus;
@@ -43,6 +44,8 @@ public class UserServiceTest {
     private EmailTokenGeneratorService emailTokenGeneratorService;
     @Mock
     private AuditService auditService;
+    @Mock
+    private CustomUserDetailsService customUserDetailsService;
     @InjectMocks
     private UserService userService;
 

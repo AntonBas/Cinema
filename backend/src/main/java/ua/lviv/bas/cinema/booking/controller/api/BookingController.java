@@ -25,6 +25,7 @@ import ua.lviv.bas.cinema.config.security.CustomUserDetails;
 import ua.lviv.bas.cinema.booking.dto.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.booking.dto.response.BookingResponse;
 import ua.lviv.bas.cinema.booking.service.BookingService;
+import ua.lviv.bas.cinema.user.service.UserService;
 
 @Slf4j
 @RestController
@@ -35,6 +36,7 @@ import ua.lviv.bas.cinema.booking.service.BookingService;
 public class BookingController {
 
     private final BookingService bookingService;
+    private final UserService userService;
 
     @RateLimit(duration = 1)
     @PostMapping
@@ -50,7 +52,7 @@ public class BookingController {
     @PreAuthorize("isAuthenticated()")
     public BookingResponse createBooking(@Valid @RequestBody BookingCreateRequest request,
                                          @AuthenticationPrincipal CustomUserDetails userDetails) {
-        var user = userDetails.getUser();
+        var user = userService.getUser(userDetails.getUserId());
         log.info("POST /api/bookings - user: {}, session: {}", user.getId(), request.sessionId());
         return bookingService.createBooking(request, user);
     }
@@ -66,7 +68,7 @@ public class BookingController {
     @PreAuthorize("isAuthenticated()")
     public BookingResponse getBooking(@PathVariable Long bookingId,
                                       @AuthenticationPrincipal CustomUserDetails userDetails) {
-        var user = userDetails.getUser();
+        var user = userService.getUser(userDetails.getUserId());
         log.info("GET /api/bookings/{} - user: {}", bookingId, user.getId());
         return bookingService.getBooking(bookingId, user);
     }
@@ -83,7 +85,7 @@ public class BookingController {
     })
     @PreAuthorize("isAuthenticated()")
     public void cancelBooking(@PathVariable Long bookingId, @AuthenticationPrincipal CustomUserDetails userDetails) {
-        var user = userDetails.getUser();
+        var user = userService.getUser(userDetails.getUserId());
         log.info("DELETE /api/bookings/{} - user: {}", bookingId, user.getId());
         bookingService.cancelBooking(bookingId, user);
     }

@@ -12,6 +12,7 @@ import ua.lviv.bas.cinema.promotion.dto.response.PromotionResponse;
 import ua.lviv.bas.cinema.exception.domain.financial.promotion.AlreadyClaimedException;
 import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionNotActiveException;
 import ua.lviv.bas.cinema.promotion.service.PromotionService;
+import ua.lviv.bas.cinema.user.service.UserService;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -31,6 +32,9 @@ public class PromotionControllerTest {
 
     @Mock
     private CustomUserDetails customUserDetails;
+
+    @Mock
+    private UserService userService;
 
     @InjectMocks
     private PromotionController promotionController;
@@ -58,7 +62,8 @@ public class PromotionControllerTest {
         User user = createUser();
         List<PromotionResponse> promotions = List.of(createPromotionResponse(), createPromotionResponse());
 
-        when(customUserDetails.getUser()).thenReturn(user);
+        when(customUserDetails.getUserId()).thenReturn(user.getId());
+        when(userService.getUser(user.getId())).thenReturn(user);
         when(promotionService.getAvailablePromotions(user)).thenReturn(promotions);
 
         List<PromotionResponse> result = promotionController.getAvailablePromotions(customUserDetails);
@@ -85,7 +90,8 @@ public class PromotionControllerTest {
         ClaimPromotionRequest request = new ClaimPromotionRequest(PROMOTION_ID);
         PromotionResponse response = createPromotionResponse();
 
-        when(customUserDetails.getUser()).thenReturn(user);
+        when(customUserDetails.getUserId()).thenReturn(user.getId());
+        when(userService.getUser(user.getId())).thenReturn(user);
         when(promotionService.claimPromotion(eq(request), eq(user))).thenReturn(response);
 
         PromotionResponse result = promotionController.claimPromotion(request, customUserDetails);
@@ -100,7 +106,8 @@ public class PromotionControllerTest {
         User user = createUser();
         ClaimPromotionRequest request = new ClaimPromotionRequest(PROMOTION_ID);
 
-        when(customUserDetails.getUser()).thenReturn(user);
+        when(customUserDetails.getUserId()).thenReturn(user.getId());
+        when(userService.getUser(user.getId())).thenReturn(user);
         when(promotionService.claimPromotion(any(), any())).thenThrow(new PromotionNotActiveException(TITLE));
 
         assertThatThrownBy(() -> promotionController.claimPromotion(request, customUserDetails))
@@ -112,7 +119,8 @@ public class PromotionControllerTest {
         User user = createUser();
         ClaimPromotionRequest request = new ClaimPromotionRequest(PROMOTION_ID);
 
-        when(customUserDetails.getUser()).thenReturn(user);
+        when(customUserDetails.getUserId()).thenReturn(user.getId());
+        when(userService.getUser(user.getId())).thenReturn(user);
         when(promotionService.claimPromotion(any(), any())).thenThrow(new AlreadyClaimedException(TITLE));
 
         assertThatThrownBy(() -> promotionController.claimPromotion(request, customUserDetails))
@@ -124,7 +132,8 @@ public class PromotionControllerTest {
         User user = createUser();
         List<PromotionResponse> promotions = List.of(createPromotionResponse());
 
-        when(customUserDetails.getUser()).thenReturn(user);
+        when(customUserDetails.getUserId()).thenReturn(user.getId());
+        when(userService.getUser(user.getId())).thenReturn(user);
         when(promotionService.getClaimedPromotions(user)).thenReturn(promotions);
 
         List<PromotionResponse> result = promotionController.getClaimedPromotions(customUserDetails);

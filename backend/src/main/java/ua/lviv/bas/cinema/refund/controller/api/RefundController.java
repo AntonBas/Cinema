@@ -50,9 +50,9 @@ public class RefundController {
     @PreAuthorize("isAuthenticated()")
     public RefundResponse refund(@Valid @RequestBody RefundRequest request,
                                  @AuthenticationPrincipal CustomUserDetails userDetails) {
-        var user = userDetails.getUser();
-        log.info("POST /api/refunds - user: {}, ticket: {}", user.getId(), request.ticketId());
-        return refundService.refund(request, user.getId());
+        var userId = userDetails.getUserId();
+        log.info("POST /api/refunds - user: {}, ticket: {}", userId, request.ticketId());
+        return refundService.refund(request, userId);
     }
 
     @PostMapping("/preview")
@@ -66,9 +66,9 @@ public class RefundController {
     @PreAuthorize("isAuthenticated()")
     public RefundPreviewResponse preview(@Valid @RequestBody RefundPreviewRequest request,
                                          @AuthenticationPrincipal CustomUserDetails userDetails) {
-        var user = userDetails.getUser();
-        log.info("POST /api/refunds/preview - user: {}, ticket: {}", user.getId(), request.ticketId());
-        return refundService.getPreview(request, user.getId());
+        var userId = userDetails.getUserId();
+        log.info("POST /api/refunds/preview - user: {}, ticket: {}", userId, request.ticketId());
+        return refundService.getPreview(request, userId);
     }
 
     @GetMapping("/policy")

@@ -1,5 +1,7 @@
 package ua.lviv.bas.cinema.config.security;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -19,6 +21,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 
     @Override
+    @Cacheable(value = "userDetails", key = "#email")
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         log.debug("Attempting to load user by email: {}", email);
@@ -35,5 +38,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         log.debug("User loaded successfully: {}, role: {}, enabled: {}", email, user.getUserRole(), user.isEnabled());
 
         return new CustomUserDetails(user);
+    }
+
+    @CacheEvict(value = "userDetails", key = "#email")
+    public void evict(String email) {
+        log.debug("Evicted cached user details for email: {}", email);
     }
 }

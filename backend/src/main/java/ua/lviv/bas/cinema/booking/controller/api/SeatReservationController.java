@@ -22,6 +22,7 @@ import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
 import ua.lviv.bas.cinema.booking.dto.response.SeatReservationResponse;
 import ua.lviv.bas.cinema.booking.service.SeatReservationService;
+import ua.lviv.bas.cinema.user.service.UserService;
 
 @Slf4j
 @RestController
@@ -31,6 +32,7 @@ import ua.lviv.bas.cinema.booking.service.SeatReservationService;
 public class SeatReservationController {
 
     private final SeatReservationService seatReservationService;
+    private final UserService userService;
 
     @GetMapping("/{sessionId}/seats")
     @Operation(summary = "Get seat availability")
@@ -58,7 +60,7 @@ public class SeatReservationController {
     public void hold(@PathVariable Long sessionId, @PathVariable Long seatId,
                      @AuthenticationPrincipal CustomUserDetails userDetails) {
         log.info("POST /api/sessions/{}/seats/{}/hold - user: {}", sessionId, seatId, userDetails.getUserId());
-        seatReservationService.hold(sessionId, seatId, userDetails.getUser());
+        seatReservationService.hold(sessionId, seatId, userService.getUser(userDetails.getUserId()));
     }
 
     @DeleteMapping("/{sessionId}/seats/{seatId}/hold")
@@ -75,6 +77,6 @@ public class SeatReservationController {
     public void cancel(@PathVariable Long sessionId, @PathVariable Long seatId,
                        @AuthenticationPrincipal CustomUserDetails userDetails) {
         log.info("DELETE /api/sessions/{}/seats/{}/hold - user: {}", sessionId, seatId, userDetails.getUserId());
-        seatReservationService.cancel(sessionId, seatId, userDetails.getUser());
+        seatReservationService.cancel(sessionId, seatId, userService.getUser(userDetails.getUserId()));
     }
 }
