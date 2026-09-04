@@ -9,6 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import ua.lviv.bas.cinema.bonus.domain.BonusCard;
 import ua.lviv.bas.cinema.bonus.domain.BonusRules;
 import ua.lviv.bas.cinema.bonus.domain.BonusTransaction;
@@ -52,6 +53,8 @@ public class BonusLedgerServiceTest {
     private ArgumentCaptor<BonusCard> cardCaptor;
     @Captor
     private ArgumentCaptor<BonusTransaction> transactionCaptor;
+    @Captor
+    private ArgumentCaptor<TransactionDefinition> transactionDefinitionCaptor;
 
     private final Long USER_ID = 1L;
     private final Long BOOKING_ID = 1L;
@@ -85,6 +88,24 @@ public class BonusLedgerServiceTest {
         BonusTransaction transaction = transactionCaptor.getValue();
         assertThat(transaction.getPointsChange()).isEqualTo(50);
         assertThat(transaction.getType()).isEqualTo(WELCOME);
+    }
+
+    @Test
+    void executeWithOptimisticLockRetryShouldRunInNewTransaction() {
+        User user = User.builder().id(USER_ID).build();
+        BonusCard card = BonusCard.builder().pointsBalance(0).welcomeBonusReceived(false).build();
+        BonusRules rule = BonusRules.builder().points(50).build();
+
+        when(bonusCardRepository.findByUserId(USER_ID)).thenReturn(Optional.of(card));
+        when(bonusRulesRepository.findByBonusTypeAndActiveTrue(WELCOME)).thenReturn(Optional.of(rule));
+        when(bonusCardRepository.save(any(BonusCard.class))).thenAnswer(i -> i.getArgument(0));
+        when(bonusTransactionRepository.save(any(BonusTransaction.class))).thenAnswer(i -> i.getArgument(0));
+
+        bonusLedgerService.awardWelcomeBonus(user);
+
+        verify(transactionManager).getTransaction(transactionDefinitionCaptor.capture());
+        assertThat(transactionDefinitionCaptor.getValue().getPropagationBehavior())
+                .isEqualTo(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     @Test
