@@ -6,15 +6,15 @@ Complete feature descriptions, technical details, and project structure.
 
 ## Contents
 
-- [Getting Started](#-getting-started)
-- [Features](#-features)
-  - [Roles & Permissions](#-roles--permissions)
-  - [User Features](#-user-features)
-  - [Admin Features](#️-admin-features)
-  - [Technical Highlights](#-technical-highlights)
+- [Getting Started](#getting-started)
+- [Features](#features)
+  - [Roles & Permissions](#roles--permissions)
+  - [User Features](#user-features)
+  - [Admin Features](#admin-features)
+  - [Technical Highlights](#technical-highlights)
 - [Engineering Details](#engineering-details)
-- [Tech Stack](#-tech-stack)
-- [Project Structure](#-project-structure)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
 
 ---
 

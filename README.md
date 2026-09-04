@@ -39,7 +39,7 @@ Full-stack cinema booking platform: seat reservation, LiqPay payments, refunds, 
 - **Audit log** of every admin change, with a per-entity history view
 - **Cashier:** ticket lookup and validation at the door by unique code
 
-Full feature breakdown for every role: [docs/DOCS.md#-features](docs/DOCS.md#-features)
+Full feature breakdown for every role: [docs/DOCS.md#features](docs/DOCS.md#features)
 
 ---
 
@@ -51,7 +51,7 @@ Full feature breakdown for every role: [docs/DOCS.md#-features](docs/DOCS.md#-fe
 
 **DevOps** — Docker / Docker Compose, GitHub Actions
 
-Full version table: [docs/DOCS.md#-tech-stack](docs/DOCS.md#-tech-stack)
+Full version table: [docs/DOCS.md#tech-stack](docs/DOCS.md#tech-stack)
 
 ---
 
@@ -133,4 +133,4 @@ docker compose up -d
 | Backend API | http://localhost:8080/api             |
 | Swagger     | http://localhost:8080/swagger-ui.html |
 
-Local (non-Docker) setup, test accounts, and database reset instructions: [docs/DOCS.md#-getting-started](docs/DOCS.md#-getting-started)
+Local (non-Docker) setup, test accounts, and database reset instructions: [docs/DOCS.md#getting-started](docs/DOCS.md#getting-started)
