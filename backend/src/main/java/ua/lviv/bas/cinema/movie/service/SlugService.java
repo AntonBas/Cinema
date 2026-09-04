@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.integration;
+package ua.lviv.bas.cinema.movie.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

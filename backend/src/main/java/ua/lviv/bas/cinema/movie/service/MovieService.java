@@ -36,7 +36,6 @@ import ua.lviv.bas.cinema.common.UniquenessValidator;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 import ua.lviv.bas.cinema.integration.PosterService;
-import ua.lviv.bas.cinema.integration.SlugService;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

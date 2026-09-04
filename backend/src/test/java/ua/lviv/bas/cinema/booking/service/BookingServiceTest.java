@@ -8,6 +8,7 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.CacheManager;
 import org.springframework.test.util.ReflectionTestUtils;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.booking.domain.SeatReservation;
@@ -71,6 +72,8 @@ public class BookingServiceTest {
     private SeatReservationService seatReservationService;
     @Mock
     private AuditService auditService;
+    @Mock
+    private CacheManager cacheManager;
 
     @InjectMocks
     private BookingService bookingService;
@@ -203,8 +206,10 @@ public class BookingServiceTest {
                 ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.empty());
         when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_2,
                 ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.empty());
-        when(seatReservationService.hold(SESSION_ID, SEAT_ID_1, testUser)).thenReturn(newReservation1);
-        when(seatReservationService.hold(SESSION_ID, SEAT_ID_2, testUser)).thenReturn(newReservation2);
+        when(seatReservationService.lockSeat(SEAT_ID_1)).thenReturn(testSeat1);
+        when(seatReservationService.lockSeat(SEAT_ID_2)).thenReturn(testSeat2);
+        when(seatReservationService.holdLockedSeat(testSession, testSeat1, testUser)).thenReturn(newReservation1);
+        when(seatReservationService.holdLockedSeat(testSession, testSeat2, testUser)).thenReturn(newReservation2);
         when(ticketTypeRepository.findById(TICKET_TYPE_ADULT_ID)).thenReturn(Optional.of(adultTicketType));
         when(ticketTypeRepository.findById(TICKET_TYPE_CHILD_ID)).thenReturn(Optional.of(childTicketType));
         when(priceCalculator.calculateSeatPrice(testSession, testSeat1, adultTicketType)).thenReturn(SEAT_1_PRICE);
@@ -219,8 +224,8 @@ public class BookingServiceTest {
         BookingResponse result = bookingService.createBooking(createRequest, testUser);
 
         assertThat(result).isNotNull();
-        verify(seatReservationService).hold(SESSION_ID, SEAT_ID_1, testUser);
-        verify(seatReservationService).hold(SESSION_ID, SEAT_ID_2, testUser);
+        verify(seatReservationService).holdLockedSeat(testSession, testSeat1, testUser);
+        verify(seatReservationService).holdLockedSeat(testSession, testSeat2, testUser);
     }
 
     @Test
@@ -244,8 +249,10 @@ public class BookingServiceTest {
                 ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.empty());
         when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_2,
                 ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.empty());
-        when(seatReservationService.hold(SESSION_ID, SEAT_ID_1, testUser)).thenReturn(newReservation1);
-        when(seatReservationService.hold(SESSION_ID, SEAT_ID_2, testUser)).thenReturn(newReservation2);
+        when(seatReservationService.lockSeat(SEAT_ID_1)).thenReturn(testSeat1);
+        when(seatReservationService.lockSeat(SEAT_ID_2)).thenReturn(testSeat2);
+        when(seatReservationService.holdLockedSeat(testSession, testSeat1, testUser)).thenReturn(newReservation1);
+        when(seatReservationService.holdLockedSeat(testSession, testSeat2, testUser)).thenReturn(newReservation2);
         when(ticketTypeRepository.findById(TICKET_TYPE_ADULT_ID)).thenReturn(Optional.of(adultTicketType));
         when(ticketTypeRepository.findById(TICKET_TYPE_CHILD_ID)).thenReturn(Optional.of(childTicketType));
         when(priceCalculator.calculateSeatPrice(testSession, testSeat1, adultTicketType)).thenReturn(SEAT_1_PRICE);
@@ -309,19 +316,22 @@ public class BookingServiceTest {
     @Test
     void cancelBookingShouldSucceed() {
         Booking booking = Booking.builder().id(BOOKING_ID).user(testUser).status(BookingStatus.PENDING)
-                .bonusPointsUsed(BONUS_POINTS_USED)
+                .session(testSession).bonusPointsUsed(BONUS_POINTS_USED)
                 .seatReservations(Arrays.asList(SeatReservation.builder().build(), SeatReservation.builder().build()))
                 .build();
+        var seatAvailabilityCache = mock(org.springframework.cache.Cache.class);
 
         when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(booking));
         when(bookingRepository.saveAndFlush(booking)).thenReturn(booking);
         when(seatReservationRepository.saveAll(anyList())).thenReturn(Collections.emptyList());
+        when(cacheManager.getCache("seatAvailability")).thenReturn(seatAvailabilityCache);
 
         bookingService.cancelBooking(BOOKING_ID, testUser);
 
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
         verify(bonusLedgerService).refundPoints(booking);
         verify(seatReservationRepository).saveAll(anyList());
+        verify(seatAvailabilityCache).evict(SESSION_ID);
     }
 
     @Test

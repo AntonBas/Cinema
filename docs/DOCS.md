@@ -493,6 +493,20 @@ A background scheduler ensures system consistency when things go wrong:
 - Updates session statuses (SCHEDULED → COMPLETED)
 - All state lives in PostgreSQL — if the app crashes mid-flow, scheduler recovers on restart with no data loss
 
+### Known Trade-offs
+
+- **`GenerationType.IDENTITY` defeats Hibernate's JDBC insert batching.** Every `@Entity` uses `@GeneratedValue(strategy = GenerationType.IDENTITY)`, and Hibernate cannot batch `INSERT` statements for `IDENTITY`-strategy entities — it needs the generated id back from each individual insert before it can build the next statement, so `hibernate.jdbc.batch_size: 20` (see `application.yml`) only ever applies to `UPDATE`/`DELETE` batching, never to inserts. Switching to `SEQUENCE` with a pooled/hi-lo optimizer (e.g. `@GenericGenerator` with `hibernate_sequence` allocation size) would restore insert batching, but it's a cross-cutting change touching every entity, every migration that defines a `BIGSERIAL` primary key, and any code relying on IDENTITY's "id available immediately after `save()`, before flush" semantics. Given booking sizes are small (≤10 seats), the current impact is low — this is a deliberate, accepted trade-off, not an oversight. Revisit only if profiling shows insert throughput actually matters (e.g. bulk imports), and treat it as a dedicated migration-heavy epic rather than an incremental fix.
+- **Seat-row locking is per physical seat, not per (session, seat).** `SeatReservationService.lockSeat()`/`hold()`
+  take `PESSIMISTIC_WRITE` on the `Seat` row itself, so two unrelated sessions in the same hall booking the same
+  physical seat number serialize against each other even though they don't conflict. Moving the lock to a
+  `(session_id, seat_id)` granularity would require locking a row that doesn't exist yet before the first hold
+  (e.g. a Postgres advisory lock keyed by `hash(session_id, seat_id)`), which is a materially bigger change to the
+  core double-booking guarantee than the throughput problem justifies at current hall sizes/concurrency. The
+  partial unique index on `seat_reservations(session_id, seat_id) WHERE status IN ('HELD','CONFIRMED')` (see
+  migration `V16`) already gives defense-in-depth against double-booking independent of this lock, so the
+  cross-session serialization is a throughput concern, not a correctness one — revisit only if profiling shows it's
+  an actual bottleneck.
+
 ### Refund Calculation
 
 Refund amount depends on time remaining before the session:

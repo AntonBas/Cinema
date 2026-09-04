@@ -67,8 +67,9 @@ public class PaymentRefundService {
     }
 
     @Transactional
-    public void applyRefundSuccess(Payment payment, BigDecimal amount, String description, Ticket ticket) {
-        var newStatus = amount.compareTo(payment.getAmount()) == 0 ? PaymentStatus.REFUNDED
+    public void applyRefundSuccess(Payment payment, BigDecimal amount, BigDecimal totalRefundedAmount,
+                                   String description, Ticket ticket) {
+        var newStatus = totalRefundedAmount.compareTo(payment.getAmount()) >= 0 ? PaymentStatus.REFUNDED
                 : PaymentStatus.PARTIALLY_REFUNDED;
 
         if (payment.getStatus() == newStatus) {

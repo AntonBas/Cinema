@@ -18,6 +18,7 @@ import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.booking.repository.BookingRepository;
 import ua.lviv.bas.cinema.booking.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
+import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusCardConcurrentModificationException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -103,6 +104,29 @@ public class BookingSchedulerTest {
         bookingScheduler.processExpiredBookings();
 
         verifyNoInteractions(bonusLedgerService);
+    }
+
+    @Test
+    void processExpiredBookingsShouldContinueBatchWhenOneBookingFailsWithNonOptimisticLockException() {
+        var failingSeat = SeatReservation.builder().status(ReservationStatus.CONFIRMED).build();
+        var failingBooking = Booking.builder().id(1L).session(testSession).status(BookingStatus.PENDING)
+                .seatReservations(List.of(failingSeat)).bonusPointsUsed(50).build();
+
+        var okSeat = SeatReservation.builder().status(ReservationStatus.CONFIRMED).build();
+        var okBooking = Booking.builder().id(2L).session(testSession).status(BookingStatus.PENDING)
+                .seatReservations(List.of(okSeat)).bonusPointsUsed(0).build();
+
+        when(bookingRepository.findByStatusAndExpiresAtBefore(eq(BookingStatus.PENDING), any(LocalDateTime.class)))
+                .thenReturn(List.of(failingBooking, okBooking));
+        when(cacheManager.getCache(anyString())).thenReturn(cache);
+        doThrow(new BonusCardConcurrentModificationException(null)).when(bonusLedgerService)
+                .refundPoints(failingBooking);
+
+        bookingScheduler.processExpiredBookings();
+
+        assertThat(okBooking.getStatus()).isEqualTo(BookingStatus.EXPIRED);
+        verify(bookingRepository).save(okBooking);
+        verify(bookingRepository, never()).save(failingBooking);
     }
 
     @Test

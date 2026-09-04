@@ -11,6 +11,7 @@ import ua.lviv.bas.cinema.cinema.domain.Seat;
 import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.config.properties.RefundRules;
 import ua.lviv.bas.cinema.payment.domain.Payment;
+import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.refund.domain.Refund;
 import ua.lviv.bas.cinema.support.CinemaTestFixtures;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
@@ -48,7 +49,7 @@ class RefundCalculatorTest {
         SeatReservation seatReservation = SeatReservation.builder().seat(seat).build();
         Booking booking = Booking.builder().session(testSession).seatReservations(List.of(seatReservation))
                 .totalPrice(new BigDecimal("100.00")).bonusPointsUsed(0).build();
-        Payment payment = Payment.builder().amount(new BigDecimal("100.00")).build();
+        Payment payment = Payment.builder().amount(new BigDecimal("100.00")).status(PaymentStatus.SUCCESS).build();
         TicketType ticketType = TicketType.builder().displayName("Standard").build();
         testTicket = Ticket.builder().booking(booking).payment(payment).ticketType(ticketType)
                 .finalPrice(new BigDecimal("100.00")).status(TicketStatus.ACTIVE)
@@ -91,6 +92,28 @@ class RefundCalculatorTest {
         String reason = refundCalculator.validate(testTicket);
 
         assertThat(reason).isEqualTo("Session has already started or finished");
+    }
+
+    @Test
+    void validateWhenPaymentNotSuccessOrPartiallyRefundedShouldReturnReason() {
+        testSession.setStartTime(LocalDateTime.now().plusHours(3));
+        when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(true);
+        testTicket.getPayment().setStatus(PaymentStatus.PENDING);
+
+        String reason = refundCalculator.validate(testTicket);
+
+        assertThat(reason).isEqualTo("Payment cannot be refunded via API. Contact support.");
+    }
+
+    @Test
+    void validateWhenPaymentPartiallyRefundedShouldReturnNull() {
+        testSession.setStartTime(LocalDateTime.now().plusHours(3));
+        when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(true);
+        testTicket.getPayment().setStatus(PaymentStatus.PARTIALLY_REFUNDED);
+
+        String reason = refundCalculator.validate(testTicket);
+
+        assertThat(reason).isNull();
     }
 
     @Test

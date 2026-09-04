@@ -70,29 +70,34 @@ public class SeatReservationService {
     }
 
     @Transactional
-    public void lockSeat(Long seatId) {
-        seatRepository.findByIdWithLock(seatId).orElseThrow(() -> new EntityNotFoundException("Seat", seatId));
+    public Seat lockSeat(Long seatId) {
+        return seatRepository.findByIdWithLock(seatId).orElseThrow(() -> new EntityNotFoundException("Seat", seatId));
     }
 
     @CacheEvict(value = "seatAvailability", key = "#sessionId")
     @Transactional
     public SeatReservation hold(Long sessionId, Long seatId, User user) {
-        log.info("Creating temporary hold for seat {} in session {} by user {}", seatId, sessionId, user.getId());
-
         var session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new EntityNotFoundException("Session", sessionId));
+        var seat = lockSeat(seatId);
 
-        var seat = seatRepository.findByIdWithLock(seatId)
-                .orElseThrow(() -> new EntityNotFoundException("Seat", seatId));
+        return holdLockedSeat(session, seat, user);
+    }
 
-        validateSeat(sessionId, seatId);
+    @Transactional
+    public SeatReservation holdLockedSeat(Session session, Seat seat, User user) {
+        log.info("Creating temporary hold for seat {} in session {} by user {}", seat.getId(), session.getId(),
+                user.getId());
+
+        validateSeat(seat, session.getId());
 
         var reservation = SeatReservation.builder().seat(seat).session(session).ticketType(null).seatPrice(null)
                 .status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(tempHoldMinutes))
                 .reservedByUser(user).build();
 
         var saved = seatReservationRepository.save(reservation);
-        log.info("Temporary hold created for seat {} in session {} by user {}", seatId, sessionId, user.getId());
+        log.info("Temporary hold created for seat {} in session {} by user {}", seat.getId(), session.getId(),
+                user.getId());
         return saved;
     }
 
@@ -160,13 +165,16 @@ public class SeatReservationService {
 
     private void validateSeat(Long sessionId, Long seatId) {
         var seat = seatRepository.findById(seatId).orElseThrow(() -> new EntityNotFoundException("Seat", seatId));
+        validateSeat(seat, sessionId);
+    }
 
+    private void validateSeat(Seat seat, Long sessionId) {
         if (!seat.isActive()) {
-            throw SeatNotAvailableException.seatInactive(seatId);
+            throw SeatNotAvailableException.seatInactive(seat.getId());
         }
 
-        if (isReserved(sessionId, seatId)) {
-            throw SeatNotAvailableException.forSeatAndSession(seatId, sessionId);
+        if (isReserved(sessionId, seat.getId())) {
+            throw SeatNotAvailableException.forSeatAndSession(seat.getId(), sessionId);
         }
     }
 

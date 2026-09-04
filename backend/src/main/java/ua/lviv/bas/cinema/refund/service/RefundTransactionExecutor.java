@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
 import ua.lviv.bas.cinema.refund.domain.Refund;
 import ua.lviv.bas.cinema.refund.domain.RefundItem;
-import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.refund.domain.status.RefundItemStatus;
 import ua.lviv.bas.cinema.refund.domain.status.RefundStatus;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
@@ -65,10 +64,6 @@ public class RefundTransactionExecutor {
         if (validationError != null) {
             throw new TicketNotRefundableException(validationError);
         }
-        if (ticket.getPayment().getStatus() != PaymentStatus.SUCCESS
-                && ticket.getPayment().getStatus() != PaymentStatus.PARTIALLY_REFUNDED) {
-            throw new TicketNotRefundableException("Payment cannot be refunded via API. Contact support.");
-        }
         if (refundRepository.existsByItemsTicketIdAndStatus(ticket.getId(), RefundStatus.PROCESSING)) {
             throw new TicketNotRefundableException("A refund for this ticket is already being processed");
         }
@@ -115,7 +110,11 @@ public class RefundTransactionExecutor {
         var bonusPointsToRefund = refund.getTotalBonusPointsToDeduct();
         var description = "Refund for ticket #" + ticket.getUniqueCode();
 
-        paymentRefundService.applyRefundSuccess(refund.getPayment(), amount, description, ticket);
+        var alreadyProcessedAmount = refundRepository.sumAmountByPaymentIdAndStatus(refund.getPayment().getId(),
+                RefundStatus.PROCESSED);
+        var totalRefundedAmount = alreadyProcessedAmount.add(amount);
+        paymentRefundService.applyRefundSuccess(refund.getPayment(), amount, totalRefundedAmount, description,
+                ticket);
 
         if (bonusPointsToRefund != null && bonusPointsToRefund > 0) {
             bonusLedgerService.refundPointsForTicket(refund.getUser().getId(), bonusPointsToRefund,

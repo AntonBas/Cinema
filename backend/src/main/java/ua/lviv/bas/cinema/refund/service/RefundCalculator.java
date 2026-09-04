@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.refund.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ua.lviv.bas.cinema.config.properties.RefundRules;
+import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
 
@@ -29,6 +30,10 @@ public class RefundCalculator {
         }
         if (sessionTime.isBefore(LocalDateTime.now())) {
             return "Session has already started or finished";
+        }
+        var paymentStatus = ticket.getPayment().getStatus();
+        if (paymentStatus != PaymentStatus.SUCCESS && paymentStatus != PaymentStatus.PARTIALLY_REFUNDED) {
+            return "Payment cannot be refunded via API. Contact support.";
         }
         return null;
     }

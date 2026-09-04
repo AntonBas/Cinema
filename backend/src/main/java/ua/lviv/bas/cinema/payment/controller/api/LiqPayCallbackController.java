@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.payment.service.PaymentStatusService;
 
 @Slf4j
@@ -25,6 +26,7 @@ public class LiqPayCallbackController {
 
     @PostMapping("/callback")
     @ResponseStatus(HttpStatus.OK)
+    @RateLimit(value = 60, duration = 1)
     @Operation(summary = "Handle LiqPay callback", description = "Receives payment status updates from LiqPay")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Callback processed successfully"),
@@ -32,11 +34,6 @@ public class LiqPayCallbackController {
     })
     public String handleCallback(@RequestParam String data, @RequestParam String signature) {
         log.info("POST /api/liqpay/callback");
-
-        if (data == null || signature == null) {
-            log.error("Missing required parameters: data or signature is null");
-            return "Missing required parameters";
-        }
 
         paymentStatusService.handleCallback(data, signature);
         return "OK";

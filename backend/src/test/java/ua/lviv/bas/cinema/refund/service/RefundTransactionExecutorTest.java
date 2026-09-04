@@ -174,11 +174,14 @@ public class RefundTransactionExecutorTest {
         when(refundRepository.findById(REFUND_ID)).thenReturn(Optional.of(testRefund));
         when(ticketRepository.findById(TICKET_ID)).thenReturn(Optional.of(testTicket));
         when(refundRepository.save(any(Refund.class))).thenAnswer(i -> i.getArgument(0));
+        when(refundRepository.sumAmountByPaymentIdAndStatus(testPayment.getId(), RefundStatus.PROCESSED))
+                .thenReturn(BigDecimal.ZERO);
 
         var result = refundTransactionExecutor.applySuccess(REFUND_ID, TICKET_ID);
 
         assertThat(result.getStatus()).isEqualTo(RefundStatus.PROCESSED);
-        verify(paymentRefundService).applyRefundSuccess(eq(testPayment), eq(REFUND_AMOUNT), any(String.class), eq(testTicket));
+        verify(paymentRefundService).applyRefundSuccess(eq(testPayment), eq(REFUND_AMOUNT), eq(REFUND_AMOUNT),
+                any(String.class), eq(testTicket));
         verify(bonusLedgerService).refundPointsForTicket(USER_ID, BONUS_POINTS_TO_REFUND, "REFUND_TICKET_" + TICKET_ID);
         verify(ticketService).markAsRefunded(testTicket, testRefund);
     }
@@ -201,6 +204,8 @@ public class RefundTransactionExecutorTest {
         when(refundRepository.findById(REFUND_ID)).thenReturn(Optional.of(testRefund));
         when(ticketRepository.findById(TICKET_ID)).thenReturn(Optional.of(testTicket));
         when(refundRepository.save(any(Refund.class))).thenAnswer(i -> i.getArgument(0));
+        when(refundRepository.sumAmountByPaymentIdAndStatus(testPayment.getId(), RefundStatus.PROCESSED))
+                .thenReturn(BigDecimal.ZERO);
 
         refundTransactionExecutor.applySuccess(REFUND_ID, TICKET_ID);
 

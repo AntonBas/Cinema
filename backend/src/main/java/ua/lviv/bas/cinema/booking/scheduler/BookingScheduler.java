@@ -65,6 +65,8 @@ public class BookingScheduler {
 				expiredCount++;
 			} catch (ObjectOptimisticLockingFailureException e) {
 				log.warn("Skipped expiring booking {} due to concurrent update, will retry on next run", bookingId);
+			} catch (RuntimeException e) {
+				log.error("Failed to expire booking {}, will retry on next run", bookingId, e);
 			}
 		}
 

@@ -3,7 +3,10 @@ package ua.lviv.bas.cinema.booking.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,6 +60,7 @@ public class BookingService {
     private final PriceCalculatorService priceCalculator;
     private final SeatReservationService seatReservationService;
     private final AuditService auditService;
+    private final CacheManager cacheManager;
 
     @Value("${booking.expiration-minutes:20}")
     private int expirationMinutes;
@@ -67,7 +71,10 @@ public class BookingService {
     @Value("${booking.session-too-close-minutes:30}")
     private int sessionTooCloseMinutes;
 
-    @CacheEvict(value = {"seatAvailability", "sessions"}, allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "seatAvailability", key = "#request.sessionId()"),
+            @CacheEvict(value = "sessions", allEntries = true)
+    })
     public BookingResponse createBooking(BookingCreateRequest request, User user) {
         var session = sessionRepository.findById(request.sessionId())
                 .orElseThrow(() -> new EntityNotFoundException("Session", request.sessionId()));
@@ -135,7 +142,6 @@ public class BookingService {
         return bookingMapper.toResponse(booking);
     }
 
-    @CacheEvict(value = "seatAvailability", allEntries = true)
     public void cancelBooking(Long bookingId, User user) {
         var booking = bookingRepository.findByIdAndUserId(bookingId, user.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Booking", bookingId));
@@ -163,8 +169,16 @@ public class BookingService {
         } catch (ObjectOptimisticLockingFailureException e) {
             throw new BookingConcurrentModificationException(bookingId);
         }
+        evictSeatAvailabilityCache(booking.getSession().getId());
         log.info("Cancelled booking {} for user {}", bookingId, user.getId());
         auditCancel(bookingId, oldStatus);
+    }
+
+    private void evictSeatAvailabilityCache(Long sessionId) {
+        Cache cache = cacheManager.getCache("seatAvailability");
+        if (cache != null) {
+            cache.evict(sessionId);
+        }
     }
 
     public void confirmBooking(Long bookingId) {
@@ -225,7 +239,7 @@ public class BookingService {
                                                     BookingCreateRequest.SeatSelectionRequest seatSelection) {
         var seatId = seatSelection.seatId();
 
-        seatReservationService.lockSeat(seatId);
+        var seat = seatReservationService.lockSeat(seatId);
 
         Optional<SeatReservation> existingReservation = seatReservationRepository
                 .findBySessionIdAndSeatIdAndStatusAndReservedByUserId(session.getId(), seatId,
@@ -240,7 +254,7 @@ public class BookingService {
             return reservation;
         }
 
-        return seatReservationService.hold(session.getId(), seatId, user);
+        return seatReservationService.holdLockedSeat(session, seat, user);
     }
 
     private void updateReservationWithTicketType(SeatReservation reservation,

@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.config.properties.RefundRules;
 import ua.lviv.bas.cinema.refund.domain.Refund;
-import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.refund.dto.request.RefundPreviewRequest;
 import ua.lviv.bas.cinema.refund.dto.request.RefundRequest;
@@ -47,9 +46,6 @@ public class RefundService {
 
         if (validationError != null) {
             return createNonRefundablePreview(ticket, validationError);
-        }
-        if (ticket.getPayment().getStatus() != PaymentStatus.SUCCESS && ticket.getPayment().getStatus() != PaymentStatus.PARTIALLY_REFUNDED) {
-            return createNonRefundablePreview(ticket, "Payment cannot be refunded via API. Contact support.");
         }
         return createPreview(ticket);
     }
