@@ -224,6 +224,47 @@ public class BookingServiceTest {
     }
 
     @Test
+    void createBookingShouldLockSeatsInAscendingIdOrderRegardlessOfRequestOrder() {
+        BookingCreateRequest.SeatSelectionRequest reversedSelection1 = new BookingCreateRequest.SeatSelectionRequest(
+                SEAT_ID_2, TICKET_TYPE_CHILD_ID);
+        BookingCreateRequest.SeatSelectionRequest reversedSelection2 = new BookingCreateRequest.SeatSelectionRequest(
+                SEAT_ID_1, TICKET_TYPE_ADULT_ID);
+        var reversedRequest = new BookingCreateRequest(SESSION_ID,
+                Arrays.asList(reversedSelection1, reversedSelection2), BONUS_POINTS_USED);
+
+        SeatReservation newReservation1 = SeatReservation.builder().id(1L).seat(testSeat1).session(testSession)
+                .status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(TEMP_HOLD_MINUTES))
+                .reservedByUser(testUser).build();
+        SeatReservation newReservation2 = SeatReservation.builder().id(2L).seat(testSeat2).session(testSession)
+                .status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(TEMP_HOLD_MINUTES))
+                .reservedByUser(testUser).build();
+
+        when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
+        when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_1,
+                ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.empty());
+        when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_2,
+                ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.empty());
+        when(seatReservationService.hold(SESSION_ID, SEAT_ID_1, testUser)).thenReturn(newReservation1);
+        when(seatReservationService.hold(SESSION_ID, SEAT_ID_2, testUser)).thenReturn(newReservation2);
+        when(ticketTypeRepository.findById(TICKET_TYPE_ADULT_ID)).thenReturn(Optional.of(adultTicketType));
+        when(ticketTypeRepository.findById(TICKET_TYPE_CHILD_ID)).thenReturn(Optional.of(childTicketType));
+        when(priceCalculator.calculateSeatPrice(testSession, testSeat1, adultTicketType)).thenReturn(SEAT_1_PRICE);
+        when(priceCalculator.calculateSeatPrice(testSession, testSeat2, childTicketType)).thenReturn(SEAT_2_PRICE);
+        doNothing().when(bonusQueryService).validatePointsForBooking(USER_ID, BONUS_POINTS_USED, TOTAL_PRICE);
+        when(priceCalculator.calculateBonusDiscount(BONUS_POINTS_USED)).thenReturn(DISCOUNT_AMOUNT);
+
+        when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
+        when(seatReservationRepository.saveAll(anyList())).thenReturn(Collections.emptyList());
+        when(bookingMapper.toResponse(any(Booking.class))).thenReturn(bookingResponse);
+
+        bookingService.createBooking(reversedRequest, testUser);
+
+        var inOrder = inOrder(seatReservationService);
+        inOrder.verify(seatReservationService).lockSeat(SEAT_ID_1);
+        inOrder.verify(seatReservationService).lockSeat(SEAT_ID_2);
+    }
+
+    @Test
     void createBookingWhenSessionNotFoundShouldThrowException() {
         when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.empty());
 

@@ -73,6 +73,7 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
             LEFT JOIN (
                 SELECT hall_id, COUNT(*) as seat_count
                 FROM seats
+                WHERE hall_id IN (SELECT hall_id FROM sessions WHERE id IN (:ids))
                 GROUP BY hall_id
             ) sc ON sc.hall_id = h.id
             WHERE s.id IN (:ids)
@@ -99,12 +100,13 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
             LEFT JOIN (
                 SELECT hall_id, COUNT(*) as seat_count
                 FROM seats
+                WHERE hall_id IN (SELECT hall_id FROM sessions WHERE id IN (:ids))
                 GROUP BY hall_id
             ) sc ON sc.hall_id = h.id
             LEFT JOIN (
                 SELECT session_id, COUNT(id) as tickets_sold, SUM(total_price) as total_revenue
                 FROM bookings
-                WHERE status = 'CONFIRMED'
+                WHERE status = 'CONFIRMED' AND session_id IN (:ids)
                 GROUP BY session_id
             ) bs ON bs.session_id = s.id
             WHERE s.id IN (:ids)

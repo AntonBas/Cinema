@@ -47,13 +47,13 @@ class BonusQueryServiceIntegrationTest {
         var bonusCard = bonusCardRepository.save(BonusCard.builder().user(user).pointsBalance(140).build());
 
         var tx1 = bonusTransactionRepository
-                .save(buildTransaction(bonusCard, BonusTransactionType.WELCOME_BONUS, 100));
+                .save(buildTransaction(bonusCard, BonusTransactionType.WELCOME_BONUS, 100, 100));
         var tx2 = bonusTransactionRepository
-                .save(buildTransaction(bonusCard, BonusTransactionType.PAYMENT_ACCRUAL, 50));
+                .save(buildTransaction(bonusCard, BonusTransactionType.PAYMENT_ACCRUAL, 50, 150));
         var tx3 = bonusTransactionRepository
-                .save(buildTransaction(bonusCard, BonusTransactionType.BOOKING_SPEND, -30));
+                .save(buildTransaction(bonusCard, BonusTransactionType.BOOKING_SPEND, -30, 120));
         var tx4 = bonusTransactionRepository
-                .save(buildTransaction(bonusCard, BonusTransactionType.PAYMENT_ACCRUAL, 20));
+                .save(buildTransaction(bonusCard, BonusTransactionType.PAYMENT_ACCRUAL, 20, 140));
 
         var page = bonusQueryService.getTransactions(user.getId(), PageRequest.of(0, 10));
         Map<Long, Integer> newBalanceById = page.getContent().stream()
@@ -71,7 +71,9 @@ class BonusQueryServiceIntegrationTest {
                 .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).build();
     }
 
-    private BonusTransaction buildTransaction(BonusCard bonusCard, BonusTransactionType type, int pointsChange) {
-        return BonusTransaction.builder().bonusCard(bonusCard).type(type).pointsChange(pointsChange).build();
+    private BonusTransaction buildTransaction(BonusCard bonusCard, BonusTransactionType type, int pointsChange,
+            int balanceAfter) {
+        return BonusTransaction.builder().bonusCard(bonusCard).type(type).pointsChange(pointsChange)
+                .balanceAfter(balanceAfter).build();
     }
 }

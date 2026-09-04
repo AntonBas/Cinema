@@ -35,6 +35,7 @@ import ua.lviv.bas.cinema.audit.service.AuditService;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,7 +98,10 @@ public class BookingService {
                                                         List<BookingCreateRequest.SeatSelectionRequest> seatSelections) {
         List<SeatReservation> seatReservations = new ArrayList<>();
 
-        for (var seatSelection : seatSelections) {
+        var orderedSeatSelections = seatSelections.stream()
+                .sorted(Comparator.comparing(BookingCreateRequest.SeatSelectionRequest::seatId)).toList();
+
+        for (var seatSelection : orderedSeatSelections) {
             var reservation = findOrCreateReservation(session, user, seatSelection);
 
             if (reservation.getStatus() == ReservationStatus.CONFIRMED) {

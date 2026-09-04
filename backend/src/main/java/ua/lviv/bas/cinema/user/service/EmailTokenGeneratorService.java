@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.notification;
+package ua.lviv.bas.cinema.user.service;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.notification.EmailService;
 import ua.lviv.bas.cinema.user.domain.EmailToken;
 import ua.lviv.bas.cinema.user.domain.TokenType;
 import ua.lviv.bas.cinema.user.domain.User;

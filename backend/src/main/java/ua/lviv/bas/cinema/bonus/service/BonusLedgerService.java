@@ -243,7 +243,7 @@ public class BonusLedgerService {
             validatePositivePoints(points);
         }
         var transaction = BonusTransaction.builder().bonusCard(card).booking(booking).type(type).pointsChange(points)
-                .referenceId(referenceId).build();
+                .balanceAfter(card.getPointsBalance()).referenceId(referenceId).build();
         bonusTransactionRepository.save(transaction);
     }
 

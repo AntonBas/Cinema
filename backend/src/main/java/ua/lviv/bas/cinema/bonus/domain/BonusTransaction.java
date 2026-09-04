@@ -69,6 +69,10 @@ public class BonusTransaction extends AuditableEntity {
 	@Column(name = "points_change", nullable = false)
 	private Integer pointsChange;
 
+	@NotNull
+	@Column(name = "balance_after", nullable = false)
+	private Integer balanceAfter;
+
 	@Size(max = 50)
 	@Column(name = "reference_id", length = 50)
 	private String referenceId;

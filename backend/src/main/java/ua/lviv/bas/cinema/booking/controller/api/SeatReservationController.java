@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
 import ua.lviv.bas.cinema.booking.dto.response.SeatReservationResponse;
 import ua.lviv.bas.cinema.booking.service.SeatReservationService;
@@ -53,6 +54,7 @@ public class SeatReservationController {
     })
     @SecurityRequirement(name = "bearerAuth")
     @PreAuthorize("isAuthenticated()")
+    @RateLimit(value = 30, duration = 60, key = "user")
     public void hold(@PathVariable Long sessionId, @PathVariable Long seatId,
                      @AuthenticationPrincipal CustomUserDetails userDetails) {
         log.info("POST /api/sessions/{}/seats/{}/hold - user: {}", sessionId, seatId, userDetails.getUserId());
@@ -69,6 +71,7 @@ public class SeatReservationController {
     })
     @SecurityRequirement(name = "bearerAuth")
     @PreAuthorize("isAuthenticated()")
+    @RateLimit(value = 30, duration = 60, key = "user")
     public void cancel(@PathVariable Long sessionId, @PathVariable Long seatId,
                        @AuthenticationPrincipal CustomUserDetails userDetails) {
         log.info("DELETE /api/sessions/{}/seats/{}/hold - user: {}", sessionId, seatId, userDetails.getUserId());

@@ -10,14 +10,12 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import ua.lviv.bas.cinema.booking.domain.Booking;
-import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.booking.domain.SeatReservation;
 import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.booking.domain.status.ReservationStatus;
 import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.booking.repository.BookingRepository;
-import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
 import ua.lviv.bas.cinema.booking.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 
@@ -35,8 +33,6 @@ public class BookingSchedulerTest {
 
     @Mock
     private BookingRepository bookingRepository;
-    @Mock
-    private PaymentRepository paymentRepository;
     @Mock
     private SeatReservationRepository seatReservationRepository;
     @Mock
@@ -110,67 +106,6 @@ public class BookingSchedulerTest {
     }
 
     @Test
-    void processExpiredPaymentsWhenNoneFoundShouldDoNothing() {
-        when(paymentRepository.findByStatusAndCreatedDateBeforeWithBookingDetails(eq(PaymentStatus.PENDING),
-                any(LocalDateTime.class)))
-                .thenReturn(List.of());
-
-        bookingScheduler.processExpiredPayments();
-
-        verifyNoInteractions(seatReservationRepository, cacheManager);
-        verify(paymentRepository, never()).save(any());
-    }
-
-    @Test
-    void processExpiredPaymentsShouldExpireBookingAndEvictCacheWhenBookingPending() {
-        var seat = SeatReservation.builder().status(ReservationStatus.CONFIRMED).build();
-        var booking = Booking.builder().id(1L).session(testSession).status(BookingStatus.PENDING)
-                .seatReservations(List.of(seat)).build();
-        var payment = Payment.builder().id(2L).booking(booking).status(PaymentStatus.PENDING).build();
-
-        when(paymentRepository.findByStatusAndCreatedDateBeforeWithBookingDetails(eq(PaymentStatus.PENDING),
-                any(LocalDateTime.class)))
-                .thenReturn(List.of(payment));
-        when(paymentRepository.findById(2L)).thenReturn(java.util.Optional.of(payment));
-        when(cacheManager.getCache(anyString())).thenReturn(cache);
-
-        bookingScheduler.processExpiredPayments();
-
-        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.EXPIRED);
-        assertThat(booking.getStatus()).isEqualTo(BookingStatus.EXPIRED);
-        assertThat(seat.getStatus()).isEqualTo(ReservationStatus.EXPIRED);
-        assertThat(seat.getBooking()).isNull();
-
-        verify(seatReservationRepository).saveAll(List.of(seat));
-        verify(cache, times(1)).evict(SESSION_ID);
-        verify(paymentRepository).save(payment);
-        verify(bookingRepository).save(booking);
-    }
-
-    @Test
-    void processExpiredPaymentsWhenBookingNotPendingShouldNotTouchBookingOrCache() {
-        var seat = SeatReservation.builder().status(ReservationStatus.CONFIRMED).build();
-        var booking = Booking.builder().id(1L).session(testSession).status(BookingStatus.CONFIRMED)
-                .seatReservations(List.of(seat)).build();
-        var payment = Payment.builder().id(2L).booking(booking).status(PaymentStatus.PENDING).build();
-
-        when(paymentRepository.findByStatusAndCreatedDateBeforeWithBookingDetails(eq(PaymentStatus.PENDING),
-                any(LocalDateTime.class)))
-                .thenReturn(List.of(payment));
-        when(paymentRepository.findById(2L)).thenReturn(java.util.Optional.of(payment));
-
-        bookingScheduler.processExpiredPayments();
-
-        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.EXPIRED);
-        assertThat(booking.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
-        assertThat(seat.getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
-
-        verifyNoInteractions(seatReservationRepository, cacheManager);
-        verify(paymentRepository).save(payment);
-        verify(bookingRepository, never()).save(any());
-    }
-
-    @Test
     void cleanupOldBookingsShouldExcludeBookingsWithEverPaidPayments() {
         when(bookingRepository.deleteByStatusInAndCreatedDateBefore(
                 eq(List.of(BookingStatus.EXPIRED, BookingStatus.CANCELLED)), any(LocalDateTime.class), any()))
@@ -181,25 +116,5 @@ public class BookingSchedulerTest {
         verify(bookingRepository).deleteByStatusInAndCreatedDateBefore(
                 eq(List.of(BookingStatus.EXPIRED, BookingStatus.CANCELLED)), any(LocalDateTime.class),
                 eq(List.of(PaymentStatus.SUCCESS, PaymentStatus.REFUNDED, PaymentStatus.PARTIALLY_REFUNDED)));
-    }
-
-    @Test
-    void processExpiredPaymentsWhenPaymentAlreadyResolvedConcurrentlyShouldSkipIt() {
-        var booking = Booking.builder().id(1L).session(testSession).status(BookingStatus.PENDING).build();
-        var staleSnapshot = Payment.builder().id(2L).booking(booking).status(PaymentStatus.PENDING).build();
-        var freshPayment = Payment.builder().id(2L).booking(booking).status(PaymentStatus.SUCCESS).build();
-
-        when(paymentRepository.findByStatusAndCreatedDateBeforeWithBookingDetails(eq(PaymentStatus.PENDING),
-                any(LocalDateTime.class)))
-                .thenReturn(List.of(staleSnapshot));
-        when(paymentRepository.findById(2L)).thenReturn(java.util.Optional.of(freshPayment));
-
-        bookingScheduler.processExpiredPayments();
-
-        assertThat(freshPayment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
-        assertThat(booking.getStatus()).isEqualTo(BookingStatus.PENDING);
-        verifyNoInteractions(seatReservationRepository, cacheManager);
-        verify(paymentRepository, never()).save(any());
-        verify(bookingRepository, never()).save(any());
     }
 }

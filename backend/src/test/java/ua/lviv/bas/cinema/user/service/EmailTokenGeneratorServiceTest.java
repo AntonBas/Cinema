@@ -1,10 +1,11 @@
-package ua.lviv.bas.cinema.notification;
+package ua.lviv.bas.cinema.user.service;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import ua.lviv.bas.cinema.notification.EmailService;
 import ua.lviv.bas.cinema.user.domain.EmailToken;
 import ua.lviv.bas.cinema.user.domain.TokenType;
 import ua.lviv.bas.cinema.user.domain.User;

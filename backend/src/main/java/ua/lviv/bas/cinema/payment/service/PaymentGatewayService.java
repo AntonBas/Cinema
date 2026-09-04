@@ -130,17 +130,7 @@ public class PaymentGatewayService {
             return RefundGatewayStatus.CONFIRMED;
         }
         try {
-            Map<String, Object> statusParams = new LinkedHashMap<>();
-            statusParams.put("public_key", liqpayPublicKey);
-            statusParams.put("version", "3");
-            statusParams.put("action", "status");
-            statusParams.put("order_id", orderId);
-
-            var data = LiqPayDecoder.encodeToBase64(statusParams);
-            var response = sendApiRequest(data);
-            var responseBody = extractResponseBody(response);
-            var responseMap = decodeRefundResponse(responseBody);
-            var status = (String) responseMap.get("status");
+            var status = (String) fetchOrderStatus(orderId).get("status");
 
             if ("reversed".equals(status)) {
                 return RefundGatewayStatus.CONFIRMED;
@@ -154,6 +144,52 @@ public class PaymentGatewayService {
             log.warn("Failed to check LiqPay refund status for order {}: {}", orderId, e.getMessage());
             return RefundGatewayStatus.UNKNOWN;
         }
+    }
+
+    public PaymentGatewayCheckResult checkPaymentStatus(String orderId) {
+        if (sandboxMode) {
+            log.debug("Sandbox mode - payment status for order {} cannot be reconciled automatically", orderId);
+            return new PaymentGatewayCheckResult(PaymentGatewayStatus.UNKNOWN, Map.of());
+        }
+        try {
+            var responseMap = fetchOrderStatus(orderId);
+            var status = (String) responseMap.get("status");
+            return new PaymentGatewayCheckResult(mapPaymentStatus(status), toStringMap(responseMap));
+        } catch (Exception e) {
+            log.warn("Failed to check LiqPay payment status for order {}: {}", orderId, e.getMessage());
+            return new PaymentGatewayCheckResult(PaymentGatewayStatus.UNKNOWN, Map.of());
+        }
+    }
+
+    private PaymentGatewayStatus mapPaymentStatus(String status) {
+        if (status == null) {
+            return PaymentGatewayStatus.UNKNOWN;
+        }
+        return switch (status) {
+            case "success", "sandbox" -> PaymentGatewayStatus.SUCCESS;
+            case "failure", "error" -> PaymentGatewayStatus.FAILED;
+            case "wait_secure", "wait_accept", "processing", "wait_reserve" -> PaymentGatewayStatus.STILL_PROCESSING;
+            default -> PaymentGatewayStatus.UNKNOWN;
+        };
+    }
+
+    private Map<String, String> toStringMap(Map<String, Object> raw) {
+        Map<String, String> result = new LinkedHashMap<>();
+        raw.forEach((key, value) -> result.put(key, value != null ? value.toString() : null));
+        return result;
+    }
+
+    private Map<String, Object> fetchOrderStatus(String orderId) {
+        Map<String, Object> statusParams = new LinkedHashMap<>();
+        statusParams.put("public_key", liqpayPublicKey);
+        statusParams.put("version", "3");
+        statusParams.put("action", "status");
+        statusParams.put("order_id", orderId);
+
+        var data = LiqPayDecoder.encodeToBase64(statusParams);
+        var response = sendApiRequest(data);
+        var responseBody = extractResponseBody(response);
+        return decodeRefundResponse(responseBody);
     }
 
     private ResponseEntity<String> sendApiRequest(String data) {

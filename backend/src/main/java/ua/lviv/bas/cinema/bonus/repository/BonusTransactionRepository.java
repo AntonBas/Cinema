@@ -17,11 +17,7 @@ public interface BonusTransactionRepository extends JpaRepository<BonusTransacti
                 bt.type as type,
                 bt.points_change as pointsChangeRaw,
                 bt.created_date as createdAt,
-                SUM(bt.points_change) OVER (
-                    PARTITION BY bt.bonus_card_id
-                    ORDER BY bt.id
-                    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-                ) as newBalance
+                bt.balance_after as newBalance
             FROM bonus_transactions bt
             JOIN bonus_cards bc ON bc.id = bt.bonus_card_id
             WHERE bc.user_id = :userId

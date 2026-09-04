@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.ticket.dto.response.TicketCashierResponse;
 import ua.lviv.bas.cinema.ticket.service.TicketService;
 
@@ -42,6 +43,7 @@ public class CashierTicketController {
             @ApiResponse(responseCode = "403", description = "Access denied"),
             @ApiResponse(responseCode = "404", description = "Ticket not found")
     })
+    @RateLimit(value = 60, duration = 60, key = "user")
     public ResponseEntity<TicketCashierResponse> validateTicket(@PathVariable String uniqueCode) {
         return ResponseEntity.ok(ticketService.validate(uniqueCode));
     }
