@@ -42,10 +42,7 @@ public class SeatReservationScheduler {
 
 		seatReservationRepository.deleteAll(expiredReservations);
 
-		affectedSessionIds.forEach(sessionId -> {
-			evictCacheIfPresent("seatAvailability", sessionId);
-			evictCacheIfPresent("availableSeatsCount", sessionId);
-		});
+		affectedSessionIds.forEach(sessionId -> evictCacheIfPresent("seatAvailability", sessionId));
 
 		log.info("Deleted {} expired temporary seat reservations for sessions: {}", expiredReservations.size(),
 				affectedSessionIds);

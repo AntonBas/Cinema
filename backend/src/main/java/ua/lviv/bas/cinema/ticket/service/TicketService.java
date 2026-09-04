@@ -172,8 +172,7 @@ public class TicketService {
 
     @Caching(evict = {
             @CacheEvict(value = "tickets", allEntries = true),
-            @CacheEvict(value = "seatAvailability", key = "#ticket.seatReservation.session.id"),
-            @CacheEvict(value = "availableSeatsCount", key = "#ticket.seatReservation.session.id")
+            @CacheEvict(value = "seatAvailability", key = "#ticket.seatReservation.session.id")
     })
     @Transactional
     public void markAsRefunded(Ticket ticket, Refund refund) {

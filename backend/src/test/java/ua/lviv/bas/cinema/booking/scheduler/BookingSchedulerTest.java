@@ -90,8 +90,7 @@ public class BookingSchedulerTest {
         verify(seatReservationRepository).saveAll(List.of(seat));
         verify(bonusLedgerService).refundPoints(booking);
         verify(cacheManager).getCache("seatAvailability");
-        verify(cacheManager).getCache("availableSeatsCount");
-        verify(cache, times(2)).evict(SESSION_ID);
+        verify(cache, times(1)).evict(SESSION_ID);
         verify(bookingRepository).save(booking);
     }
 
@@ -142,7 +141,7 @@ public class BookingSchedulerTest {
         assertThat(seat.getBooking()).isNull();
 
         verify(seatReservationRepository).saveAll(List.of(seat));
-        verify(cache, times(2)).evict(SESSION_ID);
+        verify(cache, times(1)).evict(SESSION_ID);
         verify(paymentRepository).save(payment);
         verify(bookingRepository).save(booking);
     }

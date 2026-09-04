@@ -44,7 +44,7 @@ public class CinemaHallService {
     private final CinemaHallMapper hallMapper;
     private final AuditService auditService;
 
-    @CacheEvict(value = {"cinemaHalls", "seats"}, allEntries = true)
+    @CacheEvict(value = "cinemaHalls", allEntries = true)
     @Transactional
     public CinemaHallResponse createHall(CinemaHallRequest request) {
         log.info("Creating cinema hall: {}", request.name());
@@ -94,7 +94,7 @@ public class CinemaHallService {
         return hallRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Cinema hall", id));
     }
 
-    @CacheEvict(value = {"cinemaHalls", "seats"}, allEntries = true)
+    @CacheEvict(value = "cinemaHalls", allEntries = true)
     @Transactional
     public CinemaHallResponse updateHall(Long id, CinemaHallRequest request) {
         log.info("Updating cinema hall with id: {}", id);
@@ -127,7 +127,7 @@ public class CinemaHallService {
         return hallMapper.toCinemaHallResponse(updated);
     }
 
-    @CacheEvict(value = {"cinemaHalls", "seats"}, allEntries = true)
+    @CacheEvict(value = "cinemaHalls", allEntries = true)
     @Transactional
     public void deleteHall(Long id) {
         log.info("Deleting cinema hall with id: {}", id);

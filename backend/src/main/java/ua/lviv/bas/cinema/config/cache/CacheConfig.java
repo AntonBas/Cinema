@@ -36,7 +36,6 @@ public class CacheConfig {
                         .fromSerializer(pageAwareJsonSerializer()));
 
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
-        cacheConfigurations.put("seats", defaultConfig.entryTtl(Duration.ofMinutes(30)));
         cacheConfigurations.put("cinemaHalls", defaultConfig.entryTtl(Duration.ofHours(1)));
         cacheConfigurations.put("sessions", defaultConfig.entryTtl(Duration.ofMinutes(10)));
         cacheConfigurations.put("genres", defaultConfig.entryTtl(Duration.ofHours(24)));
@@ -44,8 +43,6 @@ public class CacheConfig {
         cacheConfigurations.put("singleMovies", defaultConfig.entryTtl(Duration.ofHours(24)));
         cacheConfigurations.put("movieLists", defaultConfig.entryTtl(Duration.ofHours(24)));
         cacheConfigurations.put("seatAvailability", defaultConfig.entryTtl(Duration.ofMinutes(5)));
-        cacheConfigurations.put("availableSeatsCount", defaultConfig.entryTtl(Duration.ofMinutes(1)));
-        cacheConfigurations.put("bookings", defaultConfig.entryTtl(Duration.ofMinutes(30)));
         cacheConfigurations.put("tickets", defaultConfig.entryTtl(Duration.ofMinutes(30)));
         cacheConfigurations.put("ticketTypes", defaultConfig.entryTtl(Duration.ofHours(1)));
         cacheConfigurations.put("users", defaultConfig.entryTtl(Duration.ofMinutes(30)));

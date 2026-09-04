@@ -90,7 +90,6 @@ public class BookingScheduler {
 		bookingRepository.save(booking);
 
 		evictCacheIfPresent("seatAvailability", booking.getSession().getId());
-		evictCacheIfPresent("availableSeatsCount", booking.getSession().getId());
 	}
 
 	@Scheduled(fixedRateString = "${scheduler.payment.expiration-interval:300000}")
@@ -135,7 +134,6 @@ public class BookingScheduler {
 					"Payment booking seat reservations must not be null"));
 			bookingRepository.save(payment.getBooking());
 			evictCacheIfPresent("seatAvailability", payment.getBooking().getSession().getId());
-			evictCacheIfPresent("availableSeatsCount", payment.getBooking().getSession().getId());
 		}
 	}
 

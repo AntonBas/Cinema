@@ -66,7 +66,7 @@ public class BookingService {
     @Value("${booking.session-too-close-minutes:30}")
     private int sessionTooCloseMinutes;
 
-    @CacheEvict(value = {"seatAvailability", "availableSeatsCount", "sessions"}, allEntries = true)
+    @CacheEvict(value = {"seatAvailability", "sessions"}, allEntries = true)
     public BookingResponse createBooking(BookingCreateRequest request, User user) {
         var session = sessionRepository.findById(request.sessionId())
                 .orElseThrow(() -> new EntityNotFoundException("Session", request.sessionId()));
@@ -131,7 +131,7 @@ public class BookingService {
         return bookingMapper.toResponse(booking);
     }
 
-    @CacheEvict(value = {"seatAvailability", "availableSeatsCount"}, allEntries = true)
+    @CacheEvict(value = "seatAvailability", allEntries = true)
     public void cancelBooking(Long bookingId, User user) {
         var booking = bookingRepository.findByIdAndUserId(bookingId, user.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Booking", bookingId));

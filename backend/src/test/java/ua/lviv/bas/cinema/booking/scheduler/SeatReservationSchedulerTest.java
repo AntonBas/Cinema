@@ -58,9 +58,9 @@ public class SeatReservationSchedulerTest {
         seatReservationScheduler.expireTempSeatReservations();
 
         verify(seatReservationRepository).deleteAll(List.of(reservationA, reservationB));
-        verify(cache, times(2)).evict(1L);
-        verify(cache, times(2)).evict(2L);
-        verify(cache, times(4)).evict(any());
+        verify(cache, times(1)).evict(1L);
+        verify(cache, times(1)).evict(2L);
+        verify(cache, times(2)).evict(any());
     }
 
     @Test
@@ -76,8 +76,7 @@ public class SeatReservationSchedulerTest {
         seatReservationScheduler.expireTempSeatReservations();
 
         verify(cacheManager).getCache("seatAvailability");
-        verify(cacheManager).getCache("availableSeatsCount");
-        verify(cache, times(2)).evict(1L);
+        verify(cache, times(1)).evict(1L);
     }
 
     @Test

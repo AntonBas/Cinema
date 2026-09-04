@@ -21,7 +21,7 @@ public class SeatService {
     private final SeatRepository seatRepository;
     private final SeatMapper seatMapper;
 
-    @CacheEvict(value = {"seats", "cinemaHalls", "seatAvailability"}, allEntries = true)
+    @CacheEvict(value = {"cinemaHalls", "seatAvailability"}, allEntries = true)
     @Transactional
     public SeatResponse updateSeatType(Long seatId, SeatType seatType) {
         log.info("Updating seat type for seat id: {} to {}", seatId, seatType);
@@ -31,7 +31,7 @@ public class SeatService {
         return seatMapper.toSeatResponse(updated);
     }
 
-    @CacheEvict(value = {"seats", "cinemaHalls", "seatAvailability"}, allEntries = true)
+    @CacheEvict(value = {"cinemaHalls", "seatAvailability"}, allEntries = true)
     @Transactional
     public SeatResponse setSeatActiveStatus(Long seatId, boolean active) {
         log.info("Setting seat active status: seatId={}, active={}", seatId, active);

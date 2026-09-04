@@ -74,7 +74,7 @@ public class SeatReservationService {
         seatRepository.findByIdWithLock(seatId).orElseThrow(() -> new EntityNotFoundException("Seat", seatId));
     }
 
-    @CacheEvict(value = {"seatAvailability", "availableSeatsCount"}, key = "#sessionId")
+    @CacheEvict(value = "seatAvailability", key = "#sessionId")
     @Transactional
     public SeatReservation hold(Long sessionId, Long seatId, User user) {
         log.info("Creating temporary hold for seat {} in session {} by user {}", seatId, sessionId, user.getId());
@@ -96,7 +96,7 @@ public class SeatReservationService {
         return saved;
     }
 
-    @CacheEvict(value = {"seatAvailability", "availableSeatsCount"}, key = "#sessionId")
+    @CacheEvict(value = "seatAvailability", key = "#sessionId")
     @Transactional
     public void cancel(Long sessionId, Long seatId, User user) {
         log.info("Cancelling temporary hold for seat {} in session {} by user {}", seatId, sessionId, user.getId());
