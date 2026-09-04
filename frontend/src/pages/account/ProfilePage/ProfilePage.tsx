@@ -4,7 +4,6 @@ import { AccountSidebar } from '@/components/account/AccountSidebar/AccountSideb
 import { UserProfileCard } from '@/components/account/OverviewSection/UserProfileCard/UserProfileCard';
 import { ProfileEditForm } from '@/components/account/OverviewSection/ProfileEditForm/ProfileEditForm';
 import { useUser } from '@/hooks/features/user/useUser';
-import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import type { UserUpdateRequest } from '@/types/user';
 import styles from './ProfilePage.module.css';
@@ -12,8 +11,6 @@ import styles from './ProfilePage.module.css';
 export const ProfilePage: React.FC = () => {
     const { profile, loading, profileError, getProfile, updateProfile } = useUser();
     const [isEditing, setIsEditing] = useState(false);
-
-    const showLoading = useDelayedLoading(loading);
 
     useEffect(() => {
         getProfile();
@@ -24,7 +21,7 @@ export const ProfilePage: React.FC = () => {
         setIsEditing(false);
     };
 
-    if (showLoading && !profile) {
+    if (loading && !profile) {
         return (
             <Layout>
                 <div className={styles.profilePage}>

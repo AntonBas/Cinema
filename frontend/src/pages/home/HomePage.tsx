@@ -8,8 +8,6 @@ import { Promotions } from "@/components/home/Promotions/Promotions";
 import { useMovies } from "@/hooks/features/movies/useMovies";
 import { usePromotion } from "@/hooks/features/promotion/usePromotion";
 import { useAuth } from "@/context/AuthContext";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
-import styles from "./HomePage.module.css";
 
 export const HomePage: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -34,8 +32,6 @@ export const HomePage: React.FC = () => {
 
   const [claimedIds, setClaimedIds] = useState<number[]>([]);
 
-  const loading = moviesLoading || promotionsLoading;
-
   useEffect(() => {
     getCurrentMoviesForHome();
     getUpcomingMoviesForHome();
@@ -59,33 +55,18 @@ export const HomePage: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <Layout>
-        <div className={styles.loading}>
-          <LoadingSpinner text="Loading..." />
-        </div>
-      </Layout>
-    );
-  }
-
   return (
     <Layout>
       <HeroSection />
-      {currentMoviesHome.length > 0 && (
-        <NowShowing movies={currentMoviesHome} />
-      )}
-      {upcomingMoviesHome.length > 0 && (
-        <ComingSoon movies={upcomingMoviesHome} />
-      )}
-      {leavingSoonHome.length > 0 && <LeavingSoon movies={leavingSoonHome} />}
-      {availablePromotions.length > 0 && (
-        <Promotions
-          promotions={availablePromotions}
-          onClaim={handleClaimPromotion}
-          claimedPromotionIds={claimedIds}
-        />
-      )}
+      <NowShowing movies={currentMoviesHome} loading={moviesLoading} />
+      <ComingSoon movies={upcomingMoviesHome} loading={moviesLoading} />
+      <LeavingSoon movies={leavingSoonHome} loading={moviesLoading} />
+      <Promotions
+        promotions={availablePromotions}
+        loading={promotionsLoading}
+        onClaim={handleClaimPromotion}
+        claimedPromotionIds={claimedIds}
+      />
     </Layout>
   );
 };

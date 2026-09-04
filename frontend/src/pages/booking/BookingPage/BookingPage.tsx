@@ -23,6 +23,7 @@ export const BookingPage: React.FC = () => {
   const {
     data: seatData,
     loading,
+    loadingSeats,
     selectedSeats,
     totalPrice,
     getSeatAvailability,
@@ -128,6 +129,7 @@ export const BookingPage: React.FC = () => {
             <CinemaHall
               seats={seatData.seats}
               selectedSeats={selectedSeats.map((s) => s.seat.id)}
+              loadingSeats={loadingSeats}
               onSeatClick={handleSeatClick}
             />
           </div>

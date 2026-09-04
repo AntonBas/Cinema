@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { Modal } from "@/components/ui";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 import { useEntityAuditHistory } from "@/hooks/features/audit/useEntityAuditHistory";
 import { AuditLogsTable } from "../AuditLogsTable/AuditLogsTable";
 import { getEntityTypeDisplay } from "@/types/audit";
@@ -19,6 +20,7 @@ export const EntityHistoryModal: React.FC<EntityHistoryModalProps> = ({
 }) => {
   const { history, loading, error, getEntityHistory } =
     useEntityAuditHistory();
+  const showLoading = useDelayedLoading(loading);
 
   useEffect(() => {
     getEntityHistory(entityType, entityId);
@@ -32,9 +34,9 @@ export const EntityHistoryModal: React.FC<EntityHistoryModalProps> = ({
       size="large"
     >
       <div className={styles.body}>
-        {loading ? (
+        {showLoading ? (
           <LoadingSpinner text="Loading history..." />
-        ) : error || history.length === 0 ? (
+        ) : loading ? null : error || history.length === 0 ? (
           <p className={styles.empty}>
             No audit history found for this entity.
           </p>
