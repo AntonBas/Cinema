@@ -237,25 +237,28 @@ public class AuthControllerTest {
     }
 
     @Test
-    void oauth2SuccessShouldReturnOk() throws Exception {
-        when(userService.getUserResponse(1L)).thenReturn(userResponse);
+    void oauth2SuccessShouldReturnOkWhenTokenValid() throws Exception {
+        when(jwtTokenProvider.validateToken("oauth2Token")).thenReturn(true);
+        when(jwtTokenProvider.getEmailFromToken("oauth2Token")).thenReturn("anton@example.com");
+        when(userService.getUser("anton@example.com")).thenReturn(user);
+        when(userMapper.toUserResponse(user)).thenReturn(userResponse);
 
-        mockMvc.perform(get("/api/auth/oauth2/success").param("token", "oauth2Token").param("userId", "1")
-                        .param("email", "anton@example.com")).andExpect(status().isOk())
+        mockMvc.perform(get("/api/auth/oauth2/success").param("token", "oauth2Token"))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").value("oauth2Token")).andExpect(jsonPath("$.tokenType").value("Bearer"))
                 .andExpect(jsonPath("$.user.email").value("anton@example.com"));
     }
 
     @Test
-    void oauth2SuccessShouldReturnBadRequestWhenUserIdMissing() throws Exception {
-        mockMvc.perform(
-                        get("/api/auth/oauth2/success").param("token", "oauth2Token").param("email", "anton@example.com"))
-                .andExpect(status().isBadRequest());
+    void oauth2SuccessShouldReturnUnauthorizedWhenTokenInvalid() throws Exception {
+        when(jwtTokenProvider.validateToken("badToken")).thenReturn(false);
+
+        mockMvc.perform(get("/api/auth/oauth2/success").param("token", "badToken"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void oauth2SuccessShouldReturnBadRequestWhenEmailMissing() throws Exception {
-        mockMvc.perform(get("/api/auth/oauth2/success").param("token", "oauth2Token").param("userId", "1"))
-                .andExpect(status().isBadRequest());
+    void oauth2SuccessShouldReturnBadRequestWhenTokenMissing() throws Exception {
+        mockMvc.perform(get("/api/auth/oauth2/success")).andExpect(status().isBadRequest());
     }
 }

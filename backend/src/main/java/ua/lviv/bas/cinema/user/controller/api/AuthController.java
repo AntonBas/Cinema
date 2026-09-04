@@ -90,10 +90,14 @@ public class AuthController {
             @ApiResponse(responseCode = "401", description = "Invalid token")
     })
     @SecurityRequirements()
-    public LoginResponse oauth2Success(@RequestParam String token, @RequestParam Long userId,
-                                       @RequestParam String email) {
+    public LoginResponse oauth2Success(@RequestParam String token) {
+        if (!jwtTokenProvider.validateToken(token)) {
+            throw new InsufficientAuthenticationException("Invalid or expired token");
+        }
+        var email = jwtTokenProvider.getEmailFromToken(token);
         log.info("GET /api/auth/oauth2/success - email: {}", email);
-        var userResponse = userService.getUserResponse(userId);
+        var user = userService.getUser(email);
+        var userResponse = userMapper.toUserResponse(user);
         return new LoginResponse(token, "Bearer", userResponse);
     }
 
