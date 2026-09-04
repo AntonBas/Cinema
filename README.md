@@ -1,6 +1,6 @@
 # Cinema Management System
 
-> A concurrency-safe cinema booking system designed to handle real-world backend failures: race conditions, unreliable payments, and data consistency under stress.
+Full-stack cinema booking platform: seat reservation, LiqPay payments, refunds, and a bonus loyalty program, built to survive real backend failure modes — race conditions, unreliable payment callbacks, crashes mid-transaction. **Java 21 / Spring Boot 4 / PostgreSQL / Redis / React 19 + TypeScript.** Two-stage seat locking, idempotent payment callbacks, self-healing schedulers, full refund state machine, RBAC across 4 roles, 827 backend tests including dedicated concurrency suites.
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.0.6-green)
@@ -9,31 +9,7 @@
 ![Docker](https://img.shields.io/badge/Docker-✓-blue)
 ![CI](https://github.com/AntonBas/Cinema/workflows/CI/badge.svg)
 
----
-
-## TL;DR
-
-- Prevents double booking under concurrent requests
-- Handles unreliable payment callbacks safely (idempotent design)
-- Self-recovers from failures using scheduler-based cleanup
-- Redis-powered caching with configurable TTL per entity
-- Designed with explicit data consistency guarantees
-
----
-
 **[Full Documentation](docs/DOCS.md)** — complete feature descriptions, technical details, and project structure.
-
----
-
-## What this project demonstrates
-
-This project is intentionally built to showcase backend engineering skills beyond CRUD:
-
-- Designing **concurrency-safe systems**
-- Handling **unreliable external integrations**
-- Building **self-healing systems**
-- Making **explicit trade-offs** between simplicity and scalability
-- Ensuring **data consistency under failure conditions**
 
 ---
 
@@ -45,122 +21,43 @@ This project is intentionally built to showcase backend engineering skills beyon
 
 ---
 
-## Core Problems Solved
+## Features
 
-### 1. Race Conditions (Double Booking)
+### User
 
-Two users selecting the same seat simultaneously.
+- Registration with email verification, JWT auth, Google OAuth2, password recovery
+- Browse Now Showing / Coming Soon / Last Chance movies, custom availability calendar, session search
+- **Booking:** seat selection with live availability, ticket-type pricing, bonus-point redemption, LiqPay payment, QR-coded tickets, confirmation email
+- **Refunds:** time-based refund preview (100% / 85% / 50%) before confirming, automatic bonus rollback and seat release
+- Profile management, ticket history (Active / Used / Refunded), bonus balance & transaction history
 
-→ Solved via **pessimistic row-level locking** on seat selection. The first user acquires a `SELECT ... FOR UPDATE` lock; the second user's query waits or fails immediately. Combined with a state check against active reservations, this guarantees exactly one user gets the seat.
+### Admin / Content Manager / Cashier
 
-### 2. Unreliable Payment Gateway
+- Full CRUD for movies, genres, cast, halls (auto-generated seat layouts, interactive editor), schedule (conflict validation), promotions, ticket types
+- User management: role changes, birth-date verification, block/unblock
+- Configurable bonus rules (welcome, birthday, booking spend, payment accrual)
+- **Audit log** of every admin change, with a per-entity history view
+- **Cashier:** ticket lookup and validation at the door by unique code
 
-Payment provider may:
-
-- send duplicate callbacks
-- fail to send callbacks at all
-
-→ Solved via **idempotent state transitions** + **scheduler recovery**. Order status updates are conditional (`UPDATE ... WHERE status = 'PENDING'`), so duplicate callbacks are ignored. If no callback arrives, the scheduler detects the expired booking and releases the seats.
-
-### 3. Abandoned Bookings
-
-Users may reserve seats and never complete payment.
-
-→ Solved via **time-based expiration** + **background cleanup**. Every booking has an `expiresAt` timestamp. A scheduled job periodically cancels expired bookings and releases their seats back to availability.
+Full feature breakdown for every role: [docs/DOCS.md#-features](docs/DOCS.md#-features)
 
 ---
 
-## Consistency Guarantees
+## Tech Stack
 
-The system enforces the following invariants:
+**Backend** — Java 21, Spring Boot 4.0.6, Spring Security, Spring Data JPA, Hibernate 7, PostgreSQL 15, Flyway, Redis 7, JWT + Google OAuth2, MapStruct, Bucket4j (rate limiting), Testcontainers, GitHub Actions CI
 
-- A seat can belong to **only one active reservation at a time**
-- Orders transition to `PAID` **exactly once** (idempotent updates)
-- Expired reservations are **eventually cleaned up**
-- Payment failures never leave the system in an inconsistent state
+**Frontend** — React 19 + TypeScript, Vite, React Router, Axios, Styled Components
 
----
+**DevOps** — Docker / Docker Compose, GitHub Actions
 
-## Key Engineering Decisions
-
-### Seat Reservation Model (Two-Stage Locking)
-
-- **Stage 1:** Pessimistic lock (5 min) via `SELECT ... FOR UPDATE` when seats are selected — other users immediately see these seats as taken
-- **Stage 2:** Reservation hold (20 min) after confirmation — if unpaid, seats are released automatically
-
-This approach:
-
-- locks only individual seats, not entire rows or tables
-- keeps the system responsive under concurrency
-- guarantees no double booking at the database level
-
----
-
-### Mixed Locking Strategy
-
-- **Pessimistic locking** (`SELECT ... FOR UPDATE`) for the seat hold operation — where collision risk is high and the cost of failure (double booking) is unacceptable
-- **Optimistic locking** (`@Version`) for Booking, BonusAccount, and other entities — where conflicts are rare and throughput matters more
-- No global locks — only individual seats are locked, and only temporarily
-
-Trade-off:
-
-- Requires discipline to know which strategy fits each scenario
-- Gives the best of both worlds — guaranteed correctness where it matters, high throughput everywhere else
-
----
-
-### Idempotent Payment Handling
-
-Payment callbacks are processed safely:
-
-- Each order has a **single source of truth state**
-- Duplicate callbacks are ignored
-- State transitions are **atomic and idempotent**
-
-Result:
-
-- No duplicate charges
-- No inconsistent order states
-
----
-
-### Scheduler-Based Recovery
-
-A background job ensures system consistency:
-
-- Releases expired seat locks
-- Cancels unpaid bookings
-- Updates session statuses
-
-This acts as a **self-healing mechanism** when:
-
-- callbacks are lost — scheduler detects unpaid bookings past their expiration window
-- the app crashes mid-flow — all state lives in PostgreSQL, scheduler recovers on restart, no in-memory state lost
-
----
-
-### Simplicity over Scalability
-
-Redis for caching, PostgreSQL for everything else.
-
-Everything runs on:
-
-- PostgreSQL
-- Redis
-- Application-level scheduler
-
-Trade-off:
-
-- Not horizontally scalable to massive load
-- Extremely simple to run, debug, and reason about
+Full version table: [docs/DOCS.md#-tech-stack](docs/DOCS.md#-tech-stack)
 
 ---
 
 ## Architecture
 
-Package by Feature + Layer: each business domain (`booking/`, `payment/`, `refund/`, `bonus/`, ...)
-is a self-contained package with its own controller/service/repository/domain/dto/mapper layers,
-instead of one global layer shared by the whole app.
+**Package by Feature + Layer:** each business domain (`booking/`, `payment/`, `refund/`, `bonus/`, `movie/`, `cinema/`, `user/`, `ticket/`, `promotion/`, `audit/`) is a self-contained package with its own `controller/service/repository/domain/dto/mapper`, instead of one global layer shared by the whole app. `notification/`, `integration/`, and `common/` are shared infrastructure packages (mail sending, file/QR/slug handling, stateless utilities) — they never own a business decision, only get called by the domain that does. `config/` and `exception/` stay global across every domain.
 
 ```mermaid
 flowchart TD
@@ -186,111 +83,42 @@ flowchart TD
     S["Schedulers (per domain)"] --> DB
 ```
 
-`payment/` and `refund/` used to live inside the booking package as a single "Payment Service" —
-they're now their own domains, connected in one direction only (`refund → payment → booking`, never
-back), which is what makes the split safe.
+`payment/` and `refund/` used to live inside the booking package as a single "Payment Service" — they're now their own domains, connected one-way only (`refund → payment → booking`, never back), which is what keeps the split safe to reason about.
 
-### Package Structure
+### Key engineering decisions
 
-Every domain package carries the same internal layers:
+- **Two-stage seat locking:** 5-min pessimistic hold (`SELECT ... FOR UPDATE`) on selection, then a 20-min reservation window before payment. `@Version` optimistic locking everywhere else conflicts are rare. No global locks — only individual seats, only temporarily.
+- **Idempotent payment callbacks:** conditional updates (`UPDATE ... WHERE status = 'PENDING'`) make duplicate LiqPay callbacks safe to ignore; `PaymentScheduler` reconciles payments stuck mid-flow.
+- **Refund state machine:** `PROCESSING → PROCESSED/REJECTED`, with the `PROCESSING` row committed *before* the gateway call so a crash never loses a refund record; `RefundScheduler` reconciles anything still stuck.
+- **Scheduler-based self-healing:** one scheduler per domain releases expired locks, cancels unpaid bookings, reconciles stuck refunds/payments, and recovers all of it from PostgreSQL state on restart — no in-memory state to lose.
 
-| Layer        | Responsibility                       |
-| ------------ | ------------------------------------- |
-| `controller/`| REST API, request validation          |
-| `service/`   | Business logic, orchestration         |
-| `domain/`    | JPA entities and business rules       |
-| `repository/`| Spring Data JPA access                |
-| `dto/`       | Request/response payloads             |
-| `mapper/`    | Entity ↔ DTO mapping (MapStruct)      |
-
-`config/` (security, cache, rate limiting, ...) and `exception/` stay global across every domain.
-`common/` holds small stateless utilities (pagination, price/date/number formatting) with no
-domain of their own.
-
-**13 domain packages:** `movie`, `cinema`, `user`, `booking`, `payment`, `refund`, `bonus`,
-`ticket`, `promotion`, `audit`, `notification`, `integration`, `common`. See
-[docs/DOCS.md](docs/DOCS.md#-project-structure) for what each one owns.
+Full write-up of trade-offs and what was learned building this: [docs/DOCS.md](docs/DOCS.md#known-trade-offs)
 
 ---
 
-## Booking Flow
+## Security Highlights
 
-1. User selects seats → temporary lock (5 min)
-2. User confirms → reservation created (20 min)
-3. Payment initiated via LiqPay
-4. Callback updates order to `PAID`
-5. Tickets generated, bonuses applied
-
-### Guarantees
-
-- No double booking under concurrent requests
-- Expired reservations are automatically released
-- Duplicate payment callbacks are safely ignored
+- **Concurrency correctness:** pessimistic row-level locks prevent double booking under concurrent requests for the same seat; verified with a 10-concurrent-request test where exactly one succeeds.
+- **Idempotency everywhere it matters:** payment callbacks, refund success/failure application, and bonus-point refunds are all safe to retry or receive duplicates without double-processing.
+- **Financial safety:** refund amount/percentage/bonus math has a single source of truth (`RefundCalculator`) shared by preview and execution, so they can never disagree; refund execution runs in its own transaction, committed before the external gateway call, so a mid-request crash can't leave a charge with no record.
+- **RBAC** across 4 roles (Admin, Content Manager, Cashier, User) enforced at both API and UI level, plus per-endpoint rate limiting against brute-force/abuse.
 
 ---
 
-## Refund Flow
+## Testing
 
-Refund amount depends on time before session:
+- **827 tests** across **108 test classes**, run against real PostgreSQL via **Testcontainers** (no mocked DB in integration tests)
+- Dedicated **concurrency test suites** per domain: `SeatReservationConcurrencyTest`, `BookingConcurrencyTest`, `BookingDoubleConfirmConcurrencyTest`, `PaymentCallbackConcurrencyTest`, `RefundCreationConcurrencyTest`, `BonusCardConcurrencyTest`, `BonusRefundPointsRetryConcurrencyTest`, `TicketValidationConcurrencyTest`
+- Failure scenarios verified directly: 10 concurrent bookings for the same seat (exactly 1 wins), 5 duplicate LiqPay callbacks (order reaches `PAID` exactly once), expired reservations auto-released by the scheduler, app killed mid-payment and recovered on restart
+- Runs on every push/PR to `main`/`develop` via GitHub Actions (`.github/workflows/ci.yml`)
 
-| Time Before Session | Refund |
-| ------------------- | ------ |
-| > 24h               | 100%   |
-| 6–24h               | 85%    |
-| < 6h                | 50%    |
-
-Handled automatically with:
-
-- correct bonus rollback
-- seat release
-- consistent order updates
+```bash
+cd backend && ./mvnw test
+```
 
 ---
 
-## Testing & Validation
-
-The system was tested against real failure scenarios:
-
-- **10 concurrent booking requests for the same seat** — pessimistic row-level lock ensured only one succeeded, 9 received clear error responses
-- **Duplicate LiqPay callbacks (5 identical requests)** — conditional status update (`WHERE status = 'PENDING'`) guaranteed the order moved to PAID exactly once
-- **Expired reservations (waited 20+ minutes)** — scheduler detected and released them automatically, seats became available again
-- **Application killed mid-payment, then restarted** — all booking state persisted in PostgreSQL, scheduler recovered expired bookings on startup
-
----
-
-## What I Learned
-
-- **Pessimistic vs Optimistic locking** — row-level locks for high-collision operations, `@Version` for everything else. Knowing which to use is the real skill.
-- **Idempotency in payment systems** — conditional state updates (`WHERE status = 'PENDING'`) are simpler and safer than distributed locks.
-- **Scheduler as a safety net** — a polling job that cleans up expired state is predictable, monitorable, and needs zero extra infrastructure.
-- **Trade-off communication** — being explicit about what the system doesn't do builds more trust than pretending it scales infinitely.
-
----
-
-## Tech Stack
-
-**Backend**
-
-- Java 21, Spring Boot 4.0.6
-- Spring Security, JPA, Hibernate 7
-- PostgreSQL 16, Flyway
-- Redis (caching)
-- JWT + Google OAuth2
-- Testcontainers (integration tests)
-- GitHub Actions (CI)
-
-**Frontend**
-
-- React 19 + TypeScript
-
-**DevOps**
-
-- Docker / Docker Compose
-- GitHub Actions CI
-
----
-
-## Quick Start
+## Getting Started
 
 ```bash
 git clone https://github.com/AntonBas/Cinema.git
@@ -300,16 +128,9 @@ docker compose up -d
 ```
 
 | Service     | URL                                   |
-| ----------- | ------------------------------------- |
+| ----------- | -------------------------------------- |
 | Frontend    | http://localhost:5173                 |
 | Backend API | http://localhost:8080/api             |
 | Swagger     | http://localhost:8080/swagger-ui.html |
 
----
-
-## Highlights
-
-- Built as a **real-world backend system**, not a demo CRUD app
-- Focused on **correctness under failure**
-- Explicit **consistency guarantees**
-- Clean trade-offs between **simplicity and scalability**
+Local (non-Docker) setup, test accounts, and database reset instructions: [docs/DOCS.md#-getting-started](docs/DOCS.md#-getting-started)

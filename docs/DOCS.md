@@ -12,6 +12,7 @@ Complete feature descriptions, technical details, and project structure.
   - [User Features](#-user-features)
   - [Admin Features](#️-admin-features)
   - [Technical Highlights](#-technical-highlights)
+- [Engineering Details](#engineering-details)
 - [Tech Stack](#-tech-stack)
 - [Project Structure](#-project-structure)
 
@@ -177,6 +178,11 @@ The system supports four roles with different access levels:
 - Reset link sent to email
 - New password validation (cannot reuse old password)
 - Blocked for unverified accounts
+
+**Email Tokens**
+
+- Email verification and email-change confirmation are both handled via `POST /api/tokens/email/verify` and `POST /api/tokens/email/change/confirm`
+- Expired tokens are cleaned up automatically by a scheduler (`user/scheduler/EmailTokenCleanupScheduler`)
 
 ---
 
@@ -450,7 +456,15 @@ Three tabs for complete movie content management:
 - Filter by entity type and action type
 - Search by admin email
 - Pagination
-- **Full entity history:** view every audit entry for one specific entity (`GET /admin/audit-logs/entity/{entityType}/{entityId}`)
+- **Full entity history:** view every audit entry for one specific entity via the **Entity History** modal in the Audit Logs table (`GET /admin/audit-logs/entity/{entityType}/{entityId}`)
+
+---
+
+#### Cashier
+
+- **Ticket lookup:** enter a ticket's unique code to view its details (`GET /api/admin/ticket/{uniqueCode}`)
+- **Ticket validation:** mark a ticket as used at the door (`POST /api/admin/ticket/{uniqueCode}/validate`)
+- Available at `/cashier/scan`
 
 ---
 
@@ -464,6 +478,17 @@ Three tabs for complete movie content management:
 ---
 
 ## Engineering Details
+
+### Testing
+
+827 tests across 108 test classes, run with Testcontainers against a real PostgreSQL instance
+(no mocked DB in integration/concurrency tests). Every domain has a dedicated concurrency suite,
+e.g. `SeatReservationConcurrencyTest`, `BookingConcurrencyTest`,
+`BookingDoubleConfirmConcurrencyTest`, `PaymentCallbackConcurrencyTest`,
+`RefundCreationConcurrencyTest`, `BonusCardConcurrencyTest`,
+`BonusRefundPointsRetryConcurrencyTest`, `TicketValidationConcurrencyTest`. CI
+(`.github/workflows/ci.yml`) runs the full suite against a real Postgres service container on
+every push/PR to `main`/`develop`.
 
 ### Concurrency Control
 
@@ -542,7 +567,7 @@ Four configurable rules control the loyalty program:
 | Spring Mail          | 4.0.6   |
 | Spring Cache         | 4.0.6   |
 | Spring Actuator      | 4.0.6   |
-| PostgreSQL           | 16      |
+| PostgreSQL           | 15      |
 | Flyway               | 11.14.1 |
 | JWT (jjwt)           | 0.12.6  |
 | MapStruct            | 1.6.3   |
@@ -619,13 +644,20 @@ holds small cross-cutting utilities.
 | `promotion/`     | Promotions, promo claims                                                 |
 | `audit/`         | Admin change audit log (write path + query/history)                     |
 | `notification/`  | Outbound email sending, email verification token generation             |
-| `integration/`   | File storage, poster images, QR code generation, slug generation        |
+| `integration/`   | File storage, poster images, QR code generation                         |
 | `common/`        | Stateless cross-cutting utilities shared across every domain             |
+
+The 10 packages above `audit/` are the actual business domains, each owning its own decisions.
+`notification/`, `integration/`, and `common/` are shared infrastructure: they're called *by* a
+domain (e.g. `movie/service/SlugService` decides how a movie's slug is generated and calls
+nothing in `integration/` for it; `integration/` only holds technical adapters like file storage,
+poster handling, and QR generation) rather than making business decisions themselves.
 
 A scheduled job in each domain that needs one (`booking/`, `payment/`, `refund/`, `bonus/`,
 `movie/`, `cinema/`, `ticket/`, `user/`) handles self-healing recovery — releasing expired seat
-locks, cancelling unpaid bookings, reconciling stuck refunds, updating session/movie statuses,
-awarding birthday bonuses, cleaning up expired email tokens.
+locks (`SeatReservationScheduler`), cancelling unpaid bookings (`BookingScheduler`), reconciling
+payments stuck mid-flow (`PaymentScheduler`), reconciling stuck refunds (`RefundScheduler`),
+updating session/movie statuses, awarding birthday bonuses, cleaning up expired email tokens.
 
 ### Frontend (React)
 
