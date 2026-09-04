@@ -1,46 +1,78 @@
-.table {
-  background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+.tableWrapper {
+  width: 100%;
+  overflow: hidden;
+}
+
+.tableContainer {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
   border-radius: var(--radius-xl);
   border: 1px solid #334155;
-  overflow: hidden;
+  background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
   box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
   animation: fadeIn 0.4s ease;
 }
 
-.tableHeader {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1.5fr;
-  gap: var(--space-4);
-  padding: var(--space-6) var(--space-8);
-  background: #1e293b;
+.tableContainer::-webkit-scrollbar {
+  height: 6px;
+}
+
+.tableContainer::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.tableContainer::-webkit-scrollbar-thumb {
+  background: rgba(var(--color-primary-rgb), 0.5);
+  border-radius: 3px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 650px;
+  background: transparent;
+}
+
+.table th {
   font-weight: 600;
-  color: #f1f5f9;
+  padding: var(--space-6) var(--space-8);
+  text-align: left;
   border-bottom: 1px solid #334155;
   font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  color: #f1f5f9;
+  background: #1e293b;
 }
 
-.tableRow {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1.5fr;
-  gap: var(--space-4);
+.table th:last-child {
+  text-align: right;
+}
+
+.table td {
   padding: var(--space-6) var(--space-8);
   border-bottom: 1px solid #334155;
-  align-items: center;
   transition: background-color var(--transition-normal);
+}
+
+.table tbody tr {
   background: rgba(30, 41, 59, 0.3);
 }
 
-.tableRow:nth-child(even) {
+.table tbody tr:nth-child(even) {
   background: rgba(30, 41, 59, 0.6);
 }
 
-.tableRow:hover {
+.table tbody tr:hover {
   background: rgba(253, 95, 0, 0.15);
 }
 
-.tableRow:last-child {
+.table tbody tr:last-child td {
   border-bottom: none;
 }
 
@@ -51,19 +83,28 @@
 }
 
 .roleCell {
-  display: flex;
-  align-items: center;
+  min-width: 130px;
 }
 
-.movieCount {
-  display: flex;
-  align-items: center;
+.movieCountCell {
+  min-width: 110px;
+}
+
+.actionsCell {
+  min-width: 160px;
+  text-align: right;
 }
 
 .actions {
   display: flex;
   gap: var(--space-2);
   flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.actionButton {
+  min-width: auto;
+  padding: var(--space-2) var(--space-3);
 }
 
 .empty {
@@ -102,21 +143,83 @@
 }
 
 @media (max-width: 768px) {
-  .tableHeader {
+  .tableContainer {
+    overflow-x: visible;
+    border-radius: var(--radius-lg);
+    background: transparent;
+    box-shadow: none;
+    border: none;
+  }
+
+  .table {
+    min-width: auto;
+    display: block;
+  }
+
+  .table thead {
     display: none;
   }
 
-  .tableRow {
-    grid-template-columns: 1fr;
+  .table tbody {
+    display: flex;
+    flex-direction: column;
     gap: var(--space-3);
+  }
+
+  .table tbody tr {
+    display: block;
     padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    border: 1px solid #334155;
+    background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-2) 0;
+    border-bottom: 1px dashed #334155;
+  }
+
+  .table td:first-child {
+    padding-left: 0;
+    border-bottom: 1px solid #334155;
+    margin-bottom: var(--space-2);
+  }
+
+  .table td:last-child {
+    padding-right: 0;
+    border-bottom: none;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  .table td:first-child::before {
+    display: none;
+  }
+
+  .table td:first-child {
+    justify-content: flex-start;
   }
 
   .name {
     font-size: 1rem;
   }
 
+  .actionsCell {
+    min-width: auto;
+  }
+
   .actions {
+    justify-content: flex-start;
     margin-top: var(--space-2);
   }
 }

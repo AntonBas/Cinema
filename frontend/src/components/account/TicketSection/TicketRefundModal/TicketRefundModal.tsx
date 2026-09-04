@@ -313,7 +313,7 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
       </div>
 
       <div className={styles.modalFooter}>
-        <Button variant="secondary" onClick={onClose}>
+        <Button variant="cancel" onClick={onClose}>
           Cancel
         </Button>
         <Button

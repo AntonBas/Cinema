@@ -44,50 +44,60 @@ export const HallsTable: React.FC<HallsTableProps> = React.memo(
     }
 
     return (
-      <div className={styles.table}>
-        <div className={styles.tableHeader}>
-          <div>Name</div>
-          <div>Capacity</div>
-          <div>Actions</div>
+      <div className={styles.tableWrapper}>
+        <div className={styles.tableContainer}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Capacity</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {halls.map((hall) => (
+                <tr key={hall.id}>
+                  <td className={styles.nameCell} data-label="Name">
+                    <span className={styles.name}>{hall.name}</span>
+                  </td>
+                  <td className={styles.capacityCell} data-label="Capacity">
+                    <Badge variant="primary">{hall.capacity} seats</Badge>
+                  </td>
+                  <td className={styles.actionsCell} data-label="Actions">
+                    <div className={styles.actions}>
+                      <Button
+                        variant="primary"
+                        size="small"
+                        onClick={() => handleShowLayout(hall)}
+                        className={styles.actionButton}
+                      >
+                        Layout
+                      </Button>
+                      {onEdit && (
+                        <Button
+                          variant="success"
+                          size="small"
+                          onClick={() => handleEdit(hall)}
+                          className={styles.actionButton}
+                        >
+                          Edit
+                        </Button>
+                      )}
+                      <Button
+                        variant="error"
+                        size="small"
+                        onClick={() => handleDelete(hall)}
+                        className={styles.actionButton}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-        {halls.map((hall) => (
-          <div key={hall.id} className={styles.tableRow}>
-            <div className={styles.name}>
-              <span>{hall.name}</span>
-            </div>
-            <div className={styles.capacity}>
-              <Badge variant="primary">{hall.capacity} seats</Badge>
-            </div>
-            <div className={styles.actions}>
-              <Button
-                variant="primary"
-                size="small"
-                onClick={() => handleShowLayout(hall)}
-                className={styles.layoutButton}
-              >
-                Layout
-              </Button>
-              {onEdit && (
-                <Button
-                  variant="success"
-                  size="small"
-                  onClick={() => handleEdit(hall)}
-                  className={styles.editButton}
-                >
-                  Edit
-                </Button>
-              )}
-              <Button
-                variant="error"
-                size="small"
-                onClick={() => handleDelete(hall)}
-                className={styles.deleteButton}
-              >
-                Delete
-              </Button>
-            </div>
-          </div>
-        ))}
       </div>
     );
   },

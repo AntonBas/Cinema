@@ -196,7 +196,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
         <div className={styles.formActions}>
           <Button
             type="button"
-            variant="secondary"
+            variant="cancel"
             onClick={onCancel}
             disabled={loading}
           >

@@ -1,66 +1,49 @@
 import React, { useId, useCallback } from 'react';
-import styles from './Input.module.css';
+import styles from './Textarea.module.css';
 import clsx from 'clsx';
 
-export type InputType = 'text' | 'email' | 'password' | 'number' | 'date' | 'datetime-local' | 'url';
-export type InputSize = 'small' | 'medium' | 'large';
-
-export interface InputProps {
-    type?: InputType;
+export interface TextareaProps {
     value: string;
     onChange: (value: string) => void;
     placeholder?: string;
     disabled?: boolean;
     onBlur?: () => void;
     onFocus?: () => void;
-    onClick?: () => void;
     error?: string;
     required?: boolean;
-    minLength?: number;
     maxLength?: number;
-    min?: string | number;
-    max?: string | number;
-    step?: string | number;
-    pattern?: string;
+    rows?: number;
     className?: string;
     label?: string;
-    size?: InputSize;
     id?: string;
     autoFocus?: boolean;
     'aria-label'?: string;
     'aria-describedby'?: string;
 }
 
-export const Input: React.FC<InputProps> = ({
-    type = 'text',
+export const Textarea: React.FC<TextareaProps> = ({
     value,
     onChange,
     placeholder,
     disabled = false,
     onBlur,
     onFocus,
-    onClick,
     error,
     required = false,
-    minLength,
     maxLength,
-    min,
-    max,
-    step,
-    pattern,
+    rows = 4,
     className = '',
     label,
-    size = 'medium',
     id: externalId,
     autoFocus = false,
     'aria-label': ariaLabel,
     'aria-describedby': ariaDescribedby,
 }) => {
     const generatedId = useId();
-    const inputId = externalId || generatedId;
-    const errorId = error ? `${inputId}-error` : undefined;
+    const textareaId = externalId || generatedId;
+    const errorId = error ? `${textareaId}-error` : undefined;
 
-    const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
         onChange(e.target.value);
     }, [onChange]);
 
@@ -72,12 +55,10 @@ export const Input: React.FC<InputProps> = ({
         onFocus?.();
     }, [onFocus]);
 
-    const inputClass = clsx(
-        styles.input,
+    const textareaClass = clsx(
+        styles.textarea,
         error && styles.error,
         disabled && styles.disabled,
-        size === 'small' && styles.small,
-        size === 'large' && styles.large,
         className
     );
 
@@ -85,7 +66,7 @@ export const Input: React.FC<InputProps> = ({
         <div className={styles.container}>
             {label && (
                 <label
-                    htmlFor={inputId}
+                    htmlFor={textareaId}
                     className={clsx(styles.label, required && styles.required)}
                 >
                     {label}
@@ -93,25 +74,19 @@ export const Input: React.FC<InputProps> = ({
                 </label>
             )}
 
-            <input
-                id={inputId}
-                type={type}
+            <textarea
+                id={textareaId}
                 value={value}
                 onChange={handleChange}
                 onBlur={handleBlur}
                 onFocus={handleFocus}
-                onClick={onClick}
                 placeholder={placeholder}
                 disabled={disabled}
                 required={required}
-                minLength={minLength}
                 maxLength={maxLength}
-                min={min}
-                max={max}
-                step={step}
-                pattern={pattern}
+                rows={rows}
                 autoFocus={autoFocus}
-                className={inputClass}
+                className={textareaClass}
                 aria-label={ariaLabel}
                 aria-describedby={errorId || ariaDescribedby}
                 aria-invalid={!!error}

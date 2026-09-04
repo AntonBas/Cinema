@@ -34,46 +34,58 @@ export const PersonTable: React.FC<PersonTableProps> = React.memo(
     }
 
     return (
-      <div className={styles.table}>
-        <div className={styles.tableHeader}>
-          <div>Name</div>
-          <div>Role</div>
-          <div>Movies</div>
-          <div>Actions</div>
+      <div className={styles.tableWrapper}>
+        <div className={styles.tableContainer}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Movies</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {persons.map((person) => (
+                <tr key={person.id}>
+                  <td className={styles.nameCell} data-label="Name">
+                    <span className={styles.name}>{person.name}</span>
+                  </td>
+                  <td className={styles.roleCell} data-label="Role">
+                    <Badge variant={ROLE_VARIANTS[person.role] || "secondary"}>
+                      {PersonRoleDisplay[person.role]}
+                    </Badge>
+                  </td>
+                  <td className={styles.movieCountCell} data-label="Movies">
+                    <Badge variant="primary">
+                      {getMovieCountText(person.movieCount || 0)}
+                    </Badge>
+                  </td>
+                  <td className={styles.actionsCell} data-label="Actions">
+                    <div className={styles.actions}>
+                      <Button
+                        variant="success"
+                        size="small"
+                        onClick={() => onEdit(person)}
+                        className={styles.actionButton}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="error"
+                        size="small"
+                        onClick={() => onDelete(person)}
+                        className={styles.actionButton}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-        {persons.map((person) => (
-          <div key={person.id} className={styles.tableRow}>
-            <div className={styles.name}>
-              <span>{person.name}</span>
-            </div>
-            <div className={styles.roleCell}>
-              <Badge variant={ROLE_VARIANTS[person.role] || "secondary"}>
-                {PersonRoleDisplay[person.role]}
-              </Badge>
-            </div>
-            <div className={styles.movieCount}>
-              <Badge variant="primary">
-                {getMovieCountText(person.movieCount || 0)}
-              </Badge>
-            </div>
-            <div className={styles.actions}>
-              <Button
-                variant="success"
-                size="small"
-                onClick={() => onEdit(person)}
-              >
-                Edit
-              </Button>
-              <Button
-                variant="error"
-                size="small"
-                onClick={() => onDelete(person)}
-              >
-                Delete
-              </Button>
-            </div>
-          </div>
-        ))}
       </div>
     );
   },

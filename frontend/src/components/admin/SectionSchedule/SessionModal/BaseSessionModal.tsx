@@ -262,7 +262,7 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
                 </div>
 
                 <div className={styles.formActions}>
-                    <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>
+                    <Button type="button" variant="cancel" onClick={onClose} disabled={loading}>
                         Cancel
                     </Button>
                     <Button type="submit" variant="success" disabled={loading} loading={loading}>
