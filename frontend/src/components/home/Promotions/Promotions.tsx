@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/Button/Button";
@@ -57,9 +57,9 @@ export const Promotions: React.FC<PromotionsProps> = ({
 
   const maxIndex = Math.max(0, promotions.length - itemsToShow);
 
-  const nextSlide = () => {
+  const nextSlide = useCallback(() => {
     setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
-  };
+  }, [maxIndex]);
 
   const prevSlide = () => {
     setCurrentIndex((prev) => (prev <= 0 ? maxIndex : prev - 1));
@@ -73,7 +73,7 @@ export const Promotions: React.FC<PromotionsProps> = ({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isHovered, loading, promotions.length, maxIndex, itemsToShow]);
+  }, [isHovered, loading, promotions.length, itemsToShow, nextSlide]);
 
   const handleClaim = async (promotionId: number, title: string) => {
     if (!isAuthenticated || claimingId) return;

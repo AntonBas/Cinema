@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/Button/Button";
 import { SearchInput } from "@/components/ui/SearchInput/SearchInput";
 import { Pagination } from "@/components/ui/Pagination/Pagination";
@@ -45,12 +45,15 @@ const SectionPromotion: React.FC = () => {
         size: pageSize,
       });
     },
-    [searchQuery, pageSize, getAll],
+    [searchQuery, pageSize, getAll, currentPage],
   );
 
+  const didLoadRef = useRef(false);
   useEffect(() => {
+    if (didLoadRef.current) return;
+    didLoadRef.current = true;
     loadPromotions(0);
-  }, []);
+  }, [loadPromotions]);
 
   const handleSearch = useCallback(
     (query: string) => {

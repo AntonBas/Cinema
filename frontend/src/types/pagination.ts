@@ -19,10 +19,19 @@ export interface SortInfo {
   ascending: boolean;
 }
 
+export type SearchParamValue =
+  | string
+  | number
+  | boolean
+  | string[]
+  | number[]
+  | undefined
+  | null;
+
 export interface SearchParams {
   page?: number;
   size?: number;
   sort?: string;
   query?: string;
-  [key: string]: any;
+  [key: string]: SearchParamValue;
 }

@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
-import type { SearchParams } from "@/types/pagination";
+import type { SearchParams, SearchParamValue } from "@/types/pagination";
 
 interface UsePaginationReturn {
   params: SearchParams;
@@ -7,7 +7,7 @@ interface UsePaginationReturn {
   setSize: (size: number) => void;
   setSearch: (search: string) => void;
   setSort: (sort: string) => void;
-  setFilter: (key: string, value: any) => void;
+  setFilter: (key: string, value: SearchParamValue) => void;
   removeFilter: (key: string) => void;
   reset: () => void;
   goToNextPage: () => void;
@@ -57,7 +57,7 @@ export const usePagination = (
     }));
   }, []);
 
-  const setFilter = useCallback((key: string, value: any) => {
+  const setFilter = useCallback((key: string, value: SearchParamValue) => {
     setParams((prev) => ({
       ...prev,
       [key]: value,
@@ -98,10 +98,7 @@ export const usePagination = (
     setPage(0);
   }, [setPage]);
 
-  const stableParams = useMemo(
-    () => params,
-    [params.page, params.size, params.sort, params.query],
-  );
+  const stableParams = useMemo(() => params, [params]);
 
   return {
     params: stableParams,

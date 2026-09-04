@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/Button/Button";
 import { Badge } from "@/components/ui/Badge/Badge";
+import type { BadgeVariant } from "@/components/ui/Badge/Badge";
 import { Tooltip } from "@/components/ui/Tooltip/Tooltip";
 import { DeleteConfirmModal } from "@/components/ui/DeleteConfirmModal/DeleteConfirmModal";
 import type {
@@ -58,7 +59,9 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
     return "Any age";
   };
 
-  const getCategoryVariant = (category: TicketTypeCategory | undefined) => {
+  const getCategoryVariant = (
+    category: TicketTypeCategory | undefined,
+  ): BadgeVariant => {
     switch (category) {
       case "STANDARD":
         return "primary";
@@ -117,7 +120,7 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
                       </span>
                     </td>
                     <td className={styles.categoryCell} data-label="Category">
-                      <Badge variant={getCategoryVariant(category) as any}>
+                      <Badge variant={getCategoryVariant(category)}>
                         {categoryDisplay}
                       </Badge>
                     </td>

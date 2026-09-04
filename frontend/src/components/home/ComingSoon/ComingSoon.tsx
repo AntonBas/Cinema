@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { MovieCard } from "@/components/movies/MovieCard/MovieCard";
@@ -36,9 +36,9 @@ export const ComingSoon: React.FC<ComingSoonProps> = ({ movies, loading }) => {
 
   const maxIndex = Math.max(0, movies.length - itemsToShow);
 
-  const nextSlide = () => {
+  const nextSlide = useCallback(() => {
     setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
-  };
+  }, [maxIndex]);
 
   const prevSlide = () => {
     setCurrentIndex((prev) => (prev <= 0 ? maxIndex : prev - 1));
@@ -52,7 +52,7 @@ export const ComingSoon: React.FC<ComingSoonProps> = ({ movies, loading }) => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isHovered, loading, movies.length, maxIndex, itemsToShow]);
+  }, [isHovered, loading, movies.length, itemsToShow, nextSlide]);
 
   if (loading) {
     return (

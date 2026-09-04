@@ -24,13 +24,13 @@ export const BonusPage: React.FC = () => {
 
   useEffect(() => {
     getMyBalance();
-  }, []);
+  }, [getMyBalance]);
 
   useEffect(() => {
     if (activeTab === "transactions") {
       getMyTransactions({ page: params.page, size: params.size });
     }
-  }, [activeTab, params.page, params.size]);
+  }, [activeTab, params.page, params.size, getMyTransactions]);
 
   const totalEarned = transactions
     .filter((t) => parseFloat(t.pointsChange) > 0)

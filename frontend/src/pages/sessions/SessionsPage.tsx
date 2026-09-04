@@ -57,7 +57,7 @@ const SessionsPage: React.FC = () => {
     };
 
     fetchSessions();
-  }, [selectedMovieId]);
+  }, [selectedMovieId, getSchedule]);
 
   const sessions = useMemo(
     () => filterByDate(allSessions, selectedDate),

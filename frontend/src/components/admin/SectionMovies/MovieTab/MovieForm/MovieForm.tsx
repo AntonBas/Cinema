@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import type { MovieAdminResponse, AgeRating } from '@/types/movie';
+import type { MovieAdminResponse, AgeRating, MovieCreateRequest, MovieUpdateRequest } from '@/types/movie';
 import type { PersonResponse } from '@/types/person';
 import { useMovies } from '@/hooks/features/movies/useMovies';
 import { useGenres } from '@/hooks/features/genres/useGenres';
@@ -71,7 +71,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
 
     useEffect(() => {
         getAllGenres({});
-    }, []);
+    }, [getAllGenres]);
 
     useEffect(() => {
         if (movie) {
@@ -122,7 +122,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
 
-        const request = {
+        const baseRequest = {
             title: formData.title,
             trailerUrl: formData.trailerUrl,
             description: formData.description,
@@ -134,13 +134,18 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
             directorIds: formData.selectedDirectors,
             screenwriterIds: formData.selectedScreenwriters,
             actorIds: formData.selectedActors,
-            posterFile: formData.posterFile,
-            ...(movie && { removePoster: formData.removePoster }),
         };
 
         const result = movie
-            ? await update(movie.id, request as any)
-            : await create(request as any);
+            ? await update(movie.id, {
+                ...baseRequest,
+                posterFile: formData.posterFile,
+                removePoster: formData.removePoster,
+            } satisfies MovieUpdateRequest)
+            : await create({
+                ...baseRequest,
+                posterFile: formData.posterFile as File,
+            } satisfies MovieCreateRequest);
 
         if (result) {
             onSuccess();

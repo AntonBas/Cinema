@@ -41,7 +41,7 @@ export const BookingPage: React.FC = () => {
       getSeatAvailability();
       getMyBalance();
     }
-  }, [sessionIdNum]);
+  }, [sessionIdNum, getSeatAvailability, getMyBalance]);
 
   const handleSeatClick = useCallback(
     async (seatId: number) => {

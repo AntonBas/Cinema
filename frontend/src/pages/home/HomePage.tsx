@@ -40,7 +40,14 @@ export const HomePage: React.FC = () => {
     if (isAuthenticated) {
       getClaimed();
     }
-  }, []);
+  }, [
+    isAuthenticated,
+    getCurrentMoviesForHome,
+    getUpcomingMoviesForHome,
+    getLeavingSoonForHome,
+    getAvailable,
+    getClaimed,
+  ]);
 
   useEffect(() => {
     if (claimedPromotions.length > 0) {
@@ -48,7 +55,7 @@ export const HomePage: React.FC = () => {
     }
   }, [claimedPromotions]);
 
-  const handleClaimPromotion = async (promotionId: number, _title: string) => {
+  const handleClaimPromotion = async (promotionId: number) => {
     const result = await claim({ promotionId });
     if (result) {
       setClaimedIds((prev) => [...prev, promotionId]);

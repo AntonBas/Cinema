@@ -20,7 +20,7 @@ interface UseApiOptions<T> {
   onError?: (error: Error | ApiErrorException) => void;
 }
 
-export const useApi = <T = any>() => {
+export const useApi = <T = unknown>() => {
   const [state, setState] = useState<UseApiState<T>>({
     data: null,
     loading: false,

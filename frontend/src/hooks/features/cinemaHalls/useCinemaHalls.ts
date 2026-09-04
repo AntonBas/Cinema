@@ -30,11 +30,6 @@ export const useCinemaHalls = () => {
         { delay: 150, minDisplayTime: 300 }
     );
 
-    const getHallName = useCallback((id: number): string => {
-        const hall = hallsApi.data?.find(h => h.id === id);
-        return hall?.name || String(id);
-    }, [hallsApi.data]);
-
     const getAllHalls = useCallback(async () => {
         return hallsApiRef.current.execute(() => cinemaHallApi.getAll());
     }, []);
@@ -59,14 +54,14 @@ export const useCinemaHalls = () => {
             () => cinemaHallApi.update(id, request),
             { successMessage: `Cinema hall "${request.name}" updated successfully` }
         );
-    }, [getHallName]);
+    }, []);
 
     const deleteHall = useCallback(async (id: number) => {
         return mutationApiRef.current.execute(
             () => cinemaHallApi.delete(id),
             { successMessage: `Cinema hall deleted successfully` }
         );
-    }, [getHallName]);
+    }, []);
 
     return {
         halls: hallsApi.data || [],

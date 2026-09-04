@@ -19,13 +19,15 @@ export const TicketQRModal: React.FC<TicketQRModalProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let objectUrl = "";
+
     const loadQRCode = async () => {
       try {
         setError(null);
         const blob = await getQRCode(ticketCode);
         if (blob) {
-          const imageUrl = URL.createObjectURL(blob);
-          setQrImage(imageUrl);
+          objectUrl = URL.createObjectURL(blob);
+          setQrImage(objectUrl);
         } else {
           setError("Failed to load QR code");
         }
@@ -37,7 +39,7 @@ export const TicketQRModal: React.FC<TicketQRModalProps> = ({
     loadQRCode();
 
     return () => {
-      if (qrImage) URL.revokeObjectURL(qrImage);
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [ticketCode, getQRCode]);
 

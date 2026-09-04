@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { PersonTabs } from "./PersonTabs/PersonTabs";
 import { PersonTable } from "./PersonTable/PersonTable";
 import { PersonForm } from "./PersonForm/PersonForm";
@@ -48,12 +48,15 @@ export const PersonTab: React.FC = () => {
         size: pageSize,
       });
     },
-    [searchQuery, activeTab, pageSize, getAll],
+    [searchQuery, activeTab, pageSize, getAll, currentPage],
   );
 
+  const didLoadRef = useRef(false);
   useEffect(() => {
+    if (didLoadRef.current) return;
+    didLoadRef.current = true;
     loadPersons(0);
-  }, []);
+  }, [loadPersons]);
 
   const handleSearch = useCallback(
     (query: string) => {

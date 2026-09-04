@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { XCircle, CheckCircle2 } from "lucide-react";
+import axios from "axios";
 import { api } from "@/services/api";
 import { Button } from "@/components/ui";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
@@ -29,10 +30,16 @@ export const EmailVerificationPage: React.FC = () => {
         await api.post(`/api/tokens/email/verify?token=${verificationToken}`);
         setStatus("success");
         setTimeout(() => navigate("/login"), 5000);
-      } catch (error: any) {
+      } catch (error) {
         setStatus("error");
+        const message = axios.isAxiosError(error)
+          ? (error.response?.data as { message?: string } | undefined)
+              ?.message
+          : error instanceof Error
+            ? error.message
+            : undefined;
         setErrorMessage(
-          error?.response?.data?.message ||
+          message ||
             "Failed to verify email. The token may be invalid or expired.",
         );
       }

@@ -1,5 +1,14 @@
 import type { PageResponse, SearchParams } from "@/types/pagination";
 
+type PageSizeContext =
+  | "grid"
+  | "list"
+  | "table"
+  | "admin"
+  | "small"
+  | "medium"
+  | "large";
+
 export const DEFAULT_PAGE = 0;
 export const DEFAULT_PAGE_SIZE = 12;
 export const DEFAULT_PAGE_SIZE_SMALL = 8;
@@ -9,14 +18,7 @@ export const DEFAULT_PAGE_SIZE_ADMIN = 20;
 export const DEFAULT_SORT = "id,desc";
 
 export const getDefaultPageSize = (
-  context:
-    | "grid"
-    | "list"
-    | "table"
-    | "admin"
-    | "small"
-    | "medium"
-    | "large" = "grid",
+  context: PageSizeContext = "grid",
 ): number => {
   switch (context) {
     case "small":
@@ -39,7 +41,7 @@ export const getDefaultPageSize = (
 
 export const createSearchParams = (
   params: SearchParams,
-  context?: string,
+  context?: PageSizeContext,
 ): URLSearchParams => {
   const searchParams = new URLSearchParams();
 
@@ -48,7 +50,7 @@ export const createSearchParams = (
   searchParams.append("page", page.toString());
 
   const defaultSize = context
-    ? getDefaultPageSize(context as any)
+    ? getDefaultPageSize(context)
     : DEFAULT_PAGE_SIZE;
   const size =
     params.size !== undefined ? Math.max(1, params.size) : defaultSize;
@@ -81,7 +83,7 @@ export const createSearchParams = (
 export const buildPagedUrl = (
   baseUrl: string,
   params?: SearchParams,
-  context?: string,
+  context?: PageSizeContext,
 ): string => {
   const searchParams = createSearchParams(params || {}, context);
   const queryString = searchParams.toString();
@@ -91,8 +93,8 @@ export const buildPagedUrl = (
 export const buildFilteredUrl = (
   baseUrl: string,
   params?: SearchParams,
-  filter?: Record<string, any>,
-  context?: string,
+  filter?: Record<string, string | number | boolean | undefined | null>,
+  context?: PageSizeContext,
 ): string => {
   const searchParams = createSearchParams(params || {}, context);
 

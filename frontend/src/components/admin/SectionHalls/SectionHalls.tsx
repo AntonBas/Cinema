@@ -9,7 +9,8 @@ import { CreateHallModal } from './HallModal/CreateHallModal';
 import { EditHallModal } from './HallModal/EditHallModal';
 import { HallsTable } from './HallsTable/HallsTable';
 import { HallLayoutModal } from './HallLayoutModal/HallLayoutModal';
-import { HallLayoutProvider, useHallLayout } from './HallLayoutContext';
+import { useHallLayout } from './HallLayoutContext';
+import { HallLayoutProvider } from './HallLayoutProvider';
 import styles from './SectionHalls.module.css';
 
 const SectionHallsContent: React.FC = () => {
@@ -31,11 +32,11 @@ const SectionHallsContent: React.FC = () => {
     const loadHalls = useCallback(async () => {
         const response = await getAllHalls();
         setHallsData(response || []);
-    }, []);
+    }, [getAllHalls]);
 
     useEffect(() => {
         loadHalls();
-    }, []);
+    }, [loadHalls]);
 
     const handleCreateHall = useCallback(async (request: CinemaHallRequest) => {
         const response = await createHall(request);
@@ -43,7 +44,7 @@ const SectionHallsContent: React.FC = () => {
             await loadHalls();
             setShowCreateModal(false);
         }
-    }, []);
+    }, [createHall, loadHalls]);
 
     const handleEditHall = useCallback(async (id: number, request: CinemaHallRequest) => {
         const response = await updateHall(id, request);
@@ -52,7 +53,7 @@ const SectionHallsContent: React.FC = () => {
             setShowEditModal(false);
             setSelectedHall(null);
         }
-    }, []);
+    }, [updateHall, loadHalls]);
 
     const handleDeleteHall = useCallback(async () => {
         if (!deleteModal.hall) return;
@@ -66,7 +67,7 @@ const SectionHallsContent: React.FC = () => {
         } catch {
             setDeleteModal(prev => ({ ...prev, isDeleting: false }));
         }
-    }, [deleteModal.hall]);
+    }, [deleteModal.hall, deleteHall, loadHalls]);
 
     const confirmDelete = useCallback((hall: CinemaHallListResponse) => {
         setDeleteModal({ isOpen: true, hall, isDeleting: false });
@@ -78,14 +79,14 @@ const SectionHallsContent: React.FC = () => {
             setSelectedHall(response);
             setShowEditModal(true);
         }
-    }, []);
+    }, [getHallById]);
 
     const handleShowLayout = useCallback(async (hall: CinemaHallListResponse) => {
         const response = await getHallById(hall.id);
         if (response) {
             openLayout(response);
         }
-    }, []);
+    }, [getHallById, openLayout]);
 
     if (showDelayedLoading && !hallsData.length) {
         return (

@@ -1,28 +1,6 @@
-import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
-
-export type NotificationType = 'success' | 'error' | 'warning' | 'info';
-
-interface NotificationItem {
-    id: string;
-    message: string;
-    type: NotificationType;
-    isVisible: boolean;
-    duration?: number;
-}
-
-interface NotificationContextType {
-    notifications: NotificationItem[];
-    showNotification: (message: string, type?: NotificationType, duration?: number) => string;
-    hideNotification: (id: string) => void;
-}
-
-const NotificationContext = createContext<NotificationContextType | null>(null);
-
-export const useNotification = () => {
-    const context = useContext(NotificationContext);
-    if (!context) throw new Error('useNotification must be used within NotificationProvider');
-    return context;
-};
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import type { NotificationItem, NotificationType } from './NotificationContext';
+import { NotificationContext } from './NotificationContext';
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -60,7 +38,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }, [removeNotification]);
 
     useEffect(() => {
-        return () => timeoutsRef.current.forEach(timeout => clearTimeout(timeout));
+        const timeouts = timeoutsRef.current;
+        return () => timeouts.forEach(timeout => clearTimeout(timeout));
     }, []);
 
     return (

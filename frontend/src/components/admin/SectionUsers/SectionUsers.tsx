@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { UserTable } from './UserTable/UserTable';
 import { UserFilters } from './UserFilters/UserFilters';
 import { useAdminUsers } from '@/hooks/features/admin/useAdminUsers';
@@ -31,11 +31,14 @@ export const SectionUsers: React.FC = () => {
             page: page,
             size: pageSize
         });
-    }, [searchQuery, roleFilter, verificationStatusFilter, enabledFilter, pageSize, getUsers]);
+    }, [searchQuery, roleFilter, verificationStatusFilter, enabledFilter, pageSize, getUsers, currentPage]);
 
+    const didLoadRef = useRef(false);
     useEffect(() => {
+        if (didLoadRef.current) return;
+        didLoadRef.current = true;
         loadUsers(0);
-    }, []);
+    }, [loadUsers]);
 
     const handleSearch = useCallback((query: string) => {
         setSearchQuery(query);

@@ -9,7 +9,7 @@ export const RefundPolicyPage: React.FC = () => {
 
   useEffect(() => {
     getPolicy();
-  }, []);
+  }, [getPolicy]);
 
   return (
     <Layout>

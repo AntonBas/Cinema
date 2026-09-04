@@ -98,7 +98,8 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
                 setSearchQuery('');
                 setIsOpen(false);
             }
-        } catch {
+        } catch (error) {
+            console.error(`Failed to create ${role.toLowerCase()}:`, error);
         } finally {
             setIsCreating(false);
         }
