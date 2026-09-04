@@ -18,6 +18,7 @@ import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingEx
 import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
 import ua.lviv.bas.cinema.common.DateTimeFormatterService;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
+import ua.lviv.bas.cinema.common.SeatInfoFormatter;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 import ua.lviv.bas.cinema.payment.service.PaymentGatewayService;
 import ua.lviv.bas.cinema.notification.EmailService;
@@ -47,6 +48,8 @@ public class PaymentRefundServiceTest {
     private DateTimeFormatterService dateTimeFormatter;
     @Mock
     private NumberGeneratorService numberGenerator;
+    @Mock
+    private SeatInfoFormatter seatInfoFormatter;
 
     @InjectMocks
     private PaymentRefundService paymentRefundService;

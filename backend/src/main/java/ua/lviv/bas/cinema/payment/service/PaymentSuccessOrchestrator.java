@@ -14,6 +14,7 @@ import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.bonus.service.BonusQueryService;
 import ua.lviv.bas.cinema.common.DateTimeFormatterService;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
+import ua.lviv.bas.cinema.common.SeatInfoFormatter;
 import ua.lviv.bas.cinema.notification.EmailService;
 import ua.lviv.bas.cinema.ticket.service.TicketService;
 
@@ -32,6 +33,7 @@ public class PaymentSuccessOrchestrator {
     private final EmailService emailService;
     private final DateTimeFormatterService dateTimeFormatter;
     private final NumberGeneratorService numberGenerator;
+    private final SeatInfoFormatter seatInfoFormatter;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(Long paymentId) {
@@ -66,7 +68,7 @@ public class PaymentSuccessOrchestrator {
 
     private String extractSeatsInfo(Booking booking) {
         return booking.getSeatReservations().stream()
-                .map(seat -> String.format("Row %d, Seat %d", seat.getSeat().getRow(), seat.getSeat().getNumber()))
+                .map(seat -> seatInfoFormatter.format(seat.getSeat().getRow(), seat.getSeat().getNumber()))
                 .collect(Collectors.joining(", "));
     }
 }

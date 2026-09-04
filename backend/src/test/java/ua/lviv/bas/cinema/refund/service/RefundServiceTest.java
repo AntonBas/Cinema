@@ -30,6 +30,7 @@ import ua.lviv.bas.cinema.refund.mapper.RefundItemMapper;
 import ua.lviv.bas.cinema.refund.mapper.RefundMapper;
 import ua.lviv.bas.cinema.payment.service.PaymentRefundService;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
+import ua.lviv.bas.cinema.common.SeatInfoFormatter;
 import ua.lviv.bas.cinema.ticket.service.TicketService;
 import ua.lviv.bas.cinema.support.CinemaTestFixtures;
 
@@ -59,6 +60,8 @@ public class RefundServiceTest {
     private RefundItemMapper refundItemMapper;
     @Mock
     private NumberGeneratorService numberGenerator;
+    @Mock
+    private SeatInfoFormatter seatInfoFormatter;
 
     private RefundCalculator refundCalculator;
     private RefundService refundService;
@@ -83,7 +86,8 @@ public class RefundServiceTest {
     void setUp() {
         refundCalculator = new RefundCalculator(refundRules);
         refundService = new RefundService(ticketService, paymentRefundService, refundCalculator,
-                refundTransactionExecutor, refundRules, refundMapper, refundItemMapper, numberGenerator);
+                refundTransactionExecutor, refundRules, refundMapper, refundItemMapper, numberGenerator,
+                seatInfoFormatter);
 
         testUser = User.builder().id(USER_ID).email("test@example.com").build();
         var movie = CinemaTestFixtures.movie();

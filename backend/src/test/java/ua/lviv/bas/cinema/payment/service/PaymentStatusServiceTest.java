@@ -165,7 +165,7 @@ public class PaymentStatusServiceTest {
     }
 
     @Test
-    void handleCallbackWithProcessingStatusShouldUpdateStatus() {
+    void handleCallbackWithProcessingStatusShouldDelegateToMarkProcessing() {
         String data = "encoded_data";
         String signature = "test_signature";
         Map<String, String> decodedData = new HashMap<>();
@@ -177,14 +177,13 @@ public class PaymentStatusServiceTest {
 
         paymentStatusService.handleCallback(data, signature);
 
-        assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.PROCESSING);
-        verify(paymentRepository).save(testPayment);
+        verify(paymentService).markProcessing(testPayment);
         verify(paymentService, never()).processSuccess(any(), any());
         verify(paymentService, never()).processFailure(any(), any());
     }
 
     @Test
-    void handleCallbackWithUnknownStatusShouldMarkAsFailed() {
+    void handleCallbackWithUnknownStatusShouldDelegateToProcessFailure() {
         String data = "encoded_data";
         String signature = "test_signature";
         Map<String, String> decodedData = new HashMap<>();
@@ -196,10 +195,25 @@ public class PaymentStatusServiceTest {
 
         paymentStatusService.handleCallback(data, signature);
 
-        assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.FAILED);
-        verify(paymentRepository).save(testPayment);
+        verify(paymentService).processFailure(testPayment, decodedData);
         verify(paymentService, never()).processSuccess(any(), any());
-        verify(paymentService, never()).processFailure(any(), any());
+    }
+
+    @Test
+    void handleCallbackWithMissingStatusShouldDelegateToProcessFailure() {
+        String data = "encoded_data";
+        String signature = "test_signature";
+        Map<String, String> decodedData = new HashMap<>();
+        decodedData.put("order_id", ORDER_ID);
+
+        when(paymentGatewayService.processCallback(data, signature)).thenReturn(decodedData);
+        when(paymentRepository.findByLiqpayOrderId(ORDER_ID)).thenReturn(Optional.of(testPayment));
+
+        paymentStatusService.handleCallback(data, signature);
+
+        verify(paymentService).processFailure(testPayment, decodedData);
+        verify(paymentService, never()).processSuccess(any(), any());
+        verify(paymentService, never()).markProcessing(any());
     }
 
     @Test

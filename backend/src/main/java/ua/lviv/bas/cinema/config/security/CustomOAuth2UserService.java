@@ -8,6 +8,9 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ua.lviv.bas.cinema.audit.domain.AuditAction;
+import ua.lviv.bas.cinema.audit.service.AuditDetails;
+import ua.lviv.bas.cinema.audit.service.AuditService;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.user.domain.UserRole;
 import ua.lviv.bas.cinema.user.domain.VerificationStatus;
@@ -26,6 +29,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
     private final BonusLedgerService bonusLedgerService;
+    private final AuditService auditService;
 
     @Override
     @Transactional
@@ -40,8 +44,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String email = (String) attributes.get("email");
         String name = (String) attributes.get("name");
 
-        String[] nameParts = name.split(" ", 2);
-        String firstName = nameParts[0];
+        String[] nameParts = name != null ? name.split(" ", 2) : new String[0];
+        String firstName = nameParts.length > 0 ? nameParts[0] : "";
         String lastName = nameParts.length > 1 ? nameParts[1] : "";
 
         Optional<User> userOptional = userRepository.findByEmail(email);
@@ -62,6 +66,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
             user = userRepository.save(user);
             log.info("Created new OAuth2 user: {}", email);
+            auditRegister(user);
 
             bonusLedgerService.getOrCreateCard(user);
             bonusLedgerService.awardWelcomeBonus(user);
@@ -69,5 +74,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         }
 
         return oAuth2User;
+    }
+
+    private void auditRegister(User user) {
+        var details = AuditDetails.of().put("email", user.getEmail()).put("firstName", user.getFirstName())
+                .put("lastName", user.getLastName()).build();
+        auditService.logChange("User", user.getId(), user.getEmail(), AuditAction.REGISTER, null, details);
     }
 }

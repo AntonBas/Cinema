@@ -20,6 +20,7 @@ import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.bonus.service.BonusQueryService;
 import ua.lviv.bas.cinema.common.DateTimeFormatterService;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
+import ua.lviv.bas.cinema.common.SeatInfoFormatter;
 import ua.lviv.bas.cinema.notification.EmailService;
 import ua.lviv.bas.cinema.ticket.service.TicketService;
 import ua.lviv.bas.cinema.support.CinemaTestFixtures;
@@ -54,6 +55,8 @@ public class PaymentSuccessOrchestratorTest {
     private DateTimeFormatterService dateTimeFormatter;
     @Mock
     private NumberGeneratorService numberGenerator;
+    @Mock
+    private SeatInfoFormatter seatInfoFormatter;
 
     @InjectMocks
     private PaymentSuccessOrchestrator paymentSuccessOrchestrator;
@@ -92,6 +95,7 @@ public class PaymentSuccessOrchestratorTest {
             return null;
         }).when(emailService).sendSafely(any(String.class), any(), any());
         lenient().when(paymentRepository.findByIdWithDetails(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
+        lenient().when(seatInfoFormatter.format(1, 1)).thenReturn("Row 1, Seat 1");
     }
 
     @Test

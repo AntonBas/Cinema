@@ -5,7 +5,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.payment.dto.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentAccessDeniedException;
@@ -44,7 +43,7 @@ public class PaymentStatusService {
         var payment = paymentRepository.findByLiqpayOrderId(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Payment", orderId));
 
-        switch (status.toLowerCase()) {
+        switch (status == null ? "" : status.toLowerCase()) {
         case "success":
         case "sandbox":
             paymentService.processSuccess(payment, decodedData);
@@ -54,13 +53,11 @@ public class PaymentStatusService {
             paymentService.processFailure(payment, decodedData);
             break;
         case "wait_secure":
-            payment.setStatus(PaymentStatus.PROCESSING);
-            paymentRepository.save(payment);
+            paymentService.markProcessing(payment);
             break;
         default:
             log.warn("Unknown payment status: {} for payment {}", status, payment.getId());
-            payment.setStatus(PaymentStatus.FAILED);
-            paymentRepository.save(payment);
+            paymentService.processFailure(payment, decodedData);
         }
     }
 }

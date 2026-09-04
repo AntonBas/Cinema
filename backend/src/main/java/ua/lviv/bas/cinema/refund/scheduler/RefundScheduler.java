@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 import ua.lviv.bas.cinema.payment.service.PaymentGatewayService;
-import ua.lviv.bas.cinema.payment.service.RefundGatewayStatus;
 import ua.lviv.bas.cinema.refund.domain.status.RefundStatus;
 import ua.lviv.bas.cinema.refund.repository.RefundRepository;
 import ua.lviv.bas.cinema.refund.repository.projection.StuckRefundProjection;

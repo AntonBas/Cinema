@@ -10,6 +10,7 @@ import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 import ua.lviv.bas.cinema.common.DateTimeFormatterService;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
+import ua.lviv.bas.cinema.common.SeatInfoFormatter;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 import ua.lviv.bas.cinema.notification.EmailService;
 import ua.lviv.bas.cinema.payment.domain.Payment;
@@ -30,6 +31,7 @@ public class PaymentRefundService {
     private final EmailService emailService;
     private final DateTimeFormatterService dateTimeFormatter;
     private final NumberGeneratorService numberGenerator;
+    private final SeatInfoFormatter seatInfoFormatter;
 
     public void validateRefundEligibility(Payment payment, BigDecimal amount) {
         if (payment.getStatus() != PaymentStatus.SUCCESS && payment.getStatus() != PaymentStatus.PARTIALLY_REFUNDED) {
@@ -89,7 +91,7 @@ public class PaymentRefundService {
             var booking = payment.getBooking();
             var sessionTime = dateTimeFormatter.formatStandard(booking.getSession().getStartTime());
             var seat = ticket.getSeatReservation().getSeat();
-            var seatsInfo = String.format("Row %d, Seat %d", seat.getRow(), seat.getNumber());
+            var seatsInfo = seatInfoFormatter.format(seat.getRow(), seat.getNumber());
             var bookingNumber = numberGenerator.generateBookingNumber(booking);
 
             emailService.sendRefundEmail(booking.getUser().getEmail(), bookingNumber,

@@ -189,6 +189,21 @@ public class PaymentService {
         auditFailure(payment, oldStatus, callbackData);
     }
 
+    public void markProcessing(Payment payment) {
+        var oldStatus = payment.getStatus();
+
+        int updated = paymentRepository.updateStatusIfCurrentIn(payment.getId(), ACTIVE_STATUSES,
+                PaymentStatus.PROCESSING);
+        if (updated == 0) {
+            log.warn("Payment {} already processed (status={}), ignoring duplicate callback", payment.getId(),
+                    oldStatus);
+            return;
+        }
+
+        payment.setStatus(PaymentStatus.PROCESSING);
+        log.info("Payment {} marked PROCESSING", payment.getId());
+    }
+
     private void validateBookingForPayment(Booking booking) {
         if (booking.getStatus() != BookingStatus.PENDING) {
             throw PaymentProcessingException.bookingNotPending();

@@ -15,6 +15,7 @@ import ua.lviv.bas.cinema.user.domain.UserRole;
 import ua.lviv.bas.cinema.user.domain.VerificationStatus;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
+import ua.lviv.bas.cinema.audit.service.AuditService;
 
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -33,6 +34,9 @@ public class CustomOAuth2UserServiceTest {
 
     @Mock
     private BonusLedgerService bonusLedgerService;
+
+    @Mock
+    private AuditService auditService;
 
     @Mock
     private OAuth2User oAuth2User;
@@ -156,6 +160,29 @@ public class CustomOAuth2UserServiceTest {
         User savedUser = userCaptor.getValue();
 
         assertThat(savedUser.getFirstName()).isEqualTo("John");
+        assertThat(savedUser.getLastName()).isEmpty();
+
+        verify(bonusLedgerService).getOrCreateCard(savedUser);
+        verify(bonusLedgerService).awardWelcomeBonus(savedUser);
+    }
+
+    @Test
+    void loadUser_HandlesMissingName() throws Exception {
+        Map<String, Object> attributes = new java.util.HashMap<>();
+        attributes.put("email", EMAIL);
+        attributes.put("name", null);
+        when(oAuth2User.getAttributes()).thenReturn(attributes);
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Method processMethod = CustomOAuth2UserService.class.getDeclaredMethod("processOAuth2User", OAuth2User.class);
+        processMethod.setAccessible(true);
+        processMethod.invoke(customOAuth2UserService, oAuth2User);
+
+        verify(userRepository).save(userCaptor.capture());
+        User savedUser = userCaptor.getValue();
+
+        assertThat(savedUser.getFirstName()).isEmpty();
         assertThat(savedUser.getLastName()).isEmpty();
 
         verify(bonusLedgerService).getOrCreateCard(savedUser);

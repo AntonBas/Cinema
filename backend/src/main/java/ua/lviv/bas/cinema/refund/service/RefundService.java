@@ -17,6 +17,7 @@ import ua.lviv.bas.cinema.refund.mapper.RefundItemMapper;
 import ua.lviv.bas.cinema.refund.mapper.RefundMapper;
 import ua.lviv.bas.cinema.payment.service.PaymentRefundService;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
+import ua.lviv.bas.cinema.common.SeatInfoFormatter;
 import ua.lviv.bas.cinema.ticket.service.TicketService;
 
 import java.math.BigDecimal;
@@ -38,6 +39,7 @@ public class RefundService {
     private final RefundMapper refundMapper;
     private final RefundItemMapper refundItemMapper;
     private final NumberGeneratorService numberGenerator;
+    private final SeatInfoFormatter seatInfoFormatter;
 
     @Transactional(readOnly = true)
     public RefundPreviewResponse getPreview(RefundPreviewRequest request, Long userId) {
@@ -110,8 +112,7 @@ public class RefundService {
         var seatReservations = booking.getSeatReservations();
         if (!seatReservations.isEmpty()) {
             var bookedSeat = seatReservations.getFirst();
-            seatInfo = String.format("Row %d, Seat %d", bookedSeat.getSeat().getRow(),
-                    bookedSeat.getSeat().getNumber());
+            seatInfo = seatInfoFormatter.format(bookedSeat.getSeat().getRow(), bookedSeat.getSeat().getNumber());
         }
 
         return new RefundPreviewResponse(ticket.getId(), ticket.getUniqueCode(),
