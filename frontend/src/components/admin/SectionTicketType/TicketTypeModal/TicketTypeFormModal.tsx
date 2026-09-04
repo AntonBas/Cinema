@@ -24,6 +24,8 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
     const { create, update, loading } = useTicketType();
     const isEditing = !!ticketType;
 
+    const [ageError, setAgeError] = useState<string | undefined>(undefined);
+
     const [formData, setFormData] = useState<TicketTypeRequest>({
         displayName: '',
         category: 'STANDARD',
@@ -68,6 +70,16 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (
+            formData.minAge !== undefined &&
+            formData.maxAge !== undefined &&
+            formData.minAge > formData.maxAge
+        ) {
+            setAgeError('Min age must be less than or equal to max age');
+            return;
+        }
+        setAgeError(undefined);
 
         const result = isEditing && ticketType
             ? await update(ticketType.id, formData)
@@ -132,7 +144,10 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
                         <Input
                             type="number"
                             value={formData.minAge?.toString() || ''}
-                            onChange={(value) => setFormData(prev => ({ ...prev, minAge: value ? parseInt(value) : undefined }))}
+                            onChange={(value) => {
+                                setAgeError(undefined);
+                                setFormData(prev => ({ ...prev, minAge: value ? parseInt(value) : undefined }));
+                            }}
                             placeholder="Optional"
                             min="0"
                         />
@@ -143,9 +158,13 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
                         <Input
                             type="number"
                             value={formData.maxAge?.toString() || ''}
-                            onChange={(value) => setFormData(prev => ({ ...prev, maxAge: value ? parseInt(value) : undefined }))}
+                            onChange={(value) => {
+                                setAgeError(undefined);
+                                setFormData(prev => ({ ...prev, maxAge: value ? parseInt(value) : undefined }));
+                            }}
                             placeholder="Optional"
                             min="0"
+                            error={ageError}
                         />
                     </div>
                 </div>

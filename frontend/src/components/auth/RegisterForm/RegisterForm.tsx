@@ -3,6 +3,11 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuthActions } from "@/hooks/features/auth/useAuthActions";
 import { Input, Button, Modal } from "@/components/ui";
 import type { RegisterRequest } from "@/types/auth";
+import {
+  validateName,
+  validatePhoneNumber,
+  validatePassword,
+} from "@/utils/formValidation";
 import styles from "./RegisterForm.module.css";
 
 interface SuccessModalProps {
@@ -64,14 +69,17 @@ export const RegisterForm: React.FC = () => {
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
 
-    if (!formData.firstName) errors.firstName = "First name is required";
-    if (!formData.lastName) errors.lastName = "Last name is required";
+    const firstNameError = validateName(formData.firstName, "First name");
+    if (firstNameError) errors.firstName = firstNameError;
+    const lastNameError = validateName(formData.lastName, "Last name");
+    if (lastNameError) errors.lastName = lastNameError;
     if (!formData.email) errors.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
       errors.email = "Invalid email";
-    if (!formData.password) errors.password = "Password is required";
-    else if (formData.password.length < 8)
-      errors.password = "Password must be at least 8 characters";
+    const phoneError = validatePhoneNumber(formData.phoneNumber);
+    if (phoneError) errors.phoneNumber = phoneError;
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) errors.password = passwordError;
     if (formData.password !== formData.passwordConfirm)
       errors.passwordConfirm = "Passwords do not match";
 
@@ -161,6 +169,7 @@ export const RegisterForm: React.FC = () => {
               value={formData.phoneNumber}
               onChange={(v) => handleChange("phoneNumber", v)}
               disabled={loading}
+              error={formErrors.phoneNumber}
             />
           </div>
 

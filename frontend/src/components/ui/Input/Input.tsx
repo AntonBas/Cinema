@@ -16,6 +16,7 @@ export interface InputProps {
     onClick?: () => void;
     error?: string;
     required?: boolean;
+    minLength?: number;
     maxLength?: number;
     min?: string | number;
     max?: string | number;
@@ -40,6 +41,7 @@ export const Input: React.FC<InputProps> = ({
     onClick,
     error,
     required = false,
+    minLength,
     maxLength,
     min,
     max,
@@ -100,6 +102,7 @@ export const Input: React.FC<InputProps> = ({
                 placeholder={placeholder}
                 disabled={disabled}
                 required={required}
+                minLength={minLength}
                 maxLength={maxLength}
                 min={min}
                 max={max}

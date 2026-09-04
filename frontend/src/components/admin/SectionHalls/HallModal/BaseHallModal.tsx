@@ -63,6 +63,7 @@ export const BaseHallModal: React.FC<BaseHallModalProps> = ({
                         onChange={(value) => onFieldChange('name', value)}
                         placeholder="Enter hall name"
                         required={true}
+                        minLength={2}
                         maxLength={25}
                         disabled={loading}
                     />
@@ -158,7 +159,7 @@ export const BaseHallModal: React.FC<BaseHallModalProps> = ({
                         type="submit"
                         variant="primary"
                         disabled={
-                            !formData.name ||
+                            formData.name.trim().length < 2 ||
                             isSubmitDisabled ||
                             loading ||
                             (coupleRows.length > 0 && (formData.seatsPerRow || 0) % 2 !== 0)

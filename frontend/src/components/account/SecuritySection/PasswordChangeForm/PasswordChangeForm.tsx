@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useUser } from '@/hooks/features/user/useUser';
 import { Input, Button } from '@/components/ui';
 import type { UserPasswordUpdateRequest } from '@/types/user';
+import { validatePassword } from '@/utils/formValidation';
 import styles from './PasswordChangeForm.module.css';
 
 export const PasswordChangeForm: React.FC = () => {
@@ -27,10 +28,9 @@ export const PasswordChangeForm: React.FC = () => {
             errors.currentPassword = 'Current password is required';
         }
 
-        if (!formData.newPassword) {
-            errors.newPassword = 'New password is required';
-        } else if (formData.newPassword.length < 8) {
-            errors.newPassword = 'Password must be at least 8 characters';
+        const newPasswordError = validatePassword(formData.newPassword);
+        if (newPasswordError) {
+            errors.newPassword = newPasswordError;
         }
 
         if (!formData.confirmPassword) {

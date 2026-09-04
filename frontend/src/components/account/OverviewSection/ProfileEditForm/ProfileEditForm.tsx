@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Input, Button, Modal } from "@/components/ui";
 import type { UserProfileResponse, UserUpdateRequest } from "@/types/user";
+import { validateName, validatePhoneNumber } from "@/utils/formValidation";
 import styles from "./ProfileEditForm.module.css";
 
 interface ProfileEditFormProps {
@@ -46,10 +47,13 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
 
-    if (!formData.firstName?.trim())
-      errors.firstName = "First name is required";
-    if (!formData.lastName?.trim()) errors.lastName = "Last name is required";
+    const firstNameError = validateName(formData.firstName ?? "", "First name");
+    if (firstNameError) errors.firstName = firstNameError;
+    const lastNameError = validateName(formData.lastName ?? "", "Last name");
+    if (lastNameError) errors.lastName = lastNameError;
     if (!formData.dateOfBirth) errors.dateOfBirth = "Date of birth is required";
+    const phoneError = validatePhoneNumber(formData.phoneNumber ?? "");
+    if (phoneError) errors.phoneNumber = phoneError;
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -175,6 +179,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
             value={formData.phoneNumber || ""}
             onChange={(value) => handleChange("phoneNumber", value)}
             disabled={loading}
+            error={formErrors.phoneNumber}
             label="Phone Number"
           />
 

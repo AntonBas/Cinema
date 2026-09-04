@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { CheckCircle2 } from "lucide-react";
 import { useAuthActions } from "@/hooks/features/auth/useAuthActions";
 import { Input, Button, Modal } from "@/components/ui";
+import { validatePassword } from "@/utils/formValidation";
 import styles from "./ResetPasswordForm.module.css";
 
 interface SuccessModalProps {
@@ -56,10 +57,9 @@ export const ResetPasswordForm: React.FC = () => {
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
 
-    if (!formData.newPassword) {
-      errors.newPassword = "New password is required";
-    } else if (formData.newPassword.length < 8) {
-      errors.newPassword = "Password must be at least 8 characters";
+    const newPasswordError = validatePassword(formData.newPassword);
+    if (newPasswordError) {
+      errors.newPassword = newPasswordError;
     }
 
     if (!formData.confirmPassword) {
