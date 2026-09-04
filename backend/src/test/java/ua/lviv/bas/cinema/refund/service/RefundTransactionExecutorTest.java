@@ -22,7 +22,6 @@ import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.exception.domain.financial.refund.TicketNotRefundableException;
 import ua.lviv.bas.cinema.payment.service.PaymentRefundService;
 import ua.lviv.bas.cinema.refund.repository.RefundRepository;
-import ua.lviv.bas.cinema.ticket.repository.TicketRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 import ua.lviv.bas.cinema.ticket.service.TicketService;
@@ -41,8 +40,6 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class RefundTransactionExecutorTest {
 
-    @Mock
-    private TicketRepository ticketRepository;
     @Mock
     private RefundRepository refundRepository;
     @Mock
@@ -172,7 +169,7 @@ public class RefundTransactionExecutorTest {
     @Test
     void applySuccessShouldApplyAllDomainsAndMarkProcessed() {
         when(refundRepository.findById(REFUND_ID)).thenReturn(Optional.of(testRefund));
-        when(ticketRepository.findById(TICKET_ID)).thenReturn(Optional.of(testTicket));
+        when(ticketService.findById(TICKET_ID)).thenReturn(testTicket);
         when(refundRepository.save(any(Refund.class))).thenAnswer(i -> i.getArgument(0));
         when(refundRepository.sumAmountByPaymentIdAndStatus(testPayment.getId(), RefundStatus.PROCESSED))
                 .thenReturn(BigDecimal.ZERO);
@@ -180,6 +177,7 @@ public class RefundTransactionExecutorTest {
         var result = refundTransactionExecutor.applySuccess(REFUND_ID, TICKET_ID);
 
         assertThat(result.getStatus()).isEqualTo(RefundStatus.PROCESSED);
+        assertThat(testRefundItem.getStatus()).isEqualTo(RefundItemStatus.PROCESSED);
         verify(paymentRefundService).applyRefundSuccess(eq(testPayment), eq(REFUND_AMOUNT), eq(REFUND_AMOUNT),
                 any(String.class), eq(testTicket));
         verify(bonusLedgerService).refundPointsForTicket(USER_ID, BONUS_POINTS_TO_REFUND, "REFUND_TICKET_" + TICKET_ID);
@@ -202,7 +200,7 @@ public class RefundTransactionExecutorTest {
     void applySuccessWhenNoBonusPointsShouldSkipBonusRefund() {
         testRefund.setTotalBonusPointsToDeduct(0);
         when(refundRepository.findById(REFUND_ID)).thenReturn(Optional.of(testRefund));
-        when(ticketRepository.findById(TICKET_ID)).thenReturn(Optional.of(testTicket));
+        when(ticketService.findById(TICKET_ID)).thenReturn(testTicket);
         when(refundRepository.save(any(Refund.class))).thenAnswer(i -> i.getArgument(0));
         when(refundRepository.sumAmountByPaymentIdAndStatus(testPayment.getId(), RefundStatus.PROCESSED))
                 .thenReturn(BigDecimal.ZERO);
@@ -220,6 +218,7 @@ public class RefundTransactionExecutorTest {
         refundTransactionExecutor.markFailed(REFUND_ID, new RuntimeException("LiqPay rejected"));
 
         assertThat(testRefund.getStatus()).isEqualTo(RefundStatus.REJECTED);
+        assertThat(testRefundItem.getStatus()).isEqualTo(RefundItemStatus.REJECTED);
         verify(refundRepository).save(testRefund);
     }
 }

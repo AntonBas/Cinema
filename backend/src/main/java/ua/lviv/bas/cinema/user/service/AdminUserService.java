@@ -33,119 +33,119 @@ import ua.lviv.bas.cinema.audit.service.AuditService;
 @Transactional(readOnly = true)
 public class AdminUserService {
 
-	private final UserRepository userRepository;
-	private final UserMapper userMapper;
-	private final AuditService auditService;
+    private final UserRepository userRepository;
+    private final UserMapper userMapper;
+    private final AuditService auditService;
 
-	@CacheEvict(value = "users", allEntries = true)
-	@Transactional
-	public AdminUserListResponse updateRole(Long userId, UserRole newRole) {
-		var user = findById(userId);
-		var oldRole = user.getUserRole();
-		validateSelfOperation(user);
+    @CacheEvict(value = "users", allEntries = true)
+    @Transactional
+    public AdminUserListResponse updateRole(Long userId, UserRole newRole) {
+        var user = findById(userId);
+        var oldRole = user.getUserRole();
+        validateSelfOperation(user);
 
-		if (user.getUserRole() == UserRole.ROLE_ADMIN && newRole != UserRole.ROLE_ADMIN) {
-			validateLastAdmin();
-		}
+        if (user.getUserRole() == UserRole.ROLE_ADMIN && newRole != UserRole.ROLE_ADMIN) {
+            validateLastAdmin();
+        }
 
-		user.setUserRole(newRole);
-		var updated = userRepository.save(user);
-		log.info("User role updated to {} for user {}", newRole, userId);
-		auditRoleChange(userId, user.getEmail(), oldRole, newRole);
+        user.setUserRole(newRole);
+        var updated = userRepository.save(user);
+        log.info("User role updated to {} for user {}", newRole, userId);
+        auditRoleChange(userId, user.getEmail(), oldRole, newRole);
 
-		return userMapper.toAdminUserListResponse(updated);
-	}
+        return userMapper.toAdminUserListResponse(updated);
+    }
 
-	@CacheEvict(value = "users", allEntries = true)
-	@Transactional
-	public AdminUserListResponse updateStatus(Long userId, boolean enabled) {
-		var user = findById(userId);
-		var oldStatus = user.isEnabled();
+    @CacheEvict(value = "users", allEntries = true)
+    @Transactional
+    public AdminUserListResponse updateStatus(Long userId, boolean enabled) {
+        var user = findById(userId);
+        var oldStatus = user.isEnabled();
 
-		if (isCurrentUser(user) && !enabled) {
-			throw new SelfBlockException();
-		}
+        if (isCurrentUser(user) && !enabled) {
+            throw new SelfBlockException();
+        }
 
-		user.setEnabled(enabled);
-		var updated = userRepository.save(user);
-		log.info("User status updated: enabled = {} for user {}", enabled, userId);
-		auditStatusChange(userId, user.getEmail(), oldStatus, enabled);
+        user.setEnabled(enabled);
+        var updated = userRepository.save(user);
+        log.info("User status updated: enabled = {} for user {}", enabled, userId);
+        auditStatusChange(userId, user.getEmail(), oldStatus, enabled);
 
-		return userMapper.toAdminUserListResponse(updated);
-	}
+        return userMapper.toAdminUserListResponse(updated);
+    }
 
-	@CacheEvict(value = "users", allEntries = true)
-	@Transactional
-	public AdminUserListResponse updateVerification(Long userId, VerificationStatus status) {
-		var user = findById(userId);
-		var oldStatus = user.getVerificationStatus();
+    @CacheEvict(value = "users", allEntries = true)
+    @Transactional
+    public AdminUserListResponse updateVerification(Long userId, VerificationStatus status) {
+        var user = findById(userId);
+        var oldStatus = user.getVerificationStatus();
 
-		user.setVerificationStatus(status);
-		user.setVerifiedAt(status == VerificationStatus.VERIFIED ? LocalDateTime.now() : null);
+        user.setVerificationStatus(status);
+        user.setVerifiedAt(status == VerificationStatus.VERIFIED ? LocalDateTime.now() : null);
 
-		var updated = userRepository.save(user);
-		log.info("Verification status updated: {} for user {}", status, userId);
-		auditVerificationChange(userId, user.getEmail(), oldStatus, status);
+        var updated = userRepository.save(user);
+        log.info("Verification status updated: {} for user {}", status, userId);
+        auditVerificationChange(userId, user.getEmail(), oldStatus, status);
 
-		return userMapper.toAdminUserListResponse(updated);
-	}
+        return userMapper.toAdminUserListResponse(updated);
+    }
 
-	@Cacheable(value = "users", key = "'list-' + #query + '-' + #role + '-' + #verificationStatus + '-' + #enabled + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
-	public Page<AdminUserListResponse> getUsers(String query, UserRole role, VerificationStatus verificationStatus,
-			Boolean enabled, Pageable pageable) {
-		log.info("Getting users: query={}, role={}, verificationStatus={}, enabled={}, page={}, size={}", query, role,
-				verificationStatus, enabled, pageable.getPageNumber(), pageable.getPageSize());
+    @Cacheable(value = "users", key = "'list-' + #query + '-' + #role + '-' + #verificationStatus + '-' + #enabled + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+    public Page<AdminUserListResponse> getUsers(String query, UserRole role, VerificationStatus verificationStatus,
+            Boolean enabled, Pageable pageable) {
+        log.info("Getting users: query={}, role={}, verificationStatus={}, enabled={}, page={}, size={}", query, role,
+                verificationStatus, enabled, pageable.getPageNumber(), pageable.getPageSize());
 
-		String roleStr = role != null ? role.name() : null;
-		String verificationStatusStr = verificationStatus != null ? verificationStatus.name() : null;
+        String roleStr = role != null ? role.name() : null;
+        String verificationStatusStr = verificationStatus != null ? verificationStatus.name() : null;
 
-		Page<AdminUserProjection> page = userRepository.findProjectionsByFilters(query, roleStr, verificationStatusStr,
-				enabled, pageable);
+        Page<AdminUserProjection> page = userRepository.findProjectionsByFilters(query, roleStr, verificationStatusStr,
+                enabled, pageable);
 
-		return page.map(userMapper::toAdminUserListResponse);
-	}
+        return page.map(userMapper::toAdminUserListResponse);
+    }
 
-	public long getAdminCount() {
-		return userRepository.countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN);
-	}
+    public long getAdminCount() {
+        return userRepository.countByUserRoleAndEnabledTrue(UserRole.ROLE_ADMIN);
+    }
 
-	private User findById(Long id) {
-		return userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User", id));
-	}
+    private User findById(Long id) {
+        return userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User", id));
+    }
 
-	private boolean isCurrentUser(User user) {
-		String currentEmail = SecurityContextHolder.getContext().getAuthentication().getName();
-		return user.getEmail().equals(currentEmail);
-	}
+    private boolean isCurrentUser(User user) {
+        String currentEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        return user.getEmail().equals(currentEmail);
+    }
 
-	private void validateSelfOperation(User user) {
-		if (isCurrentUser(user)) {
-			throw new SelfRoleChangeException(user.getId());
-		}
-	}
+    private void validateSelfOperation(User user) {
+        if (isCurrentUser(user)) {
+            throw new SelfRoleChangeException(user.getId());
+        }
+    }
 
-	private void validateLastAdmin() {
-		if (getAdminCount() <= 1) {
-			throw new LastAdminException();
-		}
-	}
+    private void validateLastAdmin() {
+        if (getAdminCount() <= 1) {
+            throw new LastAdminException();
+        }
+    }
 
-	private void auditRoleChange(Long userId, String email, UserRole oldRole, UserRole newRole) {
-		var oldDetails = AuditDetails.of().put("role", oldRole).build();
-		var newDetails = AuditDetails.of().put("role", newRole).build();
-		auditService.logChange("User", userId, email, AuditAction.ROLE_CHANGED, oldDetails, newDetails);
-	}
+    private void auditRoleChange(Long userId, String email, UserRole oldRole, UserRole newRole) {
+        var oldDetails = AuditDetails.of().put("role", oldRole).build();
+        var newDetails = AuditDetails.of().put("role", newRole).build();
+        auditService.logChange("User", userId, email, AuditAction.ROLE_CHANGED, oldDetails, newDetails);
+    }
 
-	private void auditStatusChange(Long userId, String email, boolean oldStatus, boolean newStatus) {
-		var oldDetails = AuditDetails.of().put("enabled", oldStatus).build();
-		var newDetails = AuditDetails.of().put("enabled", newStatus).build();
-		auditService.logChange("User", userId, email, AuditAction.STATUS_CHANGED, oldDetails, newDetails);
-	}
+    private void auditStatusChange(Long userId, String email, boolean oldStatus, boolean newStatus) {
+        var oldDetails = AuditDetails.of().put("enabled", oldStatus).build();
+        var newDetails = AuditDetails.of().put("enabled", newStatus).build();
+        auditService.logChange("User", userId, email, AuditAction.STATUS_CHANGED, oldDetails, newDetails);
+    }
 
-	private void auditVerificationChange(Long userId, String email, VerificationStatus oldStatus,
-			VerificationStatus newStatus) {
-		var oldDetails = AuditDetails.of().put("verificationStatus", oldStatus).build();
-		var newDetails = AuditDetails.of().put("verificationStatus", newStatus).build();
-		auditService.logChange("User", userId, email, AuditAction.VERIFICATION_CHANGED, oldDetails, newDetails);
-	}
+    private void auditVerificationChange(Long userId, String email, VerificationStatus oldStatus,
+            VerificationStatus newStatus) {
+        var oldDetails = AuditDetails.of().put("verificationStatus", oldStatus).build();
+        var newDetails = AuditDetails.of().put("verificationStatus", newStatus).build();
+        auditService.logChange("User", userId, email, AuditAction.VERIFICATION_CHANGED, oldDetails, newDetails);
+    }
 }

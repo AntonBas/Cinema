@@ -18,49 +18,49 @@ import ua.lviv.bas.cinema.user.domain.User;
 @RequiredArgsConstructor
 public class PaymentStatusService {
 
-	private final PaymentRepository paymentRepository;
-	private final PaymentService paymentService;
-	private final PaymentGatewayService paymentGatewayService;
+    private final PaymentRepository paymentRepository;
+    private final PaymentService paymentService;
+    private final PaymentGatewayService paymentGatewayService;
 
-	@Transactional(readOnly = true)
-	public PaymentLiqPayDataResponse preparePaymentData(Long paymentId, User user) {
-		var payment = paymentRepository.findById(paymentId)
-				.orElseThrow(() -> new EntityNotFoundException("Payment", paymentId));
+    @Transactional(readOnly = true)
+    public PaymentLiqPayDataResponse preparePaymentData(Long paymentId, User user) {
+        var payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new EntityNotFoundException("Payment", paymentId));
 
-		if (!payment.getBooking().getUser().getId().equals(user.getId())) {
-			throw new PaymentAccessDeniedException(paymentId, user.getId());
-		}
+        if (!payment.getBooking().getUser().getId().equals(user.getId())) {
+            throw new PaymentAccessDeniedException(paymentId, user.getId());
+        }
 
-		return paymentGatewayService.prepareLiqPayPaymentData(payment);
-	}
+        return paymentGatewayService.prepareLiqPayPaymentData(payment);
+    }
 
-	@Transactional
-	public void handleCallback(String data, String signature) {
-		var decodedData = paymentGatewayService.processCallback(data, signature);
+    @Transactional
+    public void handleCallback(String data, String signature) {
+        var decodedData = paymentGatewayService.processCallback(data, signature);
 
-		var orderId = decodedData.get("order_id");
-		var status = decodedData.get("status");
+        var orderId = decodedData.get("order_id");
+        var status = decodedData.get("status");
 
-		var payment = paymentRepository.findByLiqpayOrderId(orderId)
-				.orElseThrow(() -> new EntityNotFoundException("Payment", orderId));
+        var payment = paymentRepository.findByLiqpayOrderId(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Payment", orderId));
 
-		switch (status.toLowerCase()) {
-		case "success":
-		case "sandbox":
-			paymentService.processSuccess(payment, decodedData);
-			break;
-		case "failure":
-		case "error":
-			paymentService.processFailure(payment, decodedData);
-			break;
-		case "wait_secure":
-			payment.setStatus(PaymentStatus.PROCESSING);
-			paymentRepository.save(payment);
-			break;
-		default:
-			log.warn("Unknown payment status: {} for payment {}", status, payment.getId());
-			payment.setStatus(PaymentStatus.FAILED);
-			paymentRepository.save(payment);
-		}
-	}
+        switch (status.toLowerCase()) {
+        case "success":
+        case "sandbox":
+            paymentService.processSuccess(payment, decodedData);
+            break;
+        case "failure":
+        case "error":
+            paymentService.processFailure(payment, decodedData);
+            break;
+        case "wait_secure":
+            payment.setStatus(PaymentStatus.PROCESSING);
+            paymentRepository.save(payment);
+            break;
+        default:
+            log.warn("Unknown payment status: {} for payment {}", status, payment.getId());
+            payment.setStatus(PaymentStatus.FAILED);
+            paymentRepository.save(payment);
+        }
+    }
 }

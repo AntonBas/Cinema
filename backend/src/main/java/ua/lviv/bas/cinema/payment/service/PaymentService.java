@@ -145,7 +145,6 @@ public class PaymentService {
             payment.setLiqpayPaymentId(callbackData.get("payment_id"));
             payment.setLiqpayTransactionId(callbackData.get("transaction_id"));
             payment.setLiqpaySenderCardMask(callbackData.get("sender_card_mask"));
-            paymentRepository.save(payment);
             return true;
         });
 

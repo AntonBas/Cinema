@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.cinema.domain.Session;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,4 +40,9 @@ public interface MovieRepository extends JpaRepository<Movie, Long>, JpaSpecific
             "WHERE s.movie.slug = :slug AND s.movie.status != 'ARCHIVED' " +
             "ORDER BY s.startTime ASC, h.name ASC")
     List<Session> findSessionsByMovieSlug(@Param("slug") String slug);
+
+    @Query("SELECT m FROM Movie m WHERE " +
+            "(m.status = 'UPCOMING' AND m.releaseDate <= :today) OR " +
+            "(m.status = 'CURRENT' AND m.endShowingDate < :today)")
+    List<Movie> findCandidatesForStatusUpdate(@Param("today") LocalDate today);
 }

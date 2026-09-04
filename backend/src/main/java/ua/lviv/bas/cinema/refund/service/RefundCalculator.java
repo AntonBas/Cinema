@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.refund.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.config.properties.RefundRules;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
@@ -10,6 +11,7 @@ import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 
 @Component
 @RequiredArgsConstructor
@@ -45,9 +47,20 @@ public class RefundCalculator {
         var totalSeats = booking.getSeatReservations().size();
         var cashAmount = calculateCashAmount(ticket);
         var refundAmount = calculateRefundAmount(cashAmount, percentage);
-        var bonusPointsUsed = totalSeats > 0 ? booking.getBonusPointsUsed() / totalSeats : 0;
+        var bonusPointsUsed = totalSeats > 0 ? distributeBonusPointsShare(ticket, booking, totalSeats) : 0;
         var bonusPointsToRefund = calculateBonusRefund(bonusPointsUsed, percentage);
         return new RefundCalculation(percentage, cashAmount, refundAmount, bonusPointsUsed, bonusPointsToRefund);
+    }
+
+    private int distributeBonusPointsShare(Ticket ticket, Booking booking, int totalSeats) {
+        var totalBonusPointsUsed = booking.getBonusPointsUsed();
+        var baseShare = totalBonusPointsUsed / totalSeats;
+        var remainder = totalBonusPointsUsed % totalSeats;
+        var orderedTickets = booking.getTickets().stream()
+                .sorted(Comparator.comparing(Ticket::getId))
+                .toList();
+        var ticketIndex = orderedTickets.indexOf(ticket);
+        return ticketIndex >= 0 && ticketIndex < remainder ? baseShare + 1 : baseShare;
     }
 
     public BigDecimal calculateCashAmount(Ticket ticket) {
@@ -71,7 +84,10 @@ public class RefundCalculator {
         if (bonusPointsUsed == null || bonusPointsUsed == 0) {
             return 0;
         }
-        return (int) (bonusPointsUsed * percentage.doubleValue() / 100);
+        return BigDecimal.valueOf(bonusPointsUsed)
+                .multiply(percentage)
+                .divide(BigDecimal.valueOf(100), 0, RoundingMode.DOWN)
+                .intValue();
     }
 
     public record RefundCalculation(BigDecimal percentage, BigDecimal cashAmount, BigDecimal refundAmount,

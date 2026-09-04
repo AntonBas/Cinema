@@ -10,6 +10,7 @@ import ua.lviv.bas.cinema.audit.domain.AuditAction;
 import ua.lviv.bas.cinema.audit.domain.AuditLog;
 import ua.lviv.bas.cinema.audit.domain.AuditLogDetail;
 import ua.lviv.bas.cinema.audit.repository.AuditLogRepository;
+import ua.lviv.bas.cinema.config.async.AsyncConfig;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -23,7 +24,7 @@ class AuditLogWriter {
 
     private final AuditLogRepository auditLogRepository;
 
-    @Async
+    @Async(AsyncConfig.AUDIT_LOG_EXECUTOR)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void write(String entityType, Long entityId, String targetInfo, AuditAction action, String changedBy,
                       LocalDateTime changedAt, Map<String, Object> oldValues, Map<String, Object> newValues) {

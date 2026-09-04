@@ -246,7 +246,6 @@ public class PaymentServiceTest {
 
         assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
         assertThat(testPayment.getLiqpayPaymentId()).isEqualTo("PAY123");
-        verify(paymentRepository).save(testPayment);
         verify(auditService).logChange(anyString(), anyLong(), anyString(), any(), any(), any());
     }
 

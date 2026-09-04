@@ -31,7 +31,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import ua.lviv.bas.cinema.audit.domain.AuditableEntity;
-import ua.lviv.bas.cinema.bonus.domain.BonusTransaction;
 import ua.lviv.bas.cinema.refund.domain.status.RefundStatus;
 import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
@@ -43,7 +42,7 @@ import ua.lviv.bas.cinema.user.domain.User;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "payment", "items", "bonusTransactions" })
+@ToString(exclude = { "payment", "items" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @Table(name = "refunds", indexes = { @Index(name = "idx_refund_payment", columnList = "payment_id"),
         @Index(name = "idx_refund_status", columnList = "status"),
@@ -74,11 +73,6 @@ public class Refund extends AuditableEntity {
     @BatchSize(size = 20)
     @Builder.Default
     private List<RefundItem> items = new ArrayList<>();
-
-    @OneToMany(mappedBy = "refund", fetch = FetchType.LAZY, orphanRemoval = true)
-    @BatchSize(size = 20)
-    @Builder.Default
-    private List<BonusTransaction> bonusTransactions = new ArrayList<>();
 
     @NotNull
     @Positive

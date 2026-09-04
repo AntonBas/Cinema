@@ -2,12 +2,7 @@ package ua.lviv.bas.cinema.payment.domain;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
-import org.hibernate.annotations.BatchSize;
-
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -18,7 +13,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
@@ -33,7 +27,6 @@ import lombok.Setter;
 import lombok.ToString;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.audit.domain.AuditableEntity;
-import ua.lviv.bas.cinema.refund.domain.Refund;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 
 @Entity
@@ -42,7 +35,7 @@ import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = { "booking", "refunds" })
+@ToString(exclude = { "booking" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @Table(name = "payments", indexes = { @Index(name = "idx_payment_booking", columnList = "booking_id"),
         @Index(name = "idx_payment_status", columnList = "status"),
@@ -84,11 +77,6 @@ public class Payment extends AuditableEntity {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "booking_id", nullable = false)
     private Booking booking;
-
-    @OneToMany(mappedBy = "payment", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @BatchSize(size = 20)
-    @Builder.Default
-    private List<Refund> refunds = new ArrayList<>();
 
     @Column(name = "liqpay_error_code", length = 50)
     private String liqpayErrorCode;

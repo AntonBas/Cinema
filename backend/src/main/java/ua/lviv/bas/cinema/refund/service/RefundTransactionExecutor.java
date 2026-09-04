@@ -14,10 +14,8 @@ import ua.lviv.bas.cinema.refund.domain.status.RefundStatus;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.refund.TicketNotRefundableException;
-import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;
 import ua.lviv.bas.cinema.payment.service.PaymentRefundService;
 import ua.lviv.bas.cinema.refund.repository.RefundRepository;
-import ua.lviv.bas.cinema.ticket.repository.TicketRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 import ua.lviv.bas.cinema.ticket.service.TicketService;
@@ -32,7 +30,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class RefundTransactionExecutor {
 
-    private final TicketRepository ticketRepository;
     private final RefundRepository refundRepository;
     private final PaymentRefundService paymentRefundService;
     private final BonusLedgerService bonusLedgerService;
@@ -101,8 +98,7 @@ public class RefundTransactionExecutor {
             return refund;
         }
 
-        var ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new TicketNotFoundException("Ticket not found. Ticket ID: " + ticketId));
+        var ticket = ticketService.findById(ticketId);
 
         var refundItem = refund.getItems().getFirst();
         var amount = refund.getTotalAmount();
@@ -123,6 +119,7 @@ public class RefundTransactionExecutor {
 
         ticketService.markAsRefunded(ticket, refund);
 
+        refundItem.setStatus(RefundItemStatus.PROCESSED);
         refund.setStatus(RefundStatus.PROCESSED);
         refundRepository.save(refund);
 
@@ -134,6 +131,7 @@ public class RefundTransactionExecutor {
     public void markFailed(Long refundId, Exception cause) {
         var refund = refundRepository.findById(refundId)
                 .orElseThrow(() -> new EntityNotFoundException("Refund", refundId));
+        refund.getItems().forEach(item -> item.setStatus(RefundItemStatus.REJECTED));
         refund.setStatus(RefundStatus.REJECTED);
         refundRepository.save(refund);
         auditRejected(refund, cause);

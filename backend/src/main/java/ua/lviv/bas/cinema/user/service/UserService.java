@@ -36,166 +36,166 @@ import ua.lviv.bas.cinema.audit.service.AuditService;
 @Transactional(readOnly = true)
 public class UserService {
 
-	private final UserRepository userRepository;
-	private final PasswordEncoder passwordEncoder;
-	private final UserMapper userMapper;
-	private final EmailTokenGeneratorService emailTokenGeneratorService;
-	private final AuditService auditService;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
+    private final EmailTokenGeneratorService emailTokenGeneratorService;
+    private final AuditService auditService;
 
-	@CacheEvict(value = "users", allEntries = true)
-	@Transactional
-	public UserResponse register(UserRegistrationRequest request) {
-		validatePasswordMatch(request.password(), request.passwordConfirm());
-		validateEmailNotExists(request.email());
+    @CacheEvict(value = "users", allEntries = true)
+    @Transactional
+    public UserResponse register(UserRegistrationRequest request) {
+        validatePasswordMatch(request.password(), request.passwordConfirm());
+        validateEmailNotExists(request.email());
 
-		var user = userMapper.toUser(request);
-		user.setPassword(passwordEncoder.encode(request.password()));
+        var user = userMapper.toUser(request);
+        user.setPassword(passwordEncoder.encode(request.password()));
 
-		var saved = userRepository.save(user);
-		log.info("User registered: {}", request.email());
-		emailTokenGeneratorService.generateVerificationToken(saved);
-		auditRegister(saved);
+        var saved = userRepository.save(user);
+        log.info("User registered: {}", request.email());
+        emailTokenGeneratorService.generateVerificationToken(saved);
+        auditRegister(saved);
 
-		return userMapper.toUserResponse(saved);
-	}
+        return userMapper.toUserResponse(saved);
+    }
 
-	@CacheEvict(value = "users", allEntries = true)
-	@Transactional
-	public UserProfileResponse update(Long userId, UserUpdateRequest request) {
-		var user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
-		var oldDetails = captureDetails(user);
+    @CacheEvict(value = "users", allEntries = true)
+    @Transactional
+    public UserProfileResponse update(Long userId, UserUpdateRequest request) {
+        var user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
+        var oldDetails = captureDetails(user);
 
-		userMapper.updateUserFromRequest(request, user);
+        userMapper.updateUserFromRequest(request, user);
 
-		if (isDateOfBirthChanged(request.dateOfBirth(), user.getDateOfBirth())) {
-			revokeVerificationIfNeeded(user);
-		}
+        if (isDateOfBirthChanged(request.dateOfBirth(), user.getDateOfBirth())) {
+            revokeVerificationIfNeeded(user);
+        }
 
-		var updated = userRepository.save(user);
-		log.info("User updated: {}", userId);
-		auditUpdate(userId, updated.getEmail(), oldDetails, updated);
+        var updated = userRepository.save(user);
+        log.info("User updated: {}", userId);
+        auditUpdate(userId, updated.getEmail(), oldDetails, updated);
 
-		return userMapper.toUserProfileResponse(updated);
-	}
+        return userMapper.toUserProfileResponse(updated);
+    }
 
-	@CacheEvict(value = "users", allEntries = true)
-	@Transactional
-	public void requestEmailChange(Long userId, String currentPassword, String newEmail) {
-		var user = getUser(userId);
-		var oldEmail = user.getEmail();
+    @CacheEvict(value = "users", allEntries = true)
+    @Transactional
+    public void requestEmailChange(Long userId, String currentPassword, String newEmail) {
+        var user = getUser(userId);
+        var oldEmail = user.getEmail();
 
-		validateCurrentPassword(user, currentPassword);
-		validateNewEmail(user.getEmail(), newEmail);
-		validateEmailNotExists(newEmail);
+        validateCurrentPassword(user, currentPassword);
+        validateNewEmail(user.getEmail(), newEmail);
+        validateEmailNotExists(newEmail);
 
-		emailTokenGeneratorService.generateEmailChangeToken(user, newEmail);
-		log.info("Email change requested for user {} to {}", userId, newEmail);
-		auditEmailChangeRequested(userId, oldEmail, newEmail);
-	}
+        emailTokenGeneratorService.generateEmailChangeToken(user, newEmail);
+        log.info("Email change requested for user {} to {}", userId, newEmail);
+        auditEmailChangeRequested(userId, oldEmail, newEmail);
+    }
 
-	@CacheEvict(value = "users", allEntries = true)
-	@Transactional
-	public void updatePassword(Long userId, UserPasswordUpdateRequest request) {
-		var user = getUser(userId);
+    @CacheEvict(value = "users", allEntries = true)
+    @Transactional
+    public void updatePassword(Long userId, UserPasswordUpdateRequest request) {
+        var user = getUser(userId);
 
-		validatePasswordMatch(request.newPassword(), request.passwordConfirm());
-		validateCurrentPassword(user, request.currentPassword());
-		validateNewPasswordDifferent(user, request.newPassword());
+        validatePasswordMatch(request.newPassword(), request.passwordConfirm());
+        validateCurrentPassword(user, request.currentPassword());
+        validateNewPasswordDifferent(user, request.newPassword());
 
-		user.setPassword(passwordEncoder.encode(request.newPassword()));
-		userRepository.save(user);
-		log.info("Password updated for user {}", userId);
-		auditPasswordChanged(userId, user.getEmail());
-	}
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+        log.info("Password updated for user {}", userId);
+        auditPasswordChanged(userId, user.getEmail());
+    }
 
-	public User getUser(Long id) {
-		return userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User", id));
-	}
+    public User getUser(Long id) {
+        return userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("User", id));
+    }
 
-	@Cacheable(value = "users", key = "#id")
-	public UserResponse getUserResponse(Long id) {
-		return userMapper.toUserResponse(getUser(id));
-	}
+    @Cacheable(value = "users", key = "#id")
+    public UserResponse getUserResponse(Long id) {
+        return userMapper.toUserResponse(getUser(id));
+    }
 
-	public User getUser(String email) {
-		return userRepository.findByEmail(email).orElseThrow(() -> new EntityNotFoundException("User", email));
-	}
+    public User getUser(String email) {
+        return userRepository.findByEmail(email).orElseThrow(() -> new EntityNotFoundException("User", email));
+    }
 
-	public boolean emailExists(String email) {
-		return userRepository.existsByEmail(email);
-	}
+    public boolean emailExists(String email) {
+        return userRepository.existsByEmail(email);
+    }
 
-	public UserProfileResponse getProfile(Long id) {
-		return userMapper.toUserProfileResponse(getUser(id));
-	}
+    public UserProfileResponse getProfile(Long id) {
+        return userMapper.toUserProfileResponse(getUser(id));
+    }
 
-	private void validatePasswordMatch(String password, String confirm) {
-		if (!password.equals(confirm)) {
-			throw new PasswordMismatchException();
-		}
-	}
+    private void validatePasswordMatch(String password, String confirm) {
+        if (!password.equals(confirm)) {
+            throw new PasswordMismatchException();
+        }
+    }
 
-	private void validateEmailNotExists(String email) {
-		if (userRepository.existsByEmail(email)) {
-			throw new EmailAlreadyExistsException(email);
-		}
-	}
+    private void validateEmailNotExists(String email) {
+        if (userRepository.existsByEmail(email)) {
+            throw new EmailAlreadyExistsException(email);
+        }
+    }
 
-	private void validateCurrentPassword(User user, String currentPassword) {
-		if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
-			throw new InvalidCurrentPasswordException();
-		}
-	}
+    private void validateCurrentPassword(User user, String currentPassword) {
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new InvalidCurrentPasswordException();
+        }
+    }
 
-	private void validateNewPasswordDifferent(User user, String newPassword) {
-		if (passwordEncoder.matches(newPassword, user.getPassword())) {
-			throw new SamePasswordException();
-		}
-	}
+    private void validateNewPasswordDifferent(User user, String newPassword) {
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
+            throw new SamePasswordException();
+        }
+    }
 
-	private void validateNewEmail(String currentEmail, String newEmail) {
-		if (currentEmail.equalsIgnoreCase(newEmail)) {
-			throw new SameEmailException();
-		}
-	}
+    private void validateNewEmail(String currentEmail, String newEmail) {
+        if (currentEmail.equalsIgnoreCase(newEmail)) {
+            throw new SameEmailException();
+        }
+    }
 
-	private boolean isDateOfBirthChanged(LocalDate newDate, LocalDate oldDate) {
-		return newDate != null && !newDate.equals(oldDate);
-	}
+    private boolean isDateOfBirthChanged(LocalDate newDate, LocalDate oldDate) {
+        return newDate != null && !newDate.equals(oldDate);
+    }
 
-	private void revokeVerificationIfNeeded(User user) {
-		if (user.getVerificationStatus() == VerificationStatus.VERIFIED) {
-			user.setVerificationStatus(VerificationStatus.NOT_VERIFIED);
-			user.setVerifiedAt(null);
-			log.info("Birth date verification revoked for user {}", user.getId());
-		}
-	}
+    private void revokeVerificationIfNeeded(User user) {
+        if (user.getVerificationStatus() == VerificationStatus.VERIFIED) {
+            user.setVerificationStatus(VerificationStatus.NOT_VERIFIED);
+            user.setVerifiedAt(null);
+            log.info("Birth date verification revoked for user {}", user.getId());
+        }
+    }
 
-	private Map<String, Object> captureDetails(User user) {
-		return AuditDetails.of().put("firstName", user.getFirstName()).put("lastName", user.getLastName())
-				.put("city", user.getCity()).put("phoneNumber", user.getPhoneNumber())
-				.put("dateOfBirth", user.getDateOfBirth()).build();
-	}
+    private Map<String, Object> captureDetails(User user) {
+        return AuditDetails.of().put("firstName", user.getFirstName()).put("lastName", user.getLastName())
+                .put("city", user.getCity()).put("phoneNumber", user.getPhoneNumber())
+                .put("dateOfBirth", user.getDateOfBirth()).build();
+    }
 
-	private void auditRegister(User user) {
-		var details = AuditDetails.of().put("email", user.getEmail()).put("firstName", user.getFirstName())
-				.put("lastName", user.getLastName()).build();
-		auditService.logChange("User", user.getId(), user.getEmail(), AuditAction.REGISTER, null, details);
-	}
+    private void auditRegister(User user) {
+        var details = AuditDetails.of().put("email", user.getEmail()).put("firstName", user.getFirstName())
+                .put("lastName", user.getLastName()).build();
+        auditService.logChange("User", user.getId(), user.getEmail(), AuditAction.REGISTER, null, details);
+    }
 
-	private void auditUpdate(Long userId, String email, Map<String, Object> oldDetails, User updated) {
-		Map<String, Object> newDetails = captureDetails(updated);
-		auditService.logChange("User", userId, email, AuditAction.UPDATED, oldDetails, newDetails);
-	}
+    private void auditUpdate(Long userId, String email, Map<String, Object> oldDetails, User updated) {
+        Map<String, Object> newDetails = captureDetails(updated);
+        auditService.logChange("User", userId, email, AuditAction.UPDATED, oldDetails, newDetails);
+    }
 
-	private void auditEmailChangeRequested(Long userId, String oldEmail, String newEmail) {
-		var oldDetails = AuditDetails.of().put("email", oldEmail).build();
-		var newDetails = AuditDetails.of().put("email", newEmail).build();
-		auditService.logChange("User", userId, oldEmail, AuditAction.EMAIL_CHANGE_REQUESTED, oldDetails, newDetails);
-	}
+    private void auditEmailChangeRequested(Long userId, String oldEmail, String newEmail) {
+        var oldDetails = AuditDetails.of().put("email", oldEmail).build();
+        var newDetails = AuditDetails.of().put("email", newEmail).build();
+        auditService.logChange("User", userId, oldEmail, AuditAction.EMAIL_CHANGE_REQUESTED, oldDetails, newDetails);
+    }
 
-	private void auditPasswordChanged(Long userId, String email) {
-		var oldDetails = AuditDetails.of().put("passwordChanged", true).build();
-		auditService.logChange("User", userId, email, AuditAction.PASSWORD_CHANGED, oldDetails, null);
-	}
+    private void auditPasswordChanged(Long userId, String email) {
+        var oldDetails = AuditDetails.of().put("passwordChanged", true).build();
+        auditService.logChange("User", userId, email, AuditAction.PASSWORD_CHANGED, oldDetails, null);
+    }
 }

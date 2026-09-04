@@ -21,73 +21,73 @@ import ua.lviv.bas.cinema.user.repository.UserRepository;
 @RequiredArgsConstructor
 public class EmailTokenGeneratorService {
 
-	private final EmailTokenRepository tokenRepository;
-	private final UserRepository userRepository;
-	private final EmailService emailService;
+    private final EmailTokenRepository tokenRepository;
+    private final UserRepository userRepository;
+    private final EmailService emailService;
 
-	@Transactional
-	public void generateVerificationToken(User user) {
-		generateAndSendTokenForUser(user, TokenType.VERIFICATION, null);
-	}
+    @Transactional
+    public void generateVerificationToken(User user) {
+        generateAndSendTokenForUser(user, TokenType.VERIFICATION, null);
+    }
 
-	@Transactional
-	public void generatePasswordResetToken(String email) {
-		User user = userRepository.findByEmail(email)
-				.orElseThrow(() -> new EntityNotFoundException("User", email));
-		generateAndSendTokenForUser(user, TokenType.PASSWORD_RESET, null);
-	}
+    @Transactional
+    public void generatePasswordResetToken(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User", email));
+        generateAndSendTokenForUser(user, TokenType.PASSWORD_RESET, null);
+    }
 
-	@Transactional
-	public void generateEmailChangeToken(User user, String newEmail) {
-		if (newEmail == null || newEmail.trim().isEmpty()) {
-			throw new IllegalArgumentException("New email cannot be null or empty");
-		}
-		generateAndSendTokenForUser(user, TokenType.EMAIL_CHANGE, newEmail);
-	}
+    @Transactional
+    public void generateEmailChangeToken(User user, String newEmail) {
+        if (newEmail == null || newEmail.trim().isEmpty()) {
+            throw new IllegalArgumentException("New email cannot be null or empty");
+        }
+        generateAndSendTokenForUser(user, TokenType.EMAIL_CHANGE, newEmail);
+    }
 
-	private void generateAndSendTokenForUser(User user, TokenType tokenType, String newEmail) {
-		log.info("Generating {} token for user: {}", tokenType, user.getEmail());
+    private void generateAndSendTokenForUser(User user, TokenType tokenType, String newEmail) {
+        log.info("Generating {} token for user: {}", tokenType, user.getEmail());
 
-		tokenRepository.deleteByUserAndType(user, tokenType);
+        tokenRepository.deleteByUserAndType(user, tokenType);
 
-		String token = UUID.randomUUID().toString();
-		EmailToken emailToken = buildEmailToken(token, user, tokenType, newEmail);
+        String token = UUID.randomUUID().toString();
+        EmailToken emailToken = buildEmailToken(token, user, tokenType, newEmail);
 
-		tokenRepository.save(emailToken);
-		log.info("Generated new {} token for user: {}", tokenType, user.getEmail());
+        tokenRepository.save(emailToken);
+        log.info("Generated new {} token for user: {}", tokenType, user.getEmail());
 
-		sendEmail(user.getEmail(), token, tokenType, newEmail);
-	}
+        sendEmail(user.getEmail(), token, tokenType, newEmail);
+    }
 
-	private EmailToken buildEmailToken(String token, User user, TokenType tokenType, String newEmail) {
-		EmailToken.EmailTokenBuilder builder = EmailToken.builder().token(token).user(user).type(tokenType)
-				.createdAt(LocalDateTime.now());
+    private EmailToken buildEmailToken(String token, User user, TokenType tokenType, String newEmail) {
+        EmailToken.EmailTokenBuilder builder = EmailToken.builder().token(token).user(user).type(tokenType)
+                .createdAt(LocalDateTime.now());
 
-		LocalDateTime expiresAt = switch (tokenType) {
-		case VERIFICATION, PASSWORD_RESET -> LocalDateTime.now().plusMinutes(10);
-		case EMAIL_CHANGE -> LocalDateTime.now().plusHours(24);
-		};
-		builder.expiresAt(expiresAt);
+        LocalDateTime expiresAt = switch (tokenType) {
+        case VERIFICATION, PASSWORD_RESET -> LocalDateTime.now().plusMinutes(10);
+        case EMAIL_CHANGE -> LocalDateTime.now().plusHours(24);
+        };
+        builder.expiresAt(expiresAt);
 
-		if (tokenType == TokenType.EMAIL_CHANGE) {
-			builder.newEmail(newEmail);
-		}
+        if (tokenType == TokenType.EMAIL_CHANGE) {
+            builder.newEmail(newEmail);
+        }
 
-		return builder.build();
-	}
+        return builder.build();
+    }
 
-	private void sendEmail(String email, String token, TokenType tokenType, String newEmail) {
-		switch (tokenType) {
-		case VERIFICATION -> emailService.sendVerificationEmail(email, token);
-		case PASSWORD_RESET -> emailService.sendPasswordResetEmail(email, token);
-		case EMAIL_CHANGE -> {
-			if (newEmail != null) {
-				emailService.sendEmailChangeConfirmation(newEmail, token);
-			} else {
-				log.error("New email is null for EMAIL_CHANGE token type");
-			}
-		}
-		default -> log.warn("Unknown token type: {}", tokenType);
-		}
-	}
+    private void sendEmail(String email, String token, TokenType tokenType, String newEmail) {
+        switch (tokenType) {
+        case VERIFICATION -> emailService.sendVerificationEmail(email, token);
+        case PASSWORD_RESET -> emailService.sendPasswordResetEmail(email, token);
+        case EMAIL_CHANGE -> {
+            if (newEmail != null) {
+                emailService.sendEmailChangeConfirmation(newEmail, token);
+            } else {
+                log.error("New email is null for EMAIL_CHANGE token type");
+            }
+        }
+        default -> log.warn("Unknown token type: {}", tokenType);
+        }
+    }
 }

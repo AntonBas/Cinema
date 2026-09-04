@@ -6,17 +6,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
-import ua.lviv.bas.cinema.payment.domain.Payment;
-import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
-import ua.lviv.bas.cinema.ticket.domain.Ticket;
-import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
-import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
-import ua.lviv.bas.cinema.common.DateTimeFormatterService;
-import ua.lviv.bas.cinema.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
-import ua.lviv.bas.cinema.payment.service.PaymentGatewayService;
+import ua.lviv.bas.cinema.common.DateTimeFormatterService;
+import ua.lviv.bas.cinema.common.NumberGeneratorService;
+import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 import ua.lviv.bas.cinema.notification.EmailService;
+import ua.lviv.bas.cinema.payment.domain.Payment;
+import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
+import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
+import ua.lviv.bas.cinema.ticket.domain.Ticket;
 
 import java.math.BigDecimal;
 

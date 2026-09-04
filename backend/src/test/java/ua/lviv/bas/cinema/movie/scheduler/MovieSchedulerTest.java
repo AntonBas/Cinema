@@ -38,7 +38,7 @@ class MovieSchedulerTest {
     void updateMovieStatusesWhenNoStatusChangedShouldNotSave() {
         var movie = Movie.builder().id(1L).title("Test Movie").status(MovieStatus.CURRENT).build();
 
-        when(movieRepository.findAll()).thenReturn(List.of(movie));
+        when(movieRepository.findCandidatesForStatusUpdate(any(LocalDate.class))).thenReturn(List.of(movie));
         when(movieStatusCalculator.calculate(eq(movie), any(LocalDate.class))).thenReturn(MovieStatus.CURRENT);
 
         movieScheduler.updateMovieStatuses();
@@ -50,7 +50,7 @@ class MovieSchedulerTest {
     void updateMovieStatusesShouldUpdateChangedStatusesAndSave() {
         var movie = Movie.builder().id(1L).title("Test Movie").status(MovieStatus.UPCOMING).build();
 
-        when(movieRepository.findAll()).thenReturn(List.of(movie));
+        when(movieRepository.findCandidatesForStatusUpdate(any(LocalDate.class))).thenReturn(List.of(movie));
         when(movieStatusCalculator.calculate(eq(movie), any(LocalDate.class))).thenReturn(MovieStatus.CURRENT);
         when(movieRepository.findById(1L)).thenReturn(Optional.of(movie));
 
@@ -65,7 +65,8 @@ class MovieSchedulerTest {
         var conflictingMovie = Movie.builder().id(1L).title("Conflicting Movie").status(MovieStatus.UPCOMING).build();
         var okMovie = Movie.builder().id(2L).title("OK Movie").status(MovieStatus.UPCOMING).build();
 
-        when(movieRepository.findAll()).thenReturn(List.of(conflictingMovie, okMovie));
+        when(movieRepository.findCandidatesForStatusUpdate(any(LocalDate.class)))
+                .thenReturn(List.of(conflictingMovie, okMovie));
         when(movieStatusCalculator.calculate(any(Movie.class), any(LocalDate.class))).thenReturn(MovieStatus.CURRENT);
         when(movieRepository.findById(1L)).thenReturn(Optional.of(conflictingMovie));
         when(movieRepository.findById(2L)).thenReturn(Optional.of(okMovie));

@@ -171,7 +171,7 @@ public class MovieService {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @CacheEvict(value = {"singleMovies", "movieDetails", "movieLists"}, allEntries = true)
+    @CacheEvict(value = {"singleMovies", "movieLists"}, allEntries = true)
     @Transactional
     public MovieAdminResponse updateMovie(Long id, MovieUpdateRequest request) {
         log.info("Updating movie with id: {}", id);
@@ -201,7 +201,7 @@ public class MovieService {
         return movieMapper.toMovieAdminResponse(updated);
     }
 
-    @CacheEvict(value = {"singleMovies", "movieDetails", "movieLists"}, allEntries = true)
+    @CacheEvict(value = {"singleMovies", "movieLists"}, allEntries = true)
     @Transactional
     public void deleteMovie(Long id) {
         log.info("Deleting movie with id: {}", id);

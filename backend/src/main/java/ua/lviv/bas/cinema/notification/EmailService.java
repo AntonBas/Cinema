@@ -8,6 +8,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import ua.lviv.bas.cinema.config.async.AsyncConfig;
 import ua.lviv.bas.cinema.exception.infrastructure.ExternalServiceException;
 
 import java.math.BigDecimal;
@@ -31,7 +32,7 @@ public class EmailService {
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
-    @Async
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
     public void sendVerificationEmail(String toEmail, String token) {
         sendCriticalEmail(toEmail, "Confirm Your Email Address", () -> {
             String link = frontendUrl + "/verify-email/" + token;
@@ -51,7 +52,7 @@ public class EmailService {
         });
     }
 
-    @Async
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
     public void sendPasswordResetEmail(String toEmail, String token) {
         sendCriticalEmail(toEmail, "Password Reset Request", () -> {
             String link = frontendUrl + "/reset-password/" + token;
@@ -71,7 +72,7 @@ public class EmailService {
         });
     }
 
-    @Async
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
     public void sendTicketsEmail(String toEmail, String bookingNumber, String movieTitle, String sessionTime,
                                  String hallName, BigDecimal amountPaid, String paymentMethod, String seatInfo) {
         sendNonCriticalEmail(toEmail, "Your Tickets: " + movieTitle, () -> String.format("""
@@ -102,7 +103,7 @@ public class EmailService {
                 hallName, seatInfo, amountPaid, paymentMethod, frontendUrl, companyName));
     }
 
-    @Async
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
     public void sendPaymentFailedEmail(String toEmail, String bookingNumber, String movieTitle, String sessionTime,
                                        String errorMessage) {
         sendNonCriticalEmail(toEmail, "Payment Failed: " + movieTitle, () -> String.format("""
@@ -119,7 +120,7 @@ public class EmailService {
                 %s""", bookingNumber, movieTitle, sessionTime, errorMessage, getCompanySignature()));
     }
 
-    @Async
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
     public void sendRefundEmail(String toEmail, String bookingNumber, String movieTitle, String sessionTime,
                                 String hallName, BigDecimal refundAmount, String seatInfo, String refundReason) {
         sendNonCriticalEmail(toEmail, "Refund Confirmation: " + movieTitle,
@@ -153,7 +154,7 @@ public class EmailService {
                         LocalDateTime.now().format(DATE_TIME_FORMATTER), companyName));
     }
 
-    @Async
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
     public void sendEmailChangeConfirmation(String toEmail, String token) {
         sendCriticalEmail(toEmail, "Confirm Your Email Change", () -> {
             String link = frontendUrl + "/confirm-email-change/" + token;
@@ -173,7 +174,7 @@ public class EmailService {
         });
     }
 
-    @Async
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
     public void sendEmailChangeNotification(String oldEmail, String newEmail) {
         sendNonCriticalEmail(oldEmail, "Email Address Changed", () -> String.format("""
                 Email Address Changed

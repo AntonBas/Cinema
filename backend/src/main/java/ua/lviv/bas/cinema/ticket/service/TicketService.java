@@ -80,6 +80,11 @@ public class TicketService {
                 () -> new TicketNotFoundException("Ticket not found or not active. Ticket ID: " + ticketId));
     }
 
+    public Ticket findById(Long ticketId) {
+        return ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new TicketNotFoundException("Ticket not found. Ticket ID: " + ticketId));
+    }
+
     public TicketCashierResponse getTicketForCashier(String uniqueCode) {
         var ticket = ticketRepository.findByUniqueCode(uniqueCode).orElseThrow(() -> new TicketNotFoundException("Ticket not found with code: " + uniqueCode));
         return ticketMapper.toTicketCashierResponse(ticket);

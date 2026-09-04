@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -56,7 +57,7 @@ public class PaymentGatewayService {
             var params = buildPaymentParams(payment);
             var data = LiqPayDecoder.encodeToBase64(params);
             var signature = LiqPayDecoder.generateSignature(data, liqpayPrivateKey);
-            var paymentUrl = createPayment(payment);
+            var paymentUrl = buildCheckoutUrl(data, signature);
 
             return new PaymentLiqPayDataResponse(data, signature, paymentUrl, payment.getLiqpayOrderId());
         } catch (Exception e) {
@@ -64,12 +65,8 @@ public class PaymentGatewayService {
         }
     }
 
-    private String createPayment(Payment payment) {
+    private String buildCheckoutUrl(String data, String signature) {
         try {
-            var paymentParams = buildPaymentParams(payment);
-            var data = LiqPayDecoder.encodeToBase64(paymentParams);
-            var signature = LiqPayDecoder.generateSignature(data, liqpayPrivateKey);
-
             return liqpayApiUrl + "3/checkout?data=" + URLEncoder.encode(data, StandardCharsets.UTF_8) + "&signature="
                     + URLEncoder.encode(signature, StandardCharsets.UTF_8);
         } catch (Exception e) {
@@ -79,7 +76,8 @@ public class PaymentGatewayService {
 
     public Map<String, String> processCallback(String data, String signature) {
         var calculatedSignature = LiqPayDecoder.generateSignature(data, liqpayPrivateKey);
-        if (!calculatedSignature.equals(signature)) {
+        if (!MessageDigest.isEqual(calculatedSignature.getBytes(StandardCharsets.UTF_8),
+                signature.getBytes(StandardCharsets.UTF_8))) {
             log.error("Invalid LiqPay signature");
             throw new PaymentProcessingException("Invalid LiqPay signature");
         }

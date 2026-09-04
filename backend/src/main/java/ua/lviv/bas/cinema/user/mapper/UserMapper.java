@@ -18,43 +18,43 @@ import ua.lviv.bas.cinema.user.repository.projection.AdminUserProjection;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface UserMapper {
 
-	@Mapping(target = "id", ignore = true)
-	@Mapping(target = "tickets", ignore = true)
-	@Mapping(target = "bonusCard", ignore = true)
-	@Mapping(target = "bookings", ignore = true)
-	@Mapping(target = "redeemedPromotions", ignore = true)
-	@Mapping(target = "enabled", constant = "false")
-	@Mapping(target = "userRole", constant = "ROLE_USER")
-	@Mapping(target = "verificationStatus", constant = "NOT_VERIFIED")
-	@Mapping(target = "verifiedAt", ignore = true)
-	@Mapping(target = "password", ignore = true)
-	User toUser(UserRegistrationRequest request);
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "tickets", ignore = true)
+    @Mapping(target = "bonusCard", ignore = true)
+    @Mapping(target = "bookings", ignore = true)
+    @Mapping(target = "redeemedPromotions", ignore = true)
+    @Mapping(target = "enabled", constant = "false")
+    @Mapping(target = "userRole", constant = "ROLE_USER")
+    @Mapping(target = "verificationStatus", constant = "NOT_VERIFIED")
+    @Mapping(target = "verifiedAt", ignore = true)
+    @Mapping(target = "password", ignore = true)
+    User toUser(UserRegistrationRequest request);
 
-	UserResponse toUserResponse(User user);
+    UserResponse toUserResponse(User user);
 
-	UserProfileResponse toUserProfileResponse(User user);
+    UserProfileResponse toUserProfileResponse(User user);
 
-	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-	@Mapping(target = "id", ignore = true)
-	@Mapping(target = "email", ignore = true)
-	@Mapping(target = "password", ignore = true)
-	@Mapping(target = "tickets", ignore = true)
-	@Mapping(target = "bonusCard", ignore = true)
-	@Mapping(target = "bookings", ignore = true)
-	@Mapping(target = "redeemedPromotions", ignore = true)
-	@Mapping(target = "enabled", ignore = true)
-	@Mapping(target = "userRole", ignore = true)
-	@Mapping(target = "verificationStatus", ignore = true)
-	@Mapping(target = "verifiedAt", ignore = true)
-	@Mapping(target = "createdBy", ignore = true)
-	@Mapping(target = "createdDate", ignore = true)
-	@Mapping(target = "lastModifiedBy", ignore = true)
-	@Mapping(target = "lastModifiedDate", ignore = true)
-	void updateUserFromRequest(UserUpdateRequest request, @MappingTarget User user);
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "email", ignore = true)
+    @Mapping(target = "password", ignore = true)
+    @Mapping(target = "tickets", ignore = true)
+    @Mapping(target = "bonusCard", ignore = true)
+    @Mapping(target = "bookings", ignore = true)
+    @Mapping(target = "redeemedPromotions", ignore = true)
+    @Mapping(target = "enabled", ignore = true)
+    @Mapping(target = "userRole", ignore = true)
+    @Mapping(target = "verificationStatus", ignore = true)
+    @Mapping(target = "verifiedAt", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "createdDate", ignore = true)
+    @Mapping(target = "lastModifiedBy", ignore = true)
+    @Mapping(target = "lastModifiedDate", ignore = true)
+    void updateUserFromRequest(UserUpdateRequest request, @MappingTarget User user);
 
-	AdminUserListResponse toAdminUserListResponse(AdminUserProjection projection);
+    AdminUserListResponse toAdminUserListResponse(AdminUserProjection projection);
 
-	@Mapping(target = "ticketsCount", expression = "java(user.getTickets() != null ? (long) user.getTickets().size() : 0L)")
-	@Mapping(target = "lastActivity", ignore = true)
-	AdminUserListResponse toAdminUserListResponse(User user);
+    @Mapping(target = "ticketsCount", expression = "java(user.getTickets() != null ? (long) user.getTickets().size() : 0L)")
+    @Mapping(target = "lastActivity", ignore = true)
+    AdminUserListResponse toAdminUserListResponse(User user);
 }

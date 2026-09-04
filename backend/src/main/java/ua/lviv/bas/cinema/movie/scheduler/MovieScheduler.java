@@ -37,10 +37,10 @@ public class MovieScheduler {
 		LocalDate today = LocalDate.now();
 		log.info("Starting movie status update for date: {}", today);
 
-		List<Movie> allMovies = movieRepository.findAll();
-		log.info("Found {} movies to check", allMovies.size());
+		List<Movie> candidates = movieRepository.findCandidatesForStatusUpdate(today);
+		log.info("Found {} movies to check", candidates.size());
 
-		var summary = applyStatusUpdates(allMovies, today);
+		var summary = applyStatusUpdates(candidates, today);
 
 		log.info("Updated {} movie statuses", summary.updatedCount());
 		log.info("Movie status summary - CURRENT: {}, UPCOMING: {}, ARCHIVED: {}", summary.currentCount(),

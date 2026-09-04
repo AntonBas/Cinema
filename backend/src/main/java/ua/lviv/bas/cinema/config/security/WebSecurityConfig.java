@@ -99,6 +99,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/ticket/**").hasAnyRole("CASHIER", "ADMIN")
                         .requestMatchers("/api/admin/users/**").hasAnyRole("ADMIN", "CASHIER")
+                        .requestMatchers("/api/admin/bonus/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "CONTENT_MANAGER")
                         .anyRequest().authenticated()
                 )
