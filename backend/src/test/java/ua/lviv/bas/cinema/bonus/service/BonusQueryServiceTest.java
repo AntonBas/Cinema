@@ -21,7 +21,9 @@ import java.math.BigDecimal;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -72,11 +74,13 @@ public class BonusQueryServiceTest {
 
     @Test
     void validateRedemptionWhenSufficientPointsShouldPass() {
-        BonusCard card = BonusCard.builder().pointsBalance(100).build();
+        BonusCard card = BonusCard.builder().pointsBalance(50).build();
 
         when(bonusCardRepository.findByUserId(USER_ID)).thenReturn(Optional.of(card));
 
-        bonusQueryService.validateRedemption(USER_ID, 50);
+        assertThatCode(() -> bonusQueryService.validateRedemption(USER_ID, 50)).doesNotThrowAnyException();
+
+        verify(bonusCardRepository).findByUserId(USER_ID);
     }
 
     @Test
@@ -154,7 +158,8 @@ public class BonusQueryServiceTest {
         when(bonusProperties.getPointValue()).thenReturn(new BigDecimal("1.00"));
         when(bonusProperties.getMaxDiscountPercentage()).thenReturn(new BigDecimal("0.5"));
 
-        bonusQueryService.validatePointsForBooking(USER_ID, 30, new BigDecimal("100"));
+        assertThatCode(() -> bonusQueryService.validatePointsForBooking(USER_ID, 50, new BigDecimal("100")))
+                .doesNotThrowAnyException();
     }
 
     @Test

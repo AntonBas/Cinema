@@ -27,6 +27,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -99,7 +100,8 @@ public class PaymentRefundServiceTest {
         testPayment.setLiqpayPaymentId("PAY123");
         testPayment.setLiqpayOrderId("ORD_123");
 
-        paymentRefundService.validateRefundEligibility(testPayment, new BigDecimal("100.00"));
+        assertThatCode(() -> paymentRefundService.validateRefundEligibility(testPayment, testPayment.getAmount()))
+                .doesNotThrowAnyException();
     }
 
     @Test

@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -165,7 +166,13 @@ public class SeatReservationServiceTest {
         when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.of(testSeat));
         when(seatReservationRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, SEAT_ID,
                 ReservationStatus.ACTIVE_STATUSES)).thenReturn(false);
-        seatReservationService.validateAvailability(SESSION_ID, SEAT_ID);
+
+        assertThatCode(() -> seatReservationService.validateAvailability(SESSION_ID, SEAT_ID))
+                .doesNotThrowAnyException();
+
+        verify(seatRepository).findById(SEAT_ID);
+        verify(seatReservationRepository).existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, SEAT_ID,
+                ReservationStatus.ACTIVE_STATUSES);
     }
 
     @Test

@@ -27,9 +27,12 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -80,7 +83,7 @@ class PaymentGatewayServiceTest {
 
         Map<String, String> result = paymentGatewayService.processCallback(data, signature);
 
-        assertThat(result).isNotNull();
+        assertThat(result).containsExactly(Map.entry("status", "success"));
     }
 
     @Test
@@ -102,7 +105,9 @@ class PaymentGatewayServiceTest {
         String refundData = paymentGatewayService.prepareRefundData("payment_123", "order_123",
                 new BigDecimal("50.00"), "Test refund");
 
-        paymentGatewayService.processRefund(refundData);
+        assertThatCode(() -> paymentGatewayService.processRefund(refundData)).doesNotThrowAnyException();
+
+        verify(restTemplate, never()).postForEntity(any(String.class), any(), eq(String.class));
     }
 
     @Test
@@ -112,7 +117,9 @@ class PaymentGatewayServiceTest {
         when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
                 .thenReturn(ResponseEntity.ok(responseBody));
 
-        paymentGatewayService.processRefund("refund_data");
+        assertThatCode(() -> paymentGatewayService.processRefund("refund_data")).doesNotThrowAnyException();
+
+        verify(restTemplate).postForEntity(any(String.class), any(), eq(String.class));
     }
 
     @Test
