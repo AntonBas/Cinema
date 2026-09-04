@@ -25,6 +25,7 @@ import ua.lviv.bas.cinema.movie.dto.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieHasSessionsException;
+import ua.lviv.bas.cinema.exception.domain.cinema.MovieValidationException;
 import ua.lviv.bas.cinema.movie.mapper.MovieMapper;
 import ua.lviv.bas.cinema.movie.repository.GenreRepository;
 import ua.lviv.bas.cinema.movie.repository.MovieRepository;
@@ -68,6 +69,10 @@ public class MovieService {
 
         if (movieRepository.existsByTitle(request.getTitle())) {
             throw new DuplicateEntityException("Movie", "title '" + request.getTitle() + "'");
+        }
+
+        if (!request.getEndShowingDate().isAfter(request.getReleaseDate())) {
+            throw MovieValidationException.endShowingBeforeRelease(request.getReleaseDate(), request.getEndShowingDate());
         }
 
         var movie = movieMapper.toMovie(request);
@@ -181,6 +186,10 @@ public class MovieService {
 
         if (!request.getTitle().equals(oldTitle) && movieRepository.existsByTitle(request.getTitle())) {
             throw new DuplicateEntityException("Movie", "title '" + request.getTitle() + "'");
+        }
+
+        if (!request.getEndShowingDate().isAfter(request.getReleaseDate())) {
+            throw MovieValidationException.endShowingBeforeRelease(request.getReleaseDate(), request.getEndShowingDate());
         }
 
         movieMapper.updateMovieFromRequest(request, movie);

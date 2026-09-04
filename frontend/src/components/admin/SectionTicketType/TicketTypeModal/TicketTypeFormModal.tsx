@@ -119,7 +119,8 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
                             onChange={(value) => setFormData(prev => ({ ...prev, priceMultiplier: value }))}
                             placeholder="e.g., 1.0"
                             step="0.01"
-                            min="0"
+                            min="0.01"
+                            max="9.99"
                             required
                         />
                     </div>
