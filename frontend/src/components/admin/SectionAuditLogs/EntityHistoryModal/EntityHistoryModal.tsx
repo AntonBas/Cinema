@@ -31,7 +31,7 @@ export const EntityHistoryModal: React.FC<EntityHistoryModalProps> = ({
       isOpen={true}
       onClose={onClose}
       title={`${getEntityTypeDisplay(entityType)} #${entityId} History`}
-      size="large"
+      size="fullscreen"
     >
       <div className={styles.body}>
         {showLoading ? (
