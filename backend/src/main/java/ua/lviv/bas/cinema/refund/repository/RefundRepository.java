@@ -19,8 +19,8 @@ public interface RefundRepository extends JpaRepository<Refund, Long> {
     @Query("SELECT COUNT(r) > 0 FROM Refund r JOIN r.items i WHERE i.ticket.id = :ticketId AND r.status = :status")
     boolean existsByItemsTicketIdAndStatus(@Param("ticketId") Long ticketId, @Param("status") RefundStatus status);
 
-    @Query("SELECT r.id as refundId, i.ticket.id as ticketId FROM Refund r JOIN r.items i "
-            + "WHERE r.status = :status AND r.createdDate < :cutoff")
+    @Query("SELECT r.id as refundId, i.ticket.id as ticketId, r.payment.liqpayOrderId as liqpayOrderId "
+            + "FROM Refund r JOIN r.items i WHERE r.status = :status AND r.createdDate < :cutoff")
     List<StuckRefundProjection> findStuckRefunds(@Param("status") RefundStatus status,
                                                  @Param("cutoff") LocalDateTime cutoff);
 }

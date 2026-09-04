@@ -118,16 +118,48 @@ public class PaymentGatewayService {
             return;
         }
 
-        var response = sendRefundRequest(refundData);
+        var response = sendApiRequest(refundData);
         var responseBody = extractResponseBody(response);
         var responseMap = decodeRefundResponse(responseBody);
         checkRefundResult(responseMap);
     }
 
-    private ResponseEntity<String> sendRefundRequest(String refundData) {
+    public RefundGatewayStatus checkRefundStatus(String orderId) {
+        if (sandboxMode) {
+            log.debug("Sandbox mode - treating refund for order {} as confirmed by gateway", orderId);
+            return RefundGatewayStatus.CONFIRMED;
+        }
         try {
-            var signature = LiqPayDecoder.generateSignature(refundData, liqpayPrivateKey);
-            var requestBody = "data=" + URLEncoder.encode(refundData, StandardCharsets.UTF_8) + "&signature="
+            Map<String, Object> statusParams = new LinkedHashMap<>();
+            statusParams.put("public_key", liqpayPublicKey);
+            statusParams.put("version", "3");
+            statusParams.put("action", "status");
+            statusParams.put("order_id", orderId);
+
+            var data = LiqPayDecoder.encodeToBase64(statusParams);
+            var response = sendApiRequest(data);
+            var responseBody = extractResponseBody(response);
+            var responseMap = decodeRefundResponse(responseBody);
+            var status = (String) responseMap.get("status");
+
+            if ("reversed".equals(status)) {
+                return RefundGatewayStatus.CONFIRMED;
+            }
+            if ("failure".equals(status) || "error".equals(status)) {
+                return RefundGatewayStatus.NOT_CONFIRMED;
+            }
+            log.warn("Ambiguous LiqPay status '{}' for order {} while reconciling a stuck refund", status, orderId);
+            return RefundGatewayStatus.UNKNOWN;
+        } catch (Exception e) {
+            log.warn("Failed to check LiqPay refund status for order {}: {}", orderId, e.getMessage());
+            return RefundGatewayStatus.UNKNOWN;
+        }
+    }
+
+    private ResponseEntity<String> sendApiRequest(String data) {
+        try {
+            var signature = LiqPayDecoder.generateSignature(data, liqpayPrivateKey);
+            var requestBody = "data=" + URLEncoder.encode(data, StandardCharsets.UTF_8) + "&signature="
                     + URLEncoder.encode(signature, StandardCharsets.UTF_8);
 
             var headers = new HttpHeaders();
@@ -137,7 +169,8 @@ public class PaymentGatewayService {
             HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
             return restTemplate.postForEntity(liqpayApiUrl + "request", request, String.class);
         } catch (RestClientException e) {
-            throw new PaymentGatewayUnavailableException("Network error during refund: " + e.getMessage(), e);
+            throw new PaymentGatewayUnavailableException("Network error during LiqPay API request: " + e.getMessage(),
+                    e);
         }
     }
 

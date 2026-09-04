@@ -7,6 +7,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.PlatformTransactionManager;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.booking.domain.SeatReservation;
@@ -57,6 +58,8 @@ public class PaymentServiceTest {
     private EmailService emailService;
     @Mock
     private AuditService auditService;
+    @Mock
+    private PlatformTransactionManager transactionManager;
 
     @InjectMocks
     private PaymentService paymentService;
@@ -225,6 +228,26 @@ public class PaymentServiceTest {
         assertThat(testPayment.getPaymentTime()).isNotNull();
 
         verify(paymentSuccessOrchestrator).handle(testPayment);
+    }
+
+    @Test
+    void processSuccessWhenOrchestratorFailsShouldKeepPaymentSuccessAndNotThrow() {
+        Map<String, String> callbackData = new HashMap<>();
+        callbackData.put("payment_id", "PAY123");
+        callbackData.put("transaction_id", "TXN123");
+        callbackData.put("sender_card_mask", "****1234");
+
+        when(paymentRepository.updateStatusIfCurrentIn(eq(PAYMENT_ID), anyList(), eq(PaymentStatus.SUCCESS)))
+                .thenReturn(1);
+        doThrow(new RuntimeException("booking already expired")).when(paymentSuccessOrchestrator)
+                .handle(testPayment);
+
+        paymentService.processSuccess(testPayment, callbackData);
+
+        assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
+        assertThat(testPayment.getLiqpayPaymentId()).isEqualTo("PAY123");
+        verify(paymentRepository).save(testPayment);
+        verify(auditService).logChange(anyString(), anyLong(), anyString(), any(), any(), any());
     }
 
     @Test

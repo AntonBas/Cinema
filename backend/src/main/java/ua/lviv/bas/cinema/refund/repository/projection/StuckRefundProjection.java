@@ -5,4 +5,6 @@ public interface StuckRefundProjection {
     Long getRefundId();
 
     Long getTicketId();
+
+    String getLiqpayOrderId();
 }

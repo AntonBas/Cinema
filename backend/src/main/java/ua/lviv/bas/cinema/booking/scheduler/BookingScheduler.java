@@ -27,6 +27,9 @@ import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 @Slf4j
 @Component
 public class BookingScheduler {
+	private static final List<PaymentStatus> EVER_PAID_STATUSES = List.of(PaymentStatus.SUCCESS,
+			PaymentStatus.REFUNDED, PaymentStatus.PARTIALLY_REFUNDED);
+
 	private final BookingRepository bookingRepository;
 	private final PaymentRepository paymentRepository;
 	private final SeatReservationRepository seatReservationRepository;
@@ -110,7 +113,7 @@ public class BookingScheduler {
 		for (Payment payment : expiredPayments) {
 			Long paymentId = payment.getId();
 			try {
-				transactionTemplate.executeWithoutResult(status -> expirePayment(payment));
+				transactionTemplate.executeWithoutResult(status -> expirePayment(paymentId));
 				expiredCount++;
 			} catch (ObjectOptimisticLockingFailureException e) {
 				log.warn("Skipped expiring payment {} due to concurrent update, will retry on next run", paymentId);
@@ -120,20 +123,27 @@ public class BookingScheduler {
 		log.info("Successfully expired {} of {} payments", expiredCount, expiredPayments.size());
 	}
 
-	private void expirePayment(Payment payment) {
+	private void expirePayment(Long paymentId) {
+		var payment = paymentRepository.findById(paymentId).orElse(null);
+		if (payment == null || payment.getStatus() != PaymentStatus.PENDING) {
+			log.debug("Payment {} no longer PENDING (already resolved concurrently), skipping expiration", paymentId);
+			return;
+		}
+
 		payment.setStatus(PaymentStatus.EXPIRED);
 		paymentRepository.save(payment);
 
-		if (payment.getBooking().getStatus() == BookingStatus.PENDING) {
-			payment.getBooking().setStatus(BookingStatus.EXPIRED);
-			payment.getBooking().getSeatReservations().forEach(sr -> {
+		var booking = payment.getBooking();
+		if (booking.getStatus() == BookingStatus.PENDING) {
+			booking.setStatus(BookingStatus.EXPIRED);
+			booking.getSeatReservations().forEach(sr -> {
 				sr.setStatus(ReservationStatus.EXPIRED);
 				sr.setBooking(null);
 			});
-			seatReservationRepository.saveAll(Objects.requireNonNull(payment.getBooking().getSeatReservations(),
+			seatReservationRepository.saveAll(Objects.requireNonNull(booking.getSeatReservations(),
 					"Payment booking seat reservations must not be null"));
-			bookingRepository.save(payment.getBooking());
-			evictCacheIfPresent("seatAvailability", payment.getBooking().getSession().getId());
+			bookingRepository.save(booking);
+			evictCacheIfPresent("seatAvailability", booking.getSession().getId());
 		}
 	}
 
@@ -143,7 +153,7 @@ public class BookingScheduler {
 		log.debug("Starting old bookings cleanup");
 		LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
 		int deletedCount = bookingRepository.deleteByStatusInAndCreatedDateBefore(
-				List.of(BookingStatus.EXPIRED, BookingStatus.CANCELLED), thirtyDaysAgo);
+				List.of(BookingStatus.EXPIRED, BookingStatus.CANCELLED), thirtyDaysAgo, EVER_PAID_STATUSES);
 
 		if (deletedCount > 0) {
 			log.info("Cleaned up {} old bookings", deletedCount);

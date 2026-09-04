@@ -1,10 +1,12 @@
 package ua.lviv.bas.cinema.payment.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.payment.domain.Payment;
@@ -35,7 +37,6 @@ import java.util.Optional;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class PaymentService {
 
@@ -49,9 +50,25 @@ public class PaymentService {
     private final AuditService auditService;
     private final EmailService emailService;
     private final DateTimeFormatterService dateTimeFormatter;
+    private final TransactionTemplate requiresNewTransactionTemplate;
 
     @Value("${booking.session-too-close-minutes:30}")
     private int sessionTooCloseMinutes;
+
+    public PaymentService(PaymentRepository paymentRepository, BookingRepository bookingRepository,
+            NumberGeneratorService numberGenerator, PaymentSuccessOrchestrator paymentSuccessOrchestrator,
+            AuditService auditService, EmailService emailService, DateTimeFormatterService dateTimeFormatter,
+            PlatformTransactionManager transactionManager) {
+        this.paymentRepository = paymentRepository;
+        this.bookingRepository = bookingRepository;
+        this.numberGenerator = numberGenerator;
+        this.paymentSuccessOrchestrator = paymentSuccessOrchestrator;
+        this.auditService = auditService;
+        this.emailService = emailService;
+        this.dateTimeFormatter = dateTimeFormatter;
+        this.requiresNewTransactionTemplate = new TransactionTemplate(transactionManager);
+        this.requiresNewTransactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    }
 
     public PaymentResponse createPayment(PaymentCreateRequest request, User user) {
         log.info("Creating payment for booking {} by user {}", request.bookingId(), user.getId());
@@ -117,24 +134,40 @@ public class PaymentService {
     public void processSuccess(Payment payment, Map<String, String> callbackData) {
         var oldStatus = payment.getStatus();
 
-        int updated = paymentRepository.updateStatusIfCurrentIn(payment.getId(), ACTIVE_STATUSES,
-                PaymentStatus.SUCCESS);
-        if (updated == 0) {
+        boolean flipped = requiresNewTransactionTemplate.execute(status -> {
+            int updated = paymentRepository.updateStatusIfCurrentIn(payment.getId(), ACTIVE_STATUSES,
+                    PaymentStatus.SUCCESS);
+            if (updated == 0) {
+                return false;
+            }
+            payment.setStatus(PaymentStatus.SUCCESS);
+            payment.setPaymentTime(LocalDateTime.now());
+            payment.setLiqpayPaymentId(callbackData.get("payment_id"));
+            payment.setLiqpayTransactionId(callbackData.get("transaction_id"));
+            payment.setLiqpaySenderCardMask(callbackData.get("sender_card_mask"));
+            paymentRepository.save(payment);
+            return true;
+        });
+
+        if (!flipped) {
             log.warn("Payment {} already processed (status={}), ignoring duplicate callback", payment.getId(),
                     oldStatus);
             return;
         }
 
-        payment.setStatus(PaymentStatus.SUCCESS);
-        payment.setPaymentTime(LocalDateTime.now());
-        payment.setLiqpayPaymentId(callbackData.get("payment_id"));
-        payment.setLiqpayTransactionId(callbackData.get("transaction_id"));
-        payment.setLiqpaySenderCardMask(callbackData.get("sender_card_mask"));
-
-        paymentSuccessOrchestrator.handle(payment);
-
-        log.info("Payment {} completed successfully", payment.getId());
+        log.info("Payment {} marked SUCCESS", payment.getId());
         auditSuccess(payment, oldStatus);
+
+        try {
+            paymentSuccessOrchestrator.handle(payment);
+            log.info("Payment {} completed successfully", payment.getId());
+        } catch (RuntimeException e) {
+            log.error(
+                    "Post-payment processing failed for payment {} (booking {}) after status was already committed "
+                            + "as SUCCESS - tickets/booking confirmation/bonus accrual may be incomplete, manual "
+                            + "reconciliation required",
+                    payment.getId(), payment.getBooking().getId(), e);
+        }
     }
 
     public void processFailure(Payment payment, Map<String, String> callbackData) {

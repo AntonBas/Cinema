@@ -163,4 +163,51 @@ class PaymentGatewayServiceTest {
         assertThatThrownBy(() -> paymentGatewayService.processRefund("refund_data"))
                 .isInstanceOf(PaymentGatewayUnavailableException.class);
     }
+
+    @Test
+    void checkRefundStatusInSandboxModeShouldReturnConfirmedWithoutCallingGateway() {
+        RefundGatewayStatus result = paymentGatewayService.checkRefundStatus("ORDER_123");
+
+        assertThat(result).isEqualTo(RefundGatewayStatus.CONFIRMED);
+        verify(restTemplate, never()).postForEntity(any(String.class), any(), eq(String.class));
+    }
+
+    @Test
+    void checkRefundStatusWhenLiqPayReportsReversedShouldReturnConfirmed() {
+        ReflectionTestUtils.setField(paymentGatewayService, "sandboxMode", false);
+        String responseBody = LiqPayDecoder.encodeToBase64(Map.of("status", "reversed"));
+        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
+                .thenReturn(ResponseEntity.ok(responseBody));
+
+        assertThat(paymentGatewayService.checkRefundStatus("ORDER_123")).isEqualTo(RefundGatewayStatus.CONFIRMED);
+    }
+
+    @Test
+    void checkRefundStatusWhenLiqPayReportsFailureShouldReturnNotConfirmed() {
+        ReflectionTestUtils.setField(paymentGatewayService, "sandboxMode", false);
+        String responseBody = LiqPayDecoder.encodeToBase64(Map.of("status", "failure"));
+        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
+                .thenReturn(ResponseEntity.ok(responseBody));
+
+        assertThat(paymentGatewayService.checkRefundStatus("ORDER_123")).isEqualTo(RefundGatewayStatus.NOT_CONFIRMED);
+    }
+
+    @Test
+    void checkRefundStatusWhenLiqPayReportsAmbiguousStatusShouldReturnUnknown() {
+        ReflectionTestUtils.setField(paymentGatewayService, "sandboxMode", false);
+        String responseBody = LiqPayDecoder.encodeToBase64(Map.of("status", "wait_reserve"));
+        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
+                .thenReturn(ResponseEntity.ok(responseBody));
+
+        assertThat(paymentGatewayService.checkRefundStatus("ORDER_123")).isEqualTo(RefundGatewayStatus.UNKNOWN);
+    }
+
+    @Test
+    void checkRefundStatusWhenGatewayUnreachableShouldReturnUnknownInsteadOfThrowing() {
+        ReflectionTestUtils.setField(paymentGatewayService, "sandboxMode", false);
+        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
+                .thenThrow(new RestClientException("Connection timed out"));
+
+        assertThat(paymentGatewayService.checkRefundStatus("ORDER_123")).isEqualTo(RefundGatewayStatus.UNKNOWN);
+    }
 }
