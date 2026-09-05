@@ -29,6 +29,7 @@ import ua.lviv.bas.cinema.booking.mapper.BookingMapper;
 import ua.lviv.bas.cinema.booking.repository.BookingRepository;
 import ua.lviv.bas.cinema.booking.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
+import ua.lviv.bas.cinema.ticket.domain.TicketType;
 import ua.lviv.bas.cinema.ticket.repository.TicketTypeRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.bonus.service.BonusQueryService;
@@ -43,6 +44,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -108,6 +111,8 @@ public class BookingService {
         var orderedSeatSelections = seatSelections.stream()
                 .sorted(Comparator.comparing(BookingCreateRequest.SeatSelectionRequest::seatId)).toList();
 
+        var ticketTypesById = findTicketTypesByIds(orderedSeatSelections);
+
         for (var seatSelection : orderedSeatSelections) {
             var reservation = findOrCreateReservation(session, user, seatSelection);
 
@@ -115,11 +120,19 @@ public class BookingService {
                 throw new SeatNotAvailableException("Seat already booked");
             }
 
-            updateReservationWithTicketType(reservation, seatSelection);
+            updateReservationWithTicketType(reservation, seatSelection, ticketTypesById);
             seatReservations.add(reservation);
         }
 
         return seatReservations;
+    }
+
+    private Map<Long, TicketType> findTicketTypesByIds(
+            List<BookingCreateRequest.SeatSelectionRequest> seatSelections) {
+        var distinctIds = seatSelections.stream().map(BookingCreateRequest.SeatSelectionRequest::ticketTypeId)
+                .distinct().toList();
+        return ticketTypeRepository.findAllById(distinctIds).stream()
+                .collect(Collectors.toMap(TicketType::getId, Function.identity()));
     }
 
     private Booking confirmSeatsAndSaveBooking(Booking booking, List<SeatReservation> seatReservations,
@@ -258,8 +271,9 @@ public class BookingService {
     }
 
     private void updateReservationWithTicketType(SeatReservation reservation,
-                                                 BookingCreateRequest.SeatSelectionRequest seatSelection) {
-        var ticketType = ticketTypeRepository.findById(seatSelection.ticketTypeId())
+                                                 BookingCreateRequest.SeatSelectionRequest seatSelection,
+                                                 Map<Long, TicketType> ticketTypesById) {
+        var ticketType = Optional.ofNullable(ticketTypesById.get(seatSelection.ticketTypeId()))
                 .orElseThrow(() -> new EntityNotFoundException("Ticket type", seatSelection.ticketTypeId()));
 
         var seatPrice = priceCalculator.calculateSeatPrice(reservation.getSession(), reservation.getSeat(), ticketType);

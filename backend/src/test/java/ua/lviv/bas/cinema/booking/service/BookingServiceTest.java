@@ -167,8 +167,8 @@ public class BookingServiceTest {
                 ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.of(pendingReservation1));
         when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_2,
                 ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.of(pendingReservation2));
-        when(ticketTypeRepository.findById(TICKET_TYPE_ADULT_ID)).thenReturn(Optional.of(adultTicketType));
-        when(ticketTypeRepository.findById(TICKET_TYPE_CHILD_ID)).thenReturn(Optional.of(childTicketType));
+        when(ticketTypeRepository.findAllById(List.of(TICKET_TYPE_ADULT_ID, TICKET_TYPE_CHILD_ID)))
+                .thenReturn(List.of(adultTicketType, childTicketType));
         when(priceCalculator.calculateSeatPrice(testSession, testSeat1, adultTicketType)).thenReturn(SEAT_1_PRICE);
         when(priceCalculator.calculateSeatPrice(testSession, testSeat2, childTicketType)).thenReturn(SEAT_2_PRICE);
         doNothing().when(bonusQueryService).validatePointsForBooking(USER_ID, BONUS_POINTS_USED, TOTAL_PRICE);
@@ -210,8 +210,8 @@ public class BookingServiceTest {
         when(seatReservationService.lockSeat(SEAT_ID_2)).thenReturn(testSeat2);
         when(seatReservationService.holdLockedSeat(testSession, testSeat1, testUser)).thenReturn(newReservation1);
         when(seatReservationService.holdLockedSeat(testSession, testSeat2, testUser)).thenReturn(newReservation2);
-        when(ticketTypeRepository.findById(TICKET_TYPE_ADULT_ID)).thenReturn(Optional.of(adultTicketType));
-        when(ticketTypeRepository.findById(TICKET_TYPE_CHILD_ID)).thenReturn(Optional.of(childTicketType));
+        when(ticketTypeRepository.findAllById(List.of(TICKET_TYPE_ADULT_ID, TICKET_TYPE_CHILD_ID)))
+                .thenReturn(List.of(adultTicketType, childTicketType));
         when(priceCalculator.calculateSeatPrice(testSession, testSeat1, adultTicketType)).thenReturn(SEAT_1_PRICE);
         when(priceCalculator.calculateSeatPrice(testSession, testSeat2, childTicketType)).thenReturn(SEAT_2_PRICE);
         doNothing().when(bonusQueryService).validatePointsForBooking(USER_ID, BONUS_POINTS_USED, TOTAL_PRICE);
@@ -253,8 +253,8 @@ public class BookingServiceTest {
         when(seatReservationService.lockSeat(SEAT_ID_2)).thenReturn(testSeat2);
         when(seatReservationService.holdLockedSeat(testSession, testSeat1, testUser)).thenReturn(newReservation1);
         when(seatReservationService.holdLockedSeat(testSession, testSeat2, testUser)).thenReturn(newReservation2);
-        when(ticketTypeRepository.findById(TICKET_TYPE_ADULT_ID)).thenReturn(Optional.of(adultTicketType));
-        when(ticketTypeRepository.findById(TICKET_TYPE_CHILD_ID)).thenReturn(Optional.of(childTicketType));
+        when(ticketTypeRepository.findAllById(List.of(TICKET_TYPE_ADULT_ID, TICKET_TYPE_CHILD_ID)))
+                .thenReturn(List.of(adultTicketType, childTicketType));
         when(priceCalculator.calculateSeatPrice(testSession, testSeat1, adultTicketType)).thenReturn(SEAT_1_PRICE);
         when(priceCalculator.calculateSeatPrice(testSession, testSeat2, childTicketType)).thenReturn(SEAT_2_PRICE);
         doNothing().when(bonusQueryService).validatePointsForBooking(USER_ID, BONUS_POINTS_USED, TOTAL_PRICE);
@@ -288,7 +288,8 @@ public class BookingServiceTest {
         when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
         when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_1,
                 ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.of(pendingReservation));
-        when(ticketTypeRepository.findById(TICKET_TYPE_ADULT_ID)).thenReturn(Optional.empty());
+        when(ticketTypeRepository.findAllById(List.of(TICKET_TYPE_ADULT_ID, TICKET_TYPE_CHILD_ID)))
+                .thenReturn(List.of(childTicketType));
 
         assertThatThrownBy(() -> bookingService.createBooking(createRequest, testUser))
                 .isInstanceOf(EntityNotFoundException.class);
