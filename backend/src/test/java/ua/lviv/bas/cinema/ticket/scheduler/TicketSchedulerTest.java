@@ -6,7 +6,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.transaction.PlatformTransactionManager;
 import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
@@ -15,9 +14,7 @@ import ua.lviv.bas.cinema.ticket.repository.specification.TicketSpecification;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -28,8 +25,6 @@ class TicketSchedulerTest {
     private TicketRepository ticketRepository;
     @Mock
     private TicketSpecification ticketSpecification;
-    @Mock
-    private PlatformTransactionManager transactionManager;
 
     @InjectMocks
     private TicketScheduler ticketScheduler;
@@ -37,47 +32,31 @@ class TicketSchedulerTest {
     private static final Specification<Ticket> NOOP_SPEC = (root, query, cb) -> null;
 
     @Test
-    void markTicketsAsExpiredAfterSessionWhenNoneFoundShouldNotSave() {
+    void markTicketsAsExpiredAfterSessionWhenNoneFoundShouldNotUpdate() {
         when(ticketSpecification.hasStatus(TicketStatus.ACTIVE)).thenReturn(NOOP_SPEC);
         when(ticketSpecification.hasSessionStatus(CinemaSessionStatus.COMPLETED)).thenReturn(NOOP_SPEC);
         when(ticketRepository.findAll(any(Specification.class))).thenReturn(List.of());
 
         ticketScheduler.markTicketsAsExpiredAfterSession();
 
-        verify(ticketRepository, never()).save(any());
+        verify(ticketRepository, never()).updateStatusIfCurrentForIds(any(), any(), any());
     }
 
     @Test
-    void markTicketsAsExpiredAfterSessionShouldMarkFoundTicketsExpired() {
-        var ticket = Ticket.builder().id(1L).status(TicketStatus.ACTIVE).build();
+    void markTicketsAsExpiredAfterSessionShouldBulkUpdateFoundTickets() {
+        var ticket1 = Ticket.builder().id(1L).status(TicketStatus.ACTIVE).build();
+        var ticket2 = Ticket.builder().id(2L).status(TicketStatus.ACTIVE).build();
 
         when(ticketSpecification.hasStatus(TicketStatus.ACTIVE)).thenReturn(NOOP_SPEC);
         when(ticketSpecification.hasSessionStatus(CinemaSessionStatus.COMPLETED)).thenReturn(NOOP_SPEC);
-        when(ticketRepository.findAll(any(Specification.class))).thenReturn(List.of(ticket));
-        when(ticketRepository.findById(1L)).thenReturn(Optional.of(ticket));
+        when(ticketRepository.findAll(any(Specification.class))).thenReturn(List.of(ticket1, ticket2));
+        when(ticketRepository.updateStatusIfCurrentForIds(List.of(1L, 2L), TicketStatus.ACTIVE, TicketStatus.EXPIRED))
+                .thenReturn(2);
 
         ticketScheduler.markTicketsAsExpiredAfterSession();
 
-        assertThat(ticket.getStatus()).isEqualTo(TicketStatus.EXPIRED);
-        verify(ticketRepository).save(ticket);
-    }
-
-    @Test
-    void markTicketsAsExpiredAfterSessionShouldContinueBatchWhenOneTicketFails() {
-        var failingTicket = Ticket.builder().id(1L).status(TicketStatus.ACTIVE).build();
-        var okTicket = Ticket.builder().id(2L).status(TicketStatus.ACTIVE).build();
-
-        when(ticketSpecification.hasStatus(TicketStatus.ACTIVE)).thenReturn(NOOP_SPEC);
-        when(ticketSpecification.hasSessionStatus(CinemaSessionStatus.COMPLETED)).thenReturn(NOOP_SPEC);
-        when(ticketRepository.findAll(any(Specification.class))).thenReturn(List.of(failingTicket, okTicket));
-        when(ticketRepository.findById(1L)).thenReturn(Optional.of(failingTicket));
-        when(ticketRepository.findById(2L)).thenReturn(Optional.of(okTicket));
-        doThrow(new RuntimeException("DB error")).when(ticketRepository).save(failingTicket);
-
-        ticketScheduler.markTicketsAsExpiredAfterSession();
-
-        assertThat(okTicket.getStatus()).isEqualTo(TicketStatus.EXPIRED);
-        verify(ticketRepository).save(okTicket);
+        verify(ticketRepository).updateStatusIfCurrentForIds(List.of(1L, 2L), TicketStatus.ACTIVE,
+                TicketStatus.EXPIRED);
     }
 
     @Test

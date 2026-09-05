@@ -4,10 +4,12 @@ import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ua.lviv.bas.cinema.cinema.domain.Session;
+import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.cinema.repository.projection.SessionAdminProjection;
 import ua.lviv.bas.cinema.cinema.repository.projection.SessionScheduleProjection;
 
@@ -38,6 +40,11 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
             AND (s.start_time + (m.duration_minutes * INTERVAL '1 minute')) <= :currentTime
             """, nativeQuery = true)
     List<Session> findSessionsToComplete(@Param("currentTime") LocalDateTime currentTime);
+
+    @Modifying
+    @Query("UPDATE Session s SET s.status = :newStatus WHERE s.id IN :ids AND s.status = :fromStatus")
+    int updateStatusForIds(@Param("ids") List<Long> ids, @Param("fromStatus") CinemaSessionStatus fromStatus,
+                           @Param("newStatus") CinemaSessionStatus newStatus);
 
     @Query("SELECT COUNT(s) FROM Session s WHERE s.movie.id = :movieId")
     long countByMovieId(@Param("movieId") Long movieId);

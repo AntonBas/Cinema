@@ -1,13 +1,12 @@
 package ua.lviv.bas.cinema.ticket.scheduler;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
@@ -19,21 +18,15 @@ import java.util.List;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class TicketScheduler {
 
     private final TicketRepository ticketRepository;
     private final TicketSpecification ticketSpecification;
-    private final TransactionTemplate transactionTemplate;
-
-    public TicketScheduler(TicketRepository ticketRepository, TicketSpecification ticketSpecification,
-            PlatformTransactionManager transactionManager) {
-        this.ticketRepository = ticketRepository;
-        this.ticketSpecification = ticketSpecification;
-        this.transactionTemplate = new TransactionTemplate(transactionManager);
-    }
 
     @Scheduled(fixedRateString = "${scheduler.ticket.mark-as-used:60000}")
     @CacheEvict(value = "tickets", allEntries = true)
+    @Transactional
     public void markTicketsAsExpiredAfterSession() {
         log.debug("Starting to mark tickets as expired after sessions");
 
@@ -41,32 +34,16 @@ public class TicketScheduler {
                 .where(ticketSpecification.hasStatus(TicketStatus.ACTIVE))
                 .and(ticketSpecification.hasSessionStatus(CinemaSessionStatus.COMPLETED));
 
-        List<Ticket> tickets = ticketRepository.findAll(spec);
+        List<Long> ticketIds = ticketRepository.findAll(spec).stream().map(Ticket::getId).toList();
 
-        if (tickets.isEmpty()) {
+        if (ticketIds.isEmpty()) {
             log.debug("No tickets to mark as expired");
             return;
         }
 
-        int expiredCount = 0;
-        for (Ticket ticket : tickets) {
-            Long ticketId = ticket.getId();
-            try {
-                transactionTemplate.executeWithoutResult(status -> markExpired(ticketId));
-                expiredCount++;
-            } catch (RuntimeException e) {
-                log.error("Failed to mark ticket {} as expired, will retry on next run", ticketId, e);
-            }
-        }
-
-        log.info("Successfully marked {} of {} tickets as expired", expiredCount, tickets.size());
-    }
-
-    private void markExpired(Long ticketId) {
-        ticketRepository.findById(ticketId).ifPresent(ticket -> {
-            ticket.setStatus(TicketStatus.EXPIRED);
-            ticketRepository.save(ticket);
-        });
+        int expiredCount = ticketRepository.updateStatusIfCurrentForIds(ticketIds, TicketStatus.ACTIVE,
+                TicketStatus.EXPIRED);
+        log.info("Successfully marked {} of {} tickets as expired", expiredCount, ticketIds.size());
     }
 
     @Scheduled(cron = "${scheduler.ticket.cleanup-cron:0 0 3 * * *}")

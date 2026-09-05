@@ -34,4 +34,9 @@ public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecif
     @Query("UPDATE Ticket t SET t.status = :newStatus WHERE t.id = :id AND t.status = :fromStatus")
     int updateStatusIfCurrent(@Param("id") Long id, @Param("fromStatus") TicketStatus fromStatus,
                               @Param("newStatus") TicketStatus newStatus);
+
+    @Modifying
+    @Query("UPDATE Ticket t SET t.status = :newStatus WHERE t.id IN :ids AND t.status = :fromStatus")
+    int updateStatusIfCurrentForIds(@Param("ids") List<Long> ids, @Param("fromStatus") TicketStatus fromStatus,
+                                    @Param("newStatus") TicketStatus newStatus);
 }
