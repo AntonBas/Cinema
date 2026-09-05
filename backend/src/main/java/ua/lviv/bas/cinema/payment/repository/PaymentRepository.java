@@ -19,7 +19,9 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     Optional<Payment> findByLiqpayOrderId(String liqpayOrderId);
 
-    @Query("SELECT p FROM Payment p JOIN FETCH p.booking b JOIN FETCH b.user JOIN FETCH b.session s JOIN FETCH s.movie WHERE p.id = :paymentId")
+    @Query("SELECT DISTINCT p FROM Payment p JOIN FETCH p.booking b JOIN FETCH b.user "
+            + "JOIN FETCH b.session s JOIN FETCH s.movie LEFT JOIN FETCH s.hall "
+            + "LEFT JOIN FETCH b.seatReservations sr LEFT JOIN FETCH sr.seat WHERE p.id = :paymentId")
     Optional<Payment> findByIdWithDetails(@Param("paymentId") Long paymentId);
 
     List<Payment> findByStatusAndCreatedDateBefore(PaymentStatus status, LocalDateTime createdDate);
