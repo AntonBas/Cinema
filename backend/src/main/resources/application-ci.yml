@@ -7,6 +7,8 @@ spring:
     username: ${DB_USER:cinema}
     password: ${DB_PASSWORD:test}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
   jpa:
     hibernate:
       ddl-auto: validate
