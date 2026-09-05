@@ -74,7 +74,7 @@ public class PaymentScheduler {
 		for (var payment : expiredPayments) {
 			Long paymentId = payment.getId();
 			try {
-				transactionTemplate.executeWithoutResult(status -> expirePayment(paymentId));
+				transactionTemplate.executeWithoutResult(status -> expirePayment(payment));
 				expiredCount++;
 			} catch (ObjectOptimisticLockingFailureException e) {
 				log.warn("Skipped expiring payment {} due to concurrent update, will retry on next run", paymentId);
@@ -84,13 +84,7 @@ public class PaymentScheduler {
 		log.info("Successfully expired {} of {} payments", expiredCount, expiredPayments.size());
 	}
 
-	private void expirePayment(Long paymentId) {
-		var payment = paymentRepository.findById(paymentId).orElse(null);
-		if (payment == null || payment.getStatus() != PaymentStatus.PENDING) {
-			log.debug("Payment {} no longer PENDING (already resolved concurrently), skipping expiration", paymentId);
-			return;
-		}
-
+	private void expirePayment(Payment payment) {
 		payment.setStatus(PaymentStatus.EXPIRED);
 		paymentRepository.save(payment);
 

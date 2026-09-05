@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 import ua.lviv.bas.cinema.booking.domain.Booking;
@@ -29,7 +30,6 @@ import ua.lviv.bas.cinema.payment.service.PaymentService;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -94,7 +94,6 @@ class PaymentSchedulerTest {
         when(paymentRepository.findByStatusAndCreatedDateBeforeWithBookingDetails(eq(PaymentStatus.PENDING),
                 any(LocalDateTime.class)))
                 .thenReturn(List.of(payment));
-        when(paymentRepository.findById(2L)).thenReturn(Optional.of(payment));
         when(cacheManager.getCache(anyString())).thenReturn(cache);
 
         paymentScheduler.processExpiredPayments();
@@ -120,7 +119,6 @@ class PaymentSchedulerTest {
         when(paymentRepository.findByStatusAndCreatedDateBeforeWithBookingDetails(eq(PaymentStatus.PENDING),
                 any(LocalDateTime.class)))
                 .thenReturn(List.of(payment));
-        when(paymentRepository.findById(2L)).thenReturn(Optional.of(payment));
 
         paymentScheduler.processExpiredPayments();
 
@@ -143,7 +141,6 @@ class PaymentSchedulerTest {
         when(paymentRepository.findByStatusAndCreatedDateBeforeWithBookingDetails(eq(PaymentStatus.PENDING),
                 any(LocalDateTime.class)))
                 .thenReturn(List.of(payment));
-        when(paymentRepository.findById(2L)).thenReturn(Optional.of(payment));
         when(cacheManager.getCache(anyString())).thenReturn(cache);
 
         paymentScheduler.processExpiredPayments();
@@ -152,22 +149,20 @@ class PaymentSchedulerTest {
     }
 
     @Test
-    void processExpiredPaymentsWhenPaymentAlreadyResolvedConcurrentlyShouldSkipIt() {
+    void processExpiredPaymentsWhenPaymentConcurrentlyModifiedShouldSkipIt() {
         var booking = Booking.builder().id(1L).session(testSession).status(BookingStatus.PENDING).build();
-        var staleSnapshot = Payment.builder().id(2L).booking(booking).status(PaymentStatus.PENDING).build();
-        var freshPayment = Payment.builder().id(2L).booking(booking).status(PaymentStatus.SUCCESS).build();
+        var payment = Payment.builder().id(2L).booking(booking).status(PaymentStatus.PENDING).build();
 
         when(paymentRepository.findByStatusAndCreatedDateBeforeWithBookingDetails(eq(PaymentStatus.PENDING),
                 any(LocalDateTime.class)))
-                .thenReturn(List.of(staleSnapshot));
-        when(paymentRepository.findById(2L)).thenReturn(Optional.of(freshPayment));
+                .thenReturn(List.of(payment));
+        when(paymentRepository.save(payment))
+                .thenThrow(new ObjectOptimisticLockingFailureException(Payment.class, 2L));
 
         paymentScheduler.processExpiredPayments();
 
-        assertThat(freshPayment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.PENDING);
         verifyNoInteractions(seatReservationRepository, cacheManager);
-        verify(paymentRepository, never()).save(any());
         verify(bookingRepository, never()).save(any());
     }
 
