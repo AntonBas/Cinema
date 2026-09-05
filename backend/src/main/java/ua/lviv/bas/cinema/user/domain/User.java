@@ -86,7 +86,7 @@ public class User extends AuditableEntity {
     @Builder.Default
     private boolean enabled = false;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private BonusCard bonusCard;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)

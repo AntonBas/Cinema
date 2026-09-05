@@ -115,6 +115,6 @@ public class Booking extends AuditableEntity {
     @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;
 
-    @OneToOne(mappedBy = "booking")
+    @OneToOne(mappedBy = "booking", fetch = FetchType.LAZY)
     private Payment payment;
 }
