@@ -38,3 +38,4 @@ scheduler:
 logging:
   level:
     root: WARN
+    ua.lviv.bas.cinema: INFO

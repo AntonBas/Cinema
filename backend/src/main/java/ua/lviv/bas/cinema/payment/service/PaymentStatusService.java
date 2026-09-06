@@ -40,6 +40,8 @@ public class PaymentStatusService {
         var orderId = decodedData.get("order_id");
         var status = decodedData.get("status");
 
+        log.info("Received LiqPay callback for order {} with status {}", orderId, status);
+
         var payment = paymentRepository.findByLiqpayOrderId(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Payment", orderId));
 

@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.payment.service.PaymentStatusService;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/liqpay")
 @RequiredArgsConstructor
@@ -35,8 +33,6 @@ public class LiqPayCallbackController {
     })
     @SecurityRequirements()
     public String handleCallback(@RequestParam String data, @RequestParam String signature) {
-        log.info("POST /api/liqpay/callback");
-
         paymentStatusService.handleCallback(data, signature);
         return "OK";
     }

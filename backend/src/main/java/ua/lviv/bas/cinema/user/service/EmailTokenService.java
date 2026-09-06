@@ -35,8 +35,6 @@ public class EmailTokenService {
     @CacheEvict(value = "users", allEntries = true)
     @Transactional
     public String confirmEmail(String token) {
-        log.info("Attempting to confirm email with token: {}", token);
-
         var emailToken = validateToken(token, TokenType.VERIFICATION);
         var user = emailToken.getUser();
 
@@ -58,8 +56,6 @@ public class EmailTokenService {
     @CacheEvict(value = "users", allEntries = true)
     @Transactional
     public User confirmEmailChange(String token) {
-        log.info("Attempting to confirm email change with token: {}", token);
-
         var emailToken = validateToken(token, TokenType.EMAIL_CHANGE);
 
         if (emailToken.getNewEmail() == null) {

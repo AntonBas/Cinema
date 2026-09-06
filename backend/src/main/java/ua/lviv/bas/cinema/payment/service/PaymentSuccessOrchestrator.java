@@ -50,6 +50,9 @@ public class PaymentSuccessOrchestrator {
         }
 
         sendSuccessEmail(payment, booking);
+
+        log.info("Payment {} completed successfully: booking {} confirmed, tickets issued, {} bonus points accrued",
+                paymentId, booking.getId(), pointsToAccrue == null ? 0 : pointsToAccrue);
     }
 
     private void sendSuccessEmail(Payment payment, Booking booking) {

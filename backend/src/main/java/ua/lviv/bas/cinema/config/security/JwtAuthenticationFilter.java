@@ -31,21 +31,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String jwt = getJwtFromRequest(request);
 
-        if (StringUtils.hasText(jwt) && jwtTokenProvider.validateToken(jwt)) {
-            String email = jwtTokenProvider.getEmailFromToken(jwt);
-            log.debug("JWT token valid for email: {}", email);
+        if (StringUtils.hasText(jwt)) {
+            if (jwtTokenProvider.validateToken(jwt)) {
+                String email = jwtTokenProvider.getEmailFromToken(jwt);
+                log.debug("JWT token valid for email: {}", email);
 
-            try {
-                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                try {
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-                log.debug("Authenticated user: {}", email);
-            } catch (Exception e) {
-                log.error("Could not load user by email: {}", email, e);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    log.debug("Authenticated user: {}", email);
+                } catch (Exception e) {
+                    log.error("Could not load user by email: {}", email, e);
+                }
+            } else {
+                log.warn("Rejected request to {} with invalid or expired JWT", request.getRequestURI());
             }
         }
 

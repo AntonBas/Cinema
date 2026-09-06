@@ -124,6 +124,8 @@ public class RefundTransactionExecutor {
         refundRepository.save(refund);
 
         auditProcessed(refund, ticket, amount, percentage, bonusPointsToRefund);
+        log.info("Refund {} processed for ticket {}: amount={}, bonusPointsRefunded={}", refundId,
+                ticket.getUniqueCode(), amount, bonusPointsToRefund);
         return refund;
     }
 
@@ -135,6 +137,7 @@ public class RefundTransactionExecutor {
         refund.setStatus(RefundStatus.REJECTED);
         refundRepository.save(refund);
         auditRejected(refund, cause);
+        log.warn("Refund {} rejected: {}", refundId, cause.getMessage());
     }
 
     private void auditCreated(Refund refund, Ticket ticket, RefundCalculator.RefundCalculation calculation) {

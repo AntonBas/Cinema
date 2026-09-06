@@ -160,3 +160,15 @@ logging:
   level:
     root: INFO
     ua.lviv.bas.cinema: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics, prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    tags:
+      application: ${spring.application.name}
