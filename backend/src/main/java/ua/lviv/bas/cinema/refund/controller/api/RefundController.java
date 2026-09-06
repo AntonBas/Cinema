@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -76,6 +77,7 @@ public class RefundController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Refund policy retrieved successfully")
     })
+    @SecurityRequirements()
     public ResponseEntity<Map<String, Object>> getPolicy() {
         return ResponseEntity.ok(Map.of(
                 "rules", refundPolicyConfig.getRules(),

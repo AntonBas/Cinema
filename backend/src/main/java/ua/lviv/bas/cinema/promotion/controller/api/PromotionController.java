@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,7 @@ public class PromotionController {
             @ApiResponse(responseCode = "200", description = "Promotions retrieved successfully")
     })
     @PreAuthorize("permitAll()")
+    @SecurityRequirements()
     public List<PromotionResponse> getAvailablePromotions(@AuthenticationPrincipal CustomUserDetails currentUser) {
         User user = currentUser != null ? userService.getUser(currentUser.getUserId()) : null;
         log.info("GET /api/promotions - user: {}", user != null ? user.getId() : "anonymous");

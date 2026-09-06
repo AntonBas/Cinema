@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.payment.controller.api;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,7 @@ public class LiqPayCallbackController {
             @ApiResponse(responseCode = "200", description = "Callback processed successfully"),
             @ApiResponse(responseCode = "400", description = "Missing required parameters")
     })
+    @SecurityRequirements()
     public String handleCallback(@RequestParam String data, @RequestParam String signature) {
         log.info("POST /api/liqpay/callback");
 
