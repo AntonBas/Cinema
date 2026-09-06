@@ -5,6 +5,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -20,6 +22,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
@@ -49,6 +52,9 @@ public class OAuth2AuthenticationSuccessHandlerTest {
     @InjectMocks
     private OAuth2AuthenticationSuccessHandler successHandler;
 
+    @Captor
+    private ArgumentCaptor<String> urlCaptor;
+
     private final String EMAIL = "test@gmail.com";
     private final Long USER_ID = 1L;
     private final String TOKEN = "jwt-token-123";
@@ -71,7 +77,10 @@ public class OAuth2AuthenticationSuccessHandlerTest {
 
         successHandler.onAuthenticationSuccess(request, response, authentication);
 
-        verify(response).encodeRedirectURL(anyString());
+        verify(response).encodeRedirectURL(urlCaptor.capture());
+        String redirectUrl = urlCaptor.getValue();
+        assertThat(redirectUrl).contains("#token=" + TOKEN);
+        assertThat(redirectUrl).doesNotContain("?token=");
     }
 
     @Test
