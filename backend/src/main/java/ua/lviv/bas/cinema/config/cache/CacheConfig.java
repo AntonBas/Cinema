@@ -1,5 +1,6 @@
 package ua.lviv.bas.cinema.config.cache;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,6 +30,7 @@ import java.util.Map;
 public class CacheConfig {
 
     @Bean
+    @ConditionalOnProperty(prefix = "spring.cache", name = "type", havingValue = "redis")
     RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(30))
