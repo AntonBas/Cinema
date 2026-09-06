@@ -1,7 +1,5 @@
 package ua.lviv.bas.cinema.movie.controller.admin;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -33,9 +31,6 @@ public class AdminMovieControllerTest {
     @Mock
     private MovieService movieService;
 
-    @Mock
-    private ObjectMapper objectMapper;
-
     @InjectMocks
     private AdminMovieController movieController;
 
@@ -51,8 +46,7 @@ public class AdminMovieControllerTest {
     }
 
     @Test
-    void createMovieShouldReturnCreatedMovie() throws Exception {
-        String movieDataJson = "{\"title\":\"New Movie\",\"description\":\"Description\",\"durationMinutes\":120}";
+    void createMovieShouldReturnCreatedMovie() {
         MockMultipartFile posterFile = new MockMultipartFile("posterFile", "poster.jpg", "image/jpeg",
                 "content".getBytes());
         MovieAdminResponse responseDto = createMovieAdminResponse("New Movie");
@@ -60,28 +54,14 @@ public class AdminMovieControllerTest {
         MovieCreateRequest request = MovieCreateRequest.builder().title("New Movie").description("Description")
                 .durationMinutes(120).build();
 
-        when(objectMapper.readValue(movieDataJson, MovieCreateRequest.class)).thenReturn(request);
         when(movieService.createMovie(any(MovieCreateRequest.class))).thenReturn(responseDto);
 
-        MovieAdminResponse response = movieController.createMovie(movieDataJson, posterFile);
+        MovieAdminResponse response = movieController.createMovie(request, posterFile);
 
         assertThat(response).isNotNull();
         assertThat(response.title()).isEqualTo("New Movie");
-        verify(movieService).createMovie(any(MovieCreateRequest.class));
-    }
-
-    @Test
-    void createMovieWithInvalidJsonShouldThrowException() throws Exception {
-        String invalidMovieDataJson = "invalid json";
-        MockMultipartFile posterFile = new MockMultipartFile("posterFile", "poster.jpg", "image/jpeg",
-                "content".getBytes());
-
-        when(objectMapper.readValue(invalidMovieDataJson, MovieCreateRequest.class))
-                .thenThrow(new JsonProcessingException("Invalid JSON") {
-                });
-
-        assertThrows(IllegalArgumentException.class,
-                () -> movieController.createMovie(invalidMovieDataJson, posterFile));
+        assertThat(request.getPosterFile()).isEqualTo(posterFile);
+        verify(movieService).createMovie(request);
     }
 
     @Test
@@ -182,8 +162,7 @@ public class AdminMovieControllerTest {
     }
 
     @Test
-    void updateMovieShouldReturnUpdatedMovie() throws Exception {
-        String movieDataJson = "{\"title\":\"Updated Movie\",\"description\":\"Updated Description\",\"durationMinutes\":130,\"removePoster\":false}";
+    void updateMovieShouldReturnUpdatedMovie() {
         MockMultipartFile posterFile = new MockMultipartFile("posterFile", "poster.jpg", "image/jpeg",
                 "content".getBytes());
         MovieAdminResponse responseDto = createMovieAdminResponse("Updated Movie");
@@ -191,46 +170,30 @@ public class AdminMovieControllerTest {
         MovieUpdateRequest request = MovieUpdateRequest.builder().title("Updated Movie")
                 .description("Updated Description").durationMinutes(130).removePoster(false).build();
 
-        when(objectMapper.readValue(movieDataJson, MovieUpdateRequest.class)).thenReturn(request);
         when(movieService.updateMovie(eq(1L), any(MovieUpdateRequest.class))).thenReturn(responseDto);
 
-        MovieAdminResponse response = movieController.updateMovie(1L, movieDataJson, posterFile);
+        MovieAdminResponse response = movieController.updateMovie(1L, request, posterFile);
 
         assertThat(response).isNotNull();
         assertThat(response.title()).isEqualTo("Updated Movie");
-        verify(movieService).updateMovie(eq(1L), any(MovieUpdateRequest.class));
+        assertThat(request.getPosterFile()).isEqualTo(posterFile);
+        verify(movieService).updateMovie(eq(1L), eq(request));
     }
 
     @Test
-    void updateMovieWithoutPosterShouldReturnUpdatedMovie() throws Exception {
-        String movieDataJson = "{\"title\":\"Updated Movie\",\"description\":\"Updated Description\",\"durationMinutes\":130,\"removePoster\":true}";
+    void updateMovieWithoutPosterShouldReturnUpdatedMovie() {
         MovieAdminResponse responseDto = createMovieAdminResponse("Updated Movie");
 
         MovieUpdateRequest request = MovieUpdateRequest.builder().title("Updated Movie")
                 .description("Updated Description").durationMinutes(130).removePoster(true).build();
 
-        when(objectMapper.readValue(movieDataJson, MovieUpdateRequest.class)).thenReturn(request);
         when(movieService.updateMovie(eq(1L), any(MovieUpdateRequest.class))).thenReturn(responseDto);
 
-        MovieAdminResponse response = movieController.updateMovie(1L, movieDataJson, null);
+        MovieAdminResponse response = movieController.updateMovie(1L, request, null);
 
         assertThat(response).isNotNull();
         assertThat(response.title()).isEqualTo("Updated Movie");
-        verify(movieService).updateMovie(eq(1L), any(MovieUpdateRequest.class));
-    }
-
-    @Test
-    void updateMovieWithInvalidJsonShouldThrowException() throws Exception {
-        String invalidMovieDataJson = "invalid json";
-        MockMultipartFile posterFile = new MockMultipartFile("posterFile", "poster.jpg", "image/jpeg",
-                "content".getBytes());
-
-        when(objectMapper.readValue(invalidMovieDataJson, MovieUpdateRequest.class))
-                .thenThrow(new JsonProcessingException("Invalid JSON") {
-                });
-
-        assertThrows(IllegalArgumentException.class,
-                () -> movieController.updateMovie(1L, invalidMovieDataJson, posterFile));
+        verify(movieService).updateMovie(eq(1L), eq(request));
     }
 
     @Test

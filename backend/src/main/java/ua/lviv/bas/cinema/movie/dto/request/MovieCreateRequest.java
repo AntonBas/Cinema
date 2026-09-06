@@ -75,6 +75,5 @@ public class MovieCreateRequest {
     private List<Long> screenwriterIds;
 
     @Schema(description = "Movie poster image file (JPG, PNG)", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotNull(message = "Poster is required")
     private MultipartFile posterFile;
 }

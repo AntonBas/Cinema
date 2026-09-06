@@ -18,8 +18,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -46,7 +45,6 @@ import ua.lviv.bas.cinema.movie.service.MovieService;
 public class AdminMovieController {
 
     private final MovieService movieService;
-    private final ObjectMapper objectMapper;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
@@ -56,10 +54,9 @@ public class AdminMovieController {
             @ApiResponse(responseCode = "400", description = "Invalid request data"),
             @ApiResponse(responseCode = "403", description = "Access denied")
     })
-    public MovieAdminResponse createMovie(@RequestPart("movieData") String movieDataJson,
+    public MovieAdminResponse createMovie(@Valid @RequestPart("movieData") MovieCreateRequest request,
                                           @RequestPart(value = "posterFile") MultipartFile posterFile) {
         log.info("POST /api/admin/movies - Creating new movie");
-        var request = parseRequest(movieDataJson, MovieCreateRequest.class);
         request.setPosterFile(posterFile);
         return movieService.createMovie(request);
     }
@@ -96,10 +93,10 @@ public class AdminMovieController {
             @ApiResponse(responseCode = "403", description = "Access denied"),
             @ApiResponse(responseCode = "404", description = "Movie not found")
     })
-    public MovieAdminResponse updateMovie(@PathVariable Long id, @RequestPart("movieData") String movieDataJson,
+    public MovieAdminResponse updateMovie(@PathVariable Long id,
+                                          @Valid @RequestPart("movieData") MovieUpdateRequest request,
                                           @RequestPart(value = "posterFile", required = false) MultipartFile posterFile) {
         log.info("PUT /api/admin/movies/{} - Updating movie", id);
-        var request = parseRequest(movieDataJson, MovieUpdateRequest.class);
         request.setPosterFile(posterFile);
         return movieService.updateMovie(id, request);
     }
@@ -115,14 +112,5 @@ public class AdminMovieController {
     public void deleteMovie(@PathVariable Long id) {
         log.info("DELETE /api/admin/movies/{} - Deleting movie", id);
         movieService.deleteMovie(id);
-    }
-
-    private <T> T parseRequest(String json, Class<T> clazz) {
-        try {
-            return objectMapper.readValue(json, clazz);
-        } catch (JsonProcessingException e) {
-            log.error("Error parsing request data", e);
-            throw new IllegalArgumentException("Invalid request data format", e);
-        }
     }
 }
