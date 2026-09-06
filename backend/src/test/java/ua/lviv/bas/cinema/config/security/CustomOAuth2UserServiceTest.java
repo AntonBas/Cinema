@@ -39,6 +39,9 @@ public class CustomOAuth2UserServiceTest {
     private AuditService auditService;
 
     @Mock
+    private CustomUserDetailsService customUserDetailsService;
+
+    @Mock
     private OAuth2User oAuth2User;
 
     @InjectMocks
@@ -90,8 +93,9 @@ public class CustomOAuth2UserServiceTest {
 
     @Test
     void loadUser_EnablesExistingUser_WhenUserIsDisabled() throws Exception {
+        String originalPassword = "attacker-set-password-hash";
         User existingUser = User.builder().email(EMAIL).firstName(FIRST_NAME).lastName(LAST_NAME).enabled(false)
-                .build();
+                .password(originalPassword).build();
 
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(existingUser));
 
@@ -100,7 +104,10 @@ public class CustomOAuth2UserServiceTest {
         OAuth2User result = (OAuth2User) processMethod.invoke(customOAuth2UserService, oAuth2User);
 
         assertThat(existingUser.isEnabled()).isTrue();
+        assertThat(existingUser.getPassword()).isNotEqualTo(originalPassword);
+        assertThat(UUID.fromString(existingUser.getPassword())).isNotNull();
         verify(userRepository).save(existingUser);
+        verify(customUserDetailsService).evict(EMAIL);
         assertThat(result).isEqualTo(oAuth2User);
 
         verify(bonusLedgerService, never()).getOrCreateCard(any());

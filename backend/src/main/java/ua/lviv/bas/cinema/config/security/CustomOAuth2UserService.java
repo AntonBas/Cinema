@@ -30,6 +30,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final UserRepository userRepository;
     private final BonusLedgerService bonusLedgerService;
     private final AuditService auditService;
+    private final CustomUserDetailsService customUserDetailsService;
 
     @Override
     @Transactional
@@ -55,8 +56,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             user = userOptional.get();
             if (!user.isEnabled()) {
                 user.setEnabled(true);
+                user.setPassword(UUID.randomUUID().toString());
                 userRepository.save(user);
-                log.info("Enabled existing OAuth2 user {}", email);
+                customUserDetailsService.evict(email);
+                log.info("Enabled existing OAuth2 user {} and invalidated local password", email);
             }
         } else {
             user = User.builder().email(email).firstName(firstName).lastName(lastName)
