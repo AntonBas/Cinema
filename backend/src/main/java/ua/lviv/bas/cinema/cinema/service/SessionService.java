@@ -26,10 +26,8 @@ import ua.lviv.bas.cinema.cinema.mapper.SessionMapper;
 import ua.lviv.bas.cinema.movie.repository.MovieRepository;
 import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.cinema.repository.projection.SessionAdminProjection;
-import ua.lviv.bas.cinema.cinema.repository.projection.SessionScheduleProjection;
 import ua.lviv.bas.cinema.cinema.repository.specification.SessionSpecification;
 import ua.lviv.bas.cinema.booking.service.SeatReservationService;
-import ua.lviv.bas.cinema.common.CacheableList;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 
@@ -51,6 +49,7 @@ public class SessionService {
     private final MovieRepository movieRepository;
     private final CinemaHallService cinemaHallService;
     private final SeatReservationService seatReservationService;
+    private final SessionScheduleQueryService sessionScheduleQueryService;
     private final AuditService auditService;
 
     @CacheEvict(value = {"sessions", "seatAvailability"}, allEntries = true)
@@ -77,27 +76,19 @@ public class SessionService {
         return sessionMapper.toSessionResponse(saved);
     }
 
-    @Cacheable(value = "sessions", key = "'schedule:' + #searchTerm + ':' + #date + ':' + #movieId")
     public List<SessionScheduleResponse> getSchedule(String searchTerm, LocalDate date, Long movieId) {
-        Specification<Session> spec = sessionSpecification.forSchedule(searchTerm, date, movieId);
-        var sessions = sessionRepository.findAll(spec);
+        var schedule = sessionScheduleQueryService.getScheduleWithoutAvailability(searchTerm, date, movieId);
 
-        if (sessions.isEmpty()) {
-            return new CacheableList<>(List.of());
+        if (schedule.isEmpty()) {
+            return schedule;
         }
 
-        var sessionIds = sessions.stream().map(Session::getId).toList();
+        var sessionIds = schedule.stream().map(SessionScheduleResponse::id).toList();
         var availableSeats = seatReservationService.getAvailableSeatsBatch(sessionIds);
 
-        var projections = sessionRepository.findScheduleProjectionsByIds(sessionIds)
-                .stream()
-                .collect(Collectors.toMap(SessionScheduleProjection::getId, p -> p));
-
-        return new CacheableList<>(sessions.stream().map(session -> {
-            var proj = projections.get(session.getId());
-            return sessionMapper.toSessionScheduleResponse(proj)
-                    .withAvailableSeats(availableSeats.getOrDefault(session.getId(), 0));
-        }).toList());
+        return schedule.stream()
+                .map(response -> response.withAvailableSeats(availableSeats.getOrDefault(response.id(), 0)))
+                .toList();
     }
 
     @Cacheable(value = "sessions", key = "'admin:' + #hallId + ':' + #movieTitle + ':' + #status + ':' + #dateFrom + ':' + #dateTo + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")

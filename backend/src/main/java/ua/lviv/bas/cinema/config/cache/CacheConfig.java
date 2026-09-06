@@ -18,6 +18,8 @@ import tools.jackson.core.JsonParser;
 import tools.jackson.databind.DeserializationContext;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import tools.jackson.databind.jsontype.PolymorphicTypeValidator;
 import tools.jackson.databind.module.SimpleModule;
 
 import java.time.Duration;
@@ -61,7 +63,15 @@ public class CacheConfig {
 
     private static RedisSerializer<Object> pageAwareJsonSerializer() {
         return GenericJacksonJsonRedisSerializer.create(it -> it.enableSpringCacheNullValueSupport()
-                .enableUnsafeDefaultTyping().customize(builder -> builder.addModule(pageImplModule())));
+                .enableDefaultTyping(cachedTypeValidator())
+                .customize(builder -> builder.addModule(pageImplModule())));
+    }
+
+    private static PolymorphicTypeValidator cachedTypeValidator() {
+        return BasicPolymorphicTypeValidator.builder()
+                .allowIfSubType("ua.lviv.bas.cinema.")
+                .allowIfSubType("java.")
+                .build();
     }
 
     private static SimpleModule pageImplModule() {
