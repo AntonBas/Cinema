@@ -139,7 +139,7 @@ public class PaymentGatewayService {
             log.warn("Ambiguous LiqPay status '{}' for order {} while reconciling a stuck refund", status, orderId);
             return RefundGatewayStatus.UNKNOWN;
         } catch (Exception e) {
-            log.warn("Failed to check LiqPay refund status for order {}: {}", orderId, e.getMessage());
+            log.warn("Failed to check LiqPay refund status for order {}", orderId, e);
             return RefundGatewayStatus.UNKNOWN;
         }
     }
@@ -154,7 +154,7 @@ public class PaymentGatewayService {
             var status = (String) responseMap.get("status");
             return new PaymentGatewayCheckResult(mapPaymentStatus(status), toStringMap(responseMap));
         } catch (Exception e) {
-            log.warn("Failed to check LiqPay payment status for order {}: {}", orderId, e.getMessage());
+            log.warn("Failed to check LiqPay payment status for order {}", orderId, e);
             return new PaymentGatewayCheckResult(PaymentGatewayStatus.UNKNOWN, Map.of());
         }
     }

@@ -137,7 +137,7 @@ public class RefundTransactionExecutor {
         refund.setStatus(RefundStatus.REJECTED);
         refundRepository.save(refund);
         auditRejected(refund, cause);
-        log.warn("Refund {} rejected: {}", refundId, cause.getMessage());
+        log.warn("Refund {} rejected", refundId, cause);
     }
 
     private void auditCreated(Refund refund, Ticket ticket, RefundCalculator.RefundCalculation calculation) {
