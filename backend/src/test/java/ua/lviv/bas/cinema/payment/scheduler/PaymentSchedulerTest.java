@@ -26,6 +26,7 @@ import ua.lviv.bas.cinema.payment.service.PaymentGatewayCheckResult;
 import ua.lviv.bas.cinema.payment.service.PaymentGatewayService;
 import ua.lviv.bas.cinema.payment.service.PaymentGatewayStatus;
 import ua.lviv.bas.cinema.payment.service.PaymentService;
+import ua.lviv.bas.cinema.payment.service.PaymentSuccessOrchestrator;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -53,6 +54,8 @@ class PaymentSchedulerTest {
     @Mock
     private PaymentGatewayService paymentGatewayService;
     @Mock
+    private PaymentSuccessOrchestrator paymentSuccessOrchestrator;
+    @Mock
     private CacheManager cacheManager;
     @Mock
     private Cache cache;
@@ -70,6 +73,7 @@ class PaymentSchedulerTest {
     void setUp() {
         testSession = Session.builder().id(SESSION_ID).build();
         ReflectionTestUtils.setField(paymentScheduler, "processingTimeoutMinutes", 15);
+        ReflectionTestUtils.setField(paymentScheduler, "orchestrationStuckTimeoutMinutes", 15);
     }
 
     @Test
@@ -224,6 +228,46 @@ class PaymentSchedulerTest {
         paymentScheduler.reconcileStuckProcessingPayments();
 
         verifyNoInteractions(paymentService);
+    }
+
+    @Test
+    void reconcileStuckSuccessfulPaymentsWhenNoneFoundShouldDoNothing() {
+        when(paymentRepository.findByStatusAndBookingStatusAndLastModifiedDateBefore(eq(PaymentStatus.SUCCESS),
+                eq(BookingStatus.PENDING), any(LocalDateTime.class))).thenReturn(List.of());
+
+        paymentScheduler.reconcileStuckSuccessfulPayments();
+
+        verifyNoInteractions(paymentSuccessOrchestrator);
+    }
+
+    @Test
+    void reconcileStuckSuccessfulPaymentsShouldRetryOrchestrationForEachStuckPayment() {
+        var booking = Booking.builder().id(1L).session(testSession).status(BookingStatus.PENDING).build();
+        var payment = Payment.builder().id(2L).booking(booking).status(PaymentStatus.SUCCESS).build();
+
+        when(paymentRepository.findByStatusAndBookingStatusAndLastModifiedDateBefore(eq(PaymentStatus.SUCCESS),
+                eq(BookingStatus.PENDING), any(LocalDateTime.class))).thenReturn(List.of(payment));
+
+        paymentScheduler.reconcileStuckSuccessfulPayments();
+
+        verify(paymentSuccessOrchestrator).handle(2L);
+    }
+
+    @Test
+    void reconcileStuckSuccessfulPaymentsWhenOneFailsShouldStillProcessTheRest() {
+        var bookingA = Booking.builder().id(1L).session(testSession).status(BookingStatus.PENDING).build();
+        var bookingB = Booking.builder().id(2L).session(testSession).status(BookingStatus.PENDING).build();
+        var paymentA = Payment.builder().id(10L).booking(bookingA).status(PaymentStatus.SUCCESS).build();
+        var paymentB = Payment.builder().id(11L).booking(bookingB).status(PaymentStatus.SUCCESS).build();
+
+        when(paymentRepository.findByStatusAndBookingStatusAndLastModifiedDateBefore(eq(PaymentStatus.SUCCESS),
+                eq(BookingStatus.PENDING), any(LocalDateTime.class))).thenReturn(List.of(paymentA, paymentB));
+        doThrow(new RuntimeException("still broken")).when(paymentSuccessOrchestrator).handle(10L);
+
+        paymentScheduler.reconcileStuckSuccessfulPayments();
+
+        verify(paymentSuccessOrchestrator).handle(10L);
+        verify(paymentSuccessOrchestrator).handle(11L);
     }
 
     @Test

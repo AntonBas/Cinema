@@ -115,11 +115,13 @@ public class RefundServiceTest {
 
     @Test
     void getPreviewShouldSucceed() {
+        var expectedDeadline = testSession.getStartTime().minusHours(2);
         when(ticketService.findActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
         when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(true);
         when(refundRules.getRefundPercentage(testSession.getStartTime())).thenReturn(PERCENTAGE);
         when(refundRules.getPolicyName(testSession.getStartTime())).thenReturn("Standard Refund");
         when(refundRules.getPolicyDescription(testSession.getStartTime())).thenReturn("70% refund before 3 hours");
+        when(refundRules.getRefundDeadline(testSession.getStartTime())).thenReturn(expectedDeadline);
 
         RefundPreviewResponse response = refundService.getPreview(previewRequest, USER_ID);
 
@@ -128,6 +130,7 @@ public class RefundServiceTest {
         assertThat(response.isRefundable()).isTrue();
         assertThat(response.refundAmount()).isEqualTo(REFUND_AMOUNT);
         assertThat(response.bonusPointsToRefund()).isEqualTo(BONUS_POINTS_TO_REFUND);
+        assertThat(response.refundDeadline()).isEqualTo(expectedDeadline);
     }
 
     @Test

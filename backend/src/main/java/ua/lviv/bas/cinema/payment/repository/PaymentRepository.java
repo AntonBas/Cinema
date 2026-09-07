@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
 import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 
@@ -34,6 +35,11 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             @Param("createdDate") LocalDateTime createdDate);
 
     List<Payment> findByStatusInAndCreatedDateBefore(List<PaymentStatus> statuses, LocalDateTime createdDate);
+
+    @Query("SELECT p FROM Payment p WHERE p.status = :status AND p.booking.status = :bookingStatus "
+            + "AND p.lastModifiedDate < :cutoff")
+    List<Payment> findByStatusAndBookingStatusAndLastModifiedDateBefore(@Param("status") PaymentStatus status,
+            @Param("bookingStatus") BookingStatus bookingStatus, @Param("cutoff") LocalDateTime cutoff);
 
     @Modifying
     @Query("UPDATE Payment p SET p.status = :newStatus WHERE p.id = :id AND p.status IN :fromStatuses")

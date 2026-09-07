@@ -9,6 +9,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import ua.lviv.bas.cinema.booking.domain.Booking;
+import ua.lviv.bas.cinema.booking.domain.SeatReservation;
+import ua.lviv.bas.cinema.cinema.domain.Seat;
+import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.refund.domain.Refund;
 import ua.lviv.bas.cinema.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.movie.domain.Movie;
@@ -24,10 +27,12 @@ import ua.lviv.bas.cinema.exception.domain.ticket.TicketValidationException;
 import ua.lviv.bas.cinema.ticket.mapper.TicketMapper;
 import ua.lviv.bas.cinema.ticket.repository.TicketRepository;
 import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.integration.QRCodeService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,6 +54,8 @@ public class TicketServiceTest {
     private AuditService auditService;
     @Mock
     private QRCodeService qrCodeService;
+    @Mock
+    private NumberGeneratorService numberGenerator;
 
     @InjectMocks
     private TicketService ticketService;
@@ -348,6 +355,43 @@ public class TicketServiceTest {
 
             assertThat(testTicket.getRefund()).isNull();
             verify(ticketRepository, never()).save(any());
+        }
+    }
+
+    @Nested
+    class CreateTicketsForBookingTests {
+
+        @Test
+        void createTicketsForBookingShouldCreateOneTicketPerSeatReservation() {
+            var booking = new Booking();
+            booking.setId(72L);
+            booking.setUser(testUser);
+            var payment = Payment.builder().id(5L).build();
+            var seat = Seat.builder().id(1L).row(3).number(4).build();
+            var seatReservation = SeatReservation.builder().id(1L).seat(seat).seatPrice(new BigDecimal("100.00"))
+                    .build();
+            booking.setSeatReservations(List.of(seatReservation));
+
+            when(ticketRepository.existsByBookingId(72L)).thenReturn(false);
+            when(numberGenerator.generateTicketCode()).thenReturn("TKT-NEW1");
+            when(ticketRepository.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+
+            ticketService.createTicketsForBooking(booking, payment);
+
+            verify(ticketRepository).saveAll(anyList());
+        }
+
+        @Test
+        void createTicketsForBookingWhenTicketsAlreadyExistShouldSkip() {
+            var booking = new Booking();
+            booking.setId(72L);
+
+            when(ticketRepository.existsByBookingId(72L)).thenReturn(true);
+
+            ticketService.createTicketsForBooking(booking, Payment.builder().id(5L).build());
+
+            verify(ticketRepository, never()).saveAll(any());
+            verify(numberGenerator, never()).generateTicketCode();
         }
     }
 }

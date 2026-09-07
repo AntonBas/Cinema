@@ -163,8 +163,8 @@ public class PaymentService {
         } catch (RuntimeException e) {
             log.error(
                     "Post-payment processing failed for payment {} (booking {}) after status was already committed "
-                            + "as SUCCESS - tickets/booking confirmation/bonus accrual may be incomplete, manual "
-                            + "reconciliation required",
+                            + "as SUCCESS - tickets/booking confirmation/bonus accrual may be incomplete, "
+                            + "PaymentScheduler.reconcileStuckSuccessfulPayments will retry automatically",
                     payment.getId(), payment.getBooking().getId(), e);
         }
     }

@@ -23,6 +23,8 @@ public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecif
 
     List<Ticket> findByBookingId(Long bookingId);
 
+    boolean existsByBookingId(Long bookingId);
+
     Optional<Ticket> findByIdAndUserIdAndStatus(Long ticketId, Long userId, TicketStatus status);
 
     @Override

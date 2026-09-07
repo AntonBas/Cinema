@@ -57,6 +57,11 @@ public class TicketService {
     @CacheEvict(value = "tickets", allEntries = true)
     @Transactional
     public void createTicketsForBooking(Booking booking, Payment payment) {
+        if (ticketRepository.existsByBookingId(booking.getId())) {
+            log.debug("Tickets already exist for booking {}, skipping creation", booking.getId());
+            return;
+        }
+
         var tickets = booking.getSeatReservations().stream()
                 .map(seatReservation -> buildTicket(booking, payment, seatReservation)).toList();
 
