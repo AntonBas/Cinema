@@ -1,9 +1,9 @@
 # Cinema Management System
 
-Full-stack cinema booking platform: seat reservation, LiqPay payments, refunds, and a bonus loyalty program, built to survive real backend failure modes — race conditions, unreliable payment callbacks, crashes mid-transaction. **Java 21 / Spring Boot 4 / PostgreSQL / Redis / React 19 + TypeScript.** Two-stage seat locking, idempotent payment callbacks, self-healing schedulers, full refund state machine, RBAC across 4 roles, 827 backend tests including dedicated concurrency suites.
+Full-stack cinema booking platform: seat reservation, LiqPay payments, refunds, and a bonus loyalty program, built to survive real backend failure modes — race conditions, unreliable payment callbacks, crashes mid-transaction. **Java 21 / Spring Boot 4 / PostgreSQL / Redis / React 19 + TypeScript.** Two-stage seat locking, idempotent payment callbacks, self-healing schedulers, full refund state machine, RBAC across 4 roles, 833 backend tests including dedicated concurrency suites.
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.0.6-green)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.1.1-green)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)
 ![React](https://img.shields.io/badge/React-19.1.1-61DAFB)
 ![Docker](https://img.shields.io/badge/Docker-✓-blue)
@@ -17,7 +17,7 @@ Full-stack cinema booking platform: seat reservation, LiqPay payments, refunds, 
 
 [![Cinema System Demo](https://img.youtube.com/vi/yTqxdIm_VAo/maxresdefault.jpg)](https://www.youtube.com/watch?v=yTqxdIm_VAo)
 
-![Booking Demo](docs/images/booking.gif)
+![Booking Demo](docs/images/bookingprocess.gif)
 
 ---
 
@@ -45,7 +45,7 @@ Full feature breakdown for every role: [docs/DOCS.md#features](docs/DOCS.md#feat
 
 ## Tech Stack
 
-**Backend** — Java 21, Spring Boot 4.0.6, Spring Security, Spring Data JPA, Hibernate 7, PostgreSQL 15, Flyway, Redis 7, JWT + Google OAuth2, MapStruct, Bucket4j (rate limiting), Testcontainers, GitHub Actions CI
+**Backend** — Java 21, Spring Boot 4.1.1, Spring Security, Spring Data JPA, Hibernate 7, PostgreSQL 15, Flyway, Redis 7, JWT + Google OAuth2, MapStruct, Bucket4j (rate limiting), Testcontainers, GitHub Actions CI
 
 **Frontend** — React 19 + TypeScript, Vite, React Router, Axios, Styled Components
 
@@ -107,7 +107,7 @@ Full write-up of trade-offs and what was learned building this: [docs/DOCS.md](d
 
 ## Testing
 
-- **827 tests** across **108 test classes**, run against real PostgreSQL via **Testcontainers** (no mocked DB in integration tests)
+- **833 tests** across **115 test classes**, run against real PostgreSQL via **Testcontainers** (no mocked DB in integration tests)
 - Dedicated **concurrency test suites** per domain: `SeatReservationConcurrencyTest`, `BookingConcurrencyTest`, `BookingDoubleConfirmConcurrencyTest`, `PaymentCallbackConcurrencyTest`, `RefundCreationConcurrencyTest`, `BonusCardConcurrencyTest`, `BonusRefundPointsRetryConcurrencyTest`, `TicketValidationConcurrencyTest`
 - Failure scenarios verified directly: 10 concurrent bookings for the same seat (exactly 1 wins), 5 duplicate LiqPay callbacks (order reaches `PAID` exactly once), expired reservations auto-released by the scheduler, app killed mid-payment and recovered on restart
 - Runs on every push/PR to `main`/`develop` via GitHub Actions (`.github/workflows/ci.yml`)

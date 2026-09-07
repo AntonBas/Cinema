@@ -481,7 +481,7 @@ Three tabs for complete movie content management:
 
 ### Testing
 
-827 tests across 108 test classes, run with Testcontainers against a real PostgreSQL instance
+833 tests across 115 test classes, run with Testcontainers against a real PostgreSQL instance
 (no mocked DB in integration/concurrency tests). Every domain has a dedicated concurrency suite,
 e.g. `SeatReservationConcurrencyTest`, `BookingConcurrencyTest`,
 `BookingDoubleConfirmConcurrencyTest`, `PaymentCallbackConcurrencyTest`,
@@ -560,25 +560,25 @@ Four configurable rules control the loyalty program:
 | Technology           | Version |
 | :------------------- | :------ |
 | Java                 | 21      |
-| Spring Boot          | 4.0.6   |
-| Spring Security      | 7.0.5   |
-| Spring Data JPA      | 4.0.5   |
-| Spring OAuth2 Client | 4.0.6   |
-| Spring Mail          | 4.0.6   |
-| Spring Cache         | 4.0.6   |
-| Spring Actuator      | 4.0.6   |
+| Spring Boot          | 4.1.1   |
+| Spring Security      | 7.1.1   |
+| Spring Data JPA      | 4.1.1   |
+| Spring OAuth2 Client | 4.1.1   |
+| Spring Mail          | 4.1.1   |
+| Spring Cache         | 4.1.1   |
+| Spring Actuator      | 4.1.1   |
 | PostgreSQL           | 15      |
 | Flyway               | 11.14.1 |
-| JWT (jjwt)           | 0.12.6  |
+| JWT (jjwt)           | 0.13.0  |
 | MapStruct            | 1.6.3   |
-| Lombok               | 1.18.46 |
+| Lombok               | 1.18.48 |
 | Bucket4j             | 8.10.1  |
 | Redis                | 7       |
-| ZXing (QR Code)      | 3.5.3   |
+| ZXing (QR Code)      | 3.5.4   |
 | Gson                 | 2.11.0  |
-| SpringDoc OpenAPI    | 2.8.7   |
+| SpringDoc OpenAPI    | 3.1.1   |
 | Dotenv               | 4.0.0   |
-| Testcontainers       | 1.20.6  |
+| Testcontainers       | 2.0.5   |
 
 ### Frontend
 
@@ -677,6 +677,7 @@ updating session/movie statuses, awarding birthday bonuses, cleaning up expired 
     │   │   └── SectionUsers/
     │   ├── auth/
     │   ├── booking/
+    │   ├── cashier/
     │   ├── home/
     │   ├── layout/
     │   ├── movies/
@@ -690,9 +691,11 @@ updating session/movie statuses, awarding birthday bonuses, cleaning up expired 
     │   ├── account/
     │   ├── auth/
     │   ├── booking/
+    │   ├── cashier/
     │   ├── home/
     │   ├── movies/
-    │   └── sessions/
+    │   ├── sessions/
+    │   └── RefundPolicyPage/
     ├── routes/
     ├── services/
     ├── types/
