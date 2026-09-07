@@ -42,7 +42,7 @@ public class QRCodeService {
             return baos.toByteArray();
 
         } catch (Exception e) {
-            log.error("Failed to generate QR code: {}", e.getMessage());
+            log.error("Failed to generate QR code", e);
             throw new QRCodeGenerationException("Failed to generate QR code", e);
         }
     }

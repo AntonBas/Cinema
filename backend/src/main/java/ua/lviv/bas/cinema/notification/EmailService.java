@@ -202,7 +202,7 @@ public class EmailService {
             sendSimpleEmail(toEmail, subject, contentSupplier.get());
             log.info("Critical email sent to: {}", toEmail);
         } catch (MailException e) {
-            log.error("Failed to send critical email to: {} - {}", toEmail, e.getMessage());
+            log.error("Failed to send critical email to: {}", toEmail, e);
             throw new ExternalServiceException("Email Service", e);
         }
     }
@@ -212,7 +212,7 @@ public class EmailService {
             sendSimpleEmail(toEmail, subject, contentSupplier.get());
             log.info("Non-critical email sent to: {}", toEmail);
         } catch (Exception e) {
-            log.error("Failed to send non-critical email to: {} - {}", toEmail, e.getMessage());
+            log.error("Failed to send non-critical email to: {}", toEmail, e);
         }
     }
 

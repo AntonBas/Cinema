@@ -162,6 +162,8 @@ logging:
     ua.lviv.bas.cinema: INFO
 
 management:
+  server:
+    port: 8081
   endpoints:
     web:
       exposure:

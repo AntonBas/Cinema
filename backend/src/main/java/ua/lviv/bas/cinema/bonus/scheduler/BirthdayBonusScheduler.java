@@ -49,7 +49,7 @@ public class BirthdayBonusScheduler {
 				log.info("Awarded birthday bonus to user {} ({})", user.getId(), user.getEmail());
 			} catch (Exception e) {
 				failedCount++;
-				log.error("Failed to award birthday bonus to user {}: {}", user.getId(), e.getMessage());
+				log.error("Failed to award birthday bonus to user {}", user.getId(), e);
 			}
 		}
 

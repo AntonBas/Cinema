@@ -65,7 +65,7 @@ public class JwtTokenProvider {
             Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token);
             return true;
         } catch (Exception ex) {
-            log.error("JWT token validation failed: {}", ex.getMessage());
+            log.debug("JWT token validation failed: {}", ex.getMessage());
             return false;
         }
     }
