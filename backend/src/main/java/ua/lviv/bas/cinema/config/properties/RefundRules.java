@@ -36,6 +36,10 @@ public class RefundRules {
         return getRefundPercentage(sessionTime).compareTo(BigDecimal.ZERO) > 0;
     }
 
+    public LocalDateTime getRefundDeadline(LocalDateTime sessionTime) {
+        return sessionTime.minusMinutes(MINIMUM_REFUND_MINUTES);
+    }
+
     public String getPolicyName(LocalDateTime sessionTime) {
         long minutesBefore = minutesUntilSession(sessionTime);
 

@@ -121,7 +121,7 @@ public class RefundService {
                 ticket.getFinalPrice(), calculation.refundAmount(), calculation.percentage(), feeAmount,
                 BigDecimal.valueOf(100).subtract(calculation.percentage()), calculation.bonusPointsUsed(),
                 calculation.bonusPointsToRefund(), refundRules.getPolicyName(sessionTime),
-                refundRules.getPolicyDescription(sessionTime), true, null, sessionTime.minusMinutes(30),
+                refundRules.getPolicyDescription(sessionTime), true, null, refundRules.getRefundDeadline(sessionTime),
                 formatRemainingTime(sessionTime), ticket.getPurchaseTime().toString(),
                 ticket.getTicketType().getDisplayName());
     }
