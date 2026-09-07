@@ -132,7 +132,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
         <div className={styles.bonusHeader}>
           <h4>Use Bonus Points</h4>
           <Tooltip content={bonusRules} position="left">
-            <button className={styles.infoButton}>
+            <button className={styles.infoButton} aria-label="Bonus points information">
               <Info size={18} />
             </button>
           </Tooltip>
@@ -156,6 +156,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                   handleBonusPointsChange(parseInt(e.target.value) || 0)
                 }
                 disabled={isBooking || loading}
+                aria-label="Bonus points to use"
               />
               <button
                 className={styles.useAllButton}

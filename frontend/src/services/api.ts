@@ -140,12 +140,24 @@ api.interceptors.response.use(
       }
     }
 
-    if (error.code === "NETWORK_ERROR" || error.message === "Network Error") {
-      console.error("Network error - please check your connection");
+    if (error.code === "ERR_NETWORK" || error.message === "Network Error") {
+      const apiErrorException = new ApiErrorException({
+        message: "Network error. Please check your connection and try again.",
+        status: "NETWORK_ERROR",
+        statusCode: 0,
+        timestamp: new Date().toISOString(),
+      });
+      return Promise.reject(apiErrorException);
     }
 
     if (error.code === "ECONNABORTED") {
-      console.error("Request timeout - please try again");
+      const apiErrorException = new ApiErrorException({
+        message: "Request timed out. Please try again.",
+        status: "TIMEOUT",
+        statusCode: 0,
+        timestamp: new Date().toISOString(),
+      });
+      return Promise.reject(apiErrorException);
     }
 
     return Promise.reject(error);

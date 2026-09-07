@@ -33,12 +33,12 @@ export const HomePage: React.FC = () => {
   const [claimedIds, setClaimedIds] = useState<number[]>([]);
 
   useEffect(() => {
-    getCurrentMoviesForHome();
-    getUpcomingMoviesForHome();
-    getLeavingSoonForHome();
-    getAvailable();
+    getCurrentMoviesForHome().catch(() => {});
+    getUpcomingMoviesForHome().catch(() => {});
+    getLeavingSoonForHome().catch(() => {});
+    getAvailable().catch(() => {});
     if (isAuthenticated) {
-      getClaimed();
+      getClaimed().catch(() => {});
     }
   }, [
     isAuthenticated,
