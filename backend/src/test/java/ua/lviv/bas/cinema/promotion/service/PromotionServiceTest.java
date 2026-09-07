@@ -112,6 +112,28 @@ public class PromotionServiceTest {
     }
 
     @Test
+    void createPromotionWithEndDateBeforeStartDateShouldThrowException() {
+        var invalidRequest = new PromotionRequest(PROMOTION_TITLE, "Summer special promotion", BONUS_POINTS,
+                END_DATE, START_DATE);
+        when(promotionRepository.existsByTitle(PROMOTION_TITLE)).thenReturn(false);
+
+        assertThatThrownBy(() -> promotionService.createPromotion(invalidRequest))
+                .isInstanceOf(InvalidPromotionDateRangeException.class);
+
+        verify(promotionRepository, never()).save(any());
+    }
+
+    @Test
+    void updatePromotionWithEndDateBeforeStartDateShouldThrowException() {
+        var invalidRequest = new PromotionRequest("Updated Title", "Updated description", 200, END_DATE, START_DATE);
+
+        assertThatThrownBy(() -> promotionService.updatePromotion(PROMOTION_ID, invalidRequest))
+                .isInstanceOf(InvalidPromotionDateRangeException.class);
+
+        verify(promotionRepository, never()).save(any());
+    }
+
+    @Test
     void getPromotionsShouldReturnPage() {
         String query = "Summer";
         Pageable pageable = PageRequest.of(0, 10);

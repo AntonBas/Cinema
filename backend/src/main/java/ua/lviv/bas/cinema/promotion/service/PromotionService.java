@@ -18,6 +18,7 @@ import ua.lviv.bas.cinema.promotion.dto.response.PromotionListResponse;
 import ua.lviv.bas.cinema.promotion.dto.response.PromotionResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.promotion.AlreadyClaimedException;
+import ua.lviv.bas.cinema.exception.domain.financial.promotion.InvalidPromotionDateRangeException;
 import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionAlreadyExistsException;
 import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionHasRedemptionsException;
 import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionNotActiveException;
@@ -52,6 +53,8 @@ public class PromotionService {
         if (promotionRepository.existsByTitle(request.title())) {
             throw PromotionAlreadyExistsException.forTitle(request.title());
         }
+
+        validateDateRange(request);
 
         var promotion = promotionMapper.toPromotion(request);
         var saved = promotionRepository.save(promotion);
@@ -91,6 +94,8 @@ public class PromotionService {
     @Transactional
     public PromotionResponse updatePromotion(Long id, PromotionRequest request) {
         log.info("Updating promotion with ID: {}", id);
+
+        validateDateRange(request);
 
         var promotion = findByIdOrThrow(id);
         String oldTitle = promotion.getTitle();
@@ -155,6 +160,14 @@ public class PromotionService {
 
     private Promotion findByIdOrThrow(Long id) {
         return promotionRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Promotion", id));
+    }
+
+    private void validateDateRange(PromotionRequest request) {
+        var startDate = request.startDate();
+        var endDate = request.endDate();
+        if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
+            throw new InvalidPromotionDateRangeException(startDate, endDate);
+        }
     }
 
     private boolean isPromotionActive(Promotion promotion) {

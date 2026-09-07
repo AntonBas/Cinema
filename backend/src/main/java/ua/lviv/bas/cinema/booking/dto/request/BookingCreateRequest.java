@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.booking.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -14,6 +15,7 @@ public record BookingCreateRequest(
         @Schema(description = "Session ID", example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
         Long sessionId,
 
+        @Valid
         @Size(min = 1, max = 10, message = "Minimum 1, maximum 10 seats")
         @NotNull(message = "Seats list is required")
         @Schema(description = "List of selected seats", requiredMode = Schema.RequiredMode.REQUIRED)
