@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.mock.web.MockMultipartFile;
 import ua.lviv.bas.cinema.exception.infrastructure.ExternalServiceException;
+import ua.lviv.bas.cinema.exception.infrastructure.UnsupportedFileTypeException;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -62,11 +63,39 @@ public class FileStorageServiceTest {
     void storeFile_WhenIOException_ShouldThrowException() throws IOException {
         MockMultipartFile file = mock(MockMultipartFile.class);
         when(file.isEmpty()).thenReturn(false);
+        when(file.getContentType()).thenReturn("image/jpeg");
         when(file.getOriginalFilename()).thenReturn("test.jpg");
         when(file.getBytes()).thenThrow(new IOException("Test"));
 
         assertThatThrownBy(() -> fileStorageService.storeFile(file, "test"))
                 .isInstanceOf(ExternalServiceException.class);
+    }
+
+    @Test
+    void storeFile_WhenContentTypeNotAllowed_ShouldThrowUnsupportedFileTypeException() {
+        MockMultipartFile file = new MockMultipartFile("test.html", "test.html", "text/html",
+                "<script>alert(1)</script>".getBytes());
+
+        assertThatThrownBy(() -> fileStorageService.storeFile(file, "test"))
+                .isInstanceOf(UnsupportedFileTypeException.class);
+    }
+
+    @Test
+    void storeFile_WhenContentTypeMissing_ShouldThrowUnsupportedFileTypeException() {
+        MockMultipartFile file = new MockMultipartFile("test", "test", null, "content".getBytes());
+
+        assertThatThrownBy(() -> fileStorageService.storeFile(file, "test"))
+                .isInstanceOf(UnsupportedFileTypeException.class);
+    }
+
+    @Test
+    void storeFile_WhenContentTypeIsWebp_ShouldSucceed() {
+        MockMultipartFile file = new MockMultipartFile("test.webp", "test.webp", "image/webp",
+                "test content".getBytes());
+
+        String result = fileStorageService.storeFile(file, "test");
+
+        assertThat(result).endsWith(".webp");
     }
 
     @Test

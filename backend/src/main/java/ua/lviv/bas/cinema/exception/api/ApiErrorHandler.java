@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import ua.lviv.bas.cinema.exception.core.BusinessException;
@@ -150,6 +151,17 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
                 cv.getPropertyPath().toString(), cv.getInvalidValue(), cv.getMessage()));
 
         log.warn("Constraint violation: {} violations", ex.getConstraintViolations().size());
+
+        return buildResponseEntity(apiError, request);
+    }
+
+    @Override
+    @Nonnull
+    protected ResponseEntity<Object> handleMaxUploadSizeExceededException(@Nonnull MaxUploadSizeExceededException ex,
+                                                                          @Nonnull HttpHeaders headers, @Nonnull HttpStatusCode status, @Nonnull WebRequest request) {
+        ApiError apiError = new ApiError(PAYLOAD_TOO_LARGE, "Uploaded file is too large", ex);
+
+        log.warn("Upload rejected, file too large: {}", ex.getMessage());
 
         return buildResponseEntity(apiError, request);
     }

@@ -6,17 +6,22 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import ua.lviv.bas.cinema.exception.infrastructure.ExternalServiceException;
+import ua.lviv.bas.cinema.exception.infrastructure.UnsupportedFileTypeException;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
 @Service
 public class FileStorageService {
+
+    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of("image/jpeg", "image/png", "image/gif",
+            "image/webp");
 
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
@@ -25,6 +30,12 @@ public class FileStorageService {
         if (file == null || file.isEmpty()) {
             log.warn("Attempted to store null or empty file");
             return null;
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
+            log.warn("Rejected file upload with unsupported content type: {}", contentType);
+            throw new UnsupportedFileTypeException(contentType);
         }
 
         try {
