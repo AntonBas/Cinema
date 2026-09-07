@@ -111,6 +111,12 @@ public class BookingService {
         var orderedSeatSelections = seatSelections.stream()
                 .sorted(Comparator.comparing(BookingCreateRequest.SeatSelectionRequest::seatId)).toList();
 
+        var distinctSeatIdCount = orderedSeatSelections.stream()
+                .map(BookingCreateRequest.SeatSelectionRequest::seatId).distinct().count();
+        if (distinctSeatIdCount != orderedSeatSelections.size()) {
+            throw BookingValidationException.duplicateSeatSelection();
+        }
+
         var ticketTypesById = findTicketTypesByIds(orderedSeatSelections);
 
         for (var seatSelection : orderedSeatSelections) {
@@ -173,15 +179,16 @@ public class BookingService {
 
         seatReservationRepository.saveAll(booking.getSeatReservations());
 
-        if (booking.getBonusPointsUsed() != null && booking.getBonusPointsUsed() > 0) {
-            bonusLedgerService.refundPoints(booking);
-        }
-
         try {
             bookingRepository.saveAndFlush(booking);
         } catch (ObjectOptimisticLockingFailureException e) {
             throw new BookingConcurrentModificationException(bookingId);
         }
+
+        if (booking.getBonusPointsUsed() != null && booking.getBonusPointsUsed() > 0) {
+            bonusLedgerService.refundPoints(booking);
+        }
+
         evictSeatAvailabilityCache(booking.getSession().getId());
         log.info("Cancelled booking {} for user {}", bookingId, user.getId());
         auditCancel(bookingId, oldStatus);
@@ -198,6 +205,10 @@ public class BookingService {
         var booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new EntityNotFoundException("Booking", bookingId));
 
+        if (booking.getStatus() == BookingStatus.CONFIRMED) {
+            log.debug("Booking {} already confirmed, skipping", bookingId);
+            return;
+        }
         if (booking.getStatus() != BookingStatus.PENDING) {
             throw BookingOperationException.onlyPendingCanBeConfirmed();
         }

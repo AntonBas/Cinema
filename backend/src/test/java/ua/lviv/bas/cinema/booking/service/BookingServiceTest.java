@@ -9,6 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.CacheManager;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.test.util.ReflectionTestUtils;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.booking.domain.SeatReservation;
@@ -25,6 +26,7 @@ import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.booking.dto.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.booking.dto.response.BookingResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.booking.BookingConcurrentModificationException;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingOperationException;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingValidationException;
 import ua.lviv.bas.cinema.booking.mapper.BookingMapper;
@@ -296,6 +298,22 @@ public class BookingServiceTest {
     }
 
     @Test
+    void createBookingWhenDuplicateSeatIdShouldThrowException() {
+        var duplicateSelection1 = new BookingCreateRequest.SeatSelectionRequest(SEAT_ID_1, TICKET_TYPE_ADULT_ID);
+        var duplicateSelection2 = new BookingCreateRequest.SeatSelectionRequest(SEAT_ID_1, TICKET_TYPE_ADULT_ID);
+        var duplicateRequest = new BookingCreateRequest(SESSION_ID,
+                Arrays.asList(duplicateSelection1, duplicateSelection2), BONUS_POINTS_USED);
+
+        when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
+
+        assertThatThrownBy(() -> bookingService.createBooking(duplicateRequest, testUser))
+                .isInstanceOf(BookingValidationException.class);
+
+        verifyNoInteractions(seatReservationService);
+        verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
     void getBookingShouldSucceed() {
         when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(savedBooking));
         when(bookingMapper.toResponse(savedBooking)).thenReturn(bookingResponse);
@@ -333,6 +351,24 @@ public class BookingServiceTest {
         verify(bonusLedgerService).refundPoints(booking);
         verify(seatReservationRepository).saveAll(anyList());
         verify(seatAvailabilityCache).evict(SESSION_ID);
+    }
+
+    @Test
+    void cancelBookingWhenOptimisticLockFailsShouldNotRefundBonusPoints() {
+        Booking booking = Booking.builder().id(BOOKING_ID).user(testUser).status(BookingStatus.PENDING)
+                .session(testSession).bonusPointsUsed(BONUS_POINTS_USED)
+                .seatReservations(Arrays.asList(SeatReservation.builder().build(), SeatReservation.builder().build()))
+                .build();
+
+        when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(booking));
+        when(seatReservationRepository.saveAll(anyList())).thenReturn(Collections.emptyList());
+        when(bookingRepository.saveAndFlush(booking))
+                .thenThrow(new ObjectOptimisticLockingFailureException(Booking.class, BOOKING_ID));
+
+        assertThatThrownBy(() -> bookingService.cancelBooking(BOOKING_ID, testUser))
+                .isInstanceOf(BookingConcurrentModificationException.class);
+
+        verifyNoInteractions(bonusLedgerService);
     }
 
     @Test
@@ -382,11 +418,23 @@ public class BookingServiceTest {
 
     @Test
     void confirmBookingWhenNotPendingShouldThrowException() {
-        Booking booking = Booking.builder().id(BOOKING_ID).status(BookingStatus.CONFIRMED).build();
+        Booking booking = Booking.builder().id(BOOKING_ID).status(BookingStatus.CANCELLED).build();
 
         when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.of(booking));
 
         assertThatThrownBy(() -> bookingService.confirmBooking(BOOKING_ID))
                 .isInstanceOf(BookingOperationException.class);
+    }
+
+    @Test
+    void confirmBookingWhenAlreadyConfirmedShouldBeNoOp() {
+        Booking booking = Booking.builder().id(BOOKING_ID).status(BookingStatus.CONFIRMED).build();
+
+        when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.of(booking));
+
+        bookingService.confirmBooking(BOOKING_ID);
+
+        assertThat(booking.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
+        verify(bookingRepository, never()).saveAndFlush(any());
     }
 }
