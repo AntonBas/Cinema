@@ -12,18 +12,22 @@ import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.cinema.dto.session.request.SessionRequest;
 import ua.lviv.bas.cinema.cinema.dto.session.response.SessionResponse;
+import ua.lviv.bas.cinema.cinema.dto.session.response.SessionScheduleResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionOperationException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
 import ua.lviv.bas.cinema.cinema.mapper.SessionMapper;
 import ua.lviv.bas.cinema.movie.repository.MovieRepository;
 import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
+import ua.lviv.bas.cinema.booking.service.SeatReservationService;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,6 +46,10 @@ public class SessionServiceTest {
     private MovieRepository movieRepository;
     @Mock
     private CinemaHallService cinemaHallService;
+    @Mock
+    private SeatReservationService seatReservationService;
+    @Mock
+    private SessionScheduleQueryService sessionScheduleQueryService;
     @Mock
     private AuditService auditService;
 
@@ -244,5 +252,32 @@ public class SessionServiceTest {
                 .isInstanceOf(SessionTimeConflictException.class);
 
         verify(sessionRepository, never()).save(any());
+    }
+
+    @Test
+    void getScheduleWhenEmptyShouldReturnEmptyListWithoutQueryingSeats() {
+        when(sessionScheduleQueryService.getScheduleWithoutAvailability("term", null, MOVIE_ID))
+                .thenReturn(List.of());
+
+        List<SessionScheduleResponse> result = sessionService.getSchedule("term", null, MOVIE_ID);
+
+        assertThat(result).isEmpty();
+        verify(seatReservationService, never()).getAvailableSeatsBatch(any());
+    }
+
+    @Test
+    void getScheduleShouldMergeAvailableSeatsIntoSchedule() {
+        SessionScheduleResponse schedule = new SessionScheduleResponse(SESSION_ID, null, null, BASE_PRICE, null,
+                MOVIE_ID, MOVIE_TITLE, null, null, null, HALL_ID, HALL_NAME, null);
+        SessionScheduleResponse withSeats = schedule.withAvailableSeats(42);
+
+        when(sessionScheduleQueryService.getScheduleWithoutAvailability(null, null, null))
+                .thenReturn(List.of(schedule));
+        when(seatReservationService.getAvailableSeatsBatch(List.of(SESSION_ID)))
+                .thenReturn(Map.of(SESSION_ID, 42));
+
+        List<SessionScheduleResponse> result = sessionService.getSchedule(null, null, null);
+
+        assertThat(result).containsExactly(withSeats);
     }
 }
