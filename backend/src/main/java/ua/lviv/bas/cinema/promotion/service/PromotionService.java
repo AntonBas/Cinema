@@ -65,7 +65,7 @@ public class PromotionService {
         return promotionMapper.toPromotionResponse(saved);
     }
 
-    @Cacheable(value = "promotions", key = "'list-' + #query + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+    @Cacheable(value = "promotions", key = "'list-' + #query + '-' + #pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
     public Page<PromotionListResponse> getPromotions(String query, Pageable pageable) {
         log.info("Getting promotions: query='{}', page={}, size={}", query, pageable.getPageNumber(),
                 pageable.getPageSize());

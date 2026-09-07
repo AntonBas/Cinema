@@ -44,7 +44,7 @@ public class GenreService {
         return genreMapper.toGenreResponse(saved);
     }
 
-    @Cacheable(value = "genres", key = "'list-' + #query + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+    @Cacheable(value = "genres", key = "'list-' + #query + '-' + #pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
     public Page<GenreListResponse> getGenres(String query, Pageable pageable) {
         log.info("Getting genres: query='{}', page={}, size={}", query, pageable.getPageNumber(),
                 pageable.getPageSize());

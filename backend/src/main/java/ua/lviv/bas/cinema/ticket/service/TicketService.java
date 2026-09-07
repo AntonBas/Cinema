@@ -102,7 +102,7 @@ public class TicketService {
         return toTicketResponse(ticket);
     }
 
-    @Cacheable(value = "tickets", key = "'user:' + #user.id + '-' + #status + '-' + #movieTitle + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+    @Cacheable(value = "tickets", key = "'user:' + #user.id + '-' + #status + '-' + #movieTitle + '-' + #pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
     public Page<TicketResponse> getTickets(User user, TicketStatus status, String movieTitle, Pageable pageable) {
         Specification<Ticket> spec = ticketSpecification.buildForUser(user.getId(), status, movieTitle);
         var page = ticketRepository.findAll(spec, pageable);

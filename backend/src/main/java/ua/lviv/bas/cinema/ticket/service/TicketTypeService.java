@@ -59,7 +59,7 @@ public class TicketTypeService {
         return ticketTypeMapper.toTicketTypeResponse(saved);
     }
 
-    @Cacheable(value = "ticketTypes", key = "'list-' + #active + '-' + #category + '-' + #query + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+    @Cacheable(value = "ticketTypes", key = "'list-' + #active + '-' + #category + '-' + #query + '-' + #pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
     public Page<TicketTypeResponse> getTicketTypes(Boolean active, TicketTypeCategory category, String query,
                                                    Pageable pageable) {
         log.info("Getting ticket types: active={}, category={}, query={}, page={}, size={}", active, category, query,

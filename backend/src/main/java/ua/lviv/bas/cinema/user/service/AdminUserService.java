@@ -94,7 +94,7 @@ public class AdminUserService {
         return userMapper.toAdminUserListResponse(updated);
     }
 
-    @Cacheable(value = "users", key = "'list-' + #query + '-' + #role + '-' + #verificationStatus + '-' + #enabled + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+    @Cacheable(value = "users", key = "'list-' + #query + '-' + #role + '-' + #verificationStatus + '-' + #enabled + '-' + #pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
     public Page<AdminUserListResponse> getUsers(String query, UserRole role, VerificationStatus verificationStatus,
             Boolean enabled, Pageable pageable) {
         log.info("Getting users: query={}, role={}, verificationStatus={}, enabled={}, page={}, size={}", query, role,

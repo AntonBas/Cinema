@@ -41,7 +41,7 @@ public class BonusQueryService {
         return buildBalanceResponse(card);
     }
 
-    @Cacheable(value = "bonus", key = "'transactions:' + #userId + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+    @Cacheable(value = "bonus", key = "'transactions:' + #userId + '-' + #pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
     @Transactional(readOnly = true)
     public Page<BonusTransactionResponse> getTransactions(Long userId, Pageable pageable) {
         var page = bonusTransactionRepository.findProjectionsByUserId(userId, pageable);

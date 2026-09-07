@@ -355,18 +355,21 @@ public class BookingServiceTest {
 
     @Test
     void confirmBookingShouldSucceed() {
-        Booking booking = Booking.builder().id(BOOKING_ID).status(BookingStatus.PENDING)
+        Booking booking = Booking.builder().id(BOOKING_ID).status(BookingStatus.PENDING).session(testSession)
                 .seatReservations(Arrays.asList(SeatReservation.builder().build(), SeatReservation.builder().build()))
                 .build();
+        var seatAvailabilityCache = mock(org.springframework.cache.Cache.class);
 
         when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.of(booking));
         when(bookingRepository.saveAndFlush(booking)).thenReturn(booking);
+        when(cacheManager.getCache("seatAvailability")).thenReturn(seatAvailabilityCache);
 
         bookingService.confirmBooking(BOOKING_ID);
 
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
         assertThat(booking.getSeatReservations().get(0).getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
         assertThat(booking.getSeatReservations().get(1).getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
+        verify(seatAvailabilityCache).evict(SESSION_ID);
     }
 
     @Test

@@ -211,6 +211,7 @@ public class BookingService {
         } catch (ObjectOptimisticLockingFailureException e) {
             throw new BookingConcurrentModificationException(bookingId);
         }
+        evictSeatAvailabilityCache(booking.getSession().getId());
         auditConfirm(bookingId, oldStatus);
     }
 

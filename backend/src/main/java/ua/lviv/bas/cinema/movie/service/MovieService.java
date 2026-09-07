@@ -122,7 +122,7 @@ public class MovieService {
         return movieMapper.toMovieDetailResponse(movie);
     }
 
-    @Cacheable(value = "movieLists", key = "'list-' + #query + '-' + #status + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
+    @Cacheable(value = "movieLists", key = "'list-' + #query + '-' + #status + '-' + #pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
     public Page<MovieCardResponse> getMovies(String query, MovieStatus status, Pageable pageable) {
         log.info("Getting movies: query='{}', status={}, page={}, size={}", query, status, pageable.getPageNumber(),
                 pageable.getPageSize());

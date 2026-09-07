@@ -91,7 +91,7 @@ public class SessionService {
                 .toList();
     }
 
-    @Cacheable(value = "sessions", key = "'admin:' + #hallId + ':' + #movieTitle + ':' + #status + ':' + #dateFrom + ':' + #dateTo + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
+    @Cacheable(value = "sessions", key = "'admin:' + #hallId + ':' + #movieTitle + ':' + #status + ':' + #dateFrom + ':' + #dateTo + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort")
     public Page<SessionAdminResponse> getSessions(Long hallId, String movieTitle, CinemaSessionStatus status,
                                                   LocalDate dateFrom, LocalDate dateTo, Pageable pageable) {
 
