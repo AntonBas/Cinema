@@ -71,6 +71,7 @@ public class CacheConfig {
         return BasicPolymorphicTypeValidator.builder()
                 .allowIfSubType("ua.lviv.bas.cinema.")
                 .allowIfSubType("java.")
+                .allowIfSubType("org.springframework.data.domain.")
                 .build();
     }
 
