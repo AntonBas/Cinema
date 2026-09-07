@@ -197,6 +197,18 @@ public class RefundTransactionExecutorTest {
     }
 
     @Test
+    void applySuccessWhenAlreadyRejectedShouldNotResurrectToProcessed() {
+        testRefund.setStatus(RefundStatus.REJECTED);
+        when(refundRepository.findById(REFUND_ID)).thenReturn(Optional.of(testRefund));
+
+        var result = refundTransactionExecutor.applySuccess(REFUND_ID, TICKET_ID);
+
+        assertThat(result.getStatus()).isEqualTo(RefundStatus.REJECTED);
+        verifyNoInteractions(paymentRefundService, bonusLedgerService, ticketService);
+        verify(refundRepository, never()).save(any());
+    }
+
+    @Test
     void applySuccessWhenNoBonusPointsShouldSkipBonusRefund() {
         testRefund.setTotalBonusPointsToDeduct(0);
         when(refundRepository.findById(REFUND_ID)).thenReturn(Optional.of(testRefund));

@@ -98,6 +98,12 @@ public class RefundTransactionExecutor {
             return refund;
         }
 
+        if (refund.getStatus() == RefundStatus.REJECTED) {
+            log.warn("Refund {} already marked REJECTED by reconciliation but the gateway call "
+                    + "reported success afterwards — leaving as REJECTED, manual review required", refundId);
+            return refund;
+        }
+
         var ticket = ticketService.findById(ticketId);
 
         var refundItem = refund.getItems().getFirst();
