@@ -8,6 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.cinema.domain.Seat;
 import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.cinema.domain.enums.SeatType;
+import ua.lviv.bas.cinema.config.properties.BonusProperties;
 import ua.lviv.bas.cinema.ticket.domain.TicketType;
 
 import java.math.BigDecimal;
@@ -30,11 +31,13 @@ public class PriceCalculatorServiceTest {
     @Mock
     private TicketType ticketType;
 
+    private BonusProperties bonusProperties;
     private PriceCalculatorService priceCalculatorService;
 
     @BeforeEach
     void setUp() {
-        priceCalculatorService = new PriceCalculatorService();
+        bonusProperties = new BonusProperties();
+        priceCalculatorService = new PriceCalculatorService(bonusProperties);
     }
 
     @Test
@@ -79,5 +82,14 @@ public class PriceCalculatorServiceTest {
         BigDecimal result = priceCalculatorService.calculateBonusDiscount(null);
 
         assertThat(result).isEqualByComparingTo("0.00");
+    }
+
+    @Test
+    void calculateBonusDiscountShouldUseConfiguredPointValueInsteadOfHardcodedRate() {
+        bonusProperties.setPointValue(new BigDecimal("0.75"));
+
+        BigDecimal result = priceCalculatorService.calculateBonusDiscount(10);
+
+        assertThat(result).isEqualByComparingTo("7.50");
     }
 }
