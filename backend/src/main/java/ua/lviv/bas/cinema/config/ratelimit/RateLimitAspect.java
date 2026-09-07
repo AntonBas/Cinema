@@ -31,7 +31,7 @@ public class RateLimitAspect {
                 response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
                 response.setHeader("X-Rate-Limit-Limit", String.valueOf(rateLimit.value()));
                 response.setHeader("X-Rate-Limit-Remaining", "0");
-                response.setHeader("Retry-After", String.valueOf(rateLimit.duration() * 60));
+                response.setHeader("Retry-After", String.valueOf(rateLimit.duration()));
             }
             return null;
         }

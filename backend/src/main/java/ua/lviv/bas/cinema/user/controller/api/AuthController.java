@@ -62,7 +62,7 @@ public class AuthController {
         return userService.register(request);
     }
 
-    @RateLimit(duration = 1)
+    @RateLimit(value = 5, duration = 60)
     @PostMapping("/login")
     @Operation(summary = "User login")
     @ApiResponses(value = {
