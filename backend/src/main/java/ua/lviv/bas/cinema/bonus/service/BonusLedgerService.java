@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.bonus.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -55,7 +56,10 @@ public class BonusLedgerService {
         this.transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
-    @CacheEvict(value = "bonus", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "bonus", key = "'balance:' + #user.id"),
+            @CacheEvict(value = "bonusTransactions", allEntries = true)
+    })
     public void awardWelcomeBonus(User user) {
         executeWithOptimisticLockRetry(() -> {
             var card = getOrCreateCard(user);
@@ -70,7 +74,10 @@ public class BonusLedgerService {
         });
     }
 
-    @CacheEvict(value = "bonus", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "bonus", key = "'balance:' + #user.id"),
+            @CacheEvict(value = "bonusTransactions", allEntries = true)
+    })
     public void awardBirthdayBonus(User user) {
         if (!canReceiveBirthdayBonus(user)) {
             return;
@@ -89,7 +96,10 @@ public class BonusLedgerService {
         });
     }
 
-    @CacheEvict(value = "bonus", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "bonus", key = "'balance:' + #user.id"),
+            @CacheEvict(value = "bonusTransactions", allEntries = true)
+    })
     public void addPromotionPoints(User user, Integer points, String promotionTitle) {
         validatePositivePoints(points);
         var card = executeWithOptimisticLockRetry(() -> {
@@ -101,7 +111,10 @@ public class BonusLedgerService {
         auditPointsAdded(card, user, points, promotionTitle);
     }
 
-    @CacheEvict(value = "bonus", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "bonus", key = "'balance:' + #userId"),
+            @CacheEvict(value = "bonusTransactions", allEntries = true)
+    })
     public void spendPoints(Long userId, Integer points, Booking booking) {
         var result = executeWithOptimisticLockRetry(() -> {
             bonusQueryService.validateRedemption(userId, points);
@@ -116,23 +129,43 @@ public class BonusLedgerService {
         auditPointsSpent(result.card(), booking, result.oldBalance());
     }
 
-    @CacheEvict(value = "bonus", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "bonus", key = "'balance:' + #userId"),
+            @CacheEvict(value = "bonusTransactions", allEntries = true)
+    })
     public void accruePointsForPayment(Long userId, Integer points, Booking booking, Payment payment) {
         if (points == null || points <= 0) {
             return;
         }
-        var card = executeWithOptimisticLockRetry(() -> {
-            var c = getCardByUserId(userId);
-            addPointsToCard(c, points);
-            bonusCardRepository.save(c);
-            createTransaction(c, points, BonusTransactionType.PAYMENT_ACCRUAL, "PAYMENT_" + payment.getId(),
-                    booking);
-            return c;
-        });
+        var referenceId = "PAYMENT_" + payment.getId();
+        BonusCard card;
+        try {
+            card = executeWithOptimisticLockRetry(() -> {
+                if (bonusTransactionRepository.existsByReferenceId(referenceId)) {
+                    log.debug("Bonus accrual for reference {} already applied, skipping", referenceId);
+                    return null;
+                }
+                var c = getCardByUserId(userId);
+                addPointsToCard(c, points);
+                bonusCardRepository.save(c);
+                createTransaction(c, points, BonusTransactionType.PAYMENT_ACCRUAL, referenceId, booking);
+                return c;
+            });
+        } catch (DataIntegrityViolationException e) {
+            log.debug("Bonus accrual for reference {} already applied concurrently, skipping", referenceId);
+            return;
+        }
+
+        if (card == null) {
+            return;
+        }
         auditPointsAccrued(card, payment, points);
     }
 
-    @CacheEvict(value = "bonus", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "bonus", key = "'balance:' + #booking.user.id"),
+            @CacheEvict(value = "bonusTransactions", allEntries = true)
+    })
     public void refundPoints(Booking booking) {
         if (booking.getBonusPointsUsed() == null || booking.getBonusPointsUsed() <= 0) {
             return;
@@ -164,7 +197,10 @@ public class BonusLedgerService {
         auditPointsRefunded(result.card(), booking, result.oldBalance());
     }
 
-    @CacheEvict(value = "bonus", allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "bonus", key = "'balance:' + #userId"),
+            @CacheEvict(value = "bonusTransactions", allEntries = true)
+    })
     public void refundPointsForTicket(Long userId, Integer points, String referenceId) {
         if (points == null || points <= 0) {
             return;
