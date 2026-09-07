@@ -39,12 +39,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 try {
                     UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities());
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    if (!userDetails.isEnabled()) {
+                        log.warn("Rejected request to {} for disabled user: {}", request.getRequestURI(), email);
+                    } else {
+                        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities());
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                    log.debug("Authenticated user: {}", email);
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                        log.debug("Authenticated user: {}", email);
+                    }
                 } catch (Exception e) {
                     log.error("Could not load user by email: {}", email, e);
                 }
