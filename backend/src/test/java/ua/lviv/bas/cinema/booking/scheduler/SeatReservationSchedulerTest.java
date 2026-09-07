@@ -7,6 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.transaction.PlatformTransactionManager;
 import ua.lviv.bas.cinema.booking.domain.SeatReservation;
 import ua.lviv.bas.cinema.booking.domain.status.ReservationStatus;
 import ua.lviv.bas.cinema.cinema.domain.Session;
@@ -29,6 +30,8 @@ public class SeatReservationSchedulerTest {
     private CacheManager cacheManager;
     @Mock
     private Cache cache;
+    @Mock
+    private PlatformTransactionManager transactionManager;
 
     @InjectMocks
     private SeatReservationScheduler seatReservationScheduler;
@@ -40,7 +43,7 @@ public class SeatReservationSchedulerTest {
 
         seatReservationScheduler.expireTempSeatReservations();
 
-        verify(seatReservationRepository, never()).deleteAll(any());
+        verify(seatReservationRepository, never()).deleteByIdIfStillExpired(any(), any(), any());
         verifyNoInteractions(cacheManager);
     }
 
@@ -48,16 +51,21 @@ public class SeatReservationSchedulerTest {
     void expireTempSeatReservationsShouldDeleteAndEvictCachePerAffectedSession() {
         var sessionA = Session.builder().id(1L).build();
         var sessionB = Session.builder().id(2L).build();
-        var reservationA = SeatReservation.builder().session(sessionA).status(ReservationStatus.PENDING).build();
-        var reservationB = SeatReservation.builder().session(sessionB).status(ReservationStatus.PENDING).build();
+        var reservationA = SeatReservation.builder().id(10L).session(sessionA).status(ReservationStatus.PENDING)
+                .build();
+        var reservationB = SeatReservation.builder().id(20L).session(sessionB).status(ReservationStatus.PENDING)
+                .build();
 
         when(seatReservationRepository.findByStatusAndReservedUntilBefore(eq(ReservationStatus.PENDING),
                 any(LocalDateTime.class))).thenReturn(List.of(reservationA, reservationB));
+        when(seatReservationRepository.deleteByIdIfStillExpired(any(), eq(ReservationStatus.PENDING),
+                any(LocalDateTime.class))).thenReturn(1);
         when(cacheManager.getCache(anyString())).thenReturn(cache);
 
         seatReservationScheduler.expireTempSeatReservations();
 
-        verify(seatReservationRepository).deleteAll(List.of(reservationA, reservationB));
+        verify(seatReservationRepository).deleteByIdIfStillExpired(eq(10L), eq(ReservationStatus.PENDING), any());
+        verify(seatReservationRepository).deleteByIdIfStillExpired(eq(20L), eq(ReservationStatus.PENDING), any());
         verify(cache, times(1)).evict(1L);
         verify(cache, times(1)).evict(2L);
         verify(cache, times(2)).evict(any());
@@ -66,11 +74,15 @@ public class SeatReservationSchedulerTest {
     @Test
     void expireTempSeatReservationsWhenReservationsShareSessionShouldEvictOncePerCache() {
         var session = Session.builder().id(1L).build();
-        var reservationA = SeatReservation.builder().session(session).status(ReservationStatus.PENDING).build();
-        var reservationB = SeatReservation.builder().session(session).status(ReservationStatus.PENDING).build();
+        var reservationA = SeatReservation.builder().id(10L).session(session).status(ReservationStatus.PENDING)
+                .build();
+        var reservationB = SeatReservation.builder().id(20L).session(session).status(ReservationStatus.PENDING)
+                .build();
 
         when(seatReservationRepository.findByStatusAndReservedUntilBefore(eq(ReservationStatus.PENDING),
                 any(LocalDateTime.class))).thenReturn(List.of(reservationA, reservationB));
+        when(seatReservationRepository.deleteByIdIfStillExpired(any(), eq(ReservationStatus.PENDING),
+                any(LocalDateTime.class))).thenReturn(1);
         when(cacheManager.getCache(anyString())).thenReturn(cache);
 
         seatReservationScheduler.expireTempSeatReservations();
@@ -82,15 +94,35 @@ public class SeatReservationSchedulerTest {
     @Test
     void expireTempSeatReservationsWhenCacheAbsentShouldStillDeleteReservations() {
         var session = Session.builder().id(1L).build();
-        var reservation = SeatReservation.builder().session(session).status(ReservationStatus.PENDING).build();
+        var reservation = SeatReservation.builder().id(10L).session(session).status(ReservationStatus.PENDING)
+                .build();
 
         when(seatReservationRepository.findByStatusAndReservedUntilBefore(eq(ReservationStatus.PENDING),
                 any(LocalDateTime.class))).thenReturn(List.of(reservation));
+        when(seatReservationRepository.deleteByIdIfStillExpired(any(), eq(ReservationStatus.PENDING),
+                any(LocalDateTime.class))).thenReturn(1);
         when(cacheManager.getCache(anyString())).thenReturn(null);
 
         seatReservationScheduler.expireTempSeatReservations();
 
-        verify(seatReservationRepository).deleteAll(List.of(reservation));
+        verify(seatReservationRepository).deleteByIdIfStillExpired(eq(10L), eq(ReservationStatus.PENDING), any());
         verifyNoInteractions(cache);
+    }
+
+    @Test
+    void expireTempSeatReservationsWhenConcurrentlyExtendedShouldSkipAndNotEvictCache() {
+        var session = Session.builder().id(1L).build();
+        var reservation = SeatReservation.builder().id(10L).session(session).status(ReservationStatus.PENDING)
+                .build();
+
+        when(seatReservationRepository.findByStatusAndReservedUntilBefore(eq(ReservationStatus.PENDING),
+                any(LocalDateTime.class))).thenReturn(List.of(reservation));
+        when(seatReservationRepository.deleteByIdIfStillExpired(eq(10L), eq(ReservationStatus.PENDING),
+                any(LocalDateTime.class))).thenReturn(0);
+
+        seatReservationScheduler.expireTempSeatReservations();
+
+        verify(seatReservationRepository).deleteByIdIfStillExpired(eq(10L), eq(ReservationStatus.PENDING), any());
+        verifyNoInteractions(cacheManager);
     }
 }

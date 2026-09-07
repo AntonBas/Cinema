@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.booking.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -26,6 +27,11 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
     List<SeatReservation> findByStatus(ReservationStatus status);
 
     List<SeatReservation> findByStatusAndReservedUntilBefore(ReservationStatus status, LocalDateTime reservedUntil);
+
+    @Modifying
+    @Query("DELETE FROM SeatReservation sr WHERE sr.id = :id AND sr.status = :status AND sr.reservedUntil < :cutoff")
+    int deleteByIdIfStillExpired(@Param("id") Long id, @Param("status") ReservationStatus status,
+                                 @Param("cutoff") LocalDateTime cutoff);
 
     Optional<SeatReservation> findBySessionIdAndSeatIdAndStatusAndReservedByUserId(Long sessionId, Long seatId,
                                                                                    ReservationStatus status, Long userId);

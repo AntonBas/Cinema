@@ -15,6 +15,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -53,6 +54,10 @@ public class SeatReservation extends AuditableEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
     private Long id;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "booking_id")
