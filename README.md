@@ -8,6 +8,7 @@ Full-stack cinema booking platform: seat reservation, LiqPay payments, refunds, 
 ![React](https://img.shields.io/badge/React-19.1.1-61DAFB)
 ![Docker](https://img.shields.io/badge/Docker-✓-blue)
 ![CI](https://github.com/AntonBas/Cinema/workflows/CI/badge.svg)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 **[Full Documentation](docs/DOCS.md)** — complete feature descriptions, technical details, and project structure.
 
@@ -134,3 +135,9 @@ docker compose up -d
 | Swagger     | http://localhost:8080/swagger-ui.html |
 
 Local (non-Docker) setup, test accounts, and database reset instructions: [docs/DOCS.md#getting-started](docs/DOCS.md#getting-started)
+
+---
+
+## License
+
+[MIT](LICENSE)
