@@ -8,6 +8,7 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.CacheManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import ua.lviv.bas.cinema.bonus.domain.BonusCard;
@@ -47,6 +48,8 @@ public class BonusLedgerServiceTest {
     private AuditService auditService;
     @Mock
     private PlatformTransactionManager transactionManager;
+    @Mock
+    private CacheManager cacheManager;
     @InjectMocks
     private BonusLedgerService bonusLedgerService;
     @Captor
@@ -65,6 +68,7 @@ public class BonusLedgerServiceTest {
     @BeforeEach
     void setUp() {
         lenient().doNothing().when(auditService).logChange(anyString(), anyLong(), anyString(), any(), any(), any());
+        lenient().when(cacheManager.getCache(anyString())).thenReturn(null);
     }
 
     @Test

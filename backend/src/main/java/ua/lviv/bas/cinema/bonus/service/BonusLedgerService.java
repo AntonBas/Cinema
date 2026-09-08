@@ -1,8 +1,9 @@
 package ua.lviv.bas.cinema.bonus.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -43,10 +44,11 @@ public class BonusLedgerService {
     private final BonusQueryService bonusQueryService;
     private final AuditService auditService;
     private final TransactionTemplate transactionTemplate;
+    private final CacheManager cacheManager;
 
     public BonusLedgerService(BonusCardRepository bonusCardRepository, BonusRulesRepository bonusRulesRepository,
             BonusTransactionRepository bonusTransactionRepository, BonusQueryService bonusQueryService,
-            AuditService auditService, PlatformTransactionManager transactionManager) {
+            AuditService auditService, PlatformTransactionManager transactionManager, CacheManager cacheManager) {
         this.bonusCardRepository = bonusCardRepository;
         this.bonusRulesRepository = bonusRulesRepository;
         this.bonusTransactionRepository = bonusTransactionRepository;
@@ -54,12 +56,10 @@ public class BonusLedgerService {
         this.auditService = auditService;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        this.cacheManager = cacheManager;
     }
 
-    @Caching(evict = {
-            @CacheEvict(value = "bonus", key = "'balance:' + #user.id"),
-            @CacheEvict(value = "bonusTransactions", allEntries = true)
-    })
+    @CacheEvict(value = "bonus", key = "'balance:' + #user.id")
     public void awardWelcomeBonus(User user) {
         executeWithOptimisticLockRetry(() -> {
             var card = getOrCreateCard(user);
@@ -72,12 +72,10 @@ public class BonusLedgerService {
             card.setWelcomeBonusReceived(true);
             bonusCardRepository.save(card);
         });
+        evictTransactionsCache(user.getId());
     }
 
-    @Caching(evict = {
-            @CacheEvict(value = "bonus", key = "'balance:' + #user.id"),
-            @CacheEvict(value = "bonusTransactions", allEntries = true)
-    })
+    @CacheEvict(value = "bonus", key = "'balance:' + #user.id")
     public void awardBirthdayBonus(User user) {
         if (!canReceiveBirthdayBonus(user)) {
             return;
@@ -94,12 +92,10 @@ public class BonusLedgerService {
             card.setLastBirthdayBonusDate(today);
             bonusCardRepository.save(card);
         });
+        evictTransactionsCache(user.getId());
     }
 
-    @Caching(evict = {
-            @CacheEvict(value = "bonus", key = "'balance:' + #user.id"),
-            @CacheEvict(value = "bonusTransactions", allEntries = true)
-    })
+    @CacheEvict(value = "bonus", key = "'balance:' + #user.id")
     public void addPromotionPoints(User user, Integer points, String promotionTitle) {
         validatePositivePoints(points);
         var card = executeWithOptimisticLockRetry(() -> {
@@ -108,31 +104,35 @@ public class BonusLedgerService {
             createTransaction(c, points, BonusTransactionType.PROMOTION_BONUS, "PROMOTION_" + promotionTitle);
             return c;
         });
+        evictTransactionsCache(user.getId());
         auditPointsAdded(card, user, points, promotionTitle);
     }
 
-    @Caching(evict = {
-            @CacheEvict(value = "bonus", key = "'balance:' + #userId"),
-            @CacheEvict(value = "bonusTransactions", allEntries = true)
-    })
+    @CacheEvict(value = "bonus", key = "'balance:' + #userId")
     public void spendPoints(Long userId, Integer points, Booking booking) {
+        var referenceId = "BOOKING_" + booking.getId();
         var result = executeWithOptimisticLockRetry(() -> {
+            if (bonusTransactionRepository.existsByReferenceId(referenceId)) {
+                log.debug("Bonus spend for reference {} already applied, skipping", referenceId);
+                return null;
+            }
             bonusQueryService.validateRedemption(userId, points);
             var card = getCardByUserId(userId);
             int oldBalance = card.getPointsBalance();
             subtractPointsFromCard(card, points);
             bonusCardRepository.save(card);
-            createTransaction(card, -points, BonusTransactionType.BOOKING_SPEND, "BOOKING_" + booking.getId(),
-                    booking);
+            createTransaction(card, -points, BonusTransactionType.BOOKING_SPEND, referenceId, booking);
             return new CardBalanceChange(card, oldBalance);
         });
+
+        if (result == null) {
+            return;
+        }
+        evictTransactionsCache(userId);
         auditPointsSpent(result.card(), booking, result.oldBalance());
     }
 
-    @Caching(evict = {
-            @CacheEvict(value = "bonus", key = "'balance:' + #userId"),
-            @CacheEvict(value = "bonusTransactions", allEntries = true)
-    })
+    @CacheEvict(value = "bonus", key = "'balance:' + #userId")
     public void accruePointsForPayment(Long userId, Integer points, Booking booking, Payment payment) {
         if (points == null || points <= 0) {
             return;
@@ -159,13 +159,11 @@ public class BonusLedgerService {
         if (card == null) {
             return;
         }
+        evictTransactionsCache(userId);
         auditPointsAccrued(card, payment, points);
     }
 
-    @Caching(evict = {
-            @CacheEvict(value = "bonus", key = "'balance:' + #booking.user.id"),
-            @CacheEvict(value = "bonusTransactions", allEntries = true)
-    })
+    @CacheEvict(value = "bonus", key = "'balance:' + #booking.user.id")
     public void refundPoints(Booking booking) {
         if (booking.getBonusPointsUsed() == null || booking.getBonusPointsUsed() <= 0) {
             return;
@@ -194,13 +192,11 @@ public class BonusLedgerService {
         if (result == null) {
             return;
         }
+        evictTransactionsCache(booking.getUser().getId());
         auditPointsRefunded(result.card(), booking, result.oldBalance());
     }
 
-    @Caching(evict = {
-            @CacheEvict(value = "bonus", key = "'balance:' + #userId"),
-            @CacheEvict(value = "bonusTransactions", allEntries = true)
-    })
+    @CacheEvict(value = "bonus", key = "'balance:' + #userId")
     public void refundPointsForTicket(Long userId, Integer points, String referenceId) {
         if (points == null || points <= 0) {
             return;
@@ -227,12 +223,20 @@ public class BonusLedgerService {
         if (result == null) {
             return;
         }
+        evictTransactionsCache(userId);
         auditBonusChange(result.card().getId(), "Ticket " + referenceId, AuditAction.POINTS_REFUNDED,
                 Map.of("points", result.oldBalance()), Map.of("points", result.card().getPointsBalance()));
     }
 
     public BonusCard getOrCreateCard(User user) {
         return bonusCardRepository.findByUserId(user.getId()).orElseGet(() -> createBonusCard(user));
+    }
+
+    private void evictTransactionsCache(Long userId) {
+        Cache cache = cacheManager.getCache(BonusTransactionsCacheResolver.CACHE_NAME_PREFIX + userId);
+        if (cache != null) {
+            cache.clear();
+        }
     }
 
     private void executeWithOptimisticLockRetry(Runnable action) {

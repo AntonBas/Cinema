@@ -53,7 +53,6 @@ public class CacheConfig {
         cacheConfigurations.put("userDetails", defaultConfig.entryTtl(Duration.ofMinutes(15)));
         cacheConfigurations.put("bonusRules", defaultConfig.entryTtl(Duration.ofHours(1)));
         cacheConfigurations.put("bonus", defaultConfig.entryTtl(Duration.ofMinutes(30)));
-        cacheConfigurations.put("bonusTransactions", defaultConfig.entryTtl(Duration.ofMinutes(30)));
         cacheConfigurations.put("promotions", defaultConfig.entryTtl(Duration.ofHours(1)));
 
         return RedisCacheManager.builder(connectionFactory)

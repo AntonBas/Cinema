@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -14,7 +15,10 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import ua.lviv.bas.cinema.bonus.domain.BonusCard;
+import ua.lviv.bas.cinema.bonus.domain.BonusTransaction;
+import ua.lviv.bas.cinema.bonus.domain.BonusTransactionType;
 import ua.lviv.bas.cinema.bonus.repository.BonusCardRepository;
+import ua.lviv.bas.cinema.bonus.repository.BonusTransactionRepository;
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.user.domain.UserRole;
@@ -46,6 +50,8 @@ class BonusLedgerServiceCacheIntegrationTest {
     @Autowired
     private BonusCardRepository bonusCardRepository;
     @Autowired
+    private BonusTransactionRepository bonusTransactionRepository;
+    @Autowired
     private UserRepository userRepository;
 
     @Test
@@ -68,6 +74,31 @@ class BonusLedgerServiceCacheIntegrationTest {
         assertThat(bonusQueryService.getBalance(userB.getId()).pointsBalance())
                 .as("user B's cached balance must survive user A's points mutation")
                 .isEqualTo(50);
+    }
+
+    @Test
+    void mutatingOneUsersPointsShouldNotEvictAnotherUsersCachedTransactionPage() {
+        var userA = userRepository.save(buildUser("zztest.bonus.tx.cache.a@test.com"));
+        var userB = userRepository.save(buildUser("zztest.bonus.tx.cache.b@test.com"));
+        var cardA = bonusCardRepository.save(BonusCard.builder().user(userA).pointsBalance(0).build());
+        var cardB = bonusCardRepository.save(BonusCard.builder().user(userB).pointsBalance(0).build());
+        var pageable = PageRequest.of(0, 10);
+
+        assertThat(bonusQueryService.getTransactions(userA.getId(), pageable)).isEmpty();
+        assertThat(bonusQueryService.getTransactions(userB.getId(), pageable)).isEmpty();
+
+        bonusTransactionRepository.save(BonusTransaction.builder().bonusCard(cardB)
+                .type(BonusTransactionType.PROMOTION_BONUS).pointsChange(30).balanceAfter(30)
+                .referenceId("PROMOTION_direct-db-write").build());
+
+        bonusLedgerService.addPromotionPoints(userA, 20, "TEST_PROMO_TX");
+
+        assertThat(bonusQueryService.getTransactions(userA.getId(), pageable))
+                .as("user A's transaction cache must be refreshed after A's own mutation")
+                .hasSize(1);
+        assertThat(bonusQueryService.getTransactions(userB.getId(), pageable))
+                .as("user B's cached transaction page must survive user A's mutation")
+                .isEmpty();
     }
 
     private User buildUser(String email) {
