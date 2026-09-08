@@ -252,5 +252,7 @@ class RefundCalculatorTest {
         assertThat(result.refundAmount()).isEqualByComparingTo("70.00");
         assertThat(result.bonusPointsUsed()).isEqualTo(50);
         assertThat(result.bonusPointsToRefund()).isEqualTo(35);
+        assertThat(result.feeAmount()).isEqualByComparingTo("30.00");
+        assertThat(result.feePercentage()).isEqualByComparingTo("30");
     }
 }

@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.refund.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.config.properties.RefundRules;
@@ -11,6 +12,7 @@ import ua.lviv.bas.cinema.refund.dto.request.RefundPreviewRequest;
 import ua.lviv.bas.cinema.refund.dto.request.RefundRequest;
 import ua.lviv.bas.cinema.refund.dto.response.RefundPreviewResponse;
 import ua.lviv.bas.cinema.refund.dto.response.RefundResponse;
+import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusCardConcurrentModificationException;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 import ua.lviv.bas.cinema.exception.domain.financial.refund.RefundProcessingException;
 import ua.lviv.bas.cinema.refund.mapper.RefundItemMapper;
@@ -20,7 +22,6 @@ import ua.lviv.bas.cinema.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.common.SeatInfoFormatter;
 import ua.lviv.bas.cinema.ticket.service.TicketService;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
@@ -78,10 +79,10 @@ public class RefundService {
         for (int attempt = 1; attempt <= MAX_APPLY_SUCCESS_ATTEMPTS; attempt++) {
             try {
                 return refundTransactionExecutor.applySuccess(refundId, ticketId);
-            } catch (RuntimeException e) {
+            } catch (OptimisticLockingFailureException | BonusCardConcurrentModificationException e) {
                 lastError = e;
-                log.error("Attempt {}/{} to finalize refund {} failed", attempt, MAX_APPLY_SUCCESS_ATTEMPTS,
-                        refundId, e);
+                log.error("Attempt {}/{} to finalize refund {} failed due to a concurrent update", attempt,
+                        MAX_APPLY_SUCCESS_ATTEMPTS, refundId, e);
             }
         }
         log.error("Refund {} left in PROCESSING after {} failed attempts; RefundScheduler will retry", refundId,
@@ -106,20 +107,15 @@ public class RefundService {
         var sessionTime = ticket.getBooking().getSession().getStartTime();
         var booking = ticket.getBooking();
         var calculation = refundCalculator.calculate(ticket);
-        var feeAmount = calculation.cashAmount().subtract(calculation.refundAmount());
 
-        String seatInfo = "N/A";
-        var seatReservations = booking.getSeatReservations();
-        if (!seatReservations.isEmpty()) {
-            var bookedSeat = seatReservations.getFirst();
-            seatInfo = seatInfoFormatter.format(bookedSeat.getSeat().getRow(), bookedSeat.getSeat().getNumber());
-        }
+        var bookedSeat = booking.getSeatReservations().getFirst();
+        var seatInfo = seatInfoFormatter.format(bookedSeat.getSeat().getRow(), bookedSeat.getSeat().getNumber());
 
         return new RefundPreviewResponse(ticket.getId(), ticket.getUniqueCode(),
                 booking.getSession().getMovie().getTitle(), sessionTime,
                 booking.getSession().getHall().getName(), seatInfo, ticket.getOriginalPrice(),
-                ticket.getFinalPrice(), calculation.refundAmount(), calculation.percentage(), feeAmount,
-                BigDecimal.valueOf(100).subtract(calculation.percentage()), calculation.bonusPointsUsed(),
+                ticket.getFinalPrice(), calculation.refundAmount(), calculation.percentage(), calculation.feeAmount(),
+                calculation.feePercentage(), calculation.bonusPointsUsed(),
                 calculation.bonusPointsToRefund(), refundRules.getPolicyName(sessionTime),
                 refundRules.getPolicyDescription(sessionTime), true, null, refundRules.getRefundDeadline(sessionTime),
                 formatRemainingTime(sessionTime), ticket.getPurchaseTime().toString(),

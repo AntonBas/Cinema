@@ -92,5 +92,13 @@ public class RefundCalculator {
 
     public record RefundCalculation(BigDecimal percentage, BigDecimal cashAmount, BigDecimal refundAmount,
                                     Integer bonusPointsUsed, Integer bonusPointsToRefund) {
+
+        public BigDecimal feeAmount() {
+            return cashAmount.subtract(refundAmount);
+        }
+
+        public BigDecimal feePercentage() {
+            return BigDecimal.valueOf(100).subtract(percentage);
+        }
     }
 }
