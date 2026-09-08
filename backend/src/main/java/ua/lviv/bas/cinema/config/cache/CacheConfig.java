@@ -47,7 +47,8 @@ public class CacheConfig {
         cacheConfigurations.put("singleMovies", defaultConfig.entryTtl(Duration.ofHours(24)));
         cacheConfigurations.put("movieLists", defaultConfig.entryTtl(Duration.ofHours(24)));
         cacheConfigurations.put("seatAvailability", defaultConfig.entryTtl(Duration.ofMinutes(5)));
-        cacheConfigurations.put("tickets", defaultConfig.entryTtl(Duration.ofMinutes(30)));
+        cacheConfigurations.put("ticket", defaultConfig.entryTtl(Duration.ofMinutes(30)));
+        cacheConfigurations.put("ticketList", defaultConfig.entryTtl(Duration.ofMinutes(30)));
         cacheConfigurations.put("ticketTypes", defaultConfig.entryTtl(Duration.ofHours(1)));
         cacheConfigurations.put("users", defaultConfig.entryTtl(Duration.ofMinutes(30)));
         cacheConfigurations.put("userDetails", defaultConfig.entryTtl(Duration.ofMinutes(15)));
