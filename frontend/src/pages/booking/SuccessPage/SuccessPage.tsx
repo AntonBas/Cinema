@@ -29,9 +29,13 @@ const SuccessPage = () => {
         }
 
         const fetchPayment = async () => {
-            const result = await getById(parseInt(id));
-            setPayment(result);
-            setPollingCount(prev => prev + 1);
+            try {
+                const result = await getById(parseInt(id));
+                setPayment(result);
+                setPollingCount(prev => prev + 1);
+            } catch {
+                return;
+            }
         };
 
         fetchPayment();

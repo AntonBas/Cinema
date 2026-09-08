@@ -43,7 +43,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
   const { balance, getMyBalance, loading } = useBonus();
 
   useEffect(() => {
-    getMyBalance();
+    getMyBalance().catch(() => {});
   }, [getMyBalance]);
 
   const bonusBalance = balance?.pointsBalance || 0;

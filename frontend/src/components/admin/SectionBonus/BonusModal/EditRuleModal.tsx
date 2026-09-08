@@ -79,9 +79,13 @@ const EditRuleModal: React.FC<EditRuleModalProps> = ({
             return;
         }
 
-        const result = await updateRule(rule.bonusType as BonusTransactionType, requestData);
-        if (result) {
-            onSuccess();
+        try {
+            const result = await updateRule(rule.bonusType as BonusTransactionType, requestData);
+            if (result) {
+                onSuccess();
+            }
+        } catch {
+            return;
         }
     };
 

@@ -75,14 +75,18 @@ export const BookingPage: React.FC = () => {
         ticketTypeId: seat.ticketTypeId,
       }));
 
-      const response = await create({
-        sessionId: sessionIdNum,
-        seats,
-        bonusPointsToUse: bonusPointsToUse > 0 ? bonusPointsToUse : undefined,
-      });
+      try {
+        const response = await create({
+          sessionId: sessionIdNum,
+          seats,
+          bonusPointsToUse: bonusPointsToUse > 0 ? bonusPointsToUse : undefined,
+        });
 
-      if (response) {
-        navigate(`/booking/summary/${response.id}`);
+        if (response) {
+          navigate(`/booking/summary/${response.id}`);
+        }
+      } catch {
+        return;
       }
     },
     [selectedSeats, sessionIdNum, create, navigate, showNotification],

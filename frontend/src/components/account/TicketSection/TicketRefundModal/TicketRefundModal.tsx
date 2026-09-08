@@ -49,12 +49,12 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
 
   useEffect(() => {
     if (ticket) {
-      getPreview({ ticketId: ticket.id });
+      getPreview({ ticketId: ticket.id }).catch(() => {});
     }
   }, [ticket, getPreview]);
 
   useEffect(() => {
-    getPolicy();
+    getPolicy().catch(() => {});
   }, [getPolicy]);
 
   if (!ticket) return null;
@@ -69,13 +69,17 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
   const handleSubmit = async () => {
     if (!selectedReason || !acceptedTerms) return;
 
-    const result = await processRefund({
-      ticketId: ticket.id,
-      reason: selectedReason,
-    });
+    try {
+      const result = await processRefund({
+        ticketId: ticket.id,
+        reason: selectedReason,
+      });
 
-    if (result) {
-      onRefundSuccess?.();
+      if (result) {
+        onRefundSuccess?.();
+      }
+    } catch {
+      return;
     }
   };
 

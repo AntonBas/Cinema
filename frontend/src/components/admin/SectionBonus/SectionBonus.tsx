@@ -18,7 +18,7 @@ const SectionBonus = () => {
     useState<BonusTransactionType | null>(null);
 
   useEffect(() => {
-    getAllRules();
+    getAllRules().catch(() => {});
   }, [getAllRules]);
 
   const handleEditSuccess = async () => {
