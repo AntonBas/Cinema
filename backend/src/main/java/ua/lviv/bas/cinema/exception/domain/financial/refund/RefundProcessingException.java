@@ -1,7 +1,7 @@
 package ua.lviv.bas.cinema.exception.domain.financial.refund;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpStatus;
-import org.springframework.lang.Nullable;
 
 import ua.lviv.bas.cinema.exception.core.BusinessException;
 

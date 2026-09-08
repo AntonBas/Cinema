@@ -14,6 +14,7 @@ export interface SelectedSeat {
 
 export const useSeatReservation = (sessionId: number, maxSeats?: number) => {
     const [selectedSeats, setSelectedSeats] = useState<SelectedSeat[]>([]);
+    const [pendingSeatId, setPendingSeatId] = useState<number | null>(null);
 
     const { showNotification } = useNotification();
     const seatApi = useApi<SeatReservationResponse>();
@@ -25,7 +26,7 @@ export const useSeatReservation = (sessionId: number, maxSeats?: number) => {
     seatApiRef.current = seatApi;
     holdApiRef.current = holdApi;
 
-    const loading = useDelayedLoading(seatApi.loading || holdApi.loading, { delay: 150, minDisplayTime: 300 });
+    const loading = useDelayedLoading(seatApi.loading, { delay: 150, minDisplayTime: 300 });
 
     const getSeatAvailability = useCallback(async () => {
         return seatApiRef.current.execute(() => seatReservationApi.getSeatAvailability(sessionId));
@@ -46,22 +47,28 @@ export const useSeatReservation = (sessionId: number, maxSeats?: number) => {
     }, [seatApi]);
 
     const temporaryHoldSeat = useCallback(async (seatId: number) => {
+        setPendingSeatId(seatId);
         try {
             await holdApiRef.current.execute(() => seatReservationApi.temporaryHoldSeat(sessionId, seatId));
             updateSeatLocally(seatId, { available: false, temporarilyReserved: true });
             return true;
         } catch {
             return false;
+        } finally {
+            setPendingSeatId(null);
         }
     }, [sessionId, updateSeatLocally]);
 
     const cancelTemporaryHold = useCallback(async (seatId: number) => {
+        setPendingSeatId(seatId);
         try {
             await holdApiRef.current.execute(() => seatReservationApi.cancelTemporaryHold(sessionId, seatId));
             updateSeatLocally(seatId, { available: true, temporarilyReserved: false });
             return true;
         } catch {
             return false;
+        } finally {
+            setPendingSeatId(null);
         }
     }, [sessionId, updateSeatLocally]);
 
@@ -142,6 +149,7 @@ export const useSeatReservation = (sessionId: number, maxSeats?: number) => {
     return {
         data: seatApi.data,
         loading,
+        loadingSeats: pendingSeatId !== null ? [pendingSeatId] : [],
         error: seatApi.error || holdApi.error,
         selectedSeats,
         totalPrice,

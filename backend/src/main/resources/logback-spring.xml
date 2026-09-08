@@ -4,7 +4,7 @@
 		<appender name="CONSOLE"
 			class="ch.qos.logback.core.ConsoleAppender">
 			<encoder>
-				<pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %highlight(%-5level)
+				<pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{correlationId}] %highlight(%-5level)
 					%cyan(%logger{36}) - %msg%n</pattern>
 			</encoder>
 		</appender>
@@ -21,7 +21,7 @@
 				<maxHistory>7</maxHistory>
 			</rollingPolicy>
 			<encoder>
-				<pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} -
+				<pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{correlationId}] %-5level %logger{36} -
 					%msg%n</pattern>
 			</encoder>
 		</appender>
@@ -42,7 +42,7 @@
 				<maxHistory>30</maxHistory>
 			</rollingPolicy>
 			<encoder>
-				<pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} -
+				<pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{correlationId}] %-5level %logger{36} -
 					%msg%n</pattern>
 			</encoder>
 		</appender>

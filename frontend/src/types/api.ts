@@ -11,13 +11,13 @@ export interface ApiError {
 export interface ApiSubError {
   object?: string;
   field?: string;
-  rejectedValue?: any;
+  rejectedValue?: unknown;
   message?: string;
 }
 
 export interface ApiValidationError extends ApiSubError {
   object: string;
   field?: string;
-  rejectedValue?: any;
+  rejectedValue?: unknown;
   message: string;
 }

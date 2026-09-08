@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuditLogs } from '@/hooks/features/audit/useAuditLogs';
 import { AuditLogsFilters } from './AuditLogsFilters/AuditLogsFilters';
 import { AuditLogsTable } from './AuditLogsTable/AuditLogsTable';
+import { EntityHistoryModal } from './EntityHistoryModal/EntityHistoryModal';
 import { Pagination } from '@/components/ui';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
@@ -18,6 +19,8 @@ export const SectionAuditLogs: React.FC = () => {
         clearFilters,
         refresh
     } = useAuditLogs();
+
+    const [selectedEntity, setSelectedEntity] = useState<{ entityType: string; entityId: number } | null>(null);
 
     const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
@@ -85,7 +88,10 @@ export const SectionAuditLogs: React.FC = () => {
             )}
 
             <div className={styles.tableContainer}>
-                <AuditLogsTable logs={auditLogs} />
+                <AuditLogsTable
+                    logs={auditLogs}
+                    onViewHistory={(entityType, entityId) => setSelectedEntity({ entityType, entityId })}
+                />
             </div>
 
             {pagination && pagination.totalPages > 1 && (
@@ -100,6 +106,14 @@ export const SectionAuditLogs: React.FC = () => {
                         showInfo={false}
                     />
                 </div>
+            )}
+
+            {selectedEntity && (
+                <EntityHistoryModal
+                    entityType={selectedEntity.entityType}
+                    entityId={selectedEntity.entityId}
+                    onClose={() => setSelectedEntity(null)}
+                />
             )}
         </div>
     );

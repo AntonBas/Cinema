@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.exception.api;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -14,6 +15,7 @@ import jakarta.annotation.Nonnull;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import ua.lviv.bas.cinema.exception.core.BusinessException;
@@ -36,6 +39,9 @@ import static org.springframework.http.HttpStatus.*;
 @Slf4j
 @SuppressWarnings("unused")
 public class ApiErrorHandler extends ResponseEntityExceptionHandler {
+
+    @Value("${app.debug-errors:false}")
+    private boolean debugErrorsEnabled;
 
     @Override
     @Nonnull
@@ -112,7 +118,7 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     protected ResponseEntity<Object> handleDataIntegrityViolation(@Nonnull DataIntegrityViolationException ex,
                                                                   @Nonnull WebRequest request) {
-        if (ex.getCause() instanceof ConstraintViolationException) {
+        if (ex.getCause() instanceof org.hibernate.exception.ConstraintViolationException) {
             ApiError apiError = new ApiError(CONFLICT, "Database constraint violation", ex.getCause());
             log.warn("Database constraint violation: {}", ex.getMessage());
             return buildResponseEntity(apiError, request);
@@ -153,6 +159,27 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
         return buildResponseEntity(apiError, request);
     }
 
+    @Override
+    @Nonnull
+    protected ResponseEntity<Object> handleMaxUploadSizeExceededException(@Nonnull MaxUploadSizeExceededException ex,
+                                                                          @Nonnull HttpHeaders headers, @Nonnull HttpStatusCode status, @Nonnull WebRequest request) {
+        ApiError apiError = new ApiError(CONTENT_TOO_LARGE, "Uploaded file is too large", ex);
+
+        log.warn("Upload rejected, file too large: {}", ex.getMessage());
+
+        return buildResponseEntity(apiError, request);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    protected ResponseEntity<Object> handleIllegalArgument(@Nonnull IllegalArgumentException ex,
+                                                            @Nonnull WebRequest request) {
+        ApiError apiError = new ApiError(BAD_REQUEST, "Invalid request data", ex);
+
+        log.warn("Illegal argument: {}", ex.getMessage());
+
+        return buildResponseEntity(apiError, request);
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
     protected ResponseEntity<Object> handleBadCredentials(@Nonnull BadCredentialsException ex,
                                                           @Nonnull WebRequest request) {
@@ -172,6 +199,14 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleLocked(@Nonnull LockedException ex, @Nonnull WebRequest request) {
         ApiError apiError = new ApiError(UNAUTHORIZED, "Account is locked");
         log.warn("Locked account attempt: {}", ex.getMessage());
+        return buildResponseEntity(apiError, request);
+    }
+
+    @ExceptionHandler(InsufficientAuthenticationException.class)
+    protected ResponseEntity<Object> handleInsufficientAuthentication(@Nonnull InsufficientAuthenticationException ex,
+                                                                       @Nonnull WebRequest request) {
+        ApiError apiError = new ApiError(UNAUTHORIZED, "Not authenticated");
+        log.warn("Unauthenticated request: {}", ex.getMessage());
         return buildResponseEntity(apiError, request);
     }
 
@@ -196,6 +231,9 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
             apiError.setPath(servletWebRequest.getRequest().getRequestURI());
         } else {
             apiError.setPath("unknown");
+        }
+        if (!debugErrorsEnabled) {
+            apiError.setDebugMessage(null);
         }
         return new ResponseEntity<>(apiError,
                 Objects.requireNonNull(apiError.getStatus(), "ApiError status must not be null"));

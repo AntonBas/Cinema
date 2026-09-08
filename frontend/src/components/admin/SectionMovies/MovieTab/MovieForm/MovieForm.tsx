@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import type { MovieAdminResponse, AgeRating } from '@/types/movie';
+import type { MovieAdminResponse, AgeRating, MovieCreateRequest, MovieUpdateRequest } from '@/types/movie';
 import type { PersonResponse } from '@/types/person';
 import { useMovies } from '@/hooks/features/movies/useMovies';
 import { useGenres } from '@/hooks/features/genres/useGenres';
@@ -8,6 +8,9 @@ import { PersonSelect } from './PersonSelect/PersonSelect';
 import { GenreSearchList } from './GenreSearchList/GenreSearchList';
 import { Button } from '@/components/ui/Button/Button';
 import { Modal } from '@/components/ui/Modal/Modal';
+import { Input } from '@/components/ui/Input/Input';
+import { Select } from '@/components/ui/Select/Select';
+import { Textarea } from '@/components/ui/Textarea/Textarea';
 import styles from './MovieForm.module.css';
 
 interface MovieFormProps {
@@ -71,7 +74,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
 
     useEffect(() => {
         getAllGenres({});
-    }, []);
+    }, [getAllGenres]);
 
     useEffect(() => {
         if (movie) {
@@ -122,7 +125,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
 
-        const request = {
+        const baseRequest = {
             title: formData.title,
             trailerUrl: formData.trailerUrl,
             description: formData.description,
@@ -134,13 +137,18 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
             directorIds: formData.selectedDirectors,
             screenwriterIds: formData.selectedScreenwriters,
             actorIds: formData.selectedActors,
-            posterFile: formData.posterFile,
-            ...(movie && { removePoster: formData.removePoster }),
         };
 
         const result = movie
-            ? await update(movie.id, request as any)
-            : await create(request as any);
+            ? await update(movie.id, {
+                ...baseRequest,
+                posterFile: formData.posterFile,
+                removePoster: formData.removePoster,
+            } satisfies MovieUpdateRequest)
+            : await create({
+                ...baseRequest,
+                posterFile: formData.posterFile as File,
+            } satisfies MovieCreateRequest);
 
         if (result) {
             onSuccess();
@@ -207,13 +215,12 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                 </div>
 
                 <div className={styles.formGroup}>
-                    <label className={styles.label}>Title <span className={styles.required}>*</span></label>
-                    <input
+                    <Input
                         type="text"
-                        value={formData.title}
-                        onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                        label="Title"
                         required
-                        className={styles.input}
+                        value={formData.title}
+                        onChange={value => setFormData(prev => ({ ...prev, title: value }))}
                         placeholder="Enter movie title"
                         maxLength={TITLE_MAX_LENGTH}
                         autoFocus={!movie}
@@ -224,26 +231,24 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                 </div>
 
                 <div className={styles.formGroup}>
-                    <label className={styles.label}>Trailer URL <span className={styles.required}>*</span></label>
-                    <input
+                    <Input
                         type="url"
-                        value={formData.trailerUrl}
-                        onChange={e => setFormData(prev => ({ ...prev, trailerUrl: e.target.value }))}
+                        label="Trailer URL"
                         required
-                        className={styles.input}
+                        value={formData.trailerUrl}
+                        onChange={value => setFormData(prev => ({ ...prev, trailerUrl: value }))}
                         placeholder="https://www.youtube.com/watch?v=..."
                         pattern="https://.*"
                     />
                 </div>
 
                 <div className={styles.formGroup}>
-                    <label className={styles.label}>Description <span className={styles.required}>*</span></label>
-                    <textarea
-                        value={formData.description}
-                        onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    <Textarea
+                        label="Description"
                         required
+                        value={formData.description}
+                        onChange={value => setFormData(prev => ({ ...prev, description: value }))}
                         rows={4}
-                        className={styles.textarea}
                         maxLength={DESCRIPTION_MAX_LENGTH}
                         placeholder="Describe the movie plot, characters, and key elements"
                     />
@@ -254,53 +259,46 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
 
                 <div className={styles.formRow}>
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Duration (minutes) <span className={styles.required}>*</span></label>
-                        <input
+                        <Input
                             type="number"
-                            value={formData.durationMinutes || ''}
-                            onChange={e => setFormData(prev => ({ ...prev, durationMinutes: parseInt(e.target.value) || 0 }))}
+                            label="Duration (minutes)"
                             required
+                            value={formData.durationMinutes ? formData.durationMinutes.toString() : ''}
+                            onChange={value => setFormData(prev => ({ ...prev, durationMinutes: parseInt(value) || 0 }))}
                             min="1"
                             max="300"
-                            className={styles.input}
                             placeholder="e.g., 120"
                         />
                     </div>
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Age Rating <span className={styles.required}>*</span></label>
-                        <select
-                            value={formData.ageRating}
-                            onChange={e => setFormData(prev => ({ ...prev, ageRating: e.target.value as AgeRating }))}
+                        <Select
+                            label="Age Rating"
                             required
-                            className={styles.select}
-                        >
-                            {AGE_RATING_OPTIONS.map(option => (
-                                <option key={option.value} value={option.value}>{option.label}</option>
-                            ))}
-                        </select>
+                            options={AGE_RATING_OPTIONS}
+                            value={formData.ageRating}
+                            onChange={value => setFormData(prev => ({ ...prev, ageRating: value as AgeRating }))}
+                        />
                     </div>
                 </div>
 
                 <div className={styles.formRow}>
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Release Date <span className={styles.required}>*</span></label>
-                        <input
+                        <Input
                             type="date"
-                            value={formatDateForInput(formData.releaseDate)}
-                            onChange={e => setFormData(prev => ({ ...prev, releaseDate: e.target.value ? new Date(e.target.value) : null }))}
+                            label="Release Date"
                             required
-                            className={styles.input}
+                            value={formatDateForInput(formData.releaseDate)}
+                            onChange={value => setFormData(prev => ({ ...prev, releaseDate: value ? new Date(value) : null }))}
                             min={movie ? undefined : new Date().toISOString().split('T')[0]}
                         />
                     </div>
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>End Showing Date <span className={styles.required}>*</span></label>
-                        <input
+                        <Input
                             type="date"
-                            value={formatDateForInput(formData.endShowingDate)}
-                            onChange={e => setFormData(prev => ({ ...prev, endShowingDate: e.target.value ? new Date(e.target.value) : null }))}
+                            label="End Showing Date"
                             required
-                            className={styles.input}
+                            value={formatDateForInput(formData.endShowingDate)}
+                            onChange={value => setFormData(prev => ({ ...prev, endShowingDate: value ? new Date(value) : null }))}
                             min={formatDateForInput(formData.releaseDate) || undefined}
                         />
                     </div>
@@ -349,7 +347,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                 </div>
 
                 <div className={styles.actions}>
-                    <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
+                    <Button type="button" variant="cancel" onClick={onCancel} disabled={loading}>
                         Cancel
                     </Button>
                     <Button type="submit" variant="primary" loading={loading} disabled={loading}>

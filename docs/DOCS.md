@@ -6,14 +6,15 @@ Complete feature descriptions, technical details, and project structure.
 
 ## Contents
 
-- [Getting Started](#-getting-started)
-- [Features](#-features)
-  - [Roles & Permissions](#-roles--permissions)
-  - [User Features](#-user-features)
-  - [Admin Features](#️-admin-features)
-  - [Technical Highlights](#-technical-highlights)
-- [Tech Stack](#-tech-stack)
-- [Project Structure](#-project-structure)
+- [Getting Started](#getting-started)
+- [Features](#features)
+  - [Roles & Permissions](#roles--permissions)
+  - [User Features](#user-features)
+  - [Admin Features](#admin-features)
+  - [Technical Highlights](#technical-highlights)
+- [Engineering Details](#engineering-details)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
 
 ---
 
@@ -178,6 +179,11 @@ The system supports four roles with different access levels:
 - New password validation (cannot reuse old password)
 - Blocked for unverified accounts
 
+**Email Tokens**
+
+- Email verification and email-change confirmation are both handled via `POST /api/tokens/email/verify` and `POST /api/tokens/email/change/confirm`
+- Expired tokens are cleaned up automatically by a scheduler (`user/scheduler/EmailTokenCleanupScheduler`)
+
 ---
 
 #### Homepage
@@ -291,7 +297,8 @@ Step-by-step ticket booking with seat reservation and secure payment.
 
 - Select refund reason from dropdown
 - System calculates refundable amount based on time until session start
-- Preview shows refundable amount
+- Preview shows refundable amount (`POST /api/refunds/preview` — same calculation logic the
+  actual refund uses, so the preview and the executed refund can never disagree)
 
 **3. Confirm Refund**
 
@@ -308,7 +315,7 @@ Step-by-step ticket booking with seat reservation and secure payment.
 **5. Refund Policy**
 
 - View full refund rules at `/refund-policy`
-- Shows refund percentages (100% / 85% / 50%) based on time until session
+- Shows refund percentages (100% / 85% / 50% / 0%) based on time until session
 - Accessible from footer and refund modal
 
 ![Refund](images/refund.gif)
@@ -449,6 +456,15 @@ Three tabs for complete movie content management:
 - Filter by entity type and action type
 - Search by admin email
 - Pagination
+- **Full entity history:** view every audit entry for one specific entity via the **Entity History** modal in the Audit Logs table (`GET /admin/audit-logs/entity/{entityType}/{entityId}`)
+
+---
+
+#### Cashier
+
+- **Ticket lookup:** enter a ticket's unique code to view its details (`GET /api/admin/ticket/{uniqueCode}`)
+- **Ticket validation:** mark a ticket as used at the door (`POST /api/admin/ticket/{uniqueCode}/validate`)
+- Available at `/cashier/scan`
 
 ---
 
@@ -463,13 +479,24 @@ Three tabs for complete movie content management:
 
 ## Engineering Details
 
+### Testing
+
+875 tests across 124 test classes, run with Testcontainers against a real PostgreSQL instance
+(no mocked DB in integration/concurrency tests). Every domain has a dedicated concurrency suite,
+e.g. `SeatReservationConcurrencyTest`, `BookingConcurrencyTest`,
+`BookingDoubleConfirmConcurrencyTest`, `PaymentCallbackConcurrencyTest`,
+`RefundCreationConcurrencyTest`, `BonusCardConcurrencyTest`,
+`BonusRefundPointsRetryConcurrencyTest`, `TicketValidationConcurrencyTest`. CI
+(`.github/workflows/ci.yml`) runs the full suite against a real Postgres service container on
+every push/PR to `main`/`develop`.
+
 ### Concurrency Control
 
 The seat booking system uses a two-stage reservation protocol with mixed locking strategies:
 
 - **Stage 1 (5-minute pessimistic lock):** When a user selects a seat, a row-level lock (`SELECT ... FOR UPDATE`) is acquired. Other users immediately see the seat as taken and cannot select it.
 - **Stage 2 (20-minute reservation):** After confirming the booking, seats are reserved for payment. If unpaid, they are released automatically.
-- **Optimistic locking (`@Version`)** is used for Booking, BonusAccount, and other entities where conflicts are rare.
+- **Optimistic locking (`@Version`)** is used for Booking, BonusCard, and other entities where conflicts are rare.
 - **Cleanup:** A scheduled job releases expired locks, cancels unpaid bookings, and updates session statuses.
 
 ### Payment Flow
@@ -491,26 +518,41 @@ A background scheduler ensures system consistency when things go wrong:
 - Updates session statuses (SCHEDULED → COMPLETED)
 - All state lives in PostgreSQL — if the app crashes mid-flow, scheduler recovers on restart with no data loss
 
+### Known Trade-offs
+
+- **`GenerationType.IDENTITY` defeats Hibernate's JDBC insert batching.** Every `@Entity` uses `@GeneratedValue(strategy = GenerationType.IDENTITY)`, and Hibernate cannot batch `INSERT` statements for `IDENTITY`-strategy entities — it needs the generated id back from each individual insert before it can build the next statement, so `hibernate.jdbc.batch_size: 20` (see `application.yml`) only ever applies to `UPDATE`/`DELETE` batching, never to inserts. Switching to `SEQUENCE` with a pooled/hi-lo optimizer (e.g. `@GenericGenerator` with `hibernate_sequence` allocation size) would restore insert batching, but it's a cross-cutting change touching every entity, every migration that defines a `BIGSERIAL` primary key, and any code relying on IDENTITY's "id available immediately after `save()`, before flush" semantics. Given booking sizes are small (≤10 seats), the current impact is low — this is a deliberate, accepted trade-off, not an oversight. Revisit only if profiling shows insert throughput actually matters (e.g. bulk imports), and treat it as a dedicated migration-heavy epic rather than an incremental fix.
+- **Seat-row locking is per physical seat, not per (session, seat).** `SeatReservationService.lockSeat()`/`hold()`
+  take `PESSIMISTIC_WRITE` on the `Seat` row itself, so two unrelated sessions in the same hall booking the same
+  physical seat number serialize against each other even though they don't conflict. Moving the lock to a
+  `(session_id, seat_id)` granularity would require locking a row that doesn't exist yet before the first hold
+  (e.g. a Postgres advisory lock keyed by `hash(session_id, seat_id)`), which is a materially bigger change to the
+  core double-booking guarantee than the throughput problem justifies at current hall sizes/concurrency. The
+  partial unique index on `seat_reservations(session_id, seat_id) WHERE status IN ('HELD','CONFIRMED')` (see
+  migration `V16`) already gives defense-in-depth against double-booking independent of this lock, so the
+  cross-session serialization is a throughput concern, not a correctness one — revisit only if profiling shows it's
+  an actual bottleneck.
+
 ### Refund Calculation
 
 Refund amount depends on time remaining before the session:
 
 | Time Before Session | Refund |
 | ------------------- | ------ |
-| > 24 hours          | 100%   |
-| 6-24 hours          | 85%    |
-| < 6 hours           | 50%    |
+| 48+ hours           | 100%   |
+| 24-48 hours         | 85%    |
+| 2-24 hours          | 50%    |
+| < 2 hours           | 0% (not eligible) |
 
 ### Bonus Rules
 
 Four configurable rules control the loyalty program:
 
-| Rule            | Description                      | Default |
-| --------------- | -------------------------------- | ------- |
-| Welcome Bonus   | Points after email verification  | 100     |
-| Birthday Bonus  | Points on verified birthday      | 200     |
-| Booking Spend   | Min/max points per booking       | 10/50%  |
-| Payment Accrual | % of purchase returned as points | 5%      |
+| Rule            | Description                                                          | Default                            |
+| --------------- | --------------------------------------------------------------------- | ----------------------------------- |
+| Welcome Bonus   | Points after email verification                                      | 150                                |
+| Birthday Bonus  | Points on verified birthday                                          | 200                                |
+| Booking Spend   | Min/max points redeemable per booking, capped at a % of total price  | 100-1000 points, max 50% of total  |
+| Payment Accrual | % of purchase returned as points                                     | 5%                                  |
 
 ## Tech Stack
 
@@ -519,25 +561,25 @@ Four configurable rules control the loyalty program:
 | Technology           | Version |
 | :------------------- | :------ |
 | Java                 | 21      |
-| Spring Boot          | 4.0.6   |
-| Spring Security      | 7.0.5   |
-| Spring Data JPA      | 4.0.5   |
-| Spring OAuth2 Client | 4.0.6   |
-| Spring Mail          | 4.0.6   |
-| Spring Cache         | 4.0.6   |
-| Spring Actuator      | 4.0.6   |
-| PostgreSQL           | 16      |
-| Flyway               | 11.14.1 |
-| JWT (jjwt)           | 0.12.6  |
+| Spring Boot          | 4.1.1   |
+| Spring Security      | 7.1.1   |
+| Spring Data JPA      | 4.1.1   |
+| Spring OAuth2 Client | 4.1.1   |
+| Spring Mail          | 4.1.1   |
+| Spring Cache         | 4.1.1   |
+| Spring Actuator      | 4.1.1   |
+| PostgreSQL           | 15      |
+| Flyway               | 12.4.0  |
+| JWT (jjwt)           | 0.13.0  |
 | MapStruct            | 1.6.3   |
-| Lombok               | 1.18.46 |
+| Lombok               | 1.18.48 |
 | Bucket4j             | 8.10.1  |
 | Redis                | 7       |
-| ZXing (QR Code)      | 3.5.3   |
-| Gson                 | 2.11.0  |
-| SpringDoc OpenAPI    | 2.8.7   |
+| ZXing (QR Code)      | 3.5.4   |
+| Gson                 | 2.13.2  |
+| SpringDoc OpenAPI    | 3.1.1   |
 | Dotenv               | 4.0.0   |
-| Testcontainers       | 1.20.6  |
+| Testcontainers       | 2.0.5   |
 
 ### Frontend
 
@@ -569,60 +611,54 @@ Four configurable rules control the loyalty program:
 
 ### Backend (Spring Boot)
 
+**Package by Feature + Layer.** Each business domain is a self-contained package with its own
+`controller/`, `service/`, `repository/`, `domain/`, `dto/`, `mapper/` — only the layers that
+domain actually needs. `config/` and `exception/` stay global (shared by every domain); `common/`
+holds small cross-cutting utilities.
+
     backend/src/main/java/ua/lviv/bas/cinema/
-    ├── config/
-    │   ├── api/
-    │   ├── audit/
-    │   ├── cache/
-    │   ├── jackson/
-    │   ├── properties/
-    │   ├── ratelimit/
-    │   ├── scheduling/
-    │   └── security/
-    ├── controller/
-    │   ├── admin/
-    │   └── api/
-    ├── domain/
-    │   ├── audit/
-    │   ├── bonus/
-    │   ├── booking/
-    │   ├── cinema/
-    │   ├── promotion/
-    │   ├── ticket/
-    │   ├── token/
-    │   └── user/
-    ├── dto/
-    │   ├── audit/
-    │   ├── bonus/
-    │   ├── booking/
-    │   ├── common/
-    │   ├── hall/
-    │   ├── movie/
-    │   ├── payment/
-    │   ├── promotion/
-    │   ├── refund/
-    │   ├── session/
-    │   ├── ticket/
-    │   ├── ticketType/
-    │   └── user/
-    ├── exception/
-    │   ├── api/
-    │   ├── core/
-    │   ├── domain/
-    │   └── infrastructure/
-    ├── mapper/
-    ├── repository/
-    ├── scheduler/
-    └── service/
-        ├── bonus/
-        ├── booking/
-        ├── cinema/
-        ├── common/
-        ├── integration/
-        ├── notification/
-        ├── promotion/
-        ├── ticket/
-        └── user/
+    ├── <domain>/                  # one package per business domain, see table below
+    │   ├── controller/
+    │   │   ├── admin/             # role-gated endpoints
+    │   │   └── api/               # public / user-facing endpoints
+    │   ├── service/
+    │   ├── repository/
+    │   ├── domain/                # JPA entities, enums, statuses
+    │   ├── dto/                   # request/response payloads
+    │   └── mapper/                # MapStruct entity <-> DTO mapping
+    ├── config/                    # global — security, cache, jackson, ratelimit, scheduling, api, http, properties
+    ├── exception/                 # global — api/, core/, domain/<domain>/, infrastructure/
+    └── common/                    # cross-cutting utilities (PageResponse, price/number/date formatting, uniqueness checks)
+
+**Domain packages:**
+
+| Package         | Responsibility                                                          |
+| ---------------- | ------------------------------------------------------------------------ |
+| `movie/`         | Movies, genres, cast (actors/directors/screenwriters)                   |
+| `cinema/`        | Cinema halls, seats, sessions                                            |
+| `user/`          | Users, authentication, email verification tokens                        |
+| `booking/`       | Booking creation, seat reservation (two-stage locking)                  |
+| `payment/`       | Payment processing, LiqPay gateway integration and callback handling    |
+| `refund/`        | Refund eligibility/calculation, refund execution, LiqPay refund calls   |
+| `bonus/`         | Bonus card, loyalty points ledger, configurable bonus rules              |
+| `ticket/`        | Tickets, ticket types                                                    |
+| `promotion/`     | Promotions, promo claims                                                 |
+| `audit/`         | Admin change audit log (write path + query/history)                     |
+| `notification/`  | Outbound email sending, email verification token generation             |
+| `integration/`   | File storage, poster images, QR code generation                         |
+| `common/`        | Stateless cross-cutting utilities shared across every domain             |
+
+The 10 packages above `audit/` are the actual business domains, each owning its own decisions.
+`notification/`, `integration/`, and `common/` are shared infrastructure: they're called *by* a
+domain (e.g. `movie/service/SlugService` decides how a movie's slug is generated and calls
+nothing in `integration/` for it; `integration/` only holds technical adapters like file storage,
+poster handling, and QR generation) rather than making business decisions themselves.
+
+A scheduled job in each domain that needs one (`booking/`, `payment/`, `refund/`, `bonus/`,
+`movie/`, `cinema/`, `ticket/`, `user/`) handles self-healing recovery — releasing expired seat
+locks (`SeatReservationScheduler`), cancelling unpaid bookings (`BookingScheduler`), reconciling
+payments stuck mid-flow (`PaymentScheduler`), reconciling stuck refunds (`RefundScheduler`),
+updating session/movie statuses, awarding birthday bonuses, cleaning up expired email tokens.
 
 ### Frontend (React)
 
@@ -642,6 +678,7 @@ Four configurable rules control the loyalty program:
     │   │   └── SectionUsers/
     │   ├── auth/
     │   ├── booking/
+    │   ├── cashier/
     │   ├── home/
     │   ├── layout/
     │   ├── movies/
@@ -655,9 +692,11 @@ Four configurable rules control the loyalty program:
     │   ├── account/
     │   ├── auth/
     │   ├── booking/
+    │   ├── cashier/
     │   ├── home/
     │   ├── movies/
-    │   └── sessions/
+    │   ├── sessions/
+    │   └── RefundPolicyPage/
     ├── routes/
     ├── services/
     ├── types/

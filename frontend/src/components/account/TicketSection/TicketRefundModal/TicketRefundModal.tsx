@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Modal, Button } from "@/components/ui";
 import { useRefund } from "@/hooks/features/refund/useRefund";
 import { AlertTriangle } from "lucide-react";
@@ -36,25 +36,50 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
 }) => {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [selectedReason, setSelectedReason] = useState<string>("");
-  const { processRefund, loading, refundResult } = useRefund();
+  const {
+    processRefund,
+    loading,
+    refundResult,
+    getPreview,
+    previewResult,
+    previewLoading,
+    getPolicy,
+    policy,
+  } = useRefund();
+
+  useEffect(() => {
+    if (ticket) {
+      getPreview({ ticketId: ticket.id }).catch(() => {});
+    }
+  }, [ticket, getPreview]);
+
+  useEffect(() => {
+    getPolicy().catch(() => {});
+  }, [getPolicy]);
 
   if (!ticket) return null;
 
   const sessionDate = new Date(ticket.sessionTime);
   const hoursUntilSession =
     (sessionDate.getTime() - Date.now()) / (1000 * 60 * 60);
-  const canRequestRefund = ticket.status === "ACTIVE" && hoursUntilSession > 2;
+  const canRequestRefund = previewLoading || !previewResult
+    ? ticket.status === "ACTIVE" && hoursUntilSession > 2
+    : previewResult.isRefundable;
 
   const handleSubmit = async () => {
     if (!selectedReason || !acceptedTerms) return;
 
-    const result = await processRefund({
-      ticketId: ticket.id,
-      reason: selectedReason,
-    });
+    try {
+      const result = await processRefund({
+        ticketId: ticket.id,
+        reason: selectedReason,
+      });
 
-    if (result) {
-      onRefundSuccess?.();
+      if (result) {
+        onRefundSuccess?.();
+      }
+    } catch {
+      return;
     }
   };
 
@@ -72,9 +97,10 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
             <div>
               <h4>Refund Not Available</h4>
               <p>
-                {ticket.status !== "ACTIVE"
-                  ? "Only active tickets can be refunded"
-                  : "Refunds are only available more than 2 hours before the session"}
+                {previewResult?.nonRefundableReason ??
+                  (ticket.status !== "ACTIVE"
+                    ? "Only active tickets can be refunded"
+                    : "Refunds are only available more than 2 hours before the session")}
               </p>
             </div>
           </div>
@@ -185,10 +211,20 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
           </svg>
           <div>
             <span className={styles.estimateLabel}>Estimated Refund</span>
-            <span className={styles.estimateValue}>{ticket.price} UAH</span>
-            <span className={styles.estimateNote}>
-              Processing fee may apply based on refund policy
-            </span>
+            {previewLoading || !previewResult ? (
+              <span className={styles.estimateValue}>Calculating...</span>
+            ) : (
+              <>
+                <span className={styles.estimateValue}>
+                  {previewResult.refundAmount} UAH (
+                  {previewResult.refundPercentage}%)
+                </span>
+                <span className={styles.estimateNote}>
+                  {previewResult.policyName}: fee {previewResult.feeAmount}{" "}
+                  UAH ({previewResult.feePercentage}%)
+                </span>
+              </>
+            )}
           </div>
         </div>
 
@@ -258,11 +294,12 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
           </div>
           <div className={styles.termsContent}>
             <ul className={styles.termsList}>
-              <li>100% refund — 48+ hours before session</li>
-              <li>85% refund — 24-48 hours before session</li>
-              <li>50% refund — 2-24 hours before session</li>
-              <li>No refund — less than 2 hours before session</li>
-              <li>Refunds processed within 5-7 business days</li>
+              {policy?.rules.map((rule) => (
+                <li key={rule.name}>{rule.description}</li>
+              ))}
+              {policy && (
+                <li>Refunds processed within {policy.processingTime}</li>
+              )}
             </ul>
           </div>
           <label className={styles.termsAgreement}>
@@ -280,7 +317,7 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
       </div>
 
       <div className={styles.modalFooter}>
-        <Button variant="secondary" onClick={onClose}>
+        <Button variant="cancel" onClick={onClose}>
           Cancel
         </Button>
         <Button

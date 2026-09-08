@@ -28,42 +28,6 @@
     margin-left: var(--space-1);
 }
 
-.input,
-.select,
-.textarea {
-    width: 100%;
-    padding: var(--space-3) var(--space-4);
-    background: var(--color-bg-tertiary);
-    border: 1px solid var(--color-border-medium);
-    border-radius: var(--radius-sm);
-    color: var(--color-text-primary);
-    font-size: var(--font-size-sm);
-    font-family: var(--font-family);
-    transition: all var(--transition-fast);
-}
-
-.input:focus,
-.select:focus,
-.textarea:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2);
-}
-
-.input::placeholder,
-.textarea::placeholder {
-    color: var(--color-text-muted);
-}
-
-.textarea {
-    resize: vertical;
-    min-height: 100px;
-}
-
-.select {
-    cursor: pointer;
-}
-
 .charCount {
     color: var(--color-text-muted);
     font-size: var(--font-size-xs);

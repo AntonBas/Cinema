@@ -31,7 +31,7 @@ public class RateLimitAspect {
                 response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
                 response.setHeader("X-Rate-Limit-Limit", String.valueOf(rateLimit.value()));
                 response.setHeader("X-Rate-Limit-Remaining", "0");
-                response.setHeader("Retry-After", String.valueOf(rateLimit.duration() * 60));
+                response.setHeader("Retry-After", String.valueOf(rateLimit.duration()));
             }
             return null;
         }
@@ -47,10 +47,6 @@ public class RateLimitAspect {
         }
 
         if ("ip".equals(keyExpression)) {
-            String xForwardedFor = request.getHeader("X-Forwarded-For");
-            if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-                return xForwardedFor.split(",")[0].trim();
-            }
             String remoteAddr = request.getRemoteAddr();
             return remoteAddr != null ? remoteAddr : "unknown";
         }

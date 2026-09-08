@@ -38,11 +38,6 @@ export const movieApi = {
         params,
       }),
 
-    getPoster: (id: number) =>
-      api.get<ArrayBuffer>(`${BASE_URL}/${id}/poster`, {
-        responseType: "arraybuffer",
-      }),
-
     search: (query?: string, date?: string) =>
       api.get<MovieSessionSearchResponse[]>(`${BASE_URL}/search`, {
         params: { query, date },
@@ -101,10 +96,5 @@ export const movieApi = {
 
     getById: (id: number) =>
       api.get<MovieAdminResponse>(`${ADMIN_BASE_URL}/${id}`),
-
-    search: (query?: string) =>
-      api.get<MovieSessionSearchResponse[]>(`${ADMIN_BASE_URL}/search`, {
-        params: query ? { query } : undefined,
-      }),
   },
 };

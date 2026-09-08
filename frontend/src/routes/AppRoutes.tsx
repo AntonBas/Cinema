@@ -1,8 +1,9 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { PublicRoute } from "./PublicRoute";
 import { AdminRoute } from "./AdminRoute";
+import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 
 import { LoginPage } from "@/pages/auth/LoginPage/LoginPage";
 import { RegisterPage } from "@/pages/auth/RegisterPage/RegisterPage";
@@ -30,17 +31,31 @@ import { BookingSummaryPage } from "@/pages/booking/BookingSummaryPage/BookingSu
 import { PaymentPage } from "@/pages/booking/PaymentPage/PaymentPage";
 import SuccessPage from "@/pages/booking/SuccessPage/SuccessPage";
 
-import { AdminLayout } from "@/components/admin/AdminLayout/AdminLayout";
-import { SectionMovies } from "@/components/admin/SectionMovies/SectionMovies";
-import { SectionHalls } from "@/components/admin/SectionHalls/SectionHalls";
-import { SectionSchedule } from "@/components/admin/SectionSchedule/SectionSchedule";
-import { SectionUsers } from "@/components/admin/SectionUsers/SectionUsers";
-import SectionBonus from "@/components/admin/SectionBonus/SectionBonus";
-import SectionPromotion from "@/components/admin/SectionPromotion/SectionPromotion";
-import SectionTicketType from "@/components/admin/SectionTicketType/SectionTicketType";
-import { SectionAuditLogs } from "@/components/admin/SectionAuditLogs/SectionAuditLogs";
+const AdminLayout = lazy(() =>
+  import("@/components/admin/AdminLayout/AdminLayout").then((m) => ({ default: m.AdminLayout })),
+);
+const SectionMovies = lazy(() =>
+  import("@/components/admin/SectionMovies/SectionMovies").then((m) => ({ default: m.SectionMovies })),
+);
+const SectionHalls = lazy(() =>
+  import("@/components/admin/SectionHalls/SectionHalls").then((m) => ({ default: m.SectionHalls })),
+);
+const SectionSchedule = lazy(() =>
+  import("@/components/admin/SectionSchedule/SectionSchedule").then((m) => ({ default: m.SectionSchedule })),
+);
+const SectionUsers = lazy(() =>
+  import("@/components/admin/SectionUsers/SectionUsers").then((m) => ({ default: m.SectionUsers })),
+);
+const SectionBonus = lazy(() => import("@/components/admin/SectionBonus/SectionBonus"));
+const SectionPromotion = lazy(() => import("@/components/admin/SectionPromotion/SectionPromotion"));
+const SectionTicketType = lazy(() => import("@/components/admin/SectionTicketType/SectionTicketType"));
+const SectionAuditLogs = lazy(() =>
+  import("@/components/admin/SectionAuditLogs/SectionAuditLogs").then((m) => ({ default: m.SectionAuditLogs })),
+);
 
-import { CashierScanPage } from "@/pages/cashier/CashierScanPage";
+const CashierScanPage = lazy(() =>
+  import("@/pages/cashier/CashierScanPage").then((m) => ({ default: m.CashierScanPage })),
+);
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -177,7 +192,9 @@ export const AppRoutes: React.FC = () => {
         path="/cashier/scan/:uniqueCode"
         element={
           <AdminRoute>
-            <CashierScanPage />
+            <Suspense fallback={<LoadingSpinner />}>
+              <CashierScanPage />
+            </Suspense>
           </AdminRoute>
         }
       />
@@ -186,19 +203,77 @@ export const AppRoutes: React.FC = () => {
         path="/admin/*"
         element={
           <AdminRoute>
-            <AdminLayout />
+            <Suspense fallback={<LoadingSpinner />}>
+              <AdminLayout />
+            </Suspense>
           </AdminRoute>
         }
       >
         <Route index element={<Navigate to="dashboard" replace />} />
-        <Route path="movies" element={<SectionMovies />} />
-        <Route path="halls" element={<SectionHalls />} />
-        <Route path="schedule" element={<SectionSchedule />} />
-        <Route path="users" element={<SectionUsers />} />
-        <Route path="bonus" element={<SectionBonus />} />
-        <Route path="promotion" element={<SectionPromotion />} />
-        <Route path="ticket-type" element={<SectionTicketType />} />
-        <Route path="audit-logs" element={<SectionAuditLogs />} />
+        <Route
+          path="movies"
+          element={
+            <AdminRoute allowedRoles={["ROLE_ADMIN", "ROLE_CONTENT_MANAGER"]}>
+              <SectionMovies />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="halls"
+          element={
+            <AdminRoute allowedRoles={["ROLE_ADMIN", "ROLE_CONTENT_MANAGER"]}>
+              <SectionHalls />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="schedule"
+          element={
+            <AdminRoute allowedRoles={["ROLE_ADMIN", "ROLE_CONTENT_MANAGER"]}>
+              <SectionSchedule />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="users"
+          element={
+            <AdminRoute allowedRoles={["ROLE_ADMIN", "ROLE_CASHIER"]}>
+              <SectionUsers />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="bonus"
+          element={
+            <AdminRoute allowedRoles={["ROLE_ADMIN"]}>
+              <SectionBonus />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="promotion"
+          element={
+            <AdminRoute allowedRoles={["ROLE_ADMIN", "ROLE_CONTENT_MANAGER"]}>
+              <SectionPromotion />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="ticket-type"
+          element={
+            <AdminRoute allowedRoles={["ROLE_ADMIN"]}>
+              <SectionTicketType />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="audit-logs"
+          element={
+            <AdminRoute allowedRoles={["ROLE_ADMIN"]}>
+              <SectionAuditLogs />
+            </AdminRoute>
+          }
+        />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

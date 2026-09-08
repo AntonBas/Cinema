@@ -25,6 +25,10 @@
   padding: var(--space-6) var(--space-8);
 }
 
+.modal:focus {
+  outline: none;
+}
+
 .small {
   width: 100%;
   max-width: 400px;

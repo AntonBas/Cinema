@@ -1,7 +1,9 @@
 import React, { useCallback } from "react";
+import { LayoutGrid, Pencil, Trash2 } from "lucide-react";
 import type { CinemaHallListResponse } from "@/types/cinemaHall";
-import { Button } from "@/components/ui/Button/Button";
 import { Badge } from "@/components/ui/Badge/Badge";
+import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
+import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
 import styles from "./HallsTable.module.css";
 
 interface HallsTableProps {
@@ -36,7 +38,7 @@ export const HallsTable: React.FC<HallsTableProps> = React.memo(
 
     if (!halls.length) {
       return (
-        <div className={styles.empty}>
+        <div className={tableStyles.empty}>
           <h3>No Cinema Halls</h3>
           <p>Create your first cinema hall to get started</p>
         </div>
@@ -44,50 +46,59 @@ export const HallsTable: React.FC<HallsTableProps> = React.memo(
     }
 
     return (
-      <div className={styles.table}>
-        <div className={styles.tableHeader}>
-          <div>Name</div>
-          <div>Capacity</div>
-          <div>Actions</div>
+      <div className={tableStyles.wrapper}>
+        <div className={tableStyles.container}>
+          <table className={tableStyles.table}>
+            <colgroup>
+              <col style={{ width: "40%" }} />
+              <col style={{ width: "28%" }} />
+              <col style={{ width: "32%" }} />
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Capacity</th>
+                <th className={tableStyles.actionsCol}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {halls.map((hall) => (
+                <tr key={hall.id}>
+                  <td data-label="Name">
+                    <span className={styles.name}>{hall.name}</span>
+                  </td>
+                  <td data-label="Capacity">
+                    <Badge variant="primary">{hall.capacity} seats</Badge>
+                  </td>
+                  <td data-label="Actions">
+                    <div className={tableStyles.actions}>
+                      <ActionIconButton
+                        icon={<LayoutGrid />}
+                        label="Seat layout"
+                        variant="primary"
+                        onClick={() => handleShowLayout(hall)}
+                      />
+                      {onEdit && (
+                        <ActionIconButton
+                          icon={<Pencil />}
+                          label="Edit hall"
+                          variant="success"
+                          onClick={() => handleEdit(hall)}
+                        />
+                      )}
+                      <ActionIconButton
+                        icon={<Trash2 />}
+                        label="Delete hall"
+                        variant="error"
+                        onClick={() => handleDelete(hall)}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-        {halls.map((hall) => (
-          <div key={hall.id} className={styles.tableRow}>
-            <div className={styles.name}>
-              <span>{hall.name}</span>
-            </div>
-            <div className={styles.capacity}>
-              <Badge variant="primary">{hall.capacity} seats</Badge>
-            </div>
-            <div className={styles.actions}>
-              <Button
-                variant="primary"
-                size="small"
-                onClick={() => handleShowLayout(hall)}
-                className={styles.layoutButton}
-              >
-                Layout
-              </Button>
-              {onEdit && (
-                <Button
-                  variant="success"
-                  size="small"
-                  onClick={() => handleEdit(hall)}
-                  className={styles.editButton}
-                >
-                  Edit
-                </Button>
-              )}
-              <Button
-                variant="error"
-                size="small"
-                onClick={() => handleDelete(hall)}
-                className={styles.deleteButton}
-              >
-                Delete
-              </Button>
-            </div>
-          </div>
-        ))}
       </div>
     );
   },

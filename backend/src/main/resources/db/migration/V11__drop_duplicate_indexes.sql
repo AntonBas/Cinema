@@ -1,0 +1,15 @@
+DROP INDEX IF EXISTS idx_user_email;
+DROP INDEX IF EXISTS idx_genre_name;
+DROP INDEX IF EXISTS idx_movie_title;
+DROP INDEX IF EXISTS idx_movie_slug;
+DROP INDEX IF EXISTS idx_hall_name;
+DROP INDEX IF EXISTS idx_cinema_hall_name;
+DROP INDEX IF EXISTS idx_seat_position;
+DROP INDEX IF EXISTS idx_payment_transaction;
+DROP INDEX IF EXISTS idx_payment_liqpay_order;
+DROP INDEX IF EXISTS idx_payment_booking;
+DROP INDEX IF EXISTS idx_ticket_unique_code;
+DROP INDEX IF EXISTS idx_bonus_card_user;
+DROP INDEX IF EXISTS idx_bonus_rules_type;
+DROP INDEX IF EXISTS idx_email_token_token;
+DROP INDEX IF EXISTS idx_email_token_user_id;

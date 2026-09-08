@@ -2,7 +2,7 @@ import React, { useId, useCallback } from 'react';
 import styles from './Input.module.css';
 import clsx from 'clsx';
 
-export type InputType = 'text' | 'email' | 'password' | 'number' | 'date' | 'datetime-local';
+export type InputType = 'text' | 'email' | 'password' | 'number' | 'date' | 'datetime-local' | 'url';
 export type InputSize = 'small' | 'medium' | 'large';
 
 export interface InputProps {
@@ -16,10 +16,12 @@ export interface InputProps {
     onClick?: () => void;
     error?: string;
     required?: boolean;
+    minLength?: number;
     maxLength?: number;
     min?: string | number;
     max?: string | number;
     step?: string | number;
+    pattern?: string;
     className?: string;
     label?: string;
     size?: InputSize;
@@ -40,10 +42,12 @@ export const Input: React.FC<InputProps> = ({
     onClick,
     error,
     required = false,
+    minLength,
     maxLength,
     min,
     max,
     step,
+    pattern,
     className = '',
     label,
     size = 'medium',
@@ -100,10 +104,12 @@ export const Input: React.FC<InputProps> = ({
                 placeholder={placeholder}
                 disabled={disabled}
                 required={required}
+                minLength={minLength}
                 maxLength={maxLength}
                 min={min}
                 max={max}
                 step={step}
+                pattern={pattern}
                 autoFocus={autoFocus}
                 className={inputClass}
                 aria-label={ariaLabel}

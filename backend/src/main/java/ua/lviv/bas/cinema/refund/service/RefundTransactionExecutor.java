@@ -1,0 +1,180 @@
+package ua.lviv.bas.cinema.refund.service;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import ua.lviv.bas.cinema.audit.domain.AuditAction;
+import ua.lviv.bas.cinema.refund.domain.Refund;
+import ua.lviv.bas.cinema.refund.domain.RefundItem;
+import ua.lviv.bas.cinema.refund.domain.status.RefundItemStatus;
+import ua.lviv.bas.cinema.refund.domain.status.RefundStatus;
+import ua.lviv.bas.cinema.ticket.domain.Ticket;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.financial.refund.TicketNotRefundableException;
+import ua.lviv.bas.cinema.payment.service.PaymentRefundService;
+import ua.lviv.bas.cinema.refund.repository.RefundRepository;
+import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
+import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.ticket.service.TicketService;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.HashMap;
+import java.util.Map;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class RefundTransactionExecutor {
+
+    private final RefundRepository refundRepository;
+    private final PaymentRefundService paymentRefundService;
+    private final BonusLedgerService bonusLedgerService;
+    private final TicketService ticketService;
+    private final RefundCalculator refundCalculator;
+    private final AuditService auditService;
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public RefundProcessingContext createProcessingRefund(Long ticketId, Long userId, String reason) {
+        var ticket = ticketService.findActiveTicketForUser(ticketId, userId);
+
+        validateRefundable(ticket);
+
+        var calculation = refundCalculator.calculate(ticket);
+        paymentRefundService.validateRefundEligibility(ticket.getPayment(), calculation.refundAmount());
+
+        var refund = buildRefund(ticket, calculation, reason);
+        var saved = saveOrThrowIfAlreadyProcessing(refund);
+
+        auditCreated(saved, ticket, calculation);
+
+        return new RefundProcessingContext(saved.getId(), ticket.getId(), ticket.getUniqueCode(),
+                ticket.getPayment().getLiqpayPaymentId(), ticket.getPayment().getLiqpayOrderId(),
+                calculation.refundAmount());
+    }
+
+    private void validateRefundable(Ticket ticket) {
+        var validationError = refundCalculator.validate(ticket);
+        if (validationError != null) {
+            throw new TicketNotRefundableException(validationError);
+        }
+        if (refundRepository.existsByItemsTicketIdAndStatus(ticket.getId(), RefundStatus.PROCESSING)) {
+            throw new TicketNotRefundableException("A refund for this ticket is already being processed");
+        }
+    }
+
+    private Refund saveOrThrowIfAlreadyProcessing(Refund refund) {
+        try {
+            return refundRepository.save(refund);
+        } catch (DataIntegrityViolationException e) {
+            throw new TicketNotRefundableException("A refund for this ticket is already being processed");
+        }
+    }
+
+    private Refund buildRefund(Ticket ticket, RefundCalculator.RefundCalculation calculation, String reason) {
+        var refund = Refund.builder().payment(ticket.getPayment()).user(ticket.getUser()).ticket(ticket)
+                .totalAmount(calculation.refundAmount()).totalBonusPointsToDeduct(calculation.bonusPointsToRefund())
+                .reason(reason).status(RefundStatus.PROCESSING).build();
+
+        var refundItem = RefundItem.builder().refund(refund).ticket(ticket).ticketPrice(ticket.getFinalPrice())
+                .refundPercentage(calculation.percentage().setScale(2, RoundingMode.HALF_UP))
+                .refundAmount(calculation.refundAmount()).bonusPointsToDeduct(calculation.bonusPointsToRefund())
+                .status(RefundItemStatus.PENDING).build();
+
+        refund.getItems().add(refundItem);
+        return refund;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Refund applySuccess(Long refundId, Long ticketId) {
+        var refund = refundRepository.findById(refundId)
+                .orElseThrow(() -> new EntityNotFoundException("Refund", refundId));
+
+        if (refund.getStatus() == RefundStatus.PROCESSED) {
+            log.debug("Refund {} already processed, skipping", refundId);
+            return refund;
+        }
+
+        if (refund.getStatus() == RefundStatus.REJECTED) {
+            log.warn("Refund {} already marked REJECTED by reconciliation but the gateway call "
+                    + "reported success afterwards — leaving as REJECTED, manual review required", refundId);
+            return refund;
+        }
+
+        var ticket = ticketService.findById(ticketId);
+
+        var refundItem = refund.getItems().getFirst();
+        var amount = refund.getTotalAmount();
+        var percentage = refundItem.getRefundPercentage();
+        var bonusPointsToRefund = refund.getTotalBonusPointsToDeduct();
+        var description = "Refund for ticket #" + ticket.getUniqueCode();
+
+        var alreadyProcessedAmount = refundRepository.sumAmountByPaymentIdAndStatus(refund.getPayment().getId(),
+                RefundStatus.PROCESSED);
+        var totalRefundedAmount = alreadyProcessedAmount.add(amount);
+        paymentRefundService.applyRefundSuccess(refund.getPayment(), amount, totalRefundedAmount, description,
+                ticket);
+
+        if (bonusPointsToRefund != null && bonusPointsToRefund > 0) {
+            bonusLedgerService.refundPointsForTicket(refund.getUser().getId(), bonusPointsToRefund,
+                    "REFUND_TICKET_" + ticket.getId());
+        }
+
+        ticketService.markAsRefunded(ticket, refund);
+
+        refundItem.setStatus(RefundItemStatus.PROCESSED);
+        refund.setStatus(RefundStatus.PROCESSED);
+        refundRepository.save(refund);
+
+        auditProcessed(refund, ticket, amount, percentage, bonusPointsToRefund);
+        log.info("Refund {} processed for ticket {}: amount={}, bonusPointsRefunded={}", refundId,
+                ticket.getUniqueCode(), amount, bonusPointsToRefund);
+        return refund;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void markFailed(Long refundId, Exception cause) {
+        var refund = refundRepository.findById(refundId)
+                .orElseThrow(() -> new EntityNotFoundException("Refund", refundId));
+        refund.getItems().forEach(item -> item.setStatus(RefundItemStatus.REJECTED));
+        refund.setStatus(RefundStatus.REJECTED);
+        refundRepository.save(refund);
+        auditRejected(refund, cause);
+        log.warn("Refund {} rejected", refundId, cause);
+    }
+
+    private void auditCreated(Refund refund, Ticket ticket, RefundCalculator.RefundCalculation calculation) {
+        Map<String, Object> details = new HashMap<>();
+        details.put("ticketId", ticket.getId());
+        details.put("refundAmount", calculation.refundAmount());
+        details.put("percentage", calculation.percentage());
+        details.put("bonusPointsToRefund", calculation.bonusPointsToRefund());
+        auditService.logChange("Refund", refund.getId(), "Refund #" + refund.getId(), AuditAction.CREATED, null,
+                details);
+    }
+
+    private void auditProcessed(Refund refund, Ticket ticket, BigDecimal refundAmount, BigDecimal percentage,
+                                Integer bonusPointsToRefund) {
+        Map<String, Object> details = new HashMap<>();
+        details.put("ticketId", ticket.getId());
+        details.put("refundAmount", refundAmount);
+        details.put("percentage", percentage);
+        details.put("bonusPointsToRefund", bonusPointsToRefund);
+        auditService.logChange("Refund", refund.getId(), "Refund #" + refund.getId(), AuditAction.SUCCESS, null,
+                details);
+    }
+
+    private void auditRejected(Refund refund, Exception e) {
+        Map<String, Object> errorDetails = new HashMap<>();
+        errorDetails.put("error", e.getMessage());
+        auditService.logChange("Refund", refund.getId(), "Refund #" + refund.getId(), AuditAction.REJECTED, null,
+                errorDetails);
+    }
+
+    public record RefundProcessingContext(Long refundId, Long ticketId, String ticketUniqueCode,
+                                          String liqpayPaymentId, String liqpayOrderId, BigDecimal refundAmount) {
+    }
+}

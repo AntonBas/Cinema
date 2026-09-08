@@ -1,0 +1,122 @@
+package ua.lviv.bas.cinema.cinema.repository;
+
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+import ua.lviv.bas.cinema.cinema.domain.Session;
+import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
+import ua.lviv.bas.cinema.cinema.repository.projection.SessionAdminProjection;
+import ua.lviv.bas.cinema.cinema.repository.projection.SessionScheduleProjection;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+@SuppressWarnings({"SqlResolve", "SqlNoDataSourceInspection"})
+public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpecificationExecutor<Session> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT s FROM Session s LEFT JOIN FETCH s.movie LEFT JOIN FETCH s.hall WHERE s.id = :id")
+    Optional<Session> findByIdWithLock(@Param("id") Long id);
+
+    @Query("""
+            SELECT s FROM Session s
+            JOIN FETCH s.movie
+            JOIN FETCH s.hall
+            WHERE s.status = 'SCHEDULED' AND s.startTime <= :currentTime
+            """)
+    List<Session> findSessionsToStart(@Param("currentTime") LocalDateTime currentTime);
+
+    @Query(value = """
+            SELECT s.* FROM sessions s
+            JOIN movies m ON m.id = s.movie_id
+            WHERE s.status = 'ONGOING'
+            AND (s.start_time + (m.duration_minutes * INTERVAL '1 minute')) <= :currentTime
+            """, nativeQuery = true)
+    List<Session> findSessionsToComplete(@Param("currentTime") LocalDateTime currentTime);
+
+    @Modifying
+    @Query("UPDATE Session s SET s.status = :newStatus WHERE s.id IN :ids AND s.status = :fromStatus")
+    int updateStatusForIds(@Param("ids") List<Long> ids, @Param("fromStatus") CinemaSessionStatus fromStatus,
+                           @Param("newStatus") CinemaSessionStatus newStatus);
+
+    @Query("SELECT COUNT(s) FROM Session s WHERE s.movie.id = :movieId")
+    long countByMovieId(@Param("movieId") Long movieId);
+
+    @Query("""
+            SELECT CASE WHEN COUNT(s) > 0 THEN true ELSE false END
+            FROM Session s
+            WHERE s.hall.id = :hallId
+            AND (:excludeSessionId IS NULL OR s.id != :excludeSessionId)
+            AND s.status IN ('SCHEDULED', 'ONGOING')
+            AND s.startTime < :endTime
+            AND FUNCTION('TIMESTAMPADD', MINUTE, s.movie.durationMinutes, s.startTime) > :startTime
+            """)
+    boolean existsConflictingSession(@Param("hallId") Long hallId, @Param("startTime") LocalDateTime startTime,
+                                     @Param("endTime") LocalDateTime endTime, @Param("excludeSessionId") Long excludeSessionId);
+
+    @Query(value = """
+            SELECT
+                s.id,
+                s.start_time as startTime,
+                s.base_price as basePrice,
+                m.id as movieId,
+                m.title as movieTitle,
+                m.poster_file_name as moviePosterFileName,
+                m.age_rating as movieAgeRating,
+                m.duration_minutes as movieDuration,
+                h.id as hallId,
+                h.name as hallName,
+                COALESCE(sc.seat_count, 0) as hallCapacity
+            FROM sessions s
+            JOIN movies m ON m.id = s.movie_id
+            JOIN cinema_halls h ON h.id = s.hall_id
+            LEFT JOIN (
+                SELECT hall_id, COUNT(*) as seat_count
+                FROM seats
+                WHERE hall_id IN (SELECT hall_id FROM sessions WHERE id IN (:ids))
+                GROUP BY hall_id
+            ) sc ON sc.hall_id = h.id
+            WHERE s.id IN (:ids)
+            """, nativeQuery = true)
+    List<SessionScheduleProjection> findScheduleProjectionsByIds(@Param("ids") List<Long> ids);
+
+    @Query(value = """
+            SELECT
+                s.id,
+                s.start_time as startTime,
+                s.base_price as basePrice,
+                s.status,
+                m.id as movieId,
+                m.title as movieTitle,
+                m.duration_minutes as movieDuration,
+                h.id as hallId,
+                h.name as hallName,
+                COALESCE(sc.seat_count, 0) as hallCapacity,
+                COALESCE(bs.tickets_sold, 0) as ticketsSold,
+                COALESCE(bs.total_revenue, 0) as totalRevenue
+            FROM sessions s
+            JOIN movies m ON m.id = s.movie_id
+            JOIN cinema_halls h ON h.id = s.hall_id
+            LEFT JOIN (
+                SELECT hall_id, COUNT(*) as seat_count
+                FROM seats
+                WHERE hall_id IN (SELECT hall_id FROM sessions WHERE id IN (:ids))
+                GROUP BY hall_id
+            ) sc ON sc.hall_id = h.id
+            LEFT JOIN (
+                SELECT session_id, COUNT(id) as tickets_sold, SUM(total_price) as total_revenue
+                FROM bookings
+                WHERE status = 'CONFIRMED' AND session_id IN (:ids)
+                GROUP BY session_id
+            ) bs ON bs.session_id = s.id
+            WHERE s.id IN (:ids)
+            """, nativeQuery = true)
+    List<SessionAdminProjection> findAdminProjectionsByIds(@Param("ids") List<Long> ids);
+}

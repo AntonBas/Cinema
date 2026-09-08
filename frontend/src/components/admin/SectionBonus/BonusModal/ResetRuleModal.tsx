@@ -22,9 +22,13 @@ const ResetRuleModal: React.FC<ResetRuleModalProps> = ({
     const { resetRule, loading } = useBonus();
 
     const handleReset = async () => {
-        const result = await resetRule(ruleType);
-        if (result) {
-            onSuccess();
+        try {
+            const result = await resetRule(ruleType);
+            if (result) {
+                onSuccess();
+            }
+        } catch {
+            return;
         }
     };
 

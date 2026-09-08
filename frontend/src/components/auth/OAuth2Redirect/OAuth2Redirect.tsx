@@ -9,7 +9,7 @@ export const OAuth2Redirect: React.FC = () => {
   const { oauth2Success } = useAuthActions();
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
     const token = params.get("token");
     const userId = params.get("userId");
     const email = params.get("email");

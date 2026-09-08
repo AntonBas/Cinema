@@ -21,4 +21,9 @@ public class SeatNotAvailableException extends ConflictException {
     public static SeatNotAvailableException seatInactive(Long seatId) {
         return new SeatNotAvailableException(String.format("Seat %d is not active", seatId));
     }
+
+    public static SeatNotAvailableException seatNotInSessionHall(Long seatId, Long sessionId) {
+        return new SeatNotAvailableException(
+                String.format("Seat %d does not belong to the hall for session %d", seatId, sessionId));
+    }
 }

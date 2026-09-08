@@ -1,5 +1,6 @@
 package ua.lviv.bas.cinema.config.security;
 
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -9,8 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.domain.user.User;
-import ua.lviv.bas.cinema.repository.user.UserRepository;
+import ua.lviv.bas.cinema.user.domain.User;
+import ua.lviv.bas.cinema.user.repository.UserRepository;
 
 @Slf4j
 @Service
@@ -20,8 +21,8 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 
     @Override
+    @Cacheable(value = "userDetails", key = "#email")
     @Transactional(readOnly = true)
-    @Cacheable(value = "users", key = "#email", unless = "#result == null")
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         log.debug("Attempting to load user by email: {}", email);
 
@@ -37,5 +38,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         log.debug("User loaded successfully: {}, role: {}, enabled: {}", email, user.getUserRole(), user.isEnabled());
 
         return new CustomUserDetails(user);
+    }
+
+    @CacheEvict(value = "userDetails", key = "#email")
+    public void evict(String email) {
+        log.debug("Evicted cached user details for email: {}", email);
     }
 }

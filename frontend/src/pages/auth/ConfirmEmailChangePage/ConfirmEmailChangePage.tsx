@@ -6,6 +6,7 @@ import {
   Link,
 } from "react-router-dom";
 import { XCircle, CheckCircle2 } from "lucide-react";
+import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/services/api";
 import { Button } from "@/components/ui/Button/Button";
@@ -41,10 +42,16 @@ export const ConfirmEmailChangePage: React.FC = () => {
         if (isAuthenticated) {
           await refreshUser();
         }
-      } catch (error: any) {
+      } catch (error) {
         setStatus("error");
+        const message = axios.isAxiosError(error)
+          ? (error.response?.data as { message?: string } | undefined)
+              ?.message
+          : error instanceof Error
+            ? error.message
+            : undefined;
         setErrorMessage(
-          error?.response?.data?.message ||
+          message ||
             "Failed to confirm email change. The token may be invalid or expired.",
         );
       }

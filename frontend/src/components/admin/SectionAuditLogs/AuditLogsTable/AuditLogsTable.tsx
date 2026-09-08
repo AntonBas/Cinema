@@ -1,10 +1,12 @@
 import React from "react";
 import { Badge, Tooltip } from "@/components/ui";
 import type { AuditLogResponse } from "@/types/audit";
+import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
 import styles from "./AuditLogsTable.module.css";
 
 interface AuditLogsTableProps {
   logs: AuditLogResponse[];
+  onViewHistory?: (entityType: string, entityId: number) => void;
 }
 
 const truncateText = (text: string, maxLength: number = 40): string => {
@@ -100,10 +102,13 @@ const getBadgeVariant = (
   return "secondary";
 };
 
-export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({ logs }) => {
+export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({
+  logs,
+  onViewHistory,
+}) => {
   if (logs.length === 0) {
     return (
-      <div className={styles.empty}>
+      <div className={tableStyles.empty}>
         <h3>No audit logs found</h3>
         <p>Actions will appear here once changes are made.</p>
       </div>
@@ -111,52 +116,68 @@ export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({ logs }) => {
   }
 
   return (
-    <div className={styles.tableWrapper}>
-      <table className={styles.table}>
-        <thead className={styles.tableHead}>
-          <tr>
-            <th className={styles.th}>Time</th>
-            <th className={styles.th}>Changed By</th>
-            <th className={styles.th}>Target</th>
-            <th className={styles.th}>Action</th>
-            <th className={styles.th}>Changes</th>
-          </tr>
-        </thead>
-        <tbody className={styles.tableBody}>
-          {logs.map((log) => {
-            const { date, time } = formatDateTime(log.changedAt);
-            return (
-              <tr key={log.id} className={styles.tr}>
-                <td className={styles.td} data-label="Time">
-                  <span className={styles.timeDate}>{date}</span>
-                  <span className={styles.timeTime}>{time}</span>
-                </td>
-                <td className={styles.td} data-label="Changed By">
-                  {log.changedBy}
-                </td>
-                <td className={styles.td} data-label="Target">
-                  <Tooltip content={log.targetInfo}>
-                    <span className={styles.targetInfo}>
-                      {truncateText(log.targetInfo, 30)}
-                    </span>
-                  </Tooltip>
-                </td>
-                <td className={styles.td} data-label="Action">
-                  <Badge
-                    variant={getBadgeVariant(log.action)}
-                    className={styles.actionBadge}
-                  >
-                    {getActionDisplay(log.action)}
-                  </Badge>
-                </td>
-                <td className={styles.td} data-label="Changes">
-                  {formatDetails(log)}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+    <div className={tableStyles.wrapper}>
+      <div className={tableStyles.container}>
+        <table className={tableStyles.table}>
+          <colgroup>
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "16%" }} />
+            <col style={{ width: "17%" }} />
+            <col style={{ width: "13%" }} />
+            <col style={{ width: "42%" }} />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Changed By</th>
+              <th>Target</th>
+              <th>Action</th>
+              <th>Changes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {logs.map((log) => {
+              const { date, time } = formatDateTime(log.changedAt);
+              return (
+                <tr key={log.id}>
+                  <td data-label="Time">
+                    <span className={styles.timeDate}>{date}</span>
+                    <span className={styles.timeTime}>{time}</span>
+                  </td>
+                  <td data-label="Changed By">{log.changedBy}</td>
+                  <td data-label="Target">
+                    {onViewHistory ? (
+                      <button
+                        type="button"
+                        className={styles.targetButton}
+                        onClick={() => onViewHistory(log.entityType, log.entityId)}
+                      >
+                        <Tooltip content={log.targetInfo}>
+                          <span className={styles.targetInfo}>
+                            {truncateText(log.targetInfo, 30)}
+                          </span>
+                        </Tooltip>
+                      </button>
+                    ) : (
+                      <Tooltip content={log.targetInfo}>
+                        <span className={styles.targetInfo}>
+                          {truncateText(log.targetInfo, 30)}
+                        </span>
+                      </Tooltip>
+                    )}
+                  </td>
+                  <td data-label="Action">
+                    <Badge variant={getBadgeVariant(log.action)}>
+                      {getActionDisplay(log.action)}
+                    </Badge>
+                  </td>
+                  <td data-label="Changes">{formatDetails(log)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

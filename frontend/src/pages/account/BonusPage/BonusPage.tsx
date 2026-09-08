@@ -23,24 +23,14 @@ export const BonusPage: React.FC = () => {
   } = useBonus();
 
   useEffect(() => {
-    getMyBalance();
-  }, []);
+    getMyBalance().catch(() => {});
+  }, [getMyBalance]);
 
   useEffect(() => {
     if (activeTab === "transactions") {
-      getMyTransactions({ page: params.page, size: params.size });
+      getMyTransactions({ page: params.page, size: params.size }).catch(() => {});
     }
-  }, [activeTab, params.page, params.size]);
-
-  const totalEarned = transactions
-    .filter((t) => parseFloat(t.pointsChange) > 0)
-    .reduce((sum, t) => sum + parseFloat(t.pointsChange), 0);
-
-  const totalSpent = transactions
-    .filter((t) => parseFloat(t.pointsChange) < 0)
-    .reduce((sum, t) => sum + Math.abs(parseFloat(t.pointsChange)), 0);
-
-  const netChange = totalEarned - totalSpent;
+  }, [activeTab, params.page, params.size, getMyTransactions]);
 
   return (
     <Layout>
@@ -72,37 +62,6 @@ export const BonusPage: React.FC = () => {
               {activeTab === "balance" ? (
                 <div className={styles.balanceContent}>
                   <BonusBalanceCard balance={balance} loading={!balance} />
-
-                  {transactions.length > 0 && (
-                    <div className={styles.summary}>
-                      <h3>Transaction Summary</h3>
-                      <div className={styles.summaryGrid}>
-                        <div className={styles.summaryItem}>
-                          <div className={styles.summaryLabel}>
-                            Total Earned
-                          </div>
-                          <div className={styles.summaryValue}>
-                            +{totalEarned} points
-                          </div>
-                        </div>
-                        <div className={styles.summaryItem}>
-                          <div className={styles.summaryLabel}>Total Spent</div>
-                          <div className={styles.summaryValue}>
-                            -{totalSpent} points
-                          </div>
-                        </div>
-                        <div className={styles.summaryItem}>
-                          <div className={styles.summaryLabel}>Net Change</div>
-                          <div
-                            className={`${styles.summaryValue} ${netChange >= 0 ? styles.positive : styles.negative}`}
-                          >
-                            {netChange >= 0 ? "+" : ""}
-                            {netChange} points
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div className={styles.transactionsContent}>

@@ -1,0 +1,39 @@
+package ua.lviv.bas.cinema.payment.controller.api;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
+import ua.lviv.bas.cinema.payment.service.PaymentStatusService;
+
+@RestController
+@RequestMapping("/api/liqpay")
+@RequiredArgsConstructor
+@Tag(name = "LiqPay Callback", description = "Callback endpoint for LiqPay payment gateway")
+public class LiqPayCallbackController {
+
+    private final PaymentStatusService paymentStatusService;
+
+    @PostMapping("/callback")
+    @ResponseStatus(HttpStatus.OK)
+    @RateLimit(value = 60, duration = 1)
+    @Operation(summary = "Handle LiqPay callback", description = "Receives payment status updates from LiqPay")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Callback processed successfully"),
+            @ApiResponse(responseCode = "400", description = "Missing required parameters")
+    })
+    @SecurityRequirements()
+    public String handleCallback(@RequestParam String data, @RequestParam String signature) {
+        paymentStatusService.handleCallback(data, signature);
+        return "OK";
+    }
+}

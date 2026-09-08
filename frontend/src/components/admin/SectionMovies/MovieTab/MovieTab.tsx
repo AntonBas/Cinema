@@ -10,6 +10,7 @@ import type {
   MovieCardResponse,
   MovieStatus,
 } from "@/types/movie";
+import type { PageResponse } from "@/types/pagination";
 import { useMovies } from "@/hooks/features/movies/useMovies";
 import { usePagination } from "@/hooks/common/usePagination";
 import { MovieList } from "./MovieList/MovieList";
@@ -29,7 +30,7 @@ type MovieTabType = "CURRENT" | "UPCOMING" | "ARCHIVED";
 interface TabData {
   data: MovieCardResponse[];
   total: number;
-  pagination: any;
+  pagination: PageResponse<MovieCardResponse> | null;
 }
 
 export const MovieTab: React.FC = () => {
@@ -127,7 +128,7 @@ export const MovieTab: React.FC = () => {
 
   useEffect(() => {
     loadAllTabCounts();
-  }, []);
+  }, [loadAllTabCounts]);
 
   useEffect(() => {
     loadTabData(activeTab, params.page || 0, params.query);
@@ -137,6 +138,15 @@ export const MovieTab: React.FC = () => {
     () => tabData[activeTab],
     [tabData, activeTab],
   );
+
+  const paginationInfo = useMemo(() => {
+    const total = currentTabData.total;
+    const page = params.page || 0;
+    const pageSize = params.size || 12;
+    const start = total > 0 ? page * pageSize + 1 : 0;
+    const end = Math.min(start + pageSize - 1, total);
+    return { start, end };
+  }, [currentTabData.total, params.page, params.size]);
 
   const handleSearch = useCallback(
     (query: string) => {
@@ -231,15 +241,6 @@ export const MovieTab: React.FC = () => {
     UPCOMING: tabData.UPCOMING.total,
     ARCHIVED: tabData.ARCHIVED.total,
   };
-
-  const paginationInfo = useMemo(() => {
-    const total = currentTabData.total;
-    const page = params.page || 0;
-    const pageSize = params.size || 12;
-    const start = total > 0 ? page * pageSize + 1 : 0;
-    const end = Math.min(start + pageSize - 1, total);
-    return { start, end };
-  }, [currentTabData.total, params.page, params.size]);
 
   return (
     <div className={styles.container}>

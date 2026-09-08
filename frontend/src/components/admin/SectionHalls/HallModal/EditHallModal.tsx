@@ -35,7 +35,7 @@ export const EditHallModal: React.FC<EditHallModalProps> = ({
 
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.name || loading) return;
+        if (formData.name.trim().length < 2 || loading) return;
         await onUpdate(hall.id, formData);
     }, [formData, hall.id, loading, onUpdate]);
 

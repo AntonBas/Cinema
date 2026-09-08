@@ -32,7 +32,7 @@ export const CashierScanPage: React.FC = () => {
     if (uniqueCode) {
       getTicketForCashier(uniqueCode);
     }
-  }, [uniqueCode]);
+  }, [uniqueCode, getTicketForCashier]);
 
   const ticket = validatedTicket || cashierTicket;
 

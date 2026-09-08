@@ -13,6 +13,9 @@ spring:
         format_sql: true
         use_sql_comments: true
 
+app:
+  debug-errors: true
+
 scheduler:
   birthday-bonus:
     cron: "0 */5 * * * *"
@@ -26,26 +29,20 @@ scheduler:
   booking:
     expiration-interval: 300000
     cleanup-cron: "0 */5 * * * *"
-    reminder-cron: "0 */5 * * * *"
   payment:
     expiration-interval: 300000
     cleanup-cron: "0 */5 * * * *"
-    daily-stats: "0 */5 * * * *"
   ticket:
     mark-as-used: 300000
     cleanup-cron: "0 */5 * * * *"
-    daily-stats: "0 */5 * * * *"
-    upcoming-reminder: "0 */5 * * * *"
   seat-reservation:
-    expiration-interval: 300000
-    cleanup-expired-interval: 60000
+    expiration-interval: 60000
+    cleanup-expired-interval: 300000
 
 logging:
   level:
     root: INFO
     ua.lviv.bas.cinema: DEBUG
-    ua.lviv.bas.cinema.controller: DEBUG
-    ua.lviv.bas.cinema.service: DEBUG
     ua.lviv.bas.cinema.config.security: DEBUG
     org.springframework.web: DEBUG
     org.springframework.security: DEBUG

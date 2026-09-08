@@ -81,7 +81,6 @@ export interface MovieDetailResponse {
   endShowingDate: string;
   ageRating: AgeRating;
   status: MovieStatus;
-  posterFileName: string;
   posterUrl: string;
   genres: GenreResponse[];
   actors: PersonResponse[];
@@ -100,7 +99,6 @@ export interface MovieAdminResponse {
   endShowingDate: string;
   ageRating: AgeRating;
   status: MovieStatus;
-  posterFileName: string;
   posterUrl: string;
   genres: GenreResponse[];
   actors: PersonResponse[];

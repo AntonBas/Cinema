@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { MovieCard } from "@/components/movies/MovieCard/MovieCard";
 import { Button } from "@/components/ui/Button/Button";
@@ -37,9 +37,9 @@ export const LeavingSoon: React.FC<LeavingSoonProps> = ({
 
   const maxIndex = Math.max(0, movies.length - itemsToShow);
 
-  const nextSlide = () => {
+  const nextSlide = useCallback(() => {
     setCurrentIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
-  };
+  }, [maxIndex]);
 
   const prevSlide = () => {
     setCurrentIndex((prev) => (prev <= 0 ? maxIndex : prev - 1));
@@ -53,7 +53,7 @@ export const LeavingSoon: React.FC<LeavingSoonProps> = ({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isHovered, loading, movies.length, maxIndex, itemsToShow]);
+  }, [isHovered, loading, movies.length, itemsToShow, nextSlide]);
 
   if (loading) {
     return (

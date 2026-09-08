@@ -30,6 +30,7 @@ spring:
     properties:
       hibernate:
         "[format_sql]": false
+        "[default_batch_fetch_size]": 20
         jdbc:
           "[batch_size]": 20
   flyway:
@@ -52,13 +53,6 @@ spring:
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
-  task:
-    execution:
-      pool:
-        core-size: 3
-        max-size: 5
-        queue-capacity: 50
-      thread-name-prefix: "scheduler-"
   servlet:
     multipart:
       max-file-size: 10MB
@@ -86,8 +80,9 @@ spring:
             user-name-attribute: sub
 
 app:
+  debug-errors: false
   jwt:
-    secret: ${JWT_SECRET:local_fallback_secret_key_for_dev_only}
+    secret: ${JWT_SECRET}
     expiration: 86400000
   qr:
     margin: 1
@@ -166,3 +161,17 @@ logging:
   level:
     root: INFO
     ua.lviv.bas.cinema: INFO
+
+management:
+  server:
+    port: 8081
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics, prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    tags:
+      application: ${spring.application.name}

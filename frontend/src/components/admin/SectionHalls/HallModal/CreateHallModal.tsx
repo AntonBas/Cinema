@@ -24,7 +24,7 @@ export const CreateHallModal: React.FC<CreateHallModalProps> = ({
 
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.name || loading) return;
+        if (formData.name.trim().length < 2 || loading) return;
         await onCreate(formData);
     }, [formData, loading, onCreate]);
 

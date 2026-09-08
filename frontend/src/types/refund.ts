@@ -1,8 +1,15 @@
-export type RefundStatus = "PENDING" | "COMPLETED" | "REJECTED" | "CANCELLED";
+export type RefundStatus =
+  | "PENDING"
+  | "PROCESSING"
+  | "APPROVED"
+  | "REJECTED"
+  | "PROCESSED"
+  | "CANCELLED";
 export type RefundItemStatus =
   | "PENDING"
-  | "COMPLETED"
+  | "APPROVED"
   | "REJECTED"
+  | "PROCESSED"
   | "CANCELLED";
 
 export interface RefundPolicyRule {
@@ -81,14 +88,17 @@ export interface RefundItemResponse {
 
 export const RefundStatusDisplay: Record<string, string> = {
   PENDING: "Pending",
-  COMPLETED: "Completed",
+  PROCESSING: "Processing",
+  APPROVED: "Approved",
   REJECTED: "Rejected",
+  PROCESSED: "Processed",
   CANCELLED: "Cancelled",
 };
 
 export const RefundItemStatusDisplay: Record<string, string> = {
   PENDING: "Pending",
-  COMPLETED: "Completed",
+  APPROVED: "Approved",
   REJECTED: "Rejected",
+  PROCESSED: "Processed",
   CANCELLED: "Cancelled",
 };

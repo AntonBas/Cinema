@@ -23,6 +23,7 @@ export const BookingPage: React.FC = () => {
   const {
     data: seatData,
     loading,
+    loadingSeats,
     selectedSeats,
     totalPrice,
     getSeatAvailability,
@@ -40,7 +41,7 @@ export const BookingPage: React.FC = () => {
       getSeatAvailability();
       getMyBalance();
     }
-  }, [sessionIdNum]);
+  }, [sessionIdNum, getSeatAvailability, getMyBalance]);
 
   const handleSeatClick = useCallback(
     async (seatId: number) => {
@@ -74,14 +75,18 @@ export const BookingPage: React.FC = () => {
         ticketTypeId: seat.ticketTypeId,
       }));
 
-      const response = await create({
-        sessionId: sessionIdNum,
-        seats,
-        bonusPointsToUse: bonusPointsToUse > 0 ? bonusPointsToUse : undefined,
-      });
+      try {
+        const response = await create({
+          sessionId: sessionIdNum,
+          seats,
+          bonusPointsToUse: bonusPointsToUse > 0 ? bonusPointsToUse : undefined,
+        });
 
-      if (response) {
-        navigate(`/booking/summary/${response.id}`);
+        if (response) {
+          navigate(`/booking/summary/${response.id}`);
+        }
+      } catch {
+        return;
       }
     },
     [selectedSeats, sessionIdNum, create, navigate, showNotification],
@@ -128,6 +133,7 @@ export const BookingPage: React.FC = () => {
             <CinemaHall
               seats={seatData.seats}
               selectedSeats={selectedSeats.map((s) => s.seat.id)}
+              loadingSeats={loadingSeats}
               onSeatClick={handleSeatClick}
             />
           </div>

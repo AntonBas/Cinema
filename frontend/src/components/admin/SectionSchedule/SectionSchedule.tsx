@@ -51,7 +51,7 @@ export const SectionSchedule: React.FC = () => {
 
     useEffect(() => {
         getAllHalls();
-    }, []);
+    }, [getAllHalls]);
 
     useEffect(() => {
         getAdminSessions({
@@ -59,7 +59,7 @@ export const SectionSchedule: React.FC = () => {
             size: params.size,
             ...filters,
         });
-    }, [params.page, params.size, filters]);
+    }, [params.page, params.size, filters, getAdminSessions]);
 
     const handleFilterChange = useCallback(<K extends keyof FiltersState>(key: K, value: FiltersState[K]) => {
         setFilters(prev => ({ ...prev, [key]: value }));
@@ -75,34 +75,34 @@ export const SectionSchedule: React.FC = () => {
         await create(data);
         setIsCreateModalOpen(false);
         getAdminSessions({ page: params.page ?? 0, size: params.size, ...filters });
-    }, [params.page, params.size, filters]);
+    }, [create, params.page, params.size, filters, getAdminSessions]);
 
     const handleUpdateSession = useCallback(async (id: number, data: SessionRequest) => {
         await update(id, data);
         setEditingSession(null);
         getAdminSessions({ page: params.page ?? 0, size: params.size, ...filters });
-    }, [params.page, params.size, filters]);
+    }, [update, params.page, params.size, filters, getAdminSessions]);
 
     const handleDeleteSession = useCallback(async () => {
         if (!deletingSession) return;
         await remove(deletingSession.id);
         setDeletingSession(null);
         getAdminSessions({ page: params.page ?? 0, size: params.size, ...filters });
-    }, [deletingSession, params.page, params.size, filters]);
+    }, [deletingSession, remove, params.page, params.size, filters, getAdminSessions]);
 
     const handleCancelSession = useCallback(async () => {
         if (!cancellingSession) return;
         await cancel(cancellingSession.id);
         setCancellingSession(null);
         getAdminSessions({ page: params.page ?? 0, size: params.size, ...filters });
-    }, [cancellingSession, params.page, params.size, filters]);
+    }, [cancellingSession, cancel, params.page, params.size, filters, getAdminSessions]);
 
     const handleReactivateSession = useCallback(async () => {
         if (!reactivatingSession) return;
         await reactivate(reactivatingSession.id);
         setReactivatingSession(null);
         getAdminSessions({ page: params.page ?? 0, size: params.size, ...filters });
-    }, [reactivatingSession, params.page, params.size, filters]);
+    }, [reactivatingSession, reactivate, params.page, params.size, filters, getAdminSessions]);
 
     const activeFilterCount = useMemo(() => {
         return Object.values(filters).filter(v => v !== undefined && v !== '').length;

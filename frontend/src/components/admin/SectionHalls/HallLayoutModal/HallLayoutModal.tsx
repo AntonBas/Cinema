@@ -3,6 +3,7 @@ import type { SeatResponse, SeatRowResponse } from '@/types/seat';
 import { SeatType } from '@/types/seat';
 import { Modal } from '@/components/ui/Modal/Modal';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
+import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import { useHallLayout } from '../HallLayoutContext';
 import styles from './HallLayoutModal.module.css';
 
@@ -73,6 +74,7 @@ export const HallLayoutModal: React.FC = () => {
     } = useHallLayout();
 
     const [updatingSeatId, setUpdatingSeatId] = useState<number | null>(null);
+    const showLoading = useDelayedLoading(loading);
 
     const handleTypeChange = async (seat: SeatResponse) => {
         if (!currentHall) return;
@@ -111,7 +113,7 @@ export const HallLayoutModal: React.FC = () => {
             size="fullscreen"
         >
             <div className={styles.modalContent}>
-                {loading && !layout && (
+                {showLoading && !layout && (
                     <div className={styles.loading}>
                         <LoadingSpinner text="Loading hall layout..." />
                     </div>

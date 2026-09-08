@@ -5,14 +5,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ua.lviv.bas.cinema.domain.user.User;
-import ua.lviv.bas.cinema.domain.user.UserRole;
-import ua.lviv.bas.cinema.domain.user.VerificationStatus;
-import ua.lviv.bas.cinema.repository.user.UserRepository;
-import ua.lviv.bas.cinema.service.bonus.BonusService;
+import ua.lviv.bas.cinema.audit.domain.AuditAction;
+import ua.lviv.bas.cinema.audit.service.AuditDetails;
+import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.user.domain.User;
+import ua.lviv.bas.cinema.user.domain.UserRole;
+import ua.lviv.bas.cinema.user.domain.VerificationStatus;
+import ua.lviv.bas.cinema.user.repository.UserRepository;
+import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 
 import java.time.LocalDate;
 import java.util.Map;
@@ -25,7 +29,9 @@ import java.util.UUID;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
-    private final BonusService bonusService;
+    private final BonusLedgerService bonusLedgerService;
+    private final AuditService auditService;
+    private final CustomUserDetailsService customUserDetailsService;
 
     @Override
     @Transactional
@@ -40,8 +46,13 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String email = (String) attributes.get("email");
         String name = (String) attributes.get("name");
 
-        String[] nameParts = name.split(" ", 2);
-        String firstName = nameParts[0];
+        if (email == null || email.isBlank()) {
+            throw new OAuth2AuthenticationException(
+                    new OAuth2Error("email_not_provided", "OAuth2 provider did not return an email address", null));
+        }
+
+        String[] nameParts = name != null ? name.split(" ", 2) : new String[0];
+        String firstName = nameParts.length > 0 ? nameParts[0] : "";
         String lastName = nameParts.length > 1 ? nameParts[1] : "";
 
         Optional<User> userOptional = userRepository.findByEmail(email);
@@ -51,8 +62,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             user = userOptional.get();
             if (!user.isEnabled()) {
                 user.setEnabled(true);
+                user.setPassword(UUID.randomUUID().toString());
                 userRepository.save(user);
-                log.info("Enabled existing OAuth2 user {}", email);
+                customUserDetailsService.evict(email);
+                log.info("Enabled existing OAuth2 user {} and invalidated local password", email);
             }
         } else {
             user = User.builder().email(email).firstName(firstName).lastName(lastName)
@@ -62,12 +75,19 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
             user = userRepository.save(user);
             log.info("Created new OAuth2 user: {}", email);
+            auditRegister(user);
 
-            bonusService.getOrCreateCard(user);
-            bonusService.awardWelcomeBonus(user);
+            bonusLedgerService.getOrCreateCard(user);
+            bonusLedgerService.awardWelcomeBonus(user);
             log.info("Created bonus card and awarded welcome bonus for OAuth2 user: {}", email);
         }
 
         return oAuth2User;
+    }
+
+    private void auditRegister(User user) {
+        var details = AuditDetails.of().put("email", user.getEmail()).put("firstName", user.getFirstName())
+                .put("lastName", user.getLastName()).build();
+        auditService.logChange("User", user.getId(), user.getEmail(), AuditAction.REGISTER, null, details);
     }
 }

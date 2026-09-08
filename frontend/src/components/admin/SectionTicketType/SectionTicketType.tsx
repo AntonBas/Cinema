@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTicketType } from '@/hooks/features/ticketType/useTicketType';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import { usePagination } from '@/hooks/common/usePagination';
@@ -33,11 +33,14 @@ const SectionTicketType = () => {
             active: statusFilter === 'all' ? undefined : statusFilter === 'active',
             category: categoryFilter === 'all' ? undefined : categoryFilter
         });
-    }, [pageSize, searchQuery, statusFilter, categoryFilter, getAll]);
+    }, [pageSize, searchQuery, statusFilter, categoryFilter, getAll, currentPage]);
 
+    const didLoadRef = useRef(false);
     useEffect(() => {
+        if (didLoadRef.current) return;
+        didLoadRef.current = true;
         loadTicketTypes(0);
-    }, []);
+    }, [loadTicketTypes]);
 
     const handleSearch = useCallback((query: string) => {
         setSearchQuery(query);

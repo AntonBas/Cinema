@@ -10,4 +10,5 @@ export * from './NotificationContainer/NotificationContainer';
 export * from './Pagination/Pagination';
 export * from './SearchInput/SearchInput';
 export * from './Select/Select';
+export * from './Textarea/Textarea';
 export * from './Tooltip/Tooltip';

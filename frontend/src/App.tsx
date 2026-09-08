@@ -1,7 +1,7 @@
 import { BrowserRouter as Router } from 'react-router-dom';
 import { AppRoutes } from '@/routes/AppRoutes';
-import { AuthProvider } from '@/context/AuthContext';
-import { NotificationProvider } from '@/context/NotificationContext';
+import { AuthProvider } from '@/context/AuthProvider';
+import { NotificationProvider } from '@/context/NotificationProvider';
 import { NotificationContainer } from '@/components/ui';
 import '@/components/ui/shared/styles/reset.css';
 import './App.css';

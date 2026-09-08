@@ -10,10 +10,12 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
-import ua.lviv.bas.cinema.domain.user.User;
-import ua.lviv.bas.cinema.repository.user.UserRepository;
+import org.springframework.web.util.UriUtils;
+import ua.lviv.bas.cinema.user.domain.User;
+import ua.lviv.bas.cinema.user.repository.UserRepository;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Component
@@ -38,9 +40,11 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         String token = jwtTokenProvider.generateToken(authentication);
 
-        String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl + "/oauth2/redirect")
-                .queryParam("token", token).queryParam("userId", user.getId()).queryParam("email", email).build()
-                .toUriString();
+        String fragment = "token=" + UriUtils.encode(token, StandardCharsets.UTF_8) + "&userId=" + user.getId()
+                + "&email=" + UriUtils.encode(email, StandardCharsets.UTF_8);
+
+        String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl + "/oauth2/redirect").fragment(fragment)
+                .build().toUriString();
 
         log.info("OAuth2 login successful for user: {}", email);
         getRedirectStrategy().sendRedirect(request, response, targetUrl);

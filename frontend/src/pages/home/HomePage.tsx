@@ -8,8 +8,6 @@ import { Promotions } from "@/components/home/Promotions/Promotions";
 import { useMovies } from "@/hooks/features/movies/useMovies";
 import { usePromotion } from "@/hooks/features/promotion/usePromotion";
 import { useAuth } from "@/context/AuthContext";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
-import styles from "./HomePage.module.css";
 
 export const HomePage: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -34,17 +32,22 @@ export const HomePage: React.FC = () => {
 
   const [claimedIds, setClaimedIds] = useState<number[]>([]);
 
-  const loading = moviesLoading || promotionsLoading;
-
   useEffect(() => {
-    getCurrentMoviesForHome();
-    getUpcomingMoviesForHome();
-    getLeavingSoonForHome();
-    getAvailable();
+    getCurrentMoviesForHome().catch(() => {});
+    getUpcomingMoviesForHome().catch(() => {});
+    getLeavingSoonForHome().catch(() => {});
+    getAvailable().catch(() => {});
     if (isAuthenticated) {
-      getClaimed();
+      getClaimed().catch(() => {});
     }
-  }, []);
+  }, [
+    isAuthenticated,
+    getCurrentMoviesForHome,
+    getUpcomingMoviesForHome,
+    getLeavingSoonForHome,
+    getAvailable,
+    getClaimed,
+  ]);
 
   useEffect(() => {
     if (claimedPromotions.length > 0) {
@@ -52,45 +55,25 @@ export const HomePage: React.FC = () => {
     }
   }, [claimedPromotions]);
 
-  const handleClaimPromotion = async (promotionId: number, _title: string) => {
+  const handleClaimPromotion = async (promotionId: number) => {
     const result = await claim({ promotionId });
     if (result) {
       setClaimedIds((prev) => [...prev, promotionId]);
     }
   };
 
-  if (loading) {
-    return (
-      <Layout>
-        <div className={styles.loading}>
-          <LoadingSpinner text="Loading..." />
-        </div>
-      </Layout>
-    );
-  }
-
-  const hasContent =
-    currentMoviesHome.length > 0 ||
-    upcomingMoviesHome.length > 0 ||
-    leavingSoonHome.length > 0;
-
   return (
     <Layout>
       <HeroSection />
-      {currentMoviesHome.length > 0 && (
-        <NowShowing movies={currentMoviesHome} />
-      )}
-      {upcomingMoviesHome.length > 0 && (
-        <ComingSoon movies={upcomingMoviesHome} />
-      )}
-      {leavingSoonHome.length > 0 && <LeavingSoon movies={leavingSoonHome} />}
-      {availablePromotions.length > 0 && (
-        <Promotions
-          promotions={availablePromotions}
-          onClaim={handleClaimPromotion}
-          claimedPromotionIds={claimedIds}
-        />
-      )}
+      <NowShowing movies={currentMoviesHome} loading={moviesLoading} />
+      <ComingSoon movies={upcomingMoviesHome} loading={moviesLoading} />
+      <LeavingSoon movies={leavingSoonHome} loading={moviesLoading} />
+      <Promotions
+        promotions={availablePromotions}
+        loading={promotionsLoading}
+        onClaim={handleClaimPromotion}
+        claimedPromotionIds={claimedIds}
+      />
     </Layout>
   );
 };

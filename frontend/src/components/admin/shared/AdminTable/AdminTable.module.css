@@ -1,0 +1,218 @@
+.wrapper {
+  width: 100%;
+}
+
+.container {
+  width: 100%;
+  border-radius: var(--radius-xl);
+  border: 1px solid #334155;
+  background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+  box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+  animation: fadeIn 0.4s ease;
+}
+
+.table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: transparent;
+}
+
+.table th {
+  font-weight: 600;
+  padding: var(--space-4) var(--space-3);
+  text-align: left;
+  border-bottom: 1px solid #334155;
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #f1f5f9;
+  background: #1e293b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table th:first-child {
+  border-top-left-radius: var(--radius-xl);
+}
+
+.table th:last-child {
+  border-top-right-radius: var(--radius-xl);
+}
+
+.table td {
+  padding: var(--space-4) var(--space-3);
+  border-bottom: 1px solid #334155;
+  transition: background-color var(--transition-normal);
+  vertical-align: middle;
+  color: var(--color-text-secondary);
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.table tbody tr {
+  background: rgba(30, 41, 59, 0.3);
+}
+
+.table tbody tr:nth-child(even) {
+  background: rgba(30, 41, 59, 0.6);
+}
+
+.table tbody tr:hover {
+  background: rgba(253, 95, 0, 0.15);
+}
+
+.table tbody tr:hover td {
+  color: #f1f5f9;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table th.actionsCol {
+  text-align: center;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: center;
+}
+
+.empty {
+  text-align: center;
+  padding: var(--space-12) var(--space-8);
+  color: var(--color-text-secondary);
+  background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+  border-radius: var(--radius-xl);
+  border: 1px solid #334155;
+  box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.empty h3 {
+  color: #f1f5f9;
+  margin: 0 0 var(--space-2) 0;
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+}
+
+.empty p {
+  margin: 0;
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1024px) {
+  .container {
+    border-radius: var(--radius-lg);
+    background: transparent;
+    box-shadow: none;
+    border: none;
+  }
+
+  .table {
+    table-layout: auto;
+    display: block;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .table tbody tr {
+    display: block;
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    border: 1px solid #334155;
+    background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-2) 0;
+    border-bottom: 1px dashed #334155;
+    white-space: normal;
+  }
+
+  .table td:first-child {
+    padding-left: 0;
+    border-bottom: 1px solid #334155;
+    margin-bottom: var(--space-2);
+    padding-bottom: var(--space-3);
+    justify-content: flex-start;
+  }
+
+  .table td:last-child {
+    padding-right: 0;
+    border-bottom: none;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .table td:first-child::before {
+    display: none;
+  }
+
+  .actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .empty {
+    padding: var(--space-8) var(--space-4);
+  }
+
+  .empty h3 {
+    font-size: var(--font-size-lg);
+  }
+
+  .empty p {
+    font-size: var(--font-size-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .table tbody {
+    gap: var(--space-3);
+  }
+
+  .table tbody tr {
+    padding: var(--space-3);
+  }
+
+  .empty {
+    padding: var(--space-6) var(--space-3);
+  }
+}
