@@ -481,7 +481,7 @@ Three tabs for complete movie content management:
 
 ### Testing
 
-889 tests across 124 test classes, run with Testcontainers against a real PostgreSQL instance
+899 tests across 123 test classes, run with Testcontainers against a real PostgreSQL instance
 (no mocked DB in integration/concurrency tests). Every domain has a dedicated concurrency suite,
 e.g. `SeatReservationConcurrencyTest`, `BookingConcurrencyTest`,
 `BookingDoubleConfirmConcurrencyTest`, `PaymentCallbackConcurrencyTest`,
@@ -547,12 +547,12 @@ Refund amount depends on time remaining before the session:
 
 Four configurable rules control the loyalty program:
 
-| Rule            | Description                      | Default |
-| --------------- | -------------------------------- | ------- |
-| Welcome Bonus   | Points after email verification  | 100     |
-| Birthday Bonus  | Points on verified birthday      | 200     |
-| Booking Spend   | Min/max points per booking       | 10/50%  |
-| Payment Accrual | % of purchase returned as points | 5%      |
+| Rule            | Description                                                          | Default                            |
+| --------------- | --------------------------------------------------------------------- | ----------------------------------- |
+| Welcome Bonus   | Points after email verification                                      | 150                                |
+| Birthday Bonus  | Points on verified birthday                                          | 200                                |
+| Booking Spend   | Min/max points redeemable per booking, capped at a % of total price  | 100-1000 points, max 50% of total  |
+| Payment Accrual | % of purchase returned as points                                     | 5%                                  |
 
 ## Tech Stack
 

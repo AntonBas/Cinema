@@ -1,6 +1,6 @@
 # Cinema Management System
 
-Full-stack cinema booking platform: seat reservation, LiqPay payments, refunds, and a bonus loyalty program, built to survive real backend failure modes — race conditions, unreliable payment callbacks, crashes mid-transaction. **Java 21 / Spring Boot 4 / PostgreSQL / Redis / React 19 + TypeScript.** Two-stage seat locking, idempotent payment callbacks, self-healing schedulers, full refund state machine, RBAC across 4 roles, 889 backend tests including dedicated concurrency suites.
+Full-stack cinema booking platform: seat reservation, LiqPay payments, refunds, and a bonus loyalty program, built to survive real backend failure modes — race conditions, unreliable payment callbacks, crashes mid-transaction. **Java 21 / Spring Boot 4 / PostgreSQL / Redis / React 19 + TypeScript.** Two-stage seat locking, idempotent payment callbacks, self-healing schedulers, full refund state machine, RBAC across 4 roles, 899 backend tests including dedicated concurrency suites.
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.1.1-green)
@@ -108,7 +108,7 @@ Full write-up of trade-offs and what was learned building this: [docs/DOCS.md](d
 
 ## Testing
 
-- **889 tests** across **124 test classes**, run against real PostgreSQL via **Testcontainers** (no mocked DB in integration tests)
+- **899 tests** across **123 test classes**, run against real PostgreSQL via **Testcontainers** (no mocked DB in integration tests)
 - Dedicated **concurrency test suites** per domain: `SeatReservationConcurrencyTest`, `BookingConcurrencyTest`, `BookingDoubleConfirmConcurrencyTest`, `PaymentCallbackConcurrencyTest`, `RefundCreationConcurrencyTest`, `BonusCardConcurrencyTest`, `BonusRefundPointsRetryConcurrencyTest`, `TicketValidationConcurrencyTest`
 - Failure scenarios verified directly: 10 concurrent bookings for the same seat (exactly 1 wins), 5 duplicate LiqPay callbacks (order reaches `PAID` exactly once), expired reservations auto-released by the scheduler, app killed mid-payment and recovered on restart
 - Runs on every push/PR to `main`/`develop` via GitHub Actions (`.github/workflows/ci.yml`)
