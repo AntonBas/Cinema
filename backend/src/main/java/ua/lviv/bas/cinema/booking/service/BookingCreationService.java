@@ -19,7 +19,6 @@ import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.common.PriceCalculatorService;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingValidationException;
-import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
 import ua.lviv.bas.cinema.ticket.domain.TicketType;
 import ua.lviv.bas.cinema.ticket.repository.TicketTypeRepository;
 import ua.lviv.bas.cinema.user.domain.User;
@@ -89,11 +88,6 @@ class BookingCreationService {
 
         for (var seatSelection : orderedSeatSelections) {
             var reservation = findOrCreateReservation(session, user, seatSelection);
-
-            if (reservation.getStatus() == ReservationStatus.CONFIRMED) {
-                throw new SeatNotAvailableException("Seat already booked");
-            }
-
             updateReservationWithTicketType(reservation, seatSelection, ticketTypesById);
             seatReservations.add(reservation);
         }

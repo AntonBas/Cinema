@@ -481,7 +481,7 @@ Three tabs for complete movie content management:
 
 ### Testing
 
-833 tests across 115 test classes, run with Testcontainers against a real PostgreSQL instance
+868 tests across 124 test classes, run with Testcontainers against a real PostgreSQL instance
 (no mocked DB in integration/concurrency tests). Every domain has a dedicated concurrency suite,
 e.g. `SeatReservationConcurrencyTest`, `BookingConcurrencyTest`,
 `BookingDoubleConfirmConcurrencyTest`, `PaymentCallbackConcurrencyTest`,

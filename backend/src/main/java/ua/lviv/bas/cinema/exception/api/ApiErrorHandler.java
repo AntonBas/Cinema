@@ -163,7 +163,7 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
     @Nonnull
     protected ResponseEntity<Object> handleMaxUploadSizeExceededException(@Nonnull MaxUploadSizeExceededException ex,
                                                                           @Nonnull HttpHeaders headers, @Nonnull HttpStatusCode status, @Nonnull WebRequest request) {
-        ApiError apiError = new ApiError(PAYLOAD_TOO_LARGE, "Uploaded file is too large", ex);
+        ApiError apiError = new ApiError(CONTENT_TOO_LARGE, "Uploaded file is too large", ex);
 
         log.warn("Upload rejected, file too large: {}", ex.getMessage());
 
