@@ -1,4 +1,4 @@
-package ua.lviv.bas.cinema.audit.dto;
+package ua.lviv.bas.cinema.audit.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;

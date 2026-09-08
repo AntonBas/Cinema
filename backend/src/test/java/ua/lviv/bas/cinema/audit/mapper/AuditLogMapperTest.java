@@ -5,7 +5,7 @@ import org.mapstruct.factory.Mappers;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
 import ua.lviv.bas.cinema.audit.domain.AuditLog;
 import ua.lviv.bas.cinema.audit.domain.AuditLogDetail;
-import ua.lviv.bas.cinema.audit.dto.AuditLogResponse;
+import ua.lviv.bas.cinema.audit.dto.response.AuditLogResponse;
 
 import java.time.LocalDateTime;
 import java.util.List;

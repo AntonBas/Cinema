@@ -4,7 +4,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.audit.domain.AuditLog;
-import ua.lviv.bas.cinema.audit.dto.AuditLogResponse;
+import ua.lviv.bas.cinema.audit.dto.response.AuditLogResponse;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface AuditLogMapper {
