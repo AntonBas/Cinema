@@ -9,6 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.CacheManager;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import ua.lviv.bas.cinema.bonus.domain.BonusCard;
@@ -29,6 +30,7 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -218,6 +220,21 @@ public class BonusLedgerServiceTest {
         verify(bonusQueryService).validateRedemption(USER_ID, 30);
         verify(bonusCardRepository).save(any(BonusCard.class));
         verify(bonusTransactionRepository).save(any(BonusTransaction.class));
+    }
+
+    @Test
+    void spendPointsWhenDuplicateReferenceRaceShouldSkip() {
+        Booking booking = Booking.builder().id(BOOKING_ID).build();
+        BonusCard card = BonusCard.builder().id(1L).pointsBalance(100).build();
+
+        doNothing().when(bonusQueryService).validateRedemption(USER_ID, 30);
+        when(bonusCardRepository.findByUserId(USER_ID)).thenReturn(Optional.of(card));
+        when(bonusCardRepository.save(any(BonusCard.class)))
+                .thenThrow(new DataIntegrityViolationException("duplicate reference"));
+
+        assertThatCode(() -> bonusLedgerService.spendPoints(USER_ID, 30, booking)).doesNotThrowAnyException();
+
+        verify(bonusTransactionRepository, never()).save(any());
     }
 
     @Test

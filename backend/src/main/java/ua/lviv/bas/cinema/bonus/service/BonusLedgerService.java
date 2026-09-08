@@ -111,19 +111,25 @@ public class BonusLedgerService {
     @CacheEvict(value = "bonus", key = "'balance:' + #userId")
     public void spendPoints(Long userId, Integer points, Booking booking) {
         var referenceId = "BOOKING_" + booking.getId();
-        var result = executeWithOptimisticLockRetry(() -> {
-            if (bonusTransactionRepository.existsByReferenceId(referenceId)) {
-                log.debug("Bonus spend for reference {} already applied, skipping", referenceId);
-                return null;
-            }
-            bonusQueryService.validateRedemption(userId, points);
-            var card = getCardByUserId(userId);
-            int oldBalance = card.getPointsBalance();
-            subtractPointsFromCard(card, points);
-            bonusCardRepository.save(card);
-            createTransaction(card, -points, BonusTransactionType.BOOKING_SPEND, referenceId, booking);
-            return new CardBalanceChange(card, oldBalance);
-        });
+        CardBalanceChange result;
+        try {
+            result = executeWithOptimisticLockRetry(() -> {
+                if (bonusTransactionRepository.existsByReferenceId(referenceId)) {
+                    log.debug("Bonus spend for reference {} already applied, skipping", referenceId);
+                    return null;
+                }
+                bonusQueryService.validateRedemption(userId, points);
+                var card = getCardByUserId(userId);
+                int oldBalance = card.getPointsBalance();
+                subtractPointsFromCard(card, points);
+                bonusCardRepository.save(card);
+                createTransaction(card, -points, BonusTransactionType.BOOKING_SPEND, referenceId, booking);
+                return new CardBalanceChange(card, oldBalance);
+            });
+        } catch (DataIntegrityViolationException e) {
+            log.debug("Bonus spend for reference {} already applied concurrently, skipping", referenceId);
+            return;
+        }
 
         if (result == null) {
             return;
