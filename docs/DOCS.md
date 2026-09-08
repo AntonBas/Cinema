@@ -315,7 +315,7 @@ Step-by-step ticket booking with seat reservation and secure payment.
 **5. Refund Policy**
 
 - View full refund rules at `/refund-policy`
-- Shows refund percentages (100% / 85% / 50%) based on time until session
+- Shows refund percentages (100% / 85% / 50% / 0%) based on time until session
 - Accessible from footer and refund modal
 
 ![Refund](images/refund.gif)
@@ -481,7 +481,7 @@ Three tabs for complete movie content management:
 
 ### Testing
 
-868 tests across 124 test classes, run with Testcontainers against a real PostgreSQL instance
+889 tests across 124 test classes, run with Testcontainers against a real PostgreSQL instance
 (no mocked DB in integration/concurrency tests). Every domain has a dedicated concurrency suite,
 e.g. `SeatReservationConcurrencyTest`, `BookingConcurrencyTest`,
 `BookingDoubleConfirmConcurrencyTest`, `PaymentCallbackConcurrencyTest`,
@@ -496,7 +496,7 @@ The seat booking system uses a two-stage reservation protocol with mixed locking
 
 - **Stage 1 (5-minute pessimistic lock):** When a user selects a seat, a row-level lock (`SELECT ... FOR UPDATE`) is acquired. Other users immediately see the seat as taken and cannot select it.
 - **Stage 2 (20-minute reservation):** After confirming the booking, seats are reserved for payment. If unpaid, they are released automatically.
-- **Optimistic locking (`@Version`)** is used for Booking, BonusAccount, and other entities where conflicts are rare.
+- **Optimistic locking (`@Version`)** is used for Booking, BonusCard, and other entities where conflicts are rare.
 - **Cleanup:** A scheduled job releases expired locks, cancels unpaid bookings, and updates session statuses.
 
 ### Payment Flow
@@ -538,9 +538,10 @@ Refund amount depends on time remaining before the session:
 
 | Time Before Session | Refund |
 | ------------------- | ------ |
-| > 24 hours          | 100%   |
-| 6-24 hours          | 85%    |
-| < 6 hours           | 50%    |
+| 48+ hours           | 100%   |
+| 24-48 hours         | 85%    |
+| 2-24 hours          | 50%    |
+| < 2 hours           | 0% (not eligible) |
 
 ### Bonus Rules
 
@@ -568,14 +569,14 @@ Four configurable rules control the loyalty program:
 | Spring Cache         | 4.1.1   |
 | Spring Actuator      | 4.1.1   |
 | PostgreSQL           | 15      |
-| Flyway               | 11.14.1 |
+| Flyway               | 12.4.0  |
 | JWT (jjwt)           | 0.13.0  |
 | MapStruct            | 1.6.3   |
 | Lombok               | 1.18.48 |
 | Bucket4j             | 8.10.1  |
 | Redis                | 7       |
 | ZXing (QR Code)      | 3.5.4   |
-| Gson                 | 2.11.0  |
+| Gson                 | 2.13.2  |
 | SpringDoc OpenAPI    | 3.1.1   |
 | Dotenv               | 4.0.0   |
 | Testcontainers       | 2.0.5   |
