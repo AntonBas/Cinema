@@ -3,6 +3,8 @@ package ua.lviv.bas.cinema.ticket.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -47,6 +49,7 @@ public class TicketService {
     private final QRCodeService qrCodeService;
     private final NumberGeneratorService numberGenerator;
     private final AuditService auditService;
+    private final CacheManager cacheManager;
 
     @Value("${app.ticket.qr.size:200}")
     private int qrCodeSize;
@@ -54,7 +57,7 @@ public class TicketService {
     @Value("${app.frontend.url}")
     private String ticketBaseUrl;
 
-    @CacheEvict(value = "tickets", allEntries = true)
+    @CacheEvict(value = "ticketList", allEntries = true)
     @Transactional
     public void createTicketsForBooking(Booking booking, Payment payment) {
         if (ticketRepository.existsByBookingId(booking.getId())) {
@@ -95,7 +98,7 @@ public class TicketService {
         return ticketMapper.toTicketCashierResponse(ticket);
     }
 
-    @Cacheable(value = "tickets", key = "#ticketCode + '-' + #user.id")
+    @Cacheable(value = "ticket", key = "#ticketCode + '-' + #user.id")
     public TicketResponse getTicket(String ticketCode, User user) {
         var ticket = ticketRepository.findByUniqueCode(ticketCode)
                 .orElseThrow(() -> new TicketNotFoundException("Ticket not found with code: " + ticketCode));
@@ -107,14 +110,14 @@ public class TicketService {
         return toTicketResponse(ticket);
     }
 
-    @Cacheable(value = "tickets", key = "'user:' + #user.id + '-' + #status + '-' + #movieTitle + '-' + #pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
+    @Cacheable(value = "ticketList", key = "'user:' + #user.id + '-' + #status + '-' + #movieTitle + '-' + #pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
     public Page<TicketResponse> getTickets(User user, TicketStatus status, String movieTitle, Pageable pageable) {
         Specification<Ticket> spec = ticketSpecification.buildForUser(user.getId(), status, movieTitle);
         var page = ticketRepository.findAll(spec, pageable);
         return page.map(this::toTicketResponse);
     }
 
-    @CacheEvict(value = "tickets", allEntries = true)
+    @CacheEvict(value = "ticketList", allEntries = true)
     @Transactional
     public TicketCashierResponse validate(String ticketCode) {
         var ticket = ticketRepository.findByUniqueCode(ticketCode).orElseThrow(TicketValidationException::notFound);
@@ -129,6 +132,7 @@ public class TicketService {
 
         ticket.setStatus(TicketStatus.USED);
         ticketRepository.save(ticket);
+        evictTicketCache(ticket);
         log.info("Ticket {} validated and marked as used", ticketCode);
         auditValidate(ticket, oldStatus);
 
@@ -181,7 +185,8 @@ public class TicketService {
     }
 
     @Caching(evict = {
-            @CacheEvict(value = "tickets", allEntries = true),
+            @CacheEvict(value = "ticket", key = "#ticket.uniqueCode + '-' + #ticket.user.id"),
+            @CacheEvict(value = "ticketList", allEntries = true),
             @CacheEvict(value = "seatAvailability", key = "#ticket.seatReservation.session.id")
     })
     @Transactional
@@ -198,6 +203,13 @@ public class TicketService {
         var seatReservation = ticket.getSeatReservation();
         if (seatReservation != null) {
             seatReservation.setStatus(ReservationStatus.CANCELLED);
+        }
+    }
+
+    private void evictTicketCache(Ticket ticket) {
+        Cache cache = cacheManager.getCache("ticket");
+        if (cache != null) {
+            cache.evict(ticket.getUniqueCode() + "-" + ticket.getUser().getId());
         }
     }
 

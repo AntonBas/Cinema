@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.CacheManager;
 import org.springframework.test.util.ReflectionTestUtils;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.booking.domain.SeatReservation;
@@ -56,6 +57,8 @@ public class TicketServiceTest {
     private QRCodeService qrCodeService;
     @Mock
     private NumberGeneratorService numberGenerator;
+    @Mock
+    private CacheManager cacheManager;
 
     @InjectMocks
     private TicketService ticketService;
