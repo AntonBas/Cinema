@@ -73,11 +73,6 @@ public class PaymentRefundService {
         var newStatus = totalRefundedAmount.compareTo(payment.getAmount()) >= 0 ? PaymentStatus.REFUNDED
                 : PaymentStatus.PARTIALLY_REFUNDED;
 
-        if (payment.getStatus() == newStatus) {
-            log.debug("Payment {} already marked as {}, skipping", payment.getId(), newStatus);
-            return;
-        }
-
         var oldStatus = payment.getStatus();
         payment.setStatus(newStatus);
         paymentRepository.save(payment);
