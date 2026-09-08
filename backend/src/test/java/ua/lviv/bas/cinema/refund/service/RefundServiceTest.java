@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import ua.lviv.bas.cinema.config.properties.RefundRules;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.payment.domain.Payment;
@@ -253,19 +254,35 @@ public class RefundServiceTest {
     }
 
     @Test
-    void refundWhenApplySuccessFailsAfterSuccessfulLiqPayShouldRetryOnceThenLeaveProcessing() {
+    void refundWhenApplySuccessFailsWithConcurrentUpdateShouldRetryOnceThenLeaveProcessing() {
         RefundRequest refundRequest = new RefundRequest(TICKET_ID, "Test reason");
 
         when(refundTransactionExecutor.createProcessingRefund(TICKET_ID, USER_ID, "Test reason"))
                 .thenReturn(defaultContext());
         when(refundTransactionExecutor.applySuccess(REFUND_ID, TICKET_ID))
-                .thenThrow(new RuntimeException("DB connection lost"));
+                .thenThrow(new ObjectOptimisticLockingFailureException(Refund.class, REFUND_ID));
 
         assertThatThrownBy(() -> refundService.refund(refundRequest, USER_ID))
                 .isInstanceOf(RefundProcessingException.class);
 
         verify(paymentRefundService, times(1)).callLiqPayRefund(eq("PAY123"), eq("ORD_123"), eq(REFUND_AMOUNT), any());
         verify(refundTransactionExecutor, times(2)).applySuccess(REFUND_ID, TICKET_ID);
+        verify(refundTransactionExecutor, never()).markFailed(any(), any());
+    }
+
+    @Test
+    void refundWhenApplySuccessFailsWithProgrammingErrorShouldPropagateImmediatelyWithoutRetry() {
+        RefundRequest refundRequest = new RefundRequest(TICKET_ID, "Test reason");
+
+        when(refundTransactionExecutor.createProcessingRefund(TICKET_ID, USER_ID, "Test reason"))
+                .thenReturn(defaultContext());
+        when(refundTransactionExecutor.applySuccess(REFUND_ID, TICKET_ID))
+                .thenThrow(new IllegalStateException("Unexpected refund state"));
+
+        assertThatThrownBy(() -> refundService.refund(refundRequest, USER_ID))
+                .isInstanceOf(IllegalStateException.class);
+
+        verify(refundTransactionExecutor, times(1)).applySuccess(REFUND_ID, TICKET_ID);
         verify(refundTransactionExecutor, never()).markFailed(any(), any());
     }
 }
