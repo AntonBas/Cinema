@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.exception.api;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -38,6 +39,9 @@ import static org.springframework.http.HttpStatus.*;
 @Slf4j
 @SuppressWarnings("unused")
 public class ApiErrorHandler extends ResponseEntityExceptionHandler {
+
+    @Value("${app.debug-errors:false}")
+    private boolean debugErrorsEnabled;
 
     @Override
     @Nonnull
@@ -114,7 +118,7 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     protected ResponseEntity<Object> handleDataIntegrityViolation(@Nonnull DataIntegrityViolationException ex,
                                                                   @Nonnull WebRequest request) {
-        if (ex.getCause() instanceof ConstraintViolationException) {
+        if (ex.getCause() instanceof org.hibernate.exception.ConstraintViolationException) {
             ApiError apiError = new ApiError(CONFLICT, "Database constraint violation", ex.getCause());
             log.warn("Database constraint violation: {}", ex.getMessage());
             return buildResponseEntity(apiError, request);
@@ -227,6 +231,9 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
             apiError.setPath(servletWebRequest.getRequest().getRequestURI());
         } else {
             apiError.setPath("unknown");
+        }
+        if (!debugErrorsEnabled) {
+            apiError.setDebugMessage(null);
         }
         return new ResponseEntity<>(apiError,
                 Objects.requireNonNull(apiError.getStatus(), "ApiError status must not be null"));

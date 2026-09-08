@@ -2,6 +2,8 @@ package ua.lviv.bas.cinema.exception.api;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,13 +22,22 @@ class ApiErrorHandlerTest {
         void trigger() {
             throw new MaxUploadSizeExceededException(10_000_000L);
         }
+
+        @GetMapping("/test/constraint-violation")
+        void triggerConstraintViolation() {
+            throw new DataIntegrityViolationException("insert failed",
+                    new org.hibernate.exception.ConstraintViolationException("duplicate key",
+                            new java.sql.SQLException("duplicate key"), "uk_user_promotion"));
+        }
     }
 
+    private ApiErrorHandler apiErrorHandler;
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(new ThrowingController()).setControllerAdvice(new ApiErrorHandler())
+        apiErrorHandler = new ApiErrorHandler();
+        mockMvc = MockMvcBuilders.standaloneSetup(new ThrowingController()).setControllerAdvice(apiErrorHandler)
                 .build();
     }
 
@@ -35,5 +46,26 @@ class ApiErrorHandlerTest {
         mockMvc.perform(get("/test/max-upload-size"))
                 .andExpect(status().isPayloadTooLarge())
                 .andExpect(jsonPath("$.message").value("Uploaded file is too large"));
+    }
+
+    @Test
+    void handleDataIntegrityViolationWithHibernateConstraintCauseShouldReturnConflict() throws Exception {
+        mockMvc.perform(get("/test/constraint-violation"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Database constraint violation"));
+    }
+
+    @Test
+    void debugMessageShouldBeOmittedByDefault() throws Exception {
+        mockMvc.perform(get("/test/max-upload-size"))
+                .andExpect(jsonPath("$.debugMessage").doesNotExist());
+    }
+
+    @Test
+    void debugMessageShouldBeIncludedWhenDebugErrorsEnabled() throws Exception {
+        ReflectionTestUtils.setField(apiErrorHandler, "debugErrorsEnabled", true);
+
+        mockMvc.perform(get("/test/max-upload-size"))
+                .andExpect(jsonPath("$.debugMessage").exists());
     }
 }
