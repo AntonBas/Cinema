@@ -67,13 +67,35 @@ public class RefundCalculator {
         var paymentAmount = ticket.getPayment().getAmount();
         var totalBookingPrice = ticket.getBooking().getTotalPrice();
         if (totalBookingPrice.compareTo(BigDecimal.ZERO) > 0) {
-            return ticket.getFinalPrice().multiply(paymentAmount)
-                    .divide(totalBookingPrice, 2, RoundingMode.HALF_UP);
+            var lastTicket = lastTicketInBooking(ticket.getBooking());
+            if (lastTicket != null && lastTicket.equals(ticket)) {
+                return paymentAmount.subtract(sumOtherTicketsCashAmount(ticket, paymentAmount, totalBookingPrice));
+            }
+            return proportionalCashAmount(ticket, paymentAmount, totalBookingPrice);
         }
         var totalSeats = ticket.getBooking().getSeatReservations().size();
         return totalSeats > 0
                 ? paymentAmount.divide(BigDecimal.valueOf(totalSeats), 2, RoundingMode.HALF_UP)
                 : paymentAmount;
+    }
+
+    private Ticket lastTicketInBooking(Booking booking) {
+        var tickets = booking.getTickets();
+        if (tickets == null || tickets.isEmpty()) {
+            return null;
+        }
+        return tickets.stream().max(Comparator.comparing(Ticket::getId)).orElse(null);
+    }
+
+    private BigDecimal sumOtherTicketsCashAmount(Ticket excluded, BigDecimal paymentAmount,
+                                                 BigDecimal totalBookingPrice) {
+        return excluded.getBooking().getTickets().stream().filter(t -> !t.equals(excluded))
+                .map(t -> proportionalCashAmount(t, paymentAmount, totalBookingPrice))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private BigDecimal proportionalCashAmount(Ticket ticket, BigDecimal paymentAmount, BigDecimal totalBookingPrice) {
+        return ticket.getFinalPrice().multiply(paymentAmount).divide(totalBookingPrice, 2, RoundingMode.HALF_UP);
     }
 
     public BigDecimal calculateRefundAmount(BigDecimal price, BigDecimal percentage) {

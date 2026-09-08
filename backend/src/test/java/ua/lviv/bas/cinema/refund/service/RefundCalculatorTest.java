@@ -173,6 +173,31 @@ class RefundCalculatorTest {
     }
 
     @Test
+    void calculateCashAmountWhenUnevenSplitShouldGiveLastTicketTheRemainder() {
+        var booking = testTicket.getBooking();
+        booking.setTotalPrice(new BigDecimal("300.00"));
+        testTicket.getPayment().setAmount(new BigDecimal("100.00"));
+        testTicket.setId(1L);
+        testTicket.setFinalPrice(new BigDecimal("100.00"));
+
+        Ticket secondTicket = Ticket.builder().id(2L).booking(booking).payment(testTicket.getPayment())
+                .finalPrice(new BigDecimal("100.00")).status(TicketStatus.ACTIVE).build();
+        Ticket thirdTicket = Ticket.builder().id(3L).booking(booking).payment(testTicket.getPayment())
+                .finalPrice(new BigDecimal("100.00")).status(TicketStatus.ACTIVE).build();
+        booking.setTickets(List.of(testTicket, secondTicket, thirdTicket));
+
+        BigDecimal firstCashAmount = refundCalculator.calculateCashAmount(testTicket);
+        BigDecimal secondCashAmount = refundCalculator.calculateCashAmount(secondTicket);
+        BigDecimal thirdCashAmount = refundCalculator.calculateCashAmount(thirdTicket);
+
+        assertThat(firstCashAmount).isEqualByComparingTo("33.33");
+        assertThat(secondCashAmount).isEqualByComparingTo("33.33");
+        assertThat(thirdCashAmount).isEqualByComparingTo("33.34");
+        assertThat(firstCashAmount.add(secondCashAmount).add(thirdCashAmount))
+                .isEqualByComparingTo(testTicket.getPayment().getAmount());
+    }
+
+    @Test
     void calculateRefundAmountAt100PercentShouldReturnFullPrice() {
         BigDecimal refundAmount = refundCalculator.calculateRefundAmount(new BigDecimal("100.00"),
                 new BigDecimal("100"));
