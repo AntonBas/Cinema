@@ -13,6 +13,9 @@ spring:
         format_sql: true
         use_sql_comments: true
 
+app:
+  debug-errors: true
+
 scheduler:
   birthday-bonus:
     cron: "0 */5 * * * *"

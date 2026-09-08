@@ -80,6 +80,7 @@ spring:
             user-name-attribute: sub
 
 app:
+  debug-errors: false
   jwt:
     secret: ${JWT_SECRET}
     expiration: 86400000
