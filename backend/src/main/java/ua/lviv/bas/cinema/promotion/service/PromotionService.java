@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
+import ua.lviv.bas.cinema.common.UniquenessValidator;
 import ua.lviv.bas.cinema.promotion.domain.Promotion;
 import ua.lviv.bas.cinema.promotion.domain.UserPromotion;
 import ua.lviv.bas.cinema.user.domain.User;
@@ -50,10 +51,7 @@ public class PromotionService {
     public PromotionResponse createPromotion(PromotionRequest request) {
         log.info("Creating new promotion: {}", request.title());
 
-        if (promotionRepository.existsByTitle(request.title())) {
-            throw PromotionAlreadyExistsException.forTitle(request.title());
-        }
-
+        validateTitleUniqueness(request.title(), null);
         validateDateRange(request);
 
         var promotion = promotionMapper.toPromotion(request);
@@ -95,6 +93,7 @@ public class PromotionService {
     public PromotionResponse updatePromotion(Long id, PromotionRequest request) {
         log.info("Updating promotion with ID: {}", id);
 
+        validateTitleUniqueness(request.title(), id);
         validateDateRange(request);
 
         var promotion = findByIdOrThrow(id);
@@ -160,6 +159,12 @@ public class PromotionService {
 
     private Promotion findByIdOrThrow(Long id) {
         return promotionRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Promotion", id));
+    }
+
+    private void validateTitleUniqueness(String title, Long excludeId) {
+        UniquenessValidator.validate(excludeId, () -> promotionRepository.existsByTitle(title),
+                id -> promotionRepository.existsByTitleAndIdNot(title, id),
+                () -> PromotionAlreadyExistsException.forTitle(title));
     }
 
     private void validateDateRange(PromotionRequest request) {

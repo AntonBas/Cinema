@@ -235,6 +235,16 @@ public class PromotionServiceTest {
     }
 
     @Test
+    void updatePromotionWithDuplicateTitleShouldThrowException() {
+        when(promotionRepository.existsByTitleAndIdNot(updateRequest.title(), PROMOTION_ID)).thenReturn(true);
+
+        assertThatThrownBy(() -> promotionService.updatePromotion(PROMOTION_ID, updateRequest))
+                .isInstanceOf(PromotionAlreadyExistsException.class);
+
+        verify(promotionRepository, never()).save(any());
+    }
+
+    @Test
     void updatePromotionWhenNotFoundShouldThrowException() {
         when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.empty());
 

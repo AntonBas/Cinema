@@ -18,6 +18,8 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
 
     boolean existsByTitle(String title);
 
+    boolean existsByTitleAndIdNot(String title, Long id);
+
     @Query("""
             SELECT p.id as id,
                    p.title as title,
