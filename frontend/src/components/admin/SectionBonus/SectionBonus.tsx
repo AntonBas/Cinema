@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Pencil, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/Button/Button";
 import { Badge } from "@/components/ui/Badge/Badge";
 import { useBonus } from "@/hooks/features/bonus/useBonus";
@@ -7,6 +8,8 @@ import ResetRuleModal from "./BonusModal/ResetRuleModal";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import type { BonusRulesResponse, BonusTransactionType } from "@/types/bonus";
 import { BonusTransactionTypeDisplay } from "@/types/bonus";
+import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
+import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
 import styles from "./SectionBonus.module.css";
 
 const SectionBonus = () => {
@@ -70,70 +73,79 @@ const SectionBonus = () => {
         </p>
       </div>
 
-      <div className={styles.tableContainer}>
-        <table className={styles.table}>
-          <thead className={styles.tableHead}>
-            <tr>
-              <th>Type</th>
-              <th>Points</th>
-              <th>Money Ratio</th>
-              <th>Min Points</th>
-              <th>Max Points</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rules.map((rule) => (
-              <tr key={rule.id}>
-                <td data-label="Type">
-                  <strong>
-                    {
-                      BonusTransactionTypeDisplay[
-                        rule.bonusType as BonusTransactionType
-                      ]
-                    }
-                  </strong>
-                </td>
-                <td data-label="Points">{rule.points ?? "N/A"}</td>
-                <td data-label="Money Ratio">{rule.moneyRatio ?? "N/A"}</td>
-                <td data-label="Min Points">
-                  {rule.minPointsPerTransaction ?? "N/A"}
-                </td>
-                <td data-label="Max Points">
-                  {rule.maxPointsPerTransaction ?? "N/A"}
-                </td>
-                <td data-label="Status">
-                  <Badge variant={getRuleStatusVariant(rule)}>
-                    {getRuleStatus(rule)}
-                  </Badge>
-                </td>
-                <td data-label="Actions">
-                  <div className={styles.actions}>
-                    <Button
-                      variant="success"
-                      size="small"
-                      onClick={() => setEditingRule(rule)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="error"
-                      size="small"
-                      onClick={() =>
-                        setResettingRuleType(
-                          rule.bonusType as BonusTransactionType,
-                        )
-                      }
-                    >
-                      Reset
-                    </Button>
-                  </div>
-                </td>
+      <div className={tableStyles.wrapper}>
+        <div className={tableStyles.container}>
+          <table className={tableStyles.table}>
+            <colgroup>
+              <col style={{ width: "19%" }} />
+              <col style={{ width: "12%" }} />
+              <col style={{ width: "13%" }} />
+              <col style={{ width: "12%" }} />
+              <col style={{ width: "12%" }} />
+              <col style={{ width: "12%" }} />
+              <col style={{ width: "20%" }} />
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Points</th>
+                <th>Money Ratio</th>
+                <th>Min Points</th>
+                <th>Max Points</th>
+                <th>Status</th>
+                <th className={tableStyles.actionsCol}>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rules.map((rule) => (
+                <tr key={rule.id}>
+                  <td data-label="Type">
+                    <span className={styles.type}>
+                      {
+                        BonusTransactionTypeDisplay[
+                          rule.bonusType as BonusTransactionType
+                        ]
+                      }
+                    </span>
+                  </td>
+                  <td data-label="Points">{rule.points ?? "N/A"}</td>
+                  <td data-label="Money Ratio">{rule.moneyRatio ?? "N/A"}</td>
+                  <td data-label="Min Points">
+                    {rule.minPointsPerTransaction ?? "N/A"}
+                  </td>
+                  <td data-label="Max Points">
+                    {rule.maxPointsPerTransaction ?? "N/A"}
+                  </td>
+                  <td data-label="Status">
+                    <Badge variant={getRuleStatusVariant(rule)}>
+                      {getRuleStatus(rule)}
+                    </Badge>
+                  </td>
+                  <td data-label="Actions">
+                    <div className={tableStyles.actions}>
+                      <ActionIconButton
+                        icon={<Pencil />}
+                        label="Edit rule"
+                        variant="success"
+                        onClick={() => setEditingRule(rule)}
+                      />
+                      <ActionIconButton
+                        icon={<RotateCcw />}
+                        label="Reset rule to default"
+                        variant="error"
+                        onClick={() =>
+                          setResettingRuleType(
+                            rule.bonusType as BonusTransactionType,
+                          )
+                        }
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {editingRule && (

@@ -1,9 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { Badge, Button, Select, ConfirmModal } from '@/components/ui';
+import { ShieldCheck, ShieldX, UserCheck, UserX } from 'lucide-react';
+import { Badge, Select, ConfirmModal } from '@/components/ui';
 import { useAdminUsers } from '@/hooks/features/admin/useAdminUsers';
 import { UserRoleDisplay, VerificationStatusDisplay } from '@/types/user';
 import type { AdminUserListResponse, UserRole, VerificationStatus } from '@/types/user';
 import { safeFormatDate } from '@/utils/dateUtils';
+import { ActionIconButton } from '@/components/admin/shared/ActionIconButton/ActionIconButton';
+import tableStyles from '@/components/admin/shared/AdminTable/AdminTable.module.css';
 import styles from './UserTableRow.module.css';
 
 interface UserTableRowProps {
@@ -62,15 +65,15 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({ user, onUpdate }) =>
 
     return (
         <>
-            <tr className={styles.row}>
-                <td className={styles.userCell}>
+            <tr>
+                <td data-label="User">
                     <div className={styles.userInfo}>
                         <div className={styles.userName}>{user.firstName} {user.lastName}</div>
                         <div className={styles.userEmail}>{user.email}</div>
                     </div>
                 </td>
 
-                <td className={styles.roleCell}>
+                <td data-label="Role">
                     <Select
                         value={user.userRole}
                         onChange={handleRoleChange}
@@ -80,48 +83,46 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({ user, onUpdate }) =>
                     />
                 </td>
 
-                <td className={styles.verificationCell}>
+                <td data-label="Verification">
                     <div className={styles.verificationInfo}>
                         <Badge variant={getVerificationColor(user.verificationStatus)} size="small">
                             {VerificationStatusDisplay[user.verificationStatus]}
                         </Badge>
                         <div className={styles.verificationDate}>{formatDateTime(user.verifiedAt)}</div>
-                        <Button
-                            variant="secondary"
-                            size="small"
-                            loading={loading}
-                            onClick={() => setShowVerificationModal(true)}
-                            disabled={loading}
-                        >
-                            {isVerified ? 'Revoke' : 'Verify'}
-                        </Button>
                     </div>
                 </td>
 
-                <td className={styles.statusCell}>
+                <td data-label="Status">
                     <Badge variant={isEnabled ? 'success' : 'error'} size="small">
                         {isEnabled ? 'Active' : 'Blocked'}
                     </Badge>
                 </td>
 
-                <td className={styles.ticketsCell}>
+                <td data-label="Tickets">
                     <span className={styles.ticketsCount}>{user.ticketsCount ?? 0}</span>
                 </td>
 
-                <td className={styles.activityCell}>
+                <td data-label="Last Activity">
                     {safeFormatDate(user.lastActivity?.split('T')[0])}
                 </td>
 
-                <td className={styles.actionsCell}>
-                    <Button
-                        variant={isEnabled ? 'error' : 'success'}
-                        size="small"
-                        loading={loading}
-                        onClick={() => setShowStatusModal(true)}
-                        disabled={loading}
-                    >
-                        {isEnabled ? 'Block' : 'Activate'}
-                    </Button>
+                <td data-label="Actions">
+                    <div className={tableStyles.actions}>
+                        <ActionIconButton
+                            icon={isVerified ? <ShieldX /> : <ShieldCheck />}
+                            label={isVerified ? 'Revoke verification' : 'Verify user'}
+                            variant={isVerified ? 'error' : 'success'}
+                            loading={loading}
+                            onClick={() => setShowVerificationModal(true)}
+                        />
+                        <ActionIconButton
+                            icon={isEnabled ? <UserX /> : <UserCheck />}
+                            label={isEnabled ? 'Block user' : 'Activate user'}
+                            variant={isEnabled ? 'error' : 'success'}
+                            loading={loading}
+                            onClick={() => setShowStatusModal(true)}
+                        />
+                    </div>
                 </td>
             </tr>
 

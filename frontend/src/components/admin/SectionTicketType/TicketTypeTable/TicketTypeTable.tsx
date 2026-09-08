@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button } from "@/components/ui/Button/Button";
+import { Pencil, Trash2, Power } from "lucide-react";
 import { Badge } from "@/components/ui/Badge/Badge";
 import type { BadgeVariant } from "@/components/ui/Badge/Badge";
 import { Tooltip } from "@/components/ui/Tooltip/Tooltip";
@@ -9,6 +9,8 @@ import type {
   TicketTypeCategory,
 } from "@/types/ticketType";
 import { TicketTypeCategoryDisplay } from "@/types/ticketType";
+import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
+import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
 import styles from "./TicketTypeTable.module.css";
 
 interface TicketTypeTableProps {
@@ -82,7 +84,7 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
 
   if (ticketTypes.length === 0) {
     return (
-      <div className={styles.empty}>
+      <div className={tableStyles.empty}>
         <h3>No ticket types found</h3>
         <p>Create your first ticket type to get started!</p>
       </div>
@@ -91,9 +93,18 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
 
   return (
     <>
-      <div className={styles.tableWrapper}>
-        <div className={styles.tableContainer}>
-          <table className={styles.table}>
+      <div className={tableStyles.wrapper}>
+        <div className={tableStyles.container}>
+          <table className={tableStyles.table}>
+            <colgroup>
+              <col style={{ width: "17%" }} />
+              <col style={{ width: "13%" }} />
+              <col style={{ width: "12%" }} />
+              <col style={{ width: "14%" }} />
+              <col style={{ width: "12%" }} />
+              <col style={{ width: "10%" }} />
+              <col style={{ width: "22%" }} />
+            </colgroup>
             <thead>
               <tr>
                 <th>Display Name</th>
@@ -102,7 +113,7 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
                 <th>Age Range</th>
                 <th>Document</th>
                 <th>Status</th>
-                <th>Actions</th>
+                <th className={tableStyles.actionsCol}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -113,31 +124,28 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
                   : "Unknown";
 
                 return (
-                  <tr key={ticketType.id} className={styles.row}>
-                    <td className={styles.nameCell} data-label="Display Name">
+                  <tr key={ticketType.id}>
+                    <td data-label="Display Name">
                       <span className={styles.displayName}>
                         {ticketType.displayName}
                       </span>
                     </td>
-                    <td className={styles.categoryCell} data-label="Category">
+                    <td data-label="Category">
                       <Badge variant={getCategoryVariant(category)}>
                         {categoryDisplay}
                       </Badge>
                     </td>
-                    <td
-                      className={styles.priceCell}
-                      data-label="Price Multiplier"
-                    >
+                    <td data-label="Price Multiplier">
                       <span className={styles.price}>
                         × {ticketType.priceMultiplier}
                       </span>
                     </td>
-                    <td className={styles.ageCell} data-label="Age Range">
+                    <td data-label="Age Range">
                       <span className={styles.ageRange}>
                         {formatAgeRange(ticketType)}
                       </span>
                     </td>
-                    <td className={styles.documentCell} data-label="Document">
+                    <td data-label="Document">
                       {ticketType.requiresDocument ? (
                         <Tooltip
                           content={
@@ -150,35 +158,37 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
                         <Badge variant="outline">Not required</Badge>
                       )}
                     </td>
-                    <td className={styles.statusCell} data-label="Status">
-                      <Button
-                        variant={ticketType.active ? "success" : "secondary"}
-                        size="small"
-                        onClick={() => handleToggleActive(ticketType.id)}
-                        loading={togglingId === ticketType.id}
-                        disabled={loading}
-                      >
+                    <td data-label="Status">
+                      <Badge variant={ticketType.active ? "success" : "secondary"}>
                         {ticketType.active ? "Active" : "Inactive"}
-                      </Button>
+                      </Badge>
                     </td>
-                    <td className={styles.actionsCell} data-label="Actions">
-                      <div className={styles.actions}>
-                        <Button
+                    <td data-label="Actions">
+                      <div className={tableStyles.actions}>
+                        <ActionIconButton
+                          icon={<Power />}
+                          label={
+                            ticketType.active
+                              ? "Deactivate ticket type"
+                              : "Activate ticket type"
+                          }
+                          variant={ticketType.active ? "secondary" : "success"}
+                          onClick={() => handleToggleActive(ticketType.id)}
+                          loading={togglingId === ticketType.id}
+                          disabled={loading}
+                        />
+                        <ActionIconButton
+                          icon={<Pencil />}
+                          label="Edit ticket type"
                           variant="success"
-                          size="small"
                           onClick={() => onEdit(ticketType)}
-                          className={styles.actionButton}
-                        >
-                          Edit
-                        </Button>
-                        <Button
+                        />
+                        <ActionIconButton
+                          icon={<Trash2 />}
+                          label="Delete ticket type"
                           variant="error"
-                          size="small"
                           onClick={() => handleDeleteClick(ticketType)}
-                          className={styles.actionButton}
-                        >
-                          Delete
-                        </Button>
+                        />
                       </div>
                     </td>
                   </tr>

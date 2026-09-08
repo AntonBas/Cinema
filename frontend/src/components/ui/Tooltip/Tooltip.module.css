@@ -21,7 +21,13 @@
     max-width: 250px;
     width: max-content;
     backdrop-filter: blur(10px);
-    animation: fadeIn var(--transition-fast);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 160ms ease, transform 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tooltip.visible {
+    opacity: 1;
 }
 
 .tooltipArrow {
@@ -35,8 +41,12 @@
 .tooltip.top {
     bottom: 100%;
     left: 50%;
-    transform: translateX(-50%);
     margin-bottom: 10px;
+    transform: translateX(-50%) translateY(6px) scale(0.96);
+}
+
+.tooltip.top.visible {
+    transform: translateX(-50%) translateY(0) scale(1);
 }
 
 .tooltip.top .tooltipArrow {
@@ -47,11 +57,31 @@
     border-bottom: 1px solid rgba(var(--color-primary-rgb), var(--opacity-high));
 }
 
+.tooltip.top.alignEnd {
+    left: auto;
+    right: 0;
+    transform: translateY(6px) scale(0.96);
+}
+
+.tooltip.top.alignEnd.visible {
+    transform: translateY(0) scale(1);
+}
+
+.tooltip.top.alignEnd .tooltipArrow {
+    left: auto;
+    right: 12px;
+    transform: translateY(-50%) rotate(45deg);
+}
+
 .tooltip.bottom {
     top: 100%;
     left: 50%;
-    transform: translateX(-50%);
     margin-top: 10px;
+    transform: translateX(-50%) translateY(-6px) scale(0.96);
+}
+
+.tooltip.bottom.visible {
+    transform: translateX(-50%) translateY(0) scale(1);
 }
 
 .tooltip.bottom .tooltipArrow {
@@ -62,12 +92,32 @@
     border-left: 1px solid rgba(var(--color-primary-rgb), var(--opacity-high));
 }
 
+.tooltip.bottom.alignEnd {
+    left: auto;
+    right: 0;
+    transform: translateY(-6px) scale(0.96);
+}
+
+.tooltip.bottom.alignEnd.visible {
+    transform: translateY(0) scale(1);
+}
+
+.tooltip.bottom.alignEnd .tooltipArrow {
+    left: auto;
+    right: 12px;
+    transform: translateY(50%) rotate(45deg);
+}
+
 .tooltip.left {
     right: 100%;
     top: 50%;
-    transform: translateY(-50%);
     margin-right: 10px;
     left: auto;
+    transform: translateY(-50%) translateX(6px) scale(0.96);
+}
+
+.tooltip.left.visible {
+    transform: translateY(-50%) translateX(0) scale(1);
 }
 
 .tooltip.left .tooltipArrow {
@@ -81,8 +131,12 @@
 .tooltip.right {
     left: 100%;
     top: 50%;
-    transform: translateY(-50%);
     margin-left: 10px;
+    transform: translateY(-50%) translateX(-6px) scale(0.96);
+}
+
+.tooltip.right.visible {
+    transform: translateY(-50%) translateX(0) scale(1);
 }
 
 .tooltip.right .tooltipArrow {
@@ -93,12 +147,8 @@
     border-left: 1px solid rgba(var(--color-primary-rgb), var(--opacity-high));
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
+@media (prefers-reduced-motion: reduce) {
+    .tooltip {
+        transition: none;
     }
 }

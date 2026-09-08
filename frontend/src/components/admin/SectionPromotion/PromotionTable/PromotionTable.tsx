@@ -1,7 +1,10 @@
 import React from "react";
-import { Button, Badge } from "@/components/ui";
+import { Pencil, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui";
 import type { PromotionListResponse } from "@/types/promotion";
 import { safeFormatDate } from "@/utils/dateUtils";
+import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
+import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
 import styles from "./PromotionTable.module.css";
 
 interface PromotionTableProps {
@@ -54,7 +57,7 @@ const PromotionTable: React.FC<PromotionTableProps> = ({
 }) => {
   if (promotions.length === 0) {
     return (
-      <div className={styles.empty}>
+      <div className={tableStyles.empty}>
         <h3>No promotions found</h3>
         <p>Create your first promotion to get started!</p>
       </div>
@@ -62,70 +65,73 @@ const PromotionTable: React.FC<PromotionTableProps> = ({
   }
 
   return (
-    <div className={styles.tableWrapper}>
-      <table className={styles.table}>
-        <thead className={styles.tableHead}>
-          <tr>
-            <th className={styles.th}>Title</th>
-            <th className={styles.th}>Bonus Points</th>
-            <th className={styles.th}>Date Range</th>
-            <th className={styles.th}>Status</th>
-            <th className={styles.th}>Actions</th>
-          </tr>
-        </thead>
-        <tbody className={styles.tableBody}>
-          {promotions.map((promotion) => {
-            const status = getPromotionStatus(promotion);
+    <div className={tableStyles.wrapper}>
+      <div className={tableStyles.container}>
+        <table className={tableStyles.table}>
+          <colgroup>
+            <col style={{ width: "26%" }} />
+            <col style={{ width: "16%" }} />
+            <col style={{ width: "22%" }} />
+            <col style={{ width: "16%" }} />
+            <col style={{ width: "20%" }} />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Bonus Points</th>
+              <th>Date Range</th>
+              <th>Status</th>
+              <th className={tableStyles.actionsCol}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {promotions.map((promotion) => {
+              const status = getPromotionStatus(promotion);
 
-            return (
-              <tr key={promotion.id} className={styles.tr}>
-                <td className={styles.td} data-label="Title">
-                  <div className={styles.titleCell}>
+              return (
+                <tr key={promotion.id}>
+                  <td data-label="Title">
                     <div className={styles.title}>{promotion.title}</div>
-                  </div>
-                </td>
-                <td className={styles.td} data-label="Bonus Points">
-                  <span className={styles.points}>
-                    {promotion.bonusPoints} pts
-                  </span>
-                </td>
-                <td className={styles.td} data-label="Date Range">
-                  <div className={styles.dates}>
-                    <div>{safeFormatDate(promotion.startDate)}</div>
-                    <div className={styles.dateSeparator}>to</div>
-                    <div>{safeFormatDate(promotion.endDate)}</div>
-                  </div>
-                </td>
-                <td className={styles.td} data-label="Status">
-                  <Badge variant={getStatusVariant(status)}>
-                    {getStatusDisplay(status)}
-                  </Badge>
-                </td>
-                <td className={styles.td} data-label="Actions">
-                  <div className={styles.actions}>
-                    <Button
-                      variant="success"
-                      size="small"
-                      onClick={() => onEdit(promotion.id)}
-                      className={styles.actionButton}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="error"
-                      size="small"
-                      onClick={() => onDelete(promotion.id, promotion.title)}
-                      className={styles.actionButton}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                  </td>
+                  <td data-label="Bonus Points">
+                    <span className={styles.points}>
+                      {promotion.bonusPoints} pts
+                    </span>
+                  </td>
+                  <td data-label="Date Range">
+                    <div className={styles.dates}>
+                      <div>{safeFormatDate(promotion.startDate)}</div>
+                      <div className={styles.dateSeparator}>to</div>
+                      <div>{safeFormatDate(promotion.endDate)}</div>
+                    </div>
+                  </td>
+                  <td data-label="Status">
+                    <Badge variant={getStatusVariant(status)}>
+                      {getStatusDisplay(status)}
+                    </Badge>
+                  </td>
+                  <td data-label="Actions">
+                    <div className={tableStyles.actions}>
+                      <ActionIconButton
+                        icon={<Pencil />}
+                        label="Edit promotion"
+                        variant="success"
+                        onClick={() => onEdit(promotion.id)}
+                      />
+                      <ActionIconButton
+                        icon={<Trash2 />}
+                        label="Delete promotion"
+                        variant="error"
+                        onClick={() => onDelete(promotion.id, promotion.title)}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

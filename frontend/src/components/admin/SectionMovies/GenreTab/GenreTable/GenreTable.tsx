@@ -1,6 +1,9 @@
 import React from "react";
+import { Pencil, Trash2 } from "lucide-react";
 import type { GenreListResponse } from "@/types/genre";
-import { Button, Badge } from "@/components/ui";
+import { Badge } from "@/components/ui";
+import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
+import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
 import styles from "./GenreTable.module.css";
 
 interface GenreTableProps {
@@ -16,7 +19,7 @@ export const GenreTable: React.FC<GenreTableProps> = React.memo(
   ({ genres, onEdit, onDelete }) => {
     if (genres.length === 0) {
       return (
-        <div className={styles.empty}>
+        <div className={tableStyles.empty}>
           <h3>No genres found</h3>
           <p>Create your first genre to get started!</p>
         </div>
@@ -24,47 +27,54 @@ export const GenreTable: React.FC<GenreTableProps> = React.memo(
     }
 
     return (
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Movies</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {genres.map((genre) => (
-            <tr key={genre.id}>
-              <td>
-                <span className={styles.name}>{genre.name}</span>
-              </td>
-              <td>
-                <Badge variant="primary">
-                  {getMovieCountText(genre.movieCount)}
-                </Badge>
-              </td>
-              <td>
-                <div className={styles.actions}>
-                  <Button
-                    variant="success"
-                    size="small"
-                    onClick={() => onEdit(genre)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="error"
-                    size="small"
-                    onClick={() => onDelete(genre)}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className={tableStyles.wrapper}>
+        <div className={tableStyles.container}>
+          <table className={tableStyles.table}>
+            <colgroup>
+              <col style={{ width: "45%" }} />
+              <col style={{ width: "25%" }} />
+              <col style={{ width: "30%" }} />
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Movies</th>
+                <th className={tableStyles.actionsCol}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {genres.map((genre) => (
+                <tr key={genre.id}>
+                  <td data-label="Name">
+                    <span className={styles.name}>{genre.name}</span>
+                  </td>
+                  <td data-label="Movies">
+                    <Badge variant="primary">
+                      {getMovieCountText(genre.movieCount)}
+                    </Badge>
+                  </td>
+                  <td data-label="Actions">
+                    <div className={tableStyles.actions}>
+                      <ActionIconButton
+                        icon={<Pencil />}
+                        label="Edit genre"
+                        variant="success"
+                        onClick={() => onEdit(genre)}
+                      />
+                      <ActionIconButton
+                        icon={<Trash2 />}
+                        label="Delete genre"
+                        variant="error"
+                        onClick={() => onDelete(genre)}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     );
   },
 );
