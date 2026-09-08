@@ -89,7 +89,7 @@ public class SeatReservationService {
         log.info("Creating temporary hold for seat {} in session {} by user {}", seat.getId(), session.getId(),
                 user.getId());
 
-        validateSeat(seat, session.getId());
+        validateSeat(seat, session);
 
         var reservation = SeatReservation.builder().seat(seat).session(session).ticketType(null).seatPrice(null)
                 .status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(tempHoldMinutes))
@@ -164,17 +164,23 @@ public class SeatReservationService {
     }
 
     private void validateSeat(Long sessionId, Long seatId) {
+        var session = sessionRepository.findById(sessionId)
+                .orElseThrow(() -> new EntityNotFoundException("Session", sessionId));
         var seat = seatRepository.findById(seatId).orElseThrow(() -> new EntityNotFoundException("Seat", seatId));
-        validateSeat(seat, sessionId);
+        validateSeat(seat, session);
     }
 
-    private void validateSeat(Seat seat, Long sessionId) {
+    private void validateSeat(Seat seat, Session session) {
         if (!seat.isActive()) {
             throw SeatNotAvailableException.seatInactive(seat.getId());
         }
 
-        if (isReserved(sessionId, seat.getId())) {
-            throw SeatNotAvailableException.forSeatAndSession(seat.getId(), sessionId);
+        if (!seat.getHall().getId().equals(session.getHall().getId())) {
+            throw SeatNotAvailableException.seatNotInSessionHall(seat.getId(), session.getId());
+        }
+
+        if (isReserved(session.getId(), seat.getId())) {
+            throw SeatNotAvailableException.forSeatAndSession(seat.getId(), session.getId());
         }
     }
 

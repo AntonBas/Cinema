@@ -64,6 +64,7 @@ public class SeatReservationServiceTest {
     private Session testSession;
     private Seat testSeat;
     private Seat inactiveSeat;
+    private Seat seatInOtherHall;
     private User testUser;
     private TicketType ticketType;
 
@@ -71,6 +72,7 @@ public class SeatReservationServiceTest {
     private static final Long SEAT_ID = 3L;
     private static final Long USER_ID = 10L;
     private static final Long HALL_ID = 2L;
+    private static final Long OTHER_HALL_ID = 20L;
     private static final BigDecimal BASE_PRICE = new BigDecimal("200.00");
     private static final int TEMP_HOLD_MINUTES = 5;
 
@@ -80,9 +82,12 @@ public class SeatReservationServiceTest {
 
         Movie movie = Movie.builder().id(1L).title("Test Movie").build();
         CinemaHall hall = CinemaHall.builder().id(HALL_ID).name("Hall A").build();
+        CinemaHall otherHall = CinemaHall.builder().id(OTHER_HALL_ID).name("Hall B").build();
         testSession = Session.builder().id(SESSION_ID).movie(movie).hall(hall).basePrice(BASE_PRICE).build();
         testSeat = Seat.builder().id(SEAT_ID).row(1).number(1).seatType(SeatType.STANDARD).active(true).hall(hall).build();
         inactiveSeat = Seat.builder().id(SEAT_ID).row(1).number(1).seatType(SeatType.STANDARD).active(false).hall(hall).build();
+        seatInOtherHall = Seat.builder().id(SEAT_ID).row(1).number(1).seatType(SeatType.STANDARD).active(true)
+                .hall(otherHall).build();
         testUser = User.builder().id(USER_ID).build();
         ticketType = TicketType.builder().id(1L).displayName("Adult").active(true).build();
     }
@@ -124,6 +129,14 @@ public class SeatReservationServiceTest {
     void holdWhenSeatInactiveShouldThrowException() {
         when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
         when(seatRepository.findByIdWithLock(SEAT_ID)).thenReturn(Optional.of(inactiveSeat));
+        assertThatThrownBy(() -> seatReservationService.hold(SESSION_ID, SEAT_ID, testUser))
+                .isInstanceOf(SeatNotAvailableException.class);
+    }
+
+    @Test
+    void holdWhenSeatBelongsToDifferentHallShouldThrowException() {
+        when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
+        when(seatRepository.findByIdWithLock(SEAT_ID)).thenReturn(Optional.of(seatInOtherHall));
         assertThatThrownBy(() -> seatReservationService.hold(SESSION_ID, SEAT_ID, testUser))
                 .isInstanceOf(SeatNotAvailableException.class);
     }
@@ -184,6 +197,12 @@ public class SeatReservationServiceTest {
     }
 
     @Test
+    void holdLockedSeatWhenSeatBelongsToDifferentHallShouldThrowException() {
+        assertThatThrownBy(() -> seatReservationService.holdLockedSeat(testSession, seatInOtherHall, testUser))
+                .isInstanceOf(SeatNotAvailableException.class);
+    }
+
+    @Test
     void cancelShouldSucceed() {
         SeatReservation reservation = SeatReservation.builder().id(1L).seat(testSeat).session(testSession)
                 .status(ReservationStatus.PENDING).reservedByUser(testUser).build();
@@ -205,6 +224,7 @@ public class SeatReservationServiceTest {
 
     @Test
     void validateAvailabilityShouldSucceed() {
+        when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
         when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.of(testSeat));
         when(seatReservationRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, SEAT_ID,
                 ReservationStatus.ACTIVE_STATUSES)).thenReturn(false);
@@ -218,7 +238,15 @@ public class SeatReservationServiceTest {
     }
 
     @Test
+    void validateAvailabilityWhenSessionNotFoundShouldThrowException() {
+        when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> seatReservationService.validateAvailability(SESSION_ID, SEAT_ID))
+                .isInstanceOf(EntityNotFoundException.class);
+    }
+
+    @Test
     void validateAvailabilityWhenSeatNotFoundShouldThrowException() {
+        when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
         when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> seatReservationService.validateAvailability(SESSION_ID, SEAT_ID))
                 .isInstanceOf(EntityNotFoundException.class);
@@ -226,13 +254,23 @@ public class SeatReservationServiceTest {
 
     @Test
     void validateAvailabilityWhenSeatInactiveShouldThrowException() {
+        when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
         when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.of(inactiveSeat));
         assertThatThrownBy(() -> seatReservationService.validateAvailability(SESSION_ID, SEAT_ID))
                 .isInstanceOf(SeatNotAvailableException.class);
     }
 
     @Test
+    void validateAvailabilityWhenSeatBelongsToDifferentHallShouldThrowException() {
+        when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
+        when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.of(seatInOtherHall));
+        assertThatThrownBy(() -> seatReservationService.validateAvailability(SESSION_ID, SEAT_ID))
+                .isInstanceOf(SeatNotAvailableException.class);
+    }
+
+    @Test
     void validateAvailabilityWhenSeatReservedShouldThrowException() {
+        when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
         when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.of(testSeat));
         when(seatReservationRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, SEAT_ID,
                 ReservationStatus.ACTIVE_STATUSES)).thenReturn(true);

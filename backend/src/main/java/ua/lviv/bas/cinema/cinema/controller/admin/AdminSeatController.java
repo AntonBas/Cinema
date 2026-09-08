@@ -43,7 +43,7 @@ public class AdminSeatController {
             @Parameter(description = "Seat ID", required = true, example = "5") @PathVariable Long seatId,
             @Parameter(description = "New seat type", required = true, example = "VIP") @RequestParam SeatType seatType) {
         log.info("PUT /api/admin/cinema-halls/{}/seats/{}/type - Updating seat type to {}", hallId, seatId, seatType);
-        return seatService.updateSeatType(seatId, seatType);
+        return seatService.updateSeatType(hallId, seatId, seatType);
     }
 
     @PutMapping("/{seatId}/status")
@@ -59,6 +59,6 @@ public class AdminSeatController {
             @Parameter(description = "Active status", required = true, example = "true") @RequestParam boolean active) {
         log.info("PUT /api/admin/cinema-halls/{}/seats/{}/status - Setting active status to {}", hallId, seatId,
                 active);
-        return seatService.setSeatActiveStatus(seatId, active);
+        return seatService.setSeatActiveStatus(hallId, seatId, active);
     }
 }
