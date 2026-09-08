@@ -6,8 +6,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.booking.domain.SeatReservation;
@@ -16,7 +14,7 @@ import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.booking.domain.status.ReservationStatus;
 import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.booking.repository.BookingRepository;
-import ua.lviv.bas.cinema.booking.repository.SeatReservationRepository;
+import ua.lviv.bas.cinema.booking.service.SeatReservationService;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusCardConcurrentModificationException;
 
@@ -25,7 +23,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -35,13 +32,9 @@ public class BookingSchedulerTest {
     @Mock
     private BookingRepository bookingRepository;
     @Mock
-    private SeatReservationRepository seatReservationRepository;
+    private SeatReservationService seatReservationService;
     @Mock
     private BonusLedgerService bonusLedgerService;
-    @Mock
-    private CacheManager cacheManager;
-    @Mock
-    private Cache cache;
     @Mock
     private PlatformTransactionManager transactionManager;
 
@@ -64,7 +57,7 @@ public class BookingSchedulerTest {
 
         bookingScheduler.processExpiredBookings();
 
-        verifyNoInteractions(seatReservationRepository, bonusLedgerService, cacheManager);
+        verifyNoInteractions(seatReservationService, bonusLedgerService);
         verify(bookingRepository, never()).saveAll(any());
     }
 
@@ -76,18 +69,13 @@ public class BookingSchedulerTest {
 
         when(bookingRepository.findByStatusAndExpiresAtBefore(eq(BookingStatus.PENDING), any(LocalDateTime.class)))
                 .thenReturn(List.of(booking));
-        when(cacheManager.getCache(anyString())).thenReturn(cache);
 
         bookingScheduler.processExpiredBookings();
 
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.EXPIRED);
-        assertThat(seat.getStatus()).isEqualTo(ReservationStatus.EXPIRED);
-        assertThat(seat.getBooking()).isNull();
 
-        verify(seatReservationRepository).saveAll(List.of(seat));
+        verify(seatReservationService).releaseReservations(List.of(seat), SESSION_ID);
         verify(bonusLedgerService).refundPoints(booking);
-        verify(cacheManager).getCache("seatAvailability");
-        verify(cache, times(1)).evict(SESSION_ID);
         verify(bookingRepository).save(booking);
     }
 
@@ -99,7 +87,6 @@ public class BookingSchedulerTest {
 
         when(bookingRepository.findByStatusAndExpiresAtBefore(eq(BookingStatus.PENDING), any(LocalDateTime.class)))
                 .thenReturn(List.of(booking));
-        when(cacheManager.getCache(anyString())).thenReturn(cache);
 
         bookingScheduler.processExpiredBookings();
 
@@ -118,7 +105,6 @@ public class BookingSchedulerTest {
 
         when(bookingRepository.findByStatusAndExpiresAtBefore(eq(BookingStatus.PENDING), any(LocalDateTime.class)))
                 .thenReturn(List.of(failingBooking, okBooking));
-        when(cacheManager.getCache(anyString())).thenReturn(cache);
         doThrow(new BonusCardConcurrentModificationException(null)).when(bonusLedgerService)
                 .refundPoints(failingBooking);
 

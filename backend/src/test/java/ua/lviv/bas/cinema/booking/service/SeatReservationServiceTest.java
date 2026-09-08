@@ -8,7 +8,10 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.test.util.ReflectionTestUtils;
+import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.booking.domain.SeatReservation;
 import ua.lviv.bas.cinema.booking.domain.status.ReservationStatus;
 import ua.lviv.bas.cinema.cinema.domain.CinemaHall;
@@ -56,6 +59,10 @@ public class SeatReservationServiceTest {
     private PriceCalculatorService priceCalculator;
     @Mock
     private SeatReservationMapper seatReservationMapper;
+    @Mock
+    private CacheManager cacheManager;
+    @Mock
+    private Cache cache;
     @Captor
     private ArgumentCaptor<SeatReservation> seatReservationCaptor;
     @InjectMocks
@@ -345,5 +352,37 @@ public class SeatReservationServiceTest {
         when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> seatReservationService.getAvailability(SESSION_ID))
                 .isInstanceOf(EntityNotFoundException.class);
+    }
+
+    @Test
+    void releaseReservationsShouldExpireSeatsUnlinkBookingAndEvictCache() {
+        var booking = Booking.builder().id(1L).build();
+        var reservation = SeatReservation.builder().status(ReservationStatus.CONFIRMED).booking(booking).build();
+        when(cacheManager.getCache("seatAvailability")).thenReturn(cache);
+
+        seatReservationService.releaseReservations(List.of(reservation), SESSION_ID);
+
+        assertThat(reservation.getStatus()).isEqualTo(ReservationStatus.EXPIRED);
+        assertThat(reservation.getBooking()).isNull();
+        verify(seatReservationRepository).saveAll(List.of(reservation));
+        verify(cache).evict(SESSION_ID);
+    }
+
+    @Test
+    void releaseReservationsWhenCacheAbsentShouldNotThrow() {
+        var reservation = SeatReservation.builder().status(ReservationStatus.CONFIRMED).build();
+        when(cacheManager.getCache("seatAvailability")).thenReturn(null);
+
+        assertThatCode(() -> seatReservationService.releaseReservations(List.of(reservation), SESSION_ID))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void evictAvailabilityCacheShouldEvictSessionKey() {
+        when(cacheManager.getCache("seatAvailability")).thenReturn(cache);
+
+        seatReservationService.evictAvailabilityCache(SESSION_ID);
+
+        verify(cache).evict(SESSION_ID);
     }
 }

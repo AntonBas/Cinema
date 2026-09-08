@@ -2,10 +2,7 @@ package ua.lviv.bas.cinema.booking.scheduler;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -17,9 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
-import ua.lviv.bas.cinema.booking.domain.status.ReservationStatus;
 import ua.lviv.bas.cinema.booking.repository.BookingRepository;
-import ua.lviv.bas.cinema.booking.repository.SeatReservationRepository;
+import ua.lviv.bas.cinema.booking.service.SeatReservationService;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 
 @Slf4j
@@ -29,18 +25,15 @@ public class BookingScheduler {
 			PaymentStatus.REFUNDED, PaymentStatus.PARTIALLY_REFUNDED);
 
 	private final BookingRepository bookingRepository;
-	private final SeatReservationRepository seatReservationRepository;
+	private final SeatReservationService seatReservationService;
 	private final BonusLedgerService bonusLedgerService;
-	private final CacheManager cacheManager;
 	private final TransactionTemplate transactionTemplate;
 
-	public BookingScheduler(BookingRepository bookingRepository,
-			SeatReservationRepository seatReservationRepository, BonusLedgerService bonusLedgerService,
-			CacheManager cacheManager, PlatformTransactionManager transactionManager) {
+	public BookingScheduler(BookingRepository bookingRepository, SeatReservationService seatReservationService,
+			BonusLedgerService bonusLedgerService, PlatformTransactionManager transactionManager) {
 		this.bookingRepository = bookingRepository;
-		this.seatReservationRepository = seatReservationRepository;
+		this.seatReservationService = seatReservationService;
 		this.bonusLedgerService = bonusLedgerService;
-		this.cacheManager = cacheManager;
 		this.transactionTemplate = new TransactionTemplate(transactionManager);
 	}
 
@@ -76,21 +69,13 @@ public class BookingScheduler {
 	private void expireBooking(Booking booking) {
 		booking.setStatus(BookingStatus.EXPIRED);
 
-		booking.getSeatReservations().forEach(sr -> {
-			sr.setStatus(ReservationStatus.EXPIRED);
-			sr.setBooking(null);
-		});
-
-		seatReservationRepository.saveAll(Objects.requireNonNull(booking.getSeatReservations(),
-				"Booking seat reservations must not be null"));
+		seatReservationService.releaseReservations(booking.getSeatReservations(), booking.getSession().getId());
 
 		if (booking.getBonusPointsUsed() != null && booking.getBonusPointsUsed() > 0) {
 			bonusLedgerService.refundPoints(booking);
 		}
 
 		bookingRepository.save(booking);
-
-		evictCacheIfPresent("seatAvailability", booking.getSession().getId());
 	}
 
 	@Scheduled(cron = "${scheduler.booking.cleanup-cron:0 0 4 * * *}")
@@ -105,13 +90,6 @@ public class BookingScheduler {
 			log.info("Cleaned up {} old bookings", deletedCount);
 		} else {
 			log.debug("No old bookings to clean up");
-		}
-	}
-
-	private void evictCacheIfPresent(String cacheName, Long key) {
-		Cache cache = cacheManager.getCache(Objects.requireNonNull(cacheName, "Cache name must not be null"));
-		if (cache != null) {
-			cache.evict(Objects.requireNonNull(key, "Cache eviction key must not be null"));
 		}
 	}
 }

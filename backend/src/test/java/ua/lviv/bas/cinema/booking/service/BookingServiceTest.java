@@ -6,7 +6,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.cache.CacheManager;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.transaction.PlatformTransactionManager;
 import ua.lviv.bas.cinema.booking.domain.Booking;
@@ -24,7 +23,6 @@ import ua.lviv.bas.cinema.exception.domain.booking.BookingValidationException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.InsufficientPointsException;
 import ua.lviv.bas.cinema.booking.mapper.BookingMapper;
 import ua.lviv.bas.cinema.booking.repository.BookingRepository;
-import ua.lviv.bas.cinema.booking.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 
@@ -46,17 +44,15 @@ public class BookingServiceTest {
     @Mock
     private BookingRepository bookingRepository;
     @Mock
-    private SeatReservationRepository seatReservationRepository;
-    @Mock
     private BookingMapper bookingMapper;
     @Mock
     private BonusLedgerService bonusLedgerService;
     @Mock
     private BookingCreationService bookingCreationService;
     @Mock
-    private AuditService auditService;
+    private SeatReservationService seatReservationService;
     @Mock
-    private CacheManager cacheManager;
+    private AuditService auditService;
     @Mock
     private PlatformTransactionManager transactionManager;
 
@@ -157,7 +153,6 @@ public class BookingServiceTest {
         when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.of(savedBooking));
         doThrow(new InsufficientPointsException(0, BONUS_POINTS_USED)).when(bonusLedgerService)
                 .spendPoints(USER_ID, BONUS_POINTS_USED, savedBooking);
-        when(seatReservationRepository.saveAll(anyList())).thenReturn(Collections.emptyList());
         when(bookingRepository.saveAndFlush(savedBooking)).thenReturn(savedBooking);
 
         assertThatThrownBy(() -> bookingService.createBooking(createRequest, testUser))
@@ -167,8 +162,7 @@ public class BookingServiceTest {
         assertThat(savedBooking.getBonusPointsUsed()).isEqualTo(0);
         assertThat(savedBooking.getBonusDiscountAmount()).isEqualByComparingTo(BigDecimal.ZERO);
         assertThat(savedBooking.getFinalPrice()).isEqualByComparingTo(TOTAL_PRICE);
-        assertThat(seatReservation.getStatus()).isEqualTo(ReservationStatus.EXPIRED);
-        assertThat(seatReservation.getBooking()).isNull();
+        verify(seatReservationService).releaseReservations(savedBooking.getSeatReservations(), SESSION_ID);
         verify(bookingRepository).saveAndFlush(savedBooking);
         verifyNoInteractions(bookingMapper);
     }
@@ -198,19 +192,15 @@ public class BookingServiceTest {
                 .session(testSession).bonusPointsUsed(BONUS_POINTS_USED)
                 .seatReservations(Arrays.asList(SeatReservation.builder().build(), SeatReservation.builder().build()))
                 .build();
-        var seatAvailabilityCache = mock(org.springframework.cache.Cache.class);
 
         when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(booking));
         when(bookingRepository.saveAndFlush(booking)).thenReturn(booking);
-        when(seatReservationRepository.saveAll(anyList())).thenReturn(Collections.emptyList());
-        when(cacheManager.getCache("seatAvailability")).thenReturn(seatAvailabilityCache);
 
         bookingService.cancelBooking(BOOKING_ID, testUser);
 
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
         verify(bonusLedgerService).refundPoints(booking);
-        verify(seatReservationRepository).saveAll(anyList());
-        verify(seatAvailabilityCache).evict(SESSION_ID);
+        verify(seatReservationService).releaseReservations(booking.getSeatReservations(), SESSION_ID);
     }
 
     @Test
@@ -221,7 +211,6 @@ public class BookingServiceTest {
                 .build();
 
         when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(booking));
-        when(seatReservationRepository.saveAll(anyList())).thenReturn(Collections.emptyList());
         when(bookingRepository.saveAndFlush(booking))
                 .thenThrow(new ObjectOptimisticLockingFailureException(Booking.class, BOOKING_ID));
 
@@ -254,18 +243,16 @@ public class BookingServiceTest {
         Booking booking = Booking.builder().id(BOOKING_ID).status(BookingStatus.PENDING).session(testSession)
                 .seatReservations(Arrays.asList(SeatReservation.builder().build(), SeatReservation.builder().build()))
                 .build();
-        var seatAvailabilityCache = mock(org.springframework.cache.Cache.class);
 
         when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.of(booking));
         when(bookingRepository.saveAndFlush(booking)).thenReturn(booking);
-        when(cacheManager.getCache("seatAvailability")).thenReturn(seatAvailabilityCache);
 
         bookingService.confirmBooking(BOOKING_ID);
 
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
         assertThat(booking.getSeatReservations().get(0).getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
         assertThat(booking.getSeatReservations().get(1).getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
-        verify(seatAvailabilityCache).evict(SESSION_ID);
+        verify(seatReservationService).evictAvailabilityCache(SESSION_ID);
     }
 
     @Test

@@ -1,8 +1,6 @@
 package ua.lviv.bas.cinema.booking.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -24,7 +22,6 @@ import ua.lviv.bas.cinema.exception.domain.booking.BookingOperationException;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingValidationException;
 import ua.lviv.bas.cinema.booking.mapper.BookingMapper;
 import ua.lviv.bas.cinema.booking.repository.BookingRepository;
-import ua.lviv.bas.cinema.booking.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 
@@ -38,25 +35,23 @@ import java.util.Map;
 public class BookingService {
 
     private final BookingRepository bookingRepository;
-    private final SeatReservationRepository seatReservationRepository;
     private final BookingMapper bookingMapper;
     private final BonusLedgerService bonusLedgerService;
     private final BookingCreationService bookingCreationService;
+    private final SeatReservationService seatReservationService;
     private final AuditService auditService;
-    private final CacheManager cacheManager;
     private final TransactionTemplate transactionTemplate;
 
-    public BookingService(BookingRepository bookingRepository, SeatReservationRepository seatReservationRepository,
-            BookingMapper bookingMapper, BonusLedgerService bonusLedgerService,
-            BookingCreationService bookingCreationService, AuditService auditService, CacheManager cacheManager,
+    public BookingService(BookingRepository bookingRepository, BookingMapper bookingMapper,
+            BonusLedgerService bonusLedgerService, BookingCreationService bookingCreationService,
+            SeatReservationService seatReservationService, AuditService auditService,
             PlatformTransactionManager transactionManager) {
         this.bookingRepository = bookingRepository;
-        this.seatReservationRepository = seatReservationRepository;
         this.bookingMapper = bookingMapper;
         this.bonusLedgerService = bonusLedgerService;
         this.bookingCreationService = bookingCreationService;
+        this.seatReservationService = seatReservationService;
         this.auditService = auditService;
-        this.cacheManager = cacheManager;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
@@ -89,22 +84,16 @@ public class BookingService {
     }
 
     private void cancelAfterBonusSpendFailure(Long bookingId) {
-        var sessionId = transactionTemplate.execute(status -> {
+        transactionTemplate.executeWithoutResult(status -> {
             var booking = bookingRepository.findById(bookingId)
                     .orElseThrow(() -> new EntityNotFoundException("Booking", bookingId));
             booking.setStatus(BookingStatus.CANCELLED);
             booking.setBonusPointsUsed(0);
             booking.setBonusDiscountAmount(BigDecimal.ZERO);
             booking.setFinalPrice(booking.getTotalPrice());
-            booking.getSeatReservations().forEach(sr -> {
-                sr.setStatus(ReservationStatus.EXPIRED);
-                sr.setBooking(null);
-            });
-            seatReservationRepository.saveAll(booking.getSeatReservations());
+            seatReservationService.releaseReservations(booking.getSeatReservations(), booking.getSession().getId());
             bookingRepository.saveAndFlush(booking);
-            return booking.getSession().getId();
         });
-        evictSeatAvailabilityCache(sessionId);
     }
 
     @Transactional(readOnly = true)
@@ -125,12 +114,7 @@ public class BookingService {
         var oldStatus = booking.getStatus();
         booking.setStatus(BookingStatus.CANCELLED);
 
-        booking.getSeatReservations().forEach(sr -> {
-            sr.setStatus(ReservationStatus.EXPIRED);
-            sr.setBooking(null);
-        });
-
-        seatReservationRepository.saveAll(booking.getSeatReservations());
+        seatReservationService.releaseReservations(booking.getSeatReservations(), booking.getSession().getId());
 
         try {
             bookingRepository.saveAndFlush(booking);
@@ -142,16 +126,8 @@ public class BookingService {
             bonusLedgerService.refundPoints(booking);
         }
 
-        evictSeatAvailabilityCache(booking.getSession().getId());
         log.info("Cancelled booking {} for user {}", bookingId, user.getId());
         auditCancel(bookingId, oldStatus);
-    }
-
-    private void evictSeatAvailabilityCache(Long sessionId) {
-        Cache cache = cacheManager.getCache("seatAvailability");
-        if (cache != null) {
-            cache.evict(sessionId);
-        }
     }
 
     public void confirmBooking(Long bookingId) {
@@ -175,7 +151,7 @@ public class BookingService {
         } catch (ObjectOptimisticLockingFailureException e) {
             throw new BookingConcurrentModificationException(bookingId);
         }
-        evictSeatAvailabilityCache(booking.getSession().getId());
+        seatReservationService.evictAvailabilityCache(booking.getSession().getId());
         auditConfirm(bookingId, oldStatus);
     }
 

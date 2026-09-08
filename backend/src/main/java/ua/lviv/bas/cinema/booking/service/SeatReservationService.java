@@ -3,6 +3,8 @@ package ua.lviv.bas.cinema.booking.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -41,6 +43,7 @@ public class SeatReservationService {
     private final TicketTypeRepository ticketTypeRepository;
     private final PriceCalculatorService priceCalculator;
     private final SeatReservationMapper seatReservationMapper;
+    private final CacheManager cacheManager;
 
     @Value("${booking.temp-hold-minutes:5}")
     private int tempHoldMinutes;
@@ -113,6 +116,23 @@ public class SeatReservationService {
 
         seatReservationRepository.delete(reservation);
         log.info("Temporary hold cancelled for seat {} in session {} by user {}", seatId, sessionId, user.getId());
+    }
+
+    @Transactional
+    public void releaseReservations(List<SeatReservation> seatReservations, Long sessionId) {
+        seatReservations.forEach(sr -> {
+            sr.setStatus(ReservationStatus.EXPIRED);
+            sr.setBooking(null);
+        });
+        seatReservationRepository.saveAll(seatReservations);
+        evictAvailabilityCache(sessionId);
+    }
+
+    public void evictAvailabilityCache(Long sessionId) {
+        Cache cache = cacheManager.getCache("seatAvailability");
+        if (cache != null) {
+            cache.evict(sessionId);
+        }
     }
 
     public void validateAvailability(Long sessionId, Long seatId) {
