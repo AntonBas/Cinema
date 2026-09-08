@@ -8,6 +8,7 @@ import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.CacheManager;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.transaction.PlatformTransactionManager;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.booking.domain.SeatReservation;
 import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
@@ -20,6 +21,7 @@ import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingConcurrentModificationException;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingOperationException;
 import ua.lviv.bas.cinema.exception.domain.booking.BookingValidationException;
+import ua.lviv.bas.cinema.exception.domain.financial.bonus.InsufficientPointsException;
 import ua.lviv.bas.cinema.booking.mapper.BookingMapper;
 import ua.lviv.bas.cinema.booking.repository.BookingRepository;
 import ua.lviv.bas.cinema.booking.repository.SeatReservationRepository;
@@ -55,6 +57,8 @@ public class BookingServiceTest {
     private AuditService auditService;
     @Mock
     private CacheManager cacheManager;
+    @Mock
+    private PlatformTransactionManager transactionManager;
 
     @InjectMocks
     private BookingService bookingService;
@@ -142,6 +146,31 @@ public class BookingServiceTest {
                 .isInstanceOf(EntityNotFoundException.class);
 
         verifyNoInteractions(bonusLedgerService);
+    }
+
+    @Test
+    void createBookingWhenBonusSpendFailsShouldCancelBookingAndPropagateException() {
+        var seatReservation = SeatReservation.builder().id(1L).status(ReservationStatus.CONFIRMED).build();
+        savedBooking.getSeatReservations().add(seatReservation);
+
+        when(bookingCreationService.createAndPersist(createRequest, testUser)).thenReturn(savedBooking);
+        when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.of(savedBooking));
+        doThrow(new InsufficientPointsException(0, BONUS_POINTS_USED)).when(bonusLedgerService)
+                .spendPoints(USER_ID, BONUS_POINTS_USED, savedBooking);
+        when(seatReservationRepository.saveAll(anyList())).thenReturn(Collections.emptyList());
+        when(bookingRepository.saveAndFlush(savedBooking)).thenReturn(savedBooking);
+
+        assertThatThrownBy(() -> bookingService.createBooking(createRequest, testUser))
+                .isInstanceOf(InsufficientPointsException.class);
+
+        assertThat(savedBooking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
+        assertThat(savedBooking.getBonusPointsUsed()).isEqualTo(0);
+        assertThat(savedBooking.getBonusDiscountAmount()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(savedBooking.getFinalPrice()).isEqualByComparingTo(TOTAL_PRICE);
+        assertThat(seatReservation.getStatus()).isEqualTo(ReservationStatus.EXPIRED);
+        assertThat(seatReservation.getBooking()).isNull();
+        verify(bookingRepository).saveAndFlush(savedBooking);
+        verifyNoInteractions(bookingMapper);
     }
 
     @Test
