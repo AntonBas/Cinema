@@ -3,6 +3,7 @@ import type {
   LoginRequest,
   RegisterRequest,
   LoginResponse,
+  ResendVerificationResponse,
 } from "@/types/auth";
 import type { UserResponse } from "@/types/user";
 
@@ -37,6 +38,17 @@ export const authApi = {
     api.get<LoginResponse>(`${API_URL}/oauth2/success`, {
       params: { token, userId, email },
     }),
+
+  resendVerification: (email: string) =>
+    api.post<ResendVerificationResponse>(`${API_URL}/resend-verification`, {
+      email,
+    }),
+
+  getResendVerificationStatus: (email: string) =>
+    api.get<ResendVerificationResponse>(
+      `${API_URL}/resend-verification/status`,
+      { params: { email } },
+    ),
 
   getGoogleAuthUrl: (): string => {
     return `${BASE_URL}/oauth2/authorize/google`;

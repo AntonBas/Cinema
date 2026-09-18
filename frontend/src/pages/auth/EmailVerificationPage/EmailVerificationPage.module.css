@@ -68,6 +68,20 @@
   gap: var(--space-2);
 }
 
+.messageError,
+.messageSuccess {
+  font-size: var(--font-size-sm);
+  margin: var(--space-2) 0 var(--space-4);
+}
+
+.messageError {
+  color: var(--color-error);
+}
+
+.messageSuccess {
+  color: var(--color-success);
+}
+
 @keyframes slideUp {
   from {
     opacity: 0;

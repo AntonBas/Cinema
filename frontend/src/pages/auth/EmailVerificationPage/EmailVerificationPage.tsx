@@ -3,8 +3,9 @@ import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { XCircle, CheckCircle2 } from "lucide-react";
 import axios from "axios";
 import { api } from "@/services/api";
-import { Button } from "@/components/ui";
+import { Button, Input } from "@/components/ui";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { useResendVerification } from "@/hooks/features/auth/useResendVerification";
 import styles from "./EmailVerificationPage.module.css";
 
 export const EmailVerificationPage: React.FC = () => {
@@ -15,6 +16,9 @@ export const EmailVerificationPage: React.FC = () => {
     "loading",
   );
   const [errorMessage, setErrorMessage] = useState("");
+  const [email, setEmail] = useState(searchParams.get("email") || "");
+  const { resend, cooldown, sending, message, messageType } =
+    useResendVerification();
 
   const verificationToken = token || searchParams.get("token");
 
@@ -63,9 +67,45 @@ export const EmailVerificationPage: React.FC = () => {
           <XCircle size={64} className={styles.icon} />
           <h2>Verification Failed</h2>
           <p>{errorMessage}</p>
-          <Button variant="secondary" onClick={() => navigate("/login")}>
-            Go to Login
-          </Button>
+          <p className={styles.message}>
+            Enter your email to get a new verification link.
+          </p>
+
+          <Input
+            type="email"
+            label="Email"
+            value={email}
+            onChange={setEmail}
+            placeholder="your@email.com"
+          />
+
+          {message && (
+            <p
+              className={
+                messageType === "error"
+                  ? styles.messageError
+                  : styles.messageSuccess
+              }
+            >
+              {message}
+            </p>
+          )}
+
+          <div className={styles.errorActions}>
+            <Button
+              variant="primary"
+              loading={sending}
+              disabled={cooldown > 0 || !email}
+              onClick={() => resend(email)}
+            >
+              {cooldown > 0
+                ? `Resend in ${cooldown}s`
+                : "Resend verification email"}
+            </Button>
+            <Button variant="secondary" onClick={() => navigate("/login")}>
+              Go to Login
+            </Button>
+          </div>
         </div>
       </div>
     );

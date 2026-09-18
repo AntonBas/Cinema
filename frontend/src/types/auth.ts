@@ -21,3 +21,7 @@ export interface RegisterRequest {
   password: string;
   passwordConfirm: string;
 }
+
+export interface ResendVerificationResponse {
+  cooldownSeconds: number;
+}
