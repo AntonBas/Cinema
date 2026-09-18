@@ -258,6 +258,30 @@ class EmailServiceTest {
     }
 
     @Test
+    void sendPasswordChangedNotification_ShouldPostToBrevoWithWarning() {
+        mockServer.expect(requestTo(BREVO_URL))
+                .andExpect(jsonPath("$.to[0].email").value("test@example.com"))
+                .andExpect(jsonPath("$.subject").value("Your Password Was Changed"))
+                .andExpect(jsonPath("$.htmlContent", containsString("password was just changed")))
+                .andExpect(jsonPath("$.htmlContent", containsString("contact our support team immediately")))
+                .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
+
+        emailService.sendPasswordChangedNotification("test@example.com");
+
+        mockServer.verify();
+    }
+
+    @Test
+    void sendPasswordChangedNotification_WhenAllAttemptsFail_ShouldNotThrowException() {
+        mockServer.expect(ExpectedCount.times(3), requestTo(BREVO_URL)).andRespond(withServerError());
+
+        assertThatCode(() -> emailService.sendPasswordChangedNotification("test@example.com"))
+                .doesNotThrowAnyException();
+
+        mockServer.verify();
+    }
+
+    @Test
     void sendSafely_WhenActionThrows_ShouldSwallowException() {
         assertThatCode(() -> emailService.sendSafely("send test email", 1L, () -> {
             throw new RuntimeException("boom");

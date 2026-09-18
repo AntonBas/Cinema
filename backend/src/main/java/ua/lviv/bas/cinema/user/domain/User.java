@@ -65,6 +65,13 @@ public class User extends AuditableEntity {
     @Column(name = "last_verification_email_sent_at")
     private LocalDateTime lastVerificationEmailSentAt;
 
+    @Column(name = "last_password_reset_sent_at")
+    private LocalDateTime lastPasswordResetSentAt;
+
+    @Column(name = "token_version", nullable = false)
+    @Builder.Default
+    private int tokenVersion = 0;
+
     @Column(nullable = false, length = 50)
     private String city;
 

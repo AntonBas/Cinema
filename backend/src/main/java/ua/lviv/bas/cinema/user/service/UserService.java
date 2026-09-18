@@ -34,6 +34,7 @@ import ua.lviv.bas.cinema.user.mapper.UserMapper;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.notification.EmailService;
 
 @Slf4j
 @Service
@@ -47,6 +48,7 @@ public class UserService {
     private final EmailTokenGeneratorService emailTokenGeneratorService;
     private final AuditService auditService;
     private final CustomUserDetailsService customUserDetailsService;
+    private final EmailService emailService;
 
     @CacheEvict(value = "users", allEntries = true)
     @Transactional
@@ -109,8 +111,10 @@ public class UserService {
         validateNewPasswordDifferent(user, request.newPassword());
 
         user.setPassword(passwordEncoder.encode(request.newPassword()));
+        user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);
         customUserDetailsService.evict(user.getEmail());
+        emailService.sendPasswordChangedNotification(user.getEmail());
         log.info("Password updated for user {}", userId);
         auditPasswordChanged(userId, user.getEmail());
     }

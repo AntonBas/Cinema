@@ -148,6 +148,15 @@ public class EmailService {
         sendNonCriticalEmail(oldEmail, "Email Address Changed", html);
     }
 
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendPasswordChangedNotification(String toEmail) {
+        String html = buildPlainEmail("Password Changed",
+                "Your " + companyName + " account password was just changed. If you didn't make this change, "
+                        + "please contact our support team immediately.");
+
+        sendNonCriticalEmail(toEmail, "Your Password Was Changed", html);
+    }
+
     public void sendSafely(String action, Long referenceId, Runnable emailAction) {
         try {
             emailAction.run();

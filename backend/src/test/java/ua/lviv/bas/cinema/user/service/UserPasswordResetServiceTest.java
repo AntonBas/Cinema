@@ -8,13 +8,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import ua.lviv.bas.cinema.config.security.CustomUserDetailsService;
+import ua.lviv.bas.cinema.notification.EmailService;
 import ua.lviv.bas.cinema.user.domain.EmailToken;
 import ua.lviv.bas.cinema.user.domain.TokenType;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.exception.domain.auth.InvalidTokenException;
 import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
 import ua.lviv.bas.cinema.exception.domain.auth.TokenExpiredException;
-import ua.lviv.bas.cinema.exception.domain.user.EmailNotVerifiedException;
 import ua.lviv.bas.cinema.user.repository.EmailTokenRepository;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
 import ua.lviv.bas.cinema.audit.service.AuditService;
@@ -22,6 +22,7 @@ import ua.lviv.bas.cinema.audit.service.AuditService;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -47,6 +48,9 @@ public class UserPasswordResetServiceTest {
     @Mock
     private CustomUserDetailsService customUserDetailsService;
 
+    @Mock
+    private EmailService emailService;
+
     @InjectMocks
     private UserPasswordResetService userPasswordResetService;
 
@@ -63,39 +67,68 @@ public class UserPasswordResetServiceTest {
         user.setEnabled(true);
         user.setId(1L);
 
-        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailForUpdate(email)).thenReturn(Optional.of(user));
 
         userPasswordResetService.requestReset(email);
 
-        verify(userRepository).findByEmail(email);
-        verify(tokenGeneratorService).generatePasswordResetToken(email);
+        verify(tokenGeneratorService).generatePasswordResetToken(user);
+        verify(userRepository).save(user);
+        assertThat(user.getLastPasswordResetSentAt()).isNotNull();
     }
 
     @Test
-    void requestResetShouldThrowExceptionWhenUserNotExists() {
-        String email = "test@example.com";
+    void requestResetShouldSilentlyReturnWhenUserNotExists() {
+        String email = "unknown@example.com";
 
-        when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
+        when(userRepository.findByEmailForUpdate(email)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> userPasswordResetService.requestReset(email))
-                .isInstanceOf(EmailNotVerifiedException.class);
+        userPasswordResetService.requestReset(email);
 
         verify(tokenGeneratorService, never()).generatePasswordResetToken(any());
     }
 
     @Test
-    void requestResetShouldThrowExceptionWhenUserNotEnabled() {
+    void requestResetShouldSilentlyReturnWhenUserNotEnabled() {
         String email = "test@example.com";
         User user = new User();
         user.setEmail(email);
         user.setEnabled(false);
 
-        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailForUpdate(email)).thenReturn(Optional.of(user));
 
-        assertThatThrownBy(() -> userPasswordResetService.requestReset(email))
-                .isInstanceOf(EmailNotVerifiedException.class);
+        userPasswordResetService.requestReset(email);
 
         verify(tokenGeneratorService, never()).generatePasswordResetToken(any());
+    }
+
+    @Test
+    void requestResetShouldSilentlyReturnWhenWithinCooldown() {
+        String email = "test@example.com";
+        User user = new User();
+        user.setEmail(email);
+        user.setEnabled(true);
+        user.setLastPasswordResetSentAt(LocalDateTime.now().minusSeconds(10));
+
+        when(userRepository.findByEmailForUpdate(email)).thenReturn(Optional.of(user));
+
+        userPasswordResetService.requestReset(email);
+
+        verify(tokenGeneratorService, never()).generatePasswordResetToken(any());
+    }
+
+    @Test
+    void requestResetShouldGenerateTokenWhenCooldownExpired() {
+        String email = "test@example.com";
+        User user = new User();
+        user.setEmail(email);
+        user.setEnabled(true);
+        user.setLastPasswordResetSentAt(LocalDateTime.now().minusSeconds(61));
+
+        when(userRepository.findByEmailForUpdate(email)).thenReturn(Optional.of(user));
+
+        userPasswordResetService.requestReset(email);
+
+        verify(tokenGeneratorService).generatePasswordResetToken(user);
     }
 
     @Test
@@ -109,6 +142,7 @@ public class UserPasswordResetServiceTest {
         user.setEmail("test@example.com");
         user.setPassword("oldEncodedPassword");
         user.setEnabled(true);
+        int originalTokenVersion = user.getTokenVersion();
 
         EmailToken resetToken = EmailToken.builder().token(token).type(TokenType.PASSWORD_RESET)
                 .expiresAt(LocalDateTime.now().plusHours(1)).user(user).confirmed(false).build();
@@ -126,6 +160,8 @@ public class UserPasswordResetServiceTest {
         verify(passwordEncoder).encode(newPassword);
         verify(userRepository).save(user);
         verify(tokenRepository).save(resetToken);
+        verify(emailService).sendPasswordChangedNotification("test@example.com");
+        assertThat(user.getTokenVersion()).isEqualTo(originalTokenVersion + 1);
     }
 
     @Test

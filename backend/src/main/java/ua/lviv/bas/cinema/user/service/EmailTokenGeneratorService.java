@@ -12,9 +12,7 @@ import ua.lviv.bas.cinema.notification.EmailService;
 import ua.lviv.bas.cinema.user.domain.EmailToken;
 import ua.lviv.bas.cinema.user.domain.TokenType;
 import ua.lviv.bas.cinema.user.domain.User;
-import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.user.repository.EmailTokenRepository;
-import ua.lviv.bas.cinema.user.repository.UserRepository;
 
 @Slf4j
 @Service
@@ -22,7 +20,6 @@ import ua.lviv.bas.cinema.user.repository.UserRepository;
 public class EmailTokenGeneratorService {
 
     private final EmailTokenRepository tokenRepository;
-    private final UserRepository userRepository;
     private final EmailService emailService;
 
     @Transactional
@@ -31,9 +28,7 @@ public class EmailTokenGeneratorService {
     }
 
     @Transactional
-    public void generatePasswordResetToken(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("User", email));
+    public void generatePasswordResetToken(User user) {
         generateAndSendTokenForUser(user, TokenType.PASSWORD_RESET, null);
     }
 

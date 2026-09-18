@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import ua.lviv.bas.cinema.config.security.CustomUserDetailsService;
+import ua.lviv.bas.cinema.notification.EmailService;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.user.domain.UserRole;
 import ua.lviv.bas.cinema.user.domain.VerificationStatus;
@@ -46,6 +47,8 @@ public class UserServiceTest {
     private AuditService auditService;
     @Mock
     private CustomUserDetailsService customUserDetailsService;
+    @Mock
+    private EmailService emailService;
     @InjectMocks
     private UserService userService;
 
@@ -234,6 +237,7 @@ public class UserServiceTest {
     @Test
     void updatePasswordShouldSucceed() {
         User user = User.builder().id(USER_ID).email(EMAIL).password(ENCODED_PASSWORD).build();
+        int originalTokenVersion = user.getTokenVersion();
 
         UserPasswordUpdateRequest request = new UserPasswordUpdateRequest("oldPassword", "newPassword123",
                 "newPassword123");
@@ -246,7 +250,9 @@ public class UserServiceTest {
         userService.updatePassword(USER_ID, request);
 
         verify(userRepository).save(user);
+        verify(emailService).sendPasswordChangedNotification(EMAIL);
         assertThat(user.getPassword()).isEqualTo("newEncodedPassword");
+        assertThat(user.getTokenVersion()).isEqualTo(originalTokenVersion + 1);
     }
 
     @Test

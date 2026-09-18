@@ -9,26 +9,18 @@ import ua.lviv.bas.cinema.notification.EmailService;
 import ua.lviv.bas.cinema.user.domain.EmailToken;
 import ua.lviv.bas.cinema.user.domain.TokenType;
 import ua.lviv.bas.cinema.user.domain.User;
-import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.user.repository.EmailTokenRepository;
-import ua.lviv.bas.cinema.user.repository.UserRepository;
-
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class EmailTokenGeneratorServiceTest {
 
     @Mock
     private EmailTokenRepository tokenRepository;
-
-    @Mock
-    private UserRepository userRepository;
 
     @Mock
     private EmailService emailService;
@@ -53,9 +45,7 @@ public class EmailTokenGeneratorServiceTest {
     void generatePasswordResetToken_Success() {
         User user = createUser();
 
-        when(userRepository.findByEmail(USER_EMAIL)).thenReturn(Optional.of(user));
-
-        tokenGeneratorService.generatePasswordResetToken(USER_EMAIL);
+        tokenGeneratorService.generatePasswordResetToken(user);
 
         verify(tokenRepository).deleteByUserAndType(user, TokenType.PASSWORD_RESET);
         verify(tokenRepository).save(any(EmailToken.class));
@@ -80,14 +70,6 @@ public class EmailTokenGeneratorServiceTest {
 
         assertThatThrownBy(() -> tokenGeneratorService.generateEmailChangeToken(user, null))
                 .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    void generateToken_UserNotFound_ThrowsException() {
-        when(userRepository.findByEmail(USER_EMAIL)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> tokenGeneratorService.generatePasswordResetToken(USER_EMAIL))
-                .isInstanceOf(EntityNotFoundException.class);
     }
 
     private User createUser() {

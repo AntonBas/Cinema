@@ -23,20 +23,23 @@ public class CustomUserDetails implements UserDetails {
     private final String password;
     private final boolean enabled;
     private final String role;
+    private final int tokenVersion;
 
     public CustomUserDetails(User user) {
-        this(user.getId(), user.getEmail(), user.getPassword(), user.isEnabled(), user.getUserRole().name());
+        this(user.getId(), user.getEmail(), user.getPassword(), user.isEnabled(), user.getUserRole().name(),
+                user.getTokenVersion());
     }
 
     @JsonCreator
     public CustomUserDetails(@JsonProperty("userId") Long userId, @JsonProperty("email") String email,
             @JsonProperty("password") String password, @JsonProperty("enabled") boolean enabled,
-            @JsonProperty("role") String role) {
+            @JsonProperty("role") String role, @JsonProperty("tokenVersion") int tokenVersion) {
         this.userId = userId;
         this.email = email;
         this.password = password;
         this.enabled = enabled;
         this.role = role;
+        this.tokenVersion = tokenVersion;
     }
 
     @Override
