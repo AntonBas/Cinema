@@ -16,18 +16,18 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class FileStorageServiceTest {
+public class LocalFileStorageServiceTest {
 
     @TempDir
     Path tempDir;
 
-    private FileStorageService fileStorageService;
+    private LocalFileStorageService fileStorageService;
 
     @BeforeEach
     void setUp() throws Exception {
-        fileStorageService = new FileStorageService();
+        fileStorageService = new LocalFileStorageService();
 
-        var field = FileStorageService.class.getDeclaredField("uploadDir");
+        var field = LocalFileStorageService.class.getDeclaredField("uploadDir");
         field.setAccessible(true);
         field.set(fileStorageService, tempDir.toString());
     }
