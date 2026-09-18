@@ -7,6 +7,7 @@ Complete feature descriptions, technical details, and project structure.
 ## Contents
 
 - [Getting Started](#getting-started)
+  - [Cloud Deployment (Free Tier)](#cloud-deployment-free-tier)
 - [Features](#features)
   - [Roles & Permissions](#roles--permissions)
   - [User Features](#user-features)
@@ -134,6 +135,49 @@ To reset the database:
 docker compose down -v postgres
 docker compose up -d postgres
 ```
+
+---
+
+### Cloud Deployment (Free Tier)
+
+Backend and frontend are on different domains here, unlike Options 1/2, so the
+frontend talks to the backend over CORS via an absolute `VITE_API_URL` instead
+of a same-origin proxy.
+
+| Component      | Service                                                                                                                                |
+| :-------------- | :-------------------------------------------------------------------------------------------------------------------------------------- |
+| Frontend        | Vercel (root dir: `frontend`)                                                                                                             |
+| Backend         | Render — Free Web Service, Docker (root dir: `backend`)                                                                                   |
+| PostgreSQL      | Neon (free tier)                                                                                                                           |
+| Redis           | Upstash (free tier, TLS)                                                                                                                   |
+| Movie posters   | Cloudinary (free tier) — Render's disk is wiped on every redeploy, so `prod` uploads go to Cloudinary instead of local disk (`docker`/`local` still use local disk) |
+
+On Render, set `SPRING_PROFILES_ACTIVE=prod` plus the "prod only" variables
+from [`.env.docker.example`](../.env.docker.example), alongside the ones
+required everywhere (`JWT_SECRET`, `BREVO_API_KEY`, `EMAIL_FROM`,
+`GOOGLE_CLIENT_ID`/`SECRET`, `LIQPAY_*`, `FRONTEND_URL`). On Vercel, set
+`VITE_API_URL` to the Render backend's URL as a project environment
+variable (there's no `frontend/.env.example` for this — it only matters
+for the Vercel build, not local dev).
+
+Steps once both services exist:
+
+1. Add `<Render URL>/login/oauth2/code/google` to Google Cloud Console's
+   Authorized redirect URIs.
+2. Point LiqPay's server callback at `<Render URL>/api/liqpay/callback`
+   (`PAYMENT_LIQPAY_CALLBACK_URL`) and the browser redirect at
+   `<Vercel URL>/booking/success` (`PAYMENT_LIQPAY_RESULT_URL`). Switch
+   `LIQPAY_SANDBOX_MODE=false` for real payments.
+3. Set `CORS_ALLOWED_ORIGINS` on Render to the Vercel URL — a wildcard
+   pattern like `https://cinema-bas*.vercel.app` also covers Vercel's
+   per-branch preview deployments.
+4. Set `FRONTEND_URL` on Render to the same Vercel URL (used for the
+   post-OAuth-login redirect and all email links — verification,
+   password reset, booking confirmation).
+
+Render's free tier sleeps after 15 minutes of inactivity; ping
+`/actuator/health` periodically (e.g. UptimeRobot or a GitHub Actions
+cron) to keep it warm.
 
 ---
 

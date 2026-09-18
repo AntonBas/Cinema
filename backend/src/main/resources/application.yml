@@ -79,6 +79,8 @@ app:
     name: "Bas Cinema"
   frontend:
     url: ${FRONTEND_URL:http://localhost:5173}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:${FRONTEND_URL:http://localhost:5173}}
   email:
     from: ${EMAIL_FROM:noreply@bascinema.com}
   mail:

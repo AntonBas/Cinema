@@ -136,6 +136,8 @@ docker compose up -d
 
 Local (non-Docker) setup, test accounts, and database reset instructions: [docs/DOCS.md#getting-started](docs/DOCS.md#getting-started)
 
+Cloud deployment (Render + Vercel + Neon + Upstash + Cloudinary, free tier): [docs/DOCS.md#cloud-deployment-free-tier](docs/DOCS.md#cloud-deployment-free-tier)
+
 ---
 
 ## License
