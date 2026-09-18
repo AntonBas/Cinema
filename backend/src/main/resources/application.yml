@@ -70,6 +70,8 @@ app:
   jwt:
     secret: ${JWT_SECRET}
     expiration: 86400000
+    cookie-secure: ${JWT_COOKIE_SECURE:false}
+    cookie-same-site: ${JWT_COOKIE_SAME_SITE:Lax}
   qr:
     margin: 1
     format: PNG

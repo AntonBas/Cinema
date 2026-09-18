@@ -2,7 +2,7 @@ import { api } from "@/services/api";
 import type {
   LoginRequest,
   RegisterRequest,
-  LoginResponse,
+  AuthResponse,
   ResendVerificationResponse,
 } from "@/types/auth";
 import type { UserResponse } from "@/types/user";
@@ -12,7 +12,7 @@ const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 export const authApi = {
   login: (credentials: LoginRequest) =>
-    api.post<LoginResponse>(`${API_URL}/login`, credentials),
+    api.post<AuthResponse>(`${API_URL}/login`, credentials),
 
   register: (userData: RegisterRequest) =>
     api.post<UserResponse>(`${API_URL}/register`, userData),
@@ -34,10 +34,10 @@ export const authApi = {
       params: { token, newPassword },
     }),
 
-  oauth2Success: (token: string, userId: number, email: string) =>
-    api.get<LoginResponse>(`${API_URL}/oauth2/success`, {
-      params: { token, userId, email },
-    }),
+  oauth2Exchange: (code: string) =>
+    api.post<AuthResponse>(`${API_URL}/oauth2/exchange`, { code }),
+
+  logout: () => api.post<void>(`${API_URL}/logout`),
 
   resendVerification: (email: string) =>
     api.post<ResendVerificationResponse>(`${API_URL}/resend-verification`, {

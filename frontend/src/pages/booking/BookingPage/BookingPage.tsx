@@ -10,6 +10,7 @@ import { BOOKING_STEPS } from "@/components/booking/ProgressStepper/bookingSteps
 import { Layout } from "@/components/layout/Layout/Layout";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { useNotification } from "@/context/NotificationContext";
+import { useAuth } from "@/context/AuthContext";
 import type { SeatInfo } from "@/types/seatReservation";
 import styles from "./BookingPage.module.css";
 
@@ -19,6 +20,7 @@ export const BookingPage: React.FC = () => {
   const sessionIdNum = parseInt(sessionId || "0");
 
   const { showNotification } = useNotification();
+  const { isAuthenticated } = useAuth();
 
   const {
     data: seatData,
@@ -64,8 +66,7 @@ export const BookingPage: React.FC = () => {
         return;
       }
 
-      const token = localStorage.getItem("authToken");
-      if (!token) {
+      if (!isAuthenticated) {
         showNotification("You need to be logged in to book tickets", "warning");
         return;
       }
@@ -89,7 +90,7 @@ export const BookingPage: React.FC = () => {
         return;
       }
     },
-    [selectedSeats, sessionIdNum, create, navigate, showNotification],
+    [selectedSeats, sessionIdNum, create, navigate, showNotification, isAuthenticated],
   );
 
   if (loading) {

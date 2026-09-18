@@ -37,9 +37,9 @@ class WebSecurityConfigIntegrationTest {
     }
 
     @Test
-    void requestWithInvalidBearerTokenShouldReturnUnauthorizedJsonNotOauthRedirect() throws Exception {
+    void requestWithInvalidJwtCookieShouldReturnUnauthorizedJsonNotOauthRedirect() throws Exception {
         var request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/api/bookings/1"))
-                .header("Authorization", "Bearer garbage.token").GET().build();
+                .header("Cookie", "jwt=garbage.token").GET().build();
 
         var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 

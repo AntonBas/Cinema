@@ -13,8 +13,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.test.util.ReflectionTestUtils;
-import ua.lviv.bas.cinema.config.security.JwtTokenProvider;
-import ua.lviv.bas.cinema.config.security.OAuth2AuthenticationSuccessHandler;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
 
@@ -32,10 +30,10 @@ import static org.mockito.Mockito.when;
 public class OAuth2AuthenticationSuccessHandlerTest {
 
     @Mock
-    private JwtTokenProvider jwtTokenProvider;
+    private UserRepository userRepository;
 
     @Mock
-    private UserRepository userRepository;
+    private OAuth2ExchangeCodeService exchangeCodeService;
 
     @Mock
     private HttpServletRequest request;
@@ -57,7 +55,7 @@ public class OAuth2AuthenticationSuccessHandlerTest {
 
     private final String EMAIL = "test@gmail.com";
     private final Long USER_ID = 1L;
-    private final String TOKEN = "jwt-token-123";
+    private final String CODE = "one-time-code-123";
 
     @BeforeEach
     void setUp() {
@@ -66,21 +64,21 @@ public class OAuth2AuthenticationSuccessHandlerTest {
     }
 
     @Test
-    void onAuthenticationSuccess_ShouldRedirectWithTokenAndUserData() throws IOException {
+    void onAuthenticationSuccess_ShouldRedirectWithOneTimeCodeNotToken() throws IOException {
         Map<String, Object> attributes = Map.of("email", EMAIL);
         User user = User.builder().id(USER_ID).email(EMAIL).build();
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
         when(oAuth2User.getAttributes()).thenReturn(attributes);
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
-        when(jwtTokenProvider.generateToken(authentication)).thenReturn(TOKEN);
+        when(exchangeCodeService.issueCode(EMAIL)).thenReturn(CODE);
 
         successHandler.onAuthenticationSuccess(request, response, authentication);
 
         verify(response).encodeRedirectURL(urlCaptor.capture());
         String redirectUrl = urlCaptor.getValue();
-        assertThat(redirectUrl).contains("#token=" + TOKEN);
-        assertThat(redirectUrl).doesNotContain("?token=");
+        assertThat(redirectUrl).contains("?code=" + CODE);
+        assertThat(redirectUrl).doesNotContain("token=");
     }
 
     @Test
@@ -96,18 +94,18 @@ public class OAuth2AuthenticationSuccessHandlerTest {
     }
 
     @Test
-    void onAuthenticationSuccess_ShouldGenerateTokenWithAuthentication() throws IOException {
+    void onAuthenticationSuccess_ShouldIssueCodeForCorrectEmail() throws IOException {
         Map<String, Object> attributes = Map.of("email", EMAIL);
         User user = User.builder().id(USER_ID).email(EMAIL).build();
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
         when(oAuth2User.getAttributes()).thenReturn(attributes);
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
-        when(jwtTokenProvider.generateToken(authentication)).thenReturn(TOKEN);
+        when(exchangeCodeService.issueCode(EMAIL)).thenReturn(CODE);
 
         successHandler.onAuthenticationSuccess(request, response, authentication);
 
-        verify(jwtTokenProvider).generateToken(authentication);
+        verify(exchangeCodeService).issueCode(EMAIL);
         verify(response).encodeRedirectURL(anyString());
     }
 
@@ -120,7 +118,7 @@ public class OAuth2AuthenticationSuccessHandlerTest {
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
         when(oAuth2User.getAttributes()).thenReturn(attributes);
         when(userRepository.findByEmail(specialEmail)).thenReturn(Optional.of(user));
-        when(jwtTokenProvider.generateToken(authentication)).thenReturn(TOKEN);
+        when(exchangeCodeService.issueCode(specialEmail)).thenReturn(CODE);
 
         successHandler.onAuthenticationSuccess(request, response, authentication);
 

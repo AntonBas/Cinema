@@ -16,6 +16,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -41,6 +42,7 @@ public class JwtTokenProvider {
             claims.put("userId", userDetails.getUserId());
             claims.put("role", userDetails.getRole());
             claims.put("enabled", userDetails.isEnabled());
+            claims.put("tokenVersion", userDetails.getTokenVersion());
             subject = userDetails.getUsername();
         } else if (principal instanceof OAuth2User oAuth2User) {
             subject = (String) oAuth2User.getAttributes().get("email");
@@ -51,13 +53,28 @@ public class JwtTokenProvider {
         Instant now = Instant.now();
         Instant expiry = now.plus(jwtExpiration, ChronoUnit.MILLIS);
 
-        return Jwts.builder().claims(claims).subject(subject).issuedAt(Date.from(now)).expiration(Date.from(expiry))
-                .signWith(getSigningKey()).compact();
+        return Jwts.builder().id(UUID.randomUUID().toString()).claims(claims).subject(subject)
+                .issuedAt(Date.from(now)).expiration(Date.from(expiry)).signWith(getSigningKey()).compact();
     }
 
     public String getEmailFromToken(String token) {
         Claims claims = Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
         return claims.getSubject();
+    }
+
+    public Integer getTokenVersionFromToken(String token) {
+        Claims claims = Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
+        return claims.get("tokenVersion", Integer.class);
+    }
+
+    public String getJtiFromToken(String token) {
+        Claims claims = Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
+        return claims.getId();
+    }
+
+    public Instant getExpirationFromToken(String token) {
+        Claims claims = Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
+        return claims.getExpiration().toInstant();
     }
 
     public boolean validateToken(String token) {

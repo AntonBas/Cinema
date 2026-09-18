@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useUser } from '@/hooks/features/user/useUser';
+import { useAuth } from '@/context/AuthContext';
 import { Input, Button } from '@/components/ui';
 import type { UserPasswordUpdateRequest } from '@/types/user';
 import { validatePassword } from '@/utils/formValidation';
@@ -7,6 +8,7 @@ import styles from './PasswordChangeForm.module.css';
 
 export const PasswordChangeForm: React.FC = () => {
     const { updatePassword, loading } = useUser();
+    const { logout } = useAuth();
     const [formData, setFormData] = useState({
         currentPassword: '',
         newPassword: '',
@@ -53,8 +55,10 @@ export const PasswordChangeForm: React.FC = () => {
             passwordConfirm: formData.confirmPassword
         };
 
-        await updatePassword(passwordData);
-        setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        const result = await updatePassword(passwordData);
+        if (result) {
+            logout();
+        }
     };
 
     return (

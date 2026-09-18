@@ -16,8 +16,7 @@ export const useAuthActions = () => {
 
     const loading = useDelayedLoading(authApiHook.loading, { delay: 150, minDisplayTime: 300 });
 
-    const handleAuthSuccess = useCallback(async (token: string) => {
-        localStorage.setItem('authToken', token);
+    const handleAuthSuccess = useCallback(async () => {
         await refreshUser();
         navigate('/');
     }, [refreshUser, navigate]);
@@ -28,7 +27,7 @@ export const useAuthActions = () => {
             { successMessage: 'Login successful' }
         );
         if (response) {
-            await handleAuthSuccess(response.token);
+            await handleAuthSuccess();
         }
         return response;
     }, [handleAuthSuccess]);
@@ -58,13 +57,13 @@ export const useAuthActions = () => {
         );
     }, []);
 
-    const oauth2Success = useCallback(async (token: string, userId: number, email: string) => {
+    const oauth2Exchange = useCallback(async (code: string) => {
         const response = await authApiRef.current.execute(
-            () => authApi.oauth2Success(token, userId, email),
+            () => authApi.oauth2Exchange(code),
             { successMessage: 'Login successful' }
         );
         if (response) {
-            await handleAuthSuccess(response.token);
+            await handleAuthSuccess();
         }
         return response;
     }, [handleAuthSuccess]);
@@ -81,7 +80,7 @@ export const useAuthActions = () => {
         checkEmail,
         forgotPassword,
         resetPassword,
-        oauth2Success,
+        oauth2Exchange,
         loginWithGoogle,
         logout: contextLogout,
     };

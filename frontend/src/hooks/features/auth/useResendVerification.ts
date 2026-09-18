@@ -32,9 +32,6 @@ export const useResendVerification = (initialCooldown = 0) => {
       } catch (err) {
         setMessageType("error");
         if (isApiErrorException(err) && err.isTooManyRequests()) {
-          // The shared axios interceptor replaces 429 bodies with a generic
-          // message, so the real cooldown isn't on this error — resync it
-          // from the status endpoint instead of guessing from a header.
           setMessage(err.message);
           try {
             const status = await authApi.getResendVerificationStatus(email);
@@ -58,12 +55,10 @@ export const useResendVerification = (initialCooldown = 0) => {
 
   const syncStatus = useCallback(async (email: string) => {
     if (!email) return;
-    try {
-      const response = await authApi.getResendVerificationStatus(email);
-      setCooldown(response.data.cooldownSeconds);
-    } catch {
-      // best-effort sync; keep the current guess on failure
-    }
+    await authApi
+      .getResendVerificationStatus(email)
+      .then((response) => setCooldown(response.data.cooldownSeconds))
+      .catch(() => undefined);
   }, []);
 
   return { resend, syncStatus, cooldown, sending, message, messageType };

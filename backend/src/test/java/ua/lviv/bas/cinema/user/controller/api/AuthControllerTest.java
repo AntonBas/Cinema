@@ -15,13 +15,18 @@ import org.springframework.security.core.Authentication;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import jakarta.servlet.http.Cookie;
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
 import ua.lviv.bas.cinema.config.security.CustomUserDetailsService;
+import ua.lviv.bas.cinema.config.security.JwtBlacklistService;
+import ua.lviv.bas.cinema.config.security.JwtCookieService;
 import ua.lviv.bas.cinema.config.security.JwtTokenProvider;
+import ua.lviv.bas.cinema.config.security.OAuth2ExchangeCodeService;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.user.domain.UserRole;
 import ua.lviv.bas.cinema.user.domain.VerificationStatus;
@@ -32,12 +37,20 @@ import ua.lviv.bas.cinema.user.mapper.UserMapper;
 import ua.lviv.bas.cinema.user.service.UserPasswordResetService;
 import ua.lviv.bas.cinema.user.service.UserService;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -72,6 +85,12 @@ public class AuthControllerTest {
     @MockitoBean
     private UserMapper userMapper;
 
+    @MockitoBean
+    private JwtBlacklistService jwtBlacklistService;
+
+    @MockitoBean
+    private OAuth2ExchangeCodeService oAuth2ExchangeCodeService;
+
     private UserRegistrationRequest registrationRequest;
     private UserLoginRequest loginRequest;
     private UserResponse userResponse;
@@ -82,10 +101,12 @@ public class AuthControllerTest {
     void setUp() {
         mockMvc = MockMvcBuilders
                 .webAppContextSetup(context)
+                .apply(SecurityMockMvcConfigurers.springSecurity())
                 .addFilter((request, response, chain) -> {
                     response.setCharacterEncoding("UTF-8");
                     chain.doFilter(request, response);
                 })
+                .defaultRequest(get("/").header("X-Requested-With", "XMLHttpRequest"))
                 .build();
 
         objectMapper.registerModule(new JavaTimeModule());
@@ -150,8 +171,11 @@ public class AuthControllerTest {
 
         mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest))).andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").value("jwtToken")).andExpect(jsonPath("$.tokenType").value("Bearer"))
-                .andExpect(jsonPath("$.user.email").value("anton@example.com"));
+                .andExpect(jsonPath("$.token").doesNotExist())
+                .andExpect(jsonPath("$.user.email").value("anton@example.com"))
+                .andExpect(cookie().exists(JwtCookieService.COOKIE_NAME))
+                .andExpect(cookie().httpOnly(JwtCookieService.COOKIE_NAME, true))
+                .andExpect(cookie().value(JwtCookieService.COOKIE_NAME, "jwtToken"));
     }
 
     @Test
@@ -237,29 +261,65 @@ public class AuthControllerTest {
     }
 
     @Test
-    void oauth2SuccessShouldReturnOkWhenTokenValid() throws Exception {
-        when(jwtTokenProvider.validateToken("oauth2Token")).thenReturn(true);
-        when(jwtTokenProvider.getEmailFromToken("oauth2Token")).thenReturn("anton@example.com");
+    void oauth2ExchangeShouldReturnOkAndSetCookieWhenCodeValid() throws Exception {
+        when(oAuth2ExchangeCodeService.consume("valid-code")).thenReturn(Optional.of("anton@example.com"));
         when(userService.getUser("anton@example.com")).thenReturn(user);
         when(userMapper.toUserResponse(user)).thenReturn(userResponse);
+        when(jwtTokenProvider.generateToken(any(Authentication.class))).thenReturn("jwtToken");
 
-        mockMvc.perform(get("/api/auth/oauth2/success").param("token", "oauth2Token"))
+        mockMvc.perform(post("/api/auth/oauth2/exchange").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"code\":\"valid-code\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").value("oauth2Token")).andExpect(jsonPath("$.tokenType").value("Bearer"))
-                .andExpect(jsonPath("$.user.email").value("anton@example.com"));
+                .andExpect(jsonPath("$.token").doesNotExist())
+                .andExpect(jsonPath("$.user.email").value("anton@example.com"))
+                .andExpect(cookie().exists(JwtCookieService.COOKIE_NAME))
+                .andExpect(cookie().value(JwtCookieService.COOKIE_NAME, "jwtToken"));
     }
 
     @Test
-    void oauth2SuccessShouldReturnUnauthorizedWhenTokenInvalid() throws Exception {
-        when(jwtTokenProvider.validateToken("badToken")).thenReturn(false);
+    void oauth2ExchangeShouldReturnBadRequestWhenCodeInvalid() throws Exception {
+        when(oAuth2ExchangeCodeService.consume("bad-code")).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/api/auth/oauth2/success").param("token", "badToken"))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/auth/oauth2/exchange").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"code\":\"bad-code\"}"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    void oauth2SuccessShouldReturnBadRequestWhenTokenMissing() throws Exception {
-        mockMvc.perform(get("/api/auth/oauth2/success")).andExpect(status().isBadRequest());
+    void oauth2ExchangeShouldReturnBadRequestWhenCodeMissing() throws Exception {
+        mockMvc.perform(post("/api/auth/oauth2/exchange").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"code\":\"\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void logoutShouldClearCookieAndBlacklistToken() throws Exception {
+        when(jwtTokenProvider.validateToken(anyString())).thenReturn(true);
+        when(jwtTokenProvider.getJtiFromToken(anyString())).thenReturn("jti-123");
+        when(jwtTokenProvider.getExpirationFromToken(anyString())).thenReturn(Instant.now().plusSeconds(3600));
+
+        mockMvc.perform(post("/api/auth/logout").cookie(new Cookie(JwtCookieService.COOKIE_NAME, "jwtToken")))
+                .andExpect(status().isOk())
+                .andExpect(cookie().maxAge(JwtCookieService.COOKIE_NAME, 0));
+
+        verify(jwtBlacklistService).blacklist(eq("jti-123"), any(Duration.class));
+    }
+
+    @Test
+    void logoutShouldReturnOkWhenNoCookiePresent() throws Exception {
+        mockMvc.perform(post("/api/auth/logout")).andExpect(status().isOk());
+
+        verify(jwtBlacklistService, never()).blacklist(anyString(), any(Duration.class));
+    }
+
+    @Test
+    void mutatingRequestWithoutCsrfHeaderShouldReturnForbidden() throws Exception {
+        MockMvc mockMvcWithoutCsrfHeader = MockMvcBuilders.webAppContextSetup(context)
+                .apply(SecurityMockMvcConfigurers.springSecurity()).build();
+
+        mockMvcWithoutCsrfHeader.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isForbidden());
     }
 
     @Test

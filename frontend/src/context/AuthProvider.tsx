@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { authApi } from "@/api/authApi";
+import { setUnauthorizedHandler } from "@/services/api";
 import type { UserResponse } from "@/types/user";
 import type { LoginRequest, RegisterRequest } from "@/types/auth";
 import { AuthContext } from "./AuthContext";
@@ -9,35 +10,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [user, setUser] = useState<UserResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const fetchedRef = useRef(false);
 
-  const token = localStorage.getItem("authToken");
-  const isAuthenticated = !!token;
+  const isAuthenticated = !!user;
   const isAdmin = user?.userRole === "ROLE_ADMIN";
   const isCashier = user?.userRole === "ROLE_CASHIER";
   const isContentManager = user?.userRole === "ROLE_CONTENT_MANAGER";
 
   useEffect(() => {
-    if (isAuthenticated && !fetchedRef.current) {
-      fetchedRef.current = true;
-      setLoading(true);
+    authApi
+      .getCurrentUser()
+      .then((response) => setUser(response.data))
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false));
+  }, []);
 
-      authApi
-        .getCurrentUser()
-        .then((response) => setUser(response.data))
-        .catch(() => {
-          localStorage.removeItem("authToken");
-          setUser(null);
-        })
-        .finally(() => setLoading(false));
-    } else if (!isAuthenticated) {
-      setLoading(false);
-    }
-  }, [isAuthenticated]);
+  useEffect(() => {
+    setUnauthorizedHandler(() => setUser(null));
+    return () => setUnauthorizedHandler(null);
+  }, []);
 
   const login = async (credentials: LoginRequest) => {
     const response = await authApi.login(credentials);
-    localStorage.setItem("authToken", response.data.token);
     setUser(response.data.user);
   };
 
@@ -47,23 +40,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const logout = () => {
-    localStorage.removeItem("authToken");
-    setUser(null);
-    fetchedRef.current = false;
-    window.location.href = "/login";
+    authApi.logout().finally(() => {
+      setUser(null);
+      window.location.href = "/login";
+    });
   };
 
   const refreshUser = async () => {
-    const currentToken = localStorage.getItem("authToken");
-    if (currentToken) {
-      try {
-        const response = await authApi.getCurrentUser();
-        setUser(response.data);
-      } catch (error) {
-        console.error("Failed to refresh user:", error);
-        localStorage.removeItem("authToken");
-        setUser(null);
-      }
+    try {
+      const response = await authApi.getCurrentUser();
+      setUser(response.data);
+    } catch (error) {
+      console.error("Failed to refresh user:", error);
+      setUser(null);
     }
   };
 
