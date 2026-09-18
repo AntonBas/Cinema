@@ -1,6 +1,8 @@
 package ua.lviv.bas.cinema.user.service;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 import org.springframework.cache.annotation.CacheEvict;
@@ -22,8 +24,10 @@ import ua.lviv.bas.cinema.user.dto.response.UserProfileResponse;
 import ua.lviv.bas.cinema.user.dto.response.UserResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyExistsException;
+import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyVerifiedException;
 import ua.lviv.bas.cinema.exception.domain.auth.InvalidCurrentPasswordException;
 import ua.lviv.bas.cinema.exception.domain.auth.PasswordMismatchException;
+import ua.lviv.bas.cinema.exception.domain.auth.ResendCooldownException;
 import ua.lviv.bas.cinema.exception.domain.auth.SameEmailException;
 import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
 import ua.lviv.bas.cinema.user.mapper.UserMapper;
@@ -109,6 +113,52 @@ public class UserService {
         customUserDetailsService.evict(user.getEmail());
         log.info("Password updated for user {}", userId);
         auditPasswordChanged(userId, user.getEmail());
+    }
+
+    private static final long RESEND_COOLDOWN_SECONDS = 60;
+
+    @Transactional
+    public int resendVerificationEmail(String email) {
+        var userOpt = userRepository.findByEmailForUpdate(email);
+        if (userOpt.isEmpty()) {
+            log.info("Resend verification requested for unknown email: {}", email);
+            return (int) RESEND_COOLDOWN_SECONDS;
+        }
+
+        var user = userOpt.get();
+        if (user.isEnabled()) {
+            throw new EmailAlreadyVerifiedException();
+        }
+
+        var lastSentAt = user.getLastVerificationEmailSentAt();
+        if (lastSentAt != null) {
+            long remaining = remainingCooldownSeconds(lastSentAt);
+            if (remaining > 0) {
+                throw new ResendCooldownException(remaining);
+            }
+        }
+
+        emailTokenGeneratorService.generateVerificationToken(user);
+        user.setLastVerificationEmailSentAt(LocalDateTime.now());
+        userRepository.save(user);
+        log.info("Verification email resent to: {}", email);
+
+        return (int) RESEND_COOLDOWN_SECONDS;
+    }
+
+    public int getResendCooldownStatus(String email) {
+        return userRepository.findByEmail(email)
+                .filter(user -> !user.isEnabled())
+                .map(User::getLastVerificationEmailSentAt)
+                .map(this::remainingCooldownSeconds)
+                .filter(remaining -> remaining > 0)
+                .map(Long::intValue)
+                .orElse(0);
+    }
+
+    private long remainingCooldownSeconds(LocalDateTime lastSentAt) {
+        var remaining = Duration.between(LocalDateTime.now(), lastSentAt.plusSeconds(RESEND_COOLDOWN_SECONDS));
+        return remaining.isNegative() ? 0 : remaining.toSeconds();
     }
 
     public User getUser(Long id) {

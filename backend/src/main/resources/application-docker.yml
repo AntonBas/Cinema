@@ -16,6 +16,8 @@ scheduler:
   email-token:
     cleanup-expired-cron: "0 */30 * * * *"
     cleanup-confirmed-cron: "0 0 3 * * *"
+  unverified-account:
+    cleanup-cron: "0 30 3 * * *"
   movie-status:
     cron: "0 0 2 * * *"
   session-status:

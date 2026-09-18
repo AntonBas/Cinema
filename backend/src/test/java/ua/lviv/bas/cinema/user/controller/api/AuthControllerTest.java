@@ -261,4 +261,30 @@ public class AuthControllerTest {
     void oauth2SuccessShouldReturnBadRequestWhenTokenMissing() throws Exception {
         mockMvc.perform(get("/api/auth/oauth2/success")).andExpect(status().isBadRequest());
     }
+
+    @Test
+    void resendVerificationShouldReturnOkWithCooldown() throws Exception {
+        when(userService.resendVerificationEmail("anton@example.com")).thenReturn(60);
+
+        mockMvc.perform(post("/api/auth/resend-verification").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"anton@example.com\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cooldownSeconds").value(60));
+    }
+
+    @Test
+    void resendVerificationShouldReturnBadRequestWhenInvalidEmail() throws Exception {
+        mockMvc.perform(post("/api/auth/resend-verification").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"invalid-email\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void resendVerificationStatusShouldReturnOkWithCooldown() throws Exception {
+        when(userService.getResendCooldownStatus("anton@example.com")).thenReturn(30);
+
+        mockMvc.perform(get("/api/auth/resend-verification/status").param("email", "anton@example.com"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cooldownSeconds").value(30));
+    }
 }

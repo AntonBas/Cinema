@@ -24,4 +24,8 @@ public interface EmailTokenRepository extends JpaRepository<EmailToken, String> 
     @Modifying
     @Query("DELETE FROM EmailToken t WHERE t.confirmed = true AND t.confirmedAt < :date")
     int deleteByConfirmedTrueAndConfirmedAtBefore(@Param("date") LocalDateTime date);
+
+    @Modifying
+    @Query("DELETE FROM EmailToken t WHERE t.user.enabled = false AND t.user.createdDate < :cutoff")
+    int deleteAllByUnverifiedUserCreatedDateBefore(@Param("cutoff") LocalDateTime cutoff);
 }

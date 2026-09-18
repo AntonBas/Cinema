@@ -26,9 +26,11 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.config.security.JwtTokenProvider;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
+import ua.lviv.bas.cinema.user.dto.request.ResendVerificationRequest;
 import ua.lviv.bas.cinema.user.dto.request.UserLoginRequest;
 import ua.lviv.bas.cinema.user.dto.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.user.dto.response.LoginResponse;
+import ua.lviv.bas.cinema.user.dto.response.ResendVerificationResponse;
 import ua.lviv.bas.cinema.user.dto.response.UserResponse;
 import ua.lviv.bas.cinema.user.mapper.UserMapper;
 import ua.lviv.bas.cinema.user.service.UserPasswordResetService;
@@ -141,6 +143,34 @@ public class AuthController {
     public void resetPassword(@RequestParam @NotBlank String token, @RequestParam @NotBlank String newPassword) {
         log.info("POST /api/auth/password/reset");
         passwordResetService.reset(token, newPassword);
+    }
+
+    @RateLimit(value = 5, duration = 900)
+    @PostMapping("/resend-verification")
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Resend email verification")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Verification email sent, or silently ignored if email is unknown"),
+            @ApiResponse(responseCode = "400", description = "Email already verified"),
+            @ApiResponse(responseCode = "429", description = "Resend requested too soon")
+    })
+    @SecurityRequirements()
+    public ResendVerificationResponse resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
+        log.info("POST /api/auth/resend-verification - email: {}", request.email());
+        int cooldownSeconds = userService.resendVerificationEmail(request.email());
+        return new ResendVerificationResponse(cooldownSeconds);
+    }
+
+    @RateLimit(value = 15, duration = 60)
+    @GetMapping("/resend-verification/status")
+    @Operation(summary = "Check remaining resend cooldown without sending an email")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Cooldown status retrieved")
+    })
+    @SecurityRequirements()
+    public ResendVerificationResponse resendVerificationStatus(@RequestParam @Email @NotBlank String email) {
+        int cooldownSeconds = userService.getResendCooldownStatus(email);
+        return new ResendVerificationResponse(cooldownSeconds);
     }
 
     @GetMapping("/email/check")

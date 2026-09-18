@@ -62,6 +62,9 @@ public class User extends AuditableEntity {
     @Column(name = "verified_at")
     private LocalDateTime verifiedAt;
 
+    @Column(name = "last_verification_email_sent_at")
+    private LocalDateTime lastVerificationEmailSentAt;
+
     @Column(nullable = false, length = 50)
     private String city;
 

@@ -28,6 +28,7 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import ua.lviv.bas.cinema.exception.core.BusinessException;
 import ua.lviv.bas.cinema.exception.core.NotFoundException;
+import ua.lviv.bas.cinema.exception.domain.auth.ResendCooldownException;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -101,6 +102,21 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
         log.warn("Business exception [{}]: {}", ex.getClass().getSimpleName(), ex.getMessage());
 
         return buildResponseEntity(apiError, request);
+    }
+
+    @ExceptionHandler(ResendCooldownException.class)
+    protected ResponseEntity<Object> handleResendCooldown(@Nonnull ResendCooldownException ex,
+                                                          @Nonnull WebRequest request) {
+        ApiError apiError = new ApiError(ex.getStatus());
+        apiError.setMessage(ex.getMessage());
+        apiError.setDebugMessage(ex.getDebugMessage());
+
+        log.warn("Resend cooldown active: {}s remaining", ex.getRemainingSeconds());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.RETRY_AFTER, String.valueOf(ex.getRemainingSeconds()));
+
+        return buildResponseEntity(apiError, request, headers);
     }
 
     @ExceptionHandler(NotFoundException.class)
@@ -227,6 +243,12 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
 
     @Nonnull
     private ResponseEntity<Object> buildResponseEntity(@Nonnull ApiError apiError, @Nonnull WebRequest request) {
+        return buildResponseEntity(apiError, request, new HttpHeaders());
+    }
+
+    @Nonnull
+    private ResponseEntity<Object> buildResponseEntity(@Nonnull ApiError apiError, @Nonnull WebRequest request,
+                                                        @Nonnull HttpHeaders headers) {
         if (request instanceof ServletWebRequest servletWebRequest) {
             apiError.setPath(servletWebRequest.getRequest().getRequestURI());
         } else {
@@ -235,7 +257,7 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
         if (!debugErrorsEnabled) {
             apiError.setDebugMessage(null);
         }
-        return new ResponseEntity<>(apiError,
+        return new ResponseEntity<>(apiError, headers,
                 Objects.requireNonNull(apiError.getStatus(), "ApiError status must not be null"));
     }
 }

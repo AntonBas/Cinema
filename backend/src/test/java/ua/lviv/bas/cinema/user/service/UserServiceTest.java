@@ -316,4 +316,105 @@ public class UserServiceTest {
         assertThatThrownBy(() -> userService.requestEmailChange(USER_ID, "currentPassword", EMAIL))
                 .isInstanceOf(SameEmailException.class);
     }
+
+    @Test
+    void resendVerificationEmailShouldGenerateNewTokenWhenNotEnabledAndNoCooldown() {
+        User user = User.builder().id(USER_ID).email(EMAIL).enabled(false).build();
+
+        when(userRepository.findByEmailForUpdate(EMAIL)).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+
+        int cooldown = userService.resendVerificationEmail(EMAIL);
+
+        assertThat(cooldown).isEqualTo(60);
+        assertThat(user.getLastVerificationEmailSentAt()).isNotNull();
+        verify(emailTokenGeneratorService).generateVerificationToken(user);
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void resendVerificationEmailShouldReturnCooldownSilentlyWhenEmailUnknown() {
+        when(userRepository.findByEmailForUpdate("unknown@example.com")).thenReturn(Optional.empty());
+
+        int cooldown = userService.resendVerificationEmail("unknown@example.com");
+
+        assertThat(cooldown).isEqualTo(60);
+        verify(emailTokenGeneratorService, never()).generateVerificationToken(any());
+    }
+
+    @Test
+    void resendVerificationEmailShouldThrowWhenAlreadyEnabled() {
+        User user = User.builder().id(USER_ID).email(EMAIL).enabled(true).build();
+
+        when(userRepository.findByEmailForUpdate(EMAIL)).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> userService.resendVerificationEmail(EMAIL))
+                .isInstanceOf(EmailAlreadyVerifiedException.class);
+        verify(emailTokenGeneratorService, never()).generateVerificationToken(any());
+    }
+
+    @Test
+    void resendVerificationEmailShouldThrowResendCooldownExceptionWhenRequestedTooSoon() {
+        User user = User.builder().id(USER_ID).email(EMAIL).enabled(false)
+                .lastVerificationEmailSentAt(LocalDateTime.now().minusSeconds(10)).build();
+
+        when(userRepository.findByEmailForUpdate(EMAIL)).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> userService.resendVerificationEmail(EMAIL))
+                .isInstanceOf(ResendCooldownException.class);
+        verify(emailTokenGeneratorService, never()).generateVerificationToken(any());
+    }
+
+    @Test
+    void resendVerificationEmailShouldSucceedWhenCooldownAlreadyExpired() {
+        User user = User.builder().id(USER_ID).email(EMAIL).enabled(false)
+                .lastVerificationEmailSentAt(LocalDateTime.now().minusSeconds(61)).build();
+
+        when(userRepository.findByEmailForUpdate(EMAIL)).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+
+        int cooldown = userService.resendVerificationEmail(EMAIL);
+
+        assertThat(cooldown).isEqualTo(60);
+        verify(emailTokenGeneratorService).generateVerificationToken(user);
+    }
+
+    @Test
+    void getResendCooldownStatusShouldReturnZeroWhenUserNotFound() {
+        when(userRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
+
+        assertThat(userService.getResendCooldownStatus("unknown@example.com")).isZero();
+    }
+
+    @Test
+    void getResendCooldownStatusShouldReturnZeroWhenAlreadyEnabled() {
+        User user = User.builder().email(EMAIL).enabled(true)
+                .lastVerificationEmailSentAt(LocalDateTime.now()).build();
+
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+
+        assertThat(userService.getResendCooldownStatus(EMAIL)).isZero();
+    }
+
+    @Test
+    void getResendCooldownStatusShouldReturnRemainingSecondsWithinCooldown() {
+        User user = User.builder().email(EMAIL).enabled(false)
+                .lastVerificationEmailSentAt(LocalDateTime.now().minusSeconds(20)).build();
+
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+
+        int remaining = userService.getResendCooldownStatus(EMAIL);
+
+        assertThat(remaining).isPositive().isLessThanOrEqualTo(40);
+    }
+
+    @Test
+    void getResendCooldownStatusShouldReturnZeroWhenCooldownExpired() {
+        User user = User.builder().email(EMAIL).enabled(false)
+                .lastVerificationEmailSentAt(LocalDateTime.now().minusSeconds(120)).build();
+
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+
+        assertThat(userService.getResendCooldownStatus(EMAIL)).isZero();
+    }
 }
