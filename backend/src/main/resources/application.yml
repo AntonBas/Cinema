@@ -39,20 +39,6 @@ spring:
     locations: classpath:/db/migration
     validate-on-migrate: true
     validate-migration-naming: true
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${EMAIL_USERNAME:}
-    password: ${EMAIL_PASSWORD:}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-          connectiontimeout: 5000
-          timeout: 5000
-          writetimeout: 5000
   servlet:
     multipart:
       max-file-size: 10MB
@@ -93,6 +79,8 @@ app:
     url: ${FRONTEND_URL:http://localhost:5173}
   email:
     from: ${EMAIL_FROM:noreply@bascinema.com}
+  mail:
+    api-key: ${BREVO_API_KEY:}
   upload:
     dir: ${UPLOAD_DIR:uploads}
   refund-policy:
