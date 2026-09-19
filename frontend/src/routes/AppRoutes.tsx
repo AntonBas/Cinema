@@ -19,6 +19,7 @@ import { SecurityPage } from "@/pages/account/SecurityPage/SecurityPage";
 import { BonusPage } from "@/pages/account/BonusPage/BonusPage";
 import { TicketsPage } from "@/pages/account/TicketsPage/TicketsPage";
 import { RefundPolicyPage } from "@/pages/RefundPolicyPage/RefundPolicyPage";
+import { NotFoundPage } from "@/pages/NotFoundPage/NotFoundPage";
 
 import { MoviesLayout } from "@/pages/movies/MoviesLayout/MoviesLayout";
 import { CurrentMoviesPage } from "@/pages/movies/CurrentMoviesPage/CurrentMoviesPage";
@@ -276,7 +277,7 @@ export const AppRoutes: React.FC = () => {
         />
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 };
