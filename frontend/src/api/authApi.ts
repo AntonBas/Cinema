@@ -1,4 +1,4 @@
-import { api } from "@/services/api";
+import { api, API_BASE_URL } from "@/services/api";
 import type {
   LoginRequest,
   RegisterRequest,
@@ -8,7 +8,6 @@ import type {
 import type { UserResponse } from "@/types/user";
 
 const API_URL = "/api/auth";
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 export const authApi = {
   login: (credentials: LoginRequest) =>
@@ -51,6 +50,6 @@ export const authApi = {
     ),
 
   getGoogleAuthUrl: (): string => {
-    return `${BASE_URL}/oauth2/authorize/google`;
+    return `${API_BASE_URL}/oauth2/authorize/google`;
   },
 };
