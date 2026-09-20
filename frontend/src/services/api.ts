@@ -41,7 +41,8 @@ api.interceptors.response.use(
 
     if (
       originalRequest?.url?.includes("/api/auth/login") ||
-      originalRequest?.url?.includes("/api/auth/register")
+      originalRequest?.url?.includes("/api/auth/register") ||
+      originalRequest?.url?.includes("/api/auth/me")
     ) {
       if (error.response) {
         const responseData = error.response.data as ApiErrorResponse;
