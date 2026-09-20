@@ -31,7 +31,7 @@ springdoc:
 app:
   jwt:
     cookie-secure: true
-    cookie-same-site: ${JWT_COOKIE_SAME_SITE:Lax}
+    cookie-same-site: ${JWT_COOKIE_SAME_SITE:None}
   upload:
     cloudinary:
       cloud-name: ${CLOUDINARY_CLOUD_NAME}
