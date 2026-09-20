@@ -4,6 +4,7 @@ import type { PersonResponse } from '@/types/person';
 import { useMovies } from '@/hooks/features/movies/useMovies';
 import { useGenres } from '@/hooks/features/genres/useGenres';
 import { toBackendFormat } from '@/utils/dateUtils';
+import { resolvePosterUrl } from '@/utils/posterUrl';
 import { PersonSelect } from './PersonSelect/PersonSelect';
 import { GenreSearchList } from './GenreSearchList/GenreSearchList';
 import { Button } from '@/components/ui/Button/Button';
@@ -99,7 +100,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
             });
 
             if (movie.posterUrl) {
-                setPosterPreview(movie.posterUrl);
+                setPosterPreview(resolvePosterUrl(movie.posterUrl));
             }
         }
     }, [movie]);

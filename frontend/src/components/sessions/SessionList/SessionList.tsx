@@ -4,6 +4,7 @@ import type { SessionScheduleResponse } from "@/types/session";
 import { AgeRatingDisplay, AgeRatingDescription } from "@/types/movie";
 import { Button } from "@/components/ui/Button/Button";
 import { Tooltip } from "@/components/ui/Tooltip/Tooltip";
+import { DEFAULT_POSTER_URL, resolvePosterUrl } from "@/utils/posterUrl";
 import styles from "./SessionList.module.css";
 
 interface SessionListProps {
@@ -30,8 +31,6 @@ const AGE_RATING_COLORS: Record<string, string> = {
   PEGI_16: styles.ageRatingOrange,
   PEGI_18: styles.ageRatingRed,
 };
-
-const DEFAULT_POSTER = "/images/default-movie-poster.svg";
 
 const formatTime = (dateString: string): string => {
   return new Date(dateString).toLocaleTimeString("en-US", {
@@ -148,14 +147,14 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
             <div className={styles.movieHeader}>
               <div className={styles.posterContainer}>
                 <img
-                  src={`/api/movies/${movieGroup.movieId}/poster`}
+                  src={resolvePosterUrl(`/api/movies/${movieGroup.movieId}/poster`)}
                   alt={movieGroup.movieTitle}
                   className={styles.poster}
                   loading="lazy"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
-                    if (target.src !== DEFAULT_POSTER) {
-                      target.src = DEFAULT_POSTER;
+                    if (target.src !== DEFAULT_POSTER_URL) {
+                      target.src = DEFAULT_POSTER_URL;
                     }
                   }}
                 />

@@ -3,6 +3,7 @@ import type { MovieCardResponse, MovieStatus } from "@/types/movie";
 import { AgeRatingDisplay, MovieStatusDisplay } from "@/types/movie";
 import { Button } from "@/components/ui/Button/Button";
 import { Badge } from "@/components/ui/Badge/Badge";
+import { DEFAULT_POSTER_URL, resolvePosterUrl } from "@/utils/posterUrl";
 import styles from "./MovieCard.module.css";
 
 interface MovieCardProps {
@@ -21,11 +22,9 @@ const STATUS_VARIANTS: Record<
   UNKNOWN: "secondary",
 };
 
-const DEFAULT_POSTER = "/images/default-movie-poster.svg";
-
 export const MovieCard: React.FC<MovieCardProps> = React.memo(
   ({ movie, onEdit, onDelete }) => {
-    const [currentSrc, setCurrentSrc] = useState<string>(DEFAULT_POSTER);
+    const [currentSrc, setCurrentSrc] = useState<string>(DEFAULT_POSTER_URL);
 
     const handleEdit = useCallback(() => onEdit(movie), [onEdit, movie]);
     const handleDelete = useCallback(() => onDelete(movie), [onDelete, movie]);
@@ -36,16 +35,12 @@ export const MovieCard: React.FC<MovieCardProps> = React.memo(
       AgeRatingDisplay[movie.ageRating] || movie.ageRating;
 
     useEffect(() => {
-      if (movie.posterUrl && movie.posterUrl.trim() !== "") {
-        setCurrentSrc(movie.posterUrl);
-      } else {
-        setCurrentSrc(DEFAULT_POSTER);
-      }
+      setCurrentSrc(resolvePosterUrl(movie.posterUrl));
     }, [movie.posterUrl]);
 
     const handleImageError = useCallback(() => {
-      if (currentSrc !== DEFAULT_POSTER) {
-        setCurrentSrc(DEFAULT_POSTER);
+      if (currentSrc !== DEFAULT_POSTER_URL) {
+        setCurrentSrc(DEFAULT_POSTER_URL);
       }
     }, [currentSrc]);
 

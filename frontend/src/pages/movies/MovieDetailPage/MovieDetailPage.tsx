@@ -12,6 +12,7 @@ import { Tooltip } from "@/components/ui/Tooltip/Tooltip";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { Layout } from "@/components/layout/Layout/Layout";
 import { SessionSection } from "@/components/movies/SessionSection/SessionSection";
+import { DEFAULT_POSTER_URL, resolvePosterUrl } from "@/utils/posterUrl";
 import styles from "./MovieDetailPage.module.css";
 
 const AGE_RATING_COLORS: Record<string, string> = {
@@ -22,7 +23,6 @@ const AGE_RATING_COLORS: Record<string, string> = {
   PEGI_18: styles.ageRatingRed,
 };
 
-const DEFAULT_POSTER = "/images/default-movie-poster.svg";
 const DATES_PER_VIEW = 5;
 
 const formatDate = (dateString: string): string => {
@@ -50,11 +50,6 @@ const groupSessionsByDate = (
 
   const dates = Object.keys(grouped).sort();
   return { dates, grouped };
-};
-
-const getPosterUrl = (url: string | undefined | null): string => {
-  if (!url || url.trim() === "") return DEFAULT_POSTER;
-  return url;
 };
 
 export const MovieDetailPage: React.FC = () => {
@@ -96,7 +91,7 @@ export const MovieDetailPage: React.FC = () => {
   );
 
   const posterUrl = useMemo(
-    () => getPosterUrl(movieDetail?.posterUrl),
+    () => resolvePosterUrl(movieDetail?.posterUrl),
     [movieDetail?.posterUrl],
   );
 
@@ -140,8 +135,8 @@ export const MovieDetailPage: React.FC = () => {
                 className={styles.poster}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  if (target.src !== DEFAULT_POSTER) {
-                    target.src = DEFAULT_POSTER;
+                  if (target.src !== DEFAULT_POSTER_URL) {
+                    target.src = DEFAULT_POSTER_URL;
                   }
                 }}
               />
