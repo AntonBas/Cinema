@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { authApi } from "@/api/authApi";
 import { setUnauthorizedHandler } from "@/services/api";
 import type { UserResponse } from "@/types/user";
@@ -29,24 +29,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => setUnauthorizedHandler(null);
   }, []);
 
-  const login = async (credentials: LoginRequest) => {
+  const login = useCallback(async (credentials: LoginRequest) => {
     const response = await authApi.login(credentials);
     setUser(response.data.user);
-  };
+  }, []);
 
-  const register = async (userData: RegisterRequest) => {
+  const register = useCallback(async (userData: RegisterRequest) => {
     const response = await authApi.register(userData);
     return response.data;
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     authApi.logout().finally(() => {
       setUser(null);
       window.location.href = "/login";
     });
-  };
+  }, []);
 
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     try {
       const response = await authApi.getCurrentUser();
       setUser(response.data);
@@ -54,24 +54,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       console.error("Failed to refresh user:", error);
       setUser(null);
     }
-  };
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      user,
+      loading,
+      isAuthenticated,
+      isAdmin,
+      isCashier,
+      isContentManager,
+      login,
+      register,
+      logout,
+      refreshUser,
+    }),
+    [user, loading, isAuthenticated, isAdmin, isCashier, isContentManager, login, register, logout, refreshUser],
+  );
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        isAuthenticated,
-        isAdmin,
-        isCashier,
-        isContentManager,
-        login,
-        register,
-        logout,
-        refreshUser,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
   );
 };

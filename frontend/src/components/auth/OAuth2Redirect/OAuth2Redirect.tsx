@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthActions } from "@/hooks/features/auth/useAuthActions";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
@@ -8,11 +8,16 @@ export const OAuth2Redirect: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { oauth2Exchange } = useAuthActions();
+  const exchangeAttempted = useRef(false);
 
   useEffect(() => {
+    if (exchangeAttempted.current) {
+      return;
+    }
     const code = searchParams.get("code");
 
     if (code) {
+      exchangeAttempted.current = true;
       oauth2Exchange(code).catch(() => {
         navigate("/login?error=oauth2_failed");
       });
