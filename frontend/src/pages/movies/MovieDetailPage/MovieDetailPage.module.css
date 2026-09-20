@@ -279,12 +279,12 @@
 }
 
 .ageRatingYellow {
-  background: #eab308;
+  background: var(--color-age-badge-yellow);
   color: black;
 }
 
 .ageRatingOrange {
-  background: #f97316;
+  background: var(--color-age-badge-orange);
   color: white;
 }
 

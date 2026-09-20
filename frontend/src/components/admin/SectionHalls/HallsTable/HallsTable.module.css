@@ -1,6 +1,6 @@
 .name {
   font-weight: 600;
-  color: #f1f5f9;
+  color: var(--color-panel-text);
   font-size: 1.1rem;
 }
 

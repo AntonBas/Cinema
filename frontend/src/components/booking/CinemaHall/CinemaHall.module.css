@@ -12,7 +12,7 @@
 }
 
 .screen {
-  background: #0a0e17;
+  background: var(--color-bg-screen);
   color: var(--color-primary);
   padding: 2rem 4rem;
   margin: 0 auto 1rem auto;
@@ -44,7 +44,7 @@
 }
 
 .seatsLayout {
-  background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+  background: linear-gradient(145deg, var(--color-panel-gradient-start) 0%, var(--color-panel-gradient-end) 100%);
   padding: 2rem 1rem;
   border: 1px solid var(--color-border-light);
   box-shadow:
@@ -143,18 +143,18 @@
 }
 
 .seatButton.standard {
-  background-color: #3498db;
-  border-color: rgba(52, 152, 219, 0.5);
+  background-color: var(--color-seat-standard);
+  border-color: var(--color-seat-standard-border);
 }
 
 .seatButton.vip {
-  background-color: #f39c12;
-  border-color: rgba(243, 156, 18, 0.5);
+  background-color: var(--color-seat-vip);
+  border-color: var(--color-seat-vip-border);
 }
 
 .seatButton.couple {
-  background-color: #e84393;
-  border-color: rgba(232, 67, 147, 0.5);
+  background-color: var(--color-seat-couple);
+  border-color: var(--color-seat-couple-border);
 }
 
 .seatButton.selected {
@@ -163,28 +163,28 @@
   box-shadow:
     0 8px 20px rgba(0, 0, 0, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
-  background-color: #2ecc71;
-  border-color: #2ecc71;
+  background-color: var(--color-seat-selected);
+  border-color: var(--color-seat-selected);
 }
 
 .seatButton.booked {
-  background-color: #e74c3c;
-  border-color: #e74c3c;
+  background-color: var(--color-seat-booked);
+  border-color: var(--color-seat-booked);
   opacity: 0.8;
   cursor: not-allowed;
 }
 
 .seatButton.temporary {
-  background-color: #7f8c8d;
-  border-color: #95a5a6;
+  background-color: var(--color-seat-temporary);
+  border-color: var(--color-seat-temporary-border);
   opacity: 0.7;
   cursor: not-allowed;
   animation: pulse 2s infinite;
 }
 
 .seatButton.inactive {
-  background-color: #95a5a6;
-  border-color: #7f8c8d;
+  background-color: var(--color-seat-inactive);
+  border-color: var(--color-seat-inactive-border);
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -244,7 +244,7 @@
 }
 
 .legend {
-  background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+  background: linear-gradient(145deg, var(--color-panel-gradient-start) 0%, var(--color-panel-gradient-end) 100%);
   border-radius: var(--radius-md);
   padding: var(--space-6) var(--space-8);
   border: 1px solid var(--color-border-light);
@@ -288,15 +288,15 @@
 }
 
 .legendColor.standard {
-  background-color: #3498db;
+  background-color: var(--color-seat-standard);
 }
 
 .legendColor.vip {
-  background-color: #f39c12;
+  background-color: var(--color-seat-vip);
 }
 
 .legendColor.couple {
-  background-color: #e84393;
+  background-color: var(--color-seat-couple);
 }
 
 @keyframes pulse {

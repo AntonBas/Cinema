@@ -233,17 +233,17 @@
 }
 
 .status.pending {
-    background: linear-gradient(135deg, var(--color-warning) 0%, #f59e0b 100%);
+    background: linear-gradient(135deg, var(--color-warning) 0%, var(--color-warning-gradient-end) 100%);
     color: white;
 }
 
 .status.confirmed {
-    background: linear-gradient(135deg, var(--color-success) 0%, #10b981 100%);
+    background: linear-gradient(135deg, var(--color-success) 0%, var(--color-success-gradient-end) 100%);
     color: white;
 }
 
 .status.cancelled {
-    background: linear-gradient(135deg, var(--color-error) 0%, #dc2626 100%);
+    background: linear-gradient(135deg, var(--color-error) 0%, var(--color-error-gradient-end) 100%);
     color: white;
 }
 
@@ -272,7 +272,7 @@
 .timerInfo {
     text-align: center;
     padding: 1.2rem;
-    background: linear-gradient(135deg, var(--color-warning) 0%, #f59e0b 100%);
+    background: linear-gradient(135deg, var(--color-warning) 0%, var(--color-warning-gradient-end) 100%);
     color: white;
     border-radius: var(--radius-md);
     font-weight: 600;
@@ -395,7 +395,7 @@
 .modalConfirmButton {
     flex: 1;
     padding: 1rem;
-    background: linear-gradient(135deg, var(--color-error) 0%, #dc2626 100%);
+    background: linear-gradient(135deg, var(--color-error) 0%, var(--color-error-gradient-end) 100%);
     color: white;
     border: none;
     border-radius: var(--radius-md);
@@ -406,7 +406,7 @@
 }
 
 .modalConfirmButton:hover:not(:disabled) {
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    background: linear-gradient(135deg, var(--color-error-gradient-end) 0%, var(--color-error-gradient-end-dark) 100%);
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
 }

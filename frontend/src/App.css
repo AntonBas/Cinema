@@ -46,6 +46,36 @@
   --color-overlay-dark: rgba(0, 0, 0, 0.75);
   --color-overlay-darker: rgba(0, 0, 0, 0.85);
 
+  --color-seat-standard: #3498db;
+  --color-seat-standard-border: rgba(52, 152, 219, 0.5);
+  --color-seat-vip: #f39c12;
+  --color-seat-vip-border: rgba(243, 156, 18, 0.5);
+  --color-seat-couple: #e84393;
+  --color-seat-couple-border: rgba(232, 67, 147, 0.5);
+  --color-seat-selected: #2ecc71;
+  --color-seat-booked: #e74c3c;
+  --color-seat-temporary: #7f8c8d;
+  --color-seat-temporary-border: #95a5a6;
+  --color-seat-inactive: #95a5a6;
+  --color-seat-inactive-border: #7f8c8d;
+  --color-seat-layout-inactive: #666;
+
+  --color-panel-gradient-start: #1a2639;
+  --color-panel-gradient-end: #0f172a;
+  --color-panel-header-bg: #1e293b;
+  --color-panel-border: #334155;
+  --color-panel-text: #f1f5f9;
+  --color-bg-secondary-end: #2d3447;
+  --color-bg-deep: #0d1117;
+  --color-primary-alt: #ff8a00;
+  --color-age-badge-yellow: #eab308;
+  --color-age-badge-orange: #f97316;
+  --color-warning-gradient-end: #f59e0b;
+  --color-success-gradient-end: #10b981;
+  --color-error-gradient-end: #dc2626;
+  --color-error-gradient-end-dark: #b91c1c;
+  --color-bg-screen: #0a0e17;
+
   --opacity-low: 0.15;
   --opacity-medium: 0.25;
   --opacity-high: 0.3;

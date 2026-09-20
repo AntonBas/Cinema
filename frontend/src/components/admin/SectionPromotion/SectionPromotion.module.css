@@ -69,7 +69,7 @@
     margin-bottom: var(--space-4);
     font-size: 0.9rem;
     padding: var(--space-2) 0;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--color-panel-border);
     text-align: left;
 }
 
@@ -139,7 +139,7 @@
 
 .error {
     background: rgba(var(--color-error-rgb), 0.1);
-    color: #f87171;
+    color: var(--color-error);
     padding: 1.25rem 1.5rem;
     border-radius: var(--radius-md);
     margin-bottom: var(--space-8);
@@ -169,7 +169,7 @@
 .retryButton {
     background: rgba(var(--color-error-rgb), 0.1);
     border: 1px solid rgba(var(--color-error-rgb), 0.3);
-    color: #f87171;
+    color: var(--color-error);
     font-weight: 500;
     min-width: 80px;
 }
@@ -183,10 +183,10 @@
     grid-template-columns: 1fr auto;
     gap: var(--space-4);
     margin-bottom: var(--space-8);
-    background: linear-gradient(145deg, #1a2639 0%, #0f172a 100%);
+    background: linear-gradient(145deg, var(--color-panel-gradient-start) 0%, var(--color-panel-gradient-end) 100%);
     padding: var(--space-6);
     border-radius: var(--radius-xl);
-    border: 1px solid #334155;
+    border: 1px solid var(--color-panel-border);
     align-items: center;
     box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
 }

@@ -45,11 +45,11 @@
 .loaderWrapper::before {
   content: attr(data-text);
   background: linear-gradient(90deg,
-      #ffffff,
-      #fd5f00 30%,
-      #ff8c00 50%,
-      #fd5f00 70%,
-      #ffffff);
+      var(--color-text-primary),
+      var(--color-primary) 30%,
+      var(--color-primary-light) 50%,
+      var(--color-primary) 70%,
+      var(--color-text-primary));
   background-size: 200% auto;
   background-clip: text;
   -webkit-background-clip: text;

@@ -1,5 +1,5 @@
 .displayName {
-  color: #f1f5f9;
+  color: var(--color-panel-text);
   font-weight: 600;
   font-size: var(--font-size-md);
   word-break: break-word;

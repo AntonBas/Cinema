@@ -27,7 +27,7 @@
   background: linear-gradient(
     135deg,
     var(--color-bg-secondary) 0%,
-    #2d3447 100%
+    var(--color-bg-secondary-end) 100%
   );
   position: relative;
 }

@@ -50,7 +50,7 @@
 }
 
 .screen {
-  background: #0a0e17;
+  background: var(--color-bg-screen);
   color: var(--color-primary);
   padding: 2rem 4rem;
   margin: 0 auto 1rem auto;
@@ -137,7 +137,7 @@
   height: 32px;
   border-radius: var(--radius-sm);
   border: 2px solid transparent;
-  background-color: #4caf50;
+  background-color: var(--color-success);
   color: var(--color-text-primary);
   font-weight: 600;
   font-size: 12px;
@@ -161,24 +161,24 @@
 
 .seatButton.couple {
   width: 72px;
-  background-color: #e84393;
-  border-color: rgba(232, 67, 147, 0.5);
+  background-color: var(--color-seat-couple);
+  border-color: var(--color-seat-couple-border);
 }
 
 .seatButton.standard {
-  background-color: #3498db;
-  border-color: rgba(52, 152, 219, 0.5);
+  background-color: var(--color-seat-standard);
+  border-color: var(--color-seat-standard-border);
 }
 
 .seatButton.vip {
-  background-color: #f39c12;
-  border-color: rgba(243, 156, 18, 0.5);
+  background-color: var(--color-seat-vip);
+  border-color: var(--color-seat-vip-border);
 }
 
 .seatButton.inactive {
   opacity: 0.4;
   filter: grayscale(0.8);
-  border-color: #666 !important;
+  border-color: var(--color-seat-layout-inactive) !important;
 }
 
 .seatButton:hover:not(:disabled) {
@@ -283,19 +283,19 @@
 }
 
 .legendColor.standard {
-  background-color: #3498db;
+  background-color: var(--color-seat-standard);
 }
 
 .legendColor.vip {
-  background-color: #f39c12;
+  background-color: var(--color-seat-vip);
 }
 
 .legendColor.couple {
-  background-color: #e84393;
+  background-color: var(--color-seat-couple);
 }
 
 .legendColor.inactive {
-  background-color: #666;
+  background-color: var(--color-seat-layout-inactive);
 }
 
 .instructions {

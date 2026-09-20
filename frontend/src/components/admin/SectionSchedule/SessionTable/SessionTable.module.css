@@ -5,7 +5,7 @@
 }
 
 .movieTitle {
-  color: #f1f5f9;
+  color: var(--color-panel-text);
   font-weight: 600;
   font-size: var(--font-size-md);
   line-height: 1.3;
@@ -25,7 +25,7 @@
 }
 
 .hallName {
-  color: #f1f5f9;
+  color: var(--color-panel-text);
   font-weight: 500;
   font-size: 0.95rem;
   word-break: break-word;
@@ -44,7 +44,7 @@
 }
 
 .date {
-  color: #f1f5f9;
+  color: var(--color-panel-text);
   font-weight: 500;
   font-size: 0.9rem;
   white-space: nowrap;
@@ -57,7 +57,7 @@
 }
 
 .price {
-  color: #f1f5f9;
+  color: var(--color-panel-text);
   font-weight: 600;
   font-size: 0.95rem;
   white-space: nowrap;
@@ -70,7 +70,7 @@
 }
 
 .occupancyInfo {
-  color: #f1f5f9;
+  color: var(--color-panel-text);
   font-size: 0.85rem;
   white-space: nowrap;
 }
@@ -90,22 +90,22 @@
 }
 
 .revenueInfo {
-  color: #f1f5f9;
+  color: var(--color-panel-text);
   font-weight: 600;
   font-size: 0.95rem;
   white-space: nowrap;
 }
 
 .statusScheduled {
-  background: rgba(59, 130, 246, 0.15);
-  border-color: rgba(59, 130, 246, 0.3);
-  color: #3b82f6;
+  background: rgba(var(--color-info-rgb), 0.15);
+  border-color: rgba(var(--color-info-rgb), 0.3);
+  color: var(--color-info);
 }
 
 .statusOngoing {
-  background: rgba(34, 197, 94, 0.15);
-  border-color: rgba(34, 197, 94, 0.3);
-  color: #22c55e;
+  background: rgba(var(--color-success-rgb), 0.15);
+  border-color: rgba(var(--color-success-rgb), 0.3);
+  color: var(--color-success);
 }
 
 .statusCompleted {
@@ -115,9 +115,9 @@
 }
 
 .statusCancelled {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.3);
-  color: #ef4444;
+  background: rgba(var(--color-error-rgb), 0.15);
+  border-color: rgba(var(--color-error-rgb), 0.3);
+  color: var(--color-error);
 }
 
 @media (max-width: 480px) {

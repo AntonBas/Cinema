@@ -1,7 +1,7 @@
 .timeDate {
   display: block;
   font-weight: 500;
-  color: #f1f5f9;
+  color: var(--color-panel-text);
   margin-bottom: 4px;
   white-space: nowrap;
 }
@@ -52,13 +52,13 @@
 }
 
 .oldValue {
-  color: #ef4444;
+  color: var(--color-error);
   text-decoration: line-through;
   opacity: 0.8;
 }
 
 .newValue {
-  color: #22c55e;
+  color: var(--color-success);
   font-weight: 500;
 }
 

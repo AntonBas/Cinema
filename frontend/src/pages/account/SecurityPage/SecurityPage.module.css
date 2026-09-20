@@ -64,7 +64,7 @@
 .mobileTabActive {
   background: var(--color-primary);
   border-color: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-text-primary);
 }
 
 .mobileTabLabel {
@@ -116,7 +116,7 @@
 
 .navButton.active {
   background: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-text-primary);
 }
 
 .navLabel {
