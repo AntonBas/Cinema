@@ -75,11 +75,13 @@ export const TicketQRModal: React.FC<TicketQRModalProps> = ({
           {loading ? (
             <LoadingSpinner text="Generating QR code..." />
           ) : qrImage ? (
-            <img
-              src={qrImage}
-              alt="Ticket QR Code"
-              className={styles.qrImage}
-            />
+            <div className={styles.qrImageWrapper}>
+              <img
+                src={qrImage}
+                alt="Ticket QR Code"
+                className={styles.qrImage}
+              />
+            </div>
           ) : (
             <div className={styles.errorQR}>
               <p>{error || "Failed to load QR code"}</p>

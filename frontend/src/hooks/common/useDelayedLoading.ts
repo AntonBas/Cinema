@@ -15,6 +15,7 @@ export const useDelayedLoading = (
   const showTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startTimeRef = useRef<number | null>(null);
+  const isShownRef = useRef(false);
 
   useEffect(() => {
     if (showTimerRef.current) clearTimeout(showTimerRef.current);
@@ -22,34 +23,36 @@ export const useDelayedLoading = (
 
     if (isLoading) {
       showTimerRef.current = setTimeout(() => {
-        setShowLoading(true);
+        isShownRef.current = true;
         startTimeRef.current = Date.now();
+        setShowLoading(true);
       }, delay);
-    } else {
-      if (showLoading && startTimeRef.current) {
-        const elapsed = Date.now() - startTimeRef.current;
-        const remaining = minDisplayTime - elapsed;
+    } else if (isShownRef.current && startTimeRef.current) {
+      const elapsed = Date.now() - startTimeRef.current;
+      const remaining = minDisplayTime - elapsed;
 
-        if (remaining > 0) {
-          hideTimerRef.current = setTimeout(() => {
-            setShowLoading(false);
-            startTimeRef.current = null;
-          }, remaining);
-        } else {
-          setShowLoading(false);
+      if (remaining > 0) {
+        hideTimerRef.current = setTimeout(() => {
+          isShownRef.current = false;
           startTimeRef.current = null;
-        }
+          setShowLoading(false);
+        }, remaining);
       } else {
-        setShowLoading(false);
+        isShownRef.current = false;
         startTimeRef.current = null;
+        setShowLoading(false);
       }
+    } else {
+      isShownRef.current = false;
+      startTimeRef.current = null;
+      setShowLoading(false);
     }
 
     return () => {
       if (showTimerRef.current) clearTimeout(showTimerRef.current);
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     };
-  }, [isLoading, delay, minDisplayTime, showLoading]);
+  }, [isLoading, delay, minDisplayTime]);
 
   return showLoading;
 };
