@@ -32,6 +32,9 @@ Complete feature descriptions, technical details, and project structure.
 
 ### Test Accounts
 
+Seeded by `V2__insert_test_data.sql`, available in local/Docker/CI environments
+(removed automatically in production — see `V22__CleanupProdTestAccounts`):
+
 | Email            | Password | Role            |
 | :--------------- | :------- | :-------------- |
 | admin@test.com   | admin    | Administrator   |
