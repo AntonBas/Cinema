@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useLockBodyScroll } from '@/hooks/common/useLockBodyScroll';
 import styles from './Modal.module.css';
 import clsx from 'clsx';
 
@@ -24,17 +25,12 @@ export const Modal: React.FC<ModalProps> = ({
 }) => {
     const dialogRef = useRef<HTMLDivElement>(null);
 
+    useLockBodyScroll(isOpen);
+
     useEffect(() => {
         if (isOpen) {
-            document.body.style.overflow = 'hidden';
             dialogRef.current?.focus();
-        } else {
-            document.body.style.overflow = 'unset';
         }
-
-        return () => {
-            document.body.style.overflow = 'unset';
-        };
     }, [isOpen]);
 
     useEffect(() => {

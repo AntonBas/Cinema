@@ -1,6 +1,7 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { useLockBodyScroll } from "@/hooks/common/useLockBodyScroll";
 import {
   Film,
   Calendar,
@@ -97,17 +98,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     }
   };
 
-  useEffect(() => {
-    if (isOpen && isMobile) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
-
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, [isOpen, isMobile]);
+  useLockBodyScroll(isOpen && isMobile);
 
   return (
     <>
