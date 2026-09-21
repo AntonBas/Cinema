@@ -158,8 +158,9 @@
 }
 
 .pageButton.active {
-    background: #4f46e5;
-    border-color: #4f46e5;
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
 }
 
 .pageButton:disabled {

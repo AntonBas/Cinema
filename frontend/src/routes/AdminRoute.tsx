@@ -14,7 +14,6 @@ const centerStyle = {
   justifyContent: "center",
   alignItems: "center",
   height: "100vh",
-  background: "linear-gradient(135deg, #0c0c0c, #1a1a1a)",
 };
 
 export const AdminRoute: React.FC<AdminRouteProps> = ({

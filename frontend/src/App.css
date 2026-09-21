@@ -15,7 +15,6 @@
   --color-error: #ff6b6b;
   --color-error-rgb: 255, 107, 107;
   --color-error-alt: #ff4757;
-  --color-error-bg: rgba(220, 38, 38, 0.85);
 
   --color-warning: #ed8936;
   --color-warning-rgb: 237, 137, 54;
@@ -25,7 +24,6 @@
 
   --color-green: #22c55e;
   --color-gray: #6b7280;
-  --color-gray-light: #a0a8c0;
   --color-gray-dark: #4b5563;
 
   --color-bg-primary: #12161f;
