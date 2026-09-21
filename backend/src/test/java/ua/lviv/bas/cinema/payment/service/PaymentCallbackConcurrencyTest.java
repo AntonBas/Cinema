@@ -103,7 +103,7 @@ class PaymentCallbackConcurrencyTest {
         bookingId = booking.getId();
 
         for (int seatNumber = 1; seatNumber <= 2; seatNumber++) {
-            var seat = seatRepository.save(Seat.builder().row(1).number(seatNumber).hall(hall).build());
+            var seat = seatRepository.save(Seat.builder().row(1).number(seatNumber).x(0).y(0).hall(hall).build());
             seatReservationRepository.save(SeatReservation.builder().booking(booking).seat(seat).session(session)
                     .ticketType(ticketType).seatPrice(new BigDecimal("100.00")).status(ReservationStatus.PENDING)
                     .reservedUntil(LocalDateTime.now().plusMinutes(5)).build());

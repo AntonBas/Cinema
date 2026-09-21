@@ -18,7 +18,7 @@ public class SeatMapperTest {
 
     @Test
     void toSeatResponseShouldMapAllFields() {
-        Seat seat = Seat.builder().id(1L).row(1).number(5).seatType(SeatType.VIP).active(true).build();
+        Seat seat = Seat.builder().id(1L).row(1).number(5).seatType(SeatType.VIP).x(120).y(60).active(true).build();
 
         SeatResponse response = seatMapper.toSeatResponse(seat);
 
@@ -26,6 +26,8 @@ public class SeatMapperTest {
         assertThat(response.row()).isEqualTo(1);
         assertThat(response.number()).isEqualTo(5);
         assertThat(response.seatType()).isEqualTo(SeatType.VIP);
+        assertThat(response.x()).isEqualTo(120);
+        assertThat(response.y()).isEqualTo(60);
         assertThat(response.active()).isTrue();
     }
 

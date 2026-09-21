@@ -70,7 +70,7 @@ class BookingCrossHallSeatVerificationTest {
         var sessionHall = cinemaHallRepository.save(CinemaHall.builder().name("Session Hall").build());
         var otherHall = cinemaHallRepository.save(CinemaHall.builder().name("Different Hall").build());
 
-        var seatInOtherHall = seatRepository.save(Seat.builder().hall(otherHall).row(1).number(1).build());
+        var seatInOtherHall = seatRepository.save(Seat.builder().hall(otherHall).row(1).number(1).x(0).y(0).build());
 
         var session = sessionRepository.save(Session.builder().movie(movie).hall(sessionHall)
                 .startTime(LocalDateTime.now().plusDays(1)).basePrice(new BigDecimal("200.00")).build());

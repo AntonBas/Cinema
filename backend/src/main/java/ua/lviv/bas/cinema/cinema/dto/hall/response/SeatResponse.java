@@ -17,6 +17,12 @@ public record SeatResponse(
         @Schema(description = "Type of the seat", example = "VIP")
         SeatType seatType,
 
+        @Schema(description = "Horizontal position in the layout canvas", example = "120")
+        Integer x,
+
+        @Schema(description = "Vertical position in the layout canvas", example = "60")
+        Integer y,
+
         @Schema(description = "Whether the seat is active (not broken/disabled)", example = "true")
         boolean active
 ) {

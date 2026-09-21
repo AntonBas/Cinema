@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ua.lviv.bas.cinema.cinema.domain.Seat;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,8 +20,8 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
 
     long countByHallId(Long hallId);
 
-    @Query("SELECT COUNT(t) > 0 FROM Ticket t WHERE t.seatReservation.seat.hall.id = :hallId")
-    boolean hasTicketsForHall(@Param("hallId") Long hallId);
+    @Query("SELECT DISTINCT t.seatReservation.seat.id FROM Ticket t WHERE t.seatReservation.seat.id IN :seatIds")
+    List<Long> findTicketedSeatIds(@Param("seatIds") Collection<Long> seatIds);
 
     @Modifying
     @Query("DELETE FROM Seat s WHERE s.hall.id = :hallId")

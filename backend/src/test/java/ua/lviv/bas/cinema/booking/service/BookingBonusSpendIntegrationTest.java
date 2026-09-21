@@ -71,7 +71,7 @@ class BookingBonusSpendIntegrationTest {
                 .releaseDate(LocalDate.now().minusDays(1)).endShowingDate(LocalDate.now().plusMonths(1))
                 .status(MovieStatus.CURRENT).posterFileName("poster.jpg").ageRating(AgeRating.PEGI_12).build());
         var hall = cinemaHallRepository.save(CinemaHall.builder().name("Bonus Spend Hall").build());
-        var seat = seatRepository.save(Seat.builder().hall(hall).row(1).number(1).build());
+        var seat = seatRepository.save(Seat.builder().hall(hall).row(1).number(1).x(0).y(0).build());
         var session = sessionRepository.save(Session.builder().movie(movie).hall(hall)
                 .startTime(LocalDateTime.now().plusDays(1)).basePrice(new BigDecimal("200.00")).build());
         var ticketType = ticketTypeRepository.save(

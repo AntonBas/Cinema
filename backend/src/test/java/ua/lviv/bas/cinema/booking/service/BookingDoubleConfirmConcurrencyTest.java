@@ -76,7 +76,7 @@ class BookingDoubleConfirmConcurrencyTest {
 
         var movie = movieRepository.save(buildMovie());
         var hall = cinemaHallRepository.save(CinemaHall.builder().name("Double Confirm Hall").build());
-        var seat = seatRepository.save(Seat.builder().row(1).number(1).hall(hall).build());
+        var seat = seatRepository.save(Seat.builder().row(1).number(1).x(0).y(0).hall(hall).build());
         var session = sessionRepository.save(Session.builder().movie(movie).hall(hall)
                 .startTime(LocalDateTime.now().plusDays(1)).basePrice(new BigDecimal("100.00")).build());
         var ticketType = ticketTypeRepository

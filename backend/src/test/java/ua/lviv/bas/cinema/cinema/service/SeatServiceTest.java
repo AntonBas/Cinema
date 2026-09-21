@@ -55,7 +55,7 @@ public class SeatServiceTest {
         seat.setSeatType(SeatType.STANDARD);
         seat.setActive(true);
 
-        response = new SeatResponse(SEAT_ID, ROW, NUMBER, SeatType.STANDARD, true);
+        response = new SeatResponse(SEAT_ID, ROW, NUMBER, SeatType.STANDARD, 0, 0, true);
     }
 
     @Test

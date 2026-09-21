@@ -59,7 +59,7 @@ class SessionServiceIntegrationTest {
         var movie = movieRepository.save(buildMovie());
         var hall = cinemaHallRepository.save(CinemaHall.builder().name("ZZTEST Hall").build());
         for (int i = 1; i <= 5; i++) {
-            seatRepository.save(Seat.builder().row(1).number(i).hall(hall).build());
+            seatRepository.save(Seat.builder().row(1).number(i).x(0).y(0).hall(hall).build());
         }
 
         var session = sessionRepository.save(Session.builder().movie(movie).hall(hall)

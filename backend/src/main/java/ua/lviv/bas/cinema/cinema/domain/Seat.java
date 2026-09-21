@@ -74,6 +74,14 @@ public class Seat extends AuditableEntity {
 	@JoinColumn(name = "hall_id", nullable = false)
 	private CinemaHall hall;
 
+	@NotNull
+	@Column(nullable = false)
+	private Integer x;
+
+	@NotNull
+	@Column(nullable = false)
+	private Integer y;
+
 	@Column(name = "active", nullable = false)
 	@Builder.Default
 	private boolean active = true;
