@@ -5,6 +5,9 @@ spring:
     name: cinema
   cache:
     type: redis
+  session:
+    store-type: redis
+    timeout: 10m
   data:
     redis:
       host: ${REDIS_HOST:localhost}

@@ -32,8 +32,13 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String email = (String) oAuth2User.getAttributes().get("email");
 
-        userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+        if (userRepository.findByEmail(email).isEmpty()) {
+            log.error("OAuth2 user not found after successful authentication: {}", email);
+            String errorUrl = UriComponentsBuilder.fromUriString(frontendUrl + "/login")
+                    .queryParam("error", "oauth2_failed").build().toUriString();
+            getRedirectStrategy().sendRedirect(request, response, errorUrl);
+            return;
+        }
 
         String code = exchangeCodeService.issueCode(email);
 
