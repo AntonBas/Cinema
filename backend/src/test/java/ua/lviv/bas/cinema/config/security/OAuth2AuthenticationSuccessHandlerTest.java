@@ -21,8 +21,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -82,15 +82,19 @@ public class OAuth2AuthenticationSuccessHandlerTest {
     }
 
     @Test
-    void onAuthenticationSuccess_ShouldThrowException_WhenUserNotFound() {
+    void onAuthenticationSuccess_ShouldRedirectToLoginWithError_WhenUserNotFound() throws IOException {
         Map<String, Object> attributes = Map.of("email", EMAIL);
 
         when(authentication.getPrincipal()).thenReturn(oAuth2User);
         when(oAuth2User.getAttributes()).thenReturn(attributes);
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> successHandler.onAuthenticationSuccess(request, response, authentication))
-                .isInstanceOf(RuntimeException.class).hasMessageContaining("User not found with email: " + EMAIL);
+        successHandler.onAuthenticationSuccess(request, response, authentication);
+
+        verify(response).encodeRedirectURL(urlCaptor.capture());
+        String redirectUrl = urlCaptor.getValue();
+        assertThat(redirectUrl).contains("/login").contains("error=oauth2_failed");
+        verify(exchangeCodeService, never()).issueCode(anyString());
     }
 
     @Test
