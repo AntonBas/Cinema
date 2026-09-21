@@ -16,6 +16,8 @@ export interface SeatInfo {
   row: number;
   seatNumber: number;
   seatType: SeatType;
+  x: number;
+  y: number;
   available: boolean;
   temporarilyReserved: boolean;
   active: boolean;

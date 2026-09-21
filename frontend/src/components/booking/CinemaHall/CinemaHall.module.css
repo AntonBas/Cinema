@@ -51,70 +51,18 @@
     inset 0 0 50px rgba(0, 0, 0, 0.3),
     0 10px 30px rgba(0, 0, 0, 0.3);
   position: relative;
-  overflow: visible;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
   margin-bottom: 2rem;
 }
 
-.rowsContainer {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  align-items: center;
-  max-width: 900px;
+.canvas {
+  position: relative;
   margin: 0 auto;
-  overflow: visible;
-  padding: var(--space-2);
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  width: 100%;
-  justify-content: center;
-  position: relative;
-  overflow: visible;
-}
-
-.rowLabel {
-  min-width: 40px;
-  flex-shrink: 0;
-}
-
-.rowNumber {
-  font-size: 14px;
-  font-weight: 700;
-  background: var(--color-overlay-light-hover);
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  color: var(--color-text-secondary);
-  transition: all var(--transition-fast);
-}
-
-.row:hover .rowNumber {
-  background: rgba(var(--color-primary-rgb), 0.2);
-  color: var(--color-primary);
-  transform: scale(1.05);
-}
-
-.seatsRow {
-  display: flex;
-  gap: 4px;
-  justify-content: center;
-  flex-wrap: nowrap;
-  width: fit-content;
-  min-width: 0;
-  position: relative;
-  overflow: visible;
 }
 
 .seatButton {
-  position: relative;
-  height: 32px;
+  position: absolute;
   border-radius: var(--radius-sm);
   border: 2px solid transparent;
   color: var(--color-text-primary);
@@ -126,20 +74,9 @@
   justify-content: center;
   transition: all var(--transition-fast);
   padding: 0;
-  margin: 0 2px;
   box-shadow:
     0 4px 8px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  flex-shrink: 0;
-}
-
-.seatButton.standard,
-.seatButton.vip {
-  width: 32px;
-}
-
-.seatButton.couple {
-  width: 72px;
 }
 
 .seatButton.standard {
@@ -354,43 +291,8 @@
     padding: var(--space-4) var(--space-1);
   }
 
-  .rowsContainer {
-    gap: var(--space-2);
-    padding: 0;
-  }
-
-  .row {
-    gap: var(--space-2);
-  }
-
-  .rowLabel {
-    min-width: 32px;
-  }
-
-  .rowNumber {
-    width: 26px;
-    height: 26px;
-    font-size: 11px;
-  }
-
-  .seatsRow {
-    gap: 2px;
-  }
-
   .seatButton {
-    height: 26px;
     font-size: 9px;
-    margin: 0 1px;
-  }
-
-  .seatButton.standard,
-  .seatButton.vip {
-    width: 26px;
-  }
-
-  .seatButton.couple {
-    width: 52px;
-    height: 26px;
   }
 
   .seatNumber {
@@ -445,42 +347,8 @@
     padding: var(--space-3) var(--space-1);
   }
 
-  .rowsContainer {
-    gap: var(--space-1);
-  }
-
-  .row {
-    gap: var(--space-1);
-  }
-
-  .rowLabel {
-    min-width: 28px;
-  }
-
-  .rowNumber {
-    width: 22px;
-    height: 22px;
-    font-size: 9px;
-  }
-
-  .seatsRow {
-    gap: 1px;
-  }
-
   .seatButton {
-    height: 22px;
     font-size: 7px;
-    margin: 0;
-  }
-
-  .seatButton.standard,
-  .seatButton.vip {
-    width: 22px;
-  }
-
-  .seatButton.couple {
-    width: 44px;
-    height: 22px;
   }
 
   .seatNumber {
@@ -498,21 +366,6 @@
 }
 
 @media (max-width: 380px) {
-  .rowLabel {
-    display: none;
-  }
-
-  .seatButton.standard,
-  .seatButton.vip {
-    width: 20px;
-    height: 20px;
-  }
-
-  .seatButton.couple {
-    width: 40px;
-    height: 20px;
-  }
-
   .legendGrid {
     flex-direction: column;
     align-items: center;

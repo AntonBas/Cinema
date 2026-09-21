@@ -3,6 +3,7 @@ import type {
   CinemaHallListResponse,
   CinemaHallResponse,
   CinemaHallRequest,
+  HallLayoutRequest,
   HallLayoutResponse,
 } from "@/types/cinemaHall";
 
@@ -23,4 +24,7 @@ export const cinemaHallApi = {
 
   getLayout: (id: number) =>
     api.get<HallLayoutResponse>(`${BASE_URL}/${id}/layout`),
+
+  updateLayout: (id: number, request: HallLayoutRequest) =>
+    api.put<HallLayoutResponse>(`${BASE_URL}/${id}/layout`, request),
 };

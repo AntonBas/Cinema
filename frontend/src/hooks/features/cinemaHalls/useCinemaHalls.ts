@@ -4,6 +4,7 @@ import type {
     CinemaHallRequest,
     CinemaHallListResponse,
     CinemaHallResponse,
+    HallLayoutRequest,
     HallLayoutResponse
 } from '@/types/cinemaHall';
 import { useApi } from '@/hooks/common/useApi';
@@ -42,6 +43,13 @@ export const useCinemaHalls = () => {
         return layoutApiRef.current.execute(() => cinemaHallApi.getLayout(id));
     }, []);
 
+    const updateLayout = useCallback(async (id: number, request: HallLayoutRequest) => {
+        return layoutApiRef.current.execute(
+            () => cinemaHallApi.updateLayout(id, request),
+            { successMessage: 'Hall layout updated successfully' }
+        );
+    }, []);
+
     const createHall = useCallback(async (request: CinemaHallRequest) => {
         return mutationApiRef.current.execute(
             () => cinemaHallApi.create(request),
@@ -77,6 +85,7 @@ export const useCinemaHalls = () => {
         getHallLayout,
         createHall,
         updateHall,
+        updateLayout,
         deleteHall,
     };
 };

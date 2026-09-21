@@ -31,6 +31,8 @@ export interface SeatResponse {
   row: number;
   number: number;
   seatType: SeatType;
+  x: number;
+  y: number;
   active: boolean;
 }
 

@@ -43,8 +43,9 @@ const SectionHallsContent: React.FC = () => {
         if (response) {
             await loadHalls();
             setShowCreateModal(false);
+            openLayout(response);
         }
-    }, [createHall, loadHalls]);
+    }, [createHall, loadHalls, openLayout]);
 
     const handleEditHall = useCallback(async (id: number, request: CinemaHallRequest) => {
         const response = await updateHall(id, request);

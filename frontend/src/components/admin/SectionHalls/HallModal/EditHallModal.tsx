@@ -15,22 +15,10 @@ export const EditHallModal: React.FC<EditHallModalProps> = ({
     onUpdate,
     loading = false
 }) => {
-    const [formData, setFormData] = useState<CinemaHallRequest>({
-        name: hall.name,
-        rows: hall.rows,
-        seatsPerRow: hall.seatsPerRow,
-        defaultSeatType: hall.defaultSeatType,
-        coupleRows: hall.coupleRows || []
-    });
+    const [formData, setFormData] = useState<CinemaHallRequest>({ name: hall.name });
 
     useEffect(() => {
-        setFormData({
-            name: hall.name,
-            rows: hall.rows,
-            seatsPerRow: hall.seatsPerRow,
-            defaultSeatType: hall.defaultSeatType,
-            coupleRows: hall.coupleRows || []
-        });
+        setFormData({ name: hall.name });
     }, [hall]);
 
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
@@ -44,41 +32,21 @@ export const EditHallModal: React.FC<EditHallModalProps> = ({
         value: CinemaHallRequest[K]
     ) => {
         setFormData(prev => ({ ...prev, [field]: value }));
-        if (field === 'rows') {
-            setFormData(prev => ({
-                ...prev,
-                coupleRows: (prev.coupleRows || []).filter(row => row <= (value as number))
-            }));
-        }
     }, []);
 
-    const handleCoupleRowsChange = useCallback((rows: number[]) => {
-        setFormData(prev => ({ ...prev, coupleRows: rows }));
-    }, []);
-
-    const hasChanges = useMemo(() =>
-        formData.name !== hall.name ||
-        formData.rows !== hall.rows ||
-        formData.seatsPerRow !== hall.seatsPerRow ||
-        formData.defaultSeatType !== hall.defaultSeatType ||
-        JSON.stringify(formData.coupleRows) !== JSON.stringify(hall.coupleRows || []),
-        [formData, hall]
-    );
+    const hasChanges = useMemo(() => formData.name !== hall.name, [formData, hall]);
 
     return (
         <BaseHallModal
             isOpen={true}
-            title="Edit Cinema Hall"
+            title="Rename Cinema Hall"
             formData={formData}
             onClose={onClose}
             onSubmit={handleSubmit}
             onFieldChange={updateField}
-            submitButtonText="Update Hall"
+            submitButtonText="Save Name"
             isSubmitDisabled={!hasChanges}
             loading={loading}
-            showDefaultSeatType={true}
-            coupleRows={formData.coupleRows || []}
-            onCoupleRowsChange={handleCoupleRowsChange}
         />
     );
 };

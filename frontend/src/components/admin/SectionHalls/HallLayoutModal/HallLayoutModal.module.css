@@ -81,117 +81,112 @@
   max-width: 500px;
 }
 
-.seatsLayout {
+.gridWrapper {
   background: rgba(42, 48, 65, 0.6);
   border-radius: var(--radius-lg);
-  padding: 2rem 1rem;
   border: 1px solid var(--color-border-light);
   box-shadow:
     inset 0 0 50px rgba(0, 0, 0, 0.3),
     0 10px 30px rgba(0, 0, 0, 0.3);
-  position: relative;
-  overflow: hidden;
-  margin-bottom: 2rem;
-}
-
-.rowsContainer {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  align-items: center;
-  max-width: 900px;
-  margin: 0 auto;
-  overflow-x: visible;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   padding: var(--space-2);
+  margin-bottom: 1rem;
 }
 
-.row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  width: 100%;
-  justify-content: center;
-}
-
-.rowLabel {
-  min-width: 60px;
-  color: var(--color-text-muted);
-  font-size: 12px;
-  font-weight: 600;
-  text-align: right;
-  padding-right: 10px;
-  flex-shrink: 0;
-}
-
-.seatsRow {
-  display: flex;
-  gap: 4px;
-  justify-content: center;
-  flex-wrap: nowrap;
-  width: fit-content;
-  min-width: 0;
-}
-
-.seatButton {
+.canvas {
   position: relative;
-  height: 32px;
+  margin: 0 auto;
+}
+
+.gridCell {
+  position: absolute;
+  border: 1px dashed transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.gridCell:hover {
+  border-color: var(--color-border-light);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.seatTile {
+  position: absolute;
   border-radius: var(--radius-sm);
   border: 2px solid transparent;
-  background-color: var(--color-success);
   color: var(--color-text-primary);
   font-weight: 600;
-  font-size: 12px;
-  cursor: pointer;
+  font-size: 11px;
+  cursor: grab;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--transition-fast);
-  padding: 0;
-  margin: 0 2px;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
   box-shadow:
     0 4px 8px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  flex-shrink: 0;
+  user-select: none;
 }
 
-.seatButton.standard,
-.seatButton.vip {
-  width: 32px;
+.seatTile:active {
+  cursor: grabbing;
 }
 
-.seatButton.couple {
-  width: 72px;
-  background-color: var(--color-seat-couple);
-  border-color: var(--color-seat-couple-border);
-}
-
-.seatButton.standard {
-  background-color: var(--color-seat-standard);
-  border-color: var(--color-seat-standard-border);
-}
-
-.seatButton.vip {
-  background-color: var(--color-seat-vip);
-  border-color: var(--color-seat-vip-border);
-}
-
-.seatButton.inactive {
-  opacity: 0.4;
-  filter: grayscale(0.8);
-  border-color: var(--color-seat-layout-inactive) !important;
-}
-
-.seatButton:hover:not(:disabled) {
-  transform: scale(1.1);
+.seatTile:hover {
+  transform: scale(1.05);
   z-index: 2;
   box-shadow:
     0 8px 20px rgba(0, 0, 0, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
-.seatButton:disabled {
-  cursor: wait;
-  opacity: 0.7;
+.seatTile.standard {
+  background-color: var(--color-seat-standard);
+  border-color: var(--color-seat-standard-border);
+}
+
+.seatTile.vip {
+  background-color: var(--color-seat-vip);
+  border-color: var(--color-seat-vip-border);
+}
+
+.seatTile.couple {
+  background-color: var(--color-seat-couple);
+  border-color: var(--color-seat-couple-border);
+}
+
+.seatTile.inactive {
+  opacity: 0.5;
+  filter: grayscale(0.8);
+  border-color: var(--color-seat-layout-inactive) !important;
+}
+
+.deleteButton {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-error);
+  color: #fff;
+  border: none;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 3;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-4);
+  justify-content: center;
 }
 
 .inactiveOverlay {
@@ -206,22 +201,6 @@
   justify-content: center;
   background-color: rgba(0, 0, 0, 0.3);
   border-radius: var(--radius-sm);
-}
-
-.inactiveIcon {
-  font-size: 14px;
-  color: #888;
-  font-weight: bold;
-  text-shadow: 0 0 2px black;
-}
-
-.loadingSpinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid var(--color-text-primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
 }
 
 .footer {
@@ -350,48 +329,11 @@
   gap: var(--space-6);
 }
 
-.noLayout {
-  text-align: center;
-  padding: 4rem 2rem;
-  color: var(--color-text-secondary);
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: var(--radius-md);
-  border: 2px dashed var(--color-border-light);
-}
-
-.emptyIcon {
-  font-size: 4rem;
-  margin-bottom: var(--space-4);
-  opacity: 0.5;
-  filter: drop-shadow(0 0 10px rgba(var(--color-primary-rgb), 0.3));
-}
-
-.noLayout h3 {
-  color: var(--color-text-primary);
-  margin: 0 0 var(--space-4) 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
-.noLayout p {
-  margin: 0 0 var(--space-6) 0;
-  font-size: 1.1rem;
-}
-
 .seatNumber {
   font-size: 11px;
   font-weight: 600;
   color: var(--color-text-primary);
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
 }
 
 @media (max-width: 768px) {
@@ -454,48 +396,8 @@
     height: 16px;
   }
 
-  .seatsLayout {
-    padding: var(--space-4) var(--space-2);
-  }
-
-  .rowsContainer {
-    padding: 0;
-    gap: var(--space-3);
-    max-width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-  }
-
-  .row {
-    gap: var(--space-2);
-    justify-content: flex-start;
-  }
-
-  .rowLabel {
-    min-width: 45px;
-    font-size: 10px;
-    padding-right: 4px;
-  }
-
-  .seatsRow {
-    gap: 3px;
-  }
-
-  .seatButton {
-    height: 26px;
-    font-size: 9px;
-    margin: 0 1px;
-  }
-
-  .seatButton.standard,
-  .seatButton.vip {
-    width: 26px;
-  }
-
-  .seatButton.couple {
-    width: 52px;
-    height: 26px;
+  .gridWrapper {
+    padding: var(--space-1);
   }
 
   .seatNumber {
@@ -531,22 +433,6 @@
   .loading {
     padding: 2.5rem;
   }
-
-  .noLayout {
-    padding: 2.5rem 1.5rem;
-  }
-
-  .emptyIcon {
-    font-size: 3.5rem;
-  }
-
-  .noLayout h3 {
-    font-size: 1.3rem;
-  }
-
-  .noLayout p {
-    font-size: 1rem;
-  }
 }
 
 @media (max-width: 480px) {
@@ -577,41 +463,8 @@
     letter-spacing: 1px;
   }
 
-  .rowLabel {
-    display: none;
-  }
-
-  .seatsLayout {
-    padding: var(--space-2) var(--space-1);
-  }
-
-  .rowsContainer {
-    gap: var(--space-1);
-  }
-
-  .row {
-    gap: 0;
-    justify-content: flex-start;
-  }
-
-  .seatsRow {
-    gap: 1px;
-  }
-
-  .seatButton {
-    height: 20px;
-    font-size: 7px;
-    margin: 0;
-  }
-
-  .seatButton.standard,
-  .seatButton.vip {
-    width: 20px;
-  }
-
-  .seatButton.couple {
-    width: 41px;
-    height: 20px;
+  .gridWrapper {
+    padding: 0;
   }
 
   .seatNumber {
@@ -667,21 +520,5 @@
 
   .loading {
     padding: 1.5rem;
-  }
-
-  .noLayout {
-    padding: 1.5rem 1rem;
-  }
-
-  .emptyIcon {
-    font-size: 2.5rem;
-  }
-
-  .noLayout h3 {
-    font-size: 1rem;
-  }
-
-  .noLayout p {
-    font-size: 0.8rem;
   }
 }

@@ -1,6 +1,5 @@
 import React, { useState, useCallback } from 'react';
 import type { CinemaHallRequest } from '@/types/cinemaHall';
-import { SeatType } from '@/types/seat';
 import { BaseHallModal } from './BaseHallModal';
 
 interface CreateHallModalProps {
@@ -14,13 +13,7 @@ export const CreateHallModal: React.FC<CreateHallModalProps> = ({
     onCreate,
     loading = false
 }) => {
-    const [formData, setFormData] = useState<CinemaHallRequest>({
-        name: '',
-        rows: 10,
-        seatsPerRow: 15,
-        defaultSeatType: SeatType.STANDARD,
-        coupleRows: []
-    });
+    const [formData, setFormData] = useState<CinemaHallRequest>({ name: '' });
 
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
@@ -33,16 +26,6 @@ export const CreateHallModal: React.FC<CreateHallModalProps> = ({
         value: CinemaHallRequest[K]
     ) => {
         setFormData(prev => ({ ...prev, [field]: value }));
-        if (field === 'rows') {
-            setFormData(prev => ({
-                ...prev,
-                coupleRows: (prev.coupleRows || []).filter(row => row <= (value as number))
-            }));
-        }
-    }, []);
-
-    const handleCoupleRowsChange = useCallback((rows: number[]) => {
-        setFormData(prev => ({ ...prev, coupleRows: rows }));
     }, []);
 
     return (
@@ -55,9 +38,6 @@ export const CreateHallModal: React.FC<CreateHallModalProps> = ({
             onFieldChange={updateField}
             submitButtonText="Create Hall"
             loading={loading}
-            showDefaultSeatType={true}
-            coupleRows={formData.coupleRows || []}
-            onCoupleRowsChange={handleCoupleRowsChange}
         />
     );
 };
