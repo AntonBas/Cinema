@@ -331,7 +331,7 @@ public class SeatReservationServiceTest {
         SeatReservationResponse.TicketPriceInfo priceInfo = new SeatReservationResponse.TicketPriceInfo(1L, "Adult",
                 BigDecimal.TEN, null, null, false, null);
         SeatReservationResponse.SeatInfo seatInfo = new SeatReservationResponse.SeatInfo(SEAT_ID, 1, 1,
-                SeatType.STANDARD, true, false, true, List.of(priceInfo));
+                SeatType.STANDARD, 0, 0, true, false, true, List.of(priceInfo));
 
         when(seatReservationMapper.toTicketPriceInfo(ticketType, BigDecimal.TEN)).thenReturn(priceInfo);
         when(seatReservationMapper.toSeatInfo(testSeat, true, false, List.of(priceInfo))).thenReturn(seatInfo);

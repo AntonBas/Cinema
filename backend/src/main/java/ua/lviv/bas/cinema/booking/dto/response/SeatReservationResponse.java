@@ -40,6 +40,12 @@ public record SeatReservationResponse(
             @Schema(description = "Seat type", example = "VIP")
             SeatType seatType,
 
+            @Schema(description = "Horizontal position in the layout canvas", example = "120")
+            Integer x,
+
+            @Schema(description = "Vertical position in the layout canvas", example = "60")
+            Integer y,
+
             @Schema(description = "Is available", example = "true")
             boolean available,
 

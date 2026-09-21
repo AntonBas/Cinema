@@ -37,8 +37,8 @@ public class SeatReservationControllerTest {
         SeatReservationResponse.TicketPriceInfo ticketPriceInfo = new SeatReservationResponse.TicketPriceInfo(1L,
                 "Adult", new BigDecimal("250.00"), null, null, false, null);
 
-        SeatReservationResponse.SeatInfo seat1 = new SeatReservationResponse.SeatInfo(1L, 1, 1, SeatType.STANDARD, true,
-                false, true, List.of(ticketPriceInfo));
+        SeatReservationResponse.SeatInfo seat1 = new SeatReservationResponse.SeatInfo(1L, 1, 1, SeatType.STANDARD, 0, 0,
+                true, false, true, List.of(ticketPriceInfo));
 
         return new SeatReservationResponse(sessionId, "Inception", new BigDecimal("200.00"), "Hall A", 75,
                 List.of(seat1));
