@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import type { PersonResponse, PersonRole } from '@/types/person';
 import { personApi } from '@/api/personApi';
+import { useNotification } from '@/context/NotificationContext';
+import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './PersonSelect.module.css';
 
 interface PersonSelectProps {
@@ -27,6 +29,7 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
     const [isCreating, setIsCreating] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const timeoutRef = useRef<number | null>(null);
+    const { showNotification } = useNotification();
 
     const displayPersons = useMemo(() =>
         selectedPersons.filter(person => selectedIds.includes(person.id)),
@@ -99,11 +102,14 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
                 setIsOpen(false);
             }
         } catch (error) {
-            console.error(`Failed to create ${role.toLowerCase()}:`, error);
+            const message = isApiErrorException(error)
+                ? error.message
+                : `Failed to create ${role.toLowerCase()}`;
+            showNotification(message, 'error');
         } finally {
             setIsCreating(false);
         }
-    }, [searchQuery, role, selectedIds, selectedPersons, onChange, isCreating]);
+    }, [searchQuery, role, selectedIds, selectedPersons, onChange, isCreating, showNotification]);
 
     const handleSelectPerson = useCallback((personId: number) => {
         const isSelected = selectedIds.includes(personId);

@@ -3,6 +3,7 @@ import { Modal, Button, Input } from '@/components/ui';
 import { usePromotion } from '@/hooks/features/promotion/usePromotion';
 import type { PromotionRequest, PromotionResponse } from '@/types/promotion';
 import { toBackendFormat } from '@/utils/dateUtils';
+import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './PromotionModal.module.css';
 
 interface EditPromotionModalProps {
@@ -23,6 +24,7 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({ promotion, onCl
         endDate: promotion.endDate?.split('T')[0] || ''
     });
     const [dateError, setDateError] = useState('');
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
     useEffect(() => {
         setFormData({
@@ -55,10 +57,16 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({ promotion, onCl
             endDate: formData.endDate ? toBackendFormat(formData.endDate) : undefined
         };
 
-        const result = await update(promotion.id, request);
-        if (result) {
-            onSuccess();
-            onClose();
+        try {
+            const result = await update(promotion.id, request);
+            if (result) {
+                onSuccess();
+                onClose();
+            }
+        } catch (err) {
+            if (isApiErrorException(err) && err.isValidationError()) {
+                setErrors(err.getValidationErrors());
+            }
         }
     };
 
@@ -74,6 +82,7 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({ promotion, onCl
                         value={formData.title}
                         onChange={(value) => setFormData(prev => ({ ...prev, title: value }))}
                         required
+                        error={errors.title}
                     />
                 </div>
 
@@ -91,6 +100,7 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({ promotion, onCl
                         className={`${styles.textarea} ${!isDescriptionValid ? styles.textareaError : ''}`}
                         maxLength={DESCRIPTION_LIMIT}
                     />
+                    {errors.description && <div className={styles.error}>{errors.description}</div>}
                 </div>
 
                 <div className={styles.formGroup}>
@@ -101,6 +111,7 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({ promotion, onCl
                         onChange={(value) => setFormData(prev => ({ ...prev, bonusPoints: value }))}
                         min="1"
                         required
+                        error={errors.bonusPoints}
                     />
                 </div>
 
@@ -111,6 +122,7 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({ promotion, onCl
                             type="date"
                             value={formData.startDate}
                             onChange={(value) => setFormData(prev => ({ ...prev, startDate: value }))}
+                            error={errors.startDate}
                         />
                     </div>
 
@@ -120,6 +132,7 @@ const EditPromotionModal: React.FC<EditPromotionModalProps> = ({ promotion, onCl
                             type="date"
                             value={formData.endDate}
                             onChange={(value) => setFormData(prev => ({ ...prev, endDate: value }))}
+                            error={errors.endDate}
                         />
                     </div>
                 </div>

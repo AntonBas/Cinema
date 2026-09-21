@@ -3,6 +3,7 @@ import { Modal, Button, Input } from '@/components/ui';
 import { usePromotion } from '@/hooks/features/promotion/usePromotion';
 import type { PromotionRequest } from '@/types/promotion';
 import { toBackendFormat } from '@/utils/dateUtils';
+import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './PromotionModal.module.css';
 
 interface CreatePromotionModalProps {
@@ -22,6 +23,7 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({ onClose, on
         endDate: ''
     });
     const [dateError, setDateError] = useState('');
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -44,10 +46,16 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({ onClose, on
             endDate: formData.endDate ? toBackendFormat(formData.endDate) : undefined
         };
 
-        const result = await create(request);
-        if (result) {
-            onSuccess();
-            onClose();
+        try {
+            const result = await create(request);
+            if (result) {
+                onSuccess();
+                onClose();
+            }
+        } catch (err) {
+            if (isApiErrorException(err) && err.isValidationError()) {
+                setErrors(err.getValidationErrors());
+            }
         }
     };
 
@@ -64,6 +72,7 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({ onClose, on
                         onChange={(value) => setFormData(prev => ({ ...prev, title: value }))}
                         placeholder="Enter title"
                         required
+                        error={errors.title}
                     />
                 </div>
 
@@ -82,6 +91,7 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({ onClose, on
                         className={`${styles.textarea} ${!isDescriptionValid ? styles.textareaError : ''}`}
                         maxLength={DESCRIPTION_LIMIT}
                     />
+                    {errors.description && <div className={styles.error}>{errors.description}</div>}
                 </div>
 
                 <div className={styles.formGroup}>
@@ -93,6 +103,7 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({ onClose, on
                         placeholder="Enter bonus points"
                         min="1"
                         required
+                        error={errors.bonusPoints}
                     />
                 </div>
 
@@ -103,6 +114,7 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({ onClose, on
                             type="date"
                             value={formData.startDate}
                             onChange={(value) => setFormData(prev => ({ ...prev, startDate: value }))}
+                            error={errors.startDate}
                         />
                     </div>
 
@@ -112,6 +124,7 @@ const CreatePromotionModal: React.FC<CreatePromotionModalProps> = ({ onClose, on
                             type="date"
                             value={formData.endDate}
                             onChange={(value) => setFormData(prev => ({ ...prev, endDate: value }))}
+                            error={errors.endDate}
                         />
                     </div>
                 </div>

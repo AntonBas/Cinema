@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Input, Button, Modal } from "@/components/ui";
 import type { UserProfileResponse, UserUpdateRequest } from "@/types/user";
+import { isApiErrorException } from "@/utils/apiErrorHandler";
 import { validateName, validatePhoneNumber } from "@/utils/formValidation";
 import styles from "./ProfileEditForm.module.css";
 
@@ -62,7 +63,13 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-    await onSuccess(formData);
+    try {
+      await onSuccess(formData);
+    } catch (err) {
+      if (isApiErrorException(err) && err.isValidationError()) {
+        setFormErrors(err.getValidationErrors());
+      }
+    }
   };
 
   const handleDateChangeContinue = () => {
@@ -189,6 +196,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
             value={formData.city || ""}
             onChange={(value) => handleChange("city", value)}
             disabled={loading}
+            error={formErrors.city}
             label="City"
           />
         </div>

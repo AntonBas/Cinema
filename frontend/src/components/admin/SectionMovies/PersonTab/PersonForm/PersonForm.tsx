@@ -2,11 +2,12 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { PersonResponse, PersonRequest, PersonRole } from '@/types/person';
 import { PersonRoleDisplay } from '@/types/person';
 import { Modal, Input, Button, Select } from '@/components/ui';
+import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './PersonForm.module.css';
 
 interface PersonFormProps {
     person?: PersonResponse | null;
-    onSubmit: (data: PersonRequest) => void;
+    onSubmit: (data: PersonRequest) => Promise<void>;
     onCancel: () => void;
     isLoading?: boolean;
 }
@@ -65,15 +66,21 @@ export const PersonForm: React.FC<PersonFormProps> = React.memo(({
         return !nameError;
     }, [formData.name, validateName]);
 
-    const handleSubmit = useCallback((e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         setTouched({ name: true });
 
-        if (validateForm()) {
-            onSubmit({
+        if (!validateForm()) return;
+
+        try {
+            await onSubmit({
                 name: formData.name.trim(),
                 role: formData.role
             });
+        } catch (err) {
+            if (isApiErrorException(err) && err.isValidationError()) {
+                setErrors(err.getValidationErrors());
+            }
         }
     }, [formData, validateForm, onSubmit]);
 

@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Modal, Input, Button } from '@/components/ui';
+import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './GenreFormModal.module.css';
 
 interface GenreFormModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (name: string) => void;
+    onSubmit: (name: string) => Promise<void>;
     initialName?: string;
     loading?: boolean;
     isEditing?: boolean;
@@ -50,7 +51,7 @@ export const GenreFormModal: React.FC<GenreFormModalProps> = ({
         return null;
     }, []);
 
-    const handleSubmit = useCallback((e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
 
         const validationError = validateName(name);
@@ -59,7 +60,13 @@ export const GenreFormModal: React.FC<GenreFormModalProps> = ({
             return;
         }
 
-        onSubmit(name.trim());
+        try {
+            await onSubmit(name.trim());
+        } catch (err) {
+            if (isApiErrorException(err) && err.isValidationError()) {
+                setError(err.getFirstValidationError() || err.message);
+            }
+        }
     }, [name, onSubmit, validateName]);
 
     const handleChange = useCallback((value: string) => {

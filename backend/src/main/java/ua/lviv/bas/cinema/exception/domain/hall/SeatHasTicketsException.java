@@ -13,7 +13,8 @@ public class SeatHasTicketsException extends BusinessException {
     private static final long serialVersionUID = 1L;
 
     public SeatHasTicketsException(List<Long> seatIds) {
-        super("Cannot delete or reposition seats that already have booked tickets: " + seatIds,
+        super(String.format("Cannot delete or reposition %d seat(s) that already have booked tickets",
+                        seatIds.size()),
                 "SEAT_HAS_TICKETS", HttpStatus.CONFLICT,
                 "Seats blocked by existing tickets: " + seatIds);
     }

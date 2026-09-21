@@ -117,7 +117,7 @@ public class PromotionService {
 
         if (!promotion.getUserRedemptions().isEmpty()) {
             int redemptionCount = promotion.getUserRedemptions().size();
-            throw new PromotionHasRedemptionsException(id, redemptionCount);
+            throw new PromotionHasRedemptionsException(id, promotion.getTitle(), redemptionCount);
         }
 
         String promotionTitle = promotion.getTitle();

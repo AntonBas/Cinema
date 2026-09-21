@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/Input/Input';
 import { Select } from '@/components/ui/Select/Select';
 import { Button } from '@/components/ui/Button/Button';
 import { Modal } from '@/components/ui/Modal/Modal';
+import { isApiErrorException } from '@/utils/apiErrorHandler';
 import type { SessionRequest } from '@/types/session';
 import type { MovieSessionSearchResponse } from '@/types/movie';
 import type { CinemaHallListResponse } from '@/types/cinemaHall';
@@ -162,7 +163,13 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
             hallId: Number(formData.hallId)
         };
 
-        await onSave(data);
+        try {
+            await onSave(data);
+        } catch (err) {
+            if (isApiErrorException(err) && err.isValidationError()) {
+                setErrors(err.getValidationErrors());
+            }
+        }
     }, [validateForm, formData, onSave]);
 
     const hallOptions = useMemo(() => [

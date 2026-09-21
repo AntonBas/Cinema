@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import type { CinemaHallRequest } from '@/types/cinemaHall';
+import { isApiErrorException } from '@/utils/apiErrorHandler';
 import { BaseHallModal } from './BaseHallModal';
 
 interface CreateHallModalProps {
@@ -14,11 +15,18 @@ export const CreateHallModal: React.FC<CreateHallModalProps> = ({
     loading = false
 }) => {
     const [formData, setFormData] = useState<CinemaHallRequest>({ name: '' });
+    const [nameError, setNameError] = useState<string | undefined>(undefined);
 
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         if (formData.name.trim().length < 2 || loading) return;
-        await onCreate(formData);
+        try {
+            await onCreate(formData);
+        } catch (err) {
+            if (isApiErrorException(err) && err.isValidationError()) {
+                setNameError(err.getValidationErrors().name);
+            }
+        }
     }, [formData, loading, onCreate]);
 
     const updateField = useCallback(<K extends keyof CinemaHallRequest>(
@@ -26,6 +34,7 @@ export const CreateHallModal: React.FC<CreateHallModalProps> = ({
         value: CinemaHallRequest[K]
     ) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+        setNameError(undefined);
     }, []);
 
     return (
@@ -38,6 +47,7 @@ export const CreateHallModal: React.FC<CreateHallModalProps> = ({
             onFieldChange={updateField}
             submitButtonText="Create Hall"
             loading={loading}
+            nameError={nameError}
         />
     );
 };

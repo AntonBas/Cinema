@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { CinemaHallResponse, CinemaHallRequest } from '@/types/cinemaHall';
+import { isApiErrorException } from '@/utils/apiErrorHandler';
 import { BaseHallModal } from './BaseHallModal';
 
 interface EditHallModalProps {
@@ -16,6 +17,7 @@ export const EditHallModal: React.FC<EditHallModalProps> = ({
     loading = false
 }) => {
     const [formData, setFormData] = useState<CinemaHallRequest>({ name: hall.name });
+    const [nameError, setNameError] = useState<string | undefined>(undefined);
 
     useEffect(() => {
         setFormData({ name: hall.name });
@@ -24,7 +26,13 @@ export const EditHallModal: React.FC<EditHallModalProps> = ({
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         if (formData.name.trim().length < 2 || loading) return;
-        await onUpdate(hall.id, formData);
+        try {
+            await onUpdate(hall.id, formData);
+        } catch (err) {
+            if (isApiErrorException(err) && err.isValidationError()) {
+                setNameError(err.getValidationErrors().name);
+            }
+        }
     }, [formData, hall.id, loading, onUpdate]);
 
     const updateField = useCallback(<K extends keyof CinemaHallRequest>(
@@ -32,6 +40,7 @@ export const EditHallModal: React.FC<EditHallModalProps> = ({
         value: CinemaHallRequest[K]
     ) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+        setNameError(undefined);
     }, []);
 
     const hasChanges = useMemo(() => formData.name !== hall.name, [formData, hall]);
@@ -47,6 +56,7 @@ export const EditHallModal: React.FC<EditHallModalProps> = ({
             submitButtonText="Save Name"
             isSubmitDisabled={!hasChanges}
             loading={loading}
+            nameError={nameError}
         />
     );
 };

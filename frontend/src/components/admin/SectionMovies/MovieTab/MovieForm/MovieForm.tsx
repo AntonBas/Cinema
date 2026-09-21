@@ -3,6 +3,7 @@ import type { MovieAdminResponse, AgeRating, MovieCreateRequest, MovieUpdateRequ
 import type { PersonResponse } from '@/types/person';
 import { useMovies } from '@/hooks/features/movies/useMovies';
 import { useGenres } from '@/hooks/features/genres/useGenres';
+import { isApiErrorException } from '@/utils/apiErrorHandler';
 import { toBackendFormat } from '@/utils/dateUtils';
 import { resolvePosterUrl } from '@/utils/posterUrl';
 import { PersonSelect } from './PersonSelect/PersonSelect';
@@ -47,6 +48,13 @@ const AGE_RATING_OPTIONS = [
 const TITLE_MAX_LENGTH = 50;
 const DESCRIPTION_MAX_LENGTH = 1000;
 
+const BACKEND_TO_FORM_FIELD: Record<string, string> = {
+    genreIds: 'selectedGenres',
+    actorIds: 'selectedActors',
+    directorIds: 'selectedDirectors',
+    screenwriterIds: 'selectedScreenwriters',
+};
+
 export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSuccess, onCancel }) => {
     const { create, update, loading } = useMovies();
     const { genres, getAll: getAllGenres } = useGenres();
@@ -55,6 +63,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
     const [selectedDirectors, setSelectedDirectors] = useState<PersonResponse[]>([]);
     const [selectedScreenwriters, setSelectedScreenwriters] = useState<PersonResponse[]>([]);
     const [posterPreview, setPosterPreview] = useState<string>('');
+    const [errors, setErrors] = useState<Record<string, string>>({});
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [formData, setFormData] = useState<MovieFormData>({
@@ -140,19 +149,30 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
             actorIds: formData.selectedActors,
         };
 
-        const result = movie
-            ? await update(movie.id, {
-                ...baseRequest,
-                posterFile: formData.posterFile,
-                removePoster: formData.removePoster,
-            } satisfies MovieUpdateRequest)
-            : await create({
-                ...baseRequest,
-                posterFile: formData.posterFile as File,
-            } satisfies MovieCreateRequest);
+        try {
+            const result = movie
+                ? await update(movie.id, {
+                    ...baseRequest,
+                    posterFile: formData.posterFile,
+                    removePoster: formData.removePoster,
+                } satisfies MovieUpdateRequest)
+                : await create({
+                    ...baseRequest,
+                    posterFile: formData.posterFile as File,
+                } satisfies MovieCreateRequest);
 
-        if (result) {
-            onSuccess();
+            if (result) {
+                onSuccess();
+            }
+        } catch (err) {
+            if (isApiErrorException(err) && err.isValidationError()) {
+                const backendErrors = err.getValidationErrors();
+                const mappedErrors: Record<string, string> = {};
+                Object.entries(backendErrors).forEach(([field, message]) => {
+                    mappedErrors[BACKEND_TO_FORM_FIELD[field] || field] = message;
+                });
+                setErrors(mappedErrors);
+            }
         }
     }, [movie, formData, create, update, onSuccess]);
 
@@ -225,6 +245,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                         placeholder="Enter movie title"
                         maxLength={TITLE_MAX_LENGTH}
                         autoFocus={!movie}
+                        error={errors.title}
                     />
                     <div className={`${styles.charCount} ${titleRemaining < 10 ? styles.warning : ''}`}>
                         {titleRemaining} characters remaining
@@ -240,6 +261,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                         onChange={value => setFormData(prev => ({ ...prev, trailerUrl: value }))}
                         placeholder="https://www.youtube.com/watch?v=..."
                         pattern="https://.*"
+                        error={errors.trailerUrl}
                     />
                 </div>
 
@@ -252,6 +274,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                         rows={4}
                         maxLength={DESCRIPTION_MAX_LENGTH}
                         placeholder="Describe the movie plot, characters, and key elements"
+                        error={errors.description}
                     />
                     <div className={`${styles.charCount} ${descriptionRemaining < 100 ? styles.warning : ''}`}>
                         {descriptionRemaining} characters remaining
@@ -269,6 +292,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                             min="1"
                             max="300"
                             placeholder="e.g., 120"
+                            error={errors.durationMinutes}
                         />
                     </div>
                     <div className={styles.formGroup}>
@@ -278,6 +302,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                             options={AGE_RATING_OPTIONS}
                             value={formData.ageRating}
                             onChange={value => setFormData(prev => ({ ...prev, ageRating: value as AgeRating }))}
+                            error={errors.ageRating}
                         />
                     </div>
                 </div>
@@ -291,6 +316,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                             value={formatDateForInput(formData.releaseDate)}
                             onChange={value => setFormData(prev => ({ ...prev, releaseDate: value ? new Date(value) : null }))}
                             min={movie ? undefined : new Date().toISOString().split('T')[0]}
+                            error={errors.releaseDate}
                         />
                     </div>
                     <div className={styles.formGroup}>
@@ -301,6 +327,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                             value={formatDateForInput(formData.endShowingDate)}
                             onChange={value => setFormData(prev => ({ ...prev, endShowingDate: value ? new Date(value) : null }))}
                             min={formatDateForInput(formData.releaseDate) || undefined}
+                            error={errors.endShowingDate}
                         />
                     </div>
                 </div>
@@ -312,6 +339,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                         selectedIds={formData.selectedGenres}
                         onChange={handleGenreChange}
                     />
+                    {errors.selectedGenres && <div className={styles.errorText}>{errors.selectedGenres}</div>}
                 </div>
 
                 <div className={styles.formGroup}>
@@ -323,6 +351,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                         role="ACTOR"
                         placeholder="Search actors or add new..."
                     />
+                    {errors.selectedActors && <div className={styles.errorText}>{errors.selectedActors}</div>}
                 </div>
 
                 <div className={styles.formGroup}>
@@ -334,6 +363,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                         role="DIRECTOR"
                         placeholder="Search directors or add new..."
                     />
+                    {errors.selectedDirectors && <div className={styles.errorText}>{errors.selectedDirectors}</div>}
                 </div>
 
                 <div className={styles.formGroup}>
@@ -345,6 +375,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSucces
                         role="SCREENWRITER"
                         placeholder="Search screenwriters or add new..."
                     />
+                    {errors.selectedScreenwriters && <div className={styles.errorText}>{errors.selectedScreenwriters}</div>}
                 </div>
 
                 <div className={styles.actions}>

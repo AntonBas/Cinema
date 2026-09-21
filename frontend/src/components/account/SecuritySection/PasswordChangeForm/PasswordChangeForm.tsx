@@ -3,6 +3,7 @@ import { useUser } from '@/hooks/features/user/useUser';
 import { useAuth } from '@/context/AuthContext';
 import { Input, Button } from '@/components/ui';
 import type { UserPasswordUpdateRequest } from '@/types/user';
+import { isApiErrorException } from '@/utils/apiErrorHandler';
 import { validatePassword } from '@/utils/formValidation';
 import styles from './PasswordChangeForm.module.css';
 
@@ -55,9 +56,20 @@ export const PasswordChangeForm: React.FC = () => {
             passwordConfirm: formData.confirmPassword
         };
 
-        const result = await updatePassword(passwordData);
-        if (result) {
-            logout();
+        try {
+            const result = await updatePassword(passwordData);
+            if (result) {
+                logout();
+            }
+        } catch (err) {
+            if (isApiErrorException(err) && err.isValidationError()) {
+                const backendErrors = err.getValidationErrors();
+                if (backendErrors.passwordConfirm) {
+                    backendErrors.confirmPassword = backendErrors.passwordConfirm;
+                    delete backendErrors.passwordConfirm;
+                }
+                setFormErrors(backendErrors);
+            }
         }
     };
 

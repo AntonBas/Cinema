@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { CheckCircle2 } from "lucide-react";
 import { useAuthActions } from "@/hooks/features/auth/useAuthActions";
 import { Input, Button, Modal } from "@/components/ui";
+import { isApiErrorException } from "@/utils/apiErrorHandler";
 import { validatePassword } from "@/utils/formValidation";
 import styles from "./ResetPasswordForm.module.css";
 
@@ -76,8 +77,14 @@ export const ResetPasswordForm: React.FC = () => {
     e.preventDefault();
     if (!validateForm() || !token) return;
 
-    await resetPassword(token, formData.newPassword);
-    setShowSuccessModal(true);
+    try {
+      await resetPassword(token, formData.newPassword);
+      setShowSuccessModal(true);
+    } catch (err) {
+      if (isApiErrorException(err) && err.isValidationError()) {
+        setFormErrors(err.getValidationErrors());
+      }
+    }
   };
 
   return (

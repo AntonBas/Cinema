@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useUser } from '@/hooks/features/user/useUser';
 import { Input, Button, Tooltip } from '@/components/ui';
+import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './EmailChangeForm.module.css';
 
 export const EmailChangeForm: React.FC = () => {
@@ -36,8 +37,14 @@ export const EmailChangeForm: React.FC = () => {
         e.preventDefault();
         if (!validateForm()) return;
 
-        await requestEmailChange(formData.newEmail, formData.password);
-        setFormData({ newEmail: '', password: '' });
+        try {
+            await requestEmailChange(formData.newEmail, formData.password);
+            setFormData({ newEmail: '', password: '' });
+        } catch (err) {
+            if (isApiErrorException(err) && err.isValidationError()) {
+                setFormErrors(err.getValidationErrors());
+            }
+        }
     };
 
     const tooltipContent = `Important:\n• You will receive a confirmation email at your new address\n• You must click the confirmation link to complete the change\n• Your login email will be updated after confirmation`;

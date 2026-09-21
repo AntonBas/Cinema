@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuthActions } from "@/hooks/features/auth/useAuthActions";
 import { Input, Button, Modal } from "@/components/ui";
 import type { RegisterRequest } from "@/types/auth";
+import { isApiErrorException } from "@/utils/apiErrorHandler";
 import {
   validateName,
   validatePhoneNumber,
@@ -91,9 +92,15 @@ export const RegisterForm: React.FC = () => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    const result = await register(formData);
-    if (result) {
-      setShowSuccessModal(true);
+    try {
+      const result = await register(formData);
+      if (result) {
+        setShowSuccessModal(true);
+      }
+    } catch (err) {
+      if (isApiErrorException(err) && err.isValidationError()) {
+        setFormErrors(err.getValidationErrors());
+      }
     }
   };
 
@@ -144,12 +151,14 @@ export const RegisterForm: React.FC = () => {
                 value={formData.dateOfBirth}
                 onChange={(v) => handleChange("dateOfBirth", v)}
                 disabled={loading}
+                error={formErrors.dateOfBirth}
               />
               <Input
                 placeholder="Your City"
                 value={formData.city}
                 onChange={(v) => handleChange("city", v)}
                 disabled={loading}
+                error={formErrors.city}
               />
             </div>
           </div>

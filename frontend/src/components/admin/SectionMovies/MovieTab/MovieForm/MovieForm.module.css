@@ -40,6 +40,12 @@
     font-weight: 500;
 }
 
+.errorText {
+    color: var(--color-error);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+}
+
 .fileUpload {
     border: 2px dashed var(--color-border-medium);
     border-radius: var(--radius-md);

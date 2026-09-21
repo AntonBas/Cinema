@@ -13,6 +13,7 @@ interface BaseHallModalProps {
     submitButtonText: string;
     isSubmitDisabled?: boolean;
     loading?: boolean;
+    nameError?: string;
 }
 
 export const BaseHallModal: React.FC<BaseHallModalProps> = ({
@@ -24,7 +25,8 @@ export const BaseHallModal: React.FC<BaseHallModalProps> = ({
     onFieldChange,
     submitButtonText,
     isSubmitDisabled = false,
-    loading = false
+    loading = false,
+    nameError
 }) => {
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={title} size="small">
@@ -40,6 +42,7 @@ export const BaseHallModal: React.FC<BaseHallModalProps> = ({
                         minLength={2}
                         maxLength={25}
                         disabled={loading}
+                        error={nameError}
                     />
                 </div>
 

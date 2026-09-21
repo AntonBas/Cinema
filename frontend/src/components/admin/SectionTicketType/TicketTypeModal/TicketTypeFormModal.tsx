@@ -6,6 +6,7 @@ import { Select } from '@/components/ui/Select/Select';
 import { useTicketType } from '@/hooks/features/ticketType/useTicketType';
 import type { TicketTypeResponse, TicketTypeRequest, TicketTypeCategory } from '@/types/ticketType';
 import { TicketTypeCategoryDisplay } from '@/types/ticketType';
+import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './TicketTypeModal.module.css';
 
 interface TicketTypeFormModalProps {
@@ -25,6 +26,7 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
     const isEditing = !!ticketType;
 
     const [ageError, setAgeError] = useState<string | undefined>(undefined);
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
     const [formData, setFormData] = useState<TicketTypeRequest>({
         displayName: '',
@@ -38,6 +40,8 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
     });
 
     useEffect(() => {
+        setErrors({});
+        setAgeError(undefined);
         if (ticketType) {
             setFormData({
                 displayName: ticketType.displayName,
@@ -81,13 +85,19 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
         }
         setAgeError(undefined);
 
-        const result = isEditing && ticketType
-            ? await update(ticketType.id, formData)
-            : await create(formData);
+        try {
+            const result = isEditing && ticketType
+                ? await update(ticketType.id, formData)
+                : await create(formData);
 
-        if (result) {
-            onSuccess();
-            onClose();
+            if (result) {
+                onSuccess();
+                onClose();
+            }
+        } catch (err) {
+            if (isApiErrorException(err) && err.isValidationError()) {
+                setErrors(err.getValidationErrors());
+            }
         }
     };
 
@@ -108,6 +118,7 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
                             onChange={(value) => setFormData(prev => ({ ...prev, displayName: value }))}
                             placeholder="e.g., Adult, Child"
                             required
+                            error={errors.displayName}
                         />
                     </div>
                 </div>
@@ -120,6 +131,7 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
                             value={formData.category}
                             onChange={(value) => setFormData(prev => ({ ...prev, category: value as TicketTypeCategory }))}
                             placeholder="Select category"
+                            error={errors.category}
                         />
                     </div>
 
@@ -134,6 +146,7 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
                             min="0.01"
                             max="9.99"
                             required
+                            error={errors.priceMultiplier}
                         />
                     </div>
                 </div>
@@ -150,6 +163,7 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
                             }}
                             placeholder="Optional"
                             min="0"
+                            error={errors.minAge}
                         />
                     </div>
 
@@ -164,7 +178,7 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
                             }}
                             placeholder="Optional"
                             min="0"
-                            error={ageError}
+                            error={ageError || errors.maxAge}
                         />
                     </div>
                 </div>
@@ -189,6 +203,7 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
                             value={formData.documentType || ''}
                             onChange={(value) => setFormData(prev => ({ ...prev, documentType: value || undefined }))}
                             placeholder="e.g., Student ID, Military ID"
+                            error={errors.documentType}
                         />
                     </div>
                 )}

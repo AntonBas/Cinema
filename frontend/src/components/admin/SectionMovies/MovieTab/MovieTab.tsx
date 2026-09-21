@@ -13,6 +13,8 @@ import type {
 import type { PageResponse } from "@/types/pagination";
 import { useMovies } from "@/hooks/features/movies/useMovies";
 import { usePagination } from "@/hooks/common/usePagination";
+import { useNotification } from "@/context/NotificationContext";
+import { isApiErrorException } from "@/utils/apiErrorHandler";
 import { DEFAULT_PAGE_SIZE } from "@/utils/paginationUtils";
 import { MovieList } from "./MovieList/MovieList";
 import { MovieForm } from "./MovieForm/MovieForm";
@@ -55,6 +57,7 @@ export const MovieTab: React.FC = () => {
     size: DEFAULT_PAGE_SIZE,
   });
   const { loading: moviesLoading, remove } = useMovies();
+  const { showNotification } = useNotification();
   const showLoading = useDelayedLoading(moviesLoading || loadingMovie, {
     delay: 150,
     minDisplayTime: 300,
@@ -92,12 +95,15 @@ export const MovieTab: React.FC = () => {
           },
         }));
       } catch (error) {
-        console.error(`Failed to load ${tab} movies:`, error);
+        const message = isApiErrorException(error)
+          ? error.message
+          : `Failed to load ${tab.toLowerCase()} movies`;
+        showNotification(message, "error");
       } finally {
         loadingDataRef.current[tab] = false;
       }
     },
-    [],
+    [showNotification],
   );
 
   const loadTabCount = useCallback(async (tab: MovieTabType) => {
