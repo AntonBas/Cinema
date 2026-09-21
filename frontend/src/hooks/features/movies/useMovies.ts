@@ -88,34 +88,28 @@ export const useMovies = () => {
         return mutationApiRef.current.execute(
             () => movieApi.admin.create(request),
             {
-                successMessage: `Movie "${request.title}" created successfully`,
-                showErrorNotification: true
+                showErrorNotification: true,
+                suppressValidationToast: true
             }
         );
     }, []);
 
     const update = useCallback(async (id: number, request: MovieUpdateRequest) => {
-        const movie = adminMoviesApi.data?.content?.find(m => m.id === id);
-        const title = movie?.title || request.title;
         return mutationApiRef.current.execute(
             () => movieApi.admin.update(id, request),
             {
-                successMessage: `Movie "${title}" updated successfully`,
-                showErrorNotification: true
+                showErrorNotification: true,
+                suppressValidationToast: true
             }
         );
-    }, [adminMoviesApi.data]);
+    }, []);
 
     const remove = useCallback(async (id: number) => {
-        const movie = adminMoviesApi.data?.content?.find(m => m.id === id);
         return mutationApiRef.current.execute(
             () => movieApi.admin.delete(id),
-            {
-                successMessage: `Movie "${movie?.title || id}" deleted successfully`,
-                showErrorNotification: true
-            }
+            { showErrorNotification: true }
         );
-    }, [adminMoviesApi.data]);
+    }, []);
 
     return {
         adminMovies: adminMoviesApi.data?.content || [],

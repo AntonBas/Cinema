@@ -32,11 +32,6 @@ export const useTicketType = () => {
         { delay: 150, minDisplayTime: 300 }
     );
 
-    const getTicketTypeName = useCallback((id: number): string => {
-        const ticketType = ticketTypesApi.data?.content?.find(t => t.id === id);
-        return ticketType?.displayName || String(id);
-    }, [ticketTypesApi.data]);
-
     const getAll = useCallback(async (params?: TicketTypeParams) => {
         return ticketTypesApiRef.current.execute(() => ticketTypeApi.admin.getAll(params));
     }, []);
@@ -44,30 +39,24 @@ export const useTicketType = () => {
     const create = useCallback(async (request: TicketTypeRequest) => {
         return mutationApiRef.current.execute(
             () => ticketTypeApi.admin.create(request),
-            { successMessage: `Ticket type "${request.displayName}" created successfully` }
+            { suppressValidationToast: true }
         );
     }, []);
 
     const update = useCallback(async (id: number, request: TicketTypeRequest) => {
         return mutationApiRef.current.execute(
             () => ticketTypeApi.admin.update(id, request),
-            { successMessage: `Ticket type "${getTicketTypeName(id)}" updated successfully` }
+            { suppressValidationToast: true }
         );
-    }, [getTicketTypeName]);
+    }, []);
 
     const remove = useCallback(async (id: number) => {
-        return mutationApiRef.current.execute(
-            () => ticketTypeApi.admin.delete(id),
-            { successMessage: `Ticket type "${getTicketTypeName(id)}" deleted successfully` }
-        );
-    }, [getTicketTypeName]);
+        return mutationApiRef.current.execute(() => ticketTypeApi.admin.delete(id));
+    }, []);
 
     const toggleActive = useCallback(async (id: number) => {
-        return mutationApiRef.current.execute(
-            () => ticketTypeApi.admin.toggleActive(id),
-            { successMessage: `Ticket type "${getTicketTypeName(id)}" status updated successfully` }
-        );
-    }, [getTicketTypeName]);
+        return mutationApiRef.current.execute(() => ticketTypeApi.admin.toggleActive(id));
+    }, []);
 
     return {
         ticketTypes: ticketTypesApi.data?.content || [],

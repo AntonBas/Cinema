@@ -68,34 +68,29 @@ export const useSession = () => {
   const create = useCallback(async (request: SessionRequest) => {
     return mutationApiRef.current.execute(
       () => sessionApi.admin.create(request),
-      { successMessage: "Session created successfully" },
+      { suppressValidationToast: true },
     );
   }, []);
 
   const update = useCallback(async (id: number, request: SessionRequest) => {
     return mutationApiRef.current.execute(
       () => sessionApi.admin.update(id, request),
-      { successMessage: "Session updated successfully" },
+      { suppressValidationToast: true },
     );
   }, []);
 
   const cancel = useCallback(async (id: number) => {
-    return mutationApiRef.current.execute(() => sessionApi.admin.cancel(id), {
-      successMessage: "Session cancelled successfully",
-    });
+    return mutationApiRef.current.execute(() => sessionApi.admin.cancel(id));
   }, []);
 
   const reactivate = useCallback(async (id: number) => {
-    return mutationApiRef.current.execute(
-      () => sessionApi.admin.reactivate(id),
-      { successMessage: "Session reactivated successfully" },
+    return mutationApiRef.current.execute(() =>
+      sessionApi.admin.reactivate(id),
     );
   }, []);
 
   const remove = useCallback(async (id: number) => {
-    return mutationApiRef.current.execute(() => sessionApi.admin.delete(id), {
-      successMessage: "Session deleted successfully",
-    });
+    return mutationApiRef.current.execute(() => sessionApi.admin.delete(id));
   }, []);
 
   return {

@@ -15,6 +15,7 @@ interface UseApiState<T> {
 
 interface UseApiOptions<T> {
   showErrorNotification?: boolean;
+  suppressValidationToast?: boolean;
   successMessage?: string;
   onSuccess?: (data: T) => void;
   onError?: (error: Error | ApiErrorException) => void;
@@ -64,6 +65,7 @@ export const useApi = <T = unknown>() => {
 
       const {
         showErrorNotification = true,
+        suppressValidationToast = false,
         successMessage,
         onSuccess,
         onError,
@@ -124,7 +126,10 @@ export const useApi = <T = unknown>() => {
           }));
         }
 
-        if (showErrorNotification) {
+        const isFieldValidationError =
+          isApiErrorException(error) && error.isValidationError();
+
+        if (showErrorNotification && !(suppressValidationToast && isFieldValidationError)) {
           const errorMessage = getErrorMessage(error);
           showNotification(errorMessage, "error");
         }

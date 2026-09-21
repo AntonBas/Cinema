@@ -53,22 +53,19 @@ export const useCinemaHalls = () => {
     const createHall = useCallback(async (request: CinemaHallRequest) => {
         return mutationApiRef.current.execute(
             () => cinemaHallApi.create(request),
-            { successMessage: `Cinema hall "${request.name}" created successfully` }
+            { suppressValidationToast: true }
         );
     }, []);
 
     const updateHall = useCallback(async (id: number, request: CinemaHallRequest) => {
         return mutationApiRef.current.execute(
             () => cinemaHallApi.update(id, request),
-            { successMessage: `Cinema hall "${request.name}" updated successfully` }
+            { suppressValidationToast: true }
         );
     }, []);
 
     const deleteHall = useCallback(async (id: number) => {
-        return mutationApiRef.current.execute(
-            () => cinemaHallApi.delete(id),
-            { successMessage: `Cinema hall deleted successfully` }
-        );
+        return mutationApiRef.current.execute(() => cinemaHallApi.delete(id));
     }, []);
 
     return {

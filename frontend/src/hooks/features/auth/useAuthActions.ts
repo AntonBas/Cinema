@@ -35,7 +35,7 @@ export const useAuthActions = () => {
     const register = useCallback(async (userData: RegisterRequest) => {
         return authApiRef.current.execute(
             () => authApi.register(userData),
-            { successMessage: 'Registration successful' }
+            { suppressValidationToast: true }
         );
     }, []);
 
@@ -53,7 +53,7 @@ export const useAuthActions = () => {
     const resetPassword = useCallback(async (token: string, newPassword: string) => {
         return authApiRef.current.execute(
             () => authApi.resetPassword(token, newPassword),
-            { successMessage: 'Password has been reset successfully' }
+            { suppressValidationToast: true }
         );
     }, []);
 

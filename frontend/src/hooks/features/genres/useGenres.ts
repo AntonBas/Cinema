@@ -24,14 +24,6 @@ export const useGenres = () => {
     minDisplayTime: 300,
   });
 
-  const getGenreName = useCallback(
-    (id: number): string => {
-      const genre = genresApi.data?.content?.find((g) => g.id === id);
-      return genre?.name || String(id);
-    },
-    [genresApi.data],
-  );
-
   const getAll = useCallback(
     async (params?: { query?: string; page?: number; size?: number }) => {
       return genresApiRef.current.execute(() => genreApi.getAll(params));
@@ -41,28 +33,20 @@ export const useGenres = () => {
 
   const create = useCallback(async (request: GenreRequest) => {
     return mutationApiRef.current.execute(() => genreApi.create(request), {
-      successMessage: `Genre "${request.name}" created successfully`,
+      suppressValidationToast: true,
     });
   }, []);
 
-  const update = useCallback(
-    async (id: number, request: GenreRequest) => {
-      return mutationApiRef.current.execute(
-        () => genreApi.update(id, request),
-        { successMessage: `Genre "${getGenreName(id)}" updated successfully` },
-      );
-    },
-    [getGenreName],
-  );
+  const update = useCallback(async (id: number, request: GenreRequest) => {
+    return mutationApiRef.current.execute(
+      () => genreApi.update(id, request),
+      { suppressValidationToast: true },
+    );
+  }, []);
 
-  const remove = useCallback(
-    async (id: number) => {
-      return mutationApiRef.current.execute(() => genreApi.delete(id), {
-        successMessage: `Genre "${getGenreName(id)}" deleted successfully`,
-      });
-    },
-    [getGenreName],
-  );
+  const remove = useCallback(async (id: number) => {
+    return mutationApiRef.current.execute(() => genreApi.delete(id));
+  }, []);
 
   return {
     genres: genresApi.data?.content || [],

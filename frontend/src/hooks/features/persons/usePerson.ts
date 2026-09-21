@@ -25,11 +25,6 @@ export const usePerson = () => {
         { delay: 150, minDisplayTime: 300 }
     );
 
-    const getPersonName = useCallback((id: number): string => {
-        const person = personsApi.data?.content?.find(p => p.id === id);
-        return person?.name || String(id);
-    }, [personsApi.data]);
-
     const getAll = useCallback(async (params?: PersonParams) => {
         return personsApiRef.current.execute(() => personApi.admin.getAll(params));
     }, []);
@@ -37,23 +32,20 @@ export const usePerson = () => {
     const create = useCallback(async (request: PersonRequest) => {
         return mutationApiRef.current.execute(
             () => personApi.admin.create(request),
-            { successMessage: `Person "${request.name}" created successfully` }
+            { suppressValidationToast: true }
         );
     }, []);
 
     const update = useCallback(async (id: number, request: PersonRequest) => {
         return mutationApiRef.current.execute(
             () => personApi.admin.update(id, request),
-            { successMessage: `Person "${getPersonName(id)}" updated successfully` }
+            { suppressValidationToast: true }
         );
-    }, [getPersonName]);
+    }, []);
 
     const remove = useCallback(async (id: number) => {
-        return mutationApiRef.current.execute(
-            () => personApi.admin.delete(id),
-            { successMessage: `Person "${getPersonName(id)}" deleted successfully` }
-        );
-    }, [getPersonName]);
+        return mutationApiRef.current.execute(() => personApi.admin.delete(id));
+    }, []);
 
     return {
         persons: personsApi.data?.content || [],

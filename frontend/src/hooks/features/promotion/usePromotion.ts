@@ -72,23 +72,20 @@ export const usePromotion = () => {
     const create = useCallback(async (request: PromotionRequest) => {
         return mutationApiRef.current.execute(
             () => promotionApi.admin.create(request),
-            { successMessage: `Promotion "${request.title}" created successfully` }
+            { suppressValidationToast: true }
         );
     }, []);
 
     const update = useCallback(async (id: number, request: PromotionRequest) => {
         return mutationApiRef.current.execute(
             () => promotionApi.admin.update(id, request),
-            { successMessage: `Promotion "${getPromotionTitle(id)}" updated successfully` }
+            { suppressValidationToast: true }
         );
-    }, [getPromotionTitle]);
+    }, []);
 
     const remove = useCallback(async (id: number) => {
-        return mutationApiRef.current.execute(
-            () => promotionApi.admin.delete(id),
-            { successMessage: `Promotion "${getPromotionTitle(id)}" deleted successfully` }
-        );
-    }, [getPromotionTitle]);
+        return mutationApiRef.current.execute(() => promotionApi.admin.delete(id));
+    }, []);
 
     return {
         availablePromotions: availableApi.data || [],

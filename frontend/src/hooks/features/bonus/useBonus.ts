@@ -48,19 +48,11 @@ export const useBonus = () => {
     }, []);
 
     const updateRule = useCallback(async (type: BonusTransactionType, request: BonusRulesRequest) => {
-        const ruleName = type.replace(/_/g, ' ').toLowerCase();
-        return updateRuleApiRef.current.execute(
-            () => bonusApi.updateRule(type, request),
-            { successMessage: `${ruleName} rule updated successfully` }
-        );
+        return updateRuleApiRef.current.execute(() => bonusApi.updateRule(type, request));
     }, []);
 
     const resetRule = useCallback(async (type: BonusTransactionType) => {
-        const ruleName = type.replace(/_/g, ' ').toLowerCase();
-        return resetRuleApiRef.current.execute(
-            () => bonusApi.resetRule(type),
-            { successMessage: `${ruleName} rule reset to defaults` }
-        );
+        return resetRuleApiRef.current.execute(() => bonusApi.resetRule(type));
     }, []);
 
     return {
