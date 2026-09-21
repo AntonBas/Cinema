@@ -27,7 +27,7 @@ const PasswordResetSuccessModal: React.FC<SuccessModalProps> = ({
         </p>
       </div>
       <div className={styles.modalActions}>
-        <Button variant="primary" onClick={onClose} style={{ width: "100%" }}>
+        <Button variant="primary" onClick={onClose} fullWidth>
           Continue to Login
         </Button>
       </div>

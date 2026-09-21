@@ -1,6 +1,7 @@
 import React from "react";
 import { Badge, Tooltip } from "@/components/ui";
 import type { AuditLogResponse } from "@/types/audit";
+import { EmptyState } from "@/components/admin/shared/EmptyState/EmptyState";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
 import styles from "./AuditLogsTable.module.css";
 
@@ -108,10 +109,10 @@ export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({
 }) => {
   if (logs.length === 0) {
     return (
-      <div className={tableStyles.empty}>
-        <h3>No audit logs found</h3>
-        <p>Actions will appear here once changes are made.</p>
-      </div>
+      <EmptyState
+        title="No audit logs found"
+        message="Actions will appear here once changes are made."
+      />
     );
   }
 

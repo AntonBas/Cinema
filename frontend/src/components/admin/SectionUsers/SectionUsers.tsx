@@ -6,6 +6,7 @@ import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import { usePagination } from '@/hooks/common/usePagination';
 import { Pagination } from '@/components/ui/Pagination/Pagination';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
+import { DEFAULT_PAGE_SIZE_COMPACT } from '@/utils/paginationUtils';
 import type { UserRole, VerificationStatus } from '@/types/user';
 import styles from './SectionUsers.module.css';
 
@@ -15,12 +16,12 @@ export const SectionUsers: React.FC = () => {
     const [verificationStatusFilter, setVerificationStatusFilter] = useState<VerificationStatus | ''>('');
     const [enabledFilter, setEnabledFilter] = useState<string>('');
 
-    const { params, setPage } = usePagination({ size: 10 });
+    const { params, setPage } = usePagination({ size: DEFAULT_PAGE_SIZE_COMPACT });
     const { users, pagination, loading, getUsers } = useAdminUsers();
     const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 
     const currentPage = params.page ?? 0;
-    const pageSize = params.size ?? 10;
+    const pageSize = params.size ?? DEFAULT_PAGE_SIZE_COMPACT;
 
     const loadUsers = useCallback((page: number = currentPage) => {
         getUsers({

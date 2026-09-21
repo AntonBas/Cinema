@@ -10,6 +10,7 @@ import { SearchInput } from "@/components/ui/SearchInput/SearchInput";
 import { usePerson } from "@/hooks/features/persons/usePerson";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 import { usePagination } from "@/hooks/common/usePagination";
+import { DEFAULT_PAGE_SIZE } from "@/utils/paginationUtils";
 import type {
   PersonRequest,
   PersonRole,
@@ -28,7 +29,7 @@ export const PersonTab: React.FC = () => {
   const [activeTab, setActiveTab] = useState<PersonRole | "ALL">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { params, setPage } = usePagination({ size: 12 });
+  const { params, setPage } = usePagination({ size: DEFAULT_PAGE_SIZE });
   const { persons, pagination, loading, getAll, create, update, remove } =
     usePerson();
   const showDelayedLoading = useDelayedLoading(loading, {

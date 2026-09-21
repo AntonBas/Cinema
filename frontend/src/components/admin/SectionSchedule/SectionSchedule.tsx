@@ -12,6 +12,7 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal/ConfirmModal';
 import { Pagination } from '@/components/ui/Pagination/Pagination';
 import { Button } from '@/components/ui/Button/Button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
+import { DEFAULT_PAGE_SIZE_COMPACT } from '@/utils/paginationUtils';
 import type { SessionAdminResponse, SessionRequest, CinemaSessionStatus } from '@/types/session';
 import type { CinemaHallListResponse } from '@/types/cinemaHall';
 import styles from './SectionSchedule.module.css';
@@ -26,7 +27,7 @@ interface FiltersState {
 
 export const SectionSchedule: React.FC = () => {
     const { halls, getAllHalls } = useCinemaHalls();
-    const { params, setPage } = usePagination({ size: 10 });
+    const { params, setPage } = usePagination({ size: DEFAULT_PAGE_SIZE_COMPACT });
 
     const [filters, setFilters] = useState<FiltersState>({});
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);

@@ -56,13 +56,14 @@ export const LoginForm: React.FC = () => {
             required
           />
 
-          <Button 
-            type="submit" 
-            variant="primary" 
-            size="large" 
-            loading={loading} 
-            disabled={loading} 
-            style={{ width: '100%', marginTop: '1rem' }}
+          <Button
+            type="submit"
+            variant="primary"
+            size="large"
+            loading={loading}
+            disabled={loading}
+            fullWidth
+            style={{ marginTop: '1rem' }}
           >
             {loading ? 'Logging in...' : 'Login'}
           </Button>
@@ -78,7 +79,7 @@ export const LoginForm: React.FC = () => {
           size="large"
           onClick={handleGoogleLogin}
           disabled={loading}
-          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+          fullWidth
         >
           <Chrome size={20} />
           Continue with Google

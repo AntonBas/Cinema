@@ -2,6 +2,7 @@ import { useApi } from '@/hooks/common/useApi';
 import { usePagination } from '@/hooks/common/usePagination';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import { auditApi } from '@/api/auditApi';
+import { DEFAULT_PAGE_SIZE_ADMIN } from '@/utils/paginationUtils';
 import type { AuditLogResponse } from '@/types/audit';
 import type { PageResponse } from '@/types/pagination';
 import { useCallback, useState, useRef } from 'react';
@@ -11,7 +12,7 @@ export const useAuditLogs = () => {
     const [action, setAction] = useState<string>();
     const [changedBy, setChangedBy] = useState<string>();
 
-    const { params, setPage, setSize, setSort } = usePagination({}, 20);
+    const { params, setPage, setSize, setSort } = usePagination({}, DEFAULT_PAGE_SIZE_ADMIN);
     const { execute, loading: apiLoading, data, reset } = useApi<PageResponse<AuditLogResponse>>();
 
     const executeRef = useRef(execute);

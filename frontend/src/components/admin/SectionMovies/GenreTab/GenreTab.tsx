@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button/Button";
 import { Pagination } from "@/components/ui/Pagination/Pagination";
 import { DeleteConfirmModal } from "@/components/ui/DeleteConfirmModal/DeleteConfirmModal";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { DEFAULT_PAGE_SIZE_COMPACT } from "@/utils/paginationUtils";
 import { GenreTable } from "./GenreTable/GenreTable";
 import { GenreFormModal } from "./GenreFormModal/GenreFormModal";
 import styles from "./GenreTab.module.css";
@@ -31,7 +32,9 @@ export const GenreTab: React.FC = () => {
     totalPages: 0,
   });
 
-  const { params, setPage, setSearch } = usePagination({ size: 10 });
+  const { params, setPage, setSearch } = usePagination({
+    size: DEFAULT_PAGE_SIZE_COMPACT,
+  });
   const { loading, getAll, create, update, remove } = useGenres();
   const showDelayedLoading = useDelayedLoading(loading, {
     delay: 150,

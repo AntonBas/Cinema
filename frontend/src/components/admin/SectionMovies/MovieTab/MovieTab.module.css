@@ -66,7 +66,7 @@
 }
 
 .tab:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--color-overlay-light);
     color: var(--color-text-primary);
 }
 
@@ -102,7 +102,7 @@
     gap: var(--space-2);
     padding: var(--space-4);
     color: var(--color-text-secondary);
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--color-overlay-light);
     border-radius: var(--radius-sm);
     margin-bottom: var(--space-4);
     font-size: 0.9rem;

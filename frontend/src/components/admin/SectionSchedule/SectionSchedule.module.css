@@ -52,9 +52,9 @@
     font-size: 0.9rem;
     font-weight: 500;
     padding: 0.25rem 0.75rem;
-    background: rgba(253, 95, 0, 0.1);
+    background: rgba(var(--color-primary-rgb), 0.1);
     border-radius: var(--radius-lg);
-    border: 1px solid rgba(253, 95, 0, 0.3);
+    border: 1px solid rgba(var(--color-primary-rgb), 0.3);
 }
 
 .filterDot {
@@ -121,7 +121,7 @@
 .createButton {
     background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
     border: none;
-    box-shadow: 0 4px 15px rgba(253, 95, 0, 0.4);
+    box-shadow: 0 4px 15px rgba(var(--color-primary-rgb), 0.4);
     font-weight: 600;
     transition: all var(--transition-normal);
     min-width: 180px;
@@ -129,7 +129,7 @@
 
 .createButton:hover:not(:disabled) {
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(253, 95, 0, 0.5);
+    box-shadow: 0 8px 25px rgba(var(--color-primary-rgb), 0.5);
 }
 
 .createButton:disabled {

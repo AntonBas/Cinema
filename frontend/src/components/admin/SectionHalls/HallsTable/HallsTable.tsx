@@ -3,6 +3,7 @@ import { LayoutGrid, Pencil, Trash2 } from "lucide-react";
 import type { CinemaHallListResponse } from "@/types/cinemaHall";
 import { Badge } from "@/components/ui/Badge/Badge";
 import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
+import { EmptyState } from "@/components/admin/shared/EmptyState/EmptyState";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
 import styles from "./HallsTable.module.css";
 
@@ -38,10 +39,10 @@ export const HallsTable: React.FC<HallsTableProps> = React.memo(
 
     if (!halls.length) {
       return (
-        <div className={tableStyles.empty}>
-          <h3>No Cinema Halls</h3>
-          <p>Create your first cinema hall to get started</p>
-        </div>
+        <EmptyState
+          title="No Cinema Halls"
+          message="Create your first cinema hall to get started"
+        />
       );
     }
 

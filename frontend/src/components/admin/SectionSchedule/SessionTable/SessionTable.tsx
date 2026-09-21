@@ -3,6 +3,7 @@ import { Pencil, Ban, RotateCcw, Trash2 } from "lucide-react";
 import type { SessionAdminResponse } from "@/types/session";
 import { Badge } from "@/components/ui";
 import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
+import { EmptyState } from "@/components/admin/shared/EmptyState/EmptyState";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
 import styles from "./SessionTable.module.css";
 
@@ -74,10 +75,10 @@ export const SessionTable: React.FC<SessionTableProps> = ({
 }) => {
   if (!sessions.length) {
     return (
-      <div className={tableStyles.empty}>
-        <h3>No sessions found</h3>
-        <p>There are currently no movie sessions matching your criteria.</p>
-      </div>
+      <EmptyState
+        title="No sessions found"
+        message="There are currently no movie sessions matching your criteria."
+      />
     );
   }
 

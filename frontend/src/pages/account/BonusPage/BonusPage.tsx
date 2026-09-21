@@ -5,6 +5,7 @@ import { BonusBalanceCard } from "@/components/account/BonusSection/BonusBalance
 import { BonusTransactions } from "@/components/account/BonusSection/BonusTransactions/BonusTransactions";
 import { useBonus } from "@/hooks/features/bonus/useBonus";
 import { usePagination } from "@/hooks/common/usePagination";
+import { DEFAULT_PAGE_SIZE_ADMIN } from "@/utils/paginationUtils";
 import styles from "./BonusPage.module.css";
 
 export const BonusPage: React.FC = () => {
@@ -12,7 +13,7 @@ export const BonusPage: React.FC = () => {
     "balance",
   );
 
-  const { params, setPage } = usePagination({ size: 20 });
+  const { params, setPage } = usePagination({ size: DEFAULT_PAGE_SIZE_ADMIN });
 
   const {
     balance,

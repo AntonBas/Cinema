@@ -61,7 +61,7 @@
 }
 
 .hallSection::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--color-overlay-light);
   border-radius: 3px;
 }
 

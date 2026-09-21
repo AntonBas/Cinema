@@ -24,7 +24,7 @@
 }
 
 .dateSeparator {
-  color: #a0a4b8;
+  color: var(--color-text-muted);
   font-size: var(--font-size-xs);
   margin: var(--space-1) 0;
 }

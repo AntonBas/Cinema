@@ -7,6 +7,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { usePromotion } from "@/hooks/features/promotion/usePromotion";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 import { usePagination } from "@/hooks/common/usePagination";
+import { DEFAULT_PAGE_SIZE_COMPACT } from "@/utils/paginationUtils";
 import type {
   PromotionResponse,
   PromotionListResponse,
@@ -26,7 +27,7 @@ const SectionPromotion: React.FC = () => {
     title: string;
   } | null>(null);
 
-  const { params, setPage } = usePagination({ size: 10 });
+  const { params, setPage } = usePagination({ size: DEFAULT_PAGE_SIZE_COMPACT });
   const { adminPromotions, pagination, getById, getAll, remove, loading } =
     usePromotion();
   const showDelayedLoading = useDelayedLoading(loading, {

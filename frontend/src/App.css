@@ -45,6 +45,8 @@
 
   --color-overlay-dark: rgba(0, 0, 0, 0.75);
   --color-overlay-darker: rgba(0, 0, 0, 0.85);
+  --color-overlay-light: rgba(255, 255, 255, 0.05);
+  --color-overlay-light-hover: rgba(255, 255, 255, 0.1);
 
   --color-seat-standard: #3498db;
   --color-seat-standard-border: rgba(52, 152, 219, 0.5);

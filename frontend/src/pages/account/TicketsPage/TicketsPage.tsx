@@ -8,6 +8,7 @@ import { Pagination } from "@/components/ui/Pagination/Pagination";
 import { Button } from "@/components/ui/Button/Button";
 import { SearchInput } from "@/components/ui/SearchInput/SearchInput";
 import { useTickets } from "@/hooks/features/tickets/useTickets";
+import { DEFAULT_PAGE_SIZE_COMPACT } from "@/utils/paginationUtils";
 import type { TicketResponse, TicketStatus } from "@/types/ticket";
 import styles from "./TicketsPage.module.css";
 
@@ -38,7 +39,7 @@ export const TicketsPage: React.FC = () => {
   useEffect(() => {
     getUserTickets({
       page: currentPage,
-      size: 10,
+      size: DEFAULT_PAGE_SIZE_COMPACT,
       status: statusFilter,
       movieTitle: searchQuery || undefined,
     });
@@ -61,7 +62,7 @@ export const TicketsPage: React.FC = () => {
   const handleRefundSuccess = () => {
     getUserTickets({
       page: currentPage,
-      size: 10,
+      size: DEFAULT_PAGE_SIZE_COMPACT,
       status: statusFilter,
       movieTitle: searchQuery || undefined,
     });

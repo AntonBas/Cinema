@@ -10,6 +10,7 @@ import type {
 } from "@/types/ticketType";
 import { TicketTypeCategoryDisplay } from "@/types/ticketType";
 import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
+import { EmptyState } from "@/components/admin/shared/EmptyState/EmptyState";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
 import styles from "./TicketTypeTable.module.css";
 
@@ -84,10 +85,10 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
 
   if (ticketTypes.length === 0) {
     return (
-      <div className={tableStyles.empty}>
-        <h3>No ticket types found</h3>
-        <p>Create your first ticket type to get started!</p>
-      </div>
+      <EmptyState
+        title="No ticket types found"
+        message="Create your first ticket type to get started!"
+      />
     );
   }
 

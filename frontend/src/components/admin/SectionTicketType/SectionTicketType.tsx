@@ -8,6 +8,7 @@ import TicketTypeTable from './TicketTypeTable/TicketTypeTable';
 import TicketTypeFilters from './TicketTypeFilters/TicketTypeFilters';
 import TicketTypeFormModal from './TicketTypeModal/TicketTypeFormModal';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
+import { DEFAULT_PAGE_SIZE_COMPACT } from '@/utils/paginationUtils';
 import styles from './SectionTicketType.module.css';
 import type { TicketTypeResponse, TicketTypeCategory } from '@/types/ticketType';
 
@@ -18,7 +19,7 @@ const SectionTicketType = () => {
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
     const [categoryFilter, setCategoryFilter] = useState<TicketTypeCategory | 'all'>('all');
 
-    const { params, setPage } = usePagination({ size: 10 });
+    const { params, setPage } = usePagination({ size: DEFAULT_PAGE_SIZE_COMPACT });
     const { ticketTypes: ticketTypesData, pagination, loading, getAll, remove, toggleActive } = useTicketType();
     const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
 

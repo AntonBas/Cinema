@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { XCircle } from "lucide-react";
 import { Layout } from "@/components/layout/Layout/Layout";
 import { useTickets } from "@/hooks/features/tickets/useTickets";
-import { CashierStatusBadge } from "@/components/cashier/CashierStatusBadge/CashierStatusBadge";
+import { TicketStatusBadge } from "@/components/ui/TicketStatusBadge/TicketStatusBadge";
 import { CashierTicketInfo } from "@/components/cashier/CashierTicketInfo/CashierTicketInfo";
 import { CashierValidateButton } from "@/components/cashier/CashierValidateButton/CashierValidateButton";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
@@ -88,7 +88,7 @@ export const CashierScanPage: React.FC = () => {
         <div className={styles.card}>
           <div className={styles.header}>
             <h1 className={styles.title}>Ticket #{ticket.uniqueCode}</h1>
-            <CashierStatusBadge status={ticket.status} />
+            <TicketStatusBadge status={ticket.status} size="large" />
           </div>
 
           <CashierTicketInfo ticket={ticket} />

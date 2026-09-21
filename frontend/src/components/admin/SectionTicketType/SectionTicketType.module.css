@@ -84,7 +84,7 @@
 .stats span:not(:last-child):after {
     content: '•';
     margin-left: var(--space-4);
-    color: #94a3b8;
+    color: var(--color-text-muted);
 }
 
 .paginationWrapper {
@@ -147,7 +147,7 @@
 
 .empty p {
     margin: 0;
-    color: #94a3b8;
+    color: var(--color-text-muted);
     font-size: var(--font-size-lg);
     font-weight: 500;
 }

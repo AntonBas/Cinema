@@ -16,6 +16,7 @@ export interface SelectProps {
     className?: string;
     required?: boolean;
     label?: string;
+    ariaLabel?: string;
     error?: string;
 }
 
@@ -28,6 +29,7 @@ export const Select: React.FC<SelectProps> = ({
     className = '',
     required = false,
     label,
+    ariaLabel,
     error,
 }) => {
     const id = `select-${Math.random().toString(36).substr(2, 9)}`;
@@ -59,6 +61,7 @@ export const Select: React.FC<SelectProps> = ({
                     onChange={handleChange}
                     disabled={disabled}
                     required={required}
+                    aria-label={ariaLabel}
                     aria-invalid={!!error}
                     aria-describedby={error ? `${id}-error` : undefined}
                 >

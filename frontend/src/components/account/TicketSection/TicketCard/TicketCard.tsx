@@ -1,8 +1,8 @@
 import React from "react";
 import { Button } from "@/components/ui/Button/Button";
+import { TicketStatusBadge } from "@/components/ui/TicketStatusBadge/TicketStatusBadge";
 import { Calendar, Clock, MapPin, Armchair } from "lucide-react";
 import type { TicketResponse } from "@/types/ticket";
-import { TicketStatusDisplay } from "@/types/ticket";
 import styles from "./TicketCard.module.css";
 
 interface TicketCardProps {
@@ -26,15 +26,6 @@ const formatTime = (dateString: string) => {
     hour: "2-digit",
     minute: "2-digit",
   });
-};
-
-const getStatusColor = (status: string) => {
-  const colors: Record<string, string> = {
-    ACTIVE: "#48bb78",
-    USED: "#3b82f6",
-    REFUNDED: "#ed8936",
-  };
-  return colors[status] || "#a0a8c0";
 };
 
 const getSeatInfo = (ticket: TicketResponse) => {
@@ -76,12 +67,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
               </span>
             </div>
           </div>
-          <div
-            className={styles.listStatus}
-            style={{ backgroundColor: getStatusColor(ticket.status) }}
-          >
-            {TicketStatusDisplay[ticket.status]}
-          </div>
+          <TicketStatusBadge status={ticket.status} />
         </div>
 
         <div className={styles.listDetails}>
@@ -132,12 +118,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
     <div className={styles.ticketCardGrid}>
       <div className={styles.cardHeader}>
         <div className={styles.headerLeft}>
-          <div
-            className={styles.statusBadge}
-            style={{ backgroundColor: getStatusColor(ticket.status) }}
-          >
-            {TicketStatusDisplay[ticket.status]}
-          </div>
+          <TicketStatusBadge status={ticket.status} />
           <div className={styles.ticketTypeBadge}>{ticket.ticketType}</div>
         </div>
         <div className={styles.ticketCode}>#{ticket.ticketCode}</div>

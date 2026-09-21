@@ -42,10 +42,3 @@ export const TicketStatusDisplay: Record<TicketStatus, string> = {
   REFUNDED: "Refunded",
   EXPIRED: "Expired",
 };
-
-export const TicketStatusColor: Record<TicketStatus, string> = {
-  ACTIVE: "green",
-  USED: "blue",
-  REFUNDED: "gray",
-  EXPIRED: "orange",
-};

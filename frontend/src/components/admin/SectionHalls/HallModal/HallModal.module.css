@@ -93,7 +93,7 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: var(--space-2);
-    color: #a0a4b8;
+    color: var(--color-text-muted);
     font-size: var(--font-size-xs);
 }
 

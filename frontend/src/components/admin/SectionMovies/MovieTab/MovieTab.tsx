@@ -13,6 +13,7 @@ import type {
 import type { PageResponse } from "@/types/pagination";
 import { useMovies } from "@/hooks/features/movies/useMovies";
 import { usePagination } from "@/hooks/common/usePagination";
+import { DEFAULT_PAGE_SIZE } from "@/utils/paginationUtils";
 import { MovieList } from "./MovieList/MovieList";
 import { MovieForm } from "./MovieForm/MovieForm";
 import { DeleteConfirmModal } from "@/components/ui/DeleteConfirmModal/DeleteConfirmModal";
@@ -50,7 +51,9 @@ export const MovieTab: React.FC = () => {
   });
   const [loadingMovie, setLoadingMovie] = useState(false);
 
-  const { params, setPage, setSearch } = usePagination({ size: 12 });
+  const { params, setPage, setSearch } = usePagination({
+    size: DEFAULT_PAGE_SIZE,
+  });
   const { loading: moviesLoading, remove } = useMovies();
   const showLoading = useDelayedLoading(moviesLoading || loadingMovie, {
     delay: 150,
@@ -73,7 +76,7 @@ export const MovieTab: React.FC = () => {
         const status = tab as MovieStatus;
         const requestParams = {
           page,
-          size: 12,
+          size: DEFAULT_PAGE_SIZE,
           ...(search ? { query: search } : {}),
           status,
         };

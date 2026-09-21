@@ -39,7 +39,7 @@
     border-radius: var(--radius-md);
     overflow: hidden;
     position: relative;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--color-overlay-light);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -66,7 +66,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--color-overlay-light);
     border-radius: var(--radius-md);
 }
 

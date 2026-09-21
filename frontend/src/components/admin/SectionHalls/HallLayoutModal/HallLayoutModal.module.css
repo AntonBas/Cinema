@@ -115,7 +115,7 @@
 
 .rowLabel {
   min-width: 60px;
-  color: #a0a4b8;
+  color: var(--color-text-muted);
   font-size: 12px;
   font-weight: 600;
   text-align: right;
@@ -232,7 +232,7 @@
 }
 
 .legend {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--color-overlay-light);
   border-radius: var(--radius-md);
   padding: var(--space-6) var(--space-8);
   border: 1px solid var(--color-border-light);
@@ -264,12 +264,12 @@
   font-weight: 500;
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--color-overlay-light);
   transition: all var(--transition-normal);
 }
 
 .legendItem:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--color-overlay-light-hover);
   transform: translateY(-2px);
 }
 
@@ -325,7 +325,7 @@
 .instructionText p {
   margin: 4px 0;
   font-size: 0.9rem;
-  color: #a0a4b8;
+  color: var(--color-text-muted);
 }
 
 .instructionText p strong {

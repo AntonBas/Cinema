@@ -61,7 +61,7 @@
 }
 
 .table tbody tr:hover {
-  background: rgba(253, 95, 0, 0.15);
+  background: rgba(var(--color-primary-rgb), 0.15);
 }
 
 .table tbody tr:hover td {

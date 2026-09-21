@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui";
 import type { PromotionListResponse } from "@/types/promotion";
 import { safeFormatDate } from "@/utils/dateUtils";
 import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
+import { EmptyState } from "@/components/admin/shared/EmptyState/EmptyState";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
 import styles from "./PromotionTable.module.css";
 
@@ -57,10 +58,10 @@ const PromotionTable: React.FC<PromotionTableProps> = ({
 }) => {
   if (promotions.length === 0) {
     return (
-      <div className={tableStyles.empty}>
-        <h3>No promotions found</h3>
-        <p>Create your first promotion to get started!</p>
-      </div>
+      <EmptyState
+        title="No promotions found"
+        message="Create your first promotion to get started!"
+      />
     );
   }
 

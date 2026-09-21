@@ -87,7 +87,7 @@ export const ForgotPasswordForm: React.FC = () => {
             <Button
               variant="primary"
               onClick={() => setShowSuccessModal(false)}
-              style={{ width: "100%" }}
+              fullWidth
             >
               Got It
             </Button>

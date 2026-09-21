@@ -81,7 +81,7 @@ export const ConfirmEmailChangePage: React.FC = () => {
             <Button
               variant="primary"
               onClick={() => navigate("/login")}
-              style={{ width: "100%" }}
+              fullWidth
             >
               Go to Login
             </Button>
@@ -106,7 +106,7 @@ export const ConfirmEmailChangePage: React.FC = () => {
           <Button
             variant="primary"
             onClick={() => navigate(isAuthenticated ? "/account" : "/login")}
-            style={{ width: "100%" }}
+            fullWidth
           >
             {isAuthenticated ? "Go to Account" : "Go to Login"}
           </Button>

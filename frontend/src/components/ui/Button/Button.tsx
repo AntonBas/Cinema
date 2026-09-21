@@ -19,6 +19,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   disabled?: boolean;
   icon?: React.ReactNode;
   sortIcon?: "asc" | "desc" | "none";
+  fullWidth?: boolean;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -30,6 +31,7 @@ export const Button: React.FC<ButtonProps> = ({
   disabled = false,
   icon,
   sortIcon = "none",
+  fullWidth = false,
   className = "",
   ...props
 }) => {
@@ -40,6 +42,7 @@ export const Button: React.FC<ButtonProps> = ({
     loading && styles.loading,
     disabled && styles.disabled,
     sortIcon !== "none" && styles.hasSortIcon,
+    fullWidth && styles.fullWidth,
     className,
   );
 

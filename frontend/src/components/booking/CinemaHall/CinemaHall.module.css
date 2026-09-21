@@ -84,7 +84,7 @@
 .rowNumber {
   font-size: 14px;
   font-weight: 700;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--color-overlay-light-hover);
   width: 32px;
   height: 32px;
   display: flex;

@@ -20,7 +20,7 @@
 }
 
 .menuButton {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--color-overlay-light);
     border: 1px solid var(--color-border-light);
     width: 44px;
     height: 44px;
@@ -110,7 +110,7 @@
     padding: var(--space-2) var(--space-4);
     background: rgba(255, 255, 255, 0.03);
     border-radius: var(--radius-lg);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--color-overlay-light);
     transition: all var(--transition-normal);
 }
 

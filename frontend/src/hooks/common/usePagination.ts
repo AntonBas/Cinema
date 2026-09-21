@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import type { SearchParams, SearchParamValue } from "@/types/pagination";
+import { DEFAULT_PAGE_SIZE } from "@/utils/paginationUtils";
 
 interface UsePaginationReturn {
   params: SearchParams;
@@ -17,7 +18,7 @@ interface UsePaginationReturn {
 
 export const usePagination = (
   initialParams: Partial<SearchParams> = {},
-  defaultPageSize: number = 12,
+  defaultPageSize: number = DEFAULT_PAGE_SIZE,
 ): UsePaginationReturn => {
   const [params, setParams] = useState<SearchParams>(() => ({
     page: initialParams.page ?? 0,

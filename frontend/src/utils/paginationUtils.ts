@@ -12,6 +12,7 @@ type PageSizeContext =
 export const DEFAULT_PAGE = 0;
 export const DEFAULT_PAGE_SIZE = 12;
 export const DEFAULT_PAGE_SIZE_SMALL = 8;
+export const DEFAULT_PAGE_SIZE_COMPACT = 10;
 export const DEFAULT_PAGE_SIZE_MEDIUM = 16;
 export const DEFAULT_PAGE_SIZE_LARGE = 24;
 export const DEFAULT_PAGE_SIZE_ADMIN = 20;

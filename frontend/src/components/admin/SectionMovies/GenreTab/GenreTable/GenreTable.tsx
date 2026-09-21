@@ -3,6 +3,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import type { GenreListResponse } from "@/types/genre";
 import { Badge } from "@/components/ui";
 import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
+import { EmptyState } from "@/components/admin/shared/EmptyState/EmptyState";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
 import styles from "./GenreTable.module.css";
 
@@ -19,10 +20,10 @@ export const GenreTable: React.FC<GenreTableProps> = React.memo(
   ({ genres, onEdit, onDelete }) => {
     if (genres.length === 0) {
       return (
-        <div className={tableStyles.empty}>
-          <h3>No genres found</h3>
-          <p>Create your first genre to get started!</p>
-        </div>
+        <EmptyState
+          title="No genres found"
+          message="Create your first genre to get started!"
+        />
       );
     }
 

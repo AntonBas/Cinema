@@ -31,7 +31,7 @@ const RegistrationSuccessModal: React.FC<SuccessModalProps> = ({
         <p className={styles.emailHighlight}>{email}</p>
       </div>
       <div className={styles.modalActions}>
-        <Button variant="primary" onClick={onClose} style={{ width: "100%" }}>
+        <Button variant="primary" onClick={onClose} fullWidth>
           Continue to Login
         </Button>
       </div>
@@ -199,7 +199,8 @@ export const RegisterForm: React.FC = () => {
             size="large"
             loading={loading}
             disabled={loading}
-            style={{ width: "100%", marginTop: "1rem" }}
+            fullWidth
+            style={{ marginTop: "1rem" }}
           >
             {loading ? "Creating account..." : "Sign Up"}
           </Button>
