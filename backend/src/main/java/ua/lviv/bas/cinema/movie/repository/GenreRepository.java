@@ -30,7 +30,7 @@ public interface GenreRepository extends JpaRepository<Genre, Long> {
                 GROUP BY genre_id
             ) gc ON gc.genre_id = g.id
             WHERE (:query IS NULL OR LOWER(g.name) LIKE LOWER(CONCAT('%', CAST(:query AS text), '%')))
-            ORDER BY COALESCE(gc.movie_count, 0) DESC, g.name ASC
+            ORDER BY COALESCE(gc.movie_count, 0) DESC, g.name ASC, g.id ASC
             """, countQuery = """
             SELECT COUNT(*)
             FROM genres g

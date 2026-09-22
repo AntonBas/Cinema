@@ -27,6 +27,7 @@ import ua.lviv.bas.cinema.ticket.repository.specification.TicketSpecification;
 import ua.lviv.bas.cinema.common.UniquenessValidator;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.common.FixedOrderPageable;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -64,7 +65,7 @@ public class TicketTypeService {
                                                    Pageable pageable) {
         log.info("Getting ticket types: active={}, category={}, query={}, page={}, size={}", active, category, query,
                 pageable.getPageNumber(), pageable.getPageSize());
-        var page = ticketTypeRepository.findProjectionsByFilters(active, category, query, pageable);
+        var page = ticketTypeRepository.findProjectionsByFilters(active, category, query, FixedOrderPageable.of(pageable));
         return page.map(ticketTypeMapper::toTicketTypeResponse);
     }
 

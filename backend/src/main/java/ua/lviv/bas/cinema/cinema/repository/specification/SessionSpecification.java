@@ -1,5 +1,6 @@
 package ua.lviv.bas.cinema.cinema.repository.specification;
 
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
@@ -72,11 +73,18 @@ public class SessionSpecification {
             }
 
             if (query != null) {
+                Expression<LocalDateTime> startTime = root.get("startTime");
+                Expression<LocalDateTime> activeStartTime = cb.<LocalDateTime>selectCase()
+                        .when(root.get("status").in(CinemaSessionStatus.SCHEDULED, CinemaSessionStatus.ONGOING),
+                                startTime)
+                        .otherwise(cb.nullLiteral(LocalDateTime.class));
                 query.orderBy(
-                        cb.asc(cb.selectCase().when(cb.equal(root.get("status"), CinemaSessionStatus.SCHEDULED), 1)
-                                .when(cb.equal(root.get("status"), CinemaSessionStatus.ONGOING), 2)
+                        cb.asc(cb.selectCase().when(cb.equal(root.get("status"), CinemaSessionStatus.ONGOING), 1)
+                                .when(cb.equal(root.get("status"), CinemaSessionStatus.SCHEDULED), 2)
                                 .when(cb.equal(root.get("status"), CinemaSessionStatus.CANCELLED), 3).otherwise(4)),
-                        cb.desc(root.get("startTime")));
+                        cb.asc(activeStartTime),
+                        cb.desc(startTime),
+                        cb.asc(root.get("id")));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));

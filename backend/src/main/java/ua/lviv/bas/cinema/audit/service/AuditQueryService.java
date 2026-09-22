@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
 import ua.lviv.bas.cinema.audit.domain.AuditLog;
 import ua.lviv.bas.cinema.audit.repository.AuditLogRepository;
+import ua.lviv.bas.cinema.common.FixedOrderPageable;
 
 import java.util.List;
 import java.util.Map;
@@ -22,7 +23,7 @@ public class AuditQueryService {
     private final AuditLogRepository auditLogRepository;
 
     public Page<AuditLog> findByFilters(String entityType, AuditAction action, String changedBy, Pageable pageable) {
-        Page<AuditLog> page = auditLogRepository.findByFilters(entityType, action, changedBy, pageable);
+        Page<AuditLog> page = auditLogRepository.findByFilters(entityType, action, changedBy, FixedOrderPageable.of(pageable));
 
         if (page.isEmpty()) {
             return page;

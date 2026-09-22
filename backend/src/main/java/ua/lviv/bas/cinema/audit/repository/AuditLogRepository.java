@@ -22,12 +22,13 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     @Query("SELECT a FROM AuditLog a WHERE " +
             "(:entityType IS NULL OR a.entityType = :entityType) AND " +
             "(:action IS NULL OR a.action = :action) AND " +
-            "(:changedBy IS NULL OR a.changedBy = :changedBy)")
+            "(:changedBy IS NULL OR a.changedBy = :changedBy) " +
+            "ORDER BY a.changedAt DESC, a.id DESC")
     Page<AuditLog> findByFilters(@Param("entityType") String entityType,
                                  @Param("action") AuditAction action,
                                  @Param("changedBy") String changedBy,
                                  Pageable pageable);
 
-    @Query("SELECT a FROM AuditLog a LEFT JOIN FETCH a.details WHERE a.id IN :ids ORDER BY a.changedAt DESC")
+    @Query("SELECT a FROM AuditLog a LEFT JOIN FETCH a.details WHERE a.id IN :ids ORDER BY a.changedAt DESC, a.id DESC")
     List<AuditLog> findByIdsWithDetails(@Param("ids") List<Long> ids);
 }

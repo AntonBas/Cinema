@@ -30,6 +30,7 @@ import ua.lviv.bas.cinema.promotion.repository.UserPromotionRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.common.FixedOrderPageable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -68,7 +69,7 @@ public class PromotionService {
     public Page<PromotionListResponse> getPromotions(String query, Pageable pageable) {
         log.info("Getting promotions: query='{}', page={}, size={}", query, pageable.getPageNumber(),
                 pageable.getPageSize());
-        return promotionRepository.findAllAdminProjections(query, pageable)
+        return promotionRepository.findAllAdminProjections(query, FixedOrderPageable.of(pageable))
                 .map(promotionMapper::toPromotionListResponse);
     }
 

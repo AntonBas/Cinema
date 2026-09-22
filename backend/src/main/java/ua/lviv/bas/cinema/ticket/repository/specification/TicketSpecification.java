@@ -4,6 +4,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Order;
 import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
@@ -26,13 +27,19 @@ public class TicketSpecification {
 
         Specification<Ticket> sortSpec = (root, query, cb) -> {
             if (query != null) {
-                List<Order> orders = new ArrayList<>();
-                orders.add(cb.asc(cb.selectCase()
-                        .when(cb.equal(root.get("status"), TicketStatus.ACTIVE), 0)
-                        .otherwise(1)));
+                var isActive = cb.equal(root.get("status"), TicketStatus.ACTIVE);
                 var booking = root.join("booking", JoinType.LEFT);
                 var session = booking.join("session", JoinType.LEFT);
-                orders.add(cb.asc(session.get("startTime")));
+                Expression<LocalDateTime> startTime = session.get("startTime");
+                Expression<LocalDateTime> activeStartTime = cb.<LocalDateTime>selectCase()
+                        .when(isActive, startTime)
+                        .otherwise(cb.nullLiteral(LocalDateTime.class));
+
+                List<Order> orders = new ArrayList<>();
+                orders.add(cb.asc(cb.selectCase().when(isActive, 0).otherwise(1)));
+                orders.add(cb.asc(activeStartTime));
+                orders.add(cb.desc(startTime));
+                orders.add(cb.asc(root.get("id")));
                 query.orderBy(orders);
             }
             return cb.conjunction();

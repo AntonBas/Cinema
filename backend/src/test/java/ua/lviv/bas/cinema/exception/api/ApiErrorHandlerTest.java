@@ -3,6 +3,8 @@ package ua.lviv.bas.cinema.exception.api;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.core.PropertyReferenceException;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -10,6 +12,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import ua.lviv.bas.cinema.exception.domain.auth.ResendCooldownException;
+
+import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -35,6 +39,11 @@ class ApiErrorHandlerTest {
         @GetMapping("/test/resend-cooldown")
         void triggerResendCooldown() {
             throw new ResendCooldownException(42);
+        }
+
+        @GetMapping("/test/invalid-sort")
+        void triggerInvalidSort() {
+            throw new PropertyReferenceException("unknownProperty", TypeInformation.of(Object.class), List.of());
         }
     }
 
@@ -82,5 +91,12 @@ class ApiErrorHandlerTest {
                 .andExpect(status().isTooManyRequests())
                 .andExpect(header().string("Retry-After", "42"))
                 .andExpect(jsonPath("$.message").value("Please wait before requesting another verification email"));
+    }
+
+    @Test
+    void handlePropertyReferenceShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get("/test/invalid-sort"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid sort property: unknownProperty"));
     }
 }

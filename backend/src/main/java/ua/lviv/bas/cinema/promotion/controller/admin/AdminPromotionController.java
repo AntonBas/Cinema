@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.promotion.controller.admin;
 
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -73,7 +72,7 @@ public class AdminPromotionController {
             @ApiResponse(responseCode = "403", description = "Access denied")
     })
     public PageResponse<PromotionListResponse> getPromotions(@RequestParam(required = false) String query,
-                                                             @PageableDefault(sort = "createdDate", direction = Sort.Direction.DESC) Pageable pageable) {
+                                                             @PageableDefault Pageable pageable) {
         log.info("GET /api/admin/promotions - query: '{}'", query);
         return PageResponse.from(promotionService.getPromotions(query, pageable));
     }

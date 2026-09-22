@@ -56,7 +56,7 @@ public class MovieController {
             @ApiResponse(responseCode = "200", description = "Movies retrieved successfully")
     })
     public ResponseEntity<PageResponse<MovieCardResponse>> getCurrentlyShowingMovies(
-            @PageableDefault(size = 12, sort = "releaseDate", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 12, sort = {"releaseDate", "id"}, direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("GET /api/movies/currently-showing - Getting currently showing movies");
         var result = movieService.getMovies(null, MovieStatus.CURRENT, pageable);
         return ResponseEntity.ok().body(PageResponse.from(result));
@@ -69,7 +69,7 @@ public class MovieController {
             @ApiResponse(responseCode = "200", description = "Movies retrieved successfully")
     })
     public ResponseEntity<PageResponse<MovieCardResponse>> getUpcomingMovies(
-            @PageableDefault(size = 12, sort = "releaseDate", direction = Sort.Direction.ASC) Pageable pageable) {
+            @PageableDefault(size = 12, sort = {"releaseDate", "id"}, direction = Sort.Direction.ASC) Pageable pageable) {
         log.info("GET /api/movies/upcoming - Getting upcoming movies");
         var result = movieService.getMovies(null, MovieStatus.UPCOMING, pageable);
         return ResponseEntity.ok().body(PageResponse.from(result));
@@ -83,7 +83,7 @@ public class MovieController {
     })
     public ResponseEntity<List<MovieCardResponse>> getCurrentMoviesForHome() {
         log.info("GET /api/movies/current/home - Getting current movies for home page");
-        var pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.DESC, "releaseDate"));
+        var pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.DESC, "releaseDate", "id"));
         var movies = movieService.getCurrentMovies(pageable);
         return ResponseEntity.ok().body(movies);
     }
@@ -96,7 +96,7 @@ public class MovieController {
     })
     public ResponseEntity<List<MovieCardResponse>> getUpcomingMoviesForHome() {
         log.info("GET /api/movies/upcoming/home - Getting upcoming movies for home page");
-        var pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.ASC, "releaseDate"));
+        var pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.ASC, "releaseDate", "id"));
         var movies = movieService.getUpcomingMovies(pageable);
         return ResponseEntity.ok().body(movies);
     }
@@ -109,7 +109,7 @@ public class MovieController {
     })
     public ResponseEntity<List<MovieCardResponse>> getLeavingSoonMoviesForHome() {
         log.info("GET /api/movies/leaving-soon/home - Getting leaving soon movies for home page");
-        var pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.ASC, "endShowingDate"));
+        var pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.ASC, "endShowingDate", "id"));
         var movies = movieService.getLeavingSoonMovies(pageable);
         return ResponseEntity.ok().body(movies);
     }

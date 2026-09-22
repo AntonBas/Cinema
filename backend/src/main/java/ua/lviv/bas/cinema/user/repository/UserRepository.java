@@ -72,6 +72,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
               AND (:role IS NULL OR u.user_role = CAST(:role AS text))
               AND (:verificationStatus IS NULL OR u.verification_status = CAST(:verificationStatus AS text))
               AND (:enabled IS NULL OR u.enabled = :enabled)
+            ORDER BY u.id DESC
             """, countQuery = """
             SELECT COUNT(*)
             FROM users u

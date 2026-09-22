@@ -8,7 +8,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -18,6 +20,8 @@ import ua.lviv.bas.cinema.booking.repository.BookingRepository;
 import ua.lviv.bas.cinema.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.cinema.domain.Seat;
 import ua.lviv.bas.cinema.cinema.domain.Session;
+import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
+import ua.lviv.bas.cinema.cinema.dto.session.response.SessionAdminResponse;
 import ua.lviv.bas.cinema.cinema.repository.CinemaHallRepository;
 import ua.lviv.bas.cinema.cinema.repository.SeatRepository;
 import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
@@ -32,6 +36,7 @@ import ua.lviv.bas.cinema.user.domain.UserRole;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @ActiveProfiles("ci")
@@ -82,8 +87,61 @@ class SessionServiceIntegrationTest {
         assertThat(adminEntry.totalRevenue()).isEqualByComparingTo(new BigDecimal("250.00"));
     }
 
+    @Test
+    void getSessionsShouldListActiveSessionsSoonestFirstThenPastSessionsNewestFirst() {
+        var movie = movieRepository.save(buildMovie("ZZTEST Order Movie", "zztest-order-movie"));
+        var hall = cinemaHallRepository.save(CinemaHall.builder().name("ZZTEST Order Hall").build());
+        var now = LocalDateTime.now().withNano(0);
+
+        var laterScheduled = saveSession(movie, hall, now.plusDays(3), "100.00", CinemaSessionStatus.SCHEDULED);
+        var soonerScheduled = saveSession(movie, hall, now.plusDays(1), "100.00", CinemaSessionStatus.SCHEDULED);
+        var cancelled = saveSession(movie, hall, now.plusDays(2), "100.00", CinemaSessionStatus.CANCELLED);
+        var olderCompleted = saveSession(movie, hall, now.minusDays(2), "100.00", CinemaSessionStatus.COMPLETED);
+        var newerCompleted = saveSession(movie, hall, now.minusDays(1), "100.00", CinemaSessionStatus.COMPLETED);
+
+        var page = sessionService.getSessions(hall.getId(), null, null, null, null, PageRequest.of(0, 10));
+
+        assertThat(page.getContent()).extracting(SessionAdminResponse::id).containsExactly(soonerScheduled.getId(),
+                laterScheduled.getId(), cancelled.getId(), newerCompleted.getId(), olderCompleted.getId());
+    }
+
+    @Test
+    void getSessionsShouldApplyRequestedSortWithStartTimeAsTiebreaker() {
+        var movie = movieRepository.save(buildMovie("ZZTEST Sort Movie", "zztest-sort-movie"));
+        var hall = cinemaHallRepository.save(CinemaHall.builder().name("ZZTEST Sort Hall").build());
+        var now = LocalDateTime.now().withNano(0);
+
+        var cheapLater = saveSession(movie, hall, now.plusDays(2), "100.00", CinemaSessionStatus.SCHEDULED);
+        var expensive = saveSession(movie, hall, now.plusDays(3), "300.00", CinemaSessionStatus.SCHEDULED);
+        var cheapSooner = saveSession(movie, hall, now.plusDays(1), "100.00", CinemaSessionStatus.SCHEDULED);
+
+        var page = sessionService.getSessions(hall.getId(), null, null, null, null,
+                PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "basePrice")));
+
+        assertThat(page.getContent()).extracting(SessionAdminResponse::id).containsExactly(expensive.getId(),
+                cheapSooner.getId(), cheapLater.getId());
+    }
+
+    @Test
+    void getSessionsShouldRejectUnknownSortProperty() {
+        var pageable = PageRequest.of(0, 10, Sort.by("unknownProperty"));
+
+        assertThatThrownBy(() -> sessionService.getSessions(null, null, null, null, null, pageable))
+                .isInstanceOf(PropertyReferenceException.class);
+    }
+
+    private Session saveSession(Movie movie, CinemaHall hall, LocalDateTime startTime, String basePrice,
+                                CinemaSessionStatus status) {
+        return sessionRepository.save(Session.builder().movie(movie).hall(hall).startTime(startTime)
+                .basePrice(new BigDecimal(basePrice)).status(status).build());
+    }
+
     private Movie buildMovie() {
-        return Movie.builder().title("ZZTEST Session Movie").slug("zztest-session-movie")
+        return buildMovie("ZZTEST Session Movie", "zztest-session-movie");
+    }
+
+    private Movie buildMovie(String title, String slug) {
+        return Movie.builder().title(title).slug(slug)
                 .trailerUrl("https://example.com/trailer").description("Test movie for session regression test")
                 .durationMinutes(120).releaseDate(LocalDate.now().minusDays(1))
                 .endShowingDate(LocalDate.now().plusMonths(1)).status(MovieStatus.CURRENT)

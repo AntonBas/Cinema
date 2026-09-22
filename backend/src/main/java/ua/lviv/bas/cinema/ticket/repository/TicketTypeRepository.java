@@ -46,7 +46,7 @@ public interface TicketTypeRepository extends JpaRepository<TicketType, Long> {
 			    WHEN 'SENIOR' THEN 6
 			    WHEN 'SPECIAL' THEN 7
 			    ELSE 8
-			END, t.displayName ASC
+			END, t.displayName ASC, t.id ASC
 			""")
 	Page<TicketTypeProjection> findProjectionsByFilters(@Param("active") Boolean active,
 			@Param("category") TicketTypeCategory category, @Param("query") String query, Pageable pageable);

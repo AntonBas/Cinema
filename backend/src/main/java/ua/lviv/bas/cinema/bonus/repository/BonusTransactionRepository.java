@@ -21,7 +21,7 @@ public interface BonusTransactionRepository extends JpaRepository<BonusTransacti
             FROM bonus_transactions bt
             JOIN bonus_cards bc ON bc.id = bt.bonus_card_id
             WHERE bc.user_id = :userId
-            ORDER BY bt.created_date DESC
+            ORDER BY bt.created_date DESC, bt.id DESC
             """, countQuery = """
             SELECT COUNT(*)
             FROM bonus_transactions bt

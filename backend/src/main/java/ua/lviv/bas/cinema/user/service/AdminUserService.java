@@ -27,6 +27,7 @@ import ua.lviv.bas.cinema.user.repository.UserRepository;
 import ua.lviv.bas.cinema.user.repository.projection.AdminUserProjection;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.common.FixedOrderPageable;
 
 @Slf4j
 @Service
@@ -104,7 +105,7 @@ public class AdminUserService {
         String verificationStatusStr = verificationStatus != null ? verificationStatus.name() : null;
 
         Page<AdminUserProjection> page = userRepository.findProjectionsByFilters(query, roleStr, verificationStatusStr,
-                enabled, pageable);
+                enabled, FixedOrderPageable.of(pageable));
 
         return page.map(userMapper::toAdminUserListResponse);
     }

@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -192,6 +193,16 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
         ApiError apiError = new ApiError(BAD_REQUEST, "Invalid request data", ex);
 
         log.warn("Illegal argument: {}", ex.getMessage());
+
+        return buildResponseEntity(apiError, request);
+    }
+
+    @ExceptionHandler(PropertyReferenceException.class)
+    protected ResponseEntity<Object> handlePropertyReference(@Nonnull PropertyReferenceException ex,
+                                                             @Nonnull WebRequest request) {
+        ApiError apiError = new ApiError(BAD_REQUEST, "Invalid sort property: " + ex.getPropertyName(), ex);
+
+        log.warn("Invalid sort property: {}", ex.getMessage());
 
         return buildResponseEntity(apiError, request);
     }

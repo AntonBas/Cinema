@@ -20,6 +20,7 @@ import ua.lviv.bas.cinema.movie.mapper.GenreMapper;
 import ua.lviv.bas.cinema.movie.repository.GenreRepository;
 import ua.lviv.bas.cinema.movie.repository.MovieRepository;
 import ua.lviv.bas.cinema.common.UniquenessValidator;
+import ua.lviv.bas.cinema.common.FixedOrderPageable;
 
 @Slf4j
 @Service
@@ -48,7 +49,7 @@ public class GenreService {
     public Page<GenreListResponse> getGenres(String query, Pageable pageable) {
         log.info("Getting genres: query='{}', page={}, size={}", query, pageable.getPageNumber(),
                 pageable.getPageSize());
-        return genreRepository.findGenresByFilters(query, pageable).map(genreMapper::toGenreListResponse);
+        return genreRepository.findGenresByFilters(query, FixedOrderPageable.of(pageable)).map(genreMapper::toGenreListResponse);
     }
 
     @CacheEvict(value = "genres", allEntries = true)

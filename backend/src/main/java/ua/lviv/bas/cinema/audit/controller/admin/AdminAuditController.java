@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -43,7 +42,7 @@ public class AdminAuditController {
             @Parameter(description = "Filter by entity type (e.g., User, BonusRules)") @RequestParam(required = false) String entityType,
             @Parameter(description = "Filter by audit action (CREATED, UPDATED, DELETED, etc.)") @RequestParam(required = false) AuditAction action,
             @Parameter(description = "Filter by user who performed the action") @RequestParam(required = false) String changedBy,
-            @PageableDefault(size = 20, sort = "changedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 20) Pageable pageable) {
 
         Page<AuditLog> auditLogs = auditQueryService.findByFilters(entityType, action, changedBy, pageable);
         Page<AuditLogResponse> responsePage = auditLogs.map(auditLogMapper::toResponse);

@@ -39,7 +39,7 @@ public interface PersonRepository extends JpaRepository<Person, Long> {
 			) pc ON pc.person_id = p.id
 			WHERE (:query IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', CAST(:query AS text), '%')))
 			    AND (:role IS NULL OR p.role = CAST(:role AS text))
-			ORDER BY COALESCE(pc.movie_count, 0) DESC, p.name ASC
+			ORDER BY COALESCE(pc.movie_count, 0) DESC, p.name ASC, p.id ASC
 			""", countQuery = """
 			SELECT COUNT(*)
 			FROM persons p

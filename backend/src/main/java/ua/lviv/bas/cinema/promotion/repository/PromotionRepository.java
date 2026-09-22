@@ -45,6 +45,7 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
             WHERE (:query IS NULL OR
                    LOWER(p.title) LIKE LOWER(CONCAT('%', CAST(:query AS text), '%')) OR
                    LOWER(p.description) LIKE LOWER(CONCAT('%', CAST(:query AS text), '%')))
+            ORDER BY p.createdDate DESC, p.id DESC
             """)
     Page<PromotionListProjection> findAllAdminProjections(@Param("query") String query, Pageable pageable);
 
@@ -59,7 +60,7 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
             FROM Promotion p
             WHERE (p.startDate IS NULL OR p.startDate <= :today)
               AND (p.endDate IS NULL OR p.endDate >= :today)
-            ORDER BY p.createdDate DESC
+            ORDER BY p.createdDate DESC, p.id DESC
             """)
     List<PromotionResponseProjection> findAllActivePromotions(@Param("today") LocalDate today);
 }

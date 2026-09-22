@@ -20,6 +20,7 @@ import ua.lviv.bas.cinema.bonus.mapper.BonusMapper;
 import ua.lviv.bas.cinema.bonus.repository.BonusCardRepository;
 import ua.lviv.bas.cinema.bonus.repository.BonusRulesRepository;
 import ua.lviv.bas.cinema.bonus.repository.BonusTransactionRepository;
+import ua.lviv.bas.cinema.common.FixedOrderPageable;
 
 import java.math.BigDecimal;
 
@@ -45,7 +46,7 @@ public class BonusQueryService {
             key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
     @Transactional(readOnly = true)
     public Page<BonusTransactionResponse> getTransactions(Long userId, Pageable pageable) {
-        var page = bonusTransactionRepository.findProjectionsByUserId(userId, pageable);
+        var page = bonusTransactionRepository.findProjectionsByUserId(userId, FixedOrderPageable.of(pageable));
         return page.map(bonusMapper::toResponse);
     }
 

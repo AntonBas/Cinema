@@ -22,6 +22,8 @@ interface SessionFiltersProps {
     onHallChange: (hallId: number | undefined) => void;
     onMovieTitleChange: (movieTitle: string | undefined) => void;
     onStatusChange: (status: CinemaSessionStatus | undefined) => void;
+    sort?: string;
+    onSortChange: (sort: string) => void;
     onClearFilters: () => void;
     halls?: CinemaHallListResponse[];
 }
@@ -34,6 +36,17 @@ const STATUS_OPTIONS: SelectOption[] = [
     { value: 'CANCELLED', label: 'Cancelled' }
 ];
 
+const SORT_OPTIONS: SelectOption[] = [
+    { value: '', label: 'Upcoming first' },
+    { value: 'startTime,asc', label: 'Date: earliest first' },
+    { value: 'startTime,desc', label: 'Date: latest first' },
+    { value: 'movie.title,asc', label: 'Movie: A–Z' },
+    { value: 'movie.title,desc', label: 'Movie: Z–A' },
+    { value: 'hall.name,asc', label: 'Hall: A–Z' },
+    { value: 'basePrice,asc', label: 'Price: low to high' },
+    { value: 'basePrice,desc', label: 'Price: high to low' }
+];
+
 const DEBOUNCE_DELAY = 300;
 
 export const SessionFilters: React.FC<SessionFiltersProps> = ({
@@ -43,6 +56,8 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
     onHallChange,
     onMovieTitleChange,
     onStatusChange,
+    sort,
+    onSortChange,
     onClearFilters,
     halls = [],
 }) => {
@@ -180,6 +195,15 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
                         value={filters.status || ''}
                         onChange={(value) => onStatusChange(value as CinemaSessionStatus || undefined)}
                         options={STATUS_OPTIONS}
+                    />
+                </div>
+
+                <div className={styles.filterGroup}>
+                    <label htmlFor="sort" className={styles.label}>Sort by</label>
+                    <Select
+                        value={sort || ''}
+                        onChange={(value) => onSortChange(String(value))}
+                        options={SORT_OPTIONS}
                     />
                 </div>
             </div>

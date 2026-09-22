@@ -6,7 +6,9 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,7 +98,7 @@ public class SessionService {
                                                   LocalDate dateFrom, LocalDate dateTo, Pageable pageable) {
 
         Specification<Session> spec = sessionSpecification.forAdmin(hallId, movieTitle, status, dateFrom, dateTo);
-        var page = sessionRepository.findAll(spec, pageable);
+        var page = sessionRepository.findAll(spec, withStableOrder(pageable));
 
         var sessionIds = page.getContent().stream().map(Session::getId).toList();
         var projections = sessionRepository.findAdminProjectionsByIds(sessionIds).stream()
@@ -216,6 +218,14 @@ public class SessionService {
 
         auditService.logChange("Session", sessionId, "Session #" + sessionId, AuditAction.REACTIVATED, oldDetails,
                 newDetails);
+    }
+
+    private Pageable withStableOrder(Pageable pageable) {
+        if (pageable.getSort().isUnsorted()) {
+            return pageable;
+        }
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                pageable.getSort().and(Sort.by("startTime", "id")));
     }
 
     private void validateStartTime(LocalDateTime startTime) {

@@ -55,6 +55,7 @@ export const usePagination = (
     setParams((prev) => ({
       ...prev,
       sort: sort || undefined,
+      page: 0,
     }));
   }, []);
 

@@ -27,7 +27,7 @@ interface FiltersState {
 
 export const SectionSchedule: React.FC = () => {
     const { halls, getAllHalls } = useCinemaHalls();
-    const { params, setPage } = usePagination({ size: DEFAULT_PAGE_SIZE_COMPACT });
+    const { params, setPage, setSort } = usePagination({ size: DEFAULT_PAGE_SIZE_COMPACT });
 
     const [filters, setFilters] = useState<FiltersState>({});
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -54,13 +54,16 @@ export const SectionSchedule: React.FC = () => {
         getAllHalls();
     }, [getAllHalls]);
 
+    const reloadSessions = useCallback(() => getAdminSessions({
+        page: params.page ?? 0,
+        size: params.size,
+        sort: params.sort,
+        ...filters,
+    }), [params.page, params.size, params.sort, filters, getAdminSessions]);
+
     useEffect(() => {
-        getAdminSessions({
-            page: params.page ?? 0,
-            size: params.size,
-            ...filters,
-        });
-    }, [params.page, params.size, filters, getAdminSessions]);
+        reloadSessions();
+    }, [reloadSessions]);
 
     const handleFilterChange = useCallback(<K extends keyof FiltersState>(key: K, value: FiltersState[K]) => {
         setFilters(prev => ({ ...prev, [key]: value }));
@@ -75,35 +78,35 @@ export const SectionSchedule: React.FC = () => {
     const handleCreateSession = useCallback(async (data: SessionRequest) => {
         await create(data);
         setIsCreateModalOpen(false);
-        getAdminSessions({ page: params.page ?? 0, size: params.size, ...filters });
-    }, [create, params.page, params.size, filters, getAdminSessions]);
+        reloadSessions();
+    }, [create, reloadSessions]);
 
     const handleUpdateSession = useCallback(async (id: number, data: SessionRequest) => {
         await update(id, data);
         setEditingSession(null);
-        getAdminSessions({ page: params.page ?? 0, size: params.size, ...filters });
-    }, [update, params.page, params.size, filters, getAdminSessions]);
+        reloadSessions();
+    }, [update, reloadSessions]);
 
     const handleDeleteSession = useCallback(async () => {
         if (!deletingSession) return;
         await remove(deletingSession.id);
         setDeletingSession(null);
-        getAdminSessions({ page: params.page ?? 0, size: params.size, ...filters });
-    }, [deletingSession, remove, params.page, params.size, filters, getAdminSessions]);
+        reloadSessions();
+    }, [deletingSession, remove, reloadSessions]);
 
     const handleCancelSession = useCallback(async () => {
         if (!cancellingSession) return;
         await cancel(cancellingSession.id);
         setCancellingSession(null);
-        getAdminSessions({ page: params.page ?? 0, size: params.size, ...filters });
-    }, [cancellingSession, cancel, params.page, params.size, filters, getAdminSessions]);
+        reloadSessions();
+    }, [cancellingSession, cancel, reloadSessions]);
 
     const handleReactivateSession = useCallback(async () => {
         if (!reactivatingSession) return;
         await reactivate(reactivatingSession.id);
         setReactivatingSession(null);
-        getAdminSessions({ page: params.page ?? 0, size: params.size, ...filters });
-    }, [reactivatingSession, reactivate, params.page, params.size, filters, getAdminSessions]);
+        reloadSessions();
+    }, [reactivatingSession, reactivate, reloadSessions]);
 
     const activeFilterCount = useMemo(() => {
         return Object.values(filters).filter(v => v !== undefined && v !== '').length;
@@ -140,6 +143,8 @@ export const SectionSchedule: React.FC = () => {
                 onHallChange={(v) => handleFilterChange('hallId', v)}
                 onMovieTitleChange={(v) => handleFilterChange('movieTitle', v)}
                 onStatusChange={(v) => handleFilterChange('status', v)}
+                sort={params.sort}
+                onSortChange={setSort}
                 onClearFilters={handleClearFilters}
                 halls={hallsForSelect}
             />
