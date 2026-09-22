@@ -7,6 +7,7 @@ export interface TooltipProps {
     position?: 'top' | 'bottom' | 'left' | 'right';
     align?: 'center' | 'end';
     className?: string;
+    style?: React.CSSProperties;
     id?: string;
 }
 
@@ -18,6 +19,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
     position = 'top',
     align = 'center',
     className = '',
+    style,
     id
 }) => {
     const [isVisible, setIsVisible] = useState(false);
@@ -48,7 +50,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
     };
 
     return (
-        <div className={`${styles.tooltipContainer} ${className}`}>
+        <div className={`${styles.tooltipContainer} ${className}`} style={style}>
             <div
                 onMouseEnter={scheduleShow}
                 onMouseLeave={hide}

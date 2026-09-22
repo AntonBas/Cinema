@@ -14,33 +14,34 @@
 .screen {
   background: var(--color-bg-screen);
   color: var(--color-primary);
-  padding: 2rem 4rem;
-  margin: 0 auto 1rem auto;
-  border-radius: var(--radius-md);
+  width: 100%;
+  padding: 1.25rem 2rem;
+  margin: 0 auto 0.75rem auto;
+  border-radius: 50% 50% 6px 6px / 20px 20px 6px 6px;
   font-weight: 800;
   font-size: 1.5rem;
   text-transform: uppercase;
   letter-spacing: 4px;
   box-shadow:
-    0 10px 30px rgba(var(--color-primary-rgb), 0.3),
-    inset 0 0 50px rgba(var(--color-primary-rgb), 0.1);
+    0 10px 40px rgba(var(--color-primary-rgb), 0.35),
+    inset 0 0 60px rgba(var(--color-primary-rgb), 0.12);
   position: relative;
-  max-width: 600px;
-  border: 2px solid rgba(var(--color-primary-rgb), 0.3);
+  border: 2px solid rgba(var(--color-primary-rgb), 0.35);
   text-shadow: 0 0 10px rgba(var(--color-primary-rgb), 0.5);
+  clip-path: polygon(3% 0%, 97% 0%, 100% 100%, 0% 100%);
 }
 
 .screenReflection {
-  height: 20px;
+  height: 24px;
+  width: 92%;
   background: linear-gradient(
     180deg,
-    rgba(var(--color-primary-rgb), 0.2) 0%,
+    rgba(var(--color-primary-rgb), 0.25) 0%,
     transparent 100%
   );
   margin: 0 auto;
   border-radius: 50%;
-  filter: blur(5px);
-  max-width: 500px;
+  filter: blur(6px);
 }
 
 .seatsLayout {
@@ -51,21 +52,32 @@
     inset 0 0 50px rgba(0, 0, 0, 0.3),
     0 10px 30px rgba(0, 0, 0, 0.3);
   position: relative;
-  display: flex;
-  justify-content: center;
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   margin-bottom: 2rem;
 }
 
-.canvas {
+.canvasViewport {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.canvasSizer {
   position: relative;
   flex-shrink: 0;
-  text-align: left;
+}
+
+.canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
 }
 
 .seatButton {
-  position: absolute;
+  position: relative;
   border-radius: var(--radius-sm);
   border: 2px solid transparent;
   color: var(--color-text-primary);
@@ -259,11 +271,9 @@
     padding: var(--space-4) var(--space-6);
     font-size: 1.1rem;
     letter-spacing: 2px;
-    max-width: 90%;
   }
 
   .screenReflection {
-    max-width: 80%;
     height: 14px;
   }
 
@@ -293,18 +303,6 @@
   .seatsLayout {
     padding: var(--space-4) var(--space-1);
   }
-
-  .seatButton {
-    font-size: 9px;
-  }
-
-  .seatNumber {
-    font-size: 8px;
-  }
-
-  .inactiveIcon {
-    font-size: 11px;
-  }
 }
 
 @media (max-width: 480px) {
@@ -312,7 +310,6 @@
     padding: var(--space-3) var(--space-4);
     font-size: 0.9rem;
     letter-spacing: 1px;
-    max-width: 95%;
   }
 
   .screenReflection {
@@ -348,23 +345,6 @@
 
   .seatsLayout {
     padding: var(--space-3) var(--space-1);
-  }
-
-  .seatButton {
-    font-size: 7px;
-  }
-
-  .seatNumber {
-    font-size: 6px;
-  }
-
-  .inactiveIcon {
-    font-size: 9px;
-  }
-
-  .loadingSpinner {
-    width: 12px;
-    height: 12px;
   }
 }
 
