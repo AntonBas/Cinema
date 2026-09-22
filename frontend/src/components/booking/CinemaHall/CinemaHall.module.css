@@ -52,9 +52,6 @@
     inset 0 0 50px rgba(0, 0, 0, 0.3),
     0 10px 30px rgba(0, 0, 0, 0.3);
   position: relative;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
   margin-bottom: 2rem;
 }
 

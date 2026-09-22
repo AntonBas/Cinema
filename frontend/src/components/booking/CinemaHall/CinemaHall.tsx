@@ -6,7 +6,7 @@ import type { SeatInfo } from "@/types/seatReservation";
 import { CELL_WIDTH, CELL_HEIGHT } from "@/utils/hallLayoutGrid";
 import { useElementWidth } from "@/hooks/common/useElementWidth";
 
-const MIN_SCALE = 0.45;
+const SEAT_INSET = 8;
 
 interface CinemaHallProps {
   seats: SeatInfo[];
@@ -32,9 +32,7 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
     };
   }, [seats]);
 
-  const scale = viewportWidth > 0
-    ? Math.max(Math.min(1, viewportWidth / canvasSize.width), MIN_SCALE)
-    : 1;
+  const scale = viewportWidth > 0 ? Math.min(1, viewportWidth / canvasSize.width) : 1;
 
   const getSeatInfo = (seat: SeatInfo) => {
     const status = !seat.active
@@ -93,7 +91,7 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
                   status === "temporary" ||
                   isLoading;
 
-                const width = seat.seatType === "COUPLE" ? CELL_WIDTH * 2 - 8 : CELL_WIDTH - 8;
+                const width = seat.seatType === "COUPLE" ? CELL_WIDTH * 2 - SEAT_INSET * 2 : CELL_WIDTH - SEAT_INSET * 2;
                 const seatClass = `${styles.seatButton} ${styles[seat.seatType.toLowerCase()]} ${
                   status === "inactive"
                     ? styles.inactive
@@ -112,12 +110,12 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
                   <Tooltip
                     key={`seat-${seat.id}`}
                     content={title}
-                    position="top"
-                    style={{ position: "absolute", left: seat.x + 4, top: seat.y + 4 }}
+                    position={seat.row === 1 ? "bottom" : "top"}
+                    style={{ position: "absolute", left: seat.x + SEAT_INSET, top: seat.y + SEAT_INSET }}
                   >
                     <button
                       className={seatClass}
-                      style={{ width, height: CELL_HEIGHT - 8 }}
+                      style={{ width, height: CELL_HEIGHT - SEAT_INSET * 2 }}
                       onClick={() => onSeatClick(seat.id)}
                       disabled={disabled}
                     >
