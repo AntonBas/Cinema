@@ -7,6 +7,7 @@ import { CELL_WIDTH, CELL_HEIGHT } from "@/utils/hallLayoutGrid";
 import { useElementWidth } from "@/hooks/common/useElementWidth";
 
 const SEAT_INSET = 8;
+const TARGET_HALL_WIDTH = 640;
 
 interface CinemaHallProps {
   seats: SeatInfo[];
@@ -32,7 +33,11 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
     };
   }, [seats]);
 
-  const scale = viewportWidth > 0 ? Math.min(1, viewportWidth / canvasSize.width) : 1;
+  const compactScale = Math.min(1, TARGET_HALL_WIDTH / canvasSize.width);
+  const scale = viewportWidth > 0
+    ? Math.min(compactScale, viewportWidth / canvasSize.width)
+    : compactScale;
+  const hallWidth = Math.max(360, canvasSize.width * compactScale + 80);
 
   const getSeatInfo = (seat: SeatInfo) => {
     const status = !seat.active
@@ -66,7 +71,7 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
   };
 
   return (
-    <div className={styles.cinemaHall}>
+    <div className={styles.cinemaHall} style={{ maxWidth: hallWidth }}>
       <div className={styles.screenArea}>
         <div className={styles.screen}>SCREEN</div>
         <div className={styles.screenReflection} />
