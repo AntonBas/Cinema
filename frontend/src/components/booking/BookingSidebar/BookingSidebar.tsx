@@ -39,7 +39,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
   onBooking,
   isBooking,
 }) => {
-  const [bonusPointsToUse, setBonusPointsToUse] = useState(0);
+  const [bonusPointsInput, setBonusPointsInput] = useState("");
   const { balance, getMyBalance, loading } = useBonus();
 
   useEffect(() => {
@@ -58,12 +58,27 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
     Math.floor((totalPrice * maxDiscountPercentage) / pointValue),
   );
 
-  const handleBonusPointsChange = (points: number) => {
-    setBonusPointsToUse(Math.max(0, Math.min(points, maxAvailablePoints)));
+  const bonusPointsToUse =
+    bonusPointsInput === ""
+      ? 0
+      : Math.max(0, Math.min(parseInt(bonusPointsInput, 10) || 0, maxAvailablePoints));
+
+  const handleBonusPointsInputChange = (rawValue: string) => {
+    if (rawValue === "") {
+      setBonusPointsInput("");
+      return;
+    }
+
+    const parsed = parseInt(rawValue, 10);
+    if (Number.isNaN(parsed)) {
+      return;
+    }
+
+    setBonusPointsInput(String(Math.max(0, Math.min(parsed, maxAvailablePoints))));
   };
 
   const handleUseAllPoints = () => {
-    setBonusPointsToUse(maxAvailablePoints);
+    setBonusPointsInput(String(maxAvailablePoints));
   };
 
   const handleBooking = () => {
@@ -153,11 +168,9 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                 type="number"
                 min={0}
                 max={maxAvailablePoints}
-                value={bonusPointsToUse}
-                onChange={(e) =>
-                  handleBonusPointsChange(parseInt(e.target.value) || 0)
-                }
-                onFocus={(e) => e.target.select()}
+                value={bonusPointsInput}
+                placeholder="0"
+                onChange={(e) => handleBonusPointsInputChange(e.target.value)}
                 disabled={isBooking || loading}
                 aria-label="Bonus points to use"
               />
