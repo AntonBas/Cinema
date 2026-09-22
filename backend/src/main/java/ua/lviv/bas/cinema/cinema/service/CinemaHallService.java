@@ -136,6 +136,8 @@ public class CinemaHallService {
         validateNoTicketsOn(protectedIds);
 
         hall.getSeats().removeIf(seat -> removedIds.contains(seat.getId()));
+        seatRepository.flush();
+
         for (var item : request.seats()) {
             if (item.id() == null) {
                 hall.getSeats().add(toNewSeat(hall, item));

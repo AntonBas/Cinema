@@ -2,7 +2,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import type { CinemaHallResponse, HallLayoutResponse, SeatLayoutItem } from '@/types/cinemaHall';
 import { SeatType } from '@/types/seat';
 import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
-import { CELL_WIDTH, CELL_HEIGHT } from '@/utils/hallLayoutGrid';
+import { CELL_WIDTH, CELL_HEIGHT, GRID_COLS } from '@/utils/hallLayoutGrid';
 import { HallLayoutContext, type DraftSeat } from './HallLayoutContext';
 
 const nextSeatType = (type: SeatType): SeatType => {
@@ -87,9 +87,20 @@ export const HallLayoutProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }, []);
 
     const cycleSeatType = useCallback((key: string) => {
-        setSeats(prev => prev.map(seat => (seat.key === key ? { ...seat, seatType: nextSeatType(seat.seatType) } : seat)));
+        setSeats(prev => {
+            const seat = prev.find(s => s.key === key);
+            if (!seat) return prev;
+            const type = nextSeatType(seat.seatType);
+            if (type === SeatType.COUPLE) {
+                const rightCol = seat.col + 1;
+                if (rightCol >= GRID_COLS || isCellOccupied(rightCol, seat.gridRow, key, prev)) {
+                    return prev;
+                }
+            }
+            return prev.map(s => (s.key === key ? { ...s, seatType: type } : s));
+        });
         setIsDirty(true);
-    }, []);
+    }, [isCellOccupied]);
 
     const toggleSeatActive = useCallback((key: string) => {
         setSeats(prev => prev.map(seat => (seat.key === key ? { ...seat, active: !seat.active } : seat)));
