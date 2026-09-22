@@ -17,7 +17,6 @@ import styles from "./BookingPage.module.css";
 export const BookingPage: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
-  const sessionIdNum = parseInt(sessionId || "0");
 
   const { showNotification } = useNotification();
   const { isAuthenticated } = useAuth();
@@ -33,17 +32,17 @@ export const BookingPage: React.FC = () => {
     deselectSeat,
     isSeatSelected,
     updateSeatTicketType,
-  } = useSeatReservation(sessionIdNum);
+  } = useSeatReservation(sessionId ?? "");
 
   const { getMyBalance } = useBonus();
   const { create, loading: bookingLoading } = useBooking();
 
   useEffect(() => {
-    if (sessionIdNum) {
+    if (sessionId) {
       getSeatAvailability();
       getMyBalance({ showErrorNotification: false }).catch(() => {});
     }
-  }, [sessionIdNum, getSeatAvailability, getMyBalance]);
+  }, [sessionId, getSeatAvailability, getMyBalance]);
 
   const handleSeatClick = useCallback(
     async (seatId: number) => {
@@ -71,6 +70,8 @@ export const BookingPage: React.FC = () => {
         return;
       }
 
+      if (!sessionId) return;
+
       const seats = selectedSeats.map((seat) => ({
         seatId: seat.seat.id,
         ticketTypeId: seat.ticketTypeId,
@@ -78,19 +79,19 @@ export const BookingPage: React.FC = () => {
 
       try {
         const response = await create({
-          sessionId: sessionIdNum,
+          sessionId,
           seats,
           bonusPointsToUse: bonusPointsToUse > 0 ? bonusPointsToUse : undefined,
         });
 
         if (response) {
-          navigate(`/booking/summary/${response.id}`);
+          navigate(`/booking/summary/${response.publicId}`);
         }
       } catch {
         return;
       }
     },
-    [selectedSeats, sessionIdNum, create, navigate, showNotification, isAuthenticated],
+    [selectedSeats, sessionId, create, navigate, showNotification, isAuthenticated],
   );
 
   if (loading) {

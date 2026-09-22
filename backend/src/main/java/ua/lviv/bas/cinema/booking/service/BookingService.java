@@ -2,7 +2,6 @@ package ua.lviv.bas.cinema.booking.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -28,6 +27,7 @@ import ua.lviv.bas.cinema.audit.service.AuditService;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -56,10 +56,7 @@ public class BookingService {
         this.transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
-    @Caching(evict = {
-            @CacheEvict(value = "seatAvailability", key = "#request.sessionId()"),
-            @CacheEvict(value = "sessions", allEntries = true)
-    })
+    @CacheEvict(value = "sessions", allEntries = true)
     public BookingResponse createBooking(BookingCreateRequest request, User user) {
         var created = bookingCreationService.createAndPersist(request, user);
         var saved = bookingRepository.findById(created.getId())
@@ -79,6 +76,7 @@ public class BookingService {
         log.info("Created booking {} for user {} with {} bonus points used", saved.getId(), user.getId(),
                 saved.getBonusPointsUsed());
         auditCreate(saved, user);
+        seatReservationService.evictAvailabilityCache(saved.getSession().getId());
 
         return bookingMapper.toResponse(saved);
     }
@@ -97,15 +95,16 @@ public class BookingService {
     }
 
     @Transactional(readOnly = true)
-    public BookingResponse getBooking(Long bookingId, User user) {
-        var booking = bookingRepository.findByIdAndUserId(bookingId, user.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Booking", bookingId));
+    public BookingResponse getBooking(UUID publicId, User user) {
+        var booking = bookingRepository.findByPublicIdAndUserId(publicId, user.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Booking", publicId));
         return bookingMapper.toResponse(booking);
     }
 
-    public void cancelBooking(Long bookingId, User user) {
-        var booking = bookingRepository.findByIdAndUserId(bookingId, user.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Booking", bookingId));
+    public void cancelBooking(UUID publicId, User user) {
+        var booking = bookingRepository.findByPublicIdAndUserId(publicId, user.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Booking", publicId));
+        var bookingId = booking.getId();
 
         if (!canCancel(booking)) {
             throw BookingValidationException.cannotCancel();

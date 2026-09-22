@@ -73,7 +73,7 @@ public class PaymentService {
     public PaymentResponse createPayment(PaymentCreateRequest request, User user) {
         log.info("Creating payment for booking {} by user {}", request.bookingId(), user.getId());
 
-        var booking = bookingRepository.findByIdAndUserId(request.bookingId(), user.getId())
+        var booking = bookingRepository.findByPublicIdAndUserId(request.bookingId(), user.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Booking", request.bookingId()));
 
         validateBookingForPayment(booking);

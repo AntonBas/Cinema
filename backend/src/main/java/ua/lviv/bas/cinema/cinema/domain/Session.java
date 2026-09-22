@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.hibernate.annotations.BatchSize;
 
@@ -56,6 +57,10 @@ public class Session extends AuditableEntity {
 	@EqualsAndHashCode.Include
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+
+	@Column(name = "public_id", nullable = false, unique = true, updatable = false)
+	@Builder.Default
+	private UUID publicId = UUID.randomUUID();
 
 	@Version
 	@Column(name = "version", nullable = false)

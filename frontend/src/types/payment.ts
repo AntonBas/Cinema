@@ -9,7 +9,7 @@ export type PaymentStatus =
   | "PARTIALLY_REFUNDED";
 
 export interface PaymentCreateRequest {
-  bookingId: number;
+  bookingId: string;
 }
 
 export interface LiqPayCallbackRequest {

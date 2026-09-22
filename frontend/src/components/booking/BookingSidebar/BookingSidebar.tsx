@@ -155,6 +155,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                 onChange={(e) =>
                   handleBonusPointsChange(parseInt(e.target.value) || 0)
                 }
+                onFocus={(e) => e.target.select()}
                 disabled={isBooking || loading}
                 aria-label="Bonus points to use"
               />

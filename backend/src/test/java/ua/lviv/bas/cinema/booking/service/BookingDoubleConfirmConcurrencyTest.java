@@ -86,7 +86,7 @@ class BookingDoubleConfirmConcurrencyTest {
 
         seatReservationService.hold(sessionId, seat.getId(), user);
 
-        request = new BookingCreateRequest(sessionId,
+        request = new BookingCreateRequest(session.getPublicId(),
                 List.of(new BookingCreateRequest.SeatSelectionRequest(seat.getId(), ticketType.getId())), 0);
     }
 

@@ -7,8 +7,8 @@ export const bookingApi = {
   create: (request: BookingCreateRequest) =>
     api.post<BookingResponse>(BASE_URL, request),
 
-  getById: (bookingId: number) =>
+  getById: (bookingId: string) =>
     api.get<BookingResponse>(`${BASE_URL}/${bookingId}`),
 
-  cancel: (bookingId: number) => api.delete<void>(`${BASE_URL}/${bookingId}`),
+  cancel: (bookingId: string) => api.delete<void>(`${BASE_URL}/${bookingId}`),
 };

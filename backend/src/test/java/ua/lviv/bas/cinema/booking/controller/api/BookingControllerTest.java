@@ -16,6 +16,7 @@ import ua.lviv.bas.cinema.user.service.UserService;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -35,7 +36,9 @@ public class BookingControllerTest {
     private BookingController bookingController;
 
     private final Long BOOKING_ID = 1L;
+    private final UUID BOOKING_PUBLIC_ID = UUID.randomUUID();
     private final Long SESSION_ID = 100L;
+    private final UUID SESSION_PUBLIC_ID = UUID.randomUUID();
 
     private User createUser() {
         User user = new User();
@@ -51,7 +54,7 @@ public class BookingControllerTest {
     }
 
     private BookingResponse createBookingResponse() {
-        return new BookingResponse(BOOKING_ID, "BK-2024-00123", BookingStatus.PENDING, SESSION_ID,
+        return new BookingResponse(BOOKING_ID, BOOKING_PUBLIC_ID, "BK-2024-00123", BookingStatus.PENDING, SESSION_ID,
                 LocalDateTime.now().plusDays(1), "Test Movie", "Hall A", new BigDecimal("150.00"), 0, BigDecimal.ZERO,
                 new BigDecimal("150.00"), null, LocalDateTime.now().plusMinutes(15), Collections.emptyList());
     }
@@ -60,7 +63,7 @@ public class BookingControllerTest {
     void createBookingShouldReturnCreated() {
         User user = createUser();
         CustomUserDetails userDetails = createUserDetails();
-        BookingCreateRequest request = new BookingCreateRequest(SESSION_ID, Collections.emptyList(), null);
+        BookingCreateRequest request = new BookingCreateRequest(SESSION_PUBLIC_ID, Collections.emptyList(), null);
         BookingResponse response = createBookingResponse();
 
         when(userService.getUser(user.getId())).thenReturn(user);
@@ -80,13 +83,13 @@ public class BookingControllerTest {
         BookingResponse response = createBookingResponse();
 
         when(userService.getUser(user.getId())).thenReturn(user);
-        when(bookingService.getBooking(BOOKING_ID, user)).thenReturn(response);
+        when(bookingService.getBooking(BOOKING_PUBLIC_ID, user)).thenReturn(response);
 
-        BookingResponse result = bookingController.getBooking(BOOKING_ID, userDetails);
+        BookingResponse result = bookingController.getBooking(BOOKING_PUBLIC_ID, userDetails);
 
         assertThat(result).isNotNull();
         assertThat(result.id()).isEqualTo(BOOKING_ID);
-        verify(bookingService).getBooking(BOOKING_ID, user);
+        verify(bookingService).getBooking(BOOKING_PUBLIC_ID, user);
     }
 
     @Test
@@ -95,8 +98,8 @@ public class BookingControllerTest {
         CustomUserDetails userDetails = createUserDetails();
 
         when(userService.getUser(user.getId())).thenReturn(user);
-        bookingController.cancelBooking(BOOKING_ID, userDetails);
+        bookingController.cancelBooking(BOOKING_PUBLIC_ID, userDetails);
 
-        verify(bookingService).cancelBooking(BOOKING_ID, user);
+        verify(bookingService).cancelBooking(BOOKING_PUBLIC_ID, user);
     }
 }

@@ -7,7 +7,7 @@ export type BookingStatus =
   | "REFUNDED";
 
 export interface BookingCreateRequest {
-  sessionId: number;
+  sessionId: string;
   seats: SeatSelectionRequest[];
   bonusPointsToUse?: number;
 }
@@ -19,6 +19,7 @@ export interface SeatSelectionRequest {
 
 export interface BookingResponse {
   id: number;
+  publicId: string;
   bookingNumber: string;
   status: BookingStatus;
   sessionId: number;

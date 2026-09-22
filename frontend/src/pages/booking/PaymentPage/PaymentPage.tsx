@@ -145,7 +145,7 @@ export const PaymentPage: React.FC = () => {
       }
 
       const payment = (await create({
-        bookingId: parseInt(bookingId),
+        bookingId,
       })) as ExtendedPaymentResponse | null;
       if (payment && payment.id) {
         setCurrentPayment(payment);

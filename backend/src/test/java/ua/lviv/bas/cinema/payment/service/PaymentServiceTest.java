@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -71,6 +72,7 @@ public class PaymentServiceTest {
 
     private static final Long USER_ID = 1L;
     private static final Long BOOKING_ID = 2L;
+    private static final UUID BOOKING_PUBLIC_ID = UUID.randomUUID();
     private static final Long PAYMENT_ID = 3L;
     private static final BigDecimal AMOUNT = new BigDecimal("200.00");
     private static final int SESSION_TOO_CLOSE_MINUTES = 30;
@@ -96,7 +98,7 @@ public class PaymentServiceTest {
         testPayment = Payment.builder().id(PAYMENT_ID).booking(testBooking).amount(AMOUNT).status(PaymentStatus.PENDING)
                 .liqpayOrderId("ORD_TEST123456789").build();
 
-        createRequest = new PaymentCreateRequest(BOOKING_ID);
+        createRequest = new PaymentCreateRequest(BOOKING_PUBLIC_ID);
 
         lenient().doAnswer(invocation -> {
             Runnable emailAction = invocation.getArgument(2);
@@ -107,7 +109,7 @@ public class PaymentServiceTest {
 
     @Test
     void createPaymentShouldSucceed() {
-        when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(testBooking));
+        when(bookingRepository.findByPublicIdAndUserId(BOOKING_PUBLIC_ID, USER_ID)).thenReturn(Optional.of(testBooking));
         when(paymentRepository.findByBookingId(BOOKING_ID)).thenReturn(Optional.empty());
         when(numberGenerator.generateLiqpayOrderId()).thenReturn("ORD_NEW123456789");
         when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
@@ -127,7 +129,7 @@ public class PaymentServiceTest {
 
     @Test
     void createPaymentWhenBookingNotFoundShouldThrowException() {
-        when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.empty());
+        when(bookingRepository.findByPublicIdAndUserId(BOOKING_PUBLIC_ID, USER_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> paymentService.createPayment(createRequest, testUser))
                 .isInstanceOf(EntityNotFoundException.class);
@@ -135,7 +137,7 @@ public class PaymentServiceTest {
 
     @Test
     void createPaymentWhenAlreadyExistsShouldReturnExisting() {
-        when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(testBooking));
+        when(bookingRepository.findByPublicIdAndUserId(BOOKING_PUBLIC_ID, USER_ID)).thenReturn(Optional.of(testBooking));
         when(paymentRepository.findByBookingId(BOOKING_ID)).thenReturn(Optional.of(testPayment));
         when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
 

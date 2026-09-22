@@ -127,7 +127,7 @@ export const SessionSection: React.FC<SessionSectionProps> = ({
           <button
             key={session.id}
             className={styles.sessionTimeButton}
-            onClick={() => navigate(`/booking/${session.id}`)}
+            onClick={() => navigate(`/booking/${session.publicId}`)}
           >
             <span className={styles.sessionTimeValue}>
               {formatTime(session.startTime)}

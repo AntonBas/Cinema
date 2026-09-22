@@ -12,11 +12,14 @@ import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     Optional<Booking> findByIdAndUserId(Long id, Long userId);
+
+    Optional<Booking> findByPublicIdAndUserId(UUID publicId, Long userId);
 
     @Query("SELECT DISTINCT b FROM Booking b LEFT JOIN FETCH b.seatReservations "
             + "WHERE b.status = :status AND b.expiresAt < :expiresAt")

@@ -267,7 +267,7 @@ public class SessionServiceTest {
 
     @Test
     void getScheduleShouldMergeAvailableSeatsIntoSchedule() {
-        SessionScheduleResponse schedule = new SessionScheduleResponse(SESSION_ID, null, null, BASE_PRICE, null,
+        SessionScheduleResponse schedule = new SessionScheduleResponse(SESSION_ID, null, null, null, BASE_PRICE, null,
                 MOVIE_ID, MOVIE_TITLE, null, null, null, HALL_ID, HALL_NAME, null);
         SessionScheduleResponse withSeats = schedule.withAvailableSeats(42);
 

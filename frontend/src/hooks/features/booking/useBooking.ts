@@ -29,11 +29,11 @@ export const useBooking = () => {
         );
     }, []);
 
-    const getById = useCallback(async (bookingId: number) => {
+    const getById = useCallback(async (bookingId: string) => {
         return bookingApiRef.current.execute(() => bookingApi.getById(bookingId));
     }, []);
 
-    const cancel = useCallback(async (bookingId: number) => {
+    const cancel = useCallback(async (bookingId: string) => {
         return mutationApiRef.current.execute(
             () => bookingApi.cancel(bookingId),
             { successMessage: 'Booking cancelled successfully' }

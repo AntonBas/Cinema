@@ -17,6 +17,7 @@ import ua.lviv.bas.cinema.cinema.repository.projection.SessionScheduleProjection
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -166,6 +167,11 @@ public class SessionMapperTest {
             @Override
             public Long getId() {
                 return 1L;
+            }
+
+            @Override
+            public UUID getPublicId() {
+                return UUID.randomUUID();
             }
 
             @Override

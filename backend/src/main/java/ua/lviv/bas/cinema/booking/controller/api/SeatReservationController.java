@@ -25,6 +25,8 @@ import ua.lviv.bas.cinema.booking.dto.response.SeatReservationResponse;
 import ua.lviv.bas.cinema.booking.service.SeatReservationService;
 import ua.lviv.bas.cinema.user.service.UserService;
 
+import java.util.UUID;
+
 @Slf4j
 @RestController
 @RequestMapping("/api/sessions")
@@ -42,9 +44,9 @@ public class SeatReservationController {
             @ApiResponse(responseCode = "404", description = "Session not found")
     })
     @SecurityRequirements()
-    public SeatReservationResponse getAvailability(@PathVariable Long sessionId) {
+    public SeatReservationResponse getAvailability(@PathVariable UUID sessionId) {
         log.info("GET /api/sessions/{}/seats", sessionId);
-        return seatReservationService.getAvailability(sessionId);
+        return seatReservationService.getAvailability(seatReservationService.resolveSessionId(sessionId));
     }
 
     @PostMapping("/{sessionId}/seats/{seatId}/hold")
@@ -59,10 +61,11 @@ public class SeatReservationController {
     @SecurityRequirement(name = "bearerAuth")
     @PreAuthorize("isAuthenticated()")
     @RateLimit(value = 30, duration = 60, key = "user")
-    public void hold(@PathVariable Long sessionId, @PathVariable Long seatId,
+    public void hold(@PathVariable UUID sessionId, @PathVariable Long seatId,
                      @AuthenticationPrincipal CustomUserDetails userDetails) {
         log.info("POST /api/sessions/{}/seats/{}/hold - user: {}", sessionId, seatId, userDetails.getUserId());
-        seatReservationService.hold(sessionId, seatId, userService.getUser(userDetails.getUserId()));
+        var internalSessionId = seatReservationService.resolveSessionId(sessionId);
+        seatReservationService.hold(internalSessionId, seatId, userService.getUser(userDetails.getUserId()));
     }
 
     @DeleteMapping("/{sessionId}/seats/{seatId}/hold")
@@ -76,9 +79,10 @@ public class SeatReservationController {
     @SecurityRequirement(name = "bearerAuth")
     @PreAuthorize("isAuthenticated()")
     @RateLimit(value = 30, duration = 60, key = "user")
-    public void cancel(@PathVariable Long sessionId, @PathVariable Long seatId,
+    public void cancel(@PathVariable UUID sessionId, @PathVariable Long seatId,
                        @AuthenticationPrincipal CustomUserDetails userDetails) {
         log.info("DELETE /api/sessions/{}/seats/{}/hold - user: {}", sessionId, seatId, userDetails.getUserId());
-        seatReservationService.cancel(sessionId, seatId, userService.getUser(userDetails.getUserId()));
+        var internalSessionId = seatReservationService.resolveSessionId(sessionId);
+        seatReservationService.cancel(internalSessionId, seatId, userService.getUser(userDetails.getUserId()));
     }
 }

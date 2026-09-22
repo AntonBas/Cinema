@@ -12,7 +12,7 @@ export interface SelectedSeat {
     ticketTypeName: string;
 }
 
-export const useSeatReservation = (sessionId: number, maxSeats?: number) => {
+export const useSeatReservation = (sessionId: string, maxSeats?: number) => {
     const [selectedSeats, setSelectedSeats] = useState<SelectedSeat[]>([]);
     const [pendingSeatId, setPendingSeatId] = useState<number | null>(null);
 

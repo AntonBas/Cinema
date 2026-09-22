@@ -18,6 +18,7 @@ import ua.lviv.bas.cinema.user.service.UserService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -70,7 +71,7 @@ public class PaymentControllerTest {
 
     @Test
     void createPaymentShouldCreateSuccessfully() {
-        PaymentCreateRequest request = new PaymentCreateRequest(100L);
+        PaymentCreateRequest request = new PaymentCreateRequest(UUID.randomUUID());
 
         PaymentResponse paymentResponse = createPaymentResponse();
 

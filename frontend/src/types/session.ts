@@ -57,6 +57,7 @@ export interface SessionAdminResponse {
 
 export interface SessionScheduleResponse {
   id: number;
+  publicId: string;
   startTime: string;
   endTime: string;
   basePrice: number;
@@ -73,6 +74,7 @@ export interface SessionScheduleResponse {
 
 export interface SessionMovieInfoResponse {
   id: number;
+  publicId: string;
   startTime: string;
   endTime: string;
   basePrice: number;

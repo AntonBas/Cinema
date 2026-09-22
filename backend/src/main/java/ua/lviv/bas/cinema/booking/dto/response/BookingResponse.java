@@ -6,11 +6,16 @@ import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Schema(description = "Booking information response")
 public record BookingResponse(
         @Schema(description = "Booking ID", example = "123")
         Long id,
+
+        @Schema(description = "Public identifier of the booking, used in customer-facing URLs",
+                example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+        UUID publicId,
 
         @Schema(description = "Booking number", example = "BK-20240115-00123")
         String bookingNumber,

@@ -56,7 +56,7 @@ class BookingCreationService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Booking createAndPersist(BookingCreateRequest request, User user) {
-        var session = sessionRepository.findById(request.sessionId())
+        var session = sessionRepository.findByPublicId(request.sessionId())
                 .orElseThrow(() -> new EntityNotFoundException("Session", request.sessionId()));
 
         validateSession(session);

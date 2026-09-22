@@ -77,7 +77,7 @@ class BookingCrossHallSeatVerificationTest {
         var ticketType = ticketTypeRepository
                 .save(TicketType.builder().displayName("Adult").priceMultiplier(BigDecimal.ONE).build());
 
-        var request = new BookingCreateRequest(session.getId(),
+        var request = new BookingCreateRequest(session.getPublicId(),
                 List.of(new BookingCreateRequest.SeatSelectionRequest(seatInOtherHall.getId(), ticketType.getId())),
                 0);
 

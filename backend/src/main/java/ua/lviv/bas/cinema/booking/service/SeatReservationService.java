@@ -29,6 +29,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -47,6 +48,11 @@ public class SeatReservationService {
 
     @Value("${booking.temp-hold-minutes:5}")
     private int tempHoldMinutes;
+
+    public Long resolveSessionId(UUID publicId) {
+        return sessionRepository.findByPublicId(publicId)
+                .orElseThrow(() -> new EntityNotFoundException("Session", publicId)).getId();
+    }
 
     @Cacheable(value = "seatAvailability", key = "#sessionId")
     public SeatReservationResponse getAvailability(Long sessionId) {

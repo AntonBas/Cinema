@@ -16,6 +16,7 @@ import ua.lviv.bas.cinema.cinema.repository.projection.SessionScheduleProjection
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 @SuppressWarnings({"SqlResolve", "SqlNoDataSourceInspection"})
@@ -24,6 +25,8 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT s FROM Session s LEFT JOIN FETCH s.movie LEFT JOIN FETCH s.hall WHERE s.id = :id")
     Optional<Session> findByIdWithLock(@Param("id") Long id);
+
+    Optional<Session> findByPublicId(UUID publicId);
 
     @Query("""
             SELECT s FROM Session s
@@ -64,6 +67,7 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
     @Query(value = """
             SELECT
                 s.id,
+                s.public_id as publicId,
                 s.start_time as startTime,
                 s.base_price as basePrice,
                 m.id as movieId,

@@ -21,7 +21,7 @@ interface MovieGroup {
 
 interface SessionCardProps {
   session: SessionScheduleResponse;
-  onBook: (sessionId: number) => void;
+  onBook: (sessionPublicId: string) => void;
 }
 
 const AGE_RATING_COLORS: Record<string, string> = {
@@ -88,7 +88,7 @@ const SessionCard: React.FC<SessionCardProps> = ({ session, onBook }) => {
   return (
     <div
       className={`${styles.sessionCard} ${isAvailable ? styles.available : styles.unavailable}`}
-      onClick={() => isAvailable && onBook(session.id)}
+      onClick={() => isAvailable && onBook(session.publicId)}
     >
       <div className={styles.sessionTime}>
         <div className={styles.timeRange}>
@@ -123,7 +123,7 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
   );
 
   const handleBook = useCallback(
-    (sessionId: number) => navigate(`/booking/${sessionId}`),
+    (sessionPublicId: string) => navigate(`/booking/${sessionPublicId}`),
     [navigate],
   );
 

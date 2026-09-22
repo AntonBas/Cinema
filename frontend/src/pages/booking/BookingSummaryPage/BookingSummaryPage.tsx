@@ -17,14 +17,14 @@ export const BookingSummaryPage: React.FC = () => {
 
   useEffect(() => {
     if (bookingId) {
-      getById(parseInt(bookingId));
+      getById(bookingId);
     }
   }, [bookingId, getById]);
 
   const handleCancelBooking = async () => {
     if (!bookingId) return;
 
-    await cancel(parseInt(bookingId));
+    await cancel(bookingId);
     setShowCancelModal(false);
     setTimeout(() => navigate("/"), 2000);
   };
@@ -49,7 +49,7 @@ export const BookingSummaryPage: React.FC = () => {
       })),
     };
 
-    navigate(`/booking/payment/${booking.id}`, {
+    navigate(`/booking/payment/${booking.publicId}`, {
       state: { booking: bookingData },
     });
   };

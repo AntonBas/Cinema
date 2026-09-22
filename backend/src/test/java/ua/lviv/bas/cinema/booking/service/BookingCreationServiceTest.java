@@ -37,6 +37,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -80,6 +81,7 @@ class BookingCreationServiceTest {
 
     private static final Long USER_ID = 1L;
     private static final Long SESSION_ID = 2L;
+    private static final UUID SESSION_PUBLIC_ID = UUID.randomUUID();
     private static final Long SEAT_ID_1 = 3L;
     private static final Long SEAT_ID_2 = 4L;
     private static final Long TICKET_TYPE_ADULT_ID = 5L;
@@ -108,7 +110,7 @@ class BookingCreationServiceTest {
         CinemaHall hall = CinemaHall.builder().id(200L).name("Hall A").build();
         LocalDateTime sessionTime = LocalDateTime.now().plusHours(2);
 
-        testSession = Session.builder().id(SESSION_ID).movie(movie).hall(hall).basePrice(BASE_PRICE)
+        testSession = Session.builder().id(SESSION_ID).publicId(SESSION_PUBLIC_ID).movie(movie).hall(hall).basePrice(BASE_PRICE)
                 .status(CinemaSessionStatus.SCHEDULED).startTime(sessionTime).build();
 
         testSeat1 = Seat.builder().id(SEAT_ID_1).row(1).number(1).seatType(SeatType.STANDARD).active(true).build();
@@ -122,7 +124,7 @@ class BookingCreationServiceTest {
         BookingCreateRequest.SeatSelectionRequest seatSelection2 = new BookingCreateRequest.SeatSelectionRequest(
                 SEAT_ID_2, TICKET_TYPE_CHILD_ID);
 
-        createRequest = new BookingCreateRequest(SESSION_ID, Arrays.asList(seatSelection1, seatSelection2),
+        createRequest = new BookingCreateRequest(SESSION_PUBLIC_ID, Arrays.asList(seatSelection1, seatSelection2),
                 BONUS_POINTS_USED);
 
         savedBooking = Booking.builder().id(BOOKING_ID).user(testUser).session(testSession)
@@ -140,7 +142,7 @@ class BookingCreationServiceTest {
                 .status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(TEMP_HOLD_MINUTES))
                 .reservedByUser(testUser).build();
 
-        when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
+        when(sessionRepository.findByPublicId(SESSION_PUBLIC_ID)).thenReturn(Optional.of(testSession));
         when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_1,
                 ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.of(pendingReservation1));
         when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_2,
@@ -178,7 +180,7 @@ class BookingCreationServiceTest {
                 .status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(TEMP_HOLD_MINUTES))
                 .reservedByUser(testUser).build();
 
-        when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
+        when(sessionRepository.findByPublicId(SESSION_PUBLIC_ID)).thenReturn(Optional.of(testSession));
         when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_1,
                 ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.empty());
         when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_2,
@@ -210,7 +212,7 @@ class BookingCreationServiceTest {
                 SEAT_ID_2, TICKET_TYPE_CHILD_ID);
         BookingCreateRequest.SeatSelectionRequest reversedSelection2 = new BookingCreateRequest.SeatSelectionRequest(
                 SEAT_ID_1, TICKET_TYPE_ADULT_ID);
-        var reversedRequest = new BookingCreateRequest(SESSION_ID,
+        var reversedRequest = new BookingCreateRequest(SESSION_PUBLIC_ID,
                 Arrays.asList(reversedSelection1, reversedSelection2), BONUS_POINTS_USED);
 
         SeatReservation newReservation1 = SeatReservation.builder().id(1L).seat(testSeat1).session(testSession)
@@ -220,7 +222,7 @@ class BookingCreationServiceTest {
                 .status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(TEMP_HOLD_MINUTES))
                 .reservedByUser(testUser).build();
 
-        when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
+        when(sessionRepository.findByPublicId(SESSION_PUBLIC_ID)).thenReturn(Optional.of(testSession));
         when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_1,
                 ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.empty());
         when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_2,
@@ -248,7 +250,7 @@ class BookingCreationServiceTest {
 
     @Test
     void createAndPersistWhenSessionNotFoundShouldThrowException() {
-        when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.empty());
+        when(sessionRepository.findByPublicId(SESSION_PUBLIC_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> bookingCreationService.createAndPersist(createRequest, testUser))
                 .isInstanceOf(EntityNotFoundException.class);
@@ -260,7 +262,7 @@ class BookingCreationServiceTest {
                 .status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(TEMP_HOLD_MINUTES))
                 .reservedByUser(testUser).build();
 
-        when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
+        when(sessionRepository.findByPublicId(SESSION_PUBLIC_ID)).thenReturn(Optional.of(testSession));
         when(seatReservationRepository.findBySessionIdAndSeatIdAndStatusAndReservedByUserId(SESSION_ID, SEAT_ID_1,
                 ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.of(pendingReservation));
         when(ticketTypeRepository.findAllById(List.of(TICKET_TYPE_ADULT_ID, TICKET_TYPE_CHILD_ID)))
@@ -274,10 +276,10 @@ class BookingCreationServiceTest {
     void createAndPersistWhenDuplicateSeatIdShouldThrowException() {
         var duplicateSelection1 = new BookingCreateRequest.SeatSelectionRequest(SEAT_ID_1, TICKET_TYPE_ADULT_ID);
         var duplicateSelection2 = new BookingCreateRequest.SeatSelectionRequest(SEAT_ID_1, TICKET_TYPE_ADULT_ID);
-        var duplicateRequest = new BookingCreateRequest(SESSION_ID,
+        var duplicateRequest = new BookingCreateRequest(SESSION_PUBLIC_ID,
                 Arrays.asList(duplicateSelection1, duplicateSelection2), BONUS_POINTS_USED);
 
-        when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
+        when(sessionRepository.findByPublicId(SESSION_PUBLIC_ID)).thenReturn(Optional.of(testSession));
 
         assertThatThrownBy(() -> bookingCreationService.createAndPersist(duplicateRequest, testUser))
                 .isInstanceOf(BookingValidationException.class);
