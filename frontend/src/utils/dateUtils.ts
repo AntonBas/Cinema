@@ -44,3 +44,10 @@ export const safeFormatDate = (
   if (!dateString) return "—";
   return toDisplayFormat(dateString);
 };
+
+export const parseServerUtcInstant = (dateTimeString: string): Date => {
+  const hasTimezoneDesignator = /(Z|[+-]\d{2}:?\d{2})$/.test(dateTimeString);
+  return new Date(
+    hasTimezoneDesignator ? dateTimeString : `${dateTimeString}Z`,
+  );
+};
