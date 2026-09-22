@@ -32,6 +32,9 @@ public record PaymentResponse(
         @Schema(description = "Payment time", example = "2024-01-15T14:35:00")
         LocalDateTime paymentTime,
 
+        @Schema(description = "Payment expires at (pending payments only)", example = "2024-01-15T15:05:00")
+        LocalDateTime expiresAt,
+
         @Schema(description = "Masked card number", example = "****4832")
         String senderCardMask,
 

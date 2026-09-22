@@ -62,9 +62,10 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
   const sessionDate = new Date(ticket.sessionTime);
   const hoursUntilSession =
     (sessionDate.getTime() - Date.now()) / (1000 * 60 * 60);
-  const canRequestRefund = previewLoading || !previewResult
-    ? ticket.status === "ACTIVE" && hoursUntilSession > 2
-    : previewResult.isRefundable;
+  const canRequestRefund =
+    previewLoading || !previewResult
+      ? ticket.refundable
+      : previewResult.isRefundable;
 
   const handleSubmit = async () => {
     if (!selectedReason || !acceptedTerms) return;

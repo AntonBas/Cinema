@@ -41,6 +41,9 @@ public class PaymentScheduler {
     private final CacheManager cacheManager;
     private final TransactionTemplate transactionTemplate;
 
+    @Value("${payment.expiration-minutes:30}")
+    private int paymentExpirationMinutes;
+
     @Value("${payment.processing-timeout-minutes:15}")
     private int processingTimeoutMinutes;
 
@@ -66,7 +69,7 @@ public class PaymentScheduler {
     @Scheduled(fixedRateString = "${scheduler.payment.expiration-interval:300000}")
     public void processExpiredPayments() {
         log.debug("Starting expired payments processing");
-        LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(30);
+        LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(paymentExpirationMinutes);
         List<Payment> expiredPayments = paymentRepository
                 .findByStatusAndCreatedDateBeforeWithBookingDetails(PaymentStatus.PENDING, cutoffTime);
 

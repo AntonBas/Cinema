@@ -56,12 +56,13 @@ public class PaymentControllerTest {
 
     private PaymentResponse createPaymentResponse() {
         return new PaymentResponse(1L, "BK-123456", "Test Movie", LocalDateTime.now(), "Hall A",
-                new BigDecimal("150.00"), PaymentStatus.PENDING, null, null, null);
+                new BigDecimal("150.00"), PaymentStatus.PENDING, null, LocalDateTime.now().plusMinutes(30), null,
+                null);
     }
 
     private PaymentResponse createPaymentResponseWithSuccess() {
         return new PaymentResponse(1L, "BK-123456", "Test Movie", LocalDateTime.now(), "Hall A",
-                new BigDecimal("150.00"), PaymentStatus.SUCCESS, LocalDateTime.now(), "****1234", null);
+                new BigDecimal("150.00"), PaymentStatus.SUCCESS, LocalDateTime.now(), null, "****1234", null);
     }
 
     private PaymentLiqPayDataResponse createLiqPayDataResponse() {

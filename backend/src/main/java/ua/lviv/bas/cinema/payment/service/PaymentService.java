@@ -55,6 +55,9 @@ public class PaymentService {
     @Value("${booking.session-too-close-minutes:30}")
     private int sessionTooCloseMinutes;
 
+    @Value("${payment.expiration-minutes:30}")
+    private int paymentExpirationMinutes;
+
     public PaymentService(PaymentRepository paymentRepository, BookingRepository bookingRepository,
             NumberGeneratorService numberGenerator, PaymentSuccessOrchestrator paymentSuccessOrchestrator,
             AuditService auditService, EmailService emailService, DateTimeFormatterService dateTimeFormatter,
@@ -237,10 +240,14 @@ public class PaymentService {
 
     private PaymentResponse buildPaymentResponse(Payment payment) {
         var booking = payment.getBooking();
+        var expiresAt = payment.getCreatedDate() != null
+                ? payment.getCreatedDate().plusMinutes(paymentExpirationMinutes)
+                : null;
         return new PaymentResponse(payment.getId(), numberGenerator.generateBookingNumber(booking),
                 booking.getSession().getMovie().getTitle(), booking.getSession().getStartTime(),
                 booking.getSession().getHall().getName(), payment.getAmount(), payment.getStatus(),
-                payment.getPaymentTime(), payment.getLiqpaySenderCardMask(), payment.getLiqpayErrorDescription());
+                payment.getPaymentTime(), expiresAt, payment.getLiqpaySenderCardMask(),
+                payment.getLiqpayErrorDescription());
     }
 
     private void auditCreate(Payment payment, Booking booking) {

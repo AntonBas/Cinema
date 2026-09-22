@@ -11,6 +11,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import ua.lviv.bas.cinema.promotion.domain.Promotion;
+import ua.lviv.bas.cinema.promotion.domain.PromotionStatus;
 import ua.lviv.bas.cinema.promotion.domain.UserPromotion;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.promotion.dto.request.ClaimPromotionRequest;
@@ -76,7 +77,7 @@ public class PromotionServiceTest {
                 .build();
 
         promotionResponse = new PromotionResponse(PROMOTION_ID, PROMOTION_TITLE, "Summer special promotion",
-                BONUS_POINTS, START_DATE, END_DATE);
+                BONUS_POINTS, START_DATE, END_DATE, PromotionStatus.ACTIVE);
 
         createRequest = new PromotionRequest(PROMOTION_TITLE, "Summer special promotion", BONUS_POINTS, START_DATE,
                 END_DATE);
@@ -140,7 +141,7 @@ public class PromotionServiceTest {
         PromotionListProjection projection = createAdminProjection();
         Page<PromotionListProjection> page = new PageImpl<>(List.of(projection), pageable, 1);
         PromotionListResponse listResponse = new PromotionListResponse(PROMOTION_ID, PROMOTION_TITLE, BONUS_POINTS,
-                START_DATE, END_DATE);
+                START_DATE, END_DATE, PromotionStatus.ACTIVE);
 
         when(promotionRepository.findAllAdminProjections(eq(query), eq(pageable))).thenReturn(page);
         when(promotionMapper.toPromotionListResponse(projection)).thenReturn(listResponse);
@@ -157,7 +158,7 @@ public class PromotionServiceTest {
         PromotionListProjection projection = createAdminProjection();
         Page<PromotionListProjection> page = new PageImpl<>(List.of(projection), pageable, 1);
         PromotionListResponse listResponse = new PromotionListResponse(PROMOTION_ID, PROMOTION_TITLE, BONUS_POINTS,
-                START_DATE, END_DATE);
+                START_DATE, END_DATE, PromotionStatus.ACTIVE);
 
         when(promotionRepository.findAllAdminProjections(eq(null), eq(pageable))).thenReturn(page);
         when(promotionMapper.toPromotionListResponse(projection)).thenReturn(listResponse);
@@ -220,7 +221,7 @@ public class PromotionServiceTest {
                 .description("Updated description").bonusPoints(200).startDate(START_DATE).endDate(END_DATE).build();
 
         PromotionResponse updatedResponse = new PromotionResponse(PROMOTION_ID, "Updated Title", "Updated description",
-                200, START_DATE, END_DATE);
+                200, START_DATE, END_DATE, PromotionStatus.ACTIVE);
 
         when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(promotion));
         when(promotionRepository.save(promotion)).thenReturn(updatedPromotion);

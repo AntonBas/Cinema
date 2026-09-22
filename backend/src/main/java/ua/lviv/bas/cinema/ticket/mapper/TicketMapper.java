@@ -19,6 +19,7 @@ public interface TicketMapper {
     @Mapping(target = "row", source = "seatReservation.seat.row")
     @Mapping(target = "seatNumber", source = "seatReservation.seat.number")
     @Mapping(target = "qrCodeUrl", ignore = true)
+    @Mapping(target = "refundable", ignore = true)
     TicketResponse toTicketResponse(Ticket ticket);
 
     @Mapping(target = "ticketType", source = "ticketType.displayName")

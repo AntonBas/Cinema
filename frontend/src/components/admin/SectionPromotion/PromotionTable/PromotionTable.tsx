@@ -1,7 +1,7 @@
 import React from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui";
-import type { PromotionListResponse } from "@/types/promotion";
+import type { PromotionListResponse, PromotionStatus } from "@/types/promotion";
 import { safeFormatDate } from "@/utils/dateUtils";
 import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
 import { EmptyState } from "@/components/admin/shared/EmptyState/EmptyState";
@@ -14,40 +14,25 @@ interface PromotionTableProps {
   onDelete: (promotionId: number, title: string) => void;
 }
 
-const getPromotionStatus = (promotion: PromotionListResponse): string => {
-  const now = new Date();
-  const startDate = promotion.startDate ? new Date(promotion.startDate) : null;
-  const endDate = promotion.endDate ? new Date(promotion.endDate) : null;
-
-  if (!startDate && !endDate) return "active";
-  if (startDate && now < startDate) return "upcoming";
-  if (endDate && now > endDate) return "expired";
-  return "active";
-};
-
-const getStatusDisplay = (status: string): string => {
+const getStatusDisplay = (status: PromotionStatus): string => {
   switch (status) {
-    case "active":
+    case "ACTIVE":
       return "Active";
-    case "upcoming":
+    case "UPCOMING":
       return "Upcoming";
-    case "expired":
+    case "EXPIRED":
       return "Expired";
-    default:
-      return status;
   }
 };
 
-const getStatusVariant = (status: string) => {
+const getStatusVariant = (status: PromotionStatus) => {
   switch (status) {
-    case "active":
+    case "ACTIVE":
       return "success";
-    case "upcoming":
+    case "UPCOMING":
       return "warning";
-    case "expired":
+    case "EXPIRED":
       return "error";
-    default:
-      return "info";
   }
 };
 
@@ -87,7 +72,7 @@ const PromotionTable: React.FC<PromotionTableProps> = ({
           </thead>
           <tbody>
             {promotions.map((promotion) => {
-              const status = getPromotionStatus(promotion);
+              const status = promotion.status;
 
               return (
                 <tr key={promotion.id}>

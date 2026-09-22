@@ -27,6 +27,7 @@ export interface BonusBalanceResponse {
   maxUsablePoints: number;
   minRedemptionValue: string;
   maxRedemptionValue: string;
+  maxDiscountPercentage: string;
 }
 
 export interface BonusRulesResponse {

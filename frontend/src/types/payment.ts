@@ -32,7 +32,8 @@ export interface PaymentResponse {
   hallName: string;
   finalAmount: string;
   status: PaymentStatus;
-  paymentTime: string;
+  paymentTime: string | null;
+  expiresAt: string | null;
   senderCardMask: string;
   errorDescription?: string;
 }

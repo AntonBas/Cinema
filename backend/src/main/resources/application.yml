@@ -118,7 +118,7 @@ booking:
   max-seats-per-booking: 10
 
 payment:
-  expiration-minutes: 15
+  expiration-minutes: 30
   liqpay:
     public_key: ${LIQPAY_PUBLIC_KEY}
     private_key: ${LIQPAY_PRIVATE_KEY}

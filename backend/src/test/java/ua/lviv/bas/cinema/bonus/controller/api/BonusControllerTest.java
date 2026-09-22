@@ -40,7 +40,8 @@ public class BonusControllerTest {
         Long userId = 1L;
 
         BonusBalanceResponse balanceResponse = new BonusBalanceResponse(250, new BigDecimal("1.00"),
-                new BigDecimal("250.00"), 100, 1000, new BigDecimal("100.00"), new BigDecimal("1000.00"));
+                new BigDecimal("250.00"), 100, 1000, new BigDecimal("100.00"), new BigDecimal("1000.00"),
+                new BigDecimal("0.5"));
 
         when(bonusQueryService.getBalance(userId)).thenReturn(balanceResponse);
 

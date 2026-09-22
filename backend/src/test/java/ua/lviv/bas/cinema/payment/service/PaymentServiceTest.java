@@ -76,10 +76,12 @@ public class PaymentServiceTest {
     private static final Long PAYMENT_ID = 3L;
     private static final BigDecimal AMOUNT = new BigDecimal("200.00");
     private static final int SESSION_TOO_CLOSE_MINUTES = 30;
+    private static final int PAYMENT_EXPIRATION_MINUTES = 30;
 
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(paymentService, "sessionTooCloseMinutes", SESSION_TOO_CLOSE_MINUTES);
+        ReflectionTestUtils.setField(paymentService, "paymentExpirationMinutes", PAYMENT_EXPIRATION_MINUTES);
 
         testUser = User.builder().id(USER_ID).email("test@example.com").build();
 
@@ -97,6 +99,7 @@ public class PaymentServiceTest {
 
         testPayment = Payment.builder().id(PAYMENT_ID).booking(testBooking).amount(AMOUNT).status(PaymentStatus.PENDING)
                 .liqpayOrderId("ORD_TEST123456789").build();
+        testPayment.setCreatedDate(LocalDateTime.now());
 
         createRequest = new PaymentCreateRequest(BOOKING_PUBLIC_ID);
 
@@ -123,6 +126,8 @@ public class PaymentServiceTest {
         assertThat(response.hallName()).isEqualTo("Hall A");
         assertThat(response.finalAmount()).isEqualTo(AMOUNT);
         assertThat(response.status()).isEqualTo(PaymentStatus.PENDING);
+        assertThat(response.expiresAt())
+                .isEqualTo(testPayment.getCreatedDate().plusMinutes(PAYMENT_EXPIRATION_MINUTES));
 
         verify(paymentRepository).save(any(Payment.class));
     }

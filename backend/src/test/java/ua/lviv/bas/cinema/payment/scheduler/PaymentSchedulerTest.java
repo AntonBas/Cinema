@@ -72,6 +72,7 @@ class PaymentSchedulerTest {
     @BeforeEach
     void setUp() {
         testSession = Session.builder().id(SESSION_ID).build();
+        ReflectionTestUtils.setField(paymentScheduler, "paymentExpirationMinutes", 30);
         ReflectionTestUtils.setField(paymentScheduler, "processingTimeoutMinutes", 15);
         ReflectionTestUtils.setField(paymentScheduler, "orchestrationStuckTimeoutMinutes", 15);
     }

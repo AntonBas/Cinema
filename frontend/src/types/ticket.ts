@@ -18,6 +18,7 @@ export interface TicketResponse {
   hallName: string;
   row?: number;
   seatNumber?: number;
+  refundable: boolean;
 }
 
 export interface TicketCashierResponse {

@@ -7,6 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
 import ua.lviv.bas.cinema.user.domain.User;
+import ua.lviv.bas.cinema.promotion.domain.PromotionStatus;
 import ua.lviv.bas.cinema.promotion.dto.request.ClaimPromotionRequest;
 import ua.lviv.bas.cinema.promotion.dto.response.PromotionResponse;
 import ua.lviv.bas.cinema.exception.domain.financial.promotion.AlreadyClaimedException;
@@ -54,7 +55,7 @@ public class PromotionControllerTest {
     private PromotionResponse createPromotionResponse() {
         Integer BONUS_POINTS = 100;
         return new PromotionResponse(PROMOTION_ID, TITLE, "Description", BONUS_POINTS, LocalDate.now().minusDays(1),
-                LocalDate.now().plusDays(5));
+                LocalDate.now().plusDays(5), PromotionStatus.ACTIVE);
     }
 
     @Test

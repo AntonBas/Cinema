@@ -42,10 +42,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
   onViewDetails,
   onRequestRefund,
 }) => {
-  const sessionDate = new Date(ticket.sessionTime);
-  const hoursUntilSession =
-    (sessionDate.getTime() - Date.now()) / (1000 * 60 * 60);
-  const canRefund = ticket.status === "ACTIVE" && hoursUntilSession > 24;
+  const canRefund = ticket.refundable;
 
   if (viewMode === "list") {
     return (

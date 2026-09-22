@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.promotion.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import ua.lviv.bas.cinema.promotion.domain.PromotionStatus;
 
 import java.time.LocalDate;
 
@@ -19,6 +20,9 @@ public record PromotionListResponse(
         LocalDate startDate,
 
         @Schema(description = "End date of the promotion", example = "2024-07-10")
-        LocalDate endDate
+        LocalDate endDate,
+
+        @Schema(description = "Current promotion status relative to today", example = "ACTIVE")
+        PromotionStatus status
 ) {
 }

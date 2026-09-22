@@ -6,6 +6,7 @@ import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.promotion.domain.Promotion;
+import ua.lviv.bas.cinema.promotion.domain.PromotionStatus;
 import ua.lviv.bas.cinema.promotion.dto.request.PromotionRequest;
 import ua.lviv.bas.cinema.promotion.repository.projection.PromotionListProjection;
 import ua.lviv.bas.cinema.promotion.repository.projection.PromotionResponseProjection;
@@ -39,6 +40,7 @@ public class PromotionMapperTest {
         assertThat(response.bonusPoints()).isEqualTo(500);
         assertThat(response.startDate()).isEqualTo(LocalDate.of(2024, 6, 1));
         assertThat(response.endDate()).isEqualTo(LocalDate.of(2024, 6, 30));
+        assertThat(response.status()).isEqualTo(PromotionStatus.EXPIRED);
     }
 
     @Test
@@ -58,6 +60,7 @@ public class PromotionMapperTest {
         assertThat(response.bonusPoints()).isEqualTo(300);
         assertThat(response.startDate()).isEqualTo(LocalDate.of(2024, 7, 1));
         assertThat(response.endDate()).isEqualTo(LocalDate.of(2024, 7, 31));
+        assertThat(response.status()).isEqualTo(PromotionStatus.EXPIRED);
     }
 
     @Test
@@ -124,6 +127,7 @@ public class PromotionMapperTest {
         assertThat(response.bonusPoints()).isEqualTo(250);
         assertThat(response.startDate()).isEqualTo(LocalDate.of(2024, 10, 1));
         assertThat(response.endDate()).isEqualTo(LocalDate.of(2024, 10, 31));
+        assertThat(response.status()).isEqualTo(PromotionStatus.EXPIRED);
     }
 
     @Test

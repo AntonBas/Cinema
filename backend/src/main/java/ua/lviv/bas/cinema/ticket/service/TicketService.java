@@ -17,6 +17,7 @@ import ua.lviv.bas.cinema.audit.domain.AuditAction;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.refund.domain.Refund;
+import ua.lviv.bas.cinema.refund.service.RefundCalculator;
 import ua.lviv.bas.cinema.booking.domain.SeatReservation;
 import ua.lviv.bas.cinema.booking.domain.status.ReservationStatus;
 import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
@@ -46,6 +47,7 @@ public class TicketService {
     private final TicketRepository ticketRepository;
     private final TicketSpecification ticketSpecification;
     private final TicketMapper ticketMapper;
+    private final RefundCalculator refundCalculator;
     private final QRCodeService qrCodeService;
     private final NumberGeneratorService numberGenerator;
     private final AuditService auditService;
@@ -154,9 +156,10 @@ public class TicketService {
     private TicketResponse toTicketResponse(Ticket ticket) {
         var response = ticketMapper.toTicketResponse(ticket);
         var qrCodeUrl = "/api/tickets/" + ticket.getUniqueCode() + "/qr";
+        var refundable = refundCalculator.validate(ticket) == null;
         return new TicketResponse(response.id(), response.ticketCode(), qrCodeUrl, response.status(),
                 response.purchaseTime(), response.price(), response.ticketType(), response.movieTitle(),
-                response.sessionTime(), response.hallName(), response.row(), response.seatNumber());
+                response.sessionTime(), response.hallName(), response.row(), response.seatNumber(), refundable);
     }
 
     private void validateForEntry(Ticket ticket) {

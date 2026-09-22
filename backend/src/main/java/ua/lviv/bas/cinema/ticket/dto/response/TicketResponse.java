@@ -42,6 +42,9 @@ public record TicketResponse(
         Integer row,
 
         @Schema(description = "Seat number", example = "12")
-        Integer seatNumber
+        Integer seatNumber,
+
+        @Schema(description = "Whether this ticket is currently eligible for refund", example = "true")
+        Boolean refundable
 ) {
 }

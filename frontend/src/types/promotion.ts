@@ -10,6 +10,8 @@ export interface ClaimPromotionRequest {
   promotionId: number;
 }
 
+export type PromotionStatus = "UPCOMING" | "ACTIVE" | "EXPIRED";
+
 export interface PromotionResponse {
   id: number;
   title: string;
@@ -17,6 +19,7 @@ export interface PromotionResponse {
   bonusPoints: number;
   startDate?: string;
   endDate?: string;
+  status: PromotionStatus;
 }
 
 export interface PromotionListResponse {
@@ -25,4 +28,5 @@ export interface PromotionListResponse {
   bonusPoints: number;
   startDate?: string;
   endDate?: string;
+  status: PromotionStatus;
 }

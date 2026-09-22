@@ -14,6 +14,7 @@ import ua.lviv.bas.cinema.booking.domain.SeatReservation;
 import ua.lviv.bas.cinema.cinema.domain.Seat;
 import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.refund.domain.Refund;
+import ua.lviv.bas.cinema.refund.service.RefundCalculator;
 import ua.lviv.bas.cinema.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.cinema.domain.Session;
@@ -51,6 +52,8 @@ public class TicketServiceTest {
     private TicketRepository ticketRepository;
     @Mock
     private TicketMapper ticketMapper;
+    @Mock
+    private RefundCalculator refundCalculator;
     @Mock
     private AuditService auditService;
     @Mock
@@ -245,10 +248,11 @@ public class TicketServiceTest {
         void getTicketShouldSucceed() {
             TicketResponse mockResponse = new TicketResponse(1L, TICKET_CODE, "/qr", TicketStatus.ACTIVE,
                     LocalDateTime.now(), BigDecimal.TEN, "Standard", "Test Movie",
-                    LocalDateTime.now(), "Hall A", 5, 10);
+                    LocalDateTime.now(), "Hall A", 5, 10, null);
 
             when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
             when(ticketMapper.toTicketResponse(testTicket)).thenReturn(mockResponse);
+            when(refundCalculator.validate(testTicket)).thenReturn(null);
 
             var result = ticketService.getTicket(TICKET_CODE, testUser);
 

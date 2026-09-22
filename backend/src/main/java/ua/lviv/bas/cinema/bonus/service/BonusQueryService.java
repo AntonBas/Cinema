@@ -110,7 +110,7 @@ public class BonusQueryService {
         BigDecimal maxValue = calculateValue(pointValue, maxPoints);
 
         return new BonusBalanceResponse(card.getPointsBalance(), pointValue, balanceValue, minPoints, maxPoints,
-                minValue, maxValue);
+                minValue, maxValue, bonusProperties.getMaxDiscountPercentage());
     }
 
     private BigDecimal calculateValue(BigDecimal pointValue, Integer points) {

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import type { PaymentResponse } from "@/types/payment";
 import { PaymentStatusDisplay } from "@/types/payment";
+import { parseServerUtcInstant } from "@/utils/dateUtils";
 import styles from "./PaymentPage.module.css";
 
 interface BookingData {
@@ -97,9 +98,8 @@ export const PaymentPage: React.FC = () => {
             ) {
               stopPolling();
             }
-            if (payment.paymentTime) {
-              const createdAt = new Date(payment.paymentTime);
-              const expiresAt = new Date(createdAt.getTime() + 30 * 60000);
+            if (payment.expiresAt) {
+              const expiresAt = parseServerUtcInstant(payment.expiresAt);
               const diffMs = expiresAt.getTime() - Date.now();
               const diffMinutes = Math.floor(diffMs / (1000 * 60));
               setPaymentTimeLeft(

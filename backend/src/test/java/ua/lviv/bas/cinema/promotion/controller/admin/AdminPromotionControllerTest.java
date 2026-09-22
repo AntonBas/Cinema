@@ -7,6 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
 import ua.lviv.bas.cinema.common.PageResponse;
+import ua.lviv.bas.cinema.promotion.domain.PromotionStatus;
 import ua.lviv.bas.cinema.promotion.dto.request.PromotionRequest;
 import ua.lviv.bas.cinema.promotion.dto.response.PromotionListResponse;
 import ua.lviv.bas.cinema.promotion.dto.response.PromotionResponse;
@@ -36,12 +37,12 @@ public class AdminPromotionControllerTest {
 
     private PromotionResponse createPromotionResponse() {
         return new PromotionResponse(PROMOTION_ID, TITLE, "Description", BONUS_POINTS, LocalDate.now().plusDays(1),
-                LocalDate.now().plusDays(10));
+                LocalDate.now().plusDays(10), PromotionStatus.UPCOMING);
     }
 
     private PromotionListResponse createPromotionListResponse() {
         return new PromotionListResponse(PROMOTION_ID, TITLE, BONUS_POINTS, LocalDate.now().plusDays(1),
-                LocalDate.now().plusDays(10));
+                LocalDate.now().plusDays(10), PromotionStatus.UPCOMING);
     }
 
     @Test
@@ -136,7 +137,7 @@ public class AdminPromotionControllerTest {
         PromotionRequest request = new PromotionRequest("Updated Title", "Updated Description", 200,
                 LocalDate.now().plusDays(1), LocalDate.now().plusDays(10));
         PromotionResponse response = new PromotionResponse(PROMOTION_ID, "Updated Title", "Updated Description", 200,
-                LocalDate.now().plusDays(1), LocalDate.now().plusDays(10));
+                LocalDate.now().plusDays(1), LocalDate.now().plusDays(10), PromotionStatus.UPCOMING);
 
         when(promotionService.updatePromotion(eq(PROMOTION_ID), any(PromotionRequest.class))).thenReturn(response);
 

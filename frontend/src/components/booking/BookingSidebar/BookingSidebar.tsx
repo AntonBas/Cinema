@@ -49,11 +49,13 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
   const bonusBalance = balance?.pointsBalance || 0;
   const minUsablePoints = balance?.minUsablePoints || 0;
   const maxUsablePoints = balance?.maxUsablePoints ?? Number.POSITIVE_INFINITY;
+  const pointValue = balance ? Number(balance.pointValue) : 1;
+  const maxDiscountPercentage = balance ? Number(balance.maxDiscountPercentage) : 0.5;
 
   const maxAvailablePoints = Math.min(
     bonusBalance,
     maxUsablePoints,
-    Math.floor(totalPrice * 0.5),
+    Math.floor((totalPrice * maxDiscountPercentage) / pointValue),
   );
 
   const handleBonusPointsChange = (points: number) => {
@@ -68,7 +70,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
     onBooking(bonusPointsToUse);
   };
 
-  const discount = bonusPointsToUse;
+  const discount = bonusPointsToUse * pointValue;
   const finalPrice = totalPrice - discount;
 
   if (!selectedSeats.length) {
@@ -83,10 +85,10 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
   }
 
   const bonusRules = [
-    `• 1 bonus point = 1₴ discount`,
+    `• 1 bonus point = ${pointValue}₴ discount`,
     `• Minimum points to use: ${minUsablePoints}`,
-    `• Cannot cover more than 50% of total price`,
-    `• Maximum usable: ${maxAvailablePoints} points (${maxAvailablePoints.toFixed(2)}₴)`,
+    `• Cannot cover more than ${maxDiscountPercentage * 100}% of total price`,
+    `• Maximum usable: ${maxAvailablePoints} points (${(maxAvailablePoints * pointValue).toFixed(2)}₴)`,
   ].join("\n");
 
   return (

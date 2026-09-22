@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
 import ua.lviv.bas.cinema.common.UniquenessValidator;
 import ua.lviv.bas.cinema.promotion.domain.Promotion;
+import ua.lviv.bas.cinema.promotion.domain.PromotionStatus;
 import ua.lviv.bas.cinema.promotion.domain.UserPromotion;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.promotion.dto.request.ClaimPromotionRequest;
@@ -30,7 +31,6 @@ import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -176,14 +176,7 @@ public class PromotionService {
     }
 
     private boolean isPromotionActive(Promotion promotion) {
-        LocalDate now = LocalDate.now();
-        LocalDate start = promotion.getStartDate();
-        LocalDate end = promotion.getEndDate();
-
-        boolean afterStart = (start == null) || !now.isBefore(start);
-        boolean beforeEnd = (end == null) || !now.isAfter(end);
-
-        return afterStart && beforeEnd;
+        return PromotionStatus.of(promotion.getStartDate(), promotion.getEndDate()) == PromotionStatus.ACTIVE;
     }
 
     private void auditCreate(Promotion promotion) {

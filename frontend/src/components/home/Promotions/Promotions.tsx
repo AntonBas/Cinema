@@ -23,11 +23,6 @@ const formatDate = (dateString?: string): string => {
   });
 };
 
-const isExpired = (endDate?: string): boolean => {
-  if (!endDate) return false;
-  return new Date(endDate) < new Date();
-};
-
 const getInitialItemsToShow = () => {
   return window.innerWidth <= 768 ? 1 : 3;
 };
@@ -134,7 +129,8 @@ export const Promotions: React.FC<PromotionsProps> = ({
               className={`${styles.promotionsGrid} ${!showCarousel ? styles.promotionsGridCentered : ""}`}
             >
               {visiblePromotions.map((promo) => {
-                const expired = isExpired(promo.endDate);
+                const expired = promo.status === "EXPIRED";
+                const claimable = promo.status === "ACTIVE";
                 const claimed = isClaimed(promo.id);
                 const isClaiming = claimingId === promo.id;
 
@@ -168,11 +164,17 @@ export const Promotions: React.FC<PromotionsProps> = ({
                           variant={claimed ? "success" : "primary"}
                           size="medium"
                           onClick={() => handleClaim(promo.id, promo.title)}
-                          disabled={expired || claimed || isClaiming}
+                          disabled={!claimable || claimed || isClaiming}
                           loading={isClaiming}
                         >
                           {claimed && <Check size={16} />}
-                          {claimed ? "Claimed" : expired ? "Expired" : "Claim"}
+                          {claimed
+                            ? "Claimed"
+                            : expired
+                              ? "Expired"
+                              : claimable
+                                ? "Claim"
+                                : "Coming Soon"}
                         </Button>
                       )}
                       {!isAuthenticated && (

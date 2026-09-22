@@ -53,6 +53,7 @@ public class BonusQueryServiceTest {
 
         when(bonusCardRepository.findByUserId(USER_ID)).thenReturn(Optional.of(card));
         when(bonusProperties.getPointValue()).thenReturn(new BigDecimal("1.00"));
+        when(bonusProperties.getMaxDiscountPercentage()).thenReturn(new BigDecimal("0.5"));
         when(bonusRulesRepository.findByBonusTypeAndActiveTrue(SPEND)).thenReturn(Optional.of(spendRule));
 
         var result = bonusQueryService.getBalance(USER_ID);
@@ -63,6 +64,7 @@ public class BonusQueryServiceTest {
         assertThat(result.balanceValue()).isEqualTo(new BigDecimal("100.00"));
         assertThat(result.minUsablePoints()).isEqualTo(10);
         assertThat(result.maxUsablePoints()).isEqualTo(50);
+        assertThat(result.maxDiscountPercentage()).isEqualTo(new BigDecimal("0.5"));
     }
 
     @Test
