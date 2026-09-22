@@ -51,6 +51,8 @@
     inset 0 0 50px rgba(0, 0, 0, 0.3),
     0 10px 30px rgba(0, 0, 0, 0.3);
   position: relative;
+  display: flex;
+  justify-content: center;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   margin-bottom: 2rem;
@@ -58,7 +60,8 @@
 
 .canvas {
   position: relative;
-  margin: 0 auto;
+  flex-shrink: 0;
+  text-align: left;
 }
 
 .seatButton {
