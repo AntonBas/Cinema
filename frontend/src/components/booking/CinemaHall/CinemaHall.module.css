@@ -7,7 +7,7 @@
 }
 
 .screenArea {
-  margin-bottom: 2rem;
+  margin-bottom: 0.75rem;
   position: relative;
 }
 
@@ -15,16 +15,16 @@
   background: var(--color-bg-screen);
   color: var(--color-primary);
   width: 100%;
-  padding: 1.25rem 2rem;
-  margin: 0 auto 0.75rem auto;
-  border-radius: 50% 50% 6px 6px / 20px 20px 6px 6px;
+  padding: 0.4rem 1rem;
+  margin: 0 auto 0.25rem auto;
+  border-radius: 50% 50% 4px 4px / 12px 12px 4px 4px;
   font-weight: 800;
-  font-size: 1.5rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 4px;
   box-shadow:
-    0 10px 40px rgba(var(--color-primary-rgb), 0.35),
-    inset 0 0 60px rgba(var(--color-primary-rgb), 0.12);
+    0 6px 24px rgba(var(--color-primary-rgb), 0.35),
+    inset 0 0 30px rgba(var(--color-primary-rgb), 0.12);
   position: relative;
   border: 2px solid rgba(var(--color-primary-rgb), 0.35);
   text-shadow: 0 0 10px rgba(var(--color-primary-rgb), 0.5);
@@ -32,7 +32,7 @@
 }
 
 .screenReflection {
-  height: 24px;
+  height: 10px;
   width: 92%;
   background: linear-gradient(
     180deg,
@@ -46,13 +46,14 @@
 
 .seatsLayout {
   background: linear-gradient(145deg, var(--color-panel-gradient-start) 0%, var(--color-panel-gradient-end) 100%);
-  padding: 2rem 1rem;
+  padding: 1rem 0.75rem;
+  border-radius: var(--radius-md);
   border: 1px solid var(--color-border-light);
   box-shadow:
     inset 0 0 50px rgba(0, 0, 0, 0.3),
     0 10px 30px rgba(0, 0, 0, 0.3);
   position: relative;
-  margin-bottom: 2rem;
+  margin-bottom: 0.75rem;
 }
 
 .canvasViewport {
@@ -193,29 +194,15 @@
 }
 
 .legend {
-  background: linear-gradient(145deg, var(--color-panel-gradient-start) 0%, var(--color-panel-gradient-end) 100%);
-  border-radius: var(--radius-md);
-  padding: var(--space-6) var(--space-8);
-  border: 1px solid var(--color-border-light);
-  width: 100%;
-  max-width: 400px;
-  margin: 0 auto;
   position: relative;
   z-index: 1;
-}
-
-.legendTitle {
-  color: var(--color-text-primary);
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: var(--space-4);
-  text-align: center;
 }
 
 .legendGrid {
   display: flex;
   justify-content: center;
-  gap: 24px;
+  flex-wrap: wrap;
+  gap: 8px 20px;
 }
 
 .legendItem {
@@ -228,8 +215,8 @@
 }
 
 .legendColor {
-  width: 24px;
-  height: 24px;
+  width: 16px;
+  height: 16px;
   border-radius: var(--radius-sm);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   border: 2px solid rgba(255, 255, 255, 0.2);
@@ -263,97 +250,16 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .screen {
-    padding: var(--space-4) var(--space-6);
-    font-size: 1.1rem;
     letter-spacing: 2px;
   }
 
-  .screenReflection {
-    height: 14px;
-  }
-
-  .legend {
-    padding: var(--space-4) var(--space-5);
-    max-width: 350px;
-  }
-
-  .legendTitle {
-    font-size: 0.9rem;
-    margin-bottom: var(--space-3);
-  }
-
-  .legendGrid {
-    gap: 16px;
+  .seatsLayout {
+    padding: var(--space-2) var(--space-1);
   }
 
   .legendItem {
     font-size: 0.75rem;
-  }
-
-  .legendColor {
-    width: 20px;
-    height: 20px;
-  }
-
-  .seatsLayout {
-    padding: var(--space-4) var(--space-1);
-  }
-}
-
-@media (max-width: 480px) {
-  .screen {
-    padding: var(--space-3) var(--space-4);
-    font-size: 0.9rem;
-    letter-spacing: 1px;
-  }
-
-  .screenReflection {
-    height: 10px;
-  }
-
-  .legend {
-    padding: var(--space-3) var(--space-3);
-    max-width: 100%;
-  }
-
-  .legendTitle {
-    font-size: 0.8rem;
-    margin-bottom: var(--space-2);
-  }
-
-  .legendGrid {
-    gap: 8px;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .legendItem {
-    font-size: 0.65rem;
-    gap: var(--space-1);
-  }
-
-  .legendColor {
-    width: 16px;
-    height: 16px;
-  }
-
-  .seatsLayout {
-    padding: var(--space-3) var(--space-1);
-  }
-}
-
-@media (max-width: 380px) {
-  .legendGrid {
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .legendItem {
-    width: 100%;
-    justify-content: center;
   }
 }

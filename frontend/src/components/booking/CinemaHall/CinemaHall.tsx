@@ -5,9 +5,12 @@ import styles from "./CinemaHall.module.css";
 import type { SeatInfo } from "@/types/seatReservation";
 import { CELL_WIDTH, CELL_HEIGHT } from "@/utils/hallLayoutGrid";
 import { useElementWidth } from "@/hooks/common/useElementWidth";
+import { useViewportHeight } from "@/hooks/common/useViewportHeight";
 
 const SEAT_INSET = 8;
-const TARGET_HALL_WIDTH = 640;
+const TARGET_HALL_WIDTH = 560;
+const HALL_CHROME_HEIGHT = 260;
+const MIN_CANVAS_HEIGHT = 200;
 
 interface CinemaHallProps {
   seats: SeatInfo[];
@@ -23,6 +26,7 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
   onSeatClick,
 }) => {
   const { ref: viewportRef, width: viewportWidth } = useElementWidth<HTMLDivElement>();
+  const viewportHeight = useViewportHeight();
 
   const canvasSize = useMemo(() => {
     const maxX = seats.reduce((max, seat) => Math.max(max, seat.x), 0);
@@ -33,11 +37,16 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
     };
   }, [seats]);
 
-  const compactScale = Math.min(1, TARGET_HALL_WIDTH / canvasSize.width);
+  const availableCanvasHeight = Math.max(MIN_CANVAS_HEIGHT, viewportHeight - HALL_CHROME_HEIGHT);
+  const compactScale = Math.min(
+    1,
+    TARGET_HALL_WIDTH / canvasSize.width,
+    availableCanvasHeight / canvasSize.height,
+  );
   const scale = viewportWidth > 0
     ? Math.min(compactScale, viewportWidth / canvasSize.width)
     : compactScale;
-  const hallWidth = Math.max(360, canvasSize.width * compactScale + 80);
+  const hallWidth = Math.max(360, canvasSize.width * compactScale + 48);
 
   const getSeatInfo = (seat: SeatInfo) => {
     const status = !seat.active
@@ -144,7 +153,6 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
       </div>
 
       <div className={styles.legend}>
-        <h4 className={styles.legendTitle}>Seat types:</h4>
         <div className={styles.legendGrid}>
           <div className={styles.legendItem}>
             <div className={`${styles.legendColor} ${styles.standard}`} />
