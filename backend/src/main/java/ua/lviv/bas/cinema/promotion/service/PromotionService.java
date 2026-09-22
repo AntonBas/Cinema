@@ -31,6 +31,7 @@ import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -78,7 +79,7 @@ public class PromotionService {
 
     public List<PromotionResponse> getAvailablePromotions(User user) {
         log.debug("Getting available promotions for user: {}", user != null ? user.getEmail() : "anonymous");
-        return promotionRepository.findAllActivePromotions().stream().map(promotionMapper::toPromotionResponse)
+        return promotionRepository.findAllActivePromotions(LocalDate.now()).stream().map(promotionMapper::toPromotionResponse)
                 .toList();
     }
 

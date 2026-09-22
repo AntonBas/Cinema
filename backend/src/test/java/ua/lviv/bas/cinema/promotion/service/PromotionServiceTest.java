@@ -192,7 +192,7 @@ public class PromotionServiceTest {
         PromotionResponseProjection projection = createResponseProjection();
         List<PromotionResponseProjection> projections = List.of(projection);
 
-        when(promotionRepository.findAllActivePromotions()).thenReturn(projections);
+        when(promotionRepository.findAllActivePromotions(any(LocalDate.class))).thenReturn(projections);
         when(promotionMapper.toPromotionResponse(projection)).thenReturn(promotionResponse);
 
         List<PromotionResponse> result = promotionService.getAvailablePromotions(user);

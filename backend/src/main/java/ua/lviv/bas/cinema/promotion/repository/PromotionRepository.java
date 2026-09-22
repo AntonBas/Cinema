@@ -11,6 +11,7 @@ import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.promotion.repository.projection.PromotionListProjection;
 import ua.lviv.bas.cinema.promotion.repository.projection.PromotionResponseProjection;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -56,9 +57,9 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
                 p.startDate as startDate,
                 p.endDate as endDate
             FROM Promotion p
-            WHERE (p.startDate IS NULL OR p.startDate <= CURRENT_DATE)
-              AND (p.endDate IS NULL OR p.endDate >= CURRENT_DATE)
+            WHERE (p.startDate IS NULL OR p.startDate <= :today)
+              AND (p.endDate IS NULL OR p.endDate >= :today)
             ORDER BY p.createdDate DESC
             """)
-    List<PromotionResponseProjection> findAllActivePromotions();
+    List<PromotionResponseProjection> findAllActivePromotions(@Param("today") LocalDate today);
 }
