@@ -1,7 +1,8 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { SeatType } from '@/types/seat';
 import { Modal } from '@/components/ui/Modal/Modal';
 import { Button } from '@/components/ui/Button/Button';
+import { ConfirmModal } from '@/components/ui/ConfirmModal/ConfirmModal';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import { useHallLayout, type DraftSeat } from '../HallLayoutContext';
@@ -81,6 +82,7 @@ export const HallLayoutModal: React.FC = () => {
 
     const showLoading = useDelayedLoading(loading);
     const draggedKeyRef = useRef<string | null>(null);
+    const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
     const occupiedCells = useMemo(() => {
         const cells = new Set<string>();
@@ -114,9 +116,15 @@ export const HallLayoutModal: React.FC = () => {
     if (!currentHall) return null;
 
     const handleClose = () => {
-        if (isDirty && !window.confirm('Discard unsaved layout changes?')) {
+        if (isDirty) {
+            setShowDiscardConfirm(true);
             return;
         }
+        closeLayout();
+    };
+
+    const handleConfirmDiscard = () => {
+        setShowDiscardConfirm(false);
         closeLayout();
     };
 
@@ -238,6 +246,17 @@ export const HallLayoutModal: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            <ConfirmModal
+                isOpen={showDiscardConfirm}
+                onConfirm={handleConfirmDiscard}
+                onCancel={() => setShowDiscardConfirm(false)}
+                title="Discard changes?"
+                message="You have unsaved layout changes. Are you sure you want to discard them?"
+                confirmText="Discard"
+                cancelText="Keep editing"
+                variant="error"
+            />
         </Modal>
     );
 };
