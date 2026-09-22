@@ -12,24 +12,12 @@ import styles from "./SessionsPage.module.css";
 
 const getTodayString = (): string => new Date().toISOString().split("T")[0];
 
-const extractUniqueDates = (sessions: SessionScheduleResponse[]): string[] => {
-  const dates = sessions.map((s) => s.startTime.split("T")[0]);
-  return [...new Set(dates)].sort();
-};
-
-const filterByDate = (
-  sessions: SessionScheduleResponse[],
-  date: string,
-): SessionScheduleResponse[] => {
-  return sessions.filter((s) => s.startTime.startsWith(date));
-};
-
 const SessionsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { loading, getSchedule } = useSession();
+  const { loading, getSchedule, getScheduleDates } = useSession();
 
-  const [allSessions, setAllSessions] = useState<SessionScheduleResponse[]>([]);
-  const [allSessionDates, setAllSessionDates] = useState<string[]>([]);
+  const [sessions, setSessions] = useState<SessionScheduleResponse[]>([]);
+  const [sessionDates, setSessionDates] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const today = useMemo(() => getTodayString(), []);
@@ -39,30 +27,49 @@ const SessionsPage: React.FC = () => {
   const selectedMovieId = movieIdParam ? parseInt(movieIdParam) : undefined;
 
   useEffect(() => {
+    let isCurrent = true;
+
+    const fetchSessionDates = async () => {
+      try {
+        const dates = await getScheduleDates(selectedMovieId);
+        if (isCurrent) setSessionDates(dates || []);
+      } catch {
+        if (isCurrent) setSessionDates([]);
+      }
+    };
+
+    fetchSessionDates();
+    return () => {
+      isCurrent = false;
+    };
+  }, [selectedMovieId, getScheduleDates]);
+
+  useEffect(() => {
+    let isCurrent = true;
+
     const fetchSessions = async () => {
       setError(null);
 
       try {
-        const data = await getSchedule({ movieId: selectedMovieId });
-        const sessionList = data || [];
-        setAllSessions(sessionList);
-        setAllSessionDates(extractUniqueDates(sessionList));
+        const data = await getSchedule({
+          date: selectedDate,
+          movieId: selectedMovieId,
+        });
+        if (isCurrent) setSessions(data || []);
       } catch (err) {
+        if (!isCurrent) return;
         setError(
           err instanceof Error ? err.message : "Failed to load sessions",
         );
-        setAllSessions([]);
-        setAllSessionDates([]);
+        setSessions([]);
       }
     };
 
     fetchSessions();
-  }, [selectedMovieId, getSchedule]);
-
-  const sessions = useMemo(
-    () => filterByDate(allSessions, selectedDate),
-    [allSessions, selectedDate],
-  );
+    return () => {
+      isCurrent = false;
+    };
+  }, [selectedDate, selectedMovieId, getSchedule]);
 
   const handleDateChange = useCallback(
     (date: string) => {
@@ -114,7 +121,7 @@ const SessionsPage: React.FC = () => {
           <DateFilter
             selectedDate={selectedDate}
             onDateChange={handleDateChange}
-            sessionDates={allSessionDates}
+            sessionDates={sessionDates}
           />
           <MovieFilter
             selectedMovieId={selectedMovieId}

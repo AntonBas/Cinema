@@ -79,7 +79,8 @@ public class SessionService {
     }
 
     public List<SessionScheduleResponse> getSchedule(String searchTerm, LocalDate date, Long movieId) {
-        var schedule = sessionScheduleQueryService.getScheduleWithoutAvailability(searchTerm, date, movieId);
+        var scheduleDate = date != null ? date : LocalDate.now();
+        var schedule = sessionScheduleQueryService.getScheduleWithoutAvailability(searchTerm, scheduleDate, movieId);
 
         if (schedule.isEmpty()) {
             return schedule;
@@ -91,6 +92,10 @@ public class SessionService {
         return schedule.stream()
                 .map(response -> response.withAvailableSeats(availableSeats.getOrDefault(response.id(), 0)))
                 .toList();
+    }
+
+    public List<LocalDate> getScheduleDates(Long movieId) {
+        return sessionRepository.findScheduleDates(LocalDateTime.now(), movieId);
     }
 
     @Cacheable(value = "sessions", key = "'admin:' + #hallId + ':' + #movieTitle + ':' + #status + ':' + #dateFrom + ':' + #dateTo + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort")

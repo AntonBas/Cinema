@@ -28,16 +28,19 @@ interface PublicSessionParams {
 export const useSession = () => {
   const adminSessionsApi = useApi<PageResponse<SessionAdminResponse>>();
   const publicSessionsApi = useApi<SessionScheduleResponse[]>();
+  const scheduleDatesApi = useApi<string[]>();
   const sessionApiHook = useApi<SessionResponse>();
   const mutationApi = useApi<SessionResponse | void>();
 
   const adminSessionsApiRef = useRef(adminSessionsApi);
   const publicSessionsApiRef = useRef(publicSessionsApi);
+  const scheduleDatesApiRef = useRef(scheduleDatesApi);
   const sessionApiRef = useRef(sessionApiHook);
   const mutationApiRef = useRef(mutationApi);
 
   adminSessionsApiRef.current = adminSessionsApi;
   publicSessionsApiRef.current = publicSessionsApi;
+  scheduleDatesApiRef.current = scheduleDatesApi;
   sessionApiRef.current = sessionApiHook;
   mutationApiRef.current = mutationApi;
 
@@ -58,6 +61,12 @@ export const useSession = () => {
   const getSchedule = useCallback(async (params?: PublicSessionParams) => {
     return publicSessionsApiRef.current.execute(() =>
       sessionApi.public.getSchedule(params),
+    );
+  }, []);
+
+  const getScheduleDates = useCallback(async (movieId?: number) => {
+    return scheduleDatesApiRef.current.execute(() =>
+      sessionApi.public.getScheduleDates({ movieId }),
     );
   }, []);
 
@@ -105,6 +114,7 @@ export const useSession = () => {
     mutationError: mutationApi.error,
     getAdminSessions,
     getSchedule,
+    getScheduleDates,
     getById,
     create,
     update,

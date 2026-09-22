@@ -68,6 +68,17 @@ public class SessionControllerTest {
     }
 
     @Test
+    void getScheduleDatesShouldReturnDatesFromService() {
+        List<LocalDate> dates = List.of(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 3));
+        when(sessionService.getScheduleDates(7L)).thenReturn(dates);
+
+        ResponseEntity<List<LocalDate>> response = sessionController.getScheduleDates(7L);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).containsExactlyElementsOf(dates);
+    }
+
+    @Test
     void getScheduleWithDateShouldReturnFilteredSessions() {
         LocalDate date = LocalDate.of(2024, 1, 15);
         List<SessionScheduleResponse> sessionList = List.of(createSessionScheduleResponse());

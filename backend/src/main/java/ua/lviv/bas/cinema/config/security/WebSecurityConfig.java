@@ -67,6 +67,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/oauth2/**", "/login/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/movies/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/sessions").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/sessions/dates").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/sessions/*/seats").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/promotions").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/refunds/policy").permitAll()

@@ -47,5 +47,8 @@ export const sessionApi = {
       date?: string;
       movieId?: number;
     }) => api.get<SessionScheduleResponse[]>(BASE_URL, { params }),
+
+    getScheduleDates: (params?: { movieId?: number }) =>
+      api.get<string[]>(`${BASE_URL}/dates`, { params }),
   },
 };

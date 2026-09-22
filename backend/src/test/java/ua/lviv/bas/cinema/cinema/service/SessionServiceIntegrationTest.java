@@ -67,15 +67,16 @@ class SessionServiceIntegrationTest {
             seatRepository.save(Seat.builder().row(1).number(i).x(0).y(0).hall(hall).build());
         }
 
+        var startTime = LocalDateTime.now().plusDays(1);
         var session = sessionRepository.save(Session.builder().movie(movie).hall(hall)
-                .startTime(LocalDateTime.now().plusDays(1)).basePrice(new BigDecimal("100.00")).build());
+                .startTime(startTime).basePrice(new BigDecimal("100.00")).build());
 
         var user = userRepository.save(buildUser());
         bookingRepository.save(buildBooking(user, session, BookingStatus.CONFIRMED, new BigDecimal("100.00")));
         bookingRepository.save(buildBooking(user, session, BookingStatus.CONFIRMED, new BigDecimal("150.00")));
         bookingRepository.save(buildBooking(user, session, BookingStatus.PENDING, new BigDecimal("999.00")));
 
-        var schedule = sessionService.getSchedule(null, null, movie.getId());
+        var schedule = sessionService.getSchedule(null, startTime.toLocalDate(), movie.getId());
         var scheduleEntry = schedule.stream().filter(s -> s.id().equals(session.getId())).findFirst().orElseThrow();
         assertThat(scheduleEntry.hallCapacity()).isEqualTo(5);
 
@@ -120,6 +121,22 @@ class SessionServiceIntegrationTest {
 
         assertThat(page.getContent()).extracting(SessionAdminResponse::id).containsExactly(expensive.getId(),
                 cheapSooner.getId(), cheapLater.getId());
+    }
+
+    @Test
+    void getScheduleDatesShouldReturnDistinctUpcomingScheduledDatesInOrder() {
+        var movie = movieRepository.save(buildMovie("ZZTEST Dates Movie", "zztest-dates-movie"));
+        var hall = cinemaHallRepository.save(CinemaHall.builder().name("ZZTEST Dates Hall").build());
+        var inTwoDays = LocalDate.now().plusDays(2);
+        var inFiveDays = LocalDate.now().plusDays(5);
+
+        saveSession(movie, hall, inFiveDays.atTime(18, 0), "100.00", CinemaSessionStatus.SCHEDULED);
+        saveSession(movie, hall, inTwoDays.atTime(12, 0), "100.00", CinemaSessionStatus.SCHEDULED);
+        saveSession(movie, hall, inTwoDays.atTime(20, 0), "100.00", CinemaSessionStatus.SCHEDULED);
+        saveSession(movie, hall, LocalDate.now().plusDays(3).atTime(15, 0), "100.00", CinemaSessionStatus.CANCELLED);
+        saveSession(movie, hall, LocalDate.now().minusDays(1).atTime(15, 0), "100.00", CinemaSessionStatus.COMPLETED);
+
+        assertThat(sessionService.getScheduleDates(movie.getId())).containsExactly(inTwoDays, inFiveDays);
     }
 
     @Test

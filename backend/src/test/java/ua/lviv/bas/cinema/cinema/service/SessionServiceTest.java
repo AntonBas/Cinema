@@ -256,22 +256,23 @@ public class SessionServiceTest {
 
     @Test
     void getScheduleWhenEmptyShouldReturnEmptyListWithoutQueryingSeats() {
-        when(sessionScheduleQueryService.getScheduleWithoutAvailability("term", null, MOVIE_ID))
+        LocalDate date = LocalDate.of(2026, 10, 1);
+        when(sessionScheduleQueryService.getScheduleWithoutAvailability("term", date, MOVIE_ID))
                 .thenReturn(List.of());
 
-        List<SessionScheduleResponse> result = sessionService.getSchedule("term", null, MOVIE_ID);
+        List<SessionScheduleResponse> result = sessionService.getSchedule("term", date, MOVIE_ID);
 
         assertThat(result).isEmpty();
         verify(seatReservationService, never()).getAvailableSeatsBatch(any());
     }
 
     @Test
-    void getScheduleShouldMergeAvailableSeatsIntoSchedule() {
+    void getScheduleWithoutDateShouldUseTodayAndMergeAvailableSeats() {
         SessionScheduleResponse schedule = new SessionScheduleResponse(SESSION_ID, null, null, null, BASE_PRICE, null,
                 MOVIE_ID, MOVIE_TITLE, null, null, null, HALL_ID, HALL_NAME, null);
         SessionScheduleResponse withSeats = schedule.withAvailableSeats(42);
 
-        when(sessionScheduleQueryService.getScheduleWithoutAvailability(null, null, null))
+        when(sessionScheduleQueryService.getScheduleWithoutAvailability(null, LocalDate.now(), null))
                 .thenReturn(List.of(schedule));
         when(seatReservationService.getAvailableSeatsBatch(List.of(SESSION_ID)))
                 .thenReturn(Map.of(SESSION_ID, 42));

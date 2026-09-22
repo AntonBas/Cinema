@@ -13,6 +13,7 @@ import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.cinema.repository.projection.SessionAdminProjection;
 import ua.lviv.bas.cinema.cinema.repository.projection.SessionScheduleProjection;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -48,6 +49,16 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
     @Query("UPDATE Session s SET s.status = :newStatus WHERE s.id IN :ids AND s.status = :fromStatus")
     int updateStatusForIds(@Param("ids") List<Long> ids, @Param("fromStatus") CinemaSessionStatus fromStatus,
                            @Param("newStatus") CinemaSessionStatus newStatus);
+
+    @Query("""
+            SELECT DISTINCT CAST(s.startTime AS LocalDate) AS sessionDate
+            FROM Session s
+            WHERE s.status = 'SCHEDULED'
+              AND s.startTime > :now
+              AND (:movieId IS NULL OR s.movie.id = :movieId)
+            ORDER BY sessionDate
+            """)
+    List<LocalDate> findScheduleDates(@Param("now") LocalDateTime now, @Param("movieId") Long movieId);
 
     @Query("SELECT COUNT(s) FROM Session s WHERE s.movie.id = :movieId")
     long countByMovieId(@Param("movieId") Long movieId);
