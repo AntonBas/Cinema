@@ -10,9 +10,9 @@ interface SidebarItem {
 }
 
 const SIDEBAR_ITEMS: SidebarItem[] = [
-  { id: "overview", label: "Overview", path: "/account" },
+  { id: "overview", label: "Profile", path: "/account" },
   { id: "tickets", label: "My Tickets", path: "/account/tickets" },
-  { id: "bonuses", label: "Bonuses", path: "/account/bonuses" },
+  { id: "bonuses", label: "Bonus", path: "/account/bonuses" },
   { id: "security", label: "Security", path: "/account/security" },
 ];
 

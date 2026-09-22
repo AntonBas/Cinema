@@ -98,7 +98,7 @@ const SessionsPage: React.FC = () => {
       <div className={styles.container}>
         <div className={styles.header}>
           <div>
-            <h1 className={styles.title}>Movie Sessions</h1>
+            <h1 className={styles.title}>Schedule</h1>
             <p className={styles.subtitle}>
               Browse available movie sessions and book your tickets
             </p>

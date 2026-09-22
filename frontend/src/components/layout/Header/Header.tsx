@@ -87,6 +87,18 @@ export const Header: React.FC = () => {
             </li>
           ))}
 
+          {isAuthenticated && (
+            <li>
+              <Link
+                to="/account/tickets"
+                className={isActiveLink("/account/tickets") ? styles.active : ""}
+                onClick={() => setIsDropdownOpen(false)}
+              >
+                My Tickets
+              </Link>
+            </li>
+          )}
+
           {isAuthenticated ? (
             <li className={styles.dropdown} ref={dropdownRef}>
               <button
@@ -187,6 +199,9 @@ export const Header: React.FC = () => {
                 </div>
                 <Link to="/account" onClick={closeMobileMenu}>
                   Profile
+                </Link>
+                <Link to="/account/tickets" onClick={closeMobileMenu}>
+                  My Tickets
                 </Link>
                 {hasAdminAccess && (
                   <Link to={adminPanelPath} onClick={closeMobileMenu}>
