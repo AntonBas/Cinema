@@ -41,7 +41,7 @@ export const BookingPage: React.FC = () => {
   useEffect(() => {
     if (sessionIdNum) {
       getSeatAvailability();
-      getMyBalance();
+      getMyBalance({ showErrorNotification: false }).catch(() => {});
     }
   }, [sessionIdNum, getSeatAvailability, getMyBalance]);
 

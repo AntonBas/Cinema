@@ -13,7 +13,7 @@ interface UseApiState<T> {
   timestamp: number | null;
 }
 
-interface UseApiOptions<T> {
+export interface UseApiOptions<T> {
   showErrorNotification?: boolean;
   suppressValidationToast?: boolean;
   successMessage?: string;

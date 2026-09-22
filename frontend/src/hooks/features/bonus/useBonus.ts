@@ -8,7 +8,7 @@ import type {
     BonusTransactionType
 } from '@/types/bonus';
 import type { PageResponse, SearchParams } from '@/types/pagination';
-import { useApi } from '@/hooks/common/useApi';
+import { useApi, type UseApiOptions } from '@/hooks/common/useApi';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
 export const useBonus = () => {
@@ -35,8 +35,8 @@ export const useBonus = () => {
         { delay: 150, minDisplayTime: 300 }
     );
 
-    const getMyBalance = useCallback(async () => {
-        return balanceApiRef.current.execute(() => bonusApi.getBalance());
+    const getMyBalance = useCallback(async (options?: UseApiOptions<BonusBalanceResponse>) => {
+        return balanceApiRef.current.execute(() => bonusApi.getBalance(), options);
     }, []);
 
     const getMyTransactions = useCallback(async (params?: SearchParams) => {

@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useRef } from 'react';
 import { seatReservationApi } from '@/api/seatReservationApi';
 import type { SeatReservationResponse, SeatInfo, TicketPriceInfo } from '@/types/seatReservation';
-import { useApi } from '@/hooks/common/useApi';
+import { useApi, type UseApiOptions } from '@/hooks/common/useApi';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import { useNotification } from '@/context/NotificationContext';
 
@@ -28,8 +28,8 @@ export const useSeatReservation = (sessionId: number, maxSeats?: number) => {
 
     const loading = useDelayedLoading(seatApi.loading, { delay: 150, minDisplayTime: 300 });
 
-    const getSeatAvailability = useCallback(async () => {
-        return seatApiRef.current.execute(() => seatReservationApi.getSeatAvailability(sessionId));
+    const getSeatAvailability = useCallback(async (options?: UseApiOptions<SeatReservationResponse>) => {
+        return seatApiRef.current.execute(() => seatReservationApi.getSeatAvailability(sessionId), options);
     }, [sessionId]);
 
     const updateSeatLocally = useCallback((seatId: number, updates: Partial<SeatInfo>) => {

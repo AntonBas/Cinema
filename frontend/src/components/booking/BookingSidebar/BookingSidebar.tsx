@@ -43,12 +43,12 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
   const { balance, getMyBalance, loading } = useBonus();
 
   useEffect(() => {
-    getMyBalance().catch(() => {});
+    getMyBalance({ showErrorNotification: false }).catch(() => {});
   }, [getMyBalance]);
 
   const bonusBalance = balance?.pointsBalance || 0;
   const minUsablePoints = balance?.minUsablePoints || 0;
-  const maxUsablePoints = balance?.maxUsablePoints || 0;
+  const maxUsablePoints = balance?.maxUsablePoints ?? Number.POSITIVE_INFINITY;
 
   const maxAvailablePoints = Math.min(
     bonusBalance,
