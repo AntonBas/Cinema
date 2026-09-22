@@ -50,24 +50,7 @@
   padding: 24px;
   box-shadow: var(--shadow-md);
   border: 1px solid var(--color-border);
-  overflow-x: auto;
-  overflow-y: visible;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-}
-
-.hallSection::-webkit-scrollbar {
-  height: 6px;
-}
-
-.hallSection::-webkit-scrollbar-track {
-  background: var(--color-overlay-light);
-  border-radius: 3px;
-}
-
-.hallSection::-webkit-scrollbar-thumb {
-  background: rgba(var(--color-primary-rgb), 0.5);
-  border-radius: 3px;
+  min-width: 0;
 }
 
 .sidebarSection {
