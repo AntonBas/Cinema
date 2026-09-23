@@ -79,6 +79,7 @@ class SessionServiceIntegrationTest {
         var schedule = sessionService.getSchedule(null, startTime.toLocalDate(), movie.getId());
         var scheduleEntry = schedule.stream().filter(s -> s.id().equals(session.getId())).findFirst().orElseThrow();
         assertThat(scheduleEntry.hallCapacity()).isEqualTo(5);
+        assertThat(scheduleEntry.movieSlug()).isEqualTo(movie.getSlug());
 
         var adminPage = sessionService.getSessions(hall.getId(), null, null, null, null, PageRequest.of(0, 10));
         var adminEntry = adminPage.getContent().stream().filter(s -> s.id().equals(session.getId())).findFirst()

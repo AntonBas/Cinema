@@ -60,7 +60,7 @@ public class SessionScheduleQueryServiceTest {
     void getScheduleWithoutAvailabilityShouldMapProjectionsToResponses() {
         Session session = Session.builder().id(SESSION_ID).build();
         SessionScheduleResponse response = new SessionScheduleResponse(SESSION_ID, null, null, null, null, null,
-                null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null);
 
         when(sessionRepository.findAll(specification)).thenReturn(List.of(session));
         when(projection.getId()).thenReturn(SESSION_ID);

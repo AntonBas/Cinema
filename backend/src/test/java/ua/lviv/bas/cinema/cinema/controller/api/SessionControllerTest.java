@@ -31,7 +31,7 @@ public class SessionControllerTest {
 
     private SessionScheduleResponse createSessionScheduleResponse() {
         return new SessionScheduleResponse(1L, UUID.randomUUID(), LocalDateTime.of(2024, 1, 15, 18, 0),
-                LocalDateTime.of(2024, 1, 15, 20, 0), new BigDecimal("250.00"), 80, 1L, "Test Movie", "poster.jpg",
+                LocalDateTime.of(2024, 1, 15, 20, 0), new BigDecimal("250.00"), 80, 1L, "Test Movie", "test-movie", "poster.jpg",
                 "PG-13", 120, 1L, "Hall 1", 100);
     }
 

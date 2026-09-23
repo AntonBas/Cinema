@@ -17,6 +17,8 @@ public interface SessionScheduleProjection {
 
     String getMovieTitle();
 
+    String getMovieSlug();
+
     String getMoviePosterFileName();
 
     String getMovieAgeRating();

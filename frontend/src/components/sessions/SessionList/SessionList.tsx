@@ -14,6 +14,7 @@ interface SessionListProps {
 interface MovieGroup {
   movieId: number;
   movieTitle: string;
+  movieSlug: string;
   movieAgeRating: string;
   movieDuration: number;
   sessions: SessionScheduleResponse[];
@@ -46,15 +47,6 @@ const formatDuration = (minutes: number): string => {
   return `${hours}h ${mins}m`;
 };
 
-const getMovieSlug = (title: string): string => {
-  return title
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/--+/g, "-")
-    .trim();
-};
-
 const groupSessionsByMovie = (
   sessions: SessionScheduleResponse[],
 ): MovieGroup[] => {
@@ -65,6 +57,7 @@ const groupSessionsByMovie = (
       groupedMap[session.movieId] = {
         movieId: session.movieId,
         movieTitle: session.movieTitle,
+        movieSlug: session.movieSlug,
         movieAgeRating: session.movieAgeRating,
         movieDuration: session.movieDuration,
         sessions: [],
@@ -128,7 +121,7 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
   );
 
   const handleViewDetails = useCallback(
-    (movieTitle: string) => navigate(`/movies/${getMovieSlug(movieTitle)}`),
+    (movieSlug: string) => navigate(`/movies/${movieSlug}`),
     [navigate],
   );
 
@@ -166,7 +159,7 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
                   <Button
                     variant="secondary"
                     size="small"
-                    onClick={() => handleViewDetails(movieGroup.movieTitle)}
+                    onClick={() => handleViewDetails(movieGroup.movieSlug)}
                   >
                     Details
                   </Button>

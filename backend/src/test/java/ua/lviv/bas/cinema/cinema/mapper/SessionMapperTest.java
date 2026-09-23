@@ -195,6 +195,11 @@ public class SessionMapperTest {
             }
 
             @Override
+            public String getMovieSlug() {
+                return "schedule-movie";
+            }
+
+            @Override
             public String getMoviePosterFileName() {
                 return "poster.jpg";
             }
@@ -238,6 +243,7 @@ public class SessionMapperTest {
         assertThat(response.basePrice()).isEqualTo(new BigDecimal("200.00"));
         assertThat(response.movieId()).isEqualTo(1L);
         assertThat(response.movieTitle()).isEqualTo("Schedule Movie");
+        assertThat(response.movieSlug()).isEqualTo("schedule-movie");
         assertThat(response.moviePosterFileName()).isEqualTo("poster.jpg");
         assertThat(response.movieAgeRating()).isEqualTo(AgeRating.PEGI_12.name());
         assertThat(response.movieDuration()).isEqualTo(90);

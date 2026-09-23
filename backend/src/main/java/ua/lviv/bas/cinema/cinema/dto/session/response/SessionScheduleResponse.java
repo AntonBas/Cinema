@@ -33,6 +33,9 @@ public record SessionScheduleResponse(
         @Schema(description = "Title of the movie", example = "Inception")
         String movieTitle,
 
+        @Schema(description = "URL slug of the movie", example = "inception")
+        String movieSlug,
+
         @Schema(description = "Movie poster file name", example = "inception.jpg")
         String moviePosterFileName,
 
@@ -53,7 +56,7 @@ public record SessionScheduleResponse(
 ) {
     public SessionScheduleResponse withAvailableSeats(Integer availableSeats) {
         return new SessionScheduleResponse(
-                id, publicId, startTime, endTime, basePrice, availableSeats, movieId, movieTitle,
+                id, publicId, startTime, endTime, basePrice, availableSeats, movieId, movieTitle, movieSlug,
                 moviePosterFileName, movieAgeRating, movieDuration, hallId, hallName, hallCapacity
         );
     }

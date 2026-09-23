@@ -269,7 +269,7 @@ public class SessionServiceTest {
     @Test
     void getScheduleWithoutDateShouldUseTodayAndMergeAvailableSeats() {
         SessionScheduleResponse schedule = new SessionScheduleResponse(SESSION_ID, null, null, null, BASE_PRICE, null,
-                MOVIE_ID, MOVIE_TITLE, null, null, null, HALL_ID, HALL_NAME, null);
+                MOVIE_ID, MOVIE_TITLE, null, null, null, null, HALL_ID, HALL_NAME, null);
         SessionScheduleResponse withSeats = schedule.withAvailableSeats(42);
 
         when(sessionScheduleQueryService.getScheduleWithoutAvailability(null, LocalDate.now(), null))

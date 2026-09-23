@@ -83,6 +83,7 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
                 s.base_price as basePrice,
                 m.id as movieId,
                 m.title as movieTitle,
+                m.slug as movieSlug,
                 m.poster_file_name as moviePosterFileName,
                 m.age_rating as movieAgeRating,
                 m.duration_minutes as movieDuration,
