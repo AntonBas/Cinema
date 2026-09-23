@@ -56,7 +56,7 @@ export const CashierScanPage: React.FC = () => {
             </p>
             <button
               className={styles.backButton}
-              onClick={() => navigate("/cashier")}
+              onClick={() => navigate("/")}
             >
               Back to Home Page
             </button>

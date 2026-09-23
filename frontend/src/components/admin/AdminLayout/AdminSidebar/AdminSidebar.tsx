@@ -2,18 +2,8 @@ import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useLockBodyScroll } from "@/hooks/common/useLockBodyScroll";
-import {
-  Film,
-  Calendar,
-  Building2,
-  Users,
-  Gift,
-  Tag,
-  Ticket,
-  ScrollText,
-  Clapperboard,
-  ArrowLeft,
-} from "lucide-react";
+import { Clapperboard, ArrowLeft } from "lucide-react";
+import { getAdminMenuItems } from "../adminMenuItems";
 import styles from "./AdminSidebar.module.css";
 import clsx from "clsx";
 
@@ -32,61 +22,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const allMenuItems = [
-    {
-      path: "/admin/movies",
-      label: "Movies",
-      icon: Film,
-      roles: ["ROLE_ADMIN", "ROLE_CONTENT_MANAGER"],
-    },
-    {
-      path: "/admin/schedule",
-      label: "Schedule",
-      icon: Calendar,
-      roles: ["ROLE_ADMIN", "ROLE_CONTENT_MANAGER"],
-    },
-    {
-      path: "/admin/halls",
-      label: "Halls",
-      icon: Building2,
-      roles: ["ROLE_ADMIN", "ROLE_CONTENT_MANAGER"],
-    },
-    {
-      path: "/admin/users",
-      label: "Users",
-      icon: Users,
-      roles: ["ROLE_ADMIN", "ROLE_CASHIER"],
-    },
-    {
-      path: "/admin/bonus",
-      label: "Bonus",
-      icon: Gift,
-      roles: ["ROLE_ADMIN"],
-    },
-    {
-      path: "/admin/promotion",
-      label: "Promotion",
-      icon: Tag,
-      roles: ["ROLE_ADMIN", "ROLE_CONTENT_MANAGER"],
-    },
-    {
-      path: "/admin/ticket-type",
-      label: "Ticket Types",
-      icon: Ticket,
-      roles: ["ROLE_ADMIN"],
-    },
-    {
-      path: "/admin/audit-logs",
-      label: "Audit Logs",
-      icon: ScrollText,
-      roles: ["ROLE_ADMIN"],
-    },
-  ];
 
   const userRole = user?.userRole ?? "";
-  const menuItems = allMenuItems.filter((item) =>
-    item.roles.includes(userRole),
-  );
+  const menuItems = getAdminMenuItems(userRole);
 
   const handleBackToWebsite = () => {
     navigate("/");

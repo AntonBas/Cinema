@@ -111,7 +111,7 @@ export const MovieDetailPage: React.FC = () => {
           <p>The movie you're looking for doesn't exist or has been removed.</p>
           <Button
             variant="primary"
-            onClick={() => navigate("/movies/currently-showing")}
+            onClick={() => navigate("/movies/current")}
           >
             Browse Current Movies
           </Button>

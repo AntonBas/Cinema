@@ -1,8 +1,9 @@
 import React, { lazy, Suspense } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { PublicRoute } from "./PublicRoute";
 import { AdminRoute } from "./AdminRoute";
+import { AdminIndexRedirect } from "./AdminIndexRedirect";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 
 import { LoginPage } from "@/pages/auth/LoginPage/LoginPage";
@@ -210,7 +211,7 @@ export const AppRoutes: React.FC = () => {
           </AdminRoute>
         }
       >
-        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route index element={<AdminIndexRedirect />} />
         <Route
           path="movies"
           element={
