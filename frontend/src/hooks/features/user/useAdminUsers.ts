@@ -42,13 +42,13 @@ export const useAdminUsers = () => {
     [usersApi.data],
   );
 
-  const getUsers = useCallback(async (params?: AdminUsersParams) => {
+  const getAll = useCallback(async (params?: AdminUsersParams) => {
     return usersApiRef.current.execute(() =>
       userApi.admin.getAll(params || {}),
     );
   }, []);
 
-  const updateUserRole = useCallback(
+  const updateRole = useCallback(
     async (userId: number, userRole: UserRole) => {
       const roleData: UserRoleUpdateRequest = { userRole };
       return mutationApiRef.current.execute(
@@ -59,7 +59,7 @@ export const useAdminUsers = () => {
     [getUserName],
   );
 
-  const updateUserStatus = useCallback(
+  const updateStatus = useCallback(
     async (userId: number, enabled: boolean) => {
       const statusData: UserStatusUpdateRequest = { enabled };
       return mutationApiRef.current.execute(
@@ -95,9 +95,9 @@ export const useAdminUsers = () => {
     pagination: usersApi.data,
     loading,
     error: usersApi.error || mutationApi.error,
-    getUsers,
-    updateUserRole,
-    updateUserStatus,
+    getAll,
+    updateRole,
+    updateStatus,
     updateBirthDateVerification,
     reset: usersApi.reset,
   };

@@ -33,22 +33,18 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
 
-  const {
-    updateUserRole,
-    updateUserStatus,
-    updateBirthDateVerification,
-    loading,
-  } = useAdminUsers();
+  const { updateRole, updateStatus, updateBirthDateVerification, loading } =
+    useAdminUsers();
 
   const handleRoleChange = async (value: string | number) => {
     const newRole = value as UserRole;
     if (newRole === user.userRole) return;
-    await updateUserRole(user.id, newRole);
+    await updateRole(user.id, newRole);
     onUpdate();
   };
 
   const handleStatusChange = async () => {
-    await updateUserStatus(user.id, !user.enabled);
+    await updateStatus(user.id, !user.enabled);
     setShowStatusModal(false);
     onUpdate();
   };

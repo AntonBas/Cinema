@@ -35,7 +35,7 @@ export const useSeatReservation = (sessionId: string, maxSeats?: number) => {
     minDisplayTime: 300,
   });
 
-  const getSeatAvailability = useCallback(
+  const getAvailability = useCallback(
     async (options?: UseApiOptions<SeatReservationResponse>) => {
       return seatApiRef.current.execute(
         () => seatReservationApi.getAvailability(sessionId),
@@ -218,7 +218,7 @@ export const useSeatReservation = (sessionId: string, maxSeats?: number) => {
     selectedSeats,
     totalPrice,
     totalSelected: selectedSeats.length,
-    getSeatAvailability,
+    getAvailability,
     reset: seatApi.reset,
     selectSeat,
     deselectSeat,

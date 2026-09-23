@@ -30,7 +30,7 @@ interface FiltersState {
 }
 
 export const SectionSchedule: React.FC = () => {
-  const { halls, getAllHalls } = useCinemaHall();
+  const { halls, getAll } = useCinemaHall();
   const { params, setPage, setSort } = usePagination({
     size: DEFAULT_PAGE_SIZE_COMPACT,
   });
@@ -64,8 +64,8 @@ export const SectionSchedule: React.FC = () => {
   });
 
   useEffect(() => {
-    getAllHalls();
-  }, [getAllHalls]);
+    getAll();
+  }, [getAll]);
 
   const reloadSessions = useCallback(
     () =>

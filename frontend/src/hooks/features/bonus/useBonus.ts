@@ -39,7 +39,7 @@ export const useBonus = () => {
     { delay: 150, minDisplayTime: 300 },
   );
 
-  const getMyBalance = useCallback(
+  const getBalance = useCallback(
     async (options?: UseApiOptions<BonusBalanceResponse>) => {
       return balanceApiRef.current.execute(
         () => bonusApi.public.getBalance(),
@@ -49,13 +49,13 @@ export const useBonus = () => {
     [],
   );
 
-  const getMyTransactions = useCallback(async (params?: SearchParams) => {
+  const getTransactions = useCallback(async (params?: SearchParams) => {
     return transactionsApiRef.current.execute(() =>
       bonusApi.public.getTransactions(params),
     );
   }, []);
 
-  const getAllRules = useCallback(async () => {
+  const getRules = useCallback(async () => {
     return rulesApiRef.current.execute(() => bonusApi.admin.getRules());
   }, []);
 
@@ -83,9 +83,9 @@ export const useBonus = () => {
     balanceError: balanceApi.error,
     transactionsError: transactionsApi.error,
     rulesError: rulesApi.error,
-    getMyBalance,
-    getMyTransactions,
-    getAllRules,
+    getBalance,
+    getTransactions,
+    getRules,
     updateRule,
     resetRule,
   };

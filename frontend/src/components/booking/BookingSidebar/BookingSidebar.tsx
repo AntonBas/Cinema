@@ -42,11 +42,11 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
   isBooking,
 }) => {
   const [bonusPointsInput, setBonusPointsInput] = useState("");
-  const { balance, getMyBalance, loading } = useBonus();
+  const { balance, getBalance, loading } = useBonus();
 
   useEffect(() => {
-    getMyBalance({ showErrorNotification: false }).catch(() => {});
-  }, [getMyBalance]);
+    getBalance({ showErrorNotification: false }).catch(() => {});
+  }, [getBalance]);
 
   const bonusBalance = balance?.pointsBalance || 0;
   const minUsablePoints = balance?.minUsablePoints || 0;

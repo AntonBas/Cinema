@@ -18,14 +18,7 @@ import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import styles from "./SectionHalls.module.css";
 
 const SectionHallsContent: React.FC = () => {
-  const {
-    loading,
-    getAllHalls,
-    getHallById,
-    createHall,
-    updateHall,
-    deleteHall,
-  } = useCinemaHall();
+  const { loading, getAll, getById, create, update, remove } = useCinemaHall();
   const { openLayout } = useHallLayout();
 
   const showDelayedLoading = useDelayedLoading(loading, {
@@ -46,9 +39,9 @@ const SectionHallsContent: React.FC = () => {
   const [hallsData, setHallsData] = useState<CinemaHallListResponse[]>([]);
 
   const loadHalls = useCallback(async () => {
-    const response = await getAllHalls();
+    const response = await getAll();
     setHallsData(response || []);
-  }, [getAllHalls]);
+  }, [getAll]);
 
   useEffect(() => {
     loadHalls();
@@ -56,26 +49,26 @@ const SectionHallsContent: React.FC = () => {
 
   const handleCreateHall = useCallback(
     async (request: CinemaHallRequest) => {
-      const response = await createHall(request);
+      const response = await create(request);
       if (response) {
         await loadHalls();
         setShowCreateModal(false);
         openLayout(response);
       }
     },
-    [createHall, loadHalls, openLayout],
+    [create, loadHalls, openLayout],
   );
 
   const handleEditHall = useCallback(
     async (id: number, request: CinemaHallRequest) => {
-      const response = await updateHall(id, request);
+      const response = await update(id, request);
       if (response) {
         await loadHalls();
         setShowEditModal(false);
         setSelectedHall(null);
       }
     },
-    [updateHall, loadHalls],
+    [update, loadHalls],
   );
 
   const handleDeleteHall = useCallback(async () => {
@@ -84,13 +77,13 @@ const SectionHallsContent: React.FC = () => {
     setDeleteModal((prev) => ({ ...prev, isDeleting: true }));
 
     try {
-      await deleteHall(deleteModal.hall.id);
+      await remove(deleteModal.hall.id);
       await loadHalls();
       setDeleteModal({ isOpen: false, hall: null, isDeleting: false });
     } catch {
       setDeleteModal((prev) => ({ ...prev, isDeleting: false }));
     }
-  }, [deleteModal.hall, deleteHall, loadHalls]);
+  }, [deleteModal.hall, remove, loadHalls]);
 
   const confirmDelete = useCallback((hall: CinemaHallListResponse) => {
     setDeleteModal({ isOpen: true, hall, isDeleting: false });
@@ -98,23 +91,23 @@ const SectionHallsContent: React.FC = () => {
 
   const handleEdit = useCallback(
     async (hall: CinemaHallListResponse) => {
-      const response = await getHallById(hall.id);
+      const response = await getById(hall.id);
       if (response) {
         setSelectedHall(response);
         setShowEditModal(true);
       }
     },
-    [getHallById],
+    [getById],
   );
 
   const handleShowLayout = useCallback(
     async (hall: CinemaHallListResponse) => {
-      const response = await getHallById(hall.id);
+      const response = await getById(hall.id);
       if (response) {
         openLayout(response);
       }
     },
-    [getHallById, openLayout],
+    [getById, openLayout],
   );
 
   if (showDelayedLoading && !hallsData.length) {

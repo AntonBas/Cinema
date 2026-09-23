@@ -25,15 +25,15 @@ export const CashierScanPage: React.FC = () => {
     loading,
     cashierTicketError,
     cashierValidateError,
-    getTicketForCashier,
-    validateTicket,
+    getAdminByCode,
+    validate,
   } = useTicket();
 
   useEffect(() => {
     if (uniqueCode) {
-      getTicketForCashier(uniqueCode);
+      getAdminByCode(uniqueCode);
     }
-  }, [uniqueCode, getTicketForCashier]);
+  }, [uniqueCode, getAdminByCode]);
 
   const ticket = validatedTicket || cashierTicket;
 
@@ -76,7 +76,7 @@ export const CashierScanPage: React.FC = () => {
 
   const handleValidate = () => {
     if (uniqueCode) {
-      validateTicket(uniqueCode);
+      validate(uniqueCode);
     }
   };
 

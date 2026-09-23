@@ -35,16 +35,16 @@ export const TicketsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
 
-  const { tickets, pagination, loading, getUserTickets } = useTicket();
+  const { tickets, pagination, loading, getMine } = useTicket();
 
   useEffect(() => {
-    getUserTickets({
+    getMine({
       page: currentPage,
       size: DEFAULT_PAGE_SIZE_COMPACT,
       status: statusFilter,
       movieTitle: searchQuery || undefined,
     });
-  }, [currentPage, statusFilter, searchQuery, getUserTickets]);
+  }, [currentPage, statusFilter, searchQuery, getMine]);
 
   const hasActiveFilters =
     searchQuery.trim() !== "" || statusFilter !== undefined;
@@ -61,7 +61,7 @@ export const TicketsPage: React.FC = () => {
   };
 
   const handleRefundSuccess = () => {
-    getUserTickets({
+    getMine({
       page: currentPage,
       size: DEFAULT_PAGE_SIZE_COMPACT,
       status: statusFilter,

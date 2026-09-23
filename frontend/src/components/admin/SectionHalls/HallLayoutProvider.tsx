@@ -40,17 +40,17 @@ export const HallLayoutProvider: React.FC<{ children: React.ReactNode }> = ({
   const [saving, setSaving] = useState(false);
   const localKeyCounter = useRef(0);
 
-  const { getHallLayout, updateLayout } = useCinemaHall();
+  const { getLayout, updateLayout } = useCinemaHall();
 
   const openLayout = useCallback(
     async (hall: CinemaHallResponse) => {
       setCurrentHall(hall);
-      const layoutData = await getHallLayout(hall.id);
+      const layoutData = await getLayout(hall.id);
       setLayout(layoutData ?? null);
       setSeats(toDraftSeats(layoutData ?? null));
       setIsDirty(false);
     },
-    [getHallLayout],
+    [getLayout],
   );
 
   const closeLayout = useCallback(() => {

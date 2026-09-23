@@ -73,13 +73,13 @@ export const usePromotion = () => {
     [getPromotionTitle],
   );
 
-  const getById = useCallback(async (id: number) => {
+  const getAdminById = useCallback(async (id: number) => {
     return promotionApiRef.current.execute(() =>
       promotionApi.admin.getById(id),
     );
   }, []);
 
-  const getAll = useCallback(
+  const getAdminPromotions = useCallback(
     async (params?: {
       query?: string;
       page?: number;
@@ -126,8 +126,8 @@ export const usePromotion = () => {
     getAvailable,
     getClaimed,
     claim,
-    getById,
-    getAll,
+    getAdminById,
+    getAdminPromotions,
     create,
     update,
     remove,

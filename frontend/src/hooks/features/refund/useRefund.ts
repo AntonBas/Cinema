@@ -26,7 +26,7 @@ export const useRefund = () => {
     { delay: 150, minDisplayTime: 300 },
   );
 
-  const processRefund = useCallback(async (request: RefundRequest) => {
+  const create = useCallback(async (request: RefundRequest) => {
     return refundApiRef.current.execute(() => refundApi.create(request));
   }, []);
 
@@ -47,7 +47,7 @@ export const useRefund = () => {
     previewLoading: previewApiHook.loading,
     loading,
     error: refundApiHook.error,
-    processRefund,
+    create,
     getPolicy,
     getPreview,
     reset: refundApiHook.reset,

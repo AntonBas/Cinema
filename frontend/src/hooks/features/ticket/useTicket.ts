@@ -37,7 +37,7 @@ export const useTicket = () => {
     { delay: 150, minDisplayTime: 300 },
   );
 
-  const getUserTickets = useCallback(
+  const getMine = useCallback(
     async (params?: SearchParams & TicketFilterRequest) => {
       return ticketsApiRef.current.execute(() =>
         ticketApi.public.getMine(params),
@@ -58,13 +58,13 @@ export const useTicket = () => {
     );
   }, []);
 
-  const getTicketForCashier = useCallback(async (uniqueCode: string) => {
+  const getAdminByCode = useCallback(async (uniqueCode: string) => {
     return cashierTicketApiRef.current.execute(() =>
       ticketApi.admin.getByCode(uniqueCode),
     );
   }, []);
 
-  const validateTicket = useCallback(async (uniqueCode: string) => {
+  const validate = useCallback(async (uniqueCode: string) => {
     return cashierValidateApiRef.current.execute(
       () => ticketApi.admin.validate(uniqueCode),
       { successMessage: "Ticket validated successfully" },
@@ -84,10 +84,10 @@ export const useTicket = () => {
     qrCodeError: qrCodeApi.error,
     cashierTicketError: cashierTicketApi.error,
     cashierValidateError: cashierValidateApi.error,
-    getUserTickets,
+    getMine,
     getByCode,
     getQRCode,
-    getTicketForCashier,
-    validateTicket,
+    getAdminByCode,
+    validate,
   };
 };

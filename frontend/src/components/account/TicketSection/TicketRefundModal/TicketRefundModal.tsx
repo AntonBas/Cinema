@@ -28,7 +28,7 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [selectedReason, setSelectedReason] = useState<string>("");
   const {
-    processRefund,
+    create,
     loading,
     refundResult,
     getPreview,
@@ -62,7 +62,7 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
     if (!selectedReason || !acceptedTerms) return;
 
     try {
-      const result = await processRefund({
+      const result = await create({
         ticketId: ticket.id,
         reason: selectedReason,
       });

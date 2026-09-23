@@ -34,15 +34,15 @@ export const useCinemaHall = () => {
     { delay: 150, minDisplayTime: 300 },
   );
 
-  const getAllHalls = useCallback(async () => {
+  const getAll = useCallback(async () => {
     return hallsApiRef.current.execute(() => cinemaHallApi.admin.getAll());
   }, []);
 
-  const getHallById = useCallback(async (id: number) => {
+  const getById = useCallback(async (id: number) => {
     return hallApiRef.current.execute(() => cinemaHallApi.admin.getById(id));
   }, []);
 
-  const getHallLayout = useCallback(async (id: number) => {
+  const getLayout = useCallback(async (id: number) => {
     return layoutApiRef.current.execute(() =>
       cinemaHallApi.admin.getLayout(id),
     );
@@ -58,24 +58,21 @@ export const useCinemaHall = () => {
     [],
   );
 
-  const createHall = useCallback(async (request: CinemaHallRequest) => {
+  const create = useCallback(async (request: CinemaHallRequest) => {
     return mutationApiRef.current.execute(
       () => cinemaHallApi.admin.create(request),
       { suppressValidationToast: true },
     );
   }, []);
 
-  const updateHall = useCallback(
-    async (id: number, request: CinemaHallRequest) => {
-      return mutationApiRef.current.execute(
-        () => cinemaHallApi.admin.update(id, request),
-        { suppressValidationToast: true },
-      );
-    },
-    [],
-  );
+  const update = useCallback(async (id: number, request: CinemaHallRequest) => {
+    return mutationApiRef.current.execute(
+      () => cinemaHallApi.admin.update(id, request),
+      { suppressValidationToast: true },
+    );
+  }, []);
 
-  const deleteHall = useCallback(async (id: number) => {
+  const remove = useCallback(async (id: number) => {
     return mutationApiRef.current.execute(() => cinemaHallApi.admin.delete(id));
   }, []);
 
@@ -88,12 +85,12 @@ export const useCinemaHall = () => {
     hallError: hallApi.error,
     layoutError: layoutApi.error,
     mutationError: mutationApi.error,
-    getAllHalls,
-    getHallById,
-    getHallLayout,
-    createHall,
-    updateHall,
+    getAll,
+    getById,
+    getLayout,
+    create,
+    update,
     updateLayout,
-    deleteHall,
+    remove,
   };
 };

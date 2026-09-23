@@ -14,7 +14,7 @@ import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import styles from "./SectionBonus.module.css";
 
 export const SectionBonus = () => {
-  const { getAllRules, rules, loading, rulesError } = useBonus();
+  const { getRules, rules, loading, rulesError } = useBonus();
   const [editingRule, setEditingRule] = useState<BonusRulesResponse | null>(
     null,
   );
@@ -22,17 +22,17 @@ export const SectionBonus = () => {
     useState<BonusTransactionType | null>(null);
 
   useEffect(() => {
-    getAllRules().catch(() => {});
-  }, [getAllRules]);
+    getRules().catch(() => {});
+  }, [getRules]);
 
   const handleEditSuccess = async () => {
     setEditingRule(null);
-    await getAllRules();
+    await getRules();
   };
 
   const handleResetSuccess = async () => {
     setResettingRuleType(null);
-    await getAllRules();
+    await getRules();
   };
 
   const getRuleStatus = (rule: BonusRulesResponse) => {
@@ -59,7 +59,7 @@ export const SectionBonus = () => {
         <div className={styles.error}>
           <h3>Error Loading Bonus System</h3>
           <p>{rulesError.message}</p>
-          <Button onClick={() => getAllRules()}>Try Again</Button>
+          <Button onClick={() => getRules()}>Try Again</Button>
         </div>
       </div>
     );

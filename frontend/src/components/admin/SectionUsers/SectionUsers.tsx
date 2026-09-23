@@ -22,7 +22,7 @@ export const SectionUsers: React.FC = () => {
   const { params, setPage } = usePagination({
     size: DEFAULT_PAGE_SIZE_COMPACT,
   });
-  const { users, pagination, loading, getUsers } = useAdminUsers();
+  const { users, pagination, loading, getAll } = useAdminUsers();
   const showDelayedLoading = useDelayedLoading(loading, {
     delay: 150,
     minDisplayTime: 300,
@@ -33,7 +33,7 @@ export const SectionUsers: React.FC = () => {
 
   const loadUsers = useCallback(
     (page: number = currentPage) => {
-      getUsers({
+      getAll({
         query: searchQuery || undefined,
         role: roleFilter || undefined,
         verificationStatus: verificationStatusFilter || undefined,
@@ -48,7 +48,7 @@ export const SectionUsers: React.FC = () => {
       verificationStatusFilter,
       enabledFilter,
       pageSize,
-      getUsers,
+      getAll,
       currentPage,
     ],
   );
@@ -64,7 +64,7 @@ export const SectionUsers: React.FC = () => {
     (query: string) => {
       setSearchQuery(query);
       setPage(0);
-      getUsers({
+      getAll({
         query: query || undefined,
         role: roleFilter || undefined,
         verificationStatus: verificationStatusFilter || undefined,
@@ -78,7 +78,7 @@ export const SectionUsers: React.FC = () => {
       verificationStatusFilter,
       enabledFilter,
       pageSize,
-      getUsers,
+      getAll,
       setPage,
     ],
   );
@@ -88,7 +88,7 @@ export const SectionUsers: React.FC = () => {
       const newRole = value as UserRole | "";
       setRoleFilter(newRole);
       setPage(0);
-      getUsers({
+      getAll({
         query: searchQuery || undefined,
         role: newRole || undefined,
         verificationStatus: verificationStatusFilter || undefined,
@@ -102,7 +102,7 @@ export const SectionUsers: React.FC = () => {
       verificationStatusFilter,
       enabledFilter,
       pageSize,
-      getUsers,
+      getAll,
       setPage,
     ],
   );
@@ -112,7 +112,7 @@ export const SectionUsers: React.FC = () => {
       const newStatus = value as VerificationStatus | "";
       setVerificationStatusFilter(newStatus);
       setPage(0);
-      getUsers({
+      getAll({
         query: searchQuery || undefined,
         role: roleFilter || undefined,
         verificationStatus: newStatus || undefined,
@@ -121,14 +121,14 @@ export const SectionUsers: React.FC = () => {
         size: pageSize,
       });
     },
-    [searchQuery, roleFilter, enabledFilter, pageSize, getUsers, setPage],
+    [searchQuery, roleFilter, enabledFilter, pageSize, getAll, setPage],
   );
 
   const handleEnabledFilterChange = useCallback(
     (value: string) => {
       setEnabledFilter(value);
       setPage(0);
-      getUsers({
+      getAll({
         query: searchQuery || undefined,
         role: roleFilter || undefined,
         verificationStatus: verificationStatusFilter || undefined,
@@ -142,7 +142,7 @@ export const SectionUsers: React.FC = () => {
       roleFilter,
       verificationStatusFilter,
       pageSize,
-      getUsers,
+      getAll,
       setPage,
     ],
   );
@@ -150,7 +150,7 @@ export const SectionUsers: React.FC = () => {
   const handlePageChange = useCallback(
     (page: number) => {
       setPage(page);
-      getUsers({
+      getAll({
         query: searchQuery || undefined,
         role: roleFilter || undefined,
         verificationStatus: verificationStatusFilter || undefined,
@@ -165,7 +165,7 @@ export const SectionUsers: React.FC = () => {
       verificationStatusFilter,
       enabledFilter,
       pageSize,
-      getUsers,
+      getAll,
       setPage,
     ],
   );

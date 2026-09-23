@@ -24,21 +24,19 @@ export const BonusPage: React.FC = () => {
     balance,
     transactions,
     transactionsPagination,
-    getMyBalance,
-    getMyTransactions,
+    getBalance,
+    getTransactions,
   } = useBonus();
 
   useEffect(() => {
-    getMyBalance().catch(() => {});
-  }, [getMyBalance]);
+    getBalance().catch(() => {});
+  }, [getBalance]);
 
   useEffect(() => {
     if (activeTab === "transactions") {
-      getMyTransactions({ page: params.page, size: params.size }).catch(
-        () => {},
-      );
+      getTransactions({ page: params.page, size: params.size }).catch(() => {});
     }
-  }, [activeTab, params.page, params.size, getMyTransactions]);
+  }, [activeTab, params.page, params.size, getTransactions]);
 
   return (
     <AccountPageLayout title="My Bonuses">

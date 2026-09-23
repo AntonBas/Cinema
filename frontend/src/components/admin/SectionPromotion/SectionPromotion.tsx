@@ -30,8 +30,14 @@ export const SectionPromotion: React.FC = () => {
   const { params, setPage } = usePagination({
     size: DEFAULT_PAGE_SIZE_COMPACT,
   });
-  const { adminPromotions, pagination, getById, getAll, remove, loading } =
-    usePromotion();
+  const {
+    adminPromotions,
+    pagination,
+    getAdminById,
+    getAdminPromotions,
+    remove,
+    loading,
+  } = usePromotion();
   const showDelayedLoading = useDelayedLoading(loading, {
     delay: 150,
     minDisplayTime: 300,
@@ -42,13 +48,13 @@ export const SectionPromotion: React.FC = () => {
 
   const loadPromotions = useCallback(
     (page: number = currentPage) => {
-      getAll({
+      getAdminPromotions({
         query: searchQuery || undefined,
         page: page,
         size: pageSize,
       });
     },
-    [searchQuery, pageSize, getAll, currentPage],
+    [searchQuery, pageSize, getAdminPromotions, currentPage],
   );
 
   const didLoadRef = useRef(false);
@@ -62,25 +68,25 @@ export const SectionPromotion: React.FC = () => {
     (query: string) => {
       setSearchQuery(query);
       setPage(0);
-      getAll({
+      getAdminPromotions({
         query: query || undefined,
         page: 0,
         size: pageSize,
       });
     },
-    [pageSize, getAll, setPage],
+    [pageSize, getAdminPromotions, setPage],
   );
 
   const handlePageChange = useCallback(
     (page: number) => {
       setPage(page);
-      getAll({
+      getAdminPromotions({
         query: searchQuery || undefined,
         page: page,
         size: pageSize,
       });
     },
-    [searchQuery, pageSize, getAll, setPage],
+    [searchQuery, pageSize, getAdminPromotions, setPage],
   );
 
   const handleCreateSuccess = useCallback(() => {
@@ -101,7 +107,7 @@ export const SectionPromotion: React.FC = () => {
 
     if (adminPromotions.length === 1 && currentPage > 0) {
       setPage(currentPage - 1);
-      getAll({
+      getAdminPromotions({
         query: searchQuery || undefined,
         page: currentPage - 1,
         size: pageSize,
@@ -112,7 +118,7 @@ export const SectionPromotion: React.FC = () => {
   };
 
   const handleEdit = async (id: number) => {
-    const promotion = await getById(id);
+    const promotion = await getAdminById(id);
     if (promotion) {
       setEditingPromotion(promotion);
     }

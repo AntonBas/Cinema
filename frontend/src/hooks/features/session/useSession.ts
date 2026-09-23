@@ -70,7 +70,7 @@ export const useSession = () => {
     );
   }, []);
 
-  const getById = useCallback(async (id: number) => {
+  const getAdminById = useCallback(async (id: number) => {
     return sessionApiRef.current.execute(() => sessionApi.admin.getById(id));
   }, []);
 
@@ -115,7 +115,7 @@ export const useSession = () => {
     getAdminSessions,
     getSchedule,
     getScheduleDates,
-    getById,
+    getAdminById,
     create,
     update,
     cancel,

@@ -31,22 +31,22 @@ export const BookingPage: React.FC = () => {
     loadingSeats,
     selectedSeats,
     totalPrice,
-    getSeatAvailability,
+    getAvailability,
     selectSeat,
     deselectSeat,
     isSeatSelected,
     updateSeatTicketType,
   } = useSeatReservation(sessionId ?? "");
 
-  const { getMyBalance } = useBonus();
+  const { getBalance } = useBonus();
   const { create, loading: bookingLoading } = useBooking();
 
   useEffect(() => {
     if (sessionId) {
-      getSeatAvailability();
-      getMyBalance({ showErrorNotification: false }).catch(() => {});
+      getAvailability();
+      getBalance({ showErrorNotification: false }).catch(() => {});
     }
-  }, [sessionId, getSeatAvailability, getMyBalance]);
+  }, [sessionId, getAvailability, getBalance]);
 
   const handleSeatClick = useCallback(
     async (seatId: number) => {
