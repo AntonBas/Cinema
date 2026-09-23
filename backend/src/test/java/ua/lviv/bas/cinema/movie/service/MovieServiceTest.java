@@ -37,6 +37,7 @@ import ua.lviv.bas.cinema.audit.service.AuditService;
 import ua.lviv.bas.cinema.integration.PosterService;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -189,7 +190,7 @@ public class MovieServiceTest {
     @Test
     void getMovieBySlugShouldSucceed() {
         when(movieRepository.findMovieBySlug(SLUG)).thenReturn(Optional.of(movie));
-        when(movieRepository.findSessionsByMovieSlug(SLUG)).thenReturn(new ArrayList<>());
+        when(movieRepository.findUpcomingSessionsByMovieSlug(eq(SLUG), any(LocalDateTime.class))).thenReturn(new ArrayList<>());
         when(movieMapper.toMovieDetailResponse(movie)).thenReturn(detailResponse);
 
         MovieDetailResponse result = movieService.getMovieBySlug(SLUG);

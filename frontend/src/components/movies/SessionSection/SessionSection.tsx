@@ -14,23 +14,31 @@ interface SessionSectionProps {
   onScrollDates: (direction: "left" | "right") => void;
 }
 
-const today = new Date();
-today.setHours(0, 0, 0, 0);
+const parseLocalDate = (dateString: string): Date =>
+  new Date(`${dateString}T00:00:00`);
+
+const getDayLabel = (date: Date): string => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+
+  if (date.getTime() === today.getTime()) return "Today";
+  if (date.getTime() === tomorrow.getTime()) return "Tomorrow";
+  return date.toLocaleDateString("en-US", { weekday: "short" });
+};
 
 const getDayInfo = (dateString: string) => {
-  const date = new Date(dateString);
-  const dateOnly = new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-  );
-
-  if (dateOnly.getTime() === today.getTime()) {
-    return { shortLabel: "Today", dayNumber: date.getDate() };
-  }
+  const date = parseLocalDate(dateString);
   return {
-    shortLabel: date.toLocaleDateString("en-US", { weekday: "short" }),
+    dayLabel: getDayLabel(date),
     dayNumber: date.getDate(),
+    monthLabel: date.toLocaleDateString("en-US", { month: "short" }),
+    fullLabel: date.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    }),
   };
 };
 
@@ -96,16 +104,20 @@ export const SessionSection: React.FC<SessionSectionProps> = ({
 
         <div className={styles.dateList}>
           {visibleDates.map((date) => {
-            const { shortLabel, dayNumber } = getDayInfo(date);
+            const { dayLabel, dayNumber, monthLabel, fullLabel } =
+              getDayInfo(date);
             const isSelected = selectedDate === date;
             return (
               <button
                 key={date}
                 className={`${styles.dateButton} ${isSelected ? styles.dateButtonActive : ""}`}
                 onClick={() => onDateSelect(date)}
+                aria-label={fullLabel}
+                aria-pressed={isSelected}
               >
-                <span className={styles.dateButtonDay}>{shortLabel}</span>
+                <span className={styles.dateButtonDay}>{dayLabel}</span>
                 <span className={styles.dateButtonNumber}>{dayNumber}</span>
+                <span className={styles.dateButtonMonth}>{monthLabel}</span>
               </button>
             );
           })}

@@ -112,10 +112,7 @@ public class MovieService {
             throw new EntityNotFoundException("Movie", slug);
         }
 
-        List<Session> sessions = movieRepository.findSessionsByMovieSlug(slug);
-
-        LocalDateTime now = LocalDateTime.now();
-        sessions.removeIf(session -> session.getStartTime() == null || !session.getStartTime().isAfter(now));
+        List<Session> sessions = movieRepository.findUpcomingSessionsByMovieSlug(slug, LocalDateTime.now());
 
         movie.setSessions(new LinkedHashSet<>(sessions));
 

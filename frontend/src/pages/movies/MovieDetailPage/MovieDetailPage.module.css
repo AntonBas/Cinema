@@ -27,21 +27,21 @@
 
 .content {
   display: grid;
-  grid-template-columns: 350px 1fr;
+  grid-template-columns: 350px minmax(0, 1fr);
   gap: var(--space-12);
   animation: fadeIn 0.4s ease-out;
 }
 
 @media (max-width: 1024px) {
   .content {
-    grid-template-columns: 300px 1fr;
+    grid-template-columns: 300px minmax(0, 1fr);
     gap: var(--space-10);
   }
 }
 
 @media (max-width: 768px) {
   .content {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--space-8);
   }
 }
