@@ -35,8 +35,9 @@ interface TabProps {
 }
 
 const UserBookingsTab: React.FC<TabProps> = ({ userId, onOpenBooking }) => {
-  const { bookings, pagination, loading, setPage, refresh } =
-    useAdminBookings({ userId });
+  const { bookings, pagination, loading, setPage, refresh } = useAdminBookings({
+    userId,
+  });
 
   useEffect(() => {
     refresh();

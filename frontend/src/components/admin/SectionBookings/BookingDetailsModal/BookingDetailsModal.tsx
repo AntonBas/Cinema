@@ -146,7 +146,9 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
               <dd>{formatPrice(payment.amount)}</dd>
               <dt>Paid at</dt>
               <dd>
-                {payment.paymentTime ? formatDateTime(payment.paymentTime) : "—"}
+                {payment.paymentTime
+                  ? formatDateTime(payment.paymentTime)
+                  : "—"}
               </dd>
               <dt>LiqPay order</dt>
               <dd className={styles.mono}>{payment.liqpayOrderId || "—"}</dd>

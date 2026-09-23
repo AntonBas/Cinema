@@ -10,9 +10,7 @@ import type {
 } from "@/types/booking";
 import type { PageResponse } from "@/types/pagination";
 
-export const useAdminBookings = (
-  initialFilters: AdminBookingFilters = {},
-) => {
+export const useAdminBookings = (initialFilters: AdminBookingFilters = {}) => {
   const [filters, setFilters] = useState<AdminBookingFilters>(initialFilters);
   const { params, setPage, setSort } = usePagination(
     {},
