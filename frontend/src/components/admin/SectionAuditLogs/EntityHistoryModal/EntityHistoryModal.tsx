@@ -18,8 +18,7 @@ export const EntityHistoryModal: React.FC<EntityHistoryModalProps> = ({
   entityId,
   onClose,
 }) => {
-  const { history, loading, error, getEntityHistory } =
-    useEntityAuditHistory();
+  const { history, loading, error, getEntityHistory } = useEntityAuditHistory();
   const showLoading = useDelayedLoading(loading);
 
   useEffect(() => {

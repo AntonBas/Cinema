@@ -65,7 +65,9 @@ export const MovieRail: React.FC<MovieRailProps> = ({
 
   if (loading) {
     return (
-      <section className={`${styles.section} ${highlighted ? styles.highlighted : ""}`}>
+      <section
+        className={`${styles.section} ${highlighted ? styles.highlighted : ""}`}
+      >
         <div className={styles.container}>
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>{title}</h2>

@@ -34,35 +34,55 @@ import { PaymentPage } from "@/pages/booking/PaymentPage/PaymentPage";
 import { SuccessPage } from "@/pages/booking/SuccessPage/SuccessPage";
 
 const AdminLayout = lazy(() =>
-  import("@/components/admin/AdminLayout/AdminLayout").then((m) => ({ default: m.AdminLayout })),
+  import("@/components/admin/AdminLayout/AdminLayout").then((m) => ({
+    default: m.AdminLayout,
+  })),
 );
 const SectionMovies = lazy(() =>
-  import("@/components/admin/SectionMovies/SectionMovies").then((m) => ({ default: m.SectionMovies })),
+  import("@/components/admin/SectionMovies/SectionMovies").then((m) => ({
+    default: m.SectionMovies,
+  })),
 );
 const SectionHalls = lazy(() =>
-  import("@/components/admin/SectionHalls/SectionHalls").then((m) => ({ default: m.SectionHalls })),
+  import("@/components/admin/SectionHalls/SectionHalls").then((m) => ({
+    default: m.SectionHalls,
+  })),
 );
 const SectionSchedule = lazy(() =>
-  import("@/components/admin/SectionSchedule/SectionSchedule").then((m) => ({ default: m.SectionSchedule })),
+  import("@/components/admin/SectionSchedule/SectionSchedule").then((m) => ({
+    default: m.SectionSchedule,
+  })),
 );
 const SectionUsers = lazy(() =>
-  import("@/components/admin/SectionUsers/SectionUsers").then((m) => ({ default: m.SectionUsers })),
+  import("@/components/admin/SectionUsers/SectionUsers").then((m) => ({
+    default: m.SectionUsers,
+  })),
 );
 const SectionBonus = lazy(() =>
-  import("@/components/admin/SectionBonus/SectionBonus").then((m) => ({ default: m.SectionBonus })),
+  import("@/components/admin/SectionBonus/SectionBonus").then((m) => ({
+    default: m.SectionBonus,
+  })),
 );
 const SectionPromotion = lazy(() =>
-  import("@/components/admin/SectionPromotion/SectionPromotion").then((m) => ({ default: m.SectionPromotion })),
+  import("@/components/admin/SectionPromotion/SectionPromotion").then((m) => ({
+    default: m.SectionPromotion,
+  })),
 );
 const SectionTicketType = lazy(() =>
-  import("@/components/admin/SectionTicketType/SectionTicketType").then((m) => ({ default: m.SectionTicketType })),
+  import("@/components/admin/SectionTicketType/SectionTicketType").then(
+    (m) => ({ default: m.SectionTicketType }),
+  ),
 );
 const SectionAuditLogs = lazy(() =>
-  import("@/components/admin/SectionAuditLogs/SectionAuditLogs").then((m) => ({ default: m.SectionAuditLogs })),
+  import("@/components/admin/SectionAuditLogs/SectionAuditLogs").then((m) => ({
+    default: m.SectionAuditLogs,
+  })),
 );
 
 const CashierScanPage = lazy(() =>
-  import("@/pages/cashier/CashierScanPage").then((m) => ({ default: m.CashierScanPage })),
+  import("@/pages/cashier/CashierScanPage").then((m) => ({
+    default: m.CashierScanPage,
+  })),
 );
 
 export const AppRoutes: React.FC = () => {

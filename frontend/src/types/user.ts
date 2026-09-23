@@ -1,8 +1,5 @@
 export type UserRole =
-  | "ROLE_ADMIN"
-  | "ROLE_USER"
-  | "ROLE_CASHIER"
-  | "ROLE_CONTENT_MANAGER";
+  "ROLE_ADMIN" | "ROLE_USER" | "ROLE_CASHIER" | "ROLE_CONTENT_MANAGER";
 export type VerificationStatus = "VERIFIED" | "NOT_VERIFIED";
 
 export interface UserProfileResponse {

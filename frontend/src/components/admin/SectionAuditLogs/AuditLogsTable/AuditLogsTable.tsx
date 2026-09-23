@@ -143,7 +143,9 @@ export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({
                       <button
                         type="button"
                         className={styles.targetButton}
-                        onClick={() => onViewHistory(log.entityType, log.entityId)}
+                        onClick={() =>
+                          onViewHistory(log.entityType, log.entityId)
+                        }
                       >
                         <Tooltip content={log.targetInfo}>
                           <span className={styles.targetInfo}>

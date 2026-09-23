@@ -95,7 +95,14 @@ export const BookingPage: React.FC = () => {
         return;
       }
     },
-    [selectedSeats, sessionId, create, navigate, showNotification, isAuthenticated],
+    [
+      selectedSeats,
+      sessionId,
+      create,
+      navigate,
+      showNotification,
+      isAuthenticated,
+    ],
   );
 
   if (loading) {
@@ -133,9 +140,7 @@ export const BookingPage: React.FC = () => {
             <div className={styles.sessionInfo}>
               <span>{seatData.hallName}</span>
               <span>Available seats: {seatData.availableSeats}</span>
-              <span>
-                Base Price: {formatPrice(seatData.basePrice)}
-              </span>
+              <span>Base Price: {formatPrice(seatData.basePrice)}</span>
             </div>
           }
         />

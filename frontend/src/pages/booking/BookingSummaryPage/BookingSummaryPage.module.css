@@ -1,304 +1,316 @@
 .bookingNumber {
-    font-size: var(--font-size-lg);
-    color: var(--color-text-secondary);
-    background: var(--color-bg-secondary);
-    padding: var(--space-2) var(--space-4);
-    border-radius: var(--radius-md);
-    display: inline-block;
-    border: 1px solid var(--color-border);
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+  background: var(--color-bg-secondary);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  display: inline-block;
+  border: 1px solid var(--color-border);
 }
 
 .content {
-    background: var(--color-bg-secondary);
-    border-radius: var(--radius-lg);
-    padding: var(--space-8);
-    box-shadow: var(--shadow-md);
-    border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border);
 }
 
 .movieInfo {
-    margin-bottom: var(--space-8);
-    padding-bottom: var(--space-8);
-    border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--space-8);
+  padding-bottom: var(--space-8);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .movieInfo h2 {
-    font-size: var(--font-size-3xl);
-    margin-bottom: var(--space-6);
-    color: var(--color-text-primary);
-    font-weight: 600;
+  font-size: var(--font-size-3xl);
+  margin-bottom: var(--space-6);
+  color: var(--color-text-primary);
+  font-weight: 600;
 }
 
 .sessionDetails {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: var(--space-6);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-6);
 }
 
 .detailItem {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 .detailLabel {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
-    font-weight: 500;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: 500;
 }
 
 .detailValue {
-    font-size: var(--font-size-lg);
-    color: var(--color-text-primary);
-    font-weight: 600;
-    padding: var(--space-2) var(--space-3);
-    background: var(--color-bg-tertiary);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-border);
+  font-size: var(--font-size-lg);
+  color: var(--color-text-primary);
+  font-weight: 600;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
 }
 
 .seatsInfo {
-    margin-bottom: var(--space-8);
+  margin-bottom: var(--space-8);
 }
 
 .seatsInfo h3 {
-    font-size: var(--font-size-2xl);
-    margin-bottom: var(--space-6);
-    color: var(--color-text-primary);
-    font-weight: 600;
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-6);
+  color: var(--color-text-primary);
+  font-weight: 600;
 }
 
 .seatsList {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
 .seatItem {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--space-4);
-    background: var(--color-bg-tertiary);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-border);
-    transition: border-color var(--transition-fast);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4);
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  transition: border-color var(--transition-fast);
 }
 
 .seatItem:hover {
-    border-color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 .seatInfo {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 .seatLocation {
-    font-weight: 600;
-    color: var(--color-text-primary);
-    font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
 }
 
 .ticketType {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
-    background: var(--color-bg-quaternary);
-    padding: var(--space-1) var(--space-3);
-    border-radius: var(--radius-full);
-    display: inline-block;
-    width: fit-content;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  background: var(--color-bg-quaternary);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  display: inline-block;
+  width: fit-content;
 }
 
 .seatPrice {
-    font-weight: 700;
-    color: var(--color-success);
-    font-size: var(--font-size-xl);
-    min-width: 80px;
-    text-align: right;
+  font-weight: 700;
+  color: var(--color-success);
+  font-size: var(--font-size-xl);
+  min-width: 80px;
+  text-align: right;
 }
 
 .pricingInfo {
-    margin-bottom: var(--space-8);
+  margin-bottom: var(--space-8);
 }
 
 .pricingInfo h3 {
-    font-size: var(--font-size-2xl);
-    margin-bottom: var(--space-6);
-    color: var(--color-text-primary);
-    font-weight: 600;
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-6);
+  color: var(--color-text-primary);
+  font-weight: 600;
 }
 
 .priceBreakdown {
-    background: var(--color-bg-tertiary);
-    border-radius: var(--radius-md);
-    padding: var(--space-6);
-    border: 1px solid var(--color-border);
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
 }
 
 .priceRow {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--space-4);
-    padding-bottom: var(--space-4);
-    border-bottom: 1px solid var(--color-border-light);
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border-light);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-lg);
 }
 
 .priceRow:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-    padding-bottom: 0;
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 
 .discount {
-    color: var(--color-success);
-    font-weight: 600;
+  color: var(--color-success);
+  font-weight: 600;
 }
 
 .finalPriceRow {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: var(--font-size-xl);
-    font-weight: 600;
-    color: var(--color-text-primary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--color-text-primary);
 }
 
 .finalPrice {
-    color: var(--color-primary);
-    font-size: var(--font-size-3xl);
-    font-weight: 700;
+  color: var(--color-primary);
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
 }
 
 .bookingInfo {
-    margin-bottom: var(--space-8);
-    padding: var(--space-6);
-    background: var(--color-bg-tertiary);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-border);
+  margin-bottom: var(--space-8);
+  padding: var(--space-6);
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
 }
 
 .infoItem {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--space-4);
-    padding-bottom: var(--space-4);
-    border-bottom: 1px solid var(--color-border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .infoItem:last-child {
-    margin-bottom: 0;
-    padding-bottom: 0;
-    border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
 }
 
 .infoLabel {
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-md);
-    font-weight: 500;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+  font-weight: 500;
 }
 
 .status {
-    padding: var(--space-1) var(--space-4);
-    border-radius: var(--radius-full);
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size: var(--font-size-sm);
-    letter-spacing: 0.5px;
+  padding: var(--space-1) var(--space-4);
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: var(--font-size-sm);
+  letter-spacing: 0.5px;
 }
 
 .status.pending {
-    background: linear-gradient(135deg, var(--color-warning) 0%, var(--color-warning-gradient-end) 100%);
-    color: var(--color-text-primary);
+  background: linear-gradient(
+    135deg,
+    var(--color-warning) 0%,
+    var(--color-warning-gradient-end) 100%
+  );
+  color: var(--color-text-primary);
 }
 
 .status.confirmed {
-    background: linear-gradient(135deg, var(--color-success) 0%, var(--color-success-gradient-end) 100%);
-    color: var(--color-text-primary);
+  background: linear-gradient(
+    135deg,
+    var(--color-success) 0%,
+    var(--color-success-gradient-end) 100%
+  );
+  color: var(--color-text-primary);
 }
 
 .status.cancelled {
-    background: linear-gradient(135deg, var(--color-error) 0%, var(--color-error-gradient-end) 100%);
-    color: var(--color-text-primary);
+  background: linear-gradient(
+    135deg,
+    var(--color-error) 0%,
+    var(--color-error-gradient-end) 100%
+  );
+  color: var(--color-text-primary);
 }
 
 .timeLeft {
-    color: var(--color-success);
-    font-weight: 700;
-    font-size: var(--font-size-xl);
+  color: var(--color-success);
+  font-weight: 700;
+  font-size: var(--font-size-xl);
 }
 
 .timeLeft.warning {
-    color: var(--color-error);
+  color: var(--color-error);
 }
 
 .actionButtons {
-    display: flex;
-    gap: var(--space-6);
+  display: flex;
+  gap: var(--space-6);
 }
 
 .loading {
-    text-align: center;
-    padding: var(--space-16);
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-xl);
-    background: var(--color-bg-secondary);
-    border-radius: var(--radius-md);
-    margin: var(--space-8);
-    border: 1px solid var(--color-border);
+  text-align: center;
+  padding: var(--space-16);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xl);
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  margin: var(--space-8);
+  border: 1px solid var(--color-border);
 }
 
 @media (max-width: 768px) {
-    .content {
-        padding: var(--space-6);
-    }
+  .content {
+    padding: var(--space-6);
+  }
 
-    .sessionDetails {
-        grid-template-columns: 1fr;
-    }
+  .sessionDetails {
+    grid-template-columns: 1fr;
+  }
 
-    .actionButtons {
-        flex-direction: column;
-    }
+  .actionButtons {
+    flex-direction: column;
+  }
 
-    .seatItem {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--space-3);
-    }
+  .seatItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
 
-    .seatPrice {
-        text-align: left;
-        width: 100%;
-        border-top: 1px solid var(--color-border-light);
-        padding-top: var(--space-3);
-    }
+  .seatPrice {
+    text-align: left;
+    width: 100%;
+    border-top: 1px solid var(--color-border-light);
+    padding-top: var(--space-3);
+  }
 }
 
 @media (max-width: 480px) {
-    .movieInfo h2 {
-        font-size: var(--font-size-2xl);
-    }
+  .movieInfo h2 {
+    font-size: var(--font-size-2xl);
+  }
 
-    .pricingInfo h3,
-    .seatsInfo h3 {
-        font-size: var(--font-size-xl);
-    }
+  .pricingInfo h3,
+  .seatsInfo h3 {
+    font-size: var(--font-size-xl);
+  }
 
-    .finalPrice {
-        font-size: var(--font-size-2xl);
-    }
+  .finalPrice {
+    font-size: var(--font-size-2xl);
+  }
 }
 
 .cancelButton {
-    flex: 1;
+  flex: 1;
 }
 
 .payButton {
-    flex: 2;
+  flex: 2;
 }

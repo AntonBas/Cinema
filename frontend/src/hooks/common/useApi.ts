@@ -129,7 +129,10 @@ export const useApi = <T = unknown>() => {
         const isFieldValidationError =
           isApiErrorException(error) && error.isValidationError();
 
-        if (showErrorNotification && !(suppressValidationToast && isFieldValidationError)) {
+        if (
+          showErrorNotification &&
+          !(suppressValidationToast && isFieldValidationError)
+        ) {
           const errorMessage = getErrorMessage(error);
           showNotification(errorMessage, "error");
         }

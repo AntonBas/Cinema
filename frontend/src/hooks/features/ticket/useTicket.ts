@@ -47,11 +47,15 @@ export const useTicket = () => {
   );
 
   const getByCode = useCallback(async (ticketCode: string) => {
-    return ticketApiRef.current.execute(() => ticketApi.public.getByCode(ticketCode));
+    return ticketApiRef.current.execute(() =>
+      ticketApi.public.getByCode(ticketCode),
+    );
   }, []);
 
   const getQRCode = useCallback(async (ticketCode: string) => {
-    return qrCodeApiRef.current.execute(() => ticketApi.public.getQRCode(ticketCode));
+    return qrCodeApiRef.current.execute(() =>
+      ticketApi.public.getQRCode(ticketCode),
+    );
   }, []);
 
   const getTicketForCashier = useCallback(async (uniqueCode: string) => {

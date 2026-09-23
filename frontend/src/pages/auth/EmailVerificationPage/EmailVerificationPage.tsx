@@ -40,8 +40,7 @@ export const EmailVerificationPage: React.FC = () => {
       } catch (error) {
         setStatus("error");
         const message = axios.isAxiosError(error)
-          ? (error.response?.data as { message?: string } | undefined)
-              ?.message
+          ? (error.response?.data as { message?: string } | undefined)?.message
           : error instanceof Error
             ? error.message
             : undefined;
@@ -66,7 +65,10 @@ export const EmailVerificationPage: React.FC = () => {
   if (status === "error") {
     return (
       <AuthPageLayout>
-        <AuthCard title="Verification Failed" className={`${styles.verificationCard} ${styles.error}`}>
+        <AuthCard
+          title="Verification Failed"
+          className={`${styles.verificationCard} ${styles.error}`}
+        >
           <XCircle size={64} className={styles.icon} />
           <p>{errorMessage}</p>
           <p className={styles.message}>
@@ -115,7 +117,10 @@ export const EmailVerificationPage: React.FC = () => {
 
   return (
     <AuthPageLayout>
-      <AuthCard title="Email Verified Successfully!" className={`${styles.verificationCard} ${styles.success}`}>
+      <AuthCard
+        title="Email Verified Successfully!"
+        className={`${styles.verificationCard} ${styles.success}`}
+      >
         <CheckCircle2 size={64} className={styles.icon} />
         <p>Your email has been verified.</p>
         <p className={styles.redirectText}>

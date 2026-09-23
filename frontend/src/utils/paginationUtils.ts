@@ -1,13 +1,7 @@
 import type { PageResponse, SearchParams } from "@/types/pagination";
 
 type PageSizeContext =
-  | "grid"
-  | "list"
-  | "table"
-  | "admin"
-  | "small"
-  | "medium"
-  | "large";
+  "grid" | "list" | "table" | "admin" | "small" | "medium" | "large";
 
 export const DEFAULT_PAGE = 0;
 export const DEFAULT_PAGE_SIZE = 12;
@@ -50,9 +44,7 @@ export const createSearchParams = (
     params.page !== undefined ? Math.max(0, params.page) : DEFAULT_PAGE;
   searchParams.append("page", page.toString());
 
-  const defaultSize = context
-    ? getDefaultPageSize(context)
-    : DEFAULT_PAGE_SIZE;
+  const defaultSize = context ? getDefaultPageSize(context) : DEFAULT_PAGE_SIZE;
   const size =
     params.size !== undefined ? Math.max(1, params.size) : defaultSize;
   searchParams.append("size", size.toString());

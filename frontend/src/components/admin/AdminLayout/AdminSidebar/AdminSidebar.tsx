@@ -22,7 +22,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   const navigate = useNavigate();
   const { user } = useAuth();
 
-
   const userRole = user?.userRole ?? "";
   const menuItems = getAdminMenuItems(userRole);
 

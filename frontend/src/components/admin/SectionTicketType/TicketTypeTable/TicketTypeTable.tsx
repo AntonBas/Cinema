@@ -160,7 +160,9 @@ export const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
                       )}
                     </td>
                     <td data-label="Status">
-                      <Badge variant={ticketType.active ? "success" : "secondary"}>
+                      <Badge
+                        variant={ticketType.active ? "success" : "secondary"}
+                      >
                         {ticketType.active ? "Active" : "Inactive"}
                       </Badge>
                     </td>

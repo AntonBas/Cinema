@@ -70,7 +70,10 @@ export const TicketsPage: React.FC = () => {
   };
 
   return (
-    <AccountPageLayout title="My Tickets" subtitle="Manage and view your movie tickets">
+    <AccountPageLayout
+      title="My Tickets"
+      subtitle="Manage and view your movie tickets"
+    >
       <div className={styles.controlsSection}>
         <div className={styles.searchBox}>
           <SearchInput

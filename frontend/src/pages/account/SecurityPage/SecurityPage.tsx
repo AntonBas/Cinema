@@ -17,7 +17,10 @@ export const SecurityPage: React.FC = () => {
     useState<SecuritySection>("password");
 
   return (
-    <AccountPageLayout title="Account Security" subtitle="Manage your password and email settings">
+    <AccountPageLayout
+      title="Account Security"
+      subtitle="Manage your password and email settings"
+    >
       <Tabs
         items={SECTIONS}
         activeId={activeSection}

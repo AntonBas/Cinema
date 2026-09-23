@@ -18,9 +18,7 @@ export const TicketsList: React.FC<TicketsListProps> = ({
   onRequestRefund,
 }) => {
   if (!tickets || tickets.length === 0) {
-    return (
-      <EmptyState title="No Tickets Found" />
-    );
+    return <EmptyState title="No Tickets Found" />;
   }
 
   return (

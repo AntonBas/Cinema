@@ -38,7 +38,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   if (!isAuthenticated) {
     return (
-      <Navigate to={buildLoginPath(location.pathname + location.search)} replace />
+      <Navigate
+        to={buildLoginPath(location.pathname + location.search)}
+        replace
+      />
     );
   }
 

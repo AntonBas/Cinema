@@ -105,7 +105,9 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                 <tr key={session.id}>
                   <td data-label="Movie">
                     <div className={styles.movieInfo}>
-                      <div className={styles.movieTitle}>{session.movieTitle}</div>
+                      <div className={styles.movieTitle}>
+                        {session.movieTitle}
+                      </div>
                       <div className={styles.movieMeta}>
                         {session.movieDuration} min
                       </div>
@@ -123,8 +125,12 @@ export const SessionTable: React.FC<SessionTableProps> = ({
 
                   <td data-label="Time">
                     <div className={styles.timeInfo}>
-                      <div className={styles.date}>{formatShortDate(session.startTime)}</div>
-                      <div className={styles.time}>{formatTime(session.startTime)}</div>
+                      <div className={styles.date}>
+                        {formatShortDate(session.startTime)}
+                      </div>
+                      <div className={styles.time}>
+                        {formatTime(session.startTime)}
+                      </div>
                     </div>
                   </td>
 
@@ -137,7 +143,8 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                   <td data-label="Occupancy">
                     <div className={styles.occupancyWrapper}>
                       <div className={styles.occupancyInfo}>
-                        {session.ticketsSold}/{session.hallCapacity} ({occupancy}%)
+                        {session.ticketsSold}/{session.hallCapacity} (
+                        {occupancy}%)
                       </div>
                       <div className={styles.occupancyBar}>
                         <div

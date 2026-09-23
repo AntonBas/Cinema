@@ -136,7 +136,10 @@ export const SessionsPage: React.FC = () => {
             title="Failed to Load Sessions"
             message={error}
             action={
-              <Button variant="primary" onClick={() => window.location.reload()}>
+              <Button
+                variant="primary"
+                onClick={() => window.location.reload()}
+              >
                 Try Again
               </Button>
             }

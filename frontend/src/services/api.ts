@@ -23,7 +23,8 @@ export const setUnauthorizedHandler = (handler: (() => void) | null) => {
   onUnauthorized = handler;
 };
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+export const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 export const api = axios.create({
   baseURL: "",
@@ -80,7 +81,9 @@ api.interceptors.response.use(
         onUnauthorized?.();
         const currentPath = window.location.pathname;
         if (currentPath !== "/login" && currentPath !== "/register") {
-          window.location.href = buildLoginPath(currentPath + window.location.search);
+          window.location.href = buildLoginPath(
+            currentPath + window.location.search,
+          );
         }
       }
     }

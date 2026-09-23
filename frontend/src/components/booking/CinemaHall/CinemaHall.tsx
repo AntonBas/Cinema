@@ -25,7 +25,8 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
   loadingSeats = [],
   onSeatClick,
 }) => {
-  const { ref: viewportRef, width: viewportWidth } = useElementWidth<HTMLDivElement>();
+  const { ref: viewportRef, width: viewportWidth } =
+    useElementWidth<HTMLDivElement>();
   const viewportHeight = useViewportHeight();
 
   const canvasSize = useMemo(() => {
@@ -37,15 +38,19 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
     };
   }, [seats]);
 
-  const availableCanvasHeight = Math.max(MIN_CANVAS_HEIGHT, viewportHeight - HALL_CHROME_HEIGHT);
+  const availableCanvasHeight = Math.max(
+    MIN_CANVAS_HEIGHT,
+    viewportHeight - HALL_CHROME_HEIGHT,
+  );
   const compactScale = Math.min(
     1,
     TARGET_HALL_WIDTH / canvasSize.width,
     availableCanvasHeight / canvasSize.height,
   );
-  const scale = viewportWidth > 0
-    ? Math.min(compactScale, viewportWidth / canvasSize.width)
-    : compactScale;
+  const scale =
+    viewportWidth > 0
+      ? Math.min(compactScale, viewportWidth / canvasSize.width)
+      : compactScale;
   const hallWidth = Math.max(360, canvasSize.width * compactScale + 48);
 
   const getSeatInfo = (seat: SeatInfo) => {
@@ -90,11 +95,18 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
         <div ref={viewportRef} className={styles.canvasViewport}>
           <div
             className={styles.canvasSizer}
-            style={{ width: canvasSize.width * scale, height: canvasSize.height * scale }}
+            style={{
+              width: canvasSize.width * scale,
+              height: canvasSize.height * scale,
+            }}
           >
             <div
               className={styles.canvas}
-              style={{ width: canvasSize.width, height: canvasSize.height, transform: `scale(${scale})` }}
+              style={{
+                width: canvasSize.width,
+                height: canvasSize.height,
+                transform: `scale(${scale})`,
+              }}
             >
               {seats.map((seat) => {
                 const { status, typeName, statusText } = getSeatInfo(seat);
@@ -105,7 +117,10 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
                   status === "temporary" ||
                   isLoading;
 
-                const width = seat.seatType === "COUPLE" ? CELL_WIDTH * 2 - SEAT_INSET * 2 : CELL_WIDTH - SEAT_INSET * 2;
+                const width =
+                  seat.seatType === "COUPLE"
+                    ? CELL_WIDTH * 2 - SEAT_INSET * 2
+                    : CELL_WIDTH - SEAT_INSET * 2;
                 const seatClass = `${styles.seatButton} ${styles[seat.seatType.toLowerCase()]} ${
                   status === "inactive"
                     ? styles.inactive
@@ -125,7 +140,11 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
                     key={`seat-${seat.id}`}
                     content={title}
                     position={seat.row === 1 ? "bottom" : "top"}
-                    style={{ position: "absolute", left: seat.x + SEAT_INSET, top: seat.y + SEAT_INSET }}
+                    style={{
+                      position: "absolute",
+                      left: seat.x + SEAT_INSET,
+                      top: seat.y + SEAT_INSET,
+                    }}
                   >
                     <button
                       className={seatClass}
@@ -136,7 +155,9 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
                       {isLoading ? (
                         <span className={styles.loadingSpinner} />
                       ) : (
-                        <span className={styles.seatNumber}>{seat.seatNumber}</span>
+                        <span className={styles.seatNumber}>
+                          {seat.seatNumber}
+                        </span>
                       )}
                       {!seat.active && (
                         <div className={styles.inactiveOverlay}>

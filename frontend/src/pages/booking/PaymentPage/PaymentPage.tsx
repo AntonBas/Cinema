@@ -47,12 +47,7 @@ interface ExtendedPaymentResponse extends PaymentResponse {
 }
 
 type PaymentStep =
-  | "init"
-  | "processing"
-  | "ready"
-  | "paying"
-  | "success"
-  | "failed";
+  "init" | "processing" | "ready" | "paying" | "success" | "failed";
 
 export const PaymentPage: React.FC = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
@@ -248,7 +243,6 @@ export const PaymentPage: React.FC = () => {
       state: { booking: bookingData, existingPaymentId: currentPayment?.id },
     });
 
-
   if (!bookingData)
     return (
       <Layout>
@@ -432,7 +426,8 @@ export const PaymentPage: React.FC = () => {
               <div className={styles.movieInfo}>
                 <h3 className={styles.movieTitle}>{bookingData.movieTitle}</h3>
                 <p className={styles.movieDetails}>
-                  {bookingData.hallName} • {formatFullDateTime(bookingData.sessionTime)}
+                  {bookingData.hallName} •{" "}
+                  {formatFullDateTime(bookingData.sessionTime)}
                 </p>
                 <Badge variant="primary" className={styles.badge}>
                   {bookingData.bookingNumber}

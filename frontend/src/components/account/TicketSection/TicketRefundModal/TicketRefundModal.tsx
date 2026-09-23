@@ -181,7 +181,9 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
             </div>
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>Price</span>
-              <span className={styles.infoValue}>{formatPrice(ticket.price)}</span>
+              <span className={styles.infoValue}>
+                {formatPrice(ticket.price)}
+              </span>
             </div>
           </div>
         </div>
@@ -212,7 +214,9 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
                   {previewResult.refundPercentage}%)
                 </span>
                 <span className={styles.estimateNote}>
-                  {previewResult.policyName}: fee {formatPrice(previewResult.feeAmount)} ({previewResult.feePercentage}%)
+                  {previewResult.policyName}: fee{" "}
+                  {formatPrice(previewResult.feeAmount)} (
+                  {previewResult.feePercentage}%)
                 </span>
               </>
             )}

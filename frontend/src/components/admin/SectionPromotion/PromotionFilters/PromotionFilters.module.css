@@ -1,9 +1,9 @@
 .container {
-    min-width: 200px;
+  min-width: 200px;
 }
 
 @media (max-width: 768px) {
-    .container {
-        min-width: 100%;
-    }
+  .container {
+    min-width: 100%;
+  }
 }

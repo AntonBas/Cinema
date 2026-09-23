@@ -34,7 +34,9 @@ export const BonusPage: React.FC = () => {
 
   useEffect(() => {
     if (activeTab === "transactions") {
-      getMyTransactions({ page: params.page, size: params.size }).catch(() => {});
+      getMyTransactions({ page: params.page, size: params.size }).catch(
+        () => {},
+      );
     }
   }, [activeTab, params.page, params.size, getMyTransactions]);
 

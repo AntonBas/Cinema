@@ -4,8 +4,7 @@ import { auditApi } from "@/api/auditApi";
 import type { AuditLogResponse } from "@/types/audit";
 
 export const useEntityAuditHistory = () => {
-  const { data, loading, error, execute, reset } =
-    useApi<AuditLogResponse[]>();
+  const { data, loading, error, execute, reset } = useApi<AuditLogResponse[]>();
   const executeRef = useRef(execute);
   executeRef.current = execute;
 

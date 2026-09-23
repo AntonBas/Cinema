@@ -6,11 +6,7 @@ export type RefundStatus =
   | "PROCESSED"
   | "CANCELLED";
 export type RefundItemStatus =
-  | "PENDING"
-  | "APPROVED"
-  | "REJECTED"
-  | "PROCESSED"
-  | "CANCELLED";
+  "PENDING" | "APPROVED" | "REJECTED" | "PROCESSED" | "CANCELLED";
 
 export interface RefundPolicyRule {
   name: string;

@@ -1,15 +1,15 @@
 .container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: var(--page-min-height);
-    padding: var(--space-8);
-    box-sizing: border-box;
-    background-color: var(--color-bg-primary);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: var(--page-min-height);
+  padding: var(--space-8);
+  box-sizing: border-box;
+  background-color: var(--color-bg-primary);
 }
 
 @media (max-width: 768px) {
-    .container {
-        padding: var(--space-6) var(--space-4);
-    }
+  .container {
+    padding: var(--space-6) var(--space-4);
+  }
 }

@@ -1,111 +1,135 @@
-import { useCallback, useRef } from 'react';
-import { promotionApi } from '@/api/promotionApi';
+import { useCallback, useRef } from "react";
+import { promotionApi } from "@/api/promotionApi";
 import type {
-    PromotionResponse,
-    PromotionListResponse,
-    PromotionRequest,
-    ClaimPromotionRequest
-} from '@/types/promotion';
-import type { PageResponse } from '@/types/pagination';
-import { useApi } from '@/hooks/common/useApi';
-import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
+  PromotionResponse,
+  PromotionListResponse,
+  PromotionRequest,
+  ClaimPromotionRequest,
+} from "@/types/promotion";
+import type { PageResponse } from "@/types/pagination";
+import { useApi } from "@/hooks/common/useApi";
+import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 
 export const usePromotion = () => {
-    const availableApi = useApi<PromotionResponse[]>();
-    const claimedApi = useApi<PromotionResponse[]>();
-    const adminApi = useApi<PageResponse<PromotionListResponse>>();
-    const promotionApiHook = useApi<PromotionResponse>();
-    const mutationApi = useApi<PromotionResponse | void>();
+  const availableApi = useApi<PromotionResponse[]>();
+  const claimedApi = useApi<PromotionResponse[]>();
+  const adminApi = useApi<PageResponse<PromotionListResponse>>();
+  const promotionApiHook = useApi<PromotionResponse>();
+  const mutationApi = useApi<PromotionResponse | void>();
 
-    const availableApiRef = useRef(availableApi);
-    const claimedApiRef = useRef(claimedApi);
-    const adminApiRef = useRef(adminApi);
-    const promotionApiRef = useRef(promotionApiHook);
-    const mutationApiRef = useRef(mutationApi);
+  const availableApiRef = useRef(availableApi);
+  const claimedApiRef = useRef(claimedApi);
+  const adminApiRef = useRef(adminApi);
+  const promotionApiRef = useRef(promotionApiHook);
+  const mutationApiRef = useRef(mutationApi);
 
-    availableApiRef.current = availableApi;
-    claimedApiRef.current = claimedApi;
-    adminApiRef.current = adminApi;
-    promotionApiRef.current = promotionApiHook;
-    mutationApiRef.current = mutationApi;
+  availableApiRef.current = availableApi;
+  claimedApiRef.current = claimedApi;
+  adminApiRef.current = adminApi;
+  promotionApiRef.current = promotionApiHook;
+  mutationApiRef.current = mutationApi;
 
-    const loading = useDelayedLoading(
-        availableApi.loading || claimedApi.loading || adminApi.loading || promotionApiHook.loading || mutationApi.loading,
-        { delay: 150, minDisplayTime: 300 }
+  const loading = useDelayedLoading(
+    availableApi.loading ||
+      claimedApi.loading ||
+      adminApi.loading ||
+      promotionApiHook.loading ||
+      mutationApi.loading,
+    { delay: 150, minDisplayTime: 300 },
+  );
+
+  const getPromotionTitle = useCallback(
+    (id: number): string => {
+      const promotion =
+        adminApi.data?.content?.find((p) => p.id === id) ||
+        availableApi.data?.find((p) => p.id === id) ||
+        claimedApi.data?.find((p) => p.id === id);
+      return promotion?.title || String(id);
+    },
+    [adminApi.data, availableApi.data, claimedApi.data],
+  );
+
+  const getAvailable = useCallback(async () => {
+    return availableApiRef.current.execute(() =>
+      promotionApi.public.getAvailable(),
     );
+  }, []);
 
-    const getPromotionTitle = useCallback((id: number): string => {
-        const promotion = adminApi.data?.content?.find(p => p.id === id) ||
-            availableApi.data?.find(p => p.id === id) ||
-            claimedApi.data?.find(p => p.id === id);
-        return promotion?.title || String(id);
-    }, [adminApi.data, availableApi.data, claimedApi.data]);
+  const getClaimed = useCallback(async () => {
+    return claimedApiRef.current.execute(() =>
+      promotionApi.public.getClaimed(),
+    );
+  }, []);
 
-    const getAvailable = useCallback(async () => {
-        return availableApiRef.current.execute(() => promotionApi.public.getAvailable());
-    }, []);
+  const claim = useCallback(
+    async (request: ClaimPromotionRequest) => {
+      return mutationApiRef.current.execute(
+        () => promotionApi.public.claim(request),
+        {
+          successMessage: `Promotion "${getPromotionTitle(request.promotionId)}" claimed successfully`,
+        },
+      );
+    },
+    [getPromotionTitle],
+  );
 
-    const getClaimed = useCallback(async () => {
-        return claimedApiRef.current.execute(() => promotionApi.public.getClaimed());
-    }, []);
+  const getById = useCallback(async (id: number) => {
+    return promotionApiRef.current.execute(() =>
+      promotionApi.admin.getById(id),
+    );
+  }, []);
 
-    const claim = useCallback(async (request: ClaimPromotionRequest) => {
-        return mutationApiRef.current.execute(
-            () => promotionApi.public.claim(request),
-            { successMessage: `Promotion "${getPromotionTitle(request.promotionId)}" claimed successfully` }
-        );
-    }, [getPromotionTitle]);
-
-    const getById = useCallback(async (id: number) => {
-        return promotionApiRef.current.execute(() => promotionApi.admin.getById(id));
-    }, []);
-
-    const getAll = useCallback(async (params?: {
-        query?: string;
-        page?: number;
-        size?: number;
-        sort?: string[]
+  const getAll = useCallback(
+    async (params?: {
+      query?: string;
+      page?: number;
+      size?: number;
+      sort?: string[];
     }) => {
-        return adminApiRef.current.execute(() => promotionApi.admin.getAll(params));
-    }, []);
+      return adminApiRef.current.execute(() =>
+        promotionApi.admin.getAll(params),
+      );
+    },
+    [],
+  );
 
-    const create = useCallback(async (request: PromotionRequest) => {
-        return mutationApiRef.current.execute(
-            () => promotionApi.admin.create(request),
-            { suppressValidationToast: true }
-        );
-    }, []);
+  const create = useCallback(async (request: PromotionRequest) => {
+    return mutationApiRef.current.execute(
+      () => promotionApi.admin.create(request),
+      { suppressValidationToast: true },
+    );
+  }, []);
 
-    const update = useCallback(async (id: number, request: PromotionRequest) => {
-        return mutationApiRef.current.execute(
-            () => promotionApi.admin.update(id, request),
-            { suppressValidationToast: true }
-        );
-    }, []);
+  const update = useCallback(async (id: number, request: PromotionRequest) => {
+    return mutationApiRef.current.execute(
+      () => promotionApi.admin.update(id, request),
+      { suppressValidationToast: true },
+    );
+  }, []);
 
-    const remove = useCallback(async (id: number) => {
-        return mutationApiRef.current.execute(() => promotionApi.admin.delete(id));
-    }, []);
+  const remove = useCallback(async (id: number) => {
+    return mutationApiRef.current.execute(() => promotionApi.admin.delete(id));
+  }, []);
 
-    return {
-        availablePromotions: availableApi.data || [],
-        claimedPromotions: claimedApi.data || [],
-        adminPromotions: adminApi.data?.content || [],
-        promotion: promotionApiHook.data,
-        pagination: adminApi.data,
-        loading,
-        availableError: availableApi.error,
-        claimedError: claimedApi.error,
-        adminError: adminApi.error,
-        promotionError: promotionApiHook.error,
-        mutationError: mutationApi.error,
-        getAvailable,
-        getClaimed,
-        claim,
-        getById,
-        getAll,
-        create,
-        update,
-        remove,
-    };
+  return {
+    availablePromotions: availableApi.data || [],
+    claimedPromotions: claimedApi.data || [],
+    adminPromotions: adminApi.data?.content || [],
+    promotion: promotionApiHook.data,
+    pagination: adminApi.data,
+    loading,
+    availableError: availableApi.error,
+    claimedError: claimedApi.error,
+    adminError: adminApi.error,
+    promotionError: promotionApiHook.error,
+    mutationError: mutationApi.error,
+    getAvailable,
+    getClaimed,
+    claim,
+    getById,
+    getAll,
+    create,
+    update,
+    remove,
+  };
 };

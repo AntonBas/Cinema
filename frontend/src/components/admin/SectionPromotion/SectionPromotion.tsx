@@ -27,7 +27,9 @@ export const SectionPromotion: React.FC = () => {
     title: string;
   } | null>(null);
 
-  const { params, setPage } = usePagination({ size: DEFAULT_PAGE_SIZE_COMPACT });
+  const { params, setPage } = usePagination({
+    size: DEFAULT_PAGE_SIZE_COMPACT,
+  });
   const { adminPromotions, pagination, getById, getAll, remove, loading } =
     usePromotion();
   const showDelayedLoading = useDelayedLoading(loading, {

@@ -1,394 +1,510 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import type { MovieAdminResponse, AgeRating, MovieCreateRequest, MovieUpdateRequest } from '@/types/movie';
-import type { PersonResponse } from '@/types/person';
-import { useMovie } from '@/hooks/features/movie/useMovie';
-import { useGenre } from '@/hooks/features/genre/useGenre';
-import { isApiErrorException } from '@/utils/apiErrorHandler';
-import { toBackendFormat } from '@/utils/dateUtils';
-import { resolvePosterUrl } from '@/utils/posterUrl';
-import { PersonSelect } from './PersonSelect/PersonSelect';
-import { GenreSearchList } from './GenreSearchList/GenreSearchList';
-import { Button } from '@/components/ui/Button/Button';
-import { Modal } from '@/components/ui/Modal/Modal';
-import { Input } from '@/components/ui/Input/Input';
-import { Select } from '@/components/ui/Select/Select';
-import { Textarea } from '@/components/ui/Textarea/Textarea';
-import styles from './MovieForm.module.css';
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import type {
+  MovieAdminResponse,
+  AgeRating,
+  MovieCreateRequest,
+  MovieUpdateRequest,
+} from "@/types/movie";
+import type { PersonResponse } from "@/types/person";
+import { useMovie } from "@/hooks/features/movie/useMovie";
+import { useGenre } from "@/hooks/features/genre/useGenre";
+import { isApiErrorException } from "@/utils/apiErrorHandler";
+import { toBackendFormat } from "@/utils/dateUtils";
+import { resolvePosterUrl } from "@/utils/posterUrl";
+import { PersonSelect } from "./PersonSelect/PersonSelect";
+import { GenreSearchList } from "./GenreSearchList/GenreSearchList";
+import { Button } from "@/components/ui/Button/Button";
+import { Modal } from "@/components/ui/Modal/Modal";
+import { Input } from "@/components/ui/Input/Input";
+import { Select } from "@/components/ui/Select/Select";
+import { Textarea } from "@/components/ui/Textarea/Textarea";
+import styles from "./MovieForm.module.css";
 
 interface MovieFormProps {
-    movie?: MovieAdminResponse | null;
-    onSuccess: () => void;
-    onCancel: () => void;
+  movie?: MovieAdminResponse | null;
+  onSuccess: () => void;
+  onCancel: () => void;
 }
 
 interface MovieFormData {
-    title: string;
-    trailerUrl: string;
-    description: string;
-    durationMinutes: number;
-    releaseDate: Date | null;
-    endShowingDate: Date | null;
-    ageRating: AgeRating;
-    selectedGenres: number[];
-    selectedDirectors: number[];
-    selectedScreenwriters: number[];
-    selectedActors: number[];
-    posterFile?: File;
-    removePoster: boolean;
+  title: string;
+  trailerUrl: string;
+  description: string;
+  durationMinutes: number;
+  releaseDate: Date | null;
+  endShowingDate: Date | null;
+  ageRating: AgeRating;
+  selectedGenres: number[];
+  selectedDirectors: number[];
+  selectedScreenwriters: number[];
+  selectedActors: number[];
+  posterFile?: File;
+  removePoster: boolean;
 }
 
 const AGE_RATING_OPTIONS = [
-    { value: 'PEGI_3', label: 'PEGI 3' },
-    { value: 'PEGI_7', label: 'PEGI 7' },
-    { value: 'PEGI_12', label: 'PEGI 12' },
-    { value: 'PEGI_16', label: 'PEGI 16' },
-    { value: 'PEGI_18', label: 'PEGI 18' },
+  { value: "PEGI_3", label: "PEGI 3" },
+  { value: "PEGI_7", label: "PEGI 7" },
+  { value: "PEGI_12", label: "PEGI 12" },
+  { value: "PEGI_16", label: "PEGI 16" },
+  { value: "PEGI_18", label: "PEGI 18" },
 ];
 
 const TITLE_MAX_LENGTH = 50;
 const DESCRIPTION_MAX_LENGTH = 1000;
 
 const BACKEND_TO_FORM_FIELD: Record<string, string> = {
-    genreIds: 'selectedGenres',
-    actorIds: 'selectedActors',
-    directorIds: 'selectedDirectors',
-    screenwriterIds: 'selectedScreenwriters',
+  genreIds: "selectedGenres",
+  actorIds: "selectedActors",
+  directorIds: "selectedDirectors",
+  screenwriterIds: "selectedScreenwriters",
 };
 
-export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSuccess, onCancel }) => {
+export const MovieForm: React.FC<MovieFormProps> = React.memo(
+  ({ movie, onSuccess, onCancel }) => {
     const { create, update, loading } = useMovie();
     const { genres, getAll: getAllGenres } = useGenre();
 
     const [selectedActors, setSelectedActors] = useState<PersonResponse[]>([]);
-    const [selectedDirectors, setSelectedDirectors] = useState<PersonResponse[]>([]);
-    const [selectedScreenwriters, setSelectedScreenwriters] = useState<PersonResponse[]>([]);
-    const [posterPreview, setPosterPreview] = useState<string>('');
+    const [selectedDirectors, setSelectedDirectors] = useState<
+      PersonResponse[]
+    >([]);
+    const [selectedScreenwriters, setSelectedScreenwriters] = useState<
+      PersonResponse[]
+    >([]);
+    const [posterPreview, setPosterPreview] = useState<string>("");
     const [errors, setErrors] = useState<Record<string, string>>({});
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [formData, setFormData] = useState<MovieFormData>({
-        title: '',
-        trailerUrl: '',
-        description: '',
-        durationMinutes: 0,
-        releaseDate: null,
-        endShowingDate: null,
-        ageRating: 'PEGI_12',
-        selectedGenres: [],
-        selectedDirectors: [],
-        selectedScreenwriters: [],
-        selectedActors: [],
-        posterFile: undefined,
-        removePoster: false,
+      title: "",
+      trailerUrl: "",
+      description: "",
+      durationMinutes: 0,
+      releaseDate: null,
+      endShowingDate: null,
+      ageRating: "PEGI_12",
+      selectedGenres: [],
+      selectedDirectors: [],
+      selectedScreenwriters: [],
+      selectedActors: [],
+      posterFile: undefined,
+      removePoster: false,
     });
 
     useEffect(() => {
-        getAllGenres({});
+      getAllGenres({});
     }, [getAllGenres]);
 
     useEffect(() => {
-        if (movie) {
-            setSelectedActors(movie.actors || []);
-            setSelectedDirectors(movie.directors || []);
-            setSelectedScreenwriters(movie.screenwriters || []);
+      if (movie) {
+        setSelectedActors(movie.actors || []);
+        setSelectedDirectors(movie.directors || []);
+        setSelectedScreenwriters(movie.screenwriters || []);
 
-            setFormData({
-                title: movie.title,
-                trailerUrl: movie.trailerUrl,
-                description: movie.description,
-                durationMinutes: movie.durationMinutes,
-                releaseDate: movie.releaseDate ? new Date(movie.releaseDate) : null,
-                endShowingDate: movie.endShowingDate ? new Date(movie.endShowingDate) : null,
-                ageRating: movie.ageRating,
-                selectedGenres: movie.genres?.map(g => g.id) || [],
-                selectedDirectors: movie.directors?.map(d => d.id) || [],
-                selectedScreenwriters: movie.screenwriters?.map(s => s.id) || [],
-                selectedActors: movie.actors?.map(a => a.id) || [],
-                posterFile: undefined,
-                removePoster: false,
-            });
+        setFormData({
+          title: movie.title,
+          trailerUrl: movie.trailerUrl,
+          description: movie.description,
+          durationMinutes: movie.durationMinutes,
+          releaseDate: movie.releaseDate ? new Date(movie.releaseDate) : null,
+          endShowingDate: movie.endShowingDate
+            ? new Date(movie.endShowingDate)
+            : null,
+          ageRating: movie.ageRating,
+          selectedGenres: movie.genres?.map((g) => g.id) || [],
+          selectedDirectors: movie.directors?.map((d) => d.id) || [],
+          selectedScreenwriters: movie.screenwriters?.map((s) => s.id) || [],
+          selectedActors: movie.actors?.map((a) => a.id) || [],
+          posterFile: undefined,
+          removePoster: false,
+        });
 
-            if (movie.posterUrl) {
-                setPosterPreview(resolvePosterUrl(movie.posterUrl));
-            }
+        if (movie.posterUrl) {
+          setPosterPreview(resolvePosterUrl(movie.posterUrl));
         }
+      }
     }, [movie]);
 
-    const handlePosterSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const handlePosterSelect = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            setPosterPreview(URL.createObjectURL(file));
-            setFormData(prev => ({ ...prev, posterFile: file, removePoster: false }));
+          setPosterPreview(URL.createObjectURL(file));
+          setFormData((prev) => ({
+            ...prev,
+            posterFile: file,
+            removePoster: false,
+          }));
         }
-    }, []);
+      },
+      [],
+    );
 
     const handleRemovePoster = useCallback(() => {
-        setPosterPreview('');
-        setFormData(prev => ({ ...prev, posterFile: undefined, removePoster: true }));
-        if (fileInputRef.current) fileInputRef.current.value = '';
+      setPosterPreview("");
+      setFormData((prev) => ({
+        ...prev,
+        posterFile: undefined,
+        removePoster: true,
+      }));
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }, []);
 
     const formatDateForInput = (date: Date | null): string => {
-        return date ? date.toISOString().split('T')[0] : '';
+      return date ? date.toISOString().split("T")[0] : "";
     };
 
-    const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    const handleSubmit = useCallback(
+      async (e: React.FormEvent) => {
         e.preventDefault();
 
         const baseRequest = {
-            title: formData.title,
-            trailerUrl: formData.trailerUrl,
-            description: formData.description,
-            durationMinutes: formData.durationMinutes,
-            releaseDate: formData.releaseDate ? toBackendFormat(formData.releaseDate.toISOString().split('T')[0]) : '',
-            endShowingDate: formData.endShowingDate ? toBackendFormat(formData.endShowingDate.toISOString().split('T')[0]) : '',
-            ageRating: formData.ageRating,
-            genreIds: formData.selectedGenres,
-            directorIds: formData.selectedDirectors,
-            screenwriterIds: formData.selectedScreenwriters,
-            actorIds: formData.selectedActors,
+          title: formData.title,
+          trailerUrl: formData.trailerUrl,
+          description: formData.description,
+          durationMinutes: formData.durationMinutes,
+          releaseDate: formData.releaseDate
+            ? toBackendFormat(formData.releaseDate.toISOString().split("T")[0])
+            : "",
+          endShowingDate: formData.endShowingDate
+            ? toBackendFormat(
+                formData.endShowingDate.toISOString().split("T")[0],
+              )
+            : "",
+          ageRating: formData.ageRating,
+          genreIds: formData.selectedGenres,
+          directorIds: formData.selectedDirectors,
+          screenwriterIds: formData.selectedScreenwriters,
+          actorIds: formData.selectedActors,
         };
 
         try {
-            const result = movie
-                ? await update(movie.id, {
-                    ...baseRequest,
-                    posterFile: formData.posterFile,
-                    removePoster: formData.removePoster,
-                } satisfies MovieUpdateRequest)
-                : await create({
-                    ...baseRequest,
-                    posterFile: formData.posterFile as File,
-                } satisfies MovieCreateRequest);
+          const result = movie
+            ? await update(movie.id, {
+                ...baseRequest,
+                posterFile: formData.posterFile,
+                removePoster: formData.removePoster,
+              } satisfies MovieUpdateRequest)
+            : await create({
+                ...baseRequest,
+                posterFile: formData.posterFile as File,
+              } satisfies MovieCreateRequest);
 
-            if (result) {
-                onSuccess();
-            }
+          if (result) {
+            onSuccess();
+          }
         } catch (err) {
-            if (isApiErrorException(err) && err.isValidationError()) {
-                const backendErrors = err.getValidationErrors();
-                const mappedErrors: Record<string, string> = {};
-                Object.entries(backendErrors).forEach(([field, message]) => {
-                    mappedErrors[BACKEND_TO_FORM_FIELD[field] || field] = message;
-                });
-                setErrors(mappedErrors);
-            }
+          if (isApiErrorException(err) && err.isValidationError()) {
+            const backendErrors = err.getValidationErrors();
+            const mappedErrors: Record<string, string> = {};
+            Object.entries(backendErrors).forEach(([field, message]) => {
+              mappedErrors[BACKEND_TO_FORM_FIELD[field] || field] = message;
+            });
+            setErrors(mappedErrors);
+          }
         }
-    }, [movie, formData, create, update, onSuccess]);
+      },
+      [movie, formData, create, update, onSuccess],
+    );
 
     const handleGenreChange = useCallback((genreId: number) => {
-        setFormData(prev => ({
-            ...prev,
-            selectedGenres: prev.selectedGenres.includes(genreId)
-                ? prev.selectedGenres.filter(id => id !== genreId)
-                : [...prev.selectedGenres, genreId],
-        }));
+      setFormData((prev) => ({
+        ...prev,
+        selectedGenres: prev.selectedGenres.includes(genreId)
+          ? prev.selectedGenres.filter((id) => id !== genreId)
+          : [...prev.selectedGenres, genreId],
+      }));
     }, []);
 
-    const handleActorsChange = useCallback((ids: number[], persons?: PersonResponse[]) => {
+    const handleActorsChange = useCallback(
+      (ids: number[], persons?: PersonResponse[]) => {
         if (persons) setSelectedActors(persons);
-        setFormData(prev => ({ ...prev, selectedActors: ids }));
-    }, []);
+        setFormData((prev) => ({ ...prev, selectedActors: ids }));
+      },
+      [],
+    );
 
-    const handleDirectorsChange = useCallback((ids: number[], persons?: PersonResponse[]) => {
+    const handleDirectorsChange = useCallback(
+      (ids: number[], persons?: PersonResponse[]) => {
         if (persons) setSelectedDirectors(persons);
-        setFormData(prev => ({ ...prev, selectedDirectors: ids }));
-    }, []);
+        setFormData((prev) => ({ ...prev, selectedDirectors: ids }));
+      },
+      [],
+    );
 
-    const handleScreenwritersChange = useCallback((ids: number[], persons?: PersonResponse[]) => {
+    const handleScreenwritersChange = useCallback(
+      (ids: number[], persons?: PersonResponse[]) => {
         if (persons) setSelectedScreenwriters(persons);
-        setFormData(prev => ({ ...prev, selectedScreenwriters: ids }));
-    }, []);
+        setFormData((prev) => ({ ...prev, selectedScreenwriters: ids }));
+      },
+      [],
+    );
 
     const titleRemaining = TITLE_MAX_LENGTH - formData.title.length;
-    const descriptionRemaining = DESCRIPTION_MAX_LENGTH - formData.description.length;
+    const descriptionRemaining =
+      DESCRIPTION_MAX_LENGTH - formData.description.length;
 
     return (
-        <Modal isOpen={true} onClose={onCancel} title={movie ? 'Edit Movie' : 'Add New Movie'} size="large">
-            <form onSubmit={handleSubmit} className={styles.form}>
-                <div className={styles.formGroup}>
-                    <label className={styles.label}>
-                        Movie Poster {!movie && <span className={styles.required}>*</span>}
-                    </label>
-                    <div className={styles.fileUpload}>
-                        <input
-                            type="file"
-                            ref={fileInputRef}
-                            onChange={handlePosterSelect}
-                            accept="image/jpeg,image/png,image/webp"
-                            className={styles.fileInput}
-                        />
-                        {posterPreview ? (
-                            <div className={styles.posterPreview}>
-                                <img src={posterPreview} alt="Poster preview" />
-                                <Button type="button" variant="error" size="small" onClick={handleRemovePoster}>
-                                    Remove Poster
-                                </Button>
-                            </div>
-                        ) : (
-                            <div className={styles.uploadPlaceholder}>
-                                <span>📷</span>
-                                <p>Click to upload poster</p>
-                                <small>Recommended: 800x1200px, JPG/PNG/WebP</small>
-                            </div>
-                        )}
-                    </div>
+      <Modal
+        isOpen={true}
+        onClose={onCancel}
+        title={movie ? "Edit Movie" : "Add New Movie"}
+        size="large"
+      >
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>
+              Movie Poster{" "}
+              {!movie && <span className={styles.required}>*</span>}
+            </label>
+            <div className={styles.fileUpload}>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handlePosterSelect}
+                accept="image/jpeg,image/png,image/webp"
+                className={styles.fileInput}
+              />
+              {posterPreview ? (
+                <div className={styles.posterPreview}>
+                  <img src={posterPreview} alt="Poster preview" />
+                  <Button
+                    type="button"
+                    variant="error"
+                    size="small"
+                    onClick={handleRemovePoster}
+                  >
+                    Remove Poster
+                  </Button>
                 </div>
+              ) : (
+                <div className={styles.uploadPlaceholder}>
+                  <span>📷</span>
+                  <p>Click to upload poster</p>
+                  <small>Recommended: 800x1200px, JPG/PNG/WebP</small>
+                </div>
+              )}
+            </div>
+          </div>
 
-                <div className={styles.formGroup}>
-                    <Input
-                        type="text"
-                        label="Title"
-                        required
-                        value={formData.title}
-                        onChange={value => setFormData(prev => ({ ...prev, title: value }))}
-                        placeholder="Enter movie title"
-                        maxLength={TITLE_MAX_LENGTH}
-                        autoFocus={!movie}
-                        error={errors.title}
-                    />
-                    <div className={`${styles.charCount} ${titleRemaining < 10 ? styles.warning : ''}`}>
-                        {titleRemaining} characters remaining
-                    </div>
-                </div>
+          <div className={styles.formGroup}>
+            <Input
+              type="text"
+              label="Title"
+              required
+              value={formData.title}
+              onChange={(value) =>
+                setFormData((prev) => ({ ...prev, title: value }))
+              }
+              placeholder="Enter movie title"
+              maxLength={TITLE_MAX_LENGTH}
+              autoFocus={!movie}
+              error={errors.title}
+            />
+            <div
+              className={`${styles.charCount} ${titleRemaining < 10 ? styles.warning : ""}`}
+            >
+              {titleRemaining} characters remaining
+            </div>
+          </div>
 
-                <div className={styles.formGroup}>
-                    <Input
-                        type="url"
-                        label="Trailer URL"
-                        required
-                        value={formData.trailerUrl}
-                        onChange={value => setFormData(prev => ({ ...prev, trailerUrl: value }))}
-                        placeholder="https://www.youtube.com/watch?v=..."
-                        pattern="https://.*"
-                        error={errors.trailerUrl}
-                    />
-                </div>
+          <div className={styles.formGroup}>
+            <Input
+              type="url"
+              label="Trailer URL"
+              required
+              value={formData.trailerUrl}
+              onChange={(value) =>
+                setFormData((prev) => ({ ...prev, trailerUrl: value }))
+              }
+              placeholder="https://www.youtube.com/watch?v=..."
+              pattern="https://.*"
+              error={errors.trailerUrl}
+            />
+          </div>
 
-                <div className={styles.formGroup}>
-                    <Textarea
-                        label="Description"
-                        required
-                        value={formData.description}
-                        onChange={value => setFormData(prev => ({ ...prev, description: value }))}
-                        rows={4}
-                        maxLength={DESCRIPTION_MAX_LENGTH}
-                        placeholder="Describe the movie plot, characters, and key elements"
-                        error={errors.description}
-                    />
-                    <div className={`${styles.charCount} ${descriptionRemaining < 100 ? styles.warning : ''}`}>
-                        {descriptionRemaining} characters remaining
-                    </div>
-                </div>
+          <div className={styles.formGroup}>
+            <Textarea
+              label="Description"
+              required
+              value={formData.description}
+              onChange={(value) =>
+                setFormData((prev) => ({ ...prev, description: value }))
+              }
+              rows={4}
+              maxLength={DESCRIPTION_MAX_LENGTH}
+              placeholder="Describe the movie plot, characters, and key elements"
+              error={errors.description}
+            />
+            <div
+              className={`${styles.charCount} ${descriptionRemaining < 100 ? styles.warning : ""}`}
+            >
+              {descriptionRemaining} characters remaining
+            </div>
+          </div>
 
-                <div className={styles.formRow}>
-                    <div className={styles.formGroup}>
-                        <Input
-                            type="number"
-                            label="Duration (minutes)"
-                            required
-                            value={formData.durationMinutes ? formData.durationMinutes.toString() : ''}
-                            onChange={value => setFormData(prev => ({ ...prev, durationMinutes: parseInt(value) || 0 }))}
-                            min="1"
-                            max="300"
-                            placeholder="e.g., 120"
-                            error={errors.durationMinutes}
-                        />
-                    </div>
-                    <div className={styles.formGroup}>
-                        <Select
-                            label="Age Rating"
-                            required
-                            options={AGE_RATING_OPTIONS}
-                            value={formData.ageRating}
-                            onChange={value => setFormData(prev => ({ ...prev, ageRating: value as AgeRating }))}
-                            error={errors.ageRating}
-                        />
-                    </div>
-                </div>
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <Input
+                type="number"
+                label="Duration (minutes)"
+                required
+                value={
+                  formData.durationMinutes
+                    ? formData.durationMinutes.toString()
+                    : ""
+                }
+                onChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    durationMinutes: parseInt(value) || 0,
+                  }))
+                }
+                min="1"
+                max="300"
+                placeholder="e.g., 120"
+                error={errors.durationMinutes}
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <Select
+                label="Age Rating"
+                required
+                options={AGE_RATING_OPTIONS}
+                value={formData.ageRating}
+                onChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    ageRating: value as AgeRating,
+                  }))
+                }
+                error={errors.ageRating}
+              />
+            </div>
+          </div>
 
-                <div className={styles.formRow}>
-                    <div className={styles.formGroup}>
-                        <Input
-                            type="date"
-                            label="Release Date"
-                            required
-                            value={formatDateForInput(formData.releaseDate)}
-                            onChange={value => setFormData(prev => ({ ...prev, releaseDate: value ? new Date(value) : null }))}
-                            min={movie ? undefined : new Date().toISOString().split('T')[0]}
-                            error={errors.releaseDate}
-                        />
-                    </div>
-                    <div className={styles.formGroup}>
-                        <Input
-                            type="date"
-                            label="End Showing Date"
-                            required
-                            value={formatDateForInput(formData.endShowingDate)}
-                            onChange={value => setFormData(prev => ({ ...prev, endShowingDate: value ? new Date(value) : null }))}
-                            min={formatDateForInput(formData.releaseDate) || undefined}
-                            error={errors.endShowingDate}
-                        />
-                    </div>
-                </div>
+          <div className={styles.formRow}>
+            <div className={styles.formGroup}>
+              <Input
+                type="date"
+                label="Release Date"
+                required
+                value={formatDateForInput(formData.releaseDate)}
+                onChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    releaseDate: value ? new Date(value) : null,
+                  }))
+                }
+                min={movie ? undefined : new Date().toISOString().split("T")[0]}
+                error={errors.releaseDate}
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <Input
+                type="date"
+                label="End Showing Date"
+                required
+                value={formatDateForInput(formData.endShowingDate)}
+                onChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    endShowingDate: value ? new Date(value) : null,
+                  }))
+                }
+                min={formatDateForInput(formData.releaseDate) || undefined}
+                error={errors.endShowingDate}
+              />
+            </div>
+          </div>
 
-                <div className={styles.formGroup}>
-                    <label className={styles.label}>Genres <span className={styles.required}>*</span></label>
-                    <GenreSearchList
-                        genres={genres}
-                        selectedIds={formData.selectedGenres}
-                        onChange={handleGenreChange}
-                    />
-                    {errors.selectedGenres && <div className={styles.errorText}>{errors.selectedGenres}</div>}
-                </div>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>
+              Genres <span className={styles.required}>*</span>
+            </label>
+            <GenreSearchList
+              genres={genres}
+              selectedIds={formData.selectedGenres}
+              onChange={handleGenreChange}
+            />
+            {errors.selectedGenres && (
+              <div className={styles.errorText}>{errors.selectedGenres}</div>
+            )}
+          </div>
 
-                <div className={styles.formGroup}>
-                    <label className={styles.label}>Actors <span className={styles.required}>*</span></label>
-                    <PersonSelect
-                        selectedIds={formData.selectedActors}
-                        selectedPersons={selectedActors}
-                        onChange={handleActorsChange}
-                        role="ACTOR"
-                        placeholder="Search actors or add new..."
-                    />
-                    {errors.selectedActors && <div className={styles.errorText}>{errors.selectedActors}</div>}
-                </div>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>
+              Actors <span className={styles.required}>*</span>
+            </label>
+            <PersonSelect
+              selectedIds={formData.selectedActors}
+              selectedPersons={selectedActors}
+              onChange={handleActorsChange}
+              role="ACTOR"
+              placeholder="Search actors or add new..."
+            />
+            {errors.selectedActors && (
+              <div className={styles.errorText}>{errors.selectedActors}</div>
+            )}
+          </div>
 
-                <div className={styles.formGroup}>
-                    <label className={styles.label}>Directors <span className={styles.required}>*</span></label>
-                    <PersonSelect
-                        selectedIds={formData.selectedDirectors}
-                        selectedPersons={selectedDirectors}
-                        onChange={handleDirectorsChange}
-                        role="DIRECTOR"
-                        placeholder="Search directors or add new..."
-                    />
-                    {errors.selectedDirectors && <div className={styles.errorText}>{errors.selectedDirectors}</div>}
-                </div>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>
+              Directors <span className={styles.required}>*</span>
+            </label>
+            <PersonSelect
+              selectedIds={formData.selectedDirectors}
+              selectedPersons={selectedDirectors}
+              onChange={handleDirectorsChange}
+              role="DIRECTOR"
+              placeholder="Search directors or add new..."
+            />
+            {errors.selectedDirectors && (
+              <div className={styles.errorText}>{errors.selectedDirectors}</div>
+            )}
+          </div>
 
-                <div className={styles.formGroup}>
-                    <label className={styles.label}>Screenwriters <span className={styles.required}>*</span></label>
-                    <PersonSelect
-                        selectedIds={formData.selectedScreenwriters}
-                        selectedPersons={selectedScreenwriters}
-                        onChange={handleScreenwritersChange}
-                        role="SCREENWRITER"
-                        placeholder="Search screenwriters or add new..."
-                    />
-                    {errors.selectedScreenwriters && <div className={styles.errorText}>{errors.selectedScreenwriters}</div>}
-                </div>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>
+              Screenwriters <span className={styles.required}>*</span>
+            </label>
+            <PersonSelect
+              selectedIds={formData.selectedScreenwriters}
+              selectedPersons={selectedScreenwriters}
+              onChange={handleScreenwritersChange}
+              role="SCREENWRITER"
+              placeholder="Search screenwriters or add new..."
+            />
+            {errors.selectedScreenwriters && (
+              <div className={styles.errorText}>
+                {errors.selectedScreenwriters}
+              </div>
+            )}
+          </div>
 
-                <div className={styles.actions}>
-                    <Button type="button" variant="cancel" onClick={onCancel} disabled={loading}>
-                        Cancel
-                    </Button>
-                    <Button type="submit" variant="primary" loading={loading} disabled={loading}>
-                        {movie ? 'Update Movie' : 'Create Movie'}
-                    </Button>
-                </div>
-            </form>
-        </Modal>
+          <div className={styles.actions}>
+            <Button
+              type="button"
+              variant="cancel"
+              onClick={onCancel}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              loading={loading}
+              disabled={loading}
+            >
+              {movie ? "Update Movie" : "Create Movie"}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     );
-});
+  },
+);
 
-MovieForm.displayName = 'MovieForm';
+MovieForm.displayName = "MovieForm";

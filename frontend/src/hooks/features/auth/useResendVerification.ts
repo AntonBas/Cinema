@@ -35,7 +35,9 @@ export const useResendVerification = (initialCooldown = 0) => {
           setMessage(err.message);
           try {
             const status = await authApi.getResendVerificationStatus(email);
-            setCooldown(status.data.cooldownSeconds || FALLBACK_COOLDOWN_SECONDS);
+            setCooldown(
+              status.data.cooldownSeconds || FALLBACK_COOLDOWN_SECONDS,
+            );
           } catch {
             setCooldown(FALLBACK_COOLDOWN_SECONDS);
           }

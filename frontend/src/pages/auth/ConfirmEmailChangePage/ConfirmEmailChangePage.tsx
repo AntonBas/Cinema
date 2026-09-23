@@ -47,8 +47,7 @@ export const ConfirmEmailChangePage: React.FC = () => {
       } catch (error) {
         setStatus("error");
         const message = axios.isAxiosError(error)
-          ? (error.response?.data as { message?: string } | undefined)
-              ?.message
+          ? (error.response?.data as { message?: string } | undefined)?.message
           : error instanceof Error
             ? error.message
             : undefined;

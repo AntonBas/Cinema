@@ -52,7 +52,9 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
   const minUsablePoints = balance?.minUsablePoints || 0;
   const maxUsablePoints = balance?.maxUsablePoints ?? Number.POSITIVE_INFINITY;
   const pointValue = balance ? Number(balance.pointValue) : 1;
-  const maxDiscountPercentage = balance ? Number(balance.maxDiscountPercentage) : 0.5;
+  const maxDiscountPercentage = balance
+    ? Number(balance.maxDiscountPercentage)
+    : 0.5;
 
   const maxAvailablePoints = Math.min(
     bonusBalance,
@@ -63,7 +65,10 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
   const bonusPointsToUse =
     bonusPointsInput === ""
       ? 0
-      : Math.max(0, Math.min(parseInt(bonusPointsInput, 10) || 0, maxAvailablePoints));
+      : Math.max(
+          0,
+          Math.min(parseInt(bonusPointsInput, 10) || 0, maxAvailablePoints),
+        );
 
   const handleBonusPointsInputChange = (rawValue: string) => {
     if (rawValue === "") {
@@ -76,7 +81,9 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
       return;
     }
 
-    setBonusPointsInput(String(Math.max(0, Math.min(parsed, maxAvailablePoints))));
+    setBonusPointsInput(
+      String(Math.max(0, Math.min(parsed, maxAvailablePoints))),
+    );
   };
 
   const handleUseAllPoints = () => {
@@ -151,7 +158,10 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
         <div className={styles.bonusHeader}>
           <h4>Use Bonus Points</h4>
           <Tooltip content={bonusRules} position="left">
-            <button className={styles.infoButton} aria-label="Bonus points information">
+            <button
+              className={styles.infoButton}
+              aria-label="Bonus points information"
+            >
               <Info size={18} />
             </button>
           </Tooltip>
@@ -203,7 +213,9 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
               </div>
               <div className={styles.priceRow}>
                 <span>Bonus discount:</span>
-                <span className={styles.discount}>-{formatPrice(discount)}</span>
+                <span className={styles.discount}>
+                  -{formatPrice(discount)}
+                </span>
               </div>
             </>
           )}

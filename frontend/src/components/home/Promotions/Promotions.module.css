@@ -1,6 +1,10 @@
 .section {
   padding: var(--space-16) 0;
-  background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-deep) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-bg-secondary) 0%,
+    var(--color-bg-deep) 100%
+  );
   overflow: visible;
 }
 

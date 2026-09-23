@@ -133,7 +133,9 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
             <div className={styles.movieHeader}>
               <div className={styles.posterContainer}>
                 <img
-                  src={resolvePosterUrl(`/api/movies/${movieGroup.movieId}/poster`)}
+                  src={resolvePosterUrl(
+                    `/api/movies/${movieGroup.movieId}/poster`,
+                  )}
                   alt={movieGroup.movieTitle}
                   className={styles.poster}
                   loading="lazy"

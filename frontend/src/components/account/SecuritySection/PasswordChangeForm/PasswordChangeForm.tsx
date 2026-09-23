@@ -1,120 +1,128 @@
-import React, { useState } from 'react';
-import { useUser } from '@/hooks/features/user/useUser';
-import { useAuth } from '@/context/AuthContext';
-import { Input } from '@/components/ui/Input/Input';
-import { Button } from '@/components/ui/Button/Button';
-import type { UserPasswordUpdateRequest } from '@/types/user';
-import { isApiErrorException } from '@/utils/apiErrorHandler';
-import { validatePassword } from '@/utils/formValidation';
-import styles from './PasswordChangeForm.module.css';
+import React, { useState } from "react";
+import { useUser } from "@/hooks/features/user/useUser";
+import { useAuth } from "@/context/AuthContext";
+import { Input } from "@/components/ui/Input/Input";
+import { Button } from "@/components/ui/Button/Button";
+import type { UserPasswordUpdateRequest } from "@/types/user";
+import { isApiErrorException } from "@/utils/apiErrorHandler";
+import { validatePassword } from "@/utils/formValidation";
+import styles from "./PasswordChangeForm.module.css";
 
 export const PasswordChangeForm: React.FC = () => {
-    const { updatePassword, loading } = useUser();
-    const { logout } = useAuth();
-    const [formData, setFormData] = useState({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-    });
-    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const { updatePassword, loading } = useUser();
+  const { logout } = useAuth();
+  const [formData, setFormData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-    const handleChange = (field: string, value: string) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
-        if (formErrors[field]) {
-            setFormErrors(prev => ({ ...prev, [field]: '' }));
-        }
+  const handleChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (formErrors[field]) {
+      setFormErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    if (!formData.currentPassword) {
+      errors.currentPassword = "Current password is required";
+    }
+
+    const newPasswordError = validatePassword(formData.newPassword);
+    if (newPasswordError) {
+      errors.newPassword = newPasswordError;
+    }
+
+    if (!formData.confirmPassword) {
+      errors.confirmPassword = "Please confirm your new password";
+    } else if (formData.newPassword !== formData.confirmPassword) {
+      errors.confirmPassword = "Passwords do not match";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    const passwordData: UserPasswordUpdateRequest = {
+      currentPassword: formData.currentPassword,
+      newPassword: formData.newPassword,
+      passwordConfirm: formData.confirmPassword,
     };
 
-    const validateForm = (): boolean => {
-        const errors: Record<string, string> = {};
-
-        if (!formData.currentPassword) {
-            errors.currentPassword = 'Current password is required';
+    try {
+      const result = await updatePassword(passwordData);
+      if (result) {
+        logout("/login");
+      }
+    } catch (err) {
+      if (isApiErrorException(err) && err.isValidationError()) {
+        const backendErrors = err.getValidationErrors();
+        if (backendErrors.passwordConfirm) {
+          backendErrors.confirmPassword = backendErrors.passwordConfirm;
+          delete backendErrors.passwordConfirm;
         }
+        setFormErrors(backendErrors);
+      }
+    }
+  };
 
-        const newPasswordError = validatePassword(formData.newPassword);
-        if (newPasswordError) {
-            errors.newPassword = newPasswordError;
-        }
+  return (
+    <div className={styles.passwordForm}>
+      <h1 className={styles.title}>Change Password</h1>
+      <p className={styles.description}>
+        Update your password to keep your account secure.
+      </p>
 
-        if (!formData.confirmPassword) {
-            errors.confirmPassword = 'Please confirm your new password';
-        } else if (formData.newPassword !== formData.confirmPassword) {
-            errors.confirmPassword = 'Passwords do not match';
-        }
+      <form onSubmit={handleSubmit} className={styles.form}>
+        <div className={styles.formSection}>
+          <h2 className={styles.sectionTitle}>Password Details</h2>
 
-        setFormErrors(errors);
-        return Object.keys(errors).length === 0;
-    };
+          <Input
+            type="password"
+            placeholder="Enter your current password"
+            value={formData.currentPassword}
+            onChange={(value) => handleChange("currentPassword", value)}
+            disabled={loading}
+            error={formErrors.currentPassword}
+          />
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!validateForm()) return;
+          <Input
+            type="password"
+            placeholder="Enter new password (min 8 characters)"
+            value={formData.newPassword}
+            onChange={(value) => handleChange("newPassword", value)}
+            disabled={loading}
+            error={formErrors.newPassword}
+          />
 
-        const passwordData: UserPasswordUpdateRequest = {
-            currentPassword: formData.currentPassword,
-            newPassword: formData.newPassword,
-            passwordConfirm: formData.confirmPassword
-        };
-
-        try {
-            const result = await updatePassword(passwordData);
-            if (result) {
-                logout("/login");
-            }
-        } catch (err) {
-            if (isApiErrorException(err) && err.isValidationError()) {
-                const backendErrors = err.getValidationErrors();
-                if (backendErrors.passwordConfirm) {
-                    backendErrors.confirmPassword = backendErrors.passwordConfirm;
-                    delete backendErrors.passwordConfirm;
-                }
-                setFormErrors(backendErrors);
-            }
-        }
-    };
-
-    return (
-        <div className={styles.passwordForm}>
-            <h1 className={styles.title}>Change Password</h1>
-            <p className={styles.description}>Update your password to keep your account secure.</p>
-
-            <form onSubmit={handleSubmit} className={styles.form}>
-                <div className={styles.formSection}>
-                    <h2 className={styles.sectionTitle}>Password Details</h2>
-
-                    <Input
-                        type="password"
-                        placeholder="Enter your current password"
-                        value={formData.currentPassword}
-                        onChange={value => handleChange('currentPassword', value)}
-                        disabled={loading}
-                        error={formErrors.currentPassword}
-                    />
-
-                    <Input
-                        type="password"
-                        placeholder="Enter new password (min 8 characters)"
-                        value={formData.newPassword}
-                        onChange={value => handleChange('newPassword', value)}
-                        disabled={loading}
-                        error={formErrors.newPassword}
-                    />
-
-                    <Input
-                        type="password"
-                        placeholder="Confirm your new password"
-                        value={formData.confirmPassword}
-                        onChange={value => handleChange('confirmPassword', value)}
-                        disabled={loading}
-                        error={formErrors.confirmPassword}
-                    />
-                </div>
-
-                <Button type="submit" variant="primary" loading={loading} disabled={loading} className={styles.submitButton}>
-                    Update Password
-                </Button>
-            </form>
+          <Input
+            type="password"
+            placeholder="Confirm your new password"
+            value={formData.confirmPassword}
+            onChange={(value) => handleChange("confirmPassword", value)}
+            disabled={loading}
+            error={formErrors.confirmPassword}
+          />
         </div>
-    );
+
+        <Button
+          type="submit"
+          variant="primary"
+          loading={loading}
+          disabled={loading}
+          className={styles.submitButton}
+        >
+          Update Password
+        </Button>
+      </form>
+    </div>
+  );
 };

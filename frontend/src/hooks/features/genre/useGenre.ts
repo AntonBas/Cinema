@@ -32,9 +32,12 @@ export const useGenre = () => {
   );
 
   const create = useCallback(async (request: GenreRequest) => {
-    return mutationApiRef.current.execute(() => genreApi.admin.create(request), {
-      suppressValidationToast: true,
-    });
+    return mutationApiRef.current.execute(
+      () => genreApi.admin.create(request),
+      {
+        suppressValidationToast: true,
+      },
+    );
   }, []);
 
   const update = useCallback(async (id: number, request: GenreRequest) => {

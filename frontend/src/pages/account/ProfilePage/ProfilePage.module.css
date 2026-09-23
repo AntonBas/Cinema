@@ -1,63 +1,67 @@
 .verificationBanner {
-    background: linear-gradient(135deg, rgba(var(--color-warning-rgb), 0.1) 0%, rgba(var(--color-warning-rgb), 0.05) 100%);
-    border: 1px solid rgba(var(--color-warning-rgb), 0.2);
-    border-radius: var(--radius-lg);
-    padding: var(--space-6);
-    margin-bottom: var(--space-8);
-    animation: slideDown var(--transition-normal);
+  background: linear-gradient(
+    135deg,
+    rgba(var(--color-warning-rgb), 0.1) 0%,
+    rgba(var(--color-warning-rgb), 0.05) 100%
+  );
+  border: 1px solid rgba(var(--color-warning-rgb), 0.2);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  margin-bottom: var(--space-8);
+  animation: slideDown var(--transition-normal);
 }
 
 .profileSection {
-    background: var(--color-bg-primary);
-    border-radius: var(--radius-lg);
-    padding: var(--space-8);
-    box-shadow: var(--shadow-md);
-    margin-bottom: var(--space-8);
-    border: 1px solid var(--color-border);
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--space-8);
+  border: 1px solid var(--color-border);
 }
 
 .loading {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 400px;
-    font-size: var(--font-size-lg);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  font-size: var(--font-size-lg);
 }
 
 @keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 1024px) {
-    .profileSection {
-        padding: var(--space-6);
-    }
+  .profileSection {
+    padding: var(--space-6);
+  }
 }
 
 @media (max-width: 768px) {
-    .verificationBanner {
-        padding: var(--space-4);
-    }
+  .verificationBanner {
+    padding: var(--space-4);
+  }
 
-    .profileSection {
-        padding: var(--space-4);
-    }
+  .profileSection {
+    padding: var(--space-4);
+  }
 }
 
 @media (max-width: 480px) {
-    .verificationBanner {
-        padding: var(--space-3);
-    }
+  .verificationBanner {
+    padding: var(--space-3);
+  }
 
-    .profileSection {
-        padding: var(--space-3);
-    }
+  .profileSection {
+    padding: var(--space-3);
+  }
 }

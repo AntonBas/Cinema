@@ -26,9 +26,7 @@ export const BonusBalanceCard: React.FC<BonusBalanceCardProps> = ({
   }
 
   if (!balance) {
-    return (
-      <EmptyState title="No Balance Data Available" />
-    );
+    return <EmptyState title="No Balance Data Available" />;
   }
 
   return (
@@ -45,11 +43,15 @@ export const BonusBalanceCard: React.FC<BonusBalanceCardProps> = ({
       <div className={styles.valueInfo}>
         <div className={styles.valueItem}>
           <div className={styles.valueLabel}>Point Value</div>
-          <div className={styles.valueAmount}>{formatPrice(balance.pointValue)}</div>
+          <div className={styles.valueAmount}>
+            {formatPrice(balance.pointValue)}
+          </div>
         </div>
         <div className={styles.valueItem}>
           <div className={styles.valueLabel}>Total Value</div>
-          <div className={styles.valueAmount}>{formatPrice(balance.balanceValue)}</div>
+          <div className={styles.valueAmount}>
+            {formatPrice(balance.balanceValue)}
+          </div>
         </div>
       </div>
 

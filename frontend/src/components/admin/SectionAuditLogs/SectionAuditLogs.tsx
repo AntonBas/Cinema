@@ -1,117 +1,146 @@
-import React, { useEffect, useState } from 'react';
-import { useAuditLogs } from '@/hooks/features/audit/useAuditLogs';
-import { AuditLogsFilters } from './AuditLogsFilters/AuditLogsFilters';
-import { AuditLogsTable } from './AuditLogsTable/AuditLogsTable';
-import { EntityHistoryModal } from './EntityHistoryModal/EntityHistoryModal';
-import { Pagination } from '@/components/ui/Pagination/Pagination';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner/LoadingSpinner';
-import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
-import { PageHeader } from '@/components/ui/PageHeader/PageHeader';
-import styles from './SectionAuditLogs.module.css';
+import React, { useEffect, useState } from "react";
+import { useAuditLogs } from "@/hooks/features/audit/useAuditLogs";
+import { AuditLogsFilters } from "./AuditLogsFilters/AuditLogsFilters";
+import { AuditLogsTable } from "./AuditLogsTable/AuditLogsTable";
+import { EntityHistoryModal } from "./EntityHistoryModal/EntityHistoryModal";
+import { Pagination } from "@/components/ui/Pagination/Pagination";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
+import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
+import styles from "./SectionAuditLogs.module.css";
 
 export const SectionAuditLogs: React.FC = () => {
-    const {
-        auditLogs,
-        pagination,
-        loading,
-        setPage,
-        filters,
-        applyFilters,
-        clearFilters,
-        refresh
-    } = useAuditLogs();
+  const {
+    auditLogs,
+    pagination,
+    loading,
+    setPage,
+    filters,
+    applyFilters,
+    clearFilters,
+    refresh,
+  } = useAuditLogs();
 
-    const [selectedEntity, setSelectedEntity] = useState<{ entityType: string; entityId: number } | null>(null);
+  const [selectedEntity, setSelectedEntity] = useState<{
+    entityType: string;
+    entityId: number;
+  } | null>(null);
 
-    const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
+  const showDelayedLoading = useDelayedLoading(loading, {
+    delay: 150,
+    minDisplayTime: 300,
+  });
 
-    const handleEntityTypeChange = (value: string) => {
-        applyFilters({ entityType: value || undefined });
-    };
+  const handleEntityTypeChange = (value: string) => {
+    applyFilters({ entityType: value || undefined });
+  };
 
-    const handleActionChange = (value: string) => {
-        applyFilters({ action: value || undefined });
-    };
+  const handleActionChange = (value: string) => {
+    applyFilters({ action: value || undefined });
+  };
 
-    const handleChangedByChange = (value: string) => {
-        applyFilters({ changedBy: value || undefined });
-    };
+  const handleChangedByChange = (value: string) => {
+    applyFilters({ changedBy: value || undefined });
+  };
 
-    const handleClearFilters = () => {
-        clearFilters();
-    };
+  const handleClearFilters = () => {
+    clearFilters();
+  };
 
-    const entityTypes = ['User', 'Bonus', 'Promotion', 'TicketType', 'Movie', 'Session'];
-    const actions = ['CREATED', 'UPDATED', 'DELETED', 'TOGGLE', 'CLAIMED', 'REFUNDED'];
+  const entityTypes = [
+    "User",
+    "Bonus",
+    "Promotion",
+    "TicketType",
+    "Movie",
+    "Session",
+  ];
+  const actions = [
+    "CREATED",
+    "UPDATED",
+    "DELETED",
+    "TOGGLE",
+    "CLAIMED",
+    "REFUNDED",
+  ];
 
-    const hasActiveFilters = !!(filters.entityType || filters.action || filters.changedBy);
+  const hasActiveFilters = !!(
+    filters.entityType ||
+    filters.action ||
+    filters.changedBy
+  );
 
-    useEffect(() => {
-        refresh();
-    }, [refresh]);
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
 
-    if (showDelayedLoading && !auditLogs.length) {
-        return (
-            <div className={styles.loading}>
-                <LoadingSpinner text="Loading audit logs..." />
-            </div>
-        );
-    }
-
+  if (showDelayedLoading && !auditLogs.length) {
     return (
-        <div className={styles.container}>
-            <PageHeader
-                title="Audit Logs"
-                subtitle="Track all changes and user activities in the system"
-            />
-
-            <AuditLogsFilters
-                entityType={filters.entityType || ''}
-                action={filters.action || ''}
-                changedBy={filters.changedBy || ''}
-                onEntityTypeChange={handleEntityTypeChange}
-                onActionChange={handleActionChange}
-                onChangedByChange={handleChangedByChange}
-                onClear={handleClearFilters}
-                entityTypes={entityTypes}
-                actions={actions}
-            />
-
-            {pagination && pagination.totalElements > 0 && (
-                <div className={styles.resultsInfo}>
-                    Showing {pagination.number * pagination.size + 1}-
-                    {Math.min((pagination.number + 1) * pagination.size, pagination.totalElements)} of{' '}
-                    {pagination.totalElements} audit logs
-                    {hasActiveFilters && ' (filtered)'}
-                </div>
-            )}
-
-            <AuditLogsTable
-                logs={auditLogs}
-                onViewHistory={(entityType, entityId) => setSelectedEntity({ entityType, entityId })}
-            />
-
-            {pagination && pagination.totalPages > 1 && (
-                <div className={styles.paginationWrapper}>
-                    <Pagination
-                        currentPage={pagination.number}
-                        totalPages={pagination.totalPages}
-                        totalElements={pagination.totalElements}
-                        pageSize={pagination.size}
-                        onPageChange={setPage}
-                        variant="pages"
-                        showInfo={false}
-                    />
-                </div>
-            )}
-
-            {selectedEntity && (
-                <EntityHistoryModal
-                    entityType={selectedEntity.entityType}
-                    entityId={selectedEntity.entityId}
-                    onClose={() => setSelectedEntity(null)}
-                />
-            )}
-        </div>
+      <div className={styles.loading}>
+        <LoadingSpinner text="Loading audit logs..." />
+      </div>
     );
+  }
+
+  return (
+    <div className={styles.container}>
+      <PageHeader
+        title="Audit Logs"
+        subtitle="Track all changes and user activities in the system"
+      />
+
+      <AuditLogsFilters
+        entityType={filters.entityType || ""}
+        action={filters.action || ""}
+        changedBy={filters.changedBy || ""}
+        onEntityTypeChange={handleEntityTypeChange}
+        onActionChange={handleActionChange}
+        onChangedByChange={handleChangedByChange}
+        onClear={handleClearFilters}
+        entityTypes={entityTypes}
+        actions={actions}
+      />
+
+      {pagination && pagination.totalElements > 0 && (
+        <div className={styles.resultsInfo}>
+          Showing {pagination.number * pagination.size + 1}-
+          {Math.min(
+            (pagination.number + 1) * pagination.size,
+            pagination.totalElements,
+          )}{" "}
+          of {pagination.totalElements} audit logs
+          {hasActiveFilters && " (filtered)"}
+        </div>
+      )}
+
+      <AuditLogsTable
+        logs={auditLogs}
+        onViewHistory={(entityType, entityId) =>
+          setSelectedEntity({ entityType, entityId })
+        }
+      />
+
+      {pagination && pagination.totalPages > 1 && (
+        <div className={styles.paginationWrapper}>
+          <Pagination
+            currentPage={pagination.number}
+            totalPages={pagination.totalPages}
+            totalElements={pagination.totalElements}
+            pageSize={pagination.size}
+            onPageChange={setPage}
+            variant="pages"
+            showInfo={false}
+          />
+        </div>
+      )}
+
+      {selectedEntity && (
+        <EntityHistoryModal
+          entityType={selectedEntity.entityType}
+          entityId={selectedEntity.entityId}
+          onClose={() => setSelectedEntity(null)}
+        />
+      )}
+    </div>
+  );
 };

@@ -60,9 +60,7 @@ export const RefundPolicyPage: React.FC = () => {
                 <li>
                   Bonus points used during purchase will be partially refunded
                 </li>
-                <li>
-                  Refund will be returned to the original payment method
-                </li>
+                <li>Refund will be returned to the original payment method</li>
                 <li>
                   Processing fees may apply based on the refund policy tier
                 </li>

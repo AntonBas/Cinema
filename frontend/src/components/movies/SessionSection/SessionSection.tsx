@@ -138,7 +138,9 @@ export const SessionSection: React.FC<SessionSectionProps> = ({
               {formatTime(session.startTime)}
             </span>
             <span className={styles.sessionHall}>{session.hallName}</span>
-            <span className={styles.sessionPrice}>{formatPrice(session.basePrice)}</span>
+            <span className={styles.sessionPrice}>
+              {formatPrice(session.basePrice)}
+            </span>
           </button>
         ))}
       </div>

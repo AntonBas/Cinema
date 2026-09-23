@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuthActions } from '@/hooks/features/auth/useAuthActions';
-import { Input } from '@/components/ui/Input/Input';
-import { Button } from '@/components/ui/Button/Button';
-import { Chrome } from 'lucide-react';
-import { AuthCard } from '@/components/auth/AuthCard/AuthCard';
-import styles from './LoginForm.module.css';
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuthActions } from "@/hooks/features/auth/useAuthActions";
+import { Input } from "@/components/ui/Input/Input";
+import { Button } from "@/components/ui/Button/Button";
+import { Chrome } from "lucide-react";
+import { AuthCard } from "@/components/auth/AuthCard/AuthCard";
+import styles from "./LoginForm.module.css";
 
 export const LoginForm: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const { loading, error, login, loginWithGoogle } = useAuthActions();
 
@@ -62,9 +62,9 @@ export const LoginForm: React.FC = () => {
           loading={loading}
           disabled={loading}
           fullWidth
-          style={{ marginTop: '1rem' }}
+          style={{ marginTop: "1rem" }}
         >
-          {loading ? 'Logging in...' : 'Login'}
+          {loading ? "Logging in..." : "Login"}
         </Button>
       </form>
 

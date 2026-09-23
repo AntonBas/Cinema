@@ -1,6 +1,9 @@
 const PHONE_PATTERN = /^\+?[0-9]{10,15}$/;
 
-export const validateName = (value: string, fieldLabel: string): string | undefined => {
+export const validateName = (
+  value: string,
+  fieldLabel: string,
+): string | undefined => {
   const trimmed = value.trim();
   if (!trimmed) return `${fieldLabel} is required`;
   if (trimmed.length < 2 || trimmed.length > 50)

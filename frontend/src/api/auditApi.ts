@@ -14,6 +14,8 @@ export const auditApi = {
       },
     ) => api.get<PageResponse<AuditLogResponse>>(BASE_URL, { params }),
     getEntityHistory: (entityType: string, entityId: number) =>
-      api.get<AuditLogResponse[]>(`${BASE_URL}/entity/${entityType}/${entityId}`),
+      api.get<AuditLogResponse[]>(
+        `${BASE_URL}/entity/${entityType}/${entityId}`,
+      ),
   },
 };

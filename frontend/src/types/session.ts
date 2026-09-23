@@ -1,8 +1,5 @@
 export type CinemaSessionStatus =
-  | "SCHEDULED"
-  | "ONGOING"
-  | "COMPLETED"
-  | "CANCELLED";
+  "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED";
 
 export const SessionStatusDisplay: Record<CinemaSessionStatus, string> = {
   SCHEDULED: "Scheduled",

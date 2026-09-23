@@ -37,10 +37,22 @@ export const userApi = {
     ) =>
       api.get<PageResponse<AdminUserListResponse>>(ADMIN_BASE_URL, { params }),
     updateRole: (userId: number, request: UserRoleUpdateRequest) =>
-      api.patch<AdminUserListResponse>(`${ADMIN_BASE_URL}/${userId}/role`, request),
+      api.patch<AdminUserListResponse>(
+        `${ADMIN_BASE_URL}/${userId}/role`,
+        request,
+      ),
     updateStatus: (userId: number, request: UserStatusUpdateRequest) =>
-      api.patch<AdminUserListResponse>(`${ADMIN_BASE_URL}/${userId}/status`, request),
-    updateBirthDateVerification: (userId: number, request: VerificationBirthDateRequest) =>
-      api.patch<AdminUserListResponse>(`${ADMIN_BASE_URL}/${userId}/verification`, request),
+      api.patch<AdminUserListResponse>(
+        `${ADMIN_BASE_URL}/${userId}/status`,
+        request,
+      ),
+    updateBirthDateVerification: (
+      userId: number,
+      request: VerificationBirthDateRequest,
+    ) =>
+      api.patch<AdminUserListResponse>(
+        `${ADMIN_BASE_URL}/${userId}/verification`,
+        request,
+      ),
   },
 };

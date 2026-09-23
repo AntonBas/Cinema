@@ -3,12 +3,7 @@ import styles from "./Button.module.css";
 import clsx from "clsx";
 
 export type ButtonVariant =
-  | "primary"
-  | "secondary"
-  | "error"
-  | "success"
-  | "cancel"
-  | "outline";
+  "primary" | "secondary" | "error" | "success" | "cancel" | "outline";
 export type ButtonSize = "small" | "medium" | "large";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {

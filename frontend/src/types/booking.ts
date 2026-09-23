@@ -1,10 +1,5 @@
 export type BookingStatus =
-  | "PENDING"
-  | "CONFIRMED"
-  | "CANCELLED"
-  | "EXPIRED"
-  | "FAILED"
-  | "REFUNDED";
+  "PENDING" | "CONFIRMED" | "CANCELLED" | "EXPIRED" | "FAILED" | "REFUNDED";
 
 export interface BookingCreateRequest {
   sessionId: string;

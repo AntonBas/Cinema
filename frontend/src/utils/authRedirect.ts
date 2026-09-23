@@ -7,7 +7,12 @@ const isAuthPage = (path: string): boolean =>
   AUTH_PAGES.some((page) => path === page || path.startsWith(`${page}?`));
 
 export const getSafeRedirect = (target: string | null | undefined): string => {
-  if (!target || !target.startsWith("/") || target.startsWith("//") || target.startsWith("/\\")) {
+  if (
+    !target ||
+    !target.startsWith("/") ||
+    target.startsWith("//") ||
+    target.startsWith("/\\")
+  ) {
     return DEFAULT_REDIRECT;
   }
   return isAuthPage(target) ? DEFAULT_REDIRECT : target;
@@ -25,7 +30,10 @@ export const buildLoginPath = (target: string): string => {
 
 export const rememberOAuth2Redirect = (target: string): void => {
   try {
-    sessionStorage.setItem(OAUTH2_REDIRECT_STORAGE_KEY, getSafeRedirect(target));
+    sessionStorage.setItem(
+      OAUTH2_REDIRECT_STORAGE_KEY,
+      getSafeRedirect(target),
+    );
   } catch {
     return;
   }

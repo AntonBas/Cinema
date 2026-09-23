@@ -1,161 +1,195 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import type { CinemaHallListResponse, CinemaHallResponse, CinemaHallRequest } from '@/types/cinemaHall';
-import { useCinemaHall } from '@/hooks/features/cinemaHall/useCinemaHall';
-import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
-import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal/DeleteConfirmModal';
-import { Button } from '@/components/ui/Button/Button';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner/LoadingSpinner';
-import { HallFormModal } from './HallFormModal/HallFormModal';
-import { HallsTable } from './HallsTable/HallsTable';
-import { HallLayoutModal } from './HallLayoutModal/HallLayoutModal';
-import { useHallLayout } from './HallLayoutContext';
-import { HallLayoutProvider } from './HallLayoutProvider';
-import { PageHeader } from '@/components/ui/PageHeader/PageHeader';
-import styles from './SectionHalls.module.css';
+import React, { useState, useEffect, useCallback } from "react";
+import type {
+  CinemaHallListResponse,
+  CinemaHallResponse,
+  CinemaHallRequest,
+} from "@/types/cinemaHall";
+import { useCinemaHall } from "@/hooks/features/cinemaHall/useCinemaHall";
+import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
+import { DeleteConfirmModal } from "@/components/ui/DeleteConfirmModal/DeleteConfirmModal";
+import { Button } from "@/components/ui/Button/Button";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { HallFormModal } from "./HallFormModal/HallFormModal";
+import { HallsTable } from "./HallsTable/HallsTable";
+import { HallLayoutModal } from "./HallLayoutModal/HallLayoutModal";
+import { useHallLayout } from "./HallLayoutContext";
+import { HallLayoutProvider } from "./HallLayoutProvider";
+import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
+import styles from "./SectionHalls.module.css";
 
 const SectionHallsContent: React.FC = () => {
-    const { loading, getAllHalls, getHallById, createHall, updateHall, deleteHall } = useCinemaHall();
-    const { openLayout } = useHallLayout();
+  const {
+    loading,
+    getAllHalls,
+    getHallById,
+    createHall,
+    updateHall,
+    deleteHall,
+  } = useCinemaHall();
+  const { openLayout } = useHallLayout();
 
-    const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
+  const showDelayedLoading = useDelayedLoading(loading, {
+    delay: 150,
+    minDisplayTime: 300,
+  });
 
-    const [showCreateModal, setShowCreateModal] = useState(false);
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [selectedHall, setSelectedHall] = useState<CinemaHallResponse | null>(null);
-    const [deleteModal, setDeleteModal] = useState({
-        isOpen: false,
-        hall: null as CinemaHallListResponse | null,
-        isDeleting: false
-    });
-    const [hallsData, setHallsData] = useState<CinemaHallListResponse[]>([]);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedHall, setSelectedHall] = useState<CinemaHallResponse | null>(
+    null,
+  );
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    hall: null as CinemaHallListResponse | null,
+    isDeleting: false,
+  });
+  const [hallsData, setHallsData] = useState<CinemaHallListResponse[]>([]);
 
-    const loadHalls = useCallback(async () => {
-        const response = await getAllHalls();
-        setHallsData(response || []);
-    }, [getAllHalls]);
+  const loadHalls = useCallback(async () => {
+    const response = await getAllHalls();
+    setHallsData(response || []);
+  }, [getAllHalls]);
 
-    useEffect(() => {
-        loadHalls();
-    }, [loadHalls]);
+  useEffect(() => {
+    loadHalls();
+  }, [loadHalls]);
 
-    const handleCreateHall = useCallback(async (request: CinemaHallRequest) => {
-        const response = await createHall(request);
-        if (response) {
-            await loadHalls();
-            setShowCreateModal(false);
-            openLayout(response);
+  const handleCreateHall = useCallback(
+    async (request: CinemaHallRequest) => {
+      const response = await createHall(request);
+      if (response) {
+        await loadHalls();
+        setShowCreateModal(false);
+        openLayout(response);
+      }
+    },
+    [createHall, loadHalls, openLayout],
+  );
+
+  const handleEditHall = useCallback(
+    async (id: number, request: CinemaHallRequest) => {
+      const response = await updateHall(id, request);
+      if (response) {
+        await loadHalls();
+        setShowEditModal(false);
+        setSelectedHall(null);
+      }
+    },
+    [updateHall, loadHalls],
+  );
+
+  const handleDeleteHall = useCallback(async () => {
+    if (!deleteModal.hall) return;
+
+    setDeleteModal((prev) => ({ ...prev, isDeleting: true }));
+
+    try {
+      await deleteHall(deleteModal.hall.id);
+      await loadHalls();
+      setDeleteModal({ isOpen: false, hall: null, isDeleting: false });
+    } catch {
+      setDeleteModal((prev) => ({ ...prev, isDeleting: false }));
+    }
+  }, [deleteModal.hall, deleteHall, loadHalls]);
+
+  const confirmDelete = useCallback((hall: CinemaHallListResponse) => {
+    setDeleteModal({ isOpen: true, hall, isDeleting: false });
+  }, []);
+
+  const handleEdit = useCallback(
+    async (hall: CinemaHallListResponse) => {
+      const response = await getHallById(hall.id);
+      if (response) {
+        setSelectedHall(response);
+        setShowEditModal(true);
+      }
+    },
+    [getHallById],
+  );
+
+  const handleShowLayout = useCallback(
+    async (hall: CinemaHallListResponse) => {
+      const response = await getHallById(hall.id);
+      if (response) {
+        openLayout(response);
+      }
+    },
+    [getHallById, openLayout],
+  );
+
+  if (showDelayedLoading && !hallsData.length) {
+    return (
+      <div className={styles.loading}>
+        <LoadingSpinner text="Loading cinema halls..." />
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.section}>
+      <PageHeader
+        title="Cinema Halls"
+        subtitle="Manage your cinema halls, seating layouts and configurations"
+        actions={
+          <Button
+            variant="primary"
+            onClick={() => setShowCreateModal(true)}
+            disabled={loading}
+          >
+            Add Hall
+          </Button>
         }
-    }, [createHall, loadHalls, openLayout]);
+      />
 
-    const handleEditHall = useCallback(async (id: number, request: CinemaHallRequest) => {
-        const response = await updateHall(id, request);
-        if (response) {
-            await loadHalls();
+      <div className={styles.content}>
+        <HallsTable
+          halls={hallsData}
+          onDelete={confirmDelete}
+          onShowLayout={handleShowLayout}
+          onEdit={handleEdit}
+        />
+      </div>
+
+      {showCreateModal && (
+        <HallFormModal
+          onClose={() => setShowCreateModal(false)}
+          onSave={handleCreateHall}
+          loading={loading}
+        />
+      )}
+
+      {showEditModal && selectedHall && (
+        <HallFormModal
+          hall={selectedHall}
+          onClose={() => {
             setShowEditModal(false);
             setSelectedHall(null);
+          }}
+          onSave={(request) => handleEditHall(selectedHall.id, request)}
+          loading={loading}
+        />
+      )}
+
+      <HallLayoutModal />
+
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onConfirm={handleDeleteHall}
+        onCancel={() =>
+          setDeleteModal({ isOpen: false, hall: null, isDeleting: false })
         }
-    }, [updateHall, loadHalls]);
-
-    const handleDeleteHall = useCallback(async () => {
-        if (!deleteModal.hall) return;
-
-        setDeleteModal(prev => ({ ...prev, isDeleting: true }));
-
-        try {
-            await deleteHall(deleteModal.hall.id);
-            await loadHalls();
-            setDeleteModal({ isOpen: false, hall: null, isDeleting: false });
-        } catch {
-            setDeleteModal(prev => ({ ...prev, isDeleting: false }));
-        }
-    }, [deleteModal.hall, deleteHall, loadHalls]);
-
-    const confirmDelete = useCallback((hall: CinemaHallListResponse) => {
-        setDeleteModal({ isOpen: true, hall, isDeleting: false });
-    }, []);
-
-    const handleEdit = useCallback(async (hall: CinemaHallListResponse) => {
-        const response = await getHallById(hall.id);
-        if (response) {
-            setSelectedHall(response);
-            setShowEditModal(true);
-        }
-    }, [getHallById]);
-
-    const handleShowLayout = useCallback(async (hall: CinemaHallListResponse) => {
-        const response = await getHallById(hall.id);
-        if (response) {
-            openLayout(response);
-        }
-    }, [getHallById, openLayout]);
-
-    if (showDelayedLoading && !hallsData.length) {
-        return (
-            <div className={styles.loading}>
-                <LoadingSpinner text="Loading cinema halls..." />
-            </div>
-        );
-    }
-
-    return (
-        <div className={styles.section}>
-            <PageHeader
-                title="Cinema Halls"
-                subtitle="Manage your cinema halls, seating layouts and configurations"
-                actions={
-                    <Button variant="primary" onClick={() => setShowCreateModal(true)} disabled={loading}>
-                        Add Hall
-                    </Button>
-                }
-            />
-
-            <div className={styles.content}>
-                <HallsTable
-                    halls={hallsData}
-                    onDelete={confirmDelete}
-                    onShowLayout={handleShowLayout}
-                    onEdit={handleEdit}
-                />
-            </div>
-
-            {showCreateModal && (
-                <HallFormModal
-                    onClose={() => setShowCreateModal(false)}
-                    onSave={handleCreateHall}
-                    loading={loading}
-                />
-            )}
-
-            {showEditModal && selectedHall && (
-                <HallFormModal
-                    hall={selectedHall}
-                    onClose={() => {
-                        setShowEditModal(false);
-                        setSelectedHall(null);
-                    }}
-                    onSave={(request) => handleEditHall(selectedHall.id, request)}
-                    loading={loading}
-                />
-            )}
-
-            <HallLayoutModal />
-
-            <DeleteConfirmModal
-                isOpen={deleteModal.isOpen}
-                onConfirm={handleDeleteHall}
-                onCancel={() => setDeleteModal({ isOpen: false, hall: null, isDeleting: false })}
-                itemName={deleteModal.hall?.name}
-                itemType="cinema hall"
-                isDeleting={deleteModal.isDeleting}
-            />
-        </div>
-    );
+        itemName={deleteModal.hall?.name}
+        itemType="cinema hall"
+        isDeleting={deleteModal.isDeleting}
+      />
+    </div>
+  );
 };
 
 export const SectionHalls: React.FC = () => {
-    return (
-        <HallLayoutProvider>
-            <SectionHallsContent />
-        </HallLayoutProvider>
-    );
+  return (
+    <HallLayoutProvider>
+      <SectionHallsContent />
+    </HallLayoutProvider>
+  );
 };

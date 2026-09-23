@@ -91,7 +91,9 @@ export const Header: React.FC = () => {
             <li>
               <Link
                 to="/account/tickets"
-                className={isActiveLink("/account/tickets") ? styles.active : ""}
+                className={
+                  isActiveLink("/account/tickets") ? styles.active : ""
+                }
                 onClick={() => setIsDropdownOpen(false)}
               >
                 My Tickets

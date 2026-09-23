@@ -60,7 +60,10 @@ export const formatFullDate = (value: DateInput): string =>
   });
 
 export const formatTime = (value: DateInput, withSeconds = false): string =>
-  format(value, withSeconds ? { ...TIME_OPTIONS, second: "2-digit" } : TIME_OPTIONS);
+  format(
+    value,
+    withSeconds ? { ...TIME_OPTIONS, second: "2-digit" } : TIME_OPTIONS,
+  );
 
 export const formatDateTime = (value: DateInput): string =>
   format(value, {
