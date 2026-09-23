@@ -57,7 +57,7 @@ const SectionBonus = () => {
     return (
       <div className={styles.section}>
         <div className={styles.error}>
-          <h3>Error loading bonus system</h3>
+          <h3>Error Loading Bonus System</h3>
           <p>{rulesError.message}</p>
           <Button onClick={() => getAllRules()}>Try Again</Button>
         </div>

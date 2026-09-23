@@ -162,7 +162,7 @@ const SectionTicketType = () => {
                 )}
 
                 {ticketTypesData.length === 0 ? (
-                    <EmptyState title="No ticket types found" />
+                    <EmptyState title="No Ticket Types Found" />
                 ) : (
                     <>
                         <TicketTypeTable

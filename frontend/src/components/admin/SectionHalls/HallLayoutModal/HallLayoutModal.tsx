@@ -251,7 +251,7 @@ export const HallLayoutModal: React.FC = () => {
                 isOpen={showDiscardConfirm}
                 onConfirm={handleConfirmDiscard}
                 onCancel={() => setShowDiscardConfirm(false)}
-                title="Discard changes?"
+                title="Discard Changes?"
                 message="You have unsaved layout changes. Are you sure you want to discard them?"
                 confirmText="Discard"
                 cancelText="Keep editing"

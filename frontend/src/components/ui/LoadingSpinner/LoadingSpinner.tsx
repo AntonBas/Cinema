@@ -5,7 +5,7 @@ interface LoadingSpinnerProps {
     text?: string;
 }
 
-const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ text = "Loading" }) => {
+const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ text = "Loading..." }) => {
     return (
         <div className={styles.loaderContainer}>
             <span className={styles.loaderWrapper} data-text={text}></span>

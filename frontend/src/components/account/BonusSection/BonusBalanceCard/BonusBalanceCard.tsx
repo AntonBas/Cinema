@@ -27,7 +27,7 @@ export const BonusBalanceCard: React.FC<BonusBalanceCardProps> = ({
 
   if (!balance) {
     return (
-      <EmptyState title="No balance data available" />
+      <EmptyState title="No Balance Data Available" />
     );
   }
 

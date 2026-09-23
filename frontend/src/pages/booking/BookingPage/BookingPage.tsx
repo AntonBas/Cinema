@@ -110,7 +110,7 @@ export const BookingPage: React.FC = () => {
     return (
       <Layout>
         <PageContainer size="narrow">
-          <EmptyState variant="error" title="No seat data available" />
+          <EmptyState variant="error" title="No Seat Data Available" />
         </PageContainer>
       </Layout>
     );

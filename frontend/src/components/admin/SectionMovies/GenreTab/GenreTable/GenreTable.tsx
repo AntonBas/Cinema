@@ -21,7 +21,7 @@ export const GenreTable: React.FC<GenreTableProps> = React.memo(
     if (genres.length === 0) {
       return (
         <EmptyState
-          title="No genres found"
+          title="No Genres Found"
           message="Create your first genre to get started!"
         />
       );

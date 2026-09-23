@@ -103,7 +103,7 @@ export const MovieDetailPage: React.FC = () => {
       <Layout>
         <PageContainer size="narrow">
           <EmptyState
-            title="Movie not found"
+            title="Movie Not Found"
             message="The movie you're looking for doesn't exist or has been removed."
             action={
               <Button

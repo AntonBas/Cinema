@@ -44,13 +44,13 @@ const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
   },
   {
     path: "/admin/bonus",
-    label: "Bonus",
+    label: "Bonus Rules",
     icon: Gift,
     roles: ["ROLE_ADMIN"],
   },
   {
     path: "/admin/promotion",
-    label: "Promotion",
+    label: "Promotions",
     icon: Tag,
     roles: ["ROLE_ADMIN", "ROLE_CONTENT_MANAGER"],
   },

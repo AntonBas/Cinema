@@ -34,7 +34,7 @@ export const ProfilePage: React.FC = () => {
     if (profileError || !profile) {
         return (
             <AccountPageLayout>
-                <EmptyState variant="error" title="Failed to load profile" message="Please try again." />
+                <EmptyState variant="error" title="Failed to Load Profile" message="Please try again." />
             </AccountPageLayout>
         );
     }

@@ -86,7 +86,7 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
   if (ticketTypes.length === 0) {
     return (
       <EmptyState
-        title="No ticket types found"
+        title="No Ticket Types Found"
         message="Create your first ticket type to get started!"
       />
     );

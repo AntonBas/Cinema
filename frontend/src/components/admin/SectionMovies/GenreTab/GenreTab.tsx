@@ -108,7 +108,7 @@ export const GenreTab: React.FC = () => {
   if (showDelayedLoading && !tabData.data.length) {
     return (
       <div className={styles.loading}>
-        <LoadingSpinner text="Loading genres" />
+        <LoadingSpinner text="Loading genres..." />
       </div>
     );
   }
@@ -117,7 +117,7 @@ export const GenreTab: React.FC = () => {
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.headerContent}>
-          <h2>Genre Management</h2>
+          <h2>Genres</h2>
           <p className={styles.subtitle}>
             Manage movie genres and their statistics
           </p>

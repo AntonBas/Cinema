@@ -100,7 +100,7 @@ export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({
   if (logs.length === 0) {
     return (
       <EmptyState
-        title="No audit logs found"
+        title="No Audit Logs Found"
         message="Actions will appear here once changes are made."
       />
     );

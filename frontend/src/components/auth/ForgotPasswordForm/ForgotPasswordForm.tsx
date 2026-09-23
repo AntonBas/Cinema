@@ -74,7 +74,7 @@ export const ForgotPasswordForm: React.FC = () => {
             <Mail size={64} className={styles.successIcon} />
           </div>
           <div className={styles.successText}>
-            <h3 className={styles.successTitle}>Check your email!</h3>
+            <h3 className={styles.successTitle}>Check Your Email!</h3>
             <p className={styles.successMessage}>
               We've sent password reset instructions to
             </p>

@@ -64,7 +64,7 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
 
   if (!transactions.length) {
     return (
-      <EmptyState title="No transactions found" />
+      <EmptyState title="No Transactions Found" />
     );
   }
 

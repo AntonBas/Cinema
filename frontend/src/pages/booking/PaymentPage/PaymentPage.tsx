@@ -253,7 +253,7 @@ export const PaymentPage: React.FC = () => {
     return (
       <Layout>
         <PageContainer size="narrow">
-          <EmptyState variant="error" title="Booking data not found" />
+          <EmptyState variant="error" title="Booking Data Not Found" />
         </PageContainer>
       </Layout>
     );

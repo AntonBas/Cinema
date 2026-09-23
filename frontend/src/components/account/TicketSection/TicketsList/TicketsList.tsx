@@ -19,7 +19,7 @@ export const TicketsList: React.FC<TicketsListProps> = ({
 }) => {
   if (!tickets || tickets.length === 0) {
     return (
-      <EmptyState title="No tickets found" />
+      <EmptyState title="No Tickets Found" />
     );
   }
 

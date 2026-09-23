@@ -62,7 +62,7 @@ const SessionsPage: React.FC = () => {
       } catch (err) {
         if (!isCurrent) return;
         setError(
-          err instanceof Error ? err.message : "Failed to load sessions",
+          err instanceof Error ? err.message : "Failed to Load Sessions",
         );
         setSessions([]);
       }
@@ -133,7 +133,7 @@ const SessionsPage: React.FC = () => {
         {error ? (
           <EmptyState
             variant="error"
-            title="Failed to load sessions"
+            title="Failed to Load Sessions"
             message={error}
             action={
               <Button variant="primary" onClick={() => window.location.reload()}>
@@ -155,7 +155,7 @@ const SessionsPage: React.FC = () => {
           </>
         ) : (
           <EmptyState
-            title="No sessions found"
+            title="No Sessions Found"
             message="Try selecting a different date or movie."
           />
         )}

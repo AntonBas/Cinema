@@ -58,7 +58,7 @@ export const SessionTable: React.FC<SessionTableProps> = ({
   if (!sessions.length) {
     return (
       <EmptyState
-        title="No sessions found"
+        title="No Sessions Found"
         message="There are currently no movie sessions matching your criteria."
       />
     );

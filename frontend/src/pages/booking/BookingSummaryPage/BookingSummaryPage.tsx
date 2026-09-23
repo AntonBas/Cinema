@@ -79,7 +79,7 @@ export const BookingSummaryPage: React.FC = () => {
     return (
       <Layout>
         <PageContainer size="narrow">
-          <EmptyState variant="error" title="Booking not found" />
+          <EmptyState variant="error" title="Booking Not Found" />
         </PageContainer>
       </Layout>
     );

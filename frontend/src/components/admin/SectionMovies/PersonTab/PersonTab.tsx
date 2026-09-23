@@ -153,7 +153,7 @@ export const PersonTab: React.FC = () => {
   if (showDelayedLoading && !persons.length && !searchQuery) {
     return (
       <div className={styles.loading}>
-        <LoadingSpinner text="Loading persons" />
+        <LoadingSpinner text="Loading people..." />
       </div>
     );
   }
@@ -162,7 +162,7 @@ export const PersonTab: React.FC = () => {
     <div className={styles.container}>
       <div className={styles.header}>
         <div>
-          <h2>People Management</h2>
+          <h2>People</h2>
           <p className={styles.description}>
             Manage actors, directors and screenwriters
           </p>

@@ -31,7 +31,7 @@ export const PersonTable: React.FC<PersonTableProps> = React.memo(
     if (persons.length === 0) {
       return (
         <EmptyState
-          title="No persons found"
+          title="No People Found"
           message="Add actors, directors, or screenwriters to get started!"
         />
       );

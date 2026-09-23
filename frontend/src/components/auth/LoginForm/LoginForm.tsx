@@ -23,7 +23,7 @@ export const LoginForm: React.FC = () => {
   };
 
   return (
-    <AuthCard title="Log in to your account">
+    <AuthCard title="Log In to Your Account">
       <div className={styles.loginTop}>
         <span>Don't have an account?</span>
         <Link to="/register">Register</Link>

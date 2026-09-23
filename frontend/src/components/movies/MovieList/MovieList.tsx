@@ -36,7 +36,7 @@ export const MovieList: React.FC<MovieListProps> = React.memo(
       return (
         <EmptyState
           variant="error"
-          title="Error loading movies"
+          title="Error Loading Movies"
           message={error.message}
           action={
             onRetry && (

@@ -44,7 +44,7 @@ const PromotionTable: React.FC<PromotionTableProps> = ({
   if (promotions.length === 0) {
     return (
       <EmptyState
-        title="No promotions found"
+        title="No Promotions Found"
         message="Create your first promotion to get started!"
       />
     );

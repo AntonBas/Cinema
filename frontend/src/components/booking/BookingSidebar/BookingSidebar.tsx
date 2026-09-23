@@ -94,7 +94,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
     return (
       <div className={styles.sidebar}>
         <div className={styles.empty}>
-          <h3>No seats selected</h3>
+          <h3>No Seats Selected</h3>
           <p>Click on available seats to select them</p>
         </div>
       </div>

@@ -39,7 +39,7 @@ export const BonusPage: React.FC = () => {
   }, [activeTab, params.page, params.size, getMyTransactions]);
 
   return (
-    <AccountPageLayout title="My Bonus">
+    <AccountPageLayout title="My Bonuses">
       <Tabs
         items={BONUS_TABS}
         activeId={activeTab}
