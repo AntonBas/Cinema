@@ -8,7 +8,7 @@
 }
 
 .header {
-  max-width: 1200px;
+  max-width: var(--container-md);
   margin: 0 auto;
   padding: 0 var(--space-6);
 }
@@ -63,7 +63,7 @@
 }
 
 .content {
-  max-width: 1400px;
+  max-width: var(--container-lg);
   margin: 0 auto;
   padding: 0 var(--space-6) var(--space-12);
 }

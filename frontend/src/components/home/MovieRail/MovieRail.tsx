@@ -1,14 +1,18 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { MovieCard } from "@/components/movies/MovieCard/MovieCard";
 import { Button } from "@/components/ui/Button/Button";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import type { MovieCardResponse } from "@/types/movie";
-import styles from "./LeavingSoon.module.css";
+import styles from "./MovieRail.module.css";
 
-interface LeavingSoonProps {
+interface MovieRailProps {
+  title: string;
   movies: MovieCardResponse[];
   loading?: boolean;
+  viewAllPath?: string;
+  highlighted?: boolean;
 }
 
 const AUTO_PLAY_INTERVAL = 5000;
@@ -17,10 +21,14 @@ const getInitialItemsToShow = () => {
   return window.innerWidth <= 768 ? 1 : 3;
 };
 
-export const LeavingSoon: React.FC<LeavingSoonProps> = ({
+export const MovieRail: React.FC<MovieRailProps> = ({
+  title,
   movies,
   loading,
+  viewAllPath,
+  highlighted = false,
 }) => {
+  const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [itemsToShow, setItemsToShow] = useState(getInitialItemsToShow);
@@ -57,10 +65,10 @@ export const LeavingSoon: React.FC<LeavingSoonProps> = ({
 
   if (loading) {
     return (
-      <section className={styles.section}>
+      <section className={`${styles.section} ${highlighted ? styles.highlighted : ""}`}>
         <div className={styles.container}>
           <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionTitle}>Last Chance</h2>
+            <h2 className={styles.sectionTitle}>{title}</h2>
           </div>
           <LoadingSpinner text="Loading movies..." />
         </div>
@@ -77,13 +85,22 @@ export const LeavingSoon: React.FC<LeavingSoonProps> = ({
 
   return (
     <section
-      className={styles.section}
+      className={`${styles.section} ${highlighted ? styles.highlighted : ""}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className={styles.container}>
         <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Last Chance</h2>
+          <h2 className={styles.sectionTitle}>{title}</h2>
+          {viewAllPath && (
+            <Button
+              variant="outline"
+              size="small"
+              onClick={() => navigate(viewAllPath)}
+            >
+              View All
+            </Button>
+          )}
         </div>
 
         <div className={styles.carouselContainer}>

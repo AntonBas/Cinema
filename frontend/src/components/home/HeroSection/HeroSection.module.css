@@ -6,7 +6,7 @@
 }
 
 .heroContent {
-    max-width: 800px;
+    max-width: var(--container-sm);
     margin: 0 auto;
     padding: 0 var(--space-4);
 }

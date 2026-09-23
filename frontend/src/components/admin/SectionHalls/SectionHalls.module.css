@@ -1,6 +1,6 @@
 .section {
     padding: var(--space-8);
-    max-width: 1400px;
+    max-width: var(--container-lg);
     margin: 0 auto;
     animation: fadeIn var(--transition-normal) ease;
     background: var(--color-bg-quaternary);

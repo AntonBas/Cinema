@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Layout } from "@/components/layout/Layout/Layout";
 import { HeroSection } from "@/components/home/HeroSection/HeroSection";
-import { NowShowing } from "@/components/home/NowShowing/NowShowing";
-import { ComingSoon } from "@/components/home/ComingSoon/ComingSoon";
-import { LeavingSoon } from "@/components/home/LeavingSoon/LeavingSoon";
+import { MovieRail } from "@/components/home/MovieRail/MovieRail";
 import { Promotions } from "@/components/home/Promotions/Promotions";
 import { useMovies } from "@/hooks/features/movies/useMovies";
 import { usePromotion } from "@/hooks/features/promotion/usePromotion";
@@ -65,9 +63,25 @@ export const HomePage: React.FC = () => {
   return (
     <Layout>
       <HeroSection />
-      <NowShowing movies={currentMoviesHome} loading={moviesLoading} />
-      <ComingSoon movies={upcomingMoviesHome} loading={moviesLoading} />
-      <LeavingSoon movies={leavingSoonHome} loading={moviesLoading} />
+      <MovieRail
+        title="Now Showing"
+        movies={currentMoviesHome}
+        loading={moviesLoading}
+        viewAllPath="/movies/current"
+      />
+      <MovieRail
+        title="Coming Soon"
+        movies={upcomingMoviesHome}
+        loading={moviesLoading}
+        viewAllPath="/movies/upcoming"
+        highlighted
+      />
+      <MovieRail
+        title="Last Chance"
+        movies={leavingSoonHome}
+        loading={moviesLoading}
+        highlighted
+      />
       <Promotions
         promotions={availablePromotions}
         loading={promotionsLoading}

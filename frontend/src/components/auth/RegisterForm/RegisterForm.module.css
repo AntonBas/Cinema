@@ -1,37 +1,3 @@
-.registration {
-  width: 100%;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: var(--space-8);
-}
-
-.registrationContainer {
-  background-color: var(--color-bg-modal);
-  border-radius: var(--radius-lg);
-  padding: var(--space-12);
-  box-shadow: var(--shadow-xl);
-  transition: var(--transition-normal);
-  animation: fadeIn 0.6s ease-out forwards;
-  width: 100%;
-  max-width: 600px;
-}
-
-.registrationContainer:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 40px rgba(var(--color-black-rgb), 0.4);
-}
-
-.registrationTitle {
-  font-size: var(--font-size-2xl);
-  margin-bottom: var(--space-4);
-  color: var(--color-primary);
-  text-align: center;
-  font-weight: 600;
-}
-
 .registrationTop {
   text-align: center;
   margin-bottom: var(--space-8);
@@ -97,10 +63,6 @@
   padding: var(--space-2) 0;
 }
 
-.successIcon {
-  color: var(--color-primary);
-}
-
 .successText {
   margin-bottom: var(--space-8);
 }
@@ -147,17 +109,6 @@
   text-align: center;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @keyframes slideDown {
   from {
     opacity: 0;
@@ -170,18 +121,6 @@
 }
 
 @media (max-width: 768px) {
-  .registration {
-    padding: var(--space-6);
-  }
-
-  .registrationContainer {
-    padding: var(--space-8) var(--space-6);
-  }
-
-  .registrationTitle {
-    font-size: var(--font-size-xl);
-  }
-
   .inputGroup {
     flex-direction: column;
     gap: var(--space-4);
@@ -190,21 +129,9 @@
   .successTitle {
     font-size: var(--font-size-xl);
   }
-
-  .successIcon {
-    font-size: 3rem;
-  }
 }
 
 @media (max-width: 480px) {
-  .registrationContainer {
-    padding: var(--space-6) var(--space-4);
-  }
-
-  .registrationTitle {
-    font-size: var(--font-size-lg);
-  }
-
   .registrationForm {
     gap: var(--space-4);
   }

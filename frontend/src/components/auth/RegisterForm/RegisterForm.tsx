@@ -9,6 +9,7 @@ import {
   validatePhoneNumber,
   validatePassword,
 } from "@/utils/formValidation";
+import { AuthCard } from "@/components/auth/AuthCard/AuthCard";
 import styles from "./RegisterForm.module.css";
 
 interface SuccessModalProps {
@@ -110,10 +111,8 @@ export const RegisterForm: React.FC = () => {
   };
 
   return (
-    <section className={styles.registration}>
-      <div className={styles.registrationContainer}>
-        <h1 className={styles.registrationTitle}>Create an account</h1>
-
+    <>
+      <AuthCard title="Create an Account" wide>
         <div className={styles.registrationTop}>
           <span>Already have an account?</span>
           <Link to="/login">Login</Link>
@@ -214,13 +213,13 @@ export const RegisterForm: React.FC = () => {
             {loading ? "Creating account..." : "Sign Up"}
           </Button>
         </form>
-      </div>
+      </AuthCard>
 
       <RegistrationSuccessModal
         isOpen={showSuccessModal}
         onClose={handleModalClose}
         email={formData.email}
       />
-    </section>
+    </>
   );
 };

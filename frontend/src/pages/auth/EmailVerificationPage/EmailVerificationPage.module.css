@@ -1,22 +1,5 @@
-.verificationContainer {
-  min-height: var(--page-min-height);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: var(--color-bg-primary);
-  padding: var(--space-8);
-}
-
 .verificationCard {
-  background: var(--color-bg-modal);
-  border-radius: var(--radius-lg);
-  padding: var(--space-12);
   text-align: center;
-  max-width: 500px;
-  width: 100%;
-  box-shadow: var(--shadow-xl);
-  border: 1px solid var(--color-border);
-  animation: slideUp var(--transition-normal);
 }
 
 .verificationCard.success {
@@ -41,13 +24,6 @@
   color: var(--color-success);
 }
 
-.verificationCard h2 {
-  color: var(--color-text-primary);
-  font-size: var(--font-size-2xl);
-  margin-bottom: var(--space-4);
-  font-weight: 600;
-}
-
 .message {
   color: var(--color-text-secondary);
   font-size: var(--font-size-lg);
@@ -61,7 +37,6 @@
   margin-bottom: var(--space-6);
 }
 
-.successActions,
 .errorActions {
   display: flex;
   flex-direction: column;
@@ -82,18 +57,6 @@
   color: var(--color-success);
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @keyframes scaleIn {
   from {
     transform: scale(0.8);
@@ -107,14 +70,6 @@
 }
 
 @media (max-width: 768px) {
-  .verificationContainer {
-    padding: var(--space-4);
-  }
-
-  .verificationCard {
-    padding: var(--space-8);
-  }
-
   .verificationCard h2 {
     font-size: var(--font-size-xl);
   }

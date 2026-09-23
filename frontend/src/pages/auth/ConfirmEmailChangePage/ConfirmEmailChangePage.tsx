@@ -11,7 +11,8 @@ import { useAuth } from "@/context/AuthContext";
 import { api } from "@/services/api";
 import { Button } from "@/components/ui/Button/Button";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
-import { Layout } from "@/components/layout/Layout/Layout";
+import { AuthPageLayout } from "@/components/auth/AuthPageLayout/AuthPageLayout";
+import { AuthCard } from "@/components/auth/AuthCard/AuthCard";
 import styles from "./ConfirmEmailChangePage.module.css";
 
 export const ConfirmEmailChangePage: React.FC = () => {
@@ -63,65 +64,55 @@ export const ConfirmEmailChangePage: React.FC = () => {
 
   if (status === "loading") {
     return (
-      <Layout>
-        <div className={styles.container}>
-          <div className={styles.card}>
-            <LoadingSpinner text="Confirming your email change..." />
-          </div>
-        </div>
-      </Layout>
+      <AuthPageLayout>
+        <LoadingSpinner text="Confirming your email change..." />
+      </AuthPageLayout>
     );
   }
 
   if (status === "error") {
     return (
-      <Layout>
-        <section className={styles.container}>
-          <div className={styles.card}>
-            <h1 className={styles.title}>Confirmation Failed</h1>
-            <XCircle size={64} className={styles.icon} />
-            <p className={styles.message}>{errorMessage}</p>
-            <div className={styles.actions}>
-              <Button
-                variant="primary"
-                onClick={() => navigate("/login")}
-                fullWidth
-              >
-                Go to Login
-              </Button>
-            </div>
-            <div className={styles.bottom}>
-              <Link to="/">Back to Home</Link>
-            </div>
-          </div>
-        </section>
-      </Layout>
-    );
-  }
-
-  return (
-    <Layout>
-      <section className={styles.container}>
-        <div className={styles.card}>
-          <h1 className={styles.title}>Email Changed!</h1>
-          <CheckCircle2 size={64} className={styles.icon} />
-          <p className={styles.message}>
-            Your email address has been successfully updated.
-          </p>
+      <AuthPageLayout>
+        <AuthCard title="Confirmation Failed" className={styles.card}>
+          <XCircle size={64} className={styles.icon} />
+          <p className={styles.message}>{errorMessage}</p>
           <div className={styles.actions}>
             <Button
               variant="primary"
-              onClick={() => navigate(isAuthenticated ? "/account" : "/login")}
+              onClick={() => navigate("/login")}
               fullWidth
             >
-              {isAuthenticated ? "Go to Account" : "Go to Login"}
+              Go to Login
             </Button>
           </div>
           <div className={styles.bottom}>
             <Link to="/">Back to Home</Link>
           </div>
+        </AuthCard>
+      </AuthPageLayout>
+    );
+  }
+
+  return (
+    <AuthPageLayout>
+      <AuthCard title="Email Changed!" className={styles.card}>
+        <CheckCircle2 size={64} className={styles.icon} />
+        <p className={styles.message}>
+          Your email address has been successfully updated.
+        </p>
+        <div className={styles.actions}>
+          <Button
+            variant="primary"
+            onClick={() => navigate(isAuthenticated ? "/account" : "/login")}
+            fullWidth
+          >
+            {isAuthenticated ? "Go to Account" : "Go to Login"}
+          </Button>
         </div>
-      </section>
-    </Layout>
+        <div className={styles.bottom}>
+          <Link to="/">Back to Home</Link>
+        </div>
+      </AuthCard>
+    </AuthPageLayout>
   );
 };

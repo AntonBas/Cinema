@@ -5,6 +5,7 @@ import { useAuthActions } from "@/hooks/features/auth/useAuthActions";
 import { Input, Button, Modal } from "@/components/ui";
 import { isApiErrorException } from "@/utils/apiErrorHandler";
 import { validatePassword } from "@/utils/formValidation";
+import { AuthCard } from "@/components/auth/AuthCard/AuthCard";
 import styles from "./ResetPasswordForm.module.css";
 
 interface SuccessModalProps {
@@ -88,10 +89,8 @@ export const ResetPasswordForm: React.FC = () => {
   };
 
   return (
-    <section className={styles.resetPassword}>
-      <div className={styles.resetPasswordContainer}>
-        <h1 className={styles.resetPasswordTitle}>Create new password</h1>
-
+    <>
+      <AuthCard title="Create New Password">
         <p className={styles.instructionText}>
           Enter and confirm your new password below.
         </p>
@@ -132,7 +131,7 @@ export const ResetPasswordForm: React.FC = () => {
             {loading ? "Resetting..." : "Reset Password"}
           </Button>
         </form>
-      </div>
+      </AuthCard>
 
       <PasswordResetSuccessModal
         isOpen={showSuccessModal}
@@ -141,6 +140,6 @@ export const ResetPasswordForm: React.FC = () => {
           navigate("/login");
         }}
       />
-    </section>
+    </>
   );
 };

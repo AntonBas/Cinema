@@ -1,6 +1,5 @@
 .container {
   padding: var(--space-8);
-  max-width: 1400px;
   margin: 0 auto;
   animation: fadeIn var(--transition-normal);
 }

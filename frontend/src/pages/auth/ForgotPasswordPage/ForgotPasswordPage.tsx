@@ -1,9 +1,8 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { Layout } from '@/components/layout/Layout/Layout';
+import { AuthPageLayout } from '@/components/auth/AuthPageLayout/AuthPageLayout';
 import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm/ForgotPasswordForm';
 import { useAuth } from '@/context/AuthContext';
-import styles from './ForgotPasswordPage.module.css';
 
 export const ForgotPasswordPage: React.FC = () => {
   const { user, loading } = useAuth();
@@ -13,10 +12,8 @@ export const ForgotPasswordPage: React.FC = () => {
   }
 
   return (
-    <Layout>
-      <div className={styles.container}>
-        <ForgotPasswordForm />
-      </div>
-    </Layout>
+    <AuthPageLayout>
+      <ForgotPasswordForm />
+    </AuthPageLayout>
   );
 };

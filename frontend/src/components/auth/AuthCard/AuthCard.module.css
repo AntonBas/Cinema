@@ -1,0 +1,51 @@
+.card {
+    width: 100%;
+    max-width: 450px;
+    box-sizing: border-box;
+    padding: var(--space-12);
+    background-color: var(--color-bg-modal);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    animation: fadeIn 0.4s ease-out;
+}
+
+.wide {
+    max-width: 600px;
+}
+
+.title {
+    margin: 0 0 var(--space-6);
+    font-size: var(--font-size-2xl);
+    font-weight: 600;
+    color: var(--color-primary);
+    text-align: center;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .card {
+        padding: var(--space-8) var(--space-6);
+    }
+
+    .title {
+        font-size: var(--font-size-xl);
+    }
+}
+
+@media (max-width: 480px) {
+    .card {
+        padding: var(--space-6) var(--space-4);
+    }
+}

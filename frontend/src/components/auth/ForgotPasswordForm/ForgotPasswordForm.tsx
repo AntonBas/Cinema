@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Mail } from "lucide-react";
 import { useAuthActions } from "@/hooks/features/auth/useAuthActions";
 import { Input, Button, Modal } from "@/components/ui";
+import { AuthCard } from "@/components/auth/AuthCard/AuthCard";
 import styles from "./ForgotPasswordForm.module.css";
 
 export const ForgotPasswordForm: React.FC = () => {
@@ -19,53 +20,49 @@ export const ForgotPasswordForm: React.FC = () => {
 
   return (
     <>
-      <section className={styles.forgotPassword}>
-        <div className={styles.forgotPasswordContainer}>
-          <h1 className={styles.forgotPasswordTitle}>Reset your password</h1>
-
-          <div className={styles.forgotPasswordTop}>
-            <span>Remember your password?</span>
-            <Link to="/login">Login</Link>
-          </div>
-
-          <form onSubmit={handleSubmit} className={styles.forgotPasswordForm}>
-            {error && (
-              <div className={styles.notification} data-type="error">
-                {error.message}
-              </div>
-            )}
-
-            <p className={styles.instructionText}>
-              Enter your email address and we'll send you instructions to reset
-              your password.
-            </p>
-
-            <Input
-              type="email"
-              placeholder="Email address"
-              value={email}
-              onChange={setEmail}
-              disabled={loading}
-              required
-            />
-
-            <Button
-              type="submit"
-              variant="primary"
-              size="large"
-              loading={loading}
-              disabled={loading}
-              className={styles.submitButton}
-            >
-              {loading ? "Sending..." : "Send Reset Instructions"}
-            </Button>
-          </form>
-
-          <div className={styles.forgotPasswordBottom}>
-            <Link to="/register">Don't have an account? Sign up</Link>
-          </div>
+      <AuthCard title="Reset Your Password">
+        <div className={styles.forgotPasswordTop}>
+          <span>Remember your password?</span>
+          <Link to="/login">Login</Link>
         </div>
-      </section>
+
+        <form onSubmit={handleSubmit} className={styles.forgotPasswordForm}>
+          {error && (
+            <div className={styles.notification} data-type="error">
+              {error.message}
+            </div>
+          )}
+
+          <p className={styles.instructionText}>
+            Enter your email address and we'll send you instructions to reset
+            your password.
+          </p>
+
+          <Input
+            type="email"
+            placeholder="Email address"
+            value={email}
+            onChange={setEmail}
+            disabled={loading}
+            required
+          />
+
+          <Button
+            type="submit"
+            variant="primary"
+            size="large"
+            loading={loading}
+            disabled={loading}
+            className={styles.submitButton}
+          >
+            {loading ? "Sending..." : "Send Reset Instructions"}
+          </Button>
+        </form>
+
+        <div className={styles.forgotPasswordBottom}>
+          <Link to="/register">Don't have an account? Sign up</Link>
+        </div>
+      </AuthCard>
 
       <Modal
         isOpen={showSuccessModal}

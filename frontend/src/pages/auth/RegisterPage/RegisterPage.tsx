@@ -2,8 +2,7 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { RegisterForm } from '@/components/auth/RegisterForm/RegisterForm';
 import { useAuth } from '@/context/AuthContext';
-import { Layout } from '@/components/layout/Layout/Layout';
-import styles from './RegisterPage.module.css';
+import { AuthPageLayout } from '@/components/auth/AuthPageLayout/AuthPageLayout';
 
 export const RegisterPage: React.FC = () => {
   const { user, loading } = useAuth();
@@ -13,10 +12,8 @@ export const RegisterPage: React.FC = () => {
   }
 
   return (
-    <Layout>
-      <div className={styles.container}>
-        <RegisterForm />
-      </div>
-    </Layout>
+    <AuthPageLayout>
+      <RegisterForm />
+    </AuthPageLayout>
   );
 };

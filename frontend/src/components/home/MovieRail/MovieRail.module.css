@@ -1,11 +1,15 @@
 .section {
   padding: var(--space-16) 0;
-  background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-deep) 100%);
+  background-color: var(--color-bg-primary);
   overflow: visible;
 }
 
+.highlighted {
+  background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-deep) 100%);
+}
+
 .container {
-  max-width: 1200px;
+  max-width: var(--container-md);
   margin: 0 auto;
   padding: 0 var(--space-4);
 }
@@ -82,7 +86,7 @@
   transform: scale(1.05);
   background-color: var(--color-primary);
   border-color: var(--color-primary);
-  color: white;
+  color: var(--color-text-primary);
 }
 
 .dots {

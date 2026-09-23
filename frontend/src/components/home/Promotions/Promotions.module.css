@@ -5,7 +5,7 @@
 }
 
 .container {
-  max-width: 1200px;
+  max-width: var(--container-md);
   margin: 0 auto;
   padding: 0 var(--space-4);
 }
