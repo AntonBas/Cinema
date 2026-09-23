@@ -5,10 +5,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import ua.lviv.bas.cinema.bonus.domain.BonusTransactionType;
 import ua.lviv.bas.cinema.bonus.dto.request.BonusRulesRequest;
 import ua.lviv.bas.cinema.bonus.dto.response.BonusRulesResponse;
 import ua.lviv.bas.cinema.bonus.service.AdminBonusService;
+import ua.lviv.bas.cinema.bonus.service.BonusQueryService;
 
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +26,9 @@ public class AdminBonusControllerTest {
 
     @Mock
     private AdminBonusService bonusAdminService;
+
+    @Mock
+    private BonusQueryService bonusQueryService;
 
     @InjectMocks
     private AdminBonusController adminBonusController;
@@ -86,5 +92,16 @@ public class AdminBonusControllerTest {
         assertThat(result).isEqualTo(response);
         assertThat(result.bonusType()).isEqualTo(BonusTransactionType.WELCOME_BONUS);
         assertThat(result.points()).isEqualTo(150);
+    }
+
+    @Test
+    void getUserTransactionsShouldQueryRequestedUser() {
+        var pageable = PageRequest.of(0, 20);
+        when(bonusQueryService.getTransactions(42L, pageable)).thenReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        var result = adminBonusController.getUserTransactions(42L, pageable);
+
+        assertThat(result.content()).isEmpty();
+        assertThat(result.totalElements()).isZero();
     }
 }

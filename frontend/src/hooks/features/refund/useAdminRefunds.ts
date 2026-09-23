@@ -2,18 +2,16 @@ import { useCallback, useRef, useState } from "react";
 import { useApi } from "@/hooks/common/useApi";
 import { usePagination } from "@/hooks/common/usePagination";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
-import { bookingApi } from "@/api/bookingApi";
+import { refundApi } from "@/api/refundApi";
 import { DEFAULT_PAGE_SIZE_ADMIN } from "@/utils/paginationUtils";
 import type {
-  AdminBookingFilters,
-  AdminBookingListResponse,
-} from "@/types/booking";
+  AdminRefundFilters,
+  AdminRefundListResponse,
+} from "@/types/refund";
 import type { PageResponse } from "@/types/pagination";
 
-export const useAdminBookings = (
-  initialFilters: AdminBookingFilters = {},
-) => {
-  const [filters, setFilters] = useState<AdminBookingFilters>(initialFilters);
+export const useAdminRefunds = (initialFilters: AdminRefundFilters = {}) => {
+  const [filters, setFilters] = useState<AdminRefundFilters>(initialFilters);
   const { params, setPage, setSort } = usePagination(
     {},
     DEFAULT_PAGE_SIZE_ADMIN,
@@ -22,7 +20,7 @@ export const useAdminBookings = (
     execute,
     loading: apiLoading,
     data,
-  } = useApi<PageResponse<AdminBookingListResponse>>();
+  } = useApi<PageResponse<AdminRefundListResponse>>();
 
   const executeRef = useRef(execute);
   executeRef.current = execute;
@@ -34,12 +32,12 @@ export const useAdminBookings = (
 
   const refresh = useCallback(() => {
     return executeRef.current(() =>
-      bookingApi.admin.getAll({ ...params, ...filters }),
+      refundApi.admin.getAll({ ...params, ...filters }),
     );
   }, [params, filters]);
 
   const applyFilters = useCallback(
-    (changes: Partial<AdminBookingFilters>) => {
+    (changes: Partial<AdminRefundFilters>) => {
       setFilters((prev) => ({ ...prev, ...changes }));
       setPage(0);
     },
@@ -52,7 +50,7 @@ export const useAdminBookings = (
   }, [setPage]);
 
   return {
-    bookings: data?.content || [],
+    refunds: data?.content || [],
     pagination: data,
     loading,
     filters,

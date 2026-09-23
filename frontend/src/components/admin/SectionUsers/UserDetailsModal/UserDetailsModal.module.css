@@ -1,0 +1,28 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-6);
+}
+
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-4);
+}
+
+.bonus {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+@media (max-width: 768px) {
+  .body {
+    padding: var(--space-4);
+  }
+
+  .pagination {
+    justify-content: center;
+  }
+}

@@ -9,6 +9,7 @@ import {
   Ticket,
   ScrollText,
   ReceiptText,
+  Undo2,
 } from "lucide-react";
 
 export interface AdminMenuItem {
@@ -47,6 +48,12 @@ const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
     path: "/admin/bookings",
     label: "Bookings",
     icon: ReceiptText,
+    roles: ["ROLE_ADMIN", "ROLE_CASHIER"],
+  },
+  {
+    path: "/admin/refunds",
+    label: "Refunds",
+    icon: Undo2,
     roles: ["ROLE_ADMIN", "ROLE_CASHIER"],
   },
   {

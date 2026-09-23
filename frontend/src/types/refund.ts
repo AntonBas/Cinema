@@ -98,3 +98,31 @@ export const RefundItemStatusDisplay: Record<string, string> = {
   PROCESSED: "Processed",
   CANCELLED: "Cancelled",
 };
+
+export interface AdminRefundListResponse {
+  id: number;
+  status: RefundStatus;
+  createdDate: string;
+  lastModifiedDate: string;
+  userId: number;
+  userEmail: string;
+  bookingId: number;
+  bookingNumber: string;
+  movieTitle: string;
+  sessionTime: string;
+  ticketCode?: string;
+  totalAmount: string;
+  totalBonusPointsToDeduct: number;
+  reason?: string;
+  paymentId: number;
+  liqpayOrderId?: string;
+}
+
+export interface AdminRefundFilters {
+  query?: string;
+  userId?: number;
+  status?: RefundStatus;
+  needsAttention?: boolean;
+  dateFrom?: string;
+  dateTo?: string;
+}

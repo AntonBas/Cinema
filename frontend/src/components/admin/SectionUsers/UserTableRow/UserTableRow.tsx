@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { ShieldCheck, ShieldX, UserCheck, UserX } from "lucide-react";
+import { History, ShieldCheck, ShieldX, UserCheck, UserX } from "lucide-react";
 import { Badge } from "@/components/ui/Badge/Badge";
 import { Select } from "@/components/ui/Select/Select";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
@@ -11,6 +11,7 @@ import type {
   VerificationStatus,
 } from "@/types/user";
 import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
+import { UserDetailsModal } from "../UserDetailsModal/UserDetailsModal";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
 import { formatDate, formatDateTime } from "@/utils/formatters";
 import styles from "./UserTableRow.module.css";
@@ -32,6 +33,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
 }) => {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   const { updateRole, updateStatus, updateBirthDateVerification, loading } =
     useAdminUsers();
@@ -122,6 +124,12 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
         <td data-label="Actions">
           <div className={tableStyles.actions}>
             <ActionIconButton
+              icon={<History />}
+              label="View activity"
+              variant="primary"
+              onClick={() => setShowDetailsModal(true)}
+            />
+            <ActionIconButton
               icon={isVerified ? <ShieldX /> : <ShieldCheck />}
               label={isVerified ? "Revoke verification" : "Verify user"}
               variant={isVerified ? "error" : "success"}
@@ -138,6 +146,13 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
           </div>
         </td>
       </tr>
+
+      {showDetailsModal && (
+        <UserDetailsModal
+          user={user}
+          onClose={() => setShowDetailsModal(false)}
+        />
+      )}
 
       <ConfirmModal
         isOpen={showStatusModal}

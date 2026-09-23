@@ -78,6 +78,11 @@ const SectionBookings = lazy(() =>
     default: m.SectionBookings,
   })),
 );
+const SectionRefunds = lazy(() =>
+  import("@/components/admin/SectionRefunds/SectionRefunds").then((m) => ({
+    default: m.SectionRefunds,
+  })),
+);
 const SectionAuditLogs = lazy(() =>
   import("@/components/admin/SectionAuditLogs/SectionAuditLogs").then((m) => ({
     default: m.SectionAuditLogs,
@@ -280,6 +285,14 @@ export const AppRoutes: React.FC = () => {
           element={
             <AdminRoute allowedRoles={["ROLE_ADMIN", "ROLE_CASHIER"]}>
               <SectionBookings />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="refunds"
+          element={
+            <AdminRoute allowedRoles={["ROLE_ADMIN", "ROLE_CASHIER"]}>
+              <SectionRefunds />
             </AdminRoute>
           }
         />

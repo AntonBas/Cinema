@@ -17,7 +17,6 @@ import ua.lviv.bas.cinema.audit.domain.AuditAction;
 import ua.lviv.bas.cinema.audit.domain.AuditLog;
 import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.audit.dto.response.AuditLogResponse;
-import ua.lviv.bas.cinema.exception.domain.audit.AuditHistoryNotFoundException;
 import ua.lviv.bas.cinema.audit.mapper.AuditLogMapper;
 import ua.lviv.bas.cinema.audit.service.AuditQueryService;
 
@@ -52,7 +51,6 @@ public class AdminAuditController {
 
     @Operation(summary = "Get entity history", description = "Returns audit history for a specific entity")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Entity history retrieved successfully"),
-            @ApiResponse(responseCode = "404", description = "No audit logs found for this entity"),
             @ApiResponse(responseCode = "403", description = "Access denied")})
     @GetMapping("/entity/{entityType}/{entityId}")
     public ResponseEntity<List<AuditLogResponse>> getEntityHistory(
@@ -60,10 +58,6 @@ public class AdminAuditController {
             @Parameter(description = "Entity ID", required = true) @PathVariable Long entityId) {
 
         List<AuditLog> auditLogs = auditQueryService.getEntityHistory(entityType, entityId);
-
-        if (auditLogs.isEmpty()) {
-            throw new AuditHistoryNotFoundException(entityType, entityId);
-        }
 
         List<AuditLogResponse> responses = auditLogs.stream().map(auditLogMapper::toResponse).toList();
 

@@ -16,7 +16,7 @@ import {
   BOOKING_STATUS_VARIANT,
   PAYMENT_STATUS_VARIANT,
   TICKET_STATUS_VARIANT,
-} from "../bookingBadges";
+} from "@/components/admin/shared/statusBadges";
 import styles from "./BookingDetailsModal.module.css";
 
 interface BookingDetailsModalProps {

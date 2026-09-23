@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,8 +18,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ua.lviv.bas.cinema.bonus.domain.BonusTransactionType;
 import ua.lviv.bas.cinema.bonus.dto.request.BonusRulesRequest;
+import ua.lviv.bas.cinema.bonus.dto.response.BonusBalanceResponse;
 import ua.lviv.bas.cinema.bonus.dto.response.BonusRulesResponse;
+import ua.lviv.bas.cinema.bonus.dto.response.BonusTransactionResponse;
 import ua.lviv.bas.cinema.bonus.service.AdminBonusService;
+import ua.lviv.bas.cinema.bonus.service.BonusQueryService;
+import ua.lviv.bas.cinema.common.PageResponse;
 
 import java.util.List;
 
@@ -30,6 +36,7 @@ import java.util.List;
 public class AdminBonusController {
 
     private final AdminBonusService bonusAdminService;
+    private final BonusQueryService bonusQueryService;
 
     @GetMapping("/rules")
     @Operation(summary = "Get all bonus rules")
@@ -63,5 +70,29 @@ public class AdminBonusController {
     })
     public BonusRulesResponse resetRule(@PathVariable BonusTransactionType type) {
         return bonusAdminService.resetRuleToDefaults(type);
+    }
+
+    @GetMapping("/users/{userId}/balance")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CASHIER')")
+    @Operation(summary = "Get bonus balance of a user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Balance retrieved successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Bonus card not found")
+    })
+    public BonusBalanceResponse getUserBalance(@PathVariable Long userId) {
+        return bonusQueryService.getBalance(userId);
+    }
+
+    @GetMapping("/users/{userId}/transactions")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CASHIER')")
+    @Operation(summary = "Get bonus transactions of a user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Transactions retrieved successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
+    })
+    public PageResponse<BonusTransactionResponse> getUserTransactions(@PathVariable Long userId,
+                                                                      @PageableDefault(size = 20) Pageable pageable) {
+        return PageResponse.from(bonusQueryService.getTransactions(userId, pageable));
     }
 }

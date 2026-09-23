@@ -120,6 +120,7 @@ export interface AdminBookingDetailsResponse {
 
 export interface AdminBookingFilters {
   query?: string;
+  userId?: number;
   status?: BookingStatus;
   paymentStatus?: PaymentStatus;
   dateFrom?: string;

@@ -26,5 +26,17 @@ export const bonusApi = {
       api.put<BonusRulesResponse>(`${ADMIN_BASE_URL}/rules/${type}`, request),
     resetRule: (type: BonusTransactionType) =>
       api.put<BonusRulesResponse>(`${ADMIN_BASE_URL}/rules/${type}/reset`),
+    getUserBalance: (userId: number) =>
+      api.get<BonusBalanceResponse>(
+        `${ADMIN_BASE_URL}/users/${userId}/balance`,
+      ),
+    getUserTransactions: (
+      userId: number,
+      params?: { page?: number; size?: number },
+    ) =>
+      api.get<PageResponse<BonusTransactionResponse>>(
+        `${ADMIN_BASE_URL}/users/${userId}/transactions`,
+        { params },
+      ),
   },
 };

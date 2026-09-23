@@ -1,6 +1,7 @@
 import type { BadgeVariant } from "@/components/ui/Badge/Badge";
 import type { BookingStatus } from "@/types/booking";
 import type { PaymentStatus } from "@/types/payment";
+import type { RefundStatus } from "@/types/refund";
 import type { TicketStatus } from "@/types/ticket";
 
 export const BOOKING_STATUS_VARIANT: Record<BookingStatus, BadgeVariant> = {
@@ -28,4 +29,13 @@ export const TICKET_STATUS_VARIANT: Record<TicketStatus, BadgeVariant> = {
   USED: "secondary",
   REFUNDED: "info",
   EXPIRED: "secondary",
+};
+
+export const REFUND_STATUS_VARIANT: Record<RefundStatus, BadgeVariant> = {
+  PENDING: "warning",
+  PROCESSING: "warning",
+  APPROVED: "info",
+  REJECTED: "error",
+  PROCESSED: "success",
+  CANCELLED: "secondary",
 };
