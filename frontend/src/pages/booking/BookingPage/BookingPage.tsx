@@ -15,6 +15,7 @@ import type { SeatInfo } from "@/types/seatReservation";
 import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import { formatPrice } from "@/utils/formatters";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import styles from "./BookingPage.module.css";
 
 export const BookingPage: React.FC = () => {
@@ -108,7 +109,9 @@ export const BookingPage: React.FC = () => {
   if (!seatData) {
     return (
       <Layout>
-        <div className={styles.error}>No seat data available</div>
+        <PageContainer size="narrow">
+          <EmptyState variant="error" title="No seat data available" />
+        </PageContainer>
       </Layout>
     );
   }

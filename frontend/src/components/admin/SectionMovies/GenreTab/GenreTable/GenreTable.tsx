@@ -3,7 +3,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import type { GenreListResponse } from "@/types/genre";
 import { Badge } from "@/components/ui";
 import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
-import { EmptyState } from "@/components/admin/shared/EmptyState/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
 import styles from "./GenreTable.module.css";
 

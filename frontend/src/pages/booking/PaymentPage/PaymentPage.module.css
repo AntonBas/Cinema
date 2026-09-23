@@ -299,12 +299,6 @@
     gap: var(--space-1);
 }
 
-.badge.error {
-    background: rgba(var(--color-error-rgb), var(--opacity-low));
-    color: var(--color-error);
-    border-color: var(--color-error);
-}
-
 .paymentNumber {
     font-family: 'Monaco', 'Consolas', monospace;
     font-size: var(--font-size-sm);

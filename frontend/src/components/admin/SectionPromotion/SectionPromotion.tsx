@@ -159,13 +159,11 @@ const SectionPromotion: React.FC = () => {
         </div>
       )}
 
-      <div className={styles.tableContainer}>
-        <PromotionTable
-          promotions={adminPromotions as PromotionListResponse[]}
-          onEdit={handleEdit}
-          onDelete={(id, title) => setDeletingPromotion({ id, title })}
-        />
-      </div>
+      <PromotionTable
+        promotions={adminPromotions as PromotionListResponse[]}
+        onEdit={handleEdit}
+        onDelete={(id, title) => setDeletingPromotion({ id, title })}
+      />
 
       {pagination && pagination.totalPages > 1 && (
         <div className={styles.paginationWrapper}>

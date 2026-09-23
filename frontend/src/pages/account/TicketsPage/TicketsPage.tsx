@@ -9,9 +9,11 @@ import { SearchInput } from "@/components/ui/SearchInput/SearchInput";
 import { useTickets } from "@/hooks/features/tickets/useTickets";
 import { DEFAULT_PAGE_SIZE_COMPACT } from "@/utils/paginationUtils";
 import type { TicketResponse, TicketStatus } from "@/types/ticket";
+import { Tabs, type TabItem } from "@/components/ui/Tabs/Tabs";
+import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import styles from "./TicketsPage.module.css";
 
-const TABS: Array<{ id: TicketStatus | "all"; label: string }> = [
+const TABS: ReadonlyArray<TabItem<TicketStatus | "all">> = [
   { id: "all", label: "All" },
   { id: "ACTIVE", label: "Active" },
   { id: "USED", label: "Used" },
@@ -105,26 +107,16 @@ export const TicketsPage: React.FC = () => {
         </div>
       </div>
 
-      <div className={styles.tabsSection}>
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            className={`${styles.filterTab} ${statusFilter === (tab.id === "all" ? undefined : tab.id) ? styles.active : ""}`}
-            onClick={() =>
-              handleStatusChange(tab.id === "all" ? undefined : tab.id)
-            }
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        items={TABS}
+        activeId={statusFilter ?? "all"}
+        onChange={(id) => handleStatusChange(id === "all" ? undefined : id)}
+        ariaLabel="Ticket status"
+      />
 
       <div className={styles.ticketsSection}>
         {loading ? (
-          <div className={styles.loadingState}>
-            <div className={styles.spinner}></div>
-            <p>Loading tickets...</p>
-          </div>
+          <LoadingSpinner text="Loading tickets..." />
         ) : (
           <>
             <TicketsList

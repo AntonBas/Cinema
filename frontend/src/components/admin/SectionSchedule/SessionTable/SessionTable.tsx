@@ -3,7 +3,7 @@ import { Pencil, Ban, RotateCcw, Trash2 } from "lucide-react";
 import type { SessionAdminResponse } from "@/types/session";
 import { Badge } from "@/components/ui";
 import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
-import { EmptyState } from "@/components/admin/shared/EmptyState/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
 import { formatPrice, formatShortDate, formatTime } from "@/utils/formatters";
 import styles from "./SessionTable.module.css";

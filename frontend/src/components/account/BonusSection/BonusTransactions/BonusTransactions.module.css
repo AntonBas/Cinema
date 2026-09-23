@@ -158,20 +158,6 @@
   justify-content: center;
 }
 
-.noData {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 300px;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-lg);
-  text-align: center;
-}
-
-.noData p {
-  margin: 0;
-}
-
 @media (max-width: 768px) {
   .transactions {
     padding: var(--space-4);
@@ -274,11 +260,6 @@
   .balance {
     font-size: var(--font-size-sm);
   }
-
-  .noData {
-    min-height: 200px;
-    font-size: var(--font-size-md);
-  }
 }
 
 @media (max-width: 480px) {
@@ -308,10 +289,5 @@
 
   .balance {
     font-size: var(--font-size-xs);
-  }
-
-  .noData {
-    min-height: 150px;
-    font-size: var(--font-size-sm);
   }
 }

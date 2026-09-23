@@ -5,6 +5,7 @@ import { MovieCard } from "../MovieCard/MovieCard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { Button } from "@/components/ui/Button/Button";
 import { Pagination } from "@/components/ui/Pagination/Pagination";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import styles from "./MovieList.module.css";
 
 interface MovieListProps {
@@ -33,15 +34,18 @@ export const MovieList: React.FC<MovieListProps> = React.memo(
   }) => {
     if (error) {
       return (
-        <div className={styles.error}>
-          <h3>Error loading movies</h3>
-          <p>{error.message}</p>
-          {onRetry && (
-            <Button variant="primary" onClick={onRetry}>
-              Try Again
-            </Button>
-          )}
-        </div>
+        <EmptyState
+          variant="error"
+          title="Error loading movies"
+          message={error.message}
+          action={
+            onRetry && (
+              <Button variant="primary" onClick={onRetry}>
+                Try Again
+              </Button>
+            )
+          }
+        />
       );
     }
 
@@ -55,10 +59,10 @@ export const MovieList: React.FC<MovieListProps> = React.memo(
 
     if (!movies.length) {
       return (
-        <div className={styles.empty}>
-          <h3>{emptyMessage}</h3>
-          <p>Check back soon for new movies.</p>
-        </div>
+        <EmptyState
+          title={emptyMessage}
+          message="Check back soon for new movies."
+        />
       );
     }
 

@@ -7,6 +7,7 @@ import { TicketStatusBadge } from "@/components/ui/TicketStatusBadge/TicketStatu
 import { CashierTicketInfo } from "@/components/cashier/CashierTicketInfo/CashierTicketInfo";
 import { CashierValidateButton } from "@/components/cashier/CashierValidateButton/CashierValidateButton";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { Button } from "@/components/ui/Button/Button";
 import styles from "./CashierScanPage.module.css";
 
 const getErrorMessage = (error: unknown): string => {
@@ -54,12 +55,9 @@ export const CashierScanPage: React.FC = () => {
             <p className={styles.errorMessage}>
               {getErrorMessage(cashierTicketError)}
             </p>
-            <button
-              className={styles.backButton}
-              onClick={() => navigate("/")}
-            >
+            <Button variant="primary" onClick={() => navigate("/")}>
               Back to Home Page
-            </button>
+            </Button>
           </div>
         </div>
       </Layout>

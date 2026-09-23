@@ -9,6 +9,7 @@ import type {
 } from "@/types/bonus";
 import { BonusTransactionTypeDisplay } from "@/types/bonus";
 import { formatDateTime } from "@/utils/formatters";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import styles from "./BonusTransactions.module.css";
 
 interface BonusTransactionsProps {
@@ -63,11 +64,7 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
 
   if (!transactions.length) {
     return (
-      <div className={styles.transactions}>
-        <div className={styles.noData}>
-          <p>No transactions found</p>
-        </div>
-      </div>
+      <EmptyState title="No transactions found" />
     );
   }
 

@@ -22,6 +22,7 @@ import { parseServerInstant } from "@/utils/dateUtils";
 import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import { formatFullDateTime, formatPrice } from "@/utils/formatters";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import styles from "./PaymentPage.module.css";
 
 interface BookingData {
@@ -251,7 +252,9 @@ export const PaymentPage: React.FC = () => {
   if (!bookingData)
     return (
       <Layout>
-        <div className={styles.error}>Booking data not found</div>
+        <PageContainer size="narrow">
+          <EmptyState variant="error" title="Booking data not found" />
+        </PageContainer>
       </Layout>
     );
 

@@ -10,6 +10,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { Button } from "@/components/ui/Button/Button";
 import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import styles from "./SessionsPage.module.css";
 
 const getTodayString = (): string => new Date().toISOString().split("T")[0];
@@ -130,12 +131,16 @@ const SessionsPage: React.FC = () => {
         </div>
 
         {error ? (
-          <div className={styles.errorContainer}>
-            <p className={styles.errorText}>{error}</p>
-            <Button variant="primary" onClick={() => window.location.reload()}>
-              Try Again
-            </Button>
-          </div>
+          <EmptyState
+            variant="error"
+            title="Failed to load sessions"
+            message={error}
+            action={
+              <Button variant="primary" onClick={() => window.location.reload()}>
+                Try Again
+              </Button>
+            }
+          />
         ) : loading ? (
           <LoadingSpinner text="Loading sessions..." />
         ) : sessions.length > 0 ? (
@@ -149,10 +154,10 @@ const SessionsPage: React.FC = () => {
             <SessionList sessions={sessions} />
           </>
         ) : (
-          <div className={styles.emptyState}>
-            <h3>No sessions found</h3>
-            <p>Try selecting a different date or movie.</p>
-          </div>
+          <EmptyState
+            title="No sessions found"
+            message="Try selecting a different date or movie."
+          />
         )}
       </PageContainer>
     </Layout>

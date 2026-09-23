@@ -14,6 +14,8 @@ import { Layout } from "@/components/layout/Layout/Layout";
 import { SessionSection } from "@/components/movies/SessionSection/SessionSection";
 import { DEFAULT_POSTER_URL, resolvePosterUrl } from "@/utils/posterUrl";
 import { formatDate } from "@/utils/formatters";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
+import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
 import styles from "./MovieDetailPage.module.css";
 
 const AGE_RATING_COLORS: Record<string, string> = {
@@ -99,16 +101,20 @@ export const MovieDetailPage: React.FC = () => {
   if (!movieDetail) {
     return (
       <Layout>
-        <div className={styles.errorContainer}>
-          <h2>Movie not found</h2>
-          <p>The movie you're looking for doesn't exist or has been removed.</p>
-          <Button
-            variant="primary"
-            onClick={() => navigate("/movies/current")}
-          >
-            Browse Current Movies
-          </Button>
-        </div>
+        <PageContainer size="narrow">
+          <EmptyState
+            title="Movie not found"
+            message="The movie you're looking for doesn't exist or has been removed."
+            action={
+              <Button
+                variant="primary"
+                onClick={() => navigate("/movies/current")}
+              >
+                Browse Current Movies
+              </Button>
+            }
+          />
+        </PageContainer>
       </Layout>
     );
   }

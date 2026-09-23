@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui";
 import type { PromotionListResponse, PromotionStatus } from "@/types/promotion";
 import { formatDate } from "@/utils/formatters";
 import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
-import { EmptyState } from "@/components/admin/shared/EmptyState/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
 import styles from "./PromotionTable.module.css";
 

@@ -1,118 +1,8 @@
-.mobileTabs {
-  display: none;
-  gap: var(--space-2);
-  margin-bottom: var(--space-4);
-}
-
-.mobileTab {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.mobileTab:hover {
-  border-color: var(--color-primary);
-  color: var(--color-text-primary);
-}
-
-.mobileTabActive {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: var(--color-text-primary);
-}
-
-.mobileTabLabel {
-  font-size: var(--font-size-sm);
-}
-
-.securityLayout {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: var(--space-8);
-}
-
-.sidebar {
-  background: linear-gradient(
-    135deg,
-    var(--color-bg-tertiary) 0%,
-    var(--color-bg-quaternary) 100%
-  );
-  border-radius: var(--radius-lg);
-  padding: var(--space-6);
-  height: fit-content;
-  box-shadow: var(--shadow-md);
-}
-
-.securityNav {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.navButton {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  background: none;
-  border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  text-align: left;
-  color: var(--color-text-secondary);
-}
-
-.navButton:hover {
-  background: var(--color-bg-tertiary);
-  color: var(--color-text-primary);
-}
-
-.navButton.active {
-  background: var(--color-primary);
-  color: var(--color-text-primary);
-}
-
-.navLabel {
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-}
-
 .mainContent {
   background: var(--color-bg-quaternary);
   border-radius: var(--radius-lg);
   padding: var(--space-8);
   box-shadow: var(--shadow-md);
-}
-
-@media (max-width: 1024px) {
-  .securityLayout {
-    grid-template-columns: 1fr;
-    gap: var(--space-6);
-  }
-
-  .sidebar {
-    display: none;
-  }
-
-  .mobileTabs {
-    display: flex;
-  }
-
-  .mainContent {
-    order: 1;
-  }
 }
 
 @media (max-width: 768px) {
@@ -124,13 +14,5 @@
 @media (max-width: 480px) {
   .mainContent {
     padding: var(--space-3);
-  }
-
-  .mobileTab {
-    padding: var(--space-2);
-  }
-
-  .mobileTabLabel {
-    font-size: var(--font-size-xs);
   }
 }

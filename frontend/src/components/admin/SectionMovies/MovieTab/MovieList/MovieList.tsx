@@ -2,6 +2,7 @@ import React from "react";
 import type { MovieCardResponse } from "@/types/movie";
 import { MovieCard } from "./MovieCard/MovieCard";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import styles from "./MovieList.module.css";
 
 interface MovieListProps {
@@ -31,10 +32,10 @@ export const MovieList: React.FC<MovieListProps> = React.memo(
 
     if (!movies.length) {
       return (
-        <div className={styles.empty}>
-          <h3>{emptyMessage}</h3>
-          <p>Get started by creating your first movie</p>
-        </div>
+        <EmptyState
+          title={emptyMessage}
+          message="Get started by creating your first movie"
+        />
       );
     }
 

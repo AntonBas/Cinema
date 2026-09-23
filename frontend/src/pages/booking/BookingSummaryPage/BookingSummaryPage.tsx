@@ -10,6 +10,8 @@ import { parseServerInstant } from "@/utils/dateUtils";
 import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import { formatFullDate, formatPrice, formatTime } from "@/utils/formatters";
+import { Button } from "@/components/ui/Button/Button";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import styles from "./BookingSummaryPage.module.css";
 
 export const BookingSummaryPage: React.FC = () => {
@@ -76,7 +78,9 @@ export const BookingSummaryPage: React.FC = () => {
   if (!booking) {
     return (
       <Layout>
-        <div className={styles.error}>Booking not found</div>
+        <PageContainer size="narrow">
+          <EmptyState variant="error" title="Booking not found" />
+        </PageContainer>
       </Layout>
     );
   }
@@ -211,20 +215,24 @@ export const BookingSummaryPage: React.FC = () => {
           </div>
 
           <div className={styles.actionButtons}>
-            <button
+            <Button
+              variant="secondary"
+              size="large"
               className={styles.cancelButton}
               onClick={() => setShowCancelModal(true)}
               disabled={booking.status !== "PENDING"}
             >
               Cancel Booking
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
+              size="large"
               className={styles.payButton}
               onClick={handleProceedToPayment}
               disabled={booking.status !== "PENDING"}
             >
               Proceed to Payment
-            </button>
+            </Button>
           </div>
         </div>
       </PageContainer>

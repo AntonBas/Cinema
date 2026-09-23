@@ -4,6 +4,7 @@ import { Tooltip } from "@/components/ui/Tooltip/Tooltip";
 import { useBonus } from "@/hooks/features/bonus/useBonus";
 import { TicketTypeSelect } from "../TicketTypeSelect/TicketTypeSelect";
 import { formatPrice } from "@/utils/formatters";
+import { Button } from "@/components/ui/Button/Button";
 import styles from "./BookingSidebar.module.css";
 
 interface SelectedSeatItem {
@@ -175,13 +176,14 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                 disabled={isBooking || loading}
                 aria-label="Bonus points to use"
               />
-              <button
-                className={styles.useAllButton}
+              <Button
+                variant="secondary"
+                size="small"
                 onClick={handleUseAllPoints}
                 disabled={isBooking || loading}
               >
                 Use Max
-              </button>
+              </Button>
             </div>
             <div className={styles.pointsLimits}>
               <span>Min: {minUsablePoints}</span>
@@ -215,15 +217,18 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
           content="After booking, you will have 20 minutes to complete the payment"
           position="top"
         >
-          <button
-            className={styles.bookButton}
+          <Button
+            variant="primary"
+            size="large"
+            fullWidth
             onClick={handleBooking}
+            loading={isBooking}
             disabled={isBooking || loading}
           >
             {isBooking
               ? "Processing..."
               : `Book Now for ${formatPrice(finalPrice)}`}
-          </button>
+          </Button>
         </Tooltip>
       </div>
     </div>

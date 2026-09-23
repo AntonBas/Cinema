@@ -86,12 +86,10 @@ export const SectionAuditLogs: React.FC = () => {
                 </div>
             )}
 
-            <div className={styles.tableContainer}>
-                <AuditLogsTable
-                    logs={auditLogs}
-                    onViewHistory={(entityType, entityId) => setSelectedEntity({ entityType, entityId })}
-                />
-            </div>
+            <AuditLogsTable
+                logs={auditLogs}
+                onViewHistory={(entityType, entityId) => setSelectedEntity({ entityType, entityId })}
+            />
 
             {pagination && pagination.totalPages > 1 && (
                 <div className={styles.paginationWrapper}>

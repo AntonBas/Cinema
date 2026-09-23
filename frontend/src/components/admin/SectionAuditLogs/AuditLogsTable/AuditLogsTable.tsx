@@ -1,7 +1,7 @@
 import React from "react";
 import { Badge, Tooltip } from "@/components/ui";
 import type { AuditLogResponse } from "@/types/audit";
-import { EmptyState } from "@/components/admin/shared/EmptyState/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
 import { formatDate, formatTime } from "@/utils/formatters";
 import styles from "./AuditLogsTable.module.css";

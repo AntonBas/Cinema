@@ -5,7 +5,13 @@ import { BonusTransactions } from "@/components/account/BonusSection/BonusTransa
 import { useBonus } from "@/hooks/features/bonus/useBonus";
 import { usePagination } from "@/hooks/common/usePagination";
 import { DEFAULT_PAGE_SIZE_ADMIN } from "@/utils/paginationUtils";
+import { Tabs, type TabItem } from "@/components/ui/Tabs/Tabs";
 import styles from "./BonusPage.module.css";
+
+const BONUS_TABS: ReadonlyArray<TabItem<"balance" | "transactions">> = [
+  { id: "balance", label: "Balance" },
+  { id: "transactions", label: "Transactions" },
+];
 
 export const BonusPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"balance" | "transactions">(
@@ -34,20 +40,12 @@ export const BonusPage: React.FC = () => {
 
   return (
     <AccountPageLayout title="My Bonus">
-      <div className={styles.tabs}>
-        <button
-          className={`${styles.tab} ${activeTab === "balance" ? styles.active : ""}`}
-          onClick={() => setActiveTab("balance")}
-        >
-          Balance
-        </button>
-        <button
-          className={`${styles.tab} ${activeTab === "transactions" ? styles.active : ""}`}
-          onClick={() => setActiveTab("transactions")}
-        >
-          Transactions
-        </button>
-      </div>
+      <Tabs
+        items={BONUS_TABS}
+        activeId={activeTab}
+        onChange={setActiveTab}
+        ariaLabel="Bonus sections"
+      />
 
       <div className={styles.tabContent}>
         {activeTab === "balance" ? (

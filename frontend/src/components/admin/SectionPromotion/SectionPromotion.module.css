@@ -19,17 +19,6 @@
     text-align: left;
 }
 
-@keyframes pulse {
-    0%,
-    100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.5;
-    }
-}
-
 .filtersContainer {
     display: grid;
     grid-template-columns: 1fr auto;
@@ -45,15 +34,6 @@
 
 .searchWrapper {
     min-width: 300px;
-}
-
-.tableContainer {
-    background: var(--color-bg-quaternary);
-    border-radius: var(--radius-xl);
-    border: 1px solid var(--color-border-medium);
-    overflow: hidden;
-    box-shadow: 0 10px 40px rgba(var(--color-black-rgb), 0.2);
-    animation: fadeIn 0.4s ease;
 }
 
 .paginationWrapper {

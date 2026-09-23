@@ -3,6 +3,7 @@ import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import type { BonusBalanceResponse } from "@/types/bonus";
 import { formatPrice } from "@/utils/formatters";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import styles from "./BonusBalanceCard.module.css";
 
 interface BonusBalanceCardProps {
@@ -26,11 +27,7 @@ export const BonusBalanceCard: React.FC<BonusBalanceCardProps> = ({
 
   if (!balance) {
     return (
-      <div className={styles.balanceCard}>
-        <div className={styles.noData}>
-          <p>No balance data available</p>
-        </div>
-      </div>
+      <EmptyState title="No balance data available" />
     );
   }
 

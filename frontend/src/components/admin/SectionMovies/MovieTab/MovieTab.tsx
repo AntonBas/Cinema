@@ -21,11 +21,11 @@ import { MovieForm } from "./MovieForm/MovieForm";
 import { DeleteConfirmModal } from "@/components/ui/DeleteConfirmModal/DeleteConfirmModal";
 import { Button } from "@/components/ui/Button/Button";
 import { SearchInput } from "@/components/ui/SearchInput/SearchInput";
-import { Badge } from "@/components/ui/Badge/Badge";
 import { Pagination } from "@/components/ui/Pagination/Pagination";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 import { movieApi } from "@/api/movieApi";
+import { Tabs, type TabItem } from "@/components/ui/Tabs/Tabs";
 import styles from "./MovieTab.module.css";
 
 type MovieTabType = "CURRENT" | "UPCOMING" | "ARCHIVED";
@@ -35,6 +35,12 @@ interface TabData {
   total: number;
   pagination: PageResponse<MovieCardResponse> | null;
 }
+
+const MOVIE_TABS: ReadonlyArray<TabItem<MovieTabType>> = [
+  { id: "CURRENT", label: "Currently Showing" },
+  { id: "UPCOMING", label: "Upcoming" },
+  { id: "ARCHIVED", label: "Archived" },
+];
 
 export const MovieTab: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -273,26 +279,12 @@ export const MovieTab: React.FC = () => {
         />
       </div>
 
-      <div className={styles.tabs}>
-        {(["CURRENT", "UPCOMING", "ARCHIVED"] as const).map((tab) => (
-          <button
-            key={tab}
-            className={`${styles.tab} ${activeTab === tab ? styles.active : ""}`}
-            onClick={() => handleTabChange(tab)}
-          >
-            <span className={styles.tabLabel}>
-              {tab === "CURRENT"
-                ? "Currently Showing"
-                : tab === "UPCOMING"
-                  ? "Upcoming"
-                  : "Archived"}
-            </span>
-            <Badge variant={activeTab === tab ? "primary" : "secondary"}>
-              {tabCounts[tab]}
-            </Badge>
-          </button>
-        ))}
-      </div>
+      <Tabs
+        items={MOVIE_TABS.map((tab) => ({ ...tab, badge: tabCounts[tab.id] }))}
+        activeId={activeTab}
+        onChange={handleTabChange}
+        ariaLabel="Movie status"
+      />
 
       {currentTabData.total > 0 && (
         <div className={styles.resultsInfo}>

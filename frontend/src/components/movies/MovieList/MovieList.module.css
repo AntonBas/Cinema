@@ -18,28 +18,6 @@
     color: var(--color-text-secondary);
 }
 
-.empty {
-    text-align: center;
-    padding: var(--space-12);
-    color: var(--color-text-secondary);
-    width: 100%;
-}
-
-.empty h3 {
-    color: var(--color-text-primary);
-    margin-bottom: var(--space-2);
-    font-size: var(--font-size-xl);
-    font-weight: 600;
-}
-
-.empty p {
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-md);
-    max-width: 400px;
-    margin: 0 auto;
-    line-height: 1.5;
-}
-
 @media (max-width: 768px) {
     .grid {
         gap: var(--space-6);
@@ -47,14 +25,6 @@
 
     .grid>* {
         width: 240px;
-    }
-
-    .empty h3 {
-        font-size: var(--font-size-lg);
-    }
-
-    .empty p {
-        font-size: var(--font-size-sm);
     }
 }
 
@@ -65,9 +35,5 @@
 
     .grid>* {
         width: 200px;
-    }
-
-    .empty {
-        padding: var(--space-8);
     }
 }

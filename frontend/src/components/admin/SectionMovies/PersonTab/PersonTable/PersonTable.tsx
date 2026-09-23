@@ -4,7 +4,7 @@ import type { PersonListResponse } from "@/types/person";
 import { PersonRoleDisplay } from "@/types/person";
 import { Badge } from "@/components/ui";
 import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
-import { EmptyState } from "@/components/admin/shared/EmptyState/EmptyState";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
 import styles from "./PersonTable.module.css";
 

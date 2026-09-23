@@ -2,19 +2,19 @@ import React, { useState } from "react";
 import { MovieTab } from "./MovieTab/MovieTab";
 import { GenreTab } from "./GenreTab/GenreTab";
 import { PersonTab } from "./PersonTab/PersonTab";
+import { Tabs, type TabItem } from "@/components/ui/Tabs/Tabs";
 import styles from "./SectionMovies.module.css";
-import clsx from "clsx";
 
 type TabType = "movies" | "genres" | "persons";
 
+const SECTION_TABS: ReadonlyArray<TabItem<TabType>> = [
+  { id: "movies", label: "Movies" },
+  { id: "genres", label: "Genres" },
+  { id: "persons", label: "People" },
+];
+
 export const SectionMovies: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>("movies");
-
-  const tabs = [
-    { id: "movies" as TabType, label: "Movies" },
-    { id: "genres" as TabType, label: "Genres" },
-    { id: "persons" as TabType, label: "People" },
-  ];
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -32,21 +32,12 @@ export const SectionMovies: React.FC = () => {
   return (
     <div className={styles.container}>
       <div className={styles.tabsContainer}>
-        <div className={styles.navigation}>
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              className={clsx(
-                styles.button,
-                activeTab === tab.id && styles.active,
-              )}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              <span className={styles.label}>{tab.label}</span>
-              <div className={styles.indicator}></div>
-            </button>
-          ))}
-        </div>
+        <Tabs
+          items={SECTION_TABS}
+          activeId={activeTab}
+          onChange={setActiveTab}
+          ariaLabel="Movie catalog sections"
+        />
 
         <div className={styles.contentWrapper}>
           <div className={styles.content}>{renderTabContent()}</div>

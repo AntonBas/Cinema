@@ -191,12 +191,6 @@
   background-color: var(--color-primary);
 }
 
-.loading {
-  text-align: center;
-  padding: var(--space-16);
-  color: var(--color-text-secondary);
-}
-
 @media (max-width: 768px) {
   .section {
     padding: var(--space-8) 0;

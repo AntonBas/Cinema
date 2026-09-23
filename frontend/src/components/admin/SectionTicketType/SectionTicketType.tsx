@@ -10,6 +10,7 @@ import TicketTypeFormModal from './TicketTypeModal/TicketTypeFormModal';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import { DEFAULT_PAGE_SIZE_COMPACT } from '@/utils/paginationUtils';
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader';
+import { EmptyState } from '@/components/ui/EmptyState/EmptyState';
 import styles from './SectionTicketType.module.css';
 import type { TicketTypeResponse, TicketTypeCategory } from '@/types/ticketType';
 
@@ -161,9 +162,7 @@ const SectionTicketType = () => {
                 )}
 
                 {ticketTypesData.length === 0 ? (
-                    <div className={styles.empty}>
-                        <p>No ticket types found</p>
-                    </div>
+                    <EmptyState title="No ticket types found" />
                 ) : (
                     <>
                         <TicketTypeTable

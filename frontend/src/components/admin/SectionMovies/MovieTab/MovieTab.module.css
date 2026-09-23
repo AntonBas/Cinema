@@ -39,47 +39,6 @@
     margin-bottom: var(--space-6);
 }
 
-.tabs {
-    display: flex;
-    gap: var(--space-2);
-    margin-bottom: var(--space-8);
-    background: var(--color-bg-secondary);
-    border-radius: var(--radius-md);
-    padding: var(--space-1);
-}
-
-.tab {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-3);
-    padding: var(--space-3) var(--space-6);
-    background: transparent;
-    border: none;
-    border-radius: var(--radius-sm);
-    color: var(--color-text-secondary);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    font-size: var(--font-size-sm);
-    font-weight: 500;
-}
-
-.tab:hover {
-    background: var(--color-overlay-light);
-    color: var(--color-text-primary);
-}
-
-.tab.active {
-    background: var(--color-border-medium);
-    color: var(--color-text-primary);
-}
-
-.tabLabel {
-    font-size: var(--font-size-sm);
-    font-weight: 500;
-}
-
 .content {
     min-height: 400px;
 }
@@ -95,77 +54,12 @@
     gap: var(--space-4);
 }
 
-.tabLoading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-2);
-    padding: var(--space-4);
-    color: var(--color-text-secondary);
-    background: var(--color-overlay-light);
-    border-radius: var(--radius-sm);
-    margin-bottom: var(--space-4);
-    font-size: var(--font-size-sm);
-}
-
 .resultsInfo {
     color: var(--color-text-secondary);
     margin-bottom: var(--space-4);
     font-size: var(--font-size-sm);
     padding: var(--space-2) 0;
     border-bottom: 1px solid var(--color-border-medium);
-}
-
-.pagination {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: var(--space-8);
-    padding: var(--space-4) 0;
-    border-top: 1px solid var(--color-border-medium);
-}
-
-.paginationInfo {
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-sm);
-}
-
-.paginationControls {
-    display: flex;
-    gap: var(--space-1);
-}
-
-.pageButton {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 40px;
-    height: 40px;
-    padding: 0 var(--space-3);
-    background: var(--color-bg-quaternary);
-    border: 1px solid var(--color-border-medium);
-    border-radius: var(--radius-sm);
-    color: var(--color-text-primary);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    font-size: var(--font-size-sm);
-    font-weight: 500;
-}
-
-.pageButton:hover:not(:disabled) {
-    background: var(--color-border-medium);
-    border-color: var(--color-border-medium);
-}
-
-.pageButton.active {
-    background: var(--color-primary);
-    border-color: var(--color-primary);
-    color: white;
-}
-
-.pageButton:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
 }
 
 @media (max-width: 768px) {
@@ -192,31 +86,6 @@
         display: flex;
         justify-content: center;
     }
-
-    .tabs {
-        flex-direction: column;
-        gap: var(--space-1);
-    }
-
-    .tab {
-        padding: var(--space-4);
-    }
-
-    .pagination {
-        flex-direction: column;
-        gap: var(--space-4);
-        text-align: center;
-    }
-
-    .paginationControls {
-        justify-content: center;
-    }
-
-    .pageButton {
-        min-width: 36px;
-        height: 36px;
-        padding: 0 var(--space-2);
-    }
 }
 
 @media (max-width: 480px) {
@@ -226,16 +95,5 @@
 
     .description {
         font-size: var(--font-size-sm);
-    }
-
-    .paginationControls {
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-
-    .pageButton {
-        min-width: 32px;
-        height: 32px;
-        font-size: var(--font-size-xs);
     }
 }

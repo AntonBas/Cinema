@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button/Button";
 import { useAuth } from "@/context/AuthContext";
 import type { PromotionResponse } from "@/types/promotion";
 import { formatShortDate } from "@/utils/formatters";
+import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import styles from "./Promotions.module.css";
 
 interface PromotionsProps {
@@ -80,7 +81,7 @@ export const Promotions: React.FC<PromotionsProps> = ({
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>Special Offers</h2>
           </div>
-          <div className={styles.loading}>Loading offers...</div>
+          <LoadingSpinner text="Loading offers..." />
         </div>
       </section>
     );

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { PersonTabs } from "./PersonTabs/PersonTabs";
 import { PersonTable } from "./PersonTable/PersonTable";
 import { PersonForm } from "./PersonForm/PersonForm";
 import { DeleteConfirmModal } from "@/components/ui/DeleteConfirmModal/DeleteConfirmModal";
@@ -16,7 +15,15 @@ import type {
   PersonRole,
   PersonListResponse,
 } from "@/types/person";
+import { Tabs, type TabItem } from "@/components/ui/Tabs/Tabs";
 import styles from "./PersonTab.module.css";
+
+const PERSON_TABS: ReadonlyArray<TabItem<PersonRole | "ALL">> = [
+  { id: "ALL", label: "All People" },
+  { id: "ACTOR", label: "Actors" },
+  { id: "DIRECTOR", label: "Directors" },
+  { id: "SCREENWRITER", label: "Screenwriters" },
+];
 
 export const PersonTab: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -185,7 +192,12 @@ export const PersonTab: React.FC = () => {
         </div>
       )}
 
-      <PersonTabs activeTab={activeTab} onTabChange={handleTabChange} />
+      <Tabs
+        items={PERSON_TABS}
+        activeId={activeTab}
+        onChange={handleTabChange}
+        ariaLabel="Person categories"
+      />
 
       <PersonTable
         persons={persons}

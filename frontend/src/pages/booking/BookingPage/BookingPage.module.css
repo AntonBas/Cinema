@@ -40,17 +40,6 @@
   height: fit-content;
 }
 
-.error {
-  text-align: center;
-  padding: 100px var(--space-4);
-  font-size: var(--font-size-lg);
-  color: var(--color-error);
-  background: var(--color-error-light);
-  border-radius: 12px;
-  margin: var(--space-6);
-  border: 1px solid var(--color-error);
-}
-
 @media (max-width: 1024px) {
   .content {
     grid-template-columns: 1fr;
