@@ -6,7 +6,7 @@
     background: var(--color-bg-quaternary);
     border-radius: var(--radius-xl);
     border: 1px solid var(--color-border-medium);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 40px rgba(var(--color-black-rgb), 0.3);
     min-height: auto;
 }
 
@@ -16,9 +16,9 @@
 
 .loading {
     text-align: center;
-    padding: 4rem 2rem;
+    padding: var(--space-16) var(--space-8);
     color: var(--color-text-secondary);
-    font-size: 1.1rem;
+    font-size: var(--font-size-lg);
     background: var(--color-bg-quaternary);
     border-radius: var(--radius-xl);
     border: 1px solid var(--color-border-medium);
@@ -31,7 +31,7 @@
 
 .loading p {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: var(--font-size-lg);
 }
 
 @keyframes fadeIn {
@@ -58,12 +58,12 @@
 
 @media (max-width: 768px) {
     .section {
-        padding: var(--space-5);
+        padding: var(--space-4);
         min-height: calc(100vh - 2.5rem);
     }
 
     .loading {
-        padding: 3rem 1rem;
+        padding: var(--space-12) var(--space-4);
     }
 }
 

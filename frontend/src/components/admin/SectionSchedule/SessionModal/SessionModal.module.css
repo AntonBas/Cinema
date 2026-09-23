@@ -20,7 +20,7 @@
 .label {
     color: var(--color-text-primary);
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: var(--font-size-sm);
 }
 
 .input {
@@ -55,7 +55,7 @@
 }
 
 .sessionInfo {
-    background: rgba(58, 64, 81, 0.3);
+    background: rgba(var(--color-border-medium-rgb), 0.3);
     border-radius: var(--radius-md);
     padding: var(--space-4);
     border: 1px solid var(--color-border-medium);
@@ -72,19 +72,19 @@
 
 .infoLabel {
     color: var(--color-text-secondary);
-    font-size: 0.9rem;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     min-width: 120px;
 }
 
 .infoValue {
     color: var(--color-text-primary);
-    font-size: 0.9rem;
+    font-size: var(--font-size-sm);
     font-weight: 500;
 }
 
 .statusBadge {
-    padding: 0.25rem 0.75rem;
+    padding: var(--space-1) var(--space-3);
     border-radius: var(--radius-lg);
     font-size: var(--font-size-xs);
     font-weight: 600;
@@ -104,9 +104,9 @@
 }
 
 .statusBadge.completed {
-    background: rgba(107, 114, 128, 0.2);
+    background: rgba(var(--color-gray-rgb), 0.2);
     color: var(--color-text-muted);
-    border: 1px solid rgba(107, 114, 128, 0.3);
+    border: 1px solid rgba(var(--color-gray-rgb), 0.3);
 }
 
 .statusBadge.cancelled {
@@ -128,7 +128,7 @@
 }
 
 .errorIcon {
-    font-size: 1.25rem;
+    font-size: var(--font-size-xl);
     flex-shrink: 0;
 }
 
@@ -166,7 +166,7 @@
 .selectedMovieTitle {
     color: var(--color-primary);
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: var(--font-size-md);
     margin-bottom: var(--space-1);
 }
 
@@ -183,7 +183,7 @@
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-border-medium);
     border-radius: var(--radius-md);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 25px rgba(var(--color-black-rgb), 0.3);
     z-index: 1000;
     max-height: 250px;
     overflow-y: auto;
@@ -208,7 +208,7 @@
 }
 
 .movieOption.selected {
-    background: linear-gradient(135deg, rgba(var(--color-primary-rgb), 0.2) 0%, rgba(255, 123, 0, 0.2) 100%);
+    background: linear-gradient(135deg, rgba(var(--color-primary-rgb), 0.2) 0%, rgba(var(--color-primary-rgb), 0.2) 100%);
     border-left: 3px solid var(--color-primary);
 }
 
@@ -220,7 +220,7 @@
     color: var(--color-text-primary);
     font-weight: 500;
     margin-bottom: var(--space-1);
-    font-size: 0.9rem;
+    font-size: var(--font-size-sm);
 }
 
 .movieDetails {
@@ -282,15 +282,15 @@
 
 @media (max-width: 480px) {
     .form {
-        gap: var(--space-5);
+        gap: var(--space-4);
     }
 
     .formRow {
-        gap: var(--space-5);
+        gap: var(--space-4);
     }
 
     .label {
-        font-size: 0.85rem;
+        font-size: var(--font-size-sm);
     }
 
     .sessionInfo {
@@ -302,6 +302,6 @@
     }
 
     .selectedMovieTitle {
-        font-size: 0.9rem;
+        font-size: var(--font-size-sm);
     }
 }

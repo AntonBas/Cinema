@@ -5,14 +5,14 @@
 .sessionInfo {
   display: flex;
   justify-content: center;
-  gap: 32px;
+  gap: var(--space-8);
   color: var(--color-text-secondary);
-  font-size: 16px;
+  font-size: var(--font-size-md);
   flex-wrap: wrap;
 }
 
 .sessionInfo span {
-  padding: 8px 16px;
+  padding: var(--space-2) var(--space-4);
   background: var(--color-bg-secondary);
   border-radius: 8px;
   border: 1px solid var(--color-border);
@@ -21,14 +21,14 @@
 .content {
   display: grid;
   grid-template-columns: 1fr 350px;
-  gap: 40px;
+  gap: var(--space-8);
   align-items: start;
 }
 
 .hallSection {
-  background: rgba(42, 48, 65, 0.6);
+  background: rgba(var(--color-bg-quaternary-rgb), 0.6);
   border-radius: 12px;
-  padding: 24px;
+  padding: var(--space-6);
   box-shadow: var(--shadow-md);
   border: 1px solid var(--color-border);
   min-width: 0;
@@ -42,19 +42,19 @@
 
 .error {
   text-align: center;
-  padding: 100px 20px;
-  font-size: 18px;
+  padding: 100px var(--space-4);
+  font-size: var(--font-size-lg);
   color: var(--color-error);
   background: var(--color-error-light);
   border-radius: 12px;
-  margin: 24px;
+  margin: var(--space-6);
   border: 1px solid var(--color-error);
 }
 
 @media (max-width: 1024px) {
   .content {
     grid-template-columns: 1fr;
-    gap: 30px;
+    gap: var(--space-8);
   }
 
   .sidebarSection {
@@ -66,18 +66,18 @@
   .sessionInfo {
     flex-direction: row;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .sessionInfo span {
     width: auto;
     max-width: none;
-    padding: 6px 12px;
-    font-size: 14px;
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--font-size-sm);
   }
 
   .hallSection {
-    padding: 12px;
+    padding: var(--space-3);
     border-radius: 8px;
   }
 }
@@ -85,21 +85,21 @@
 @media (max-width: 480px) {
   .sessionInfo {
     flex-direction: column;
-    gap: 6px;
+    gap: var(--space-1);
   }
 
   .sessionInfo span {
     width: 100%;
     text-align: center;
-    font-size: 13px;
-    padding: 5px 10px;
+    font-size: var(--font-size-xs);
+    padding: var(--space-1) var(--space-2);
   }
 
   .hallSection {
-    padding: 8px;
+    padding: var(--space-2);
   }
 
   .content {
-    gap: 20px;
+    gap: var(--space-4);
   }
 }

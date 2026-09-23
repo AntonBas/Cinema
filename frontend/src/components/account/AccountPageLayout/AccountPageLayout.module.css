@@ -16,7 +16,7 @@
     padding: var(--space-8);
 }
 
-@media (min-width: 969px) {
+@media (min-width: 1025px) {
     .container {
         flex-direction: row;
     }

@@ -54,32 +54,32 @@
   right: 12px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: flex-end;
 }
 
 .durationBadge {
-  padding: 6px 10px;
+  padding: var(--space-1) var(--space-2);
   border-radius: 20px;
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   min-width: 50px;
   text-align: center;
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(var(--color-white-rgb), 0.2);
   background: var(--color-overlay-dark);
   color: white;
 }
 
 .ageBadge {
-  padding: 6px 10px;
+  padding: var(--space-1) var(--space-2);
   border-radius: 20px;
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   min-width: 50px;
   text-align: center;
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(var(--color-white-rgb), 0.2);
   color: white;
 }
 
@@ -116,7 +116,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 20px;
+  padding: var(--space-4);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -141,8 +141,8 @@
 .buttonContainer button {
   width: 100%;
   font-weight: 600;
-  padding: 12px 20px;
-  font-size: 15px;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-size-sm);
   border-radius: 10px;
   transition: all 0.2s ease;
   border: none;
@@ -155,7 +155,7 @@
 }
 
 .content {
-  padding: 20px;
+  padding: var(--space-4);
   flex-grow: 1;
   display: flex;
   flex-direction: column;
@@ -164,7 +164,7 @@
 }
 
 .title {
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   font-weight: 700;
   color: var(--color-text-primary);
   margin: 0;
@@ -183,31 +183,31 @@
   .cornerInfo {
     top: 8px;
     right: 8px;
-    gap: 6px;
+    gap: var(--space-1);
   }
 
   .durationBadge,
   .ageBadge {
-    padding: 5px 8px;
-    font-size: 12px;
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--font-size-xs);
     min-width: 45px;
   }
 
   .overlay {
-    padding: 16px;
+    padding: var(--space-4);
   }
 
   .buttonContainer button {
-    padding: 10px 16px;
-    font-size: 14px;
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-size-sm);
   }
 
   .content {
-    padding: 16px;
+    padding: var(--space-4);
   }
 
   .title {
-    font-size: 16px;
+    font-size: var(--font-size-md);
     min-height: 2.4em;
   }
 }
@@ -226,6 +226,6 @@
   }
 
   .title {
-    font-size: 15px;
+    font-size: var(--font-size-sm);
   }
 }

@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(var(--color-black-rgb), 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -16,7 +16,7 @@
 .modal {
   background: var(--color-bg-modal);
   border-radius: var(--radius-xl);
-  padding: 2.5rem;
+  padding: var(--space-8);
   max-width: 440px;
   width: 100%;
   box-shadow: var(--shadow-xl);
@@ -44,7 +44,7 @@
   color: var(--color-text-secondary);
   margin: 0 0 var(--space-6) 0;
   line-height: 1.5;
-  font-size: 0.95rem;
+  font-size: var(--font-size-md);
 }
 
 .itemName {
@@ -64,7 +64,7 @@
   font-size: var(--font-size-sm);
   font-weight: 500;
   margin: 0 0 var(--space-8) 0;
-  padding: 10px;
+  padding: var(--space-2);
   background: rgba(var(--color-error-rgb), var(--opacity-low));
   border-radius: var(--radius-sm);
   border: 1px solid rgba(var(--color-error-rgb), var(--opacity-high));
@@ -85,7 +85,7 @@
   cursor: pointer;
   font-weight: 500;
   transition: all var(--transition-normal);
-  font-size: 0.95rem;
+  font-size: var(--font-size-md);
   flex: 1;
 }
 
@@ -110,18 +110,18 @@
 .confirmButton {
   padding: var(--space-3) var(--space-6);
   border: none;
-  background: linear-gradient(135deg, var(--color-error), #ff8e8e);
+  background: linear-gradient(135deg, var(--color-error), var(--color-error-highlight));
   color: var(--color-text-primary);
   border-radius: var(--radius-md);
   cursor: pointer;
   font-weight: 600;
   transition: all var(--transition-normal);
-  font-size: 0.95rem;
+  font-size: var(--font-size-md);
   flex: 1;
 }
 
 .confirmButton:hover:not(:disabled) {
-  background: linear-gradient(135deg, #ff5252, #ff7b7b);
+  background: linear-gradient(135deg, var(--color-error-alt), var(--color-error));
   transform: translateY(-1px);
   box-shadow: 0 8px 20px rgba(var(--color-error-rgb), 0.3);
 }

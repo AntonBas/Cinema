@@ -75,16 +75,16 @@
   }
 
   .userEmail {
-    font-size: 10px;
+    font-size: var(--font-size-2xs);
   }
 
   .roleSelect select {
-    font-size: 11px;
-    padding: 4px 6px;
+    font-size: var(--font-size-2xs);
+    padding: var(--space-1) var(--space-1);
   }
 
   .ticketsCount {
-    padding: 2px 4px;
-    font-size: 10px;
+    padding: 2px var(--space-1);
+    font-size: var(--font-size-2xs);
   }
 }

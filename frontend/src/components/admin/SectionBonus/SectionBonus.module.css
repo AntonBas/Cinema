@@ -49,7 +49,7 @@
 
 @media (max-width: 1024px) {
   .section {
-    padding: var(--space-5);
+    padding: var(--space-4);
     min-height: 550px;
   }
 }

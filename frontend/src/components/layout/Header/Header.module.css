@@ -45,7 +45,7 @@
 .navLinks {
   display: flex;
   list-style: none;
-  gap: 2.5rem;
+  gap: var(--space-8);
   align-items: center;
   margin: 0;
   padding: 0;
@@ -118,7 +118,7 @@
 }
 
 .dropdownArrow {
-  font-size: 0.7rem;
+  font-size: var(--font-size-xs);
   transition: transform var(--transition-normal);
 }
 
@@ -400,7 +400,7 @@
   }
 
   .mobileUserInfo .userEmail {
-    font-size: 11px;
+    font-size: var(--font-size-2xs);
   }
 
   .mobileLogoutBtn {

@@ -50,7 +50,7 @@
 
 .adminFooter {
   padding: var(--space-6) var(--space-8);
-  background: rgba(15, 23, 42, 0.95);
+  background: rgba(var(--color-panel-gradient-end-rgb), 0.95);
   backdrop-filter: blur(10px);
   border-top: 1px solid var(--color-border-light);
   position: relative;

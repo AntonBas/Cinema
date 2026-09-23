@@ -30,7 +30,7 @@
   justify-content: center;
   align-items: center;
   min-height: 200px;
-  padding: 20px;
+  padding: var(--space-4);
 }
 
 .loaderWrapper {
@@ -67,7 +67,7 @@
   left: 0;
   width: 30px;
   height: 30px;
-  font-size: 40px;
+  font-size: var(--font-size-4xl);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -76,11 +76,11 @@
 
 @media (max-width: 768px) {
   .loaderWrapper {
-    font-size: 36px;
+    font-size: var(--font-size-4xl);
   }
 
   .loaderWrapper::after {
-    font-size: 32px;
+    font-size: var(--font-size-3xl);
     top: -60px;
   }
 }

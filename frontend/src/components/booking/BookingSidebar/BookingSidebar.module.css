@@ -1,5 +1,5 @@
 .sidebar {
-  background: rgba(42, 48, 65, 0.6);
+  background: rgba(var(--color-bg-quaternary-rgb), 0.6);
   border-radius: var(--radius-lg);
   padding: var(--space-6);
   box-shadow: var(--shadow-md);
@@ -445,7 +445,7 @@
   }
 
   .pointsLimits {
-    font-size: 10px;
+    font-size: var(--font-size-2xs);
   }
 
   .summary {

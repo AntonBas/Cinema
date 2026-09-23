@@ -4,7 +4,7 @@
     border: 1px solid var(--color-panel-border);
     margin-bottom: var(--space-8);
     overflow: visible;
-    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 20px 30px -10px rgba(var(--color-black-rgb), 0.5);
     position: relative;
 }
 
@@ -27,19 +27,19 @@
 .label {
     color: var(--color-panel-text);
     font-weight: 500;
-    font-size: 0.9rem;
+    font-size: var(--font-size-sm);
     margin-bottom: var(--space-1);
     white-space: nowrap;
 }
 
 .filterInput {
     height: 40px;
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     font-size: var(--font-size-sm);
     line-height: 1.5;
     box-sizing: border-box;
     width: 100%;
-    background: rgba(30, 41, 59, 0.6);
+    background: rgba(var(--color-panel-header-bg-rgb), 0.6);
     border: 1px solid var(--color-panel-border);
     color: var(--color-panel-text);
     border-radius: var(--radius-md);
@@ -53,7 +53,7 @@
 
 .filterSelectWrapper :global(.select) {
     height: 40px;
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     font-size: var(--font-size-sm);
     line-height: 1.5;
     box-sizing: border-box;
@@ -65,10 +65,10 @@
 
 .filterSelectWrapper select {
     height: 40px;
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     font-size: var(--font-size-sm);
     line-height: 1.5;
-    background: rgba(30, 41, 59, 0.6);
+    background: rgba(var(--color-panel-header-bg-rgb), 0.6);
     border: 1px solid var(--color-panel-border);
     color: var(--color-panel-text);
     border-radius: var(--radius-md);
@@ -100,11 +100,11 @@
 .movieInput {
     width: 100%;
     cursor: pointer;
-    padding-right: 40px;
-    background: rgba(30, 41, 59, 0.6);
+    padding-right: var(--space-8);
+    background: rgba(var(--color-panel-header-bg-rgb), 0.6);
     border: 1px solid var(--color-panel-border);
     height: 40px;
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     font-size: var(--font-size-sm);
     line-height: 1.5;
     box-sizing: border-box;
@@ -124,7 +124,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     font-weight: bold;
     border-radius: 50%;
     background: var(--color-error);
@@ -146,7 +146,7 @@
     background: var(--color-panel-header-bg);
     border: 1px solid var(--color-panel-border);
     border-radius: var(--radius-md);
-    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 20px 30px -10px rgba(var(--color-black-rgb), 0.5);
     z-index: 20;
     max-height: 300px;
     overflow-y: auto;
@@ -160,7 +160,7 @@
 }
 
 .movieOption:hover {
-    background: rgba(30, 41, 59, 0.8);
+    background: rgba(var(--color-panel-header-bg-rgb), 0.8);
 }
 
 .movieOption.selected {
@@ -176,7 +176,7 @@
     color: var(--color-panel-text);
     font-weight: 500;
     margin-bottom: var(--space-1);
-    font-size: 0.95rem;
+    font-size: var(--font-size-md);
 }
 
 .movieDetails {
@@ -209,7 +209,7 @@
 .clearFiltersContainer {
     padding: var(--space-4) var(--space-6);
     border-top: 1px solid var(--color-panel-border);
-    background: rgba(30, 41, 59, 0.3);
+    background: rgba(var(--color-panel-header-bg-rgb), 0.3);
     position: relative;
     z-index: 1;
 }
@@ -227,7 +227,7 @@
     color: white;
     font-weight: 600;
     font-size: var(--font-size-xs);
-    padding: 0.25rem 0.5rem;
+    padding: var(--space-1) var(--space-2);
     border-radius: 12px;
     min-width: 20px;
     text-align: center;
@@ -261,7 +261,7 @@
 
     .filterInput,
     .movieInput {
-        padding: 6px 10px;
+        padding: var(--space-1) var(--space-2);
         font-size: var(--font-size-xs);
     }
 
@@ -315,7 +315,7 @@
 
     .filterInput,
     .movieInput {
-        padding: 6px 10px;
+        padding: var(--space-1) var(--space-2);
         font-size: var(--font-size-xs);
     }
 
@@ -328,12 +328,12 @@
     }
 
     .label {
-        font-size: 0.85rem;
+        font-size: var(--font-size-sm);
     }
 
     .countBadge {
-        font-size: 0.7rem;
-        padding: 0.2rem 0.4rem;
+        font-size: var(--font-size-xs);
+        padding: 0.2rem var(--space-2);
     }
 
     .clearButton {
@@ -344,6 +344,6 @@
     .clearMovieButton {
         width: 22px;
         height: 22px;
-        font-size: 16px;
+        font-size: var(--font-size-md);
     }
 }

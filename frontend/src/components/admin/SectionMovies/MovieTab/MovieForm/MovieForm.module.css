@@ -197,7 +197,7 @@
     }
 
     .uploadPlaceholder span {
-        font-size: 2rem;
+        font-size: var(--font-size-3xl);
     }
 
     .uploadPlaceholder p {

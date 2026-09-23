@@ -4,13 +4,13 @@
     justify-content: space-between;
     padding: 0 var(--space-8);
     height: 70px;
-    background: rgba(15, 23, 42, 0.95);
+    background: rgba(var(--color-panel-gradient-end-rgb), 0.95);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--color-border-light);
     position: sticky;
     top: 0;
     z-index: 100;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 20px rgba(var(--color-black-rgb), 0.3);
 }
 
 .leftSection {
@@ -108,14 +108,14 @@
     align-items: center;
     gap: var(--space-4);
     padding: var(--space-2) var(--space-4);
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(var(--color-white-rgb), 0.03);
     border-radius: var(--radius-lg);
     border: 1px solid var(--color-overlay-light);
     transition: all var(--transition-normal);
 }
 
 .userInfo:hover {
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(var(--color-white-rgb), 0.06);
     border-color: rgba(var(--color-primary-rgb), var(--opacity-high));
 }
 
@@ -127,7 +127,7 @@
 
 .userName {
     color: var(--color-text-primary);
-    font-size: 0.95rem;
+    font-size: var(--font-size-md);
     font-weight: 600;
 }
 
@@ -164,11 +164,11 @@
     }
 
     .userName {
-        font-size: 0.85rem;
+        font-size: var(--font-size-sm);
     }
 
     .userRole {
-        font-size: 0.75rem;
+        font-size: var(--font-size-xs);
     }
 
     .breadcrumbText {

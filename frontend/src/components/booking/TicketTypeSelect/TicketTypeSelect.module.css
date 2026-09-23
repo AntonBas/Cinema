@@ -4,6 +4,6 @@
 
 .noTypes {
   color: var(--color-text-secondary);
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-style: italic;
 }

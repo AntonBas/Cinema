@@ -1,14 +1,14 @@
 .container {
     display: flex;
     flex-direction: column;
-    gap: 2.5rem;
+    gap: var(--space-8);
 }
 
 .movieGroup {
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
-    padding: 1.5rem;
+    padding: var(--space-6);
     transition: all 0.2s ease;
 }
 
@@ -19,9 +19,9 @@
 
 .movieHeader {
     display: flex;
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1.5rem;
+    gap: var(--space-6);
+    margin-bottom: var(--space-6);
+    padding-bottom: var(--space-6);
     border-bottom: 1px solid var(--color-border);
 }
 
@@ -48,12 +48,12 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 0.75rem;
-    gap: 1rem;
+    margin-bottom: var(--space-3);
+    gap: var(--space-4);
 }
 
 .movieTitle {
-    font-size: 1.5rem;
+    font-size: var(--font-size-2xl);
     font-weight: 700;
     color: var(--color-text-primary);
     margin: 0;
@@ -61,22 +61,22 @@
 }
 
 .movieButton {
-    padding: 0.375rem 0.875rem;
-    font-size: 0.875rem;
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--font-size-sm);
     flex-shrink: 0;
 }
 
 .movieMeta {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: var(--space-4);
     flex-wrap: wrap;
 }
 
 .ageRating {
-    padding: 0.375rem 0.875rem;
+    padding: var(--space-1) var(--space-3);
     border-radius: var(--radius-sm);
-    font-size: 0.875rem;
+    font-size: var(--font-size-sm);
     font-weight: 600;
     color: white;
 }
@@ -103,16 +103,16 @@
 }
 
 .duration {
-    font-size: 0.875rem;
+    font-size: var(--font-size-sm);
     color: var(--color-text-secondary);
     font-weight: 500;
 }
 
 .sessionCount {
-    font-size: 0.875rem;
+    font-size: var(--font-size-sm);
     color: var(--color-text-secondary);
     background: var(--color-bg-tertiary);
-    padding: 0.25rem 0.5rem;
+    padding: var(--space-1) var(--space-2);
     border-radius: var(--radius-sm);
 }
 
@@ -123,19 +123,19 @@
 .sessionsGrid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1rem;
+    gap: var(--space-4);
 }
 
 .sessionCard {
     background-color: var(--color-bg-primary);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
-    padding: 1rem;
+    padding: var(--space-4);
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: var(--space-3);
 }
 
 .sessionCard.available:hover {
@@ -153,35 +153,35 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-2);
 }
 
 .timeRange {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: var(--space-1);
     flex-wrap: wrap;
 }
 
 .startTime,
 .endTime {
-    font-size: 1.25rem;
+    font-size: var(--font-size-xl);
     font-weight: 600;
     color: var(--color-text-primary);
 }
 
 .timeSeparator {
-    font-size: 1.25rem;
+    font-size: var(--font-size-xl);
     font-weight: 400;
     color: var(--color-text-secondary);
     margin: 0 0.125rem;
 }
 
 .hall {
-    font-size: 0.875rem;
+    font-size: var(--font-size-sm);
     color: var(--color-text-secondary);
     background: var(--color-bg-tertiary);
-    padding: 0.25rem 0.5rem;
+    padding: var(--space-1) var(--space-2);
     border-radius: var(--radius-sm);
     flex-shrink: 0;
 }
@@ -190,11 +190,11 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 1rem;
+    gap: var(--space-4);
 }
 
 .price {
-    font-size: 1.5rem;
+    font-size: var(--font-size-2xl);
     font-weight: 700;
     color: var(--color-primary);
     flex-shrink: 0;
@@ -209,13 +209,13 @@
 }
 
 .seatsCount {
-    font-size: 0.875rem;
+    font-size: var(--font-size-sm);
     color: var(--color-text-secondary);
 }
 
 .seatsTotal {
-    font-size: 0.75rem;
-    color: var(--color-text-tertiary);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
 }
 
 .sessionStatus {
@@ -224,11 +224,11 @@
 
 .statusBadge {
     display: inline-block;
-    padding: 0.5rem 1rem;
+    padding: var(--space-2) var(--space-4);
     background: var(--color-primary);
     color: white;
     border-radius: var(--radius-sm);
-    font-size: 0.875rem;
+    font-size: var(--font-size-sm);
     font-weight: 600;
     transition: all 0.2s ease;
     white-space: nowrap;
@@ -240,7 +240,7 @@
 }
 
 .sessionCard.available:hover .statusBadge:not(.disabled) {
-    background: var(--color-primary-dark);
+    background: var(--color-primary-hover);
 }
 
 @media (max-width: 768px) {
@@ -267,7 +267,7 @@
     .sessionTime {
         flex-direction: column;
         align-items: flex-start;
-        gap: 0.5rem;
+        gap: var(--space-2);
     }
 
     .timeRange {
@@ -278,7 +278,7 @@
 
     .startTime,
     .endTime {
-        font-size: 1rem;
+        font-size: var(--font-size-md);
     }
 
     .timeSeparator {
@@ -287,12 +287,12 @@
 
     .endTime::before {
         content: "to ";
-        color: var(--color-text-tertiary);
+        color: var(--color-text-muted);
     }
 
     .sessionInfo {
         flex-direction: column;
-        gap: 0.75rem;
+        gap: var(--space-3);
         align-items: flex-start;
     }
 
@@ -304,23 +304,23 @@
 
 @media (max-width: 480px) {
     .movieGroup {
-        padding: 1rem;
+        padding: var(--space-4);
     }
 
     .movieTitle {
-        font-size: 1.25rem;
+        font-size: var(--font-size-xl);
     }
 
     .sessionCard {
-        padding: 0.875rem;
+        padding: var(--space-3);
     }
 
     .startTime,
     .endTime {
-        font-size: 1.125rem;
+        font-size: var(--font-size-lg);
     }
 
     .price {
-        font-size: 1.25rem;
+        font-size: var(--font-size-xl);
     }
 }

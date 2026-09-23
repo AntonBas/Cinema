@@ -12,12 +12,12 @@
 
 .searchInput {
   width: 100%;
-  padding: 12px;
+  padding: var(--space-3);
   background: var(--color-bg-modal);
   border: 1px solid var(--color-border-light);
   border-radius: var(--radius-md);
   color: var(--color-text-primary);
-  font-size: 0.95rem;
+  font-size: var(--font-size-md);
   transition: all var(--transition-normal);
 }
 
@@ -35,7 +35,7 @@
   position: absolute;
   right: 40px;
   color: var(--color-primary);
-  font-size: 0.9rem;
+  font-size: var(--font-size-sm);
 }
 
 .clearButton {
@@ -44,7 +44,7 @@
   background: none;
   border: none;
   color: var(--color-text-secondary);
-  font-size: 1.2rem;
+  font-size: var(--font-size-xl);
   cursor: pointer;
   width: 20px;
   height: 20px;
@@ -76,7 +76,7 @@
   }
 
   .searchInput {
-    padding: 10px 36px 10px 36px;
+    padding: var(--space-2) var(--space-8) var(--space-2) var(--space-8);
     font-size: var(--font-size-sm);
   }
 }

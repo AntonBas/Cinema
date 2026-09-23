@@ -148,7 +148,7 @@
 
     .dots {
         font-size: var(--font-size-xs);
-        padding: 0 var(--space-0);
+        padding: 0 0;
     }
 
     .loadMoreButton {

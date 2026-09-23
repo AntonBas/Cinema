@@ -11,7 +11,7 @@
 .registrationContainer {
   background-color: var(--color-bg-modal);
   border-radius: var(--radius-lg);
-  padding: 3rem;
+  padding: var(--space-12);
   box-shadow: var(--shadow-xl);
   transition: var(--transition-normal);
   animation: fadeIn 0.6s ease-out forwards;
@@ -21,7 +21,7 @@
 
 .registrationContainer:hover {
   transform: translateY(-5px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 20px 40px rgba(var(--color-black-rgb), 0.4);
 }
 
 .registrationTitle {
@@ -106,7 +106,7 @@
 }
 
 .successTitle {
-  font-size: 1.75rem;
+  font-size: var(--font-size-3xl);
   font-weight: 700;
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-alt) 100%);
   -webkit-background-clip: text;
@@ -192,7 +192,7 @@
   }
 
   .registrationContainer {
-    padding: 2rem 1.5rem;
+    padding: var(--space-8) var(--space-6);
   }
 
   .registrationTitle {
@@ -215,7 +215,7 @@
 
 @media (max-width: 480px) {
   .registrationContainer {
-    padding: 1.5rem 1.25rem;
+    padding: var(--space-6) var(--space-4);
   }
 
   .registrationTitle {

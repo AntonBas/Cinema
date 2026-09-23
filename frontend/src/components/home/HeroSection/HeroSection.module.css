@@ -1,21 +1,21 @@
 .hero {
     background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-deep) 100%);
-    padding: 80px 0;
+    padding: var(--space-20) 0;
     text-align: center;
-    margin-bottom: 60px;
+    margin-bottom: var(--space-16);
 }
 
 .heroContent {
     max-width: 800px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 var(--space-4);
 }
 
 .heroTitle {
-    font-size: 56px;
+    font-size: var(--font-size-5xl);
     font-weight: 800;
     line-height: 1.2;
-    margin-bottom: 20px;
+    margin-bottom: var(--space-4);
     color: var(--color-text-primary);
 }
 
@@ -24,24 +24,24 @@
 }
 
 .heroSubtitle {
-    font-size: 18px;
+    font-size: var(--font-size-lg);
     color: var(--color-text-secondary);
-    margin-bottom: 32px;
+    margin-bottom: var(--space-8);
     line-height: 1.6;
 }
 
 .heroButtons {
     display: flex;
-    gap: 16px;
+    gap: var(--space-4);
     justify-content: center;
-    margin-bottom: 48px;
+    margin-bottom: var(--space-12);
 }
 
 .heroFeatures {
     display: flex;
     justify-content: center;
-    gap: 60px;
-    padding-top: 40px;
+    gap: var(--space-16);
+    padding-top: var(--space-8);
     border-top: 1px solid var(--color-overlay-light-hover);
 }
 
@@ -49,17 +49,17 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-2);
 }
 
 .featureValue {
-    font-size: 28px;
+    font-size: var(--font-size-3xl);
     font-weight: 700;
     color: var(--color-primary);
 }
 
 .featureLabel {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     color: var(--color-text-secondary);
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -67,34 +67,34 @@
 
 @media (max-width: 768px) {
     .hero {
-        padding: 60px 0;
-        margin-bottom: 40px;
+        padding: var(--space-16) 0;
+        margin-bottom: var(--space-8);
     }
 
     .heroTitle {
-        font-size: 36px;
+        font-size: var(--font-size-4xl);
     }
 
     .heroSubtitle {
-        font-size: 16px;
+        font-size: var(--font-size-md);
     }
 
     .heroButtons {
         flex-direction: column;
         align-items: center;
-        margin-bottom: 32px;
+        margin-bottom: var(--space-8);
     }
 
     .heroFeatures {
-        gap: 30px;
-        padding-top: 30px;
+        gap: var(--space-8);
+        padding-top: var(--space-8);
     }
 
     .featureValue {
-        font-size: 22px;
+        font-size: var(--font-size-xl);
     }
 
     .featureLabel {
-        font-size: 12px;
+        font-size: var(--font-size-xs);
     }
 }

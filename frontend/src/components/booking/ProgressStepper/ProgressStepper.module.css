@@ -1,7 +1,7 @@
 .stepper {
   width: 100%;
-  padding: 24px 0;
-  margin-bottom: 32px;
+  padding: var(--space-6) 0;
+  margin-bottom: var(--space-8);
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -10,7 +10,7 @@
   align-items: center;
   justify-content: space-between;
   position: relative;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .stepWrapper {
@@ -27,8 +27,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 8px;
+  gap: var(--space-3);
+  padding: var(--space-2);
   width: 100%;
 }
 
@@ -81,7 +81,7 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 4px;
+  gap: var(--space-1);
   max-width: 140px;
 }
 
@@ -110,7 +110,7 @@
   flex: 1;
   height: 2px;
   background-color: var(--color-border-medium);
-  margin: 0 8px;
+  margin: 0 var(--space-2);
   position: relative;
   top: -18px;
   z-index: 1;
@@ -130,7 +130,7 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 12px 16px;
+  padding: var(--space-3) var(--space-4);
   background: var(--color-bg-tertiary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -146,7 +146,7 @@
 .mobileCurrentStep {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .mobileStepInfo {
@@ -177,7 +177,7 @@
 }
 
 .mobileStepsList {
-  margin-top: 8px;
+  margin-top: var(--space-2);
   background: var(--color-bg-tertiary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -187,8 +187,8 @@
 .mobileStepItem {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
   border-bottom: 1px solid var(--color-border);
   transition: background var(--transition-fast);
 }
@@ -220,7 +220,7 @@
 @media (max-width: 768px) {
   .stepper {
     padding: 0;
-    margin-bottom: 24px;
+    margin-bottom: var(--space-6);
     border-bottom: none;
   }
 

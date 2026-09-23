@@ -1,60 +1,60 @@
 .filtersSection {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-  padding: 1.5rem;
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
+  padding: var(--space-6);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
 }
 
 .resultsHeader {
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-4);
   border-bottom: 1px solid var(--color-border);
 }
 
 .resultsCount {
-  font-size: 1.125rem;
+  font-size: var(--font-size-lg);
   font-weight: 600;
   color: var(--color-text-primary);
 }
 
 .errorContainer {
-  padding: 2rem;
+  padding: var(--space-8);
   background: var(--color-error-light);
   border: 1px solid var(--color-error);
   border-radius: var(--radius-lg);
-  margin-bottom: 2rem;
+  margin-bottom: var(--space-8);
 }
 
 .errorText {
-  color: var(--color-error-dark);
-  font-size: 1.125rem;
-  margin-bottom: 1.5rem;
+  color: var(--color-error);
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--space-6);
   font-weight: 500;
 }
 
 .emptyState {
   text-align: center;
-  padding: 4rem 2rem;
+  padding: var(--space-16) var(--space-8);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-xl);
   border: 2px dashed var(--color-border);
-  margin: 2rem 0;
+  margin: var(--space-8) 0;
 }
 
 .emptyState h3 {
-  font-size: 1.75rem;
+  font-size: var(--font-size-3xl);
   font-weight: 600;
   color: var(--color-text-primary);
-  margin: 0 0 1rem 0;
+  margin: 0 0 var(--space-4) 0;
 }
 
 .emptyState p {
   color: var(--color-text-secondary);
-  font-size: 1.125rem;
+  font-size: var(--font-size-lg);
   line-height: 1.6;
   margin: 0;
 }
@@ -62,10 +62,10 @@
 @media (max-width: 768px) {
   .filtersSection {
     grid-template-columns: 1fr;
-    padding: 1.25rem;
+    padding: var(--space-4);
   }
 
   .emptyState h3 {
-    font-size: 1.5rem;
+    font-size: var(--font-size-2xl);
   }
 }

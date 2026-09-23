@@ -96,7 +96,7 @@
   box-shadow: var(--shadow-md);
 }
 
-@media (max-width: 968px) {
+@media (max-width: 1024px) {
   .securityLayout {
     grid-template-columns: 1fr;
     gap: var(--space-6);

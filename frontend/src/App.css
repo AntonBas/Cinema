@@ -75,6 +75,18 @@
   --color-error-gradient-end: #dc2626;
   --color-error-gradient-end-dark: #b91c1c;
   --color-bg-screen: #0a0e17;
+  --color-bg-quaternary-rgb: 42, 48, 65;
+  --color-border-medium-rgb: 58, 64, 81;
+  --color-panel-header-bg-rgb: 30, 41, 59;
+  --color-panel-gradient-end-rgb: 15, 23, 42;
+  --color-error-alt-rgb: 255, 71, 87;
+  --color-gray-rgb: 107, 114, 128;
+  --color-text-disabled-rgb: 100, 116, 139;
+  --color-black-rgb: 0, 0, 0;
+  --color-white-rgb: 255, 255, 255;
+  --color-error-light: rgba(255, 107, 107, 0.1);
+  --color-error-highlight: #ff8e8e;
+  --color-primary-gradient-end: #ff7a33;
 
   --opacity-low: 0.15;
   --opacity-medium: 0.25;
@@ -105,6 +117,7 @@
   --font-size-2xl: 1.5rem;
   --font-size-3xl: 1.875rem;
   --font-size-4xl: 2.25rem;
+  --font-size-5xl: 3.5rem;
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -113,6 +126,8 @@
   --space-6: 1.5rem;
   --space-8: 2rem;
   --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
 
   --container-sm: 800px;
   --container-md: 1200px;

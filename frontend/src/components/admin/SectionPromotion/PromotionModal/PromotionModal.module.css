@@ -17,11 +17,11 @@
     display: block;
     color: var(--color-text-primary);
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: var(--font-size-md);
 }
 
 .counter {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     color: var(--color-text-secondary);
 }
 
@@ -46,7 +46,7 @@
 .textarea:focus {
     outline: none;
     border-color: var(--color-primary);
-    background: #2d3444;
+    background: var(--color-border);
     box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
 }
 
@@ -118,7 +118,7 @@
     align-items: center;
     height: 200px;
     color: var(--color-text-secondary);
-    background: linear-gradient(135deg, rgba(42, 48, 65, 0.8) 0%, rgba(58, 64, 81, 0.8) 100%);
+    background: linear-gradient(135deg, rgba(var(--color-bg-quaternary-rgb), 0.8) 0%, rgba(var(--color-border-medium-rgb), 0.8) 100%);
     border-radius: var(--radius-xl);
     border: 1px solid var(--color-border-medium);
 }

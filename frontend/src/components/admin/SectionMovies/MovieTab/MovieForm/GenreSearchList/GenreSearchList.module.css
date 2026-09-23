@@ -18,7 +18,7 @@
 
 .typingIndicator {
     position: absolute;
-    right: var(--space-5);
+    right: var(--space-4);
     top: 50%;
     transform: translateY(-50%);
     color: var(--color-text-muted);
@@ -127,7 +127,7 @@
 .checkbox:checked+.checkmark::after {
     content: '✓';
     color: var(--color-text-primary);
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     font-weight: bold;
 }
 

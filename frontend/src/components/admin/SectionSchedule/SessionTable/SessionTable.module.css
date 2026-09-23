@@ -27,7 +27,7 @@
 .hallName {
   color: var(--color-panel-text);
   font-weight: 500;
-  font-size: 0.95rem;
+  font-size: var(--font-size-md);
   word-break: break-word;
 }
 
@@ -46,20 +46,20 @@
 .date {
   color: var(--color-panel-text);
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: var(--font-size-sm);
   white-space: nowrap;
 }
 
 .time {
   color: var(--color-text-secondary);
-  font-size: 0.85rem;
+  font-size: var(--font-size-sm);
   white-space: nowrap;
 }
 
 .price {
   color: var(--color-panel-text);
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: var(--font-size-md);
   white-space: nowrap;
 }
 
@@ -71,7 +71,7 @@
 
 .occupancyInfo {
   color: var(--color-panel-text);
-  font-size: 0.85rem;
+  font-size: var(--font-size-sm);
   white-space: nowrap;
 }
 
@@ -92,7 +92,7 @@
 .revenueInfo {
   color: var(--color-panel-text);
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: var(--font-size-md);
   white-space: nowrap;
 }
 
@@ -109,8 +109,8 @@
 }
 
 .statusCompleted {
-  background: rgba(100, 116, 139, 0.15);
-  border-color: rgba(100, 116, 139, 0.3);
+  background: rgba(var(--color-text-disabled-rgb), 0.15);
+  border-color: rgba(var(--color-text-disabled-rgb), 0.3);
   color: var(--color-text-muted);
 }
 
@@ -129,10 +129,10 @@
   .date,
   .price,
   .revenueInfo {
-    font-size: 0.85rem;
+    font-size: var(--font-size-sm);
   }
 
   .occupancyInfo {
-    font-size: 0.8rem;
+    font-size: var(--font-size-xs);
   }
 }

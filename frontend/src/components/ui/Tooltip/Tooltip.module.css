@@ -41,7 +41,7 @@
 .tooltip.top {
     bottom: 100%;
     left: 50%;
-    margin-bottom: 10px;
+    margin-bottom: var(--space-2);
     transform: translateX(-50%) translateY(6px) scale(0.96);
 }
 
@@ -76,7 +76,7 @@
 .tooltip.bottom {
     top: 100%;
     left: 50%;
-    margin-top: 10px;
+    margin-top: var(--space-2);
     transform: translateX(-50%) translateY(-6px) scale(0.96);
 }
 
@@ -111,7 +111,7 @@
 .tooltip.left {
     right: 100%;
     top: 50%;
-    margin-right: 10px;
+    margin-right: var(--space-2);
     left: auto;
     transform: translateY(-50%) translateX(6px) scale(0.96);
 }
@@ -131,7 +131,7 @@
 .tooltip.right {
     left: 100%;
     top: 50%;
-    margin-left: 10px;
+    margin-left: var(--space-2);
     transform: translateY(-50%) translateX(-6px) scale(0.96);
 }
 
