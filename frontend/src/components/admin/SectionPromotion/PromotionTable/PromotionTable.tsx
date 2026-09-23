@@ -2,7 +2,7 @@ import React from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui";
 import type { PromotionListResponse, PromotionStatus } from "@/types/promotion";
-import { safeFormatDate } from "@/utils/dateUtils";
+import { formatDate } from "@/utils/formatters";
 import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
 import { EmptyState } from "@/components/admin/shared/EmptyState/EmptyState";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
@@ -86,9 +86,9 @@ const PromotionTable: React.FC<PromotionTableProps> = ({
                   </td>
                   <td data-label="Date Range">
                     <div className={styles.dates}>
-                      <div>{safeFormatDate(promotion.startDate)}</div>
+                      <div>{formatDate(promotion.startDate)}</div>
                       <div className={styles.dateSeparator}>to</div>
-                      <div>{safeFormatDate(promotion.endDate)}</div>
+                      <div>{formatDate(promotion.endDate)}</div>
                     </div>
                   </td>
                   <td data-label="Status">

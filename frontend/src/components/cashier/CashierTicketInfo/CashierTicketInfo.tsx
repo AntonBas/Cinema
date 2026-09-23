@@ -1,5 +1,6 @@
 import React from "react";
 import { IdCard } from "lucide-react";
+import { formatFullDateTime, formatPrice } from "@/utils/formatters";
 import styles from "./CashierTicketInfo.module.css";
 import type { TicketCashierResponse } from "@/types/ticket";
 
@@ -20,7 +21,7 @@ export const CashierTicketInfo: React.FC<CashierTicketInfoProps> = ({
       <div className={styles.row}>
         <span className={styles.label}>Time</span>
         <span className={styles.value}>
-          {new Date(ticket.sessionTime).toLocaleString()}
+          {formatFullDateTime(ticket.sessionTime)}
         </span>
       </div>
 
@@ -43,7 +44,7 @@ export const CashierTicketInfo: React.FC<CashierTicketInfoProps> = ({
 
       <div className={styles.row}>
         <span className={styles.label}>Price</span>
-        <span className={styles.value}>{ticket.finalPrice} UAH</span>
+        <span className={styles.value}>{formatPrice(ticket.finalPrice)}</span>
       </div>
 
       <div className={styles.row}>

@@ -21,6 +21,7 @@ import { PaymentStatusDisplay } from "@/types/payment";
 import { parseServerInstant } from "@/utils/dateUtils";
 import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
+import { formatFullDateTime, formatPrice } from "@/utils/formatters";
 import styles from "./PaymentPage.module.css";
 
 interface BookingData {
@@ -246,15 +247,6 @@ export const PaymentPage: React.FC = () => {
       state: { booking: bookingData, existingPaymentId: currentPayment?.id },
     });
 
-  const formatTime = (dateString: string) =>
-    new Date(dateString).toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
 
   if (!bookingData)
     return (
@@ -437,7 +429,7 @@ export const PaymentPage: React.FC = () => {
               <div className={styles.movieInfo}>
                 <h3 className={styles.movieTitle}>{bookingData.movieTitle}</h3>
                 <p className={styles.movieDetails}>
-                  {bookingData.hallName} • {formatTime(bookingData.sessionTime)}
+                  {bookingData.hallName} • {formatFullDateTime(bookingData.sessionTime)}
                 </p>
                 <Badge variant="primary" className={styles.badge}>
                   {bookingData.bookingNumber}
@@ -455,7 +447,7 @@ export const PaymentPage: React.FC = () => {
                       <span className={styles.seatType}>{seat.ticketType}</span>
                       <span className={styles.seatLabel}>
                         {" "}
-                        • {seat.seatPrice}₴
+                        • {formatPrice(seat.seatPrice)}
                       </span>
                     </div>
                   </div>
@@ -467,7 +459,7 @@ export const PaymentPage: React.FC = () => {
                   <div className={styles.detailRow}>
                     <span className={styles.detailLabel}>Total price:</span>
                     <span className={styles.detailValue}>
-                      {bookingData.totalPrice}₴
+                      {formatPrice(bookingData.totalPrice)}
                     </span>
                   </div>
                   <div className={styles.detailRow}>
@@ -482,7 +474,7 @@ export const PaymentPage: React.FC = () => {
               )}
               <div className={styles.totalRow}>
                 <span>Final amount:</span>
-                <span>{bookingData.finalPrice}₴</span>
+                <span>{formatPrice(bookingData.finalPrice)}</span>
               </div>
             </div>
           </div>

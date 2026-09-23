@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { Calendar } from "@/components/ui/Calendar/Calendar";
+import { formatWeekdayDate } from "@/utils/formatters";
 import styles from "./DateFilter.module.css";
 
 interface DateFilterProps {
@@ -8,16 +9,6 @@ interface DateFilterProps {
   onDateChange: (date: string) => void;
   sessionDates?: string[];
 }
-
-const formatDisplayDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return "Select date";
-  return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-};
 
 export const DateFilter: React.FC<DateFilterProps> = ({
   selectedDate,
@@ -81,7 +72,7 @@ export const DateFilter: React.FC<DateFilterProps> = ({
           onClick={() => setIsCalendarOpen(!isCalendarOpen)}
         >
           <span className={styles.currentDate}>
-            {formatDisplayDate(selectedDate)}
+            {formatWeekdayDate(selectedDate)}
           </span>
           <span className={styles.calendarToggle}>
             {isCalendarOpen ? (

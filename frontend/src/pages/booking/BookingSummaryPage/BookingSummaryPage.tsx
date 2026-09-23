@@ -9,6 +9,7 @@ import { useBooking } from "@/hooks/features/booking/useBooking";
 import { parseServerInstant } from "@/utils/dateUtils";
 import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
+import { formatFullDate, formatPrice, formatTime } from "@/utils/formatters";
 import styles from "./BookingSummaryPage.module.css";
 
 export const BookingSummaryPage: React.FC = () => {
@@ -80,7 +81,6 @@ export const BookingSummaryPage: React.FC = () => {
     );
   }
 
-  const sessionDate = new Date(booking.sessionTime);
   const expiresAt = parseServerInstant(booking.expiresAt);
   const timeLeft = Math.max(
     0,
@@ -131,21 +131,13 @@ export const BookingSummaryPage: React.FC = () => {
               <div className={styles.detailItem}>
                 <span className={styles.detailLabel}>Date:</span>
                 <span className={styles.detailValue}>
-                  {sessionDate.toLocaleDateString("en-US", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
+                  {formatFullDate(booking.sessionTime)}
                 </span>
               </div>
               <div className={styles.detailItem}>
                 <span className={styles.detailLabel}>Time:</span>
                 <span className={styles.detailValue}>
-                  {sessionDate.toLocaleTimeString("en-US", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {formatTime(booking.sessionTime)}
                 </span>
               </div>
             </div>
@@ -165,7 +157,7 @@ export const BookingSummaryPage: React.FC = () => {
                     </span>
                   </div>
                   <span className={styles.seatPrice}>
-                    {parseFloat(seat.seatPrice).toFixed(2)}₴
+                    {formatPrice(seat.seatPrice)}
                   </span>
                 </div>
               ))}
@@ -179,12 +171,12 @@ export const BookingSummaryPage: React.FC = () => {
                 <>
                   <div className={styles.priceRow}>
                     <span>Total Price:</span>
-                    <span>{parseFloat(booking.totalPrice).toFixed(2)}₴</span>
+                    <span>{formatPrice(booking.totalPrice)}</span>
                   </div>
                   <div className={styles.priceRow}>
                     <span>Bonus discount:</span>
                     <span className={styles.discount}>
-                      -{parseFloat(booking.bonusDiscountAmount).toFixed(2)}₴
+                      -{formatPrice(booking.bonusDiscountAmount)}
                     </span>
                   </div>
                 </>
@@ -192,7 +184,7 @@ export const BookingSummaryPage: React.FC = () => {
               <div className={styles.finalPriceRow}>
                 <span>Amount to pay:</span>
                 <span className={styles.finalPrice}>
-                  {parseFloat(booking.finalPrice).toFixed(2)}₴
+                  {formatPrice(booking.finalPrice)}
                 </span>
               </div>
             </div>

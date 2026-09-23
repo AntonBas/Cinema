@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui";
 import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
 import { EmptyState } from "@/components/admin/shared/EmptyState/EmptyState";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
+import { formatPrice, formatShortDate, formatTime } from "@/utils/formatters";
 import styles from "./SessionTable.module.css";
 
 interface SessionTableProps {
@@ -45,25 +46,6 @@ const getOccupancyPercentage = (
   capacity: number,
 ): number => {
   return capacity > 0 ? Math.round((ticketsSold / capacity) * 100) : 0;
-};
-
-const formatCurrency = (price: number | string | null | undefined): string => {
-  const num = typeof price === "string" ? parseFloat(price) : (price ?? 0);
-  return `${num.toFixed(2)} UAH`;
-};
-
-const formatTime = (dateString: string): string => {
-  return new Date(dateString).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
-const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
 };
 
 export const SessionTable: React.FC<SessionTableProps> = ({
@@ -141,14 +123,14 @@ export const SessionTable: React.FC<SessionTableProps> = ({
 
                   <td data-label="Time">
                     <div className={styles.timeInfo}>
-                      <div className={styles.date}>{formatDate(session.startTime)}</div>
+                      <div className={styles.date}>{formatShortDate(session.startTime)}</div>
                       <div className={styles.time}>{formatTime(session.startTime)}</div>
                     </div>
                   </td>
 
                   <td data-label="Price">
                     <span className={styles.price}>
-                      {formatCurrency(session.basePrice)}
+                      {formatPrice(session.basePrice)}
                     </span>
                   </td>
 
@@ -168,7 +150,7 @@ export const SessionTable: React.FC<SessionTableProps> = ({
 
                   <td data-label="Revenue">
                     <span className={styles.revenueInfo}>
-                      {formatCurrency(session.totalRevenue)}
+                      {formatPrice(session.totalRevenue)}
                     </span>
                   </td>
 

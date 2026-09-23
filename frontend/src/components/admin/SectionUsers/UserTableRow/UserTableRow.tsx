@@ -4,9 +4,9 @@ import { Badge, Select, ConfirmModal } from '@/components/ui';
 import { useAdminUsers } from '@/hooks/features/admin/useAdminUsers';
 import { UserRoleDisplay, VerificationStatusDisplay } from '@/types/user';
 import type { AdminUserListResponse, UserRole, VerificationStatus } from '@/types/user';
-import { formatInstantDate, parseServerInstant } from '@/utils/dateUtils';
 import { ActionIconButton } from '@/components/admin/shared/ActionIconButton/ActionIconButton';
 import tableStyles from '@/components/admin/shared/AdminTable/AdminTable.module.css';
+import { formatDate, formatDateTime } from '@/utils/formatters';
 import styles from './UserTableRow.module.css';
 
 interface UserTableRowProps {
@@ -16,18 +16,6 @@ interface UserTableRowProps {
 
 const getVerificationColor = (status: VerificationStatus): 'success' | 'secondary' => {
     return status === 'VERIFIED' ? 'success' : 'secondary';
-};
-
-const formatDateTime = (dateString: string | null | undefined): string => {
-    if (!dateString) return 'Not verified';
-    try {
-        const date = parseServerInstant(dateString);
-        const formattedDate = formatInstantDate(dateString);
-        const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        return `${formattedDate} ${time}`;
-    } catch {
-        return 'Not verified';
-    }
 };
 
 export const UserTableRow: React.FC<UserTableRowProps> = ({ user, onUpdate }) => {
@@ -88,7 +76,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({ user, onUpdate }) =>
                         <Badge variant={getVerificationColor(user.verificationStatus)} size="small">
                             {VerificationStatusDisplay[user.verificationStatus]}
                         </Badge>
-                        <div className={styles.verificationDate}>{formatDateTime(user.verifiedAt)}</div>
+                        <div className={styles.verificationDate}>{user.verifiedAt ? formatDateTime(user.verifiedAt) : 'Not verified'}</div>
                     </div>
                 </td>
 
@@ -103,7 +91,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({ user, onUpdate }) =>
                 </td>
 
                 <td data-label="Last Activity">
-                    {formatInstantDate(user.lastActivity)}
+                    {formatDate(user.lastActivity)}
                 </td>
 
                 <td data-label="Actions">

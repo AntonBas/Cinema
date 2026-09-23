@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/Button/Button";
 import { TicketStatusBadge } from "@/components/ui/TicketStatusBadge/TicketStatusBadge";
 import { Calendar, Clock, MapPin, Armchair } from "lucide-react";
 import type { TicketResponse } from "@/types/ticket";
+import { formatDate, formatPrice, formatTime } from "@/utils/formatters";
 import styles from "./TicketCard.module.css";
 
 interface TicketCardProps {
@@ -12,21 +13,6 @@ interface TicketCardProps {
   onViewDetails?: (ticket: TicketResponse) => void;
   onRequestRefund?: (ticket: TicketResponse) => void;
 }
-
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-};
-
-const formatTime = (dateString: string) => {
-  return new Date(dateString).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
 
 const getSeatInfo = (ticket: TicketResponse) => {
   if (ticket.row == null || ticket.seatNumber == null) {
@@ -76,7 +62,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
             <Clock size={14} />
             {formatTime(ticket.sessionTime)}
           </span>
-          <span className={styles.listPrice}>{ticket.price} UAH</span>
+          <span className={styles.listPrice}>{formatPrice(ticket.price)}</span>
         </div>
 
         <div className={styles.listActions}>
@@ -163,7 +149,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
       <div className={styles.cardFooter}>
         <div className={styles.priceSection}>
           <div className={styles.priceLabel}>Price</div>
-          <div className={styles.priceValue}>{ticket.price} UAH</div>
+          <div className={styles.priceValue}>{formatPrice(ticket.price)}</div>
         </div>
 
         <div className={styles.actionButtons}>

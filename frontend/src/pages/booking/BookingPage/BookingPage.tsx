@@ -14,6 +14,7 @@ import { useAuth } from "@/context/AuthContext";
 import type { SeatInfo } from "@/types/seatReservation";
 import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
+import { formatPrice } from "@/utils/formatters";
 import styles from "./BookingPage.module.css";
 
 export const BookingPage: React.FC = () => {
@@ -130,7 +131,7 @@ export const BookingPage: React.FC = () => {
               <span>{seatData.hallName}</span>
               <span>Available seats: {seatData.availableSeats}</span>
               <span>
-                Base Price: {parseFloat(seatData.basePrice).toFixed(2)}₴
+                Base Price: {formatPrice(seatData.basePrice)}
               </span>
             </div>
           }

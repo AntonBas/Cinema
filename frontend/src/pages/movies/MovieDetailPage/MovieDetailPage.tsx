@@ -13,6 +13,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { Layout } from "@/components/layout/Layout/Layout";
 import { SessionSection } from "@/components/movies/SessionSection/SessionSection";
 import { DEFAULT_POSTER_URL, resolvePosterUrl } from "@/utils/posterUrl";
+import { formatDate } from "@/utils/formatters";
 import styles from "./MovieDetailPage.module.css";
 
 const AGE_RATING_COLORS: Record<string, string> = {
@@ -24,14 +25,6 @@ const AGE_RATING_COLORS: Record<string, string> = {
 };
 
 const DATES_PER_VIEW = 5;
-
-const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-};
 
 const getAgeRatingClass = (ageRating: string): string => {
   return AGE_RATING_COLORS[ageRating] || styles.ageRatingRed;

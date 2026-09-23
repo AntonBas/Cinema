@@ -3,6 +3,7 @@ import { Badge, Tooltip } from "@/components/ui";
 import type { AuditLogResponse } from "@/types/audit";
 import { EmptyState } from "@/components/admin/shared/EmptyState/EmptyState";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
+import { formatDate, formatTime } from "@/utils/formatters";
 import styles from "./AuditLogsTable.module.css";
 
 interface AuditLogsTableProps {
@@ -13,17 +14,6 @@ interface AuditLogsTableProps {
 const truncateText = (text: string, maxLength: number = 40): string => {
   if (!text) return "";
   return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
-};
-
-const formatDateTime = (dateStr: string) => {
-  const date = new Date(dateStr);
-  const formattedDate = date.toLocaleDateString("uk-UA");
-  const formattedTime = date.toLocaleTimeString("uk-UA", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-  return { date: formattedDate, time: formattedTime };
 };
 
 const formatFieldName = (field: string): string => {
@@ -138,7 +128,8 @@ export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({
           </thead>
           <tbody>
             {logs.map((log) => {
-              const { date, time } = formatDateTime(log.changedAt);
+              const date = formatDate(log.changedAt);
+              const time = formatTime(log.changedAt, true);
               return (
                 <tr key={log.id}>
                   <td data-label="Time">

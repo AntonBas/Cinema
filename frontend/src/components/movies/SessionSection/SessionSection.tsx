@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { SessionMovieInfoResponse } from "@/types/session";
+import { formatPrice, formatTime } from "@/utils/formatters";
 import styles from "./SessionSection.module.css";
 
 interface SessionSectionProps {
@@ -40,14 +41,6 @@ const getDayInfo = (dateString: string) => {
       day: "numeric",
     }),
   };
-};
-
-const formatTime = (dateTimeString: string): string => {
-  return new Date(dateTimeString).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
 };
 
 export const SessionSection: React.FC<SessionSectionProps> = ({
@@ -145,7 +138,7 @@ export const SessionSection: React.FC<SessionSectionProps> = ({
               {formatTime(session.startTime)}
             </span>
             <span className={styles.sessionHall}>{session.hallName}</span>
-            <span className={styles.sessionPrice}>{session.basePrice}₴</span>
+            <span className={styles.sessionPrice}>{formatPrice(session.basePrice)}</span>
           </button>
         ))}
       </div>

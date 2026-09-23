@@ -1,6 +1,7 @@
 import React from "react";
 import { Select } from "@/components/ui/Select/Select";
 import type { TicketPriceInfo } from "@/types/seatReservation";
+import { formatPrice } from "@/utils/formatters";
 import styles from "./TicketTypeSelect.module.css";
 
 interface TicketTypeSelectProps {
@@ -50,7 +51,7 @@ export const TicketTypeSelect: React.FC<TicketTypeSelectProps> = ({
       label += ` (ID required)`;
     }
 
-    label += ` - ${parseFloat(ticket.finalPrice).toFixed(2)}₴`;
+    label += ` - ${formatPrice(ticket.finalPrice)}`;
 
     return label;
   };

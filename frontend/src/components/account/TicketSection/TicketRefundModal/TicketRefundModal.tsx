@@ -3,6 +3,7 @@ import { Modal, Button } from "@/components/ui";
 import { useRefund } from "@/hooks/features/refund/useRefund";
 import { AlertTriangle } from "lucide-react";
 import type { TicketResponse } from "@/types/ticket";
+import { formatFullDateTime, formatPrice } from "@/utils/formatters";
 import styles from "./TicketRefundModal.module.css";
 
 interface TicketRefundModalProps {
@@ -17,17 +18,6 @@ const REFUND_REASONS = [
   { value: "schedule_conflict", label: "Schedule conflict" },
   { value: "other", label: "Other reason" },
 ];
-
-const formatDateTime = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
 
 export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
   ticket,
@@ -142,7 +132,7 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
               <div className={styles.detailItem}>
                 <span className={styles.detailLabel}>Amount</span>
                 <span className={`${styles.detailValue} ${styles.amount}`}>
-                  {refundResult.totalAmount} UAH
+                  {formatPrice(refundResult.totalAmount)}
                 </span>
               </div>
             </div>
@@ -175,7 +165,7 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>Session</span>
               <span className={styles.infoValue}>
-                {formatDateTime(ticket.sessionTime)}
+                {formatFullDateTime(ticket.sessionTime)}
               </span>
             </div>
             <div className={styles.infoItem}>
@@ -190,7 +180,7 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
             </div>
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>Price</span>
-              <span className={styles.infoValue}>{ticket.price} UAH</span>
+              <span className={styles.infoValue}>{formatPrice(ticket.price)}</span>
             </div>
           </div>
         </div>
@@ -217,12 +207,11 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
             ) : (
               <>
                 <span className={styles.estimateValue}>
-                  {previewResult.refundAmount} UAH (
+                  {formatPrice(previewResult.refundAmount)} (
                   {previewResult.refundPercentage}%)
                 </span>
                 <span className={styles.estimateNote}>
-                  {previewResult.policyName}: fee {previewResult.feeAmount}{" "}
-                  UAH ({previewResult.feePercentage}%)
+                  {previewResult.policyName}: fee {formatPrice(previewResult.feeAmount)} ({previewResult.feePercentage}%)
                 </span>
               </>
             )}

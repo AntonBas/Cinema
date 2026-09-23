@@ -142,7 +142,7 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
         if (!formData.basePrice) {
             newErrors.basePrice = 'Price is required';
         } else if (isNaN(basePrice) || basePrice < 10) {
-            newErrors.basePrice = 'Price must be at least 10 UAH';
+            newErrors.basePrice = 'Price must be at least 10 ₴';
         }
 
         if (!formData.movieId) newErrors.movieId = 'Movie is required';
@@ -199,7 +199,7 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
                     </div>
 
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Base Price (UAH) *</label>
+                        <label className={styles.label}>Base Price (₴) *</label>
                         <Input
                             type="number"
                             step="0.01"

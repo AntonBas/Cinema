@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/Button/Button";
 import { useAuth } from "@/context/AuthContext";
 import type { PromotionResponse } from "@/types/promotion";
+import { formatShortDate } from "@/utils/formatters";
 import styles from "./Promotions.module.css";
 
 interface PromotionsProps {
@@ -14,14 +15,6 @@ interface PromotionsProps {
 }
 
 const AUTO_PLAY_INTERVAL = 5000;
-
-const formatDate = (dateString?: string): string => {
-  if (!dateString) return "";
-  return new Date(dateString).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-};
 
 const getInitialItemsToShow = () => {
   return window.innerWidth <= 768 ? 1 : 3;
@@ -152,8 +145,8 @@ export const Promotions: React.FC<PromotionsProps> = ({
                         </span>
                         {promo.startDate && promo.endDate && (
                           <span className={styles.promoDate}>
-                            {formatDate(promo.startDate)} -{" "}
-                            {formatDate(promo.endDate)}
+                            {formatShortDate(promo.startDate)} -{" "}
+                            {formatShortDate(promo.endDate)}
                           </span>
                         )}
                       </div>

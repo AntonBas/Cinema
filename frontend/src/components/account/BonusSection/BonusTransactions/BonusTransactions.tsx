@@ -8,6 +8,7 @@ import type {
   BonusTransactionType,
 } from "@/types/bonus";
 import { BonusTransactionTypeDisplay } from "@/types/bonus";
+import { formatDateTime } from "@/utils/formatters";
 import styles from "./BonusTransactions.module.css";
 
 interface BonusTransactionsProps {
@@ -37,16 +38,6 @@ const getBadgeVariant = (
     default:
       return "secondary";
   }
-};
-
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 };
 
 export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
@@ -109,7 +100,7 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
             return (
               <div key={transaction.id} className={styles.tableRow}>
                 <div className={styles.tableCell}>
-                  {formatDate(transaction.createdAt)}
+                  {formatDateTime(transaction.createdAt)}
                 </div>
                 <div className={styles.tableCell}>
                   <Badge

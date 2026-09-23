@@ -3,6 +3,7 @@ import { Info } from "lucide-react";
 import { Tooltip } from "@/components/ui/Tooltip/Tooltip";
 import { useBonus } from "@/hooks/features/bonus/useBonus";
 import { TicketTypeSelect } from "../TicketTypeSelect/TicketTypeSelect";
+import { formatPrice } from "@/utils/formatters";
 import styles from "./BookingSidebar.module.css";
 
 interface SelectedSeatItem {
@@ -100,10 +101,10 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
   }
 
   const bonusRules = [
-    `• 1 bonus point = ${pointValue}₴ discount`,
+    `• 1 bonus point = ${formatPrice(pointValue)} discount`,
     `• Minimum points to use: ${minUsablePoints}`,
     `• Cannot cover more than ${maxDiscountPercentage * 100}% of total price`,
-    `• Maximum usable: ${maxAvailablePoints} points (${(maxAvailablePoints * pointValue).toFixed(2)}₴)`,
+    `• Maximum usable: ${maxAvailablePoints} points (${formatPrice(maxAvailablePoints * pointValue)})`,
   ].join("\n");
 
   return (
@@ -139,7 +140,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
               />
             </div>
             <div className={styles.seatPrice}>
-              {selectedSeat.price.toFixed(2)}₴
+              {formatPrice(selectedSeat.price)}
             </div>
           </div>
         ))}
@@ -156,7 +157,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
         </div>
         <div className={styles.bonusInfo}>
           <span>
-            Available: {bonusBalance} points ({bonusBalance.toFixed(2)}₴)
+            Available: {bonusBalance} points ({formatPrice(bonusBalance)})
           </span>
           {loading && <span>Loading...</span>}
         </div>
@@ -196,17 +197,17 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
             <>
               <div className={styles.priceRow}>
                 <span>Total price:</span>
-                <span>{totalPrice.toFixed(2)}₴</span>
+                <span>{formatPrice(totalPrice)}</span>
               </div>
               <div className={styles.priceRow}>
                 <span>Bonus discount:</span>
-                <span className={styles.discount}>-{discount.toFixed(2)}₴</span>
+                <span className={styles.discount}>-{formatPrice(discount)}</span>
               </div>
             </>
           )}
           <div className={styles.finalPriceRow}>
             <span>Amount to pay:</span>
-            <span className={styles.finalPrice}>{finalPrice.toFixed(2)}₴</span>
+            <span className={styles.finalPrice}>{formatPrice(finalPrice)}</span>
           </div>
         </div>
 
@@ -221,7 +222,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
           >
             {isBooking
               ? "Processing..."
-              : `Book Now for ${finalPrice.toFixed(2)}₴`}
+              : `Book Now for ${formatPrice(finalPrice)}`}
           </button>
         </Tooltip>
       </div>
