@@ -8,11 +8,12 @@ import styles from "./Header.module.css";
 interface NavLink {
   name: string;
   path: string;
+  section?: string;
 }
 
 const LINKS: NavLink[] = [
   { name: "Home", path: "/" },
-  { name: "Movies", path: "/movies" },
+  { name: "Movies", path: "/movies/current", section: "/movies" },
   { name: "Schedule", path: "/schedule" },
 ];
 
@@ -33,6 +34,10 @@ export const Header: React.FC = () => {
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   const isActiveLink = (path: string) => location.pathname === path;
+  const isActiveNavLink = (link: NavLink) =>
+    link.section
+      ? location.pathname.startsWith(link.section)
+      : isActiveLink(link.path);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -79,7 +84,7 @@ export const Header: React.FC = () => {
             <li key={link.name}>
               <Link
                 to={link.path}
-                className={isActiveLink(link.path) ? styles.active : ""}
+                className={isActiveNavLink(link) ? styles.active : ""}
                 onClick={() => setIsDropdownOpen(false)}
               >
                 {link.name}
@@ -182,7 +187,7 @@ export const Header: React.FC = () => {
               <Link
                 key={link.name}
                 to={link.path}
-                className={isActiveLink(link.path) ? styles.active : ""}
+                className={isActiveNavLink(link) ? styles.active : ""}
                 onClick={closeMobileMenu}
               >
                 {link.name}

@@ -18,7 +18,7 @@ export const NotFoundPage: React.FC = () => {
             <Link to="/">
               <Button variant="primary">Go to Home</Button>
             </Link>
-            <Link to="/movies">
+            <Link to="/movies/current">
               <Button variant="outline">Browse Movies</Button>
             </Link>
           </div>

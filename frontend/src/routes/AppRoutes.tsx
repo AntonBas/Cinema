@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { PublicRoute } from "./PublicRoute";
 import { AdminRoute } from "./AdminRoute";
@@ -136,7 +136,7 @@ export const AppRoutes: React.FC = () => {
       <Route path="/movies" element={<MoviesLayout />}>
         <Route path="current" element={<CurrentMoviesPage />} />
         <Route path="upcoming" element={<UpcomingMoviesPage />} />
-        <Route index element={<CurrentMoviesPage />} />
+        <Route index element={<Navigate to="current" replace />} />
       </Route>
       <Route path="/movies/:slug" element={<MovieDetailPage />} />
 
