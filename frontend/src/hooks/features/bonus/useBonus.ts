@@ -61,16 +61,18 @@ export const useBonus = () => {
 
   const updateRule = useCallback(
     async (type: BonusTransactionType, request: BonusRulesRequest) => {
-      return updateRuleApiRef.current.execute(() =>
-        bonusApi.admin.updateRule(type, request),
+      return updateRuleApiRef.current.execute(
+        () => bonusApi.admin.updateRule(type, request),
+        { dedupeKey: `updateRule:${type}` },
       );
     },
     [],
   );
 
   const resetRule = useCallback(async (type: BonusTransactionType) => {
-    return resetRuleApiRef.current.execute(() =>
-      bonusApi.admin.resetRule(type),
+    return resetRuleApiRef.current.execute(
+      () => bonusApi.admin.resetRule(type),
+      { dedupeKey: `resetRule:${type}` },
     );
   }, []);
 

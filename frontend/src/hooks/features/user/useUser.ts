@@ -42,6 +42,7 @@ export const useUser = () => {
       () => userApi.public.updateProfile(data),
       {
         successMessage: "Profile updated successfully",
+        dedupeKey: "updateProfile",
         suppressValidationToast: true,
       },
     );
@@ -57,6 +58,7 @@ export const useUser = () => {
         () => userApi.public.updatePassword(data),
         {
           successMessage: "Password updated successfully",
+          dedupeKey: "updatePassword",
           suppressValidationToast: true,
         },
       );
@@ -71,6 +73,7 @@ export const useUser = () => {
         () => userApi.public.requestEmailChange(request),
         {
           successMessage: "Confirmation email sent to your new address",
+          dedupeKey: "requestEmailChange",
           suppressValidationToast: true,
         },
       );

@@ -116,6 +116,7 @@ export const useMovie = () => {
       {
         showErrorNotification: true,
         suppressValidationToast: true,
+        dedupeKey: "create",
       },
     );
   }, []);
@@ -127,6 +128,7 @@ export const useMovie = () => {
         {
           showErrorNotification: true,
           suppressValidationToast: true,
+          dedupeKey: `update:${id}`,
         },
       );
     },
@@ -136,6 +138,7 @@ export const useMovie = () => {
   const remove = useCallback(async (id: number) => {
     return mutationApiRef.current.execute(() => movieApi.admin.delete(id), {
       showErrorNotification: true,
+      dedupeKey: `remove:${id}`,
     });
   }, []);
 

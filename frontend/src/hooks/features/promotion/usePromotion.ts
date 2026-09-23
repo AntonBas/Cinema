@@ -67,6 +67,7 @@ export const usePromotion = () => {
         () => promotionApi.public.claim(request),
         {
           successMessage: `Promotion "${getPromotionTitle(request.promotionId)}" claimed successfully`,
+          dedupeKey: `claim:${request.promotionId}`,
         },
       );
     },
@@ -96,19 +97,21 @@ export const usePromotion = () => {
   const create = useCallback(async (request: PromotionRequest) => {
     return mutationApiRef.current.execute(
       () => promotionApi.admin.create(request),
-      { suppressValidationToast: true },
+      { suppressValidationToast: true, dedupeKey: "create" },
     );
   }, []);
 
   const update = useCallback(async (id: number, request: PromotionRequest) => {
     return mutationApiRef.current.execute(
       () => promotionApi.admin.update(id, request),
-      { suppressValidationToast: true },
+      { suppressValidationToast: true, dedupeKey: `update:${id}` },
     );
   }, []);
 
   const remove = useCallback(async (id: number) => {
-    return mutationApiRef.current.execute(() => promotionApi.admin.delete(id));
+    return mutationApiRef.current.execute(() => promotionApi.admin.delete(id), {
+      dedupeKey: `remove:${id}`,
+    });
   }, []);
 
   return {

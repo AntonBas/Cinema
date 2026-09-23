@@ -67,7 +67,10 @@ export const useTicket = () => {
   const validate = useCallback(async (uniqueCode: string) => {
     return cashierValidateApiRef.current.execute(
       () => ticketApi.admin.validate(uniqueCode),
-      { successMessage: "Ticket validated successfully" },
+      {
+        successMessage: "Ticket validated successfully",
+        dedupeKey: `validate:${uniqueCode}`,
+      },
     );
   }, []);
 

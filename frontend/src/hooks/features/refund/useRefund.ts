@@ -27,7 +27,9 @@ export const useRefund = () => {
   );
 
   const create = useCallback(async (request: RefundRequest) => {
-    return refundApiRef.current.execute(() => refundApi.create(request));
+    return refundApiRef.current.execute(() => refundApi.create(request), {
+      dedupeKey: `create:${request.ticketId}`,
+    });
   }, []);
 
   const getPolicy = useCallback(async () => {

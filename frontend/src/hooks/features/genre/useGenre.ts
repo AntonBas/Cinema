@@ -36,6 +36,7 @@ export const useGenre = () => {
       () => genreApi.admin.create(request),
       {
         suppressValidationToast: true,
+        dedupeKey: "create",
       },
     );
   }, []);
@@ -43,12 +44,14 @@ export const useGenre = () => {
   const update = useCallback(async (id: number, request: GenreRequest) => {
     return mutationApiRef.current.execute(
       () => genreApi.admin.update(id, request),
-      { suppressValidationToast: true },
+      { suppressValidationToast: true, dedupeKey: `update:${id}` },
     );
   }, []);
 
   const remove = useCallback(async (id: number) => {
-    return mutationApiRef.current.execute(() => genreApi.admin.delete(id));
+    return mutationApiRef.current.execute(() => genreApi.admin.delete(id), {
+      dedupeKey: `remove:${id}`,
+    });
   }, []);
 
   return {

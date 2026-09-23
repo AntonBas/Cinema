@@ -22,6 +22,7 @@ export const useBooking = () => {
   const create = useCallback(async (request: BookingCreateRequest) => {
     return mutationApiRef.current.execute(() => bookingApi.create(request), {
       successMessage: "Booking created successfully",
+      dedupeKey: "create",
     });
   }, []);
 
@@ -32,6 +33,7 @@ export const useBooking = () => {
   const cancel = useCallback(async (bookingId: string) => {
     return mutationApiRef.current.execute(() => bookingApi.cancel(bookingId), {
       successMessage: "Booking cancelled successfully",
+      dedupeKey: `cancel:${bookingId}`,
     });
   }, []);
 

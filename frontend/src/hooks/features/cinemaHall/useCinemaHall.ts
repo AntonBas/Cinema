@@ -52,7 +52,10 @@ export const useCinemaHall = () => {
     async (id: number, request: HallLayoutRequest) => {
       return layoutApiRef.current.execute(
         () => cinemaHallApi.admin.updateLayout(id, request),
-        { successMessage: "Hall layout updated successfully" },
+        {
+          successMessage: "Hall layout updated successfully",
+          dedupeKey: `updateLayout:${id}`,
+        },
       );
     },
     [],
@@ -61,19 +64,24 @@ export const useCinemaHall = () => {
   const create = useCallback(async (request: CinemaHallRequest) => {
     return mutationApiRef.current.execute(
       () => cinemaHallApi.admin.create(request),
-      { suppressValidationToast: true },
+      { suppressValidationToast: true, dedupeKey: "create" },
     );
   }, []);
 
   const update = useCallback(async (id: number, request: CinemaHallRequest) => {
     return mutationApiRef.current.execute(
       () => cinemaHallApi.admin.update(id, request),
-      { suppressValidationToast: true },
+      { suppressValidationToast: true, dedupeKey: `update:${id}` },
     );
   }, []);
 
   const remove = useCallback(async (id: number) => {
-    return mutationApiRef.current.execute(() => cinemaHallApi.admin.delete(id));
+    return mutationApiRef.current.execute(
+      () => cinemaHallApi.admin.delete(id),
+      {
+        dedupeKey: `remove:${id}`,
+      },
+    );
   }, []);
 
   return {

@@ -37,19 +37,21 @@ export const usePerson = () => {
   const create = useCallback(async (request: PersonRequest) => {
     return mutationApiRef.current.execute(
       () => personApi.admin.create(request),
-      { suppressValidationToast: true },
+      { suppressValidationToast: true, dedupeKey: "create" },
     );
   }, []);
 
   const update = useCallback(async (id: number, request: PersonRequest) => {
     return mutationApiRef.current.execute(
       () => personApi.admin.update(id, request),
-      { suppressValidationToast: true },
+      { suppressValidationToast: true, dedupeKey: `update:${id}` },
     );
   }, []);
 
   const remove = useCallback(async (id: number) => {
-    return mutationApiRef.current.execute(() => personApi.admin.delete(id));
+    return mutationApiRef.current.execute(() => personApi.admin.delete(id), {
+      dedupeKey: `remove:${id}`,
+    });
   }, []);
 
   return {

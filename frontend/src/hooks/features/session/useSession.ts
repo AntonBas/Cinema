@@ -77,29 +77,34 @@ export const useSession = () => {
   const create = useCallback(async (request: SessionRequest) => {
     return mutationApiRef.current.execute(
       () => sessionApi.admin.create(request),
-      { suppressValidationToast: true },
+      { suppressValidationToast: true, dedupeKey: "create" },
     );
   }, []);
 
   const update = useCallback(async (id: number, request: SessionRequest) => {
     return mutationApiRef.current.execute(
       () => sessionApi.admin.update(id, request),
-      { suppressValidationToast: true },
+      { suppressValidationToast: true, dedupeKey: `update:${id}` },
     );
   }, []);
 
   const cancel = useCallback(async (id: number) => {
-    return mutationApiRef.current.execute(() => sessionApi.admin.cancel(id));
+    return mutationApiRef.current.execute(() => sessionApi.admin.cancel(id), {
+      dedupeKey: `cancel:${id}`,
+    });
   }, []);
 
   const reactivate = useCallback(async (id: number) => {
-    return mutationApiRef.current.execute(() =>
-      sessionApi.admin.reactivate(id),
+    return mutationApiRef.current.execute(
+      () => sessionApi.admin.reactivate(id),
+      { dedupeKey: `reactivate:${id}` },
     );
   }, []);
 
   const remove = useCallback(async (id: number) => {
-    return mutationApiRef.current.execute(() => sessionApi.admin.delete(id));
+    return mutationApiRef.current.execute(() => sessionApi.admin.delete(id), {
+      dedupeKey: `remove:${id}`,
+    });
   }, []);
 
   return {

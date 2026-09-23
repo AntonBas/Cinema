@@ -29,6 +29,7 @@ export const usePayment = () => {
   const create = useCallback(async (request: PaymentCreateRequest) => {
     return mutationApiRef.current.execute(() => paymentApi.create(request), {
       successMessage: "Payment initialized successfully",
+      dedupeKey: `create:${request.bookingId}`,
     });
   }, []);
 
@@ -45,6 +46,7 @@ export const usePayment = () => {
   const retry = useCallback(async (paymentId: number) => {
     return mutationApiRef.current.execute(() => paymentApi.retry(paymentId), {
       successMessage: "Payment retry initiated",
+      dedupeKey: `retry:${paymentId}`,
     });
   }, []);
 

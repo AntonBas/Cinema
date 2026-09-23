@@ -4,7 +4,7 @@ import {
   isApiErrorException,
   ApiErrorException,
 } from "@/utils/apiErrorHandler";
-import type { AxiosResponse } from "axios";
+import axios, { type AxiosResponse } from "axios";
 
 interface UseApiState<T> {
   data: T | null;
@@ -19,6 +19,7 @@ export interface UseApiOptions<T> {
   successMessage?: string;
   onSuccess?: (data: T) => void;
   onError?: (error: Error | ApiErrorException) => void;
+  dedupeKey?: string;
 }
 
 export const useApi = <T = unknown>() => {
@@ -30,17 +31,20 @@ export const useApi = <T = unknown>() => {
   });
 
   const { showNotification } = useNotification();
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const abortControllerRef = useRef(new AbortController());
   const mountedRef = useRef(true);
-  const loadingRef = useRef(false);
+  const latestRequestIdRef = useRef(0);
+  const inFlightRequestsRef = useRef(new Map<string, Promise<unknown>>());
 
   useEffect(() => {
     mountedRef.current = true;
+    if (abortControllerRef.current.signal.aborted) {
+      abortControllerRef.current = new AbortController();
+    }
+    const abortController = abortControllerRef.current;
     return () => {
       mountedRef.current = false;
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
+      abortController.abort();
     };
   }, []);
 
@@ -54,15 +58,11 @@ export const useApi = <T = unknown>() => {
     [],
   );
 
-  const execute = useCallback(
+  const run = useCallback(
     async <R>(
       apiCall: (signal?: AbortSignal) => Promise<AxiosResponse<R>>,
       options?: UseApiOptions<R>,
     ): Promise<R | null> => {
-      if (loadingRef.current) {
-        return null;
-      }
-
       const {
         showErrorNotification = true,
         suppressValidationToast = false,
@@ -71,11 +71,9 @@ export const useApi = <T = unknown>() => {
         onError,
       } = options || {};
 
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-
-      abortControllerRef.current = new AbortController();
+      const requestId = ++latestRequestIdRef.current;
+      const isLatestRequest = () =>
+        mountedRef.current && requestId === latestRequestIdRef.current;
 
       if (mountedRef.current) {
         setState((prev) => ({
@@ -86,13 +84,11 @@ export const useApi = <T = unknown>() => {
         }));
       }
 
-      loadingRef.current = true;
-
       try {
         const response = await apiCall(abortControllerRef.current.signal);
         const responseData = response.data;
 
-        if (mountedRef.current) {
+        if (isLatestRequest()) {
           setState({
             data: responseData as unknown as T,
             loading: false,
@@ -111,14 +107,17 @@ export const useApi = <T = unknown>() => {
 
         return responseData;
       } catch (err) {
-        if (err instanceof DOMException && err.name === "AbortError") {
+        if (
+          axios.isCancel(err) ||
+          (err instanceof DOMException && err.name === "AbortError")
+        ) {
           return null;
         }
 
         const error =
           err instanceof Error ? err : new Error("Operation failed");
 
-        if (mountedRef.current) {
+        if (isLatestRequest()) {
           setState((prev) => ({
             ...prev,
             loading: false,
@@ -139,15 +138,40 @@ export const useApi = <T = unknown>() => {
 
         if (onError) onError(error);
         throw error;
-      } finally {
-        loadingRef.current = false;
-        abortControllerRef.current = null;
       }
     },
     [showNotification, getErrorMessage],
   );
 
+  const execute = useCallback(
+    <R>(
+      apiCall: (signal?: AbortSignal) => Promise<AxiosResponse<R>>,
+      options?: UseApiOptions<R>,
+    ): Promise<R | null> => {
+      const dedupeKey = options?.dedupeKey;
+      if (!dedupeKey) {
+        return run(apiCall, options);
+      }
+
+      const inFlightRequests = inFlightRequestsRef.current;
+      const inFlightRequest = inFlightRequests.get(dedupeKey);
+      if (inFlightRequest) {
+        return inFlightRequest as Promise<R | null>;
+      }
+
+      const request = run(apiCall, options).finally(() => {
+        inFlightRequests.delete(dedupeKey);
+      });
+      inFlightRequests.set(dedupeKey, request);
+      return request;
+    },
+    [run],
+  );
+
   const reset = useCallback(() => {
+    latestRequestIdRef.current += 1;
+    abortControllerRef.current.abort();
+    abortControllerRef.current = new AbortController();
     if (mountedRef.current) {
       setState({
         data: null,
@@ -155,11 +179,6 @@ export const useApi = <T = unknown>() => {
         error: null,
         timestamp: null,
       });
-    }
-    loadingRef.current = false;
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
     }
   }, []);
 

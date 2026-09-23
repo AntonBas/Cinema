@@ -53,7 +53,10 @@ export const useAdminUsers = () => {
       const roleData: UserRoleUpdateRequest = { userRole };
       return mutationApiRef.current.execute(
         () => userApi.admin.updateRole(userId, roleData),
-        { successMessage: `${getUserName(userId)} role updated successfully` },
+        {
+          successMessage: `${getUserName(userId)} role updated successfully`,
+          dedupeKey: `updateRole:${userId}`,
+        },
       );
     },
     [getUserName],
@@ -68,6 +71,7 @@ export const useAdminUsers = () => {
           successMessage: enabled
             ? `${getUserName(userId)} activated successfully`
             : `${getUserName(userId)} deactivated successfully`,
+          dedupeKey: `updateStatus:${userId}`,
         },
       );
     },
@@ -84,7 +88,10 @@ export const useAdminUsers = () => {
       return mutationApiRef.current.execute(
         () =>
           userApi.admin.updateBirthDateVerification(userId, verificationData),
-        { successMessage: `${getUserName(userId)} birth date ${statusText}` },
+        {
+          successMessage: `${getUserName(userId)} birth date ${statusText}`,
+          dedupeKey: `updateBirthDateVerification:${userId}`,
+        },
       );
     },
     [getUserName],
