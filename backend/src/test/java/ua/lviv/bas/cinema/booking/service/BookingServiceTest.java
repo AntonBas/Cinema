@@ -98,7 +98,7 @@ public class BookingServiceTest {
                 .expiresAt(LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES)).build();
 
         bookingResponse = new BookingResponse(BOOKING_ID, BOOKING_PUBLIC_ID, BOOKING_NUMBER, BookingStatus.PENDING,
-                SESSION_ID, sessionTime, "Test Movie", "Hall A", TOTAL_PRICE, BONUS_POINTS_USED, DISCOUNT_AMOUNT,
+                SESSION_ID, null, sessionTime, "Test Movie", "Hall A", TOTAL_PRICE, BONUS_POINTS_USED, DISCOUNT_AMOUNT,
                 FINAL_PRICE, null, sessionTime.plusMinutes(EXPIRATION_MINUTES), Collections.emptyList());
     }
 

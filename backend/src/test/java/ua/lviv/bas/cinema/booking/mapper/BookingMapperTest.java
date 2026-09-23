@@ -16,10 +16,13 @@ import ua.lviv.bas.cinema.user.domain.User;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class BookingMapperTest {
+
+    private static final UUID SESSION_PUBLIC_ID = UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6");
 
     private final BookingMapper bookingMapper = new BookingMapperImpl();
     private Booking booking;
@@ -29,7 +32,7 @@ public class BookingMapperTest {
         var user = User.builder().id(1L).build();
         var movie = Movie.builder().id(1L).title("Inception").build();
         var cinemaHall = CinemaHall.builder().id(1L).name("Hall A").build();
-        var session = Session.builder().id(1L).movie(movie).hall(cinemaHall)
+        var session = Session.builder().id(1L).publicId(SESSION_PUBLIC_ID).movie(movie).hall(cinemaHall)
                 .startTime(LocalDateTime.of(2024, 1, 15, 18, 30)).build();
         var payment = Payment.builder().liqpayOrderId("ORDER_ABC123").build();
         var seat = Seat.builder().id(1L).row(5).number(12).build();
@@ -52,6 +55,7 @@ public class BookingMapperTest {
         assertThat(response.id()).isEqualTo(123L);
         assertThat(response.bookingNumber()).isEqualTo("BK-2024-00123");
         assertThat(response.sessionId()).isEqualTo(1L);
+        assertThat(response.sessionPublicId()).isEqualTo(SESSION_PUBLIC_ID);
         assertThat(response.movieTitle()).isEqualTo("Inception");
         assertThat(response.hallName()).isEqualTo("Hall A");
         assertThat(response.liqpayOrderId()).isEqualTo("ORDER_ABC123");
@@ -70,6 +74,7 @@ public class BookingMapperTest {
         assertThat(response.id()).isEqualTo(123L);
         assertThat(response.bookingNumber()).isEqualTo("BK-2024-00123");
         assertThat(response.sessionId()).isNull();
+        assertThat(response.sessionPublicId()).isNull();
         assertThat(response.movieTitle()).isNull();
         assertThat(response.hallName()).isNull();
         assertThat(response.sessionTime()).isNull();

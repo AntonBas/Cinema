@@ -54,7 +54,7 @@ public class BookingControllerTest {
     }
 
     private BookingResponse createBookingResponse() {
-        return new BookingResponse(BOOKING_ID, BOOKING_PUBLIC_ID, "BK-2024-00123", BookingStatus.PENDING, SESSION_ID,
+        return new BookingResponse(BOOKING_ID, BOOKING_PUBLIC_ID, "BK-2024-00123", BookingStatus.PENDING, SESSION_ID, null,
                 LocalDateTime.now().plusDays(1), "Test Movie", "Hall A", new BigDecimal("150.00"), 0, BigDecimal.ZERO,
                 new BigDecimal("150.00"), null, LocalDateTime.now().plusMinutes(15), Collections.emptyList());
     }

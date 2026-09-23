@@ -23,6 +23,7 @@ export interface BookingResponse {
   bookingNumber: string;
   status: BookingStatus;
   sessionId: number;
+  sessionPublicId: string;
   sessionTime: string;
   movieTitle: string;
   hallName: string;

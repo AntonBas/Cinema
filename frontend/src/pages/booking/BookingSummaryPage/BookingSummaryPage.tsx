@@ -23,11 +23,16 @@ export const BookingSummaryPage: React.FC = () => {
   }, [bookingId, getById]);
 
   const handleCancelBooking = async () => {
-    if (!bookingId) return;
+    if (!bookingId || !booking) return;
 
-    await cancel(bookingId);
-    setShowCancelModal(false);
-    setTimeout(() => navigate("/"), 2000);
+    try {
+      await cancel(bookingId);
+    } catch {
+      return;
+    } finally {
+      setShowCancelModal(false);
+    }
+    navigate(`/booking/${booking.sessionPublicId}`, { replace: true });
   };
 
   const handleProceedToPayment = () => {

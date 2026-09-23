@@ -26,6 +26,10 @@ public record BookingResponse(
         @Schema(description = "Session ID", example = "789")
         Long sessionId,
 
+        @Schema(description = "Public session identifier used in booking URLs",
+                example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+        UUID sessionPublicId,
+
         @Schema(description = "Session start time", example = "2024-01-15T18:30:00")
         LocalDateTime sessionTime,
 

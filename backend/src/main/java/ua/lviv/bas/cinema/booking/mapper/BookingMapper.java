@@ -15,6 +15,7 @@ public interface BookingMapper {
 
 	@Mapping(target = "bookingNumber", expression = "java(NumberGeneratorService.generateBookingNumberStatic(booking))")
 	@Mapping(target = "sessionId", source = "session.id")
+	@Mapping(target = "sessionPublicId", source = "session.publicId")
 	@Mapping(target = "sessionTime", source = "session.startTime")
 	@Mapping(target = "movieTitle", source = "session.movie.title")
 	@Mapping(target = "hallName", source = "session.hall.name")
