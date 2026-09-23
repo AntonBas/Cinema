@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { MovieAdminResponse, AgeRating, MovieCreateRequest, MovieUpdateRequest } from '@/types/movie';
 import type { PersonResponse } from '@/types/person';
-import { useMovies } from '@/hooks/features/movies/useMovies';
-import { useGenres } from '@/hooks/features/genres/useGenres';
+import { useMovie } from '@/hooks/features/movie/useMovie';
+import { useGenre } from '@/hooks/features/genre/useGenre';
 import { isApiErrorException } from '@/utils/apiErrorHandler';
 import { toBackendFormat } from '@/utils/dateUtils';
 import { resolvePosterUrl } from '@/utils/posterUrl';
@@ -56,8 +56,8 @@ const BACKEND_TO_FORM_FIELD: Record<string, string> = {
 };
 
 export const MovieForm: React.FC<MovieFormProps> = React.memo(({ movie, onSuccess, onCancel }) => {
-    const { create, update, loading } = useMovies();
-    const { genres, getAll: getAllGenres } = useGenres();
+    const { create, update, loading } = useMovie();
+    const { genres, getAll: getAllGenres } = useGenre();
 
     const [selectedActors, setSelectedActors] = useState<PersonResponse[]>([]);
     const [selectedDirectors, setSelectedDirectors] = useState<PersonResponse[]>([]);

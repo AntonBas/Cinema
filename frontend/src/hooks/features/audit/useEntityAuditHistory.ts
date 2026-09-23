@@ -12,7 +12,7 @@ export const useEntityAuditHistory = () => {
   const getEntityHistory = useCallback(
     async (entityType: string, entityId: number) => {
       return executeRef.current(
-        () => auditApi.getEntityHistory(entityType, entityId),
+        () => auditApi.admin.getEntityHistory(entityType, entityId),
         { showErrorNotification: false },
       );
     },

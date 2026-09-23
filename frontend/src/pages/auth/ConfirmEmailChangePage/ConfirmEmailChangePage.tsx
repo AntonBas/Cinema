@@ -10,7 +10,7 @@ import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/services/api";
 import { Button } from "@/components/ui/Button/Button";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { AuthPageLayout } from "@/components/auth/AuthPageLayout/AuthPageLayout";
 import { AuthCard } from "@/components/auth/AuthCard/AuthCard";
 import styles from "./ConfirmEmailChangePage.module.css";

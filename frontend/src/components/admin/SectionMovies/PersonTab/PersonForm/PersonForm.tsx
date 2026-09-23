@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { PersonResponse, PersonRequest, PersonRole } from '@/types/person';
 import { PersonRoleDisplay } from '@/types/person';
-import { Modal, Input, Button, Select } from '@/components/ui';
+import { Modal } from '@/components/ui/Modal/Modal';
+import { Input } from '@/components/ui/Input/Input';
+import { Button } from '@/components/ui/Button/Button';
+import { Select } from '@/components/ui/Select/Select';
 import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './PersonForm.module.css';
 

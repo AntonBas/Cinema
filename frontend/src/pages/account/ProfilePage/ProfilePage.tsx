@@ -3,7 +3,7 @@ import { AccountPageLayout } from '@/components/account/AccountPageLayout/Accoun
 import { UserProfileCard } from '@/components/account/OverviewSection/UserProfileCard/UserProfileCard';
 import { ProfileEditForm } from '@/components/account/OverviewSection/ProfileEditForm/ProfileEditForm';
 import { useUser } from '@/hooks/features/user/useUser';
-import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import type { UserUpdateRequest } from '@/types/user';
 import { EmptyState } from '@/components/ui/EmptyState/EmptyState';
 import styles from './ProfilePage.module.css';

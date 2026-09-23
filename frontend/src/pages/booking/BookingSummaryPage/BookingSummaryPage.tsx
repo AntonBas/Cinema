@@ -4,7 +4,7 @@ import { ProgressStepper } from "@/components/booking/ProgressStepper/ProgressSt
 import { BOOKING_STEPS } from "@/components/booking/ProgressStepper/bookingSteps";
 import { Layout } from "@/components/layout/Layout/Layout";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { useBooking } from "@/hooks/features/booking/useBooking";
 import { parseServerInstant } from "@/utils/dateUtils";
 import { PageContainer } from "@/components/ui/PageContainer/PageContainer";

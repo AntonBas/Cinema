@@ -11,7 +11,7 @@ import type {
   MovieStatus,
 } from "@/types/movie";
 import type { PageResponse } from "@/types/pagination";
-import { useMovies } from "@/hooks/features/movies/useMovies";
+import { useMovie } from "@/hooks/features/movie/useMovie";
 import { usePagination } from "@/hooks/common/usePagination";
 import { useNotification } from "@/context/NotificationContext";
 import { isApiErrorException } from "@/utils/apiErrorHandler";
@@ -22,7 +22,7 @@ import { DeleteConfirmModal } from "@/components/ui/DeleteConfirmModal/DeleteCon
 import { Button } from "@/components/ui/Button/Button";
 import { SearchInput } from "@/components/ui/SearchInput/SearchInput";
 import { Pagination } from "@/components/ui/Pagination/Pagination";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 import { movieApi } from "@/api/movieApi";
 import { Tabs, type TabItem } from "@/components/ui/Tabs/Tabs";
@@ -62,7 +62,7 @@ export const MovieTab: React.FC = () => {
   const { params, setPage, setSearch } = usePagination({
     size: DEFAULT_PAGE_SIZE,
   });
-  const { loading: moviesLoading, remove } = useMovies();
+  const { loading: moviesLoading, remove } = useMovie();
   const { showNotification } = useNotification();
   const showLoading = useDelayedLoading(moviesLoading || loadingMovie, {
     delay: 150,
@@ -90,7 +90,7 @@ export const MovieTab: React.FC = () => {
           status,
         };
 
-        const response = await movieApi.admin.getMovies(requestParams);
+        const response = await movieApi.admin.getAll(requestParams);
 
         setTabData((prev) => ({
           ...prev,
@@ -115,7 +115,7 @@ export const MovieTab: React.FC = () => {
   const loadTabCount = useCallback(async (tab: MovieTabType) => {
     try {
       const status = tab as MovieStatus;
-      const response = await movieApi.admin.getMovies({
+      const response = await movieApi.admin.getAll({
         page: 0,
         size: 1,
         status,

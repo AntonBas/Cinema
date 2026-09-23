@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { CinemaHallListResponse, CinemaHallResponse, CinemaHallRequest } from '@/types/cinemaHall';
-import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
+import { useCinemaHall } from '@/hooks/features/cinemaHall/useCinemaHall';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal/DeleteConfirmModal';
 import { Button } from '@/components/ui/Button/Button';
-import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
-import { CreateHallModal } from './HallModal/CreateHallModal';
-import { EditHallModal } from './HallModal/EditHallModal';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner/LoadingSpinner';
+import { HallFormModal } from './HallFormModal/HallFormModal';
 import { HallsTable } from './HallsTable/HallsTable';
 import { HallLayoutModal } from './HallLayoutModal/HallLayoutModal';
 import { useHallLayout } from './HallLayoutContext';
@@ -15,7 +14,7 @@ import { PageHeader } from '@/components/ui/PageHeader/PageHeader';
 import styles from './SectionHalls.module.css';
 
 const SectionHallsContent: React.FC = () => {
-    const { loading, getAllHalls, getHallById, createHall, updateHall, deleteHall } = useCinemaHalls();
+    const { loading, getAllHalls, getHallById, createHall, updateHall, deleteHall } = useCinemaHall();
     const { openLayout } = useHallLayout();
 
     const showDelayedLoading = useDelayedLoading(loading, { delay: 150, minDisplayTime: 300 });
@@ -120,21 +119,21 @@ const SectionHallsContent: React.FC = () => {
             </div>
 
             {showCreateModal && (
-                <CreateHallModal
+                <HallFormModal
                     onClose={() => setShowCreateModal(false)}
-                    onCreate={handleCreateHall}
+                    onSave={handleCreateHall}
                     loading={loading}
                 />
             )}
 
             {showEditModal && selectedHall && (
-                <EditHallModal
+                <HallFormModal
                     hall={selectedHall}
                     onClose={() => {
                         setShowEditModal(false);
                         setSelectedHall(null);
                     }}
-                    onUpdate={handleEditHall}
+                    onSave={(request) => handleEditHall(selectedHall.id, request)}
                     loading={loading}
                 />
             )}

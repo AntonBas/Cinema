@@ -2,13 +2,13 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { usePayment } from '@/hooks/features/payment/usePayment';
 import { Button } from '@/components/ui/Button/Button';
-import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import { CheckCircle2, Home, Ticket, AlertCircle, RefreshCw } from 'lucide-react';
 import type { PaymentResponse } from '@/types/payment';
 import { Layout } from '@/components/layout/Layout/Layout';
 import styles from './SuccessPage.module.css';
 
-const SuccessPage = () => {
+export const SuccessPage = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const { getById, loading } = usePayment();
@@ -151,5 +151,3 @@ const SuccessPage = () => {
         </Layout>
     );
 };
-
-export default SuccessPage;

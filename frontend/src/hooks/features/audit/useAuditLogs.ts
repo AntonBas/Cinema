@@ -21,7 +21,7 @@ export const useAuditLogs = () => {
     const loading = useDelayedLoading(apiLoading, { delay: 200, minDisplayTime: 300 });
 
     const fetchAuditLogs = useCallback(async () => {
-        return executeRef.current(() => auditApi.getAll({
+        return executeRef.current(() => auditApi.admin.getAll({
             ...params,
             entityType,
             action,

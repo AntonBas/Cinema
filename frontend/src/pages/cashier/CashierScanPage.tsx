@@ -2,11 +2,11 @@ import React, { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { XCircle } from "lucide-react";
 import { Layout } from "@/components/layout/Layout/Layout";
-import { useTickets } from "@/hooks/features/tickets/useTickets";
+import { useTicket } from "@/hooks/features/ticket/useTicket";
 import { TicketStatusBadge } from "@/components/ui/TicketStatusBadge/TicketStatusBadge";
 import { CashierTicketInfo } from "@/components/cashier/CashierTicketInfo/CashierTicketInfo";
 import { CashierValidateButton } from "@/components/cashier/CashierValidateButton/CashierValidateButton";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { Button } from "@/components/ui/Button/Button";
 import styles from "./CashierScanPage.module.css";
 
@@ -27,7 +27,7 @@ export const CashierScanPage: React.FC = () => {
     cashierValidateError,
     getTicketForCashier,
     validateTicket,
-  } = useTickets();
+  } = useTicket();
 
   useEffect(() => {
     if (uniqueCode) {

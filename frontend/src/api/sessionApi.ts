@@ -29,7 +29,7 @@ export const sessionApi = {
 
     delete: (id: number) => api.delete<void>(`${ADMIN_BASE_URL}/${id}`),
 
-    getSessions: (
+    getAll: (
       params?: SearchParams & {
         hallId?: number;
         movieTitle?: string;

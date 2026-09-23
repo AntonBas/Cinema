@@ -4,7 +4,7 @@ import { ProtectedRoute } from "./ProtectedRoute";
 import { PublicRoute } from "./PublicRoute";
 import { AdminRoute } from "./AdminRoute";
 import { AdminIndexRedirect } from "./AdminIndexRedirect";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 
 import { LoginPage } from "@/pages/auth/LoginPage/LoginPage";
 import { RegisterPage } from "@/pages/auth/RegisterPage/RegisterPage";
@@ -27,11 +27,11 @@ import { CurrentMoviesPage } from "@/pages/movies/CurrentMoviesPage/CurrentMovie
 import { UpcomingMoviesPage } from "@/pages/movies/UpcomingMoviesPage/UpcomingMoviesPage";
 import { MovieDetailPage } from "@/pages/movies/MovieDetailPage/MovieDetailPage";
 
-import SessionsPage from "@/pages/sessions/SessionsPage";
+import { SessionsPage } from "@/pages/sessions/SessionsPage";
 import { BookingPage } from "@/pages/booking/BookingPage/BookingPage";
 import { BookingSummaryPage } from "@/pages/booking/BookingSummaryPage/BookingSummaryPage";
 import { PaymentPage } from "@/pages/booking/PaymentPage/PaymentPage";
-import SuccessPage from "@/pages/booking/SuccessPage/SuccessPage";
+import { SuccessPage } from "@/pages/booking/SuccessPage/SuccessPage";
 
 const AdminLayout = lazy(() =>
   import("@/components/admin/AdminLayout/AdminLayout").then((m) => ({ default: m.AdminLayout })),
@@ -48,9 +48,15 @@ const SectionSchedule = lazy(() =>
 const SectionUsers = lazy(() =>
   import("@/components/admin/SectionUsers/SectionUsers").then((m) => ({ default: m.SectionUsers })),
 );
-const SectionBonus = lazy(() => import("@/components/admin/SectionBonus/SectionBonus"));
-const SectionPromotion = lazy(() => import("@/components/admin/SectionPromotion/SectionPromotion"));
-const SectionTicketType = lazy(() => import("@/components/admin/SectionTicketType/SectionTicketType"));
+const SectionBonus = lazy(() =>
+  import("@/components/admin/SectionBonus/SectionBonus").then((m) => ({ default: m.SectionBonus })),
+);
+const SectionPromotion = lazy(() =>
+  import("@/components/admin/SectionPromotion/SectionPromotion").then((m) => ({ default: m.SectionPromotion })),
+);
+const SectionTicketType = lazy(() =>
+  import("@/components/admin/SectionTicketType/SectionTicketType").then((m) => ({ default: m.SectionTicketType })),
+);
 const SectionAuditLogs = lazy(() =>
   import("@/components/admin/SectionAuditLogs/SectionAuditLogs").then((m) => ({ default: m.SectionAuditLogs })),
 );

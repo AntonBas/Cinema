@@ -13,7 +13,7 @@ interface TicketTypeFiltersProps {
     onCategoryChange: (category: TicketTypeCategory | 'all') => void;
 }
 
-const TicketTypeFilters: React.FC<TicketTypeFiltersProps> = ({
+export const TicketTypeFilters: React.FC<TicketTypeFiltersProps> = ({
     onSearchChange,
     statusFilter,
     onStatusChange,
@@ -69,5 +69,3 @@ const TicketTypeFilters: React.FC<TicketTypeFiltersProps> = ({
         </div>
     );
 };
-
-export default TicketTypeFilters;

@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import type { GenreResponse } from '@/types/genre';
 import { Input } from '@/components/ui/Input/Input';
 import { Badge } from '@/components/ui/Badge/Badge';
-import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import styles from './GenreSearchList.module.css';
 
 interface GenreSearchListProps {

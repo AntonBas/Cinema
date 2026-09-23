@@ -3,7 +3,7 @@ import { Layout } from "@/components/layout/Layout/Layout";
 import { HeroSection } from "@/components/home/HeroSection/HeroSection";
 import { MovieRail } from "@/components/home/MovieRail/MovieRail";
 import { Promotions } from "@/components/home/Promotions/Promotions";
-import { useMovies } from "@/hooks/features/movies/useMovies";
+import { useMovie } from "@/hooks/features/movie/useMovie";
 import { usePromotion } from "@/hooks/features/promotion/usePromotion";
 import { useAuth } from "@/context/AuthContext";
 
@@ -17,7 +17,7 @@ export const HomePage: React.FC = () => {
     getCurrentMoviesForHome,
     getUpcomingMoviesForHome,
     getLeavingSoonForHome,
-  } = useMovies();
+  } = useMovie();
 
   const {
     availablePromotions,

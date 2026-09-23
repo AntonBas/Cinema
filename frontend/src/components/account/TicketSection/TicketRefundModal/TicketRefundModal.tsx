@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Modal, Button } from "@/components/ui";
+import { Modal } from "@/components/ui/Modal/Modal";
+import { Button } from "@/components/ui/Button/Button";
 import { useRefund } from "@/hooks/features/refund/useRefund";
 import { AlertTriangle } from "lucide-react";
 import type { TicketResponse } from "@/types/ticket";

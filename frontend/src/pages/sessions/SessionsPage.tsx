@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useSession } from "@/hooks/features/sessions/useSession";
+import { useSession } from "@/hooks/features/session/useSession";
 import type { SessionScheduleResponse } from "@/types/session";
 import { Layout } from "@/components/layout/Layout/Layout";
 import { DateFilter } from "@/components/sessions/DateFilter/DateFilter";
 import { MovieFilter } from "@/components/sessions/MovieFilter/MovieFilter";
 import { SessionList } from "@/components/sessions/SessionList/SessionList";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { Button } from "@/components/ui/Button/Button";
 import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
@@ -15,7 +15,7 @@ import styles from "./SessionsPage.module.css";
 
 const getTodayString = (): string => new Date().toISOString().split("T")[0];
 
-const SessionsPage: React.FC = () => {
+export const SessionsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { loading, getSchedule, getScheduleDates } = useSession();
 
@@ -163,5 +163,3 @@ const SessionsPage: React.FC = () => {
     </Layout>
   );
 };
-
-export default SessionsPage;

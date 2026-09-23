@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button/Button";
 import { useAuth } from "@/context/AuthContext";
 import type { PromotionResponse } from "@/types/promotion";
 import { formatShortDate } from "@/utils/formatters";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import styles from "./Promotions.module.css";
 
 interface PromotionsProps {

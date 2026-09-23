@@ -2,7 +2,7 @@ import React from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import type { PersonListResponse } from "@/types/person";
 import { PersonRoleDisplay } from "@/types/person";
-import { Badge } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge/Badge";
 import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
 import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";

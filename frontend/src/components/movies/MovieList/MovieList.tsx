@@ -2,7 +2,7 @@ import React from "react";
 import type { MovieCardResponse } from "@/types/movie";
 import type { PageResponse } from "@/types/pagination";
 import { MovieCard } from "../MovieCard/MovieCard";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { Button } from "@/components/ui/Button/Button";
 import { Pagination } from "@/components/ui/Pagination/Pagination";
 import { EmptyState } from "@/components/ui/EmptyState/EmptyState";

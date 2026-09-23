@@ -1,5 +1,7 @@
 import React from 'react';
-import { Select, Input, Button } from '@/components/ui';
+import { Select } from '@/components/ui/Select/Select';
+import { Input } from '@/components/ui/Input/Input';
+import { Button } from '@/components/ui/Button/Button';
 import type { SelectOption } from '@/components/ui/Select/Select';
 import styles from './AuditLogsFilters.module.css';
 

@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { UserTable } from './UserTable/UserTable';
 import { UserFilters } from './UserFilters/UserFilters';
-import { useAdminUsers } from '@/hooks/features/admin/useAdminUsers';
+import { useAdminUsers } from '@/hooks/features/user/useAdminUsers';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import { usePagination } from '@/hooks/common/usePagination';
 import { Pagination } from '@/components/ui/Pagination/Pagination';
-import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import { DEFAULT_PAGE_SIZE_COMPACT } from '@/utils/paginationUtils';
 import type { UserRole, VerificationStatus } from '@/types/user';
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader';

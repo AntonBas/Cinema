@@ -1,6 +1,6 @@
 import React from "react";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import type { BonusBalanceResponse } from "@/types/bonus";
 import { formatPrice } from "@/utils/formatters";
 import { EmptyState } from "@/components/ui/EmptyState/EmptyState";

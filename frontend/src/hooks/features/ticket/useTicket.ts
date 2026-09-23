@@ -9,7 +9,7 @@ import type { PageResponse, SearchParams } from "@/types/pagination";
 import { useApi } from "@/hooks/common/useApi";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 
-export const useTickets = () => {
+export const useTicket = () => {
   const ticketsApi = useApi<PageResponse<TicketResponse>>();
   const ticketApiHook = useApi<TicketResponse>();
   const qrCodeApi = useApi<Blob>();
@@ -40,29 +40,29 @@ export const useTickets = () => {
   const getUserTickets = useCallback(
     async (params?: SearchParams & TicketFilterRequest) => {
       return ticketsApiRef.current.execute(() =>
-        ticketApi.getUserTickets(params),
+        ticketApi.public.getMine(params),
       );
     },
     [],
   );
 
   const getByCode = useCallback(async (ticketCode: string) => {
-    return ticketApiRef.current.execute(() => ticketApi.getByCode(ticketCode));
+    return ticketApiRef.current.execute(() => ticketApi.public.getByCode(ticketCode));
   }, []);
 
   const getQRCode = useCallback(async (ticketCode: string) => {
-    return qrCodeApiRef.current.execute(() => ticketApi.getQRCode(ticketCode));
+    return qrCodeApiRef.current.execute(() => ticketApi.public.getQRCode(ticketCode));
   }, []);
 
   const getTicketForCashier = useCallback(async (uniqueCode: string) => {
     return cashierTicketApiRef.current.execute(() =>
-      ticketApi.getTicketForCashier(uniqueCode),
+      ticketApi.admin.getByCode(uniqueCode),
     );
   }, []);
 
   const validateTicket = useCallback(async (uniqueCode: string) => {
     return cashierValidateApiRef.current.execute(
-      () => ticketApi.validateTicket(uniqueCode),
+      () => ticketApi.admin.validate(uniqueCode),
       { successMessage: "Ticket validated successfully" },
     );
   }, []);

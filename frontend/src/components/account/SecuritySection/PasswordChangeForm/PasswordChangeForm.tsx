@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useUser } from '@/hooks/features/user/useUser';
 import { useAuth } from '@/context/AuthContext';
-import { Input, Button } from '@/components/ui';
+import { Input } from '@/components/ui/Input/Input';
+import { Button } from '@/components/ui/Button/Button';
 import type { UserPasswordUpdateRequest } from '@/types/user';
 import { isApiErrorException } from '@/utils/apiErrorHandler';
 import { validatePassword } from '@/utils/formValidation';

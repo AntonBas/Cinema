@@ -10,11 +10,9 @@ import type {
 const BASE_URL = "/api/refunds";
 
 export const refundApi = {
-  processRefund: (request: RefundRequest) =>
+  create: (request: RefundRequest) =>
     api.post<RefundResponse>(BASE_URL, request),
-
   preview: (request: RefundPreviewRequest) =>
     api.post<RefundPreviewResponse>(`${BASE_URL}/preview`, request),
-
   getPolicy: () => api.get<RefundPolicy>(`${BASE_URL}/policy`),
 };

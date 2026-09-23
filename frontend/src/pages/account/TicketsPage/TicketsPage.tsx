@@ -6,11 +6,11 @@ import { TicketRefundModal } from "@/components/account/TicketSection/TicketRefu
 import { Pagination } from "@/components/ui/Pagination/Pagination";
 import { Button } from "@/components/ui/Button/Button";
 import { SearchInput } from "@/components/ui/SearchInput/SearchInput";
-import { useTickets } from "@/hooks/features/tickets/useTickets";
+import { useTicket } from "@/hooks/features/ticket/useTicket";
 import { DEFAULT_PAGE_SIZE_COMPACT } from "@/utils/paginationUtils";
 import type { TicketResponse, TicketStatus } from "@/types/ticket";
 import { Tabs, type TabItem } from "@/components/ui/Tabs/Tabs";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import styles from "./TicketsPage.module.css";
 
 const TABS: ReadonlyArray<TabItem<TicketStatus | "all">> = [
@@ -35,7 +35,7 @@ export const TicketsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
 
-  const { tickets, pagination, loading, getUserTickets } = useTickets();
+  const { tickets, pagination, loading, getUserTickets } = useTicket();
 
   useEffect(() => {
     getUserTickets({

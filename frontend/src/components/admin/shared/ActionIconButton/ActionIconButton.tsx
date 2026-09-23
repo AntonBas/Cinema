@@ -1,5 +1,5 @@
 import React from "react";
-import { Tooltip } from "@/components/ui";
+import { Tooltip } from "@/components/ui/Tooltip/Tooltip";
 import styles from "./ActionIconButton.module.css";
 import clsx from "clsx";
 

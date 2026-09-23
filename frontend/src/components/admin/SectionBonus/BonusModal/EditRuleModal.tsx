@@ -14,7 +14,7 @@ interface EditRuleModalProps {
     rule: BonusRulesResponse;
 }
 
-const EditRuleModal: React.FC<EditRuleModalProps> = ({
+export const EditRuleModal: React.FC<EditRuleModalProps> = ({
     isOpen,
     onClose,
     onSuccess,
@@ -188,5 +188,3 @@ const EditRuleModal: React.FC<EditRuleModalProps> = ({
         </Modal>
     );
 };
-
-export default EditRuleModal;

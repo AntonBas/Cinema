@@ -3,7 +3,7 @@ import { SeatType } from '@/types/seat';
 import { Modal } from '@/components/ui/Modal/Modal';
 import { Button } from '@/components/ui/Button/Button';
 import { ConfirmModal } from '@/components/ui/ConfirmModal/ConfirmModal';
-import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import { useHallLayout, type DraftSeat } from '../HallLayoutContext';
 import { GRID_COLS, GRID_ROWS, CELL_WIDTH, CELL_HEIGHT } from '@/utils/hallLayoutGrid';

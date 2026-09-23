@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react';
 import type { CinemaHallResponse, HallLayoutResponse, SeatLayoutItem } from '@/types/cinemaHall';
 import { SeatType } from '@/types/seat';
-import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
+import { useCinemaHall } from '@/hooks/features/cinemaHall/useCinemaHall';
 import { CELL_WIDTH, CELL_HEIGHT, GRID_COLS } from '@/utils/hallLayoutGrid';
 import { HallLayoutContext, type DraftSeat } from './HallLayoutContext';
 
@@ -30,7 +30,7 @@ export const HallLayoutProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const [saving, setSaving] = useState(false);
     const localKeyCounter = useRef(0);
 
-    const { getHallLayout, updateLayout } = useCinemaHalls();
+    const { getHallLayout, updateLayout } = useCinemaHall();
 
     const openLayout = useCallback(async (hall: CinemaHallResponse) => {
         setCurrentHall(hall);

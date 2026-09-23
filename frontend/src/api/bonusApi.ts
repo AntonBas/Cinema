@@ -12,19 +12,19 @@ const BASE_URL = "/api/bonus";
 const ADMIN_BASE_URL = "/api/admin/bonus";
 
 export const bonusApi = {
-  getBalance: () => api.get<BonusBalanceResponse>(`${BASE_URL}/balance`),
-
-  getTransactions: (params?: { page?: number; size?: number }) =>
-    api.get<PageResponse<BonusTransactionResponse>>(
-      `${BASE_URL}/transactions`,
-      { params },
-    ),
-
-  getAllRules: () => api.get<BonusRulesResponse[]>(`${ADMIN_BASE_URL}/rules`),
-
-  updateRule: (type: BonusTransactionType, request: BonusRulesRequest) =>
-    api.put<BonusRulesResponse>(`${ADMIN_BASE_URL}/rules/${type}`, request),
-
-  resetRule: (type: BonusTransactionType) =>
-    api.put<BonusRulesResponse>(`${ADMIN_BASE_URL}/rules/${type}/reset`),
+  public: {
+    getBalance: () => api.get<BonusBalanceResponse>(`${BASE_URL}/balance`),
+    getTransactions: (params?: { page?: number; size?: number }) =>
+      api.get<PageResponse<BonusTransactionResponse>>(
+        `${BASE_URL}/transactions`,
+        { params },
+      ),
+  },
+  admin: {
+    getRules: () => api.get<BonusRulesResponse[]>(`${ADMIN_BASE_URL}/rules`),
+    updateRule: (type: BonusTransactionType, request: BonusRulesRequest) =>
+      api.put<BonusRulesResponse>(`${ADMIN_BASE_URL}/rules/${type}`, request),
+    resetRule: (type: BonusTransactionType) =>
+      api.put<BonusRulesResponse>(`${ADMIN_BASE_URL}/rules/${type}/reset`),
+  },
 };

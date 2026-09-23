@@ -1,7 +1,7 @@
 import React from "react";
 import { Badge } from "@/components/ui/Badge/Badge";
 import { Pagination } from "@/components/ui/Pagination/Pagination";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 import type {
   BonusTransactionResponse,

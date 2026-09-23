@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
-import { Modal } from "@/components/ui";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { Modal } from "@/components/ui/Modal/Modal";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 import { useEntityAuditHistory } from "@/hooks/features/audit/useEntityAuditHistory";
 import { AuditLogsTable } from "../AuditLogsTable/AuditLogsTable";

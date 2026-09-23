@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { Layout } from "@/components/layout/Layout/Layout";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { useRefund } from "@/hooks/features/refund/useRefund";
 import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";

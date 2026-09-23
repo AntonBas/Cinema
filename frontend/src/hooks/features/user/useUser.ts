@@ -31,12 +31,12 @@ export const useUser = () => {
     );
 
     const getProfile = useCallback(async () => {
-        return profileApiRef.current.execute(() => userApi.getProfile());
+        return profileApiRef.current.execute(() => userApi.public.getProfile());
     }, []);
 
     const updateProfile = useCallback(async (data: UserUpdateRequest) => {
         const response = await updateProfileApiRef.current.execute(
-            () => userApi.updateProfile(data),
+            () => userApi.public.updateProfile(data),
             { successMessage: 'Profile updated successfully', suppressValidationToast: true }
         );
         if (response) {
@@ -47,7 +47,7 @@ export const useUser = () => {
 
     const updatePassword = useCallback(async (data: UserPasswordUpdateRequest) => {
         return passwordApiRef.current.execute(
-            () => userApi.updatePassword(data),
+            () => userApi.public.updatePassword(data),
             { successMessage: 'Password updated successfully', suppressValidationToast: true }
         );
     }, []);
@@ -55,7 +55,7 @@ export const useUser = () => {
     const requestEmailChange = useCallback(async (newEmail: string, password: string) => {
         const request: UserEmailChangeRequest = { newEmail, password };
         return emailApiRef.current.execute(
-            () => userApi.requestEmailChange(request),
+            () => userApi.public.requestEmailChange(request),
             { successMessage: 'Confirmation email sent to your new address', suppressValidationToast: true }
         );
     }, []);

@@ -13,7 +13,7 @@ import type { PageResponse, SearchParams } from '@/types/pagination';
 import { useApi } from '@/hooks/common/useApi';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
-export const useMovies = () => {
+export const useMovie = () => {
     const adminMoviesApi = useApi<PageResponse<MovieCardResponse>>();
     const currentMoviesHomeApi = useApi<MovieCardResponse[]>();
     const upcomingMoviesHomeApi = useApi<MovieCardResponse[]>();
@@ -49,7 +49,7 @@ export const useMovies = () => {
     );
 
     const getAdminMovies = useCallback(async (params?: SearchParams & { query?: string; status?: MovieStatus }) => {
-        return adminMoviesApiRef.current.execute(() => movieApi.admin.getMovies(params));
+        return adminMoviesApiRef.current.execute(() => movieApi.admin.getAll(params));
     }, []);
 
     const getCurrentMoviesForHome = useCallback(async () => {

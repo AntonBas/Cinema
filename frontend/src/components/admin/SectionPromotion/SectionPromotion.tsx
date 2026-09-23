@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/Button/Button";
 import { SearchInput } from "@/components/ui/SearchInput/SearchInput";
 import { Pagination } from "@/components/ui/Pagination/Pagination";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { usePromotion } from "@/hooks/features/promotion/usePromotion";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 import { usePagination } from "@/hooks/common/usePagination";
@@ -12,13 +12,12 @@ import type {
   PromotionResponse,
   PromotionListResponse,
 } from "@/types/promotion";
-import PromotionTable from "./PromotionTable/PromotionTable";
-import CreatePromotionModal from "./PromotionModal/CreatePromotionModal";
-import EditPromotionModal from "./PromotionModal/EditPromotionModal";
+import { PromotionTable } from "./PromotionTable/PromotionTable";
+import { PromotionFormModal } from "./PromotionFormModal/PromotionFormModal";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import styles from "./SectionPromotion.module.css";
 
-const SectionPromotion: React.FC = () => {
+export const SectionPromotion: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingPromotion, setEditingPromotion] =
@@ -180,14 +179,14 @@ const SectionPromotion: React.FC = () => {
       )}
 
       {showCreateModal && (
-        <CreatePromotionModal
+        <PromotionFormModal
           onClose={() => setShowCreateModal(false)}
           onSuccess={handleCreateSuccess}
         />
       )}
 
       {editingPromotion && (
-        <EditPromotionModal
+        <PromotionFormModal
           promotion={editingPromotion}
           onClose={() => setEditingPromotion(null)}
           onSuccess={handleUpdateSuccess}
@@ -208,5 +207,3 @@ const SectionPromotion: React.FC = () => {
     </div>
   );
 };
-
-export default SectionPromotion;

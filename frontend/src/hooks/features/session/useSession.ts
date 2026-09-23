@@ -54,7 +54,7 @@ export const useSession = () => {
 
   const getAdminSessions = useCallback(async (params?: AdminSessionParams) => {
     return adminSessionsApiRef.current.execute(() =>
-      sessionApi.admin.getSessions(params),
+      sessionApi.admin.getAll(params),
     );
   }, []);
 

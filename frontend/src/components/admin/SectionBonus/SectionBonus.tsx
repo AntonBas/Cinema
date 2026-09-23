@@ -3,9 +3,9 @@ import { Pencil, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/Button/Button";
 import { Badge } from "@/components/ui/Badge/Badge";
 import { useBonus } from "@/hooks/features/bonus/useBonus";
-import EditRuleModal from "./BonusModal/EditRuleModal";
-import ResetRuleModal from "./BonusModal/ResetRuleModal";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { EditRuleModal } from "./BonusModal/EditRuleModal";
+import { ResetRuleModal } from "./BonusModal/ResetRuleModal";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import type { BonusRulesResponse, BonusTransactionType } from "@/types/bonus";
 import { BonusTransactionTypeDisplay } from "@/types/bonus";
 import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
@@ -13,7 +13,7 @@ import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import styles from "./SectionBonus.module.css";
 
-const SectionBonus = () => {
+export const SectionBonus = () => {
   const { getAllRules, rules, loading, rulesError } = useBonus();
   const [editingRule, setEditingRule] = useState<BonusRulesResponse | null>(
     null,
@@ -167,5 +167,3 @@ const SectionBonus = () => {
     </div>
   );
 };
-
-export default SectionBonus;

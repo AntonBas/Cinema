@@ -36,23 +36,23 @@ export const useBonus = () => {
     );
 
     const getMyBalance = useCallback(async (options?: UseApiOptions<BonusBalanceResponse>) => {
-        return balanceApiRef.current.execute(() => bonusApi.getBalance(), options);
+        return balanceApiRef.current.execute(() => bonusApi.public.getBalance(), options);
     }, []);
 
     const getMyTransactions = useCallback(async (params?: SearchParams) => {
-        return transactionsApiRef.current.execute(() => bonusApi.getTransactions(params));
+        return transactionsApiRef.current.execute(() => bonusApi.public.getTransactions(params));
     }, []);
 
     const getAllRules = useCallback(async () => {
-        return rulesApiRef.current.execute(() => bonusApi.getAllRules());
+        return rulesApiRef.current.execute(() => bonusApi.admin.getRules());
     }, []);
 
     const updateRule = useCallback(async (type: BonusTransactionType, request: BonusRulesRequest) => {
-        return updateRuleApiRef.current.execute(() => bonusApi.updateRule(type, request));
+        return updateRuleApiRef.current.execute(() => bonusApi.admin.updateRule(type, request));
     }, []);
 
     const resetRule = useCallback(async (type: BonusTransactionType) => {
-        return resetRuleApiRef.current.execute(() => bonusApi.resetRule(type));
+        return resetRuleApiRef.current.execute(() => bonusApi.admin.resetRule(type));
     }, []);
 
     return {

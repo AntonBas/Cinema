@@ -10,22 +10,22 @@ const BASE_URL = "/api/tickets";
 const CASHIER_BASE_URL = "/api/admin/ticket";
 
 export const ticketApi = {
-  getUserTickets: (params?: SearchParams & TicketFilterRequest) =>
-    api.get<PageResponse<TicketResponse>>(BASE_URL, { params }),
-
-  getByCode: (ticketCode: string) =>
-    api.get<TicketResponse>(`${BASE_URL}/code/${ticketCode}`),
-
-  getQRCode: (ticketCode: string) =>
-    api.get<Blob>(`${BASE_URL}/code/${ticketCode}/qr`, {
-      responseType: "blob",
-    }),
-
-  getTicketForCashier: (uniqueCode: string) =>
-    api.get<TicketCashierResponse>(`${CASHIER_BASE_URL}/${uniqueCode}`),
-
-  validateTicket: (uniqueCode: string) =>
-    api.post<TicketCashierResponse>(
-      `${CASHIER_BASE_URL}/${uniqueCode}/validate`,
-    ),
+  public: {
+    getMine: (params?: SearchParams & TicketFilterRequest) =>
+      api.get<PageResponse<TicketResponse>>(BASE_URL, { params }),
+    getByCode: (ticketCode: string) =>
+      api.get<TicketResponse>(`${BASE_URL}/code/${ticketCode}`),
+    getQRCode: (ticketCode: string) =>
+      api.get<Blob>(`${BASE_URL}/code/${ticketCode}/qr`, {
+        responseType: "blob",
+      }),
+  },
+  admin: {
+    getByCode: (uniqueCode: string) =>
+      api.get<TicketCashierResponse>(`${CASHIER_BASE_URL}/${uniqueCode}`),
+    validate: (uniqueCode: string) =>
+      api.post<TicketCashierResponse>(
+        `${CASHIER_BASE_URL}/${uniqueCode}/validate`,
+      ),
+  },
 };

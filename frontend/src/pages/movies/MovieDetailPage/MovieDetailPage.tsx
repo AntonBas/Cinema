@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useMovies } from "@/hooks/features/movies/useMovies";
+import { useMovie } from "@/hooks/features/movie/useMovie";
 import type { SessionMovieInfoResponse } from "@/types/session";
 import {
   AgeRatingDisplay,
@@ -9,7 +9,7 @@ import {
 } from "@/types/movie";
 import { Button } from "@/components/ui/Button/Button";
 import { Tooltip } from "@/components/ui/Tooltip/Tooltip";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { Layout } from "@/components/layout/Layout/Layout";
 import { SessionSection } from "@/components/movies/SessionSection/SessionSection";
 import { DEFAULT_POSTER_URL, resolvePosterUrl } from "@/utils/posterUrl";
@@ -50,7 +50,7 @@ const groupSessionsByDate = (
 export const MovieDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { movieDetail, loading, getBySlug } = useMovies();
+  const { movieDetail, loading, getBySlug } = useMovie();
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [dateList, setDateList] = useState<string[]>([]);

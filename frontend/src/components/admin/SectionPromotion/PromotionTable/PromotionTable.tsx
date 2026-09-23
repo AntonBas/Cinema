@@ -1,6 +1,6 @@
 import React from "react";
 import { Pencil, Trash2 } from "lucide-react";
-import { Badge } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge/Badge";
 import type { PromotionListResponse, PromotionStatus } from "@/types/promotion";
 import { formatDate } from "@/utils/formatters";
 import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
@@ -36,7 +36,7 @@ const getStatusVariant = (status: PromotionStatus) => {
   }
 };
 
-const PromotionTable: React.FC<PromotionTableProps> = ({
+export const PromotionTable: React.FC<PromotionTableProps> = ({
   promotions,
   onEdit,
   onDelete,
@@ -121,5 +121,3 @@ const PromotionTable: React.FC<PromotionTableProps> = ({
     </div>
   );
 };
-
-export default PromotionTable;

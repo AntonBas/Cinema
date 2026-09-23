@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { Input } from '@/components/ui/Input/Input';
 import { Select } from '@/components/ui/Select/Select';
 import { Button } from '@/components/ui/Button/Button';
-import { useMovies } from '@/hooks/features/movies/useMovies';
+import { useMovie } from '@/hooks/features/movie/useMovie';
 import type { CinemaSessionStatus } from '@/types/session';
 import type { CinemaHallListResponse } from '@/types/cinemaHall';
 import type { MovieSessionSearchResponse } from '@/types/movie';
@@ -68,7 +68,7 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
     const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const movieSearchRef = useRef<HTMLDivElement>(null);
 
-    const { search } = useMovies();
+    const { search } = useMovie();
 
     useEffect(() => {
         setMovieInput(filters.movieTitle || '');

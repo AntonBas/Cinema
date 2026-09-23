@@ -1,7 +1,7 @@
 import React from "react";
 import type { MovieCardResponse } from "@/types/movie";
 import { MovieCard } from "./MovieCard/MovieCard";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import styles from "./MovieList.module.css";
 

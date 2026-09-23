@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useUser } from '@/hooks/features/user/useUser';
-import { Input, Button, Tooltip } from '@/components/ui';
+import { Input } from '@/components/ui/Input/Input';
+import { Button } from '@/components/ui/Button/Button';
+import { Tooltip } from '@/components/ui/Tooltip/Tooltip';
 import { isApiErrorException } from '@/utils/apiErrorHandler';
 import styles from './EmailChangeForm.module.css';
 

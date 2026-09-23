@@ -2,7 +2,9 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Mail } from "lucide-react";
 import { useAuthActions } from "@/hooks/features/auth/useAuthActions";
-import { Input, Button, Modal } from "@/components/ui";
+import { Input } from "@/components/ui/Input/Input";
+import { Button } from "@/components/ui/Button/Button";
+import { Modal } from "@/components/ui/Modal/Modal";
 import { AuthCard } from "@/components/auth/AuthCard/AuthCard";
 import styles from "./ForgotPasswordForm.module.css";
 

@@ -8,7 +8,7 @@ import { BookingSidebar } from "@/components/booking/BookingSidebar/BookingSideb
 import { ProgressStepper } from "@/components/booking/ProgressStepper/ProgressStepper";
 import { BOOKING_STEPS } from "@/components/booking/ProgressStepper/bookingSteps";
 import { Layout } from "@/components/layout/Layout/Layout";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { useNotification } from "@/context/NotificationContext";
 import { useAuth } from "@/context/AuthContext";
 import type { SeatInfo } from "@/types/seatReservation";

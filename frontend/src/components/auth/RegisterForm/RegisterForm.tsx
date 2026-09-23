@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuthActions } from "@/hooks/features/auth/useAuthActions";
-import { Input, Button, Modal } from "@/components/ui";
+import { Input } from "@/components/ui/Input/Input";
+import { Button } from "@/components/ui/Button/Button";
+import { Modal } from "@/components/ui/Modal/Modal";
 import type { RegisterRequest } from "@/types/auth";
 import { isApiErrorException } from "@/utils/apiErrorHandler";
 import {

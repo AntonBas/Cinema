@@ -22,7 +22,7 @@ interface TicketTypeTableProps {
   loading?: boolean;
 }
 
-const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
+export const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
   ticketTypes,
   onEdit,
   onDelete,
@@ -217,5 +217,3 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
     </>
   );
 };
-
-export default TicketTypeTable;

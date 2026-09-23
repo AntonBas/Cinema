@@ -10,7 +10,7 @@ import type {
 import { useApi } from '@/hooks/common/useApi';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
-export const useCinemaHalls = () => {
+export const useCinemaHall = () => {
     const hallsApi = useApi<CinemaHallListResponse[]>();
     const hallApi = useApi<CinemaHallResponse>();
     const layoutApi = useApi<HallLayoutResponse>();
@@ -32,40 +32,40 @@ export const useCinemaHalls = () => {
     );
 
     const getAllHalls = useCallback(async () => {
-        return hallsApiRef.current.execute(() => cinemaHallApi.getAll());
+        return hallsApiRef.current.execute(() => cinemaHallApi.admin.getAll());
     }, []);
 
     const getHallById = useCallback(async (id: number) => {
-        return hallApiRef.current.execute(() => cinemaHallApi.getById(id));
+        return hallApiRef.current.execute(() => cinemaHallApi.admin.getById(id));
     }, []);
 
     const getHallLayout = useCallback(async (id: number) => {
-        return layoutApiRef.current.execute(() => cinemaHallApi.getLayout(id));
+        return layoutApiRef.current.execute(() => cinemaHallApi.admin.getLayout(id));
     }, []);
 
     const updateLayout = useCallback(async (id: number, request: HallLayoutRequest) => {
         return layoutApiRef.current.execute(
-            () => cinemaHallApi.updateLayout(id, request),
+            () => cinemaHallApi.admin.updateLayout(id, request),
             { successMessage: 'Hall layout updated successfully' }
         );
     }, []);
 
     const createHall = useCallback(async (request: CinemaHallRequest) => {
         return mutationApiRef.current.execute(
-            () => cinemaHallApi.create(request),
+            () => cinemaHallApi.admin.create(request),
             { suppressValidationToast: true }
         );
     }, []);
 
     const updateHall = useCallback(async (id: number, request: CinemaHallRequest) => {
         return mutationApiRef.current.execute(
-            () => cinemaHallApi.update(id, request),
+            () => cinemaHallApi.admin.update(id, request),
             { suppressValidationToast: true }
         );
     }, []);
 
     const deleteHall = useCallback(async (id: number) => {
-        return mutationApiRef.current.execute(() => cinemaHallApi.delete(id));
+        return mutationApiRef.current.execute(() => cinemaHallApi.admin.delete(id));
     }, []);
 
     return {

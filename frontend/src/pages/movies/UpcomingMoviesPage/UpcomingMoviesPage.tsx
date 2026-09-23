@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useMovies } from "@/hooks/features/movies/useMovies";
+import { useMovie } from "@/hooks/features/movie/useMovie";
 import { MovieList } from "@/components/movies/MovieList/MovieList";
 import { DEFAULT_PAGE_SIZE } from "@/utils/paginationUtils";
 import type { MovieCardResponse } from "@/types/movie";
@@ -13,7 +13,7 @@ export const UpcomingMoviesPage: React.FC = () => {
   >(undefined);
   const [error, setError] = useState<Error | null>(null);
 
-  const { getUpcoming, loading } = useMovies();
+  const { getUpcoming, loading } = useMovie();
 
   const loadMovies = useCallback(
     async (page: number) => {

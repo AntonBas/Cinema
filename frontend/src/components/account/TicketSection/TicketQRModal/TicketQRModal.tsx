@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Button } from "@/components/ui";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
-import { useTickets } from "@/hooks/features/tickets/useTickets";
+import { Modal } from "@/components/ui/Modal/Modal";
+import { Button } from "@/components/ui/Button/Button";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { useTicket } from "@/hooks/features/ticket/useTicket";
 import styles from "./TicketQRModal.module.css";
 
 interface TicketQRModalProps {
@@ -13,7 +14,7 @@ export const TicketQRModal: React.FC<TicketQRModalProps> = ({
   ticketCode,
   onClose,
 }) => {
-  const { getQRCode, loading } = useTickets();
+  const { getQRCode, loading } = useTicket();
   const [qrImage, setQrImage] = useState<string>("");
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);

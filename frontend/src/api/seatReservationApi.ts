@@ -4,12 +4,10 @@ import type { SeatReservationResponse } from "@/types/seatReservation";
 const BASE_URL = "/api/sessions";
 
 export const seatReservationApi = {
-  getSeatAvailability: (sessionId: string) =>
+  getAvailability: (sessionId: string) =>
     api.get<SeatReservationResponse>(`${BASE_URL}/${sessionId}/seats`),
-
-  temporaryHoldSeat: (sessionId: string, seatId: number) =>
+  hold: (sessionId: string, seatId: number) =>
     api.post<void>(`${BASE_URL}/${sessionId}/seats/${seatId}/hold`),
-
-  cancelTemporaryHold: (sessionId: string, seatId: number) =>
+  release: (sessionId: string, seatId: number) =>
     api.delete<void>(`${BASE_URL}/${sessionId}/seats/${seatId}/hold`),
 };

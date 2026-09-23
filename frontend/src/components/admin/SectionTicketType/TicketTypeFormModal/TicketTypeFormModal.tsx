@@ -7,7 +7,7 @@ import { useTicketType } from '@/hooks/features/ticketType/useTicketType';
 import type { TicketTypeResponse, TicketTypeRequest, TicketTypeCategory } from '@/types/ticketType';
 import { TicketTypeCategoryDisplay } from '@/types/ticketType';
 import { isApiErrorException } from '@/utils/apiErrorHandler';
-import styles from './TicketTypeModal.module.css';
+import styles from './TicketTypeFormModal.module.css';
 
 interface TicketTypeFormModalProps {
     isOpen: boolean;
@@ -16,7 +16,7 @@ interface TicketTypeFormModalProps {
     ticketType?: TicketTypeResponse | null;
 }
 
-const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
+export const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
     isOpen,
     onClose,
     onSuccess,
@@ -232,5 +232,3 @@ const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
         </Modal>
     );
 };
-
-export default TicketTypeFormModal;

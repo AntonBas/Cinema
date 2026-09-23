@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { SearchInput, Select } from '@/components/ui';
+import { SearchInput } from '@/components/ui/SearchInput/SearchInput';
+import { Select } from '@/components/ui/Select/Select';
 import { UserRoleDisplay, VerificationStatusDisplay } from '@/types/user';
 import styles from './UserFilters.module.css';
 

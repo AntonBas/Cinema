@@ -11,7 +11,7 @@ interface ResetRuleModalProps {
     ruleType: BonusTransactionType;
 }
 
-const ResetRuleModal: React.FC<ResetRuleModalProps> = ({
+export const ResetRuleModal: React.FC<ResetRuleModalProps> = ({
     isOpen,
     onClose,
     onSuccess,
@@ -47,5 +47,3 @@ const ResetRuleModal: React.FC<ResetRuleModalProps> = ({
         />
     );
 };
-
-export default ResetRuleModal;

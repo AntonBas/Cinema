@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthActions } from '@/hooks/features/auth/useAuthActions';
-import { Input, Button } from '@/components/ui';
+import { Input } from '@/components/ui/Input/Input';
+import { Button } from '@/components/ui/Button/Button';
 import { Chrome } from 'lucide-react';
 import { AuthCard } from '@/components/auth/AuthCard/AuthCard';
 import styles from './LoginForm.module.css';

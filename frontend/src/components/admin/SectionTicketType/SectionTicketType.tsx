@@ -4,17 +4,17 @@ import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import { usePagination } from '@/hooks/common/usePagination';
 import { Button } from '@/components/ui/Button/Button';
 import { Pagination } from '@/components/ui/Pagination/Pagination';
-import TicketTypeTable from './TicketTypeTable/TicketTypeTable';
-import TicketTypeFilters from './TicketTypeFilters/TicketTypeFilters';
-import TicketTypeFormModal from './TicketTypeModal/TicketTypeFormModal';
-import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
+import { TicketTypeTable } from './TicketTypeTable/TicketTypeTable';
+import { TicketTypeFilters } from './TicketTypeFilters/TicketTypeFilters';
+import { TicketTypeFormModal } from './TicketTypeFormModal/TicketTypeFormModal';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import { DEFAULT_PAGE_SIZE_COMPACT } from '@/utils/paginationUtils';
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState/EmptyState';
 import styles from './SectionTicketType.module.css';
 import type { TicketTypeResponse, TicketTypeCategory } from '@/types/ticketType';
 
-const SectionTicketType = () => {
+export const SectionTicketType = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editingTicketType, setEditingTicketType] = useState<TicketTypeResponse | null>(null);
@@ -209,5 +209,3 @@ const SectionTicketType = () => {
         </div>
     );
 };
-
-export default SectionTicketType;

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Input, Button, Modal } from "@/components/ui";
+import { Input } from "@/components/ui/Input/Input";
+import { Button } from "@/components/ui/Button/Button";
+import { Modal } from "@/components/ui/Modal/Modal";
 import type { UserProfileResponse, UserUpdateRequest } from "@/types/user";
 import { isApiErrorException } from "@/utils/apiErrorHandler";
 import { validateName, validatePhoneNumber } from "@/utils/formValidation";

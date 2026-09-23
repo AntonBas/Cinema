@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { ShieldCheck, ShieldX, UserCheck, UserX } from 'lucide-react';
-import { Badge, Select, ConfirmModal } from '@/components/ui';
-import { useAdminUsers } from '@/hooks/features/admin/useAdminUsers';
+import { Badge } from '@/components/ui/Badge/Badge';
+import { Select } from '@/components/ui/Select/Select';
+import { ConfirmModal } from '@/components/ui/ConfirmModal/ConfirmModal';
+import { useAdminUsers } from '@/hooks/features/user/useAdminUsers';
 import { UserRoleDisplay, VerificationStatusDisplay } from '@/types/user';
 import type { AdminUserListResponse, UserRole, VerificationStatus } from '@/types/user';
 import { ActionIconButton } from '@/components/admin/shared/ActionIconButton/ActionIconButton';

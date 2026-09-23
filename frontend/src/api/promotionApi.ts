@@ -11,7 +11,7 @@ const BASE_URL = "/api/promotions";
 const ADMIN_BASE_URL = "/api/admin/promotions";
 
 export const promotionApi = {
-  user: {
+  public: {
     getAvailable: () => api.get<PromotionResponse[]>(BASE_URL),
 
     getClaimed: () => api.get<PromotionResponse[]>(`${BASE_URL}/claimed`),

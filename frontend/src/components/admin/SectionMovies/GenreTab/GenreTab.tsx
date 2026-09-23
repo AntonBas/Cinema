@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import type { GenreListResponse } from "@/types/genre";
-import { useGenres } from "@/hooks/features/genres/useGenres";
+import { useGenre } from "@/hooks/features/genre/useGenre";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 import { usePagination } from "@/hooks/common/usePagination";
 import { SearchInput } from "@/components/ui/SearchInput/SearchInput";
 import { Button } from "@/components/ui/Button/Button";
 import { Pagination } from "@/components/ui/Pagination/Pagination";
 import { DeleteConfirmModal } from "@/components/ui/DeleteConfirmModal/DeleteConfirmModal";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { DEFAULT_PAGE_SIZE_COMPACT } from "@/utils/paginationUtils";
 import { GenreTable } from "./GenreTable/GenreTable";
 import { GenreFormModal } from "./GenreFormModal/GenreFormModal";
@@ -35,7 +35,7 @@ export const GenreTab: React.FC = () => {
   const { params, setPage, setSearch } = usePagination({
     size: DEFAULT_PAGE_SIZE_COMPACT,
   });
-  const { loading, getAll, create, update, remove } = useGenres();
+  const { loading, getAll, create, update, remove } = useGenre();
   const showDelayedLoading = useDelayedLoading(loading, {
     delay: 150,
     minDisplayTime: 300,
@@ -182,9 +182,8 @@ export const GenreTab: React.FC = () => {
           setEditingGenre(null);
         }}
         onSubmit={handleSubmit}
-        initialName={editingGenre?.name || ""}
+        genre={editingGenre}
         loading={loading}
-        isEditing={!!editingGenre}
       />
 
       <DeleteConfirmModal

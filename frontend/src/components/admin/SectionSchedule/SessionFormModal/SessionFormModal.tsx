@@ -1,56 +1,47 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useMovies } from '@/hooks/features/movies/useMovies';
+import { useMovie } from '@/hooks/features/movie/useMovie';
 import { Input } from '@/components/ui/Input/Input';
 import { Select } from '@/components/ui/Select/Select';
 import { Button } from '@/components/ui/Button/Button';
 import { Modal } from '@/components/ui/Modal/Modal';
 import { isApiErrorException } from '@/utils/apiErrorHandler';
-import type { SessionRequest } from '@/types/session';
+import type { SessionAdminResponse, SessionRequest } from '@/types/session';
 import type { MovieSessionSearchResponse } from '@/types/movie';
 import type { CinemaHallListResponse } from '@/types/cinemaHall';
-import styles from './SessionModal.module.css';
+import styles from './SessionFormModal.module.css';
 
-interface BaseSessionModalProps {
+interface SessionFormModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSave: (data: SessionRequest) => Promise<void>;
     loading: boolean;
-    initialData?: {
-        startTime?: string;
-        basePrice?: number;
-        movieId?: number;
-        hallId?: number;
-        movieTitle?: string;
-    };
-    title: string;
-    submitText: string;
+    session?: SessionAdminResponse;
     halls: CinemaHallListResponse[];
 }
 
-export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
+export const SessionFormModal: React.FC<SessionFormModalProps> = ({
     isOpen,
     onClose,
     onSave,
     loading,
-    initialData,
-    title,
-    submitText,
+    session,
     halls,
 }) => {
-    const { search } = useMovies();
+    const { search } = useMovie();
+    const isEditing = session !== undefined;
 
     const [formData, setFormData] = useState({
-        startTime: initialData?.startTime || '',
-        basePrice: initialData?.basePrice?.toString() || '',
-        movieId: initialData?.movieId?.toString() || '',
-        hallId: initialData?.hallId?.toString() || ''
+        startTime: session?.startTime || '',
+        basePrice: session?.basePrice?.toString() || '',
+        movieId: session?.movieId?.toString() || '',
+        hallId: session?.hallId?.toString() || ''
     });
 
     const [selectedMovie, setSelectedMovie] = useState<MovieSessionSearchResponse | null>(null);
     const [movieResults, setMovieResults] = useState<MovieSessionSearchResponse[]>([]);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [showMovieResults, setShowMovieResults] = useState(false);
-    const [movieSearchTerm, setMovieSearchTerm] = useState(initialData?.movieTitle || '');
+    const [movieSearchTerm, setMovieSearchTerm] = useState(session?.movieTitle || '');
     const [isSearching, setIsSearching] = useState(false);
     const movieSearchRef = useRef<HTMLDivElement>(null);
     const hasLoadedRef = useRef(false);
@@ -58,18 +49,18 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
     useEffect(() => {
         if (isOpen) {
             setFormData({
-                startTime: initialData?.startTime || '',
-                basePrice: initialData?.basePrice?.toString() || '',
-                movieId: initialData?.movieId?.toString() || '',
-                hallId: initialData?.hallId?.toString() || ''
+                startTime: session?.startTime || '',
+                basePrice: session?.basePrice?.toString() || '',
+                movieId: session?.movieId?.toString() || '',
+                hallId: session?.hallId?.toString() || ''
             });
-            setMovieSearchTerm(initialData?.movieTitle || '');
+            setMovieSearchTerm(session?.movieTitle || '');
             setSelectedMovie(null);
             setErrors({});
             setShowMovieResults(false);
             hasLoadedRef.current = false;
         }
-    }, [isOpen, initialData]);
+    }, [isOpen, session]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -184,7 +175,7 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
     }, []);
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={title} size="large">
+        <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Session' : 'Create New Session'} size="large">
             <form onSubmit={handleSubmit} className={styles.form}>
                 <div className={styles.formRow}>
                     <div className={styles.formGroup}>
@@ -273,7 +264,7 @@ export const BaseSessionModal: React.FC<BaseSessionModalProps> = ({
                         Cancel
                     </Button>
                     <Button type="submit" variant="success" disabled={loading} loading={loading}>
-                        {submitText}
+                        {isEditing ? 'Update Session' : 'Create Session'}
                     </Button>
                 </div>
             </form>

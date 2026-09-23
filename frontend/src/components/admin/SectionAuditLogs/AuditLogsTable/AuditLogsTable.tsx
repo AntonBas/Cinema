@@ -1,5 +1,6 @@
 import React from "react";
-import { Badge, Tooltip } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge/Badge";
+import { Tooltip } from "@/components/ui/Tooltip/Tooltip";
 import type { AuditLogResponse } from "@/types/audit";
 import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";

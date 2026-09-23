@@ -8,7 +8,7 @@ import type {
     VerificationBirthDateRequest,
 } from '@/types/user';
 import type { PageResponse, SearchParams } from '@/types/pagination';
-import { adminApi } from '@/api/adminApi';
+import { userApi } from '@/api/userApi';
 import { useApi } from '@/hooks/common/useApi';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 
@@ -40,13 +40,13 @@ export const useAdminUsers = () => {
     }, [usersApi.data]);
 
     const getUsers = useCallback(async (params?: AdminUsersParams) => {
-        return usersApiRef.current.execute(() => adminApi.getUsers(params || {}));
+        return usersApiRef.current.execute(() => userApi.admin.getAll(params || {}));
     }, []);
 
     const updateUserRole = useCallback(async (userId: number, userRole: UserRole) => {
         const roleData: UserRoleUpdateRequest = { userRole };
         return mutationApiRef.current.execute(
-            () => adminApi.updateUserRole(userId, roleData),
+            () => userApi.admin.updateRole(userId, roleData),
             { successMessage: `${getUserName(userId)} role updated successfully` }
         );
     }, [getUserName]);
@@ -54,7 +54,7 @@ export const useAdminUsers = () => {
     const updateUserStatus = useCallback(async (userId: number, enabled: boolean) => {
         const statusData: UserStatusUpdateRequest = { enabled };
         return mutationApiRef.current.execute(
-            () => adminApi.updateUserStatus(userId, statusData),
+            () => userApi.admin.updateStatus(userId, statusData),
             {
                 successMessage: enabled
                     ? `${getUserName(userId)} activated successfully`
@@ -70,7 +70,7 @@ export const useAdminUsers = () => {
         const verificationData: VerificationBirthDateRequest = { verificationStatus };
         const statusText = verificationStatus === 'VERIFIED' ? 'verified' : 'unverified';
         return mutationApiRef.current.execute(
-            () => adminApi.updateBirthDateVerification(userId, verificationData),
+            () => userApi.admin.updateBirthDateVerification(userId, verificationData),
             { successMessage: `${getUserName(userId)} birth date ${statusText}` }
         );
     }, [getUserName]);

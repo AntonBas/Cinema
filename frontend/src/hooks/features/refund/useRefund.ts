@@ -27,7 +27,7 @@ export const useRefund = () => {
   );
 
   const processRefund = useCallback(async (request: RefundRequest) => {
-    return refundApiRef.current.execute(() => refundApi.processRefund(request));
+    return refundApiRef.current.execute(() => refundApi.create(request));
   }, []);
 
   const getPolicy = useCallback(async () => {

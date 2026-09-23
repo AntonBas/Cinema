@@ -1,17 +1,16 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useSession } from '@/hooks/features/sessions/useSession';
-import { useCinemaHalls } from '@/hooks/features/cinemaHalls/useCinemaHalls';
+import { useSession } from '@/hooks/features/session/useSession';
+import { useCinemaHall } from '@/hooks/features/cinemaHall/useCinemaHall';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
 import { usePagination } from '@/hooks/common/usePagination';
 import { SessionFilters } from './SessionFilters/SessionFilters';
 import { SessionTable } from './SessionTable/SessionTable';
-import { CreateSessionModal } from './SessionModal/CreateSessionModal';
-import { EditSessionModal } from './SessionModal/EditSessionModal';
+import { SessionFormModal } from './SessionFormModal/SessionFormModal';
 import { DeleteConfirmModal } from '@/components/ui/DeleteConfirmModal/DeleteConfirmModal';
 import { ConfirmModal } from '@/components/ui/ConfirmModal/ConfirmModal';
 import { Pagination } from '@/components/ui/Pagination/Pagination';
 import { Button } from '@/components/ui/Button/Button';
-import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import { DEFAULT_PAGE_SIZE_COMPACT } from '@/utils/paginationUtils';
 import type { SessionAdminResponse, SessionRequest, CinemaSessionStatus } from '@/types/session';
 import type { CinemaHallListResponse } from '@/types/cinemaHall';
@@ -27,7 +26,7 @@ interface FiltersState {
 }
 
 export const SectionSchedule: React.FC = () => {
-    const { halls, getAllHalls } = useCinemaHalls();
+    const { halls, getAllHalls } = useCinemaHall();
     const { params, setPage, setSort } = usePagination({ size: DEFAULT_PAGE_SIZE_COMPACT });
 
     const [filters, setFilters] = useState<FiltersState>({});
@@ -183,7 +182,7 @@ export const SectionSchedule: React.FC = () => {
                 </div>
             )}
 
-            <CreateSessionModal
+            <SessionFormModal
                 isOpen={isCreateModalOpen}
                 onSave={handleCreateSession}
                 onClose={() => setIsCreateModalOpen(false)}
@@ -192,10 +191,10 @@ export const SectionSchedule: React.FC = () => {
             />
 
             {editingSession && (
-                <EditSessionModal
+                <SessionFormModal
                     isOpen={!!editingSession}
                     session={editingSession}
-                    onSave={handleUpdateSession}
+                    onSave={(data) => handleUpdateSession(editingSession.id, data)}
                     onClose={() => setEditingSession(null)}
                     loading={loading}
                     halls={hallsForSelect}

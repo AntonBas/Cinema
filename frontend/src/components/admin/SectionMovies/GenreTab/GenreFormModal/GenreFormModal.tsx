@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Modal, Input, Button } from '@/components/ui';
+import { Modal } from '@/components/ui/Modal/Modal';
+import { Input } from '@/components/ui/Input/Input';
+import { Button } from '@/components/ui/Button/Button';
 import { isApiErrorException } from '@/utils/apiErrorHandler';
+import type { GenreListResponse } from '@/types/genre';
 import styles from './GenreFormModal.module.css';
 
 interface GenreFormModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSubmit: (name: string) => Promise<void>;
-    initialName?: string;
+    genre?: GenreListResponse | null;
     loading?: boolean;
-    isEditing?: boolean;
 }
 
 const MAX_NAME_LENGTH = 30;
@@ -19,10 +21,11 @@ export const GenreFormModal: React.FC<GenreFormModalProps> = ({
     isOpen,
     onClose,
     onSubmit,
-    initialName = '',
-    loading = false,
-    isEditing = false
+    genre,
+    loading = false
 }) => {
+    const isEditing = !!genre;
+    const initialName = genre?.name ?? '';
     const [name, setName] = useState(initialName);
     const [error, setError] = useState('');
 

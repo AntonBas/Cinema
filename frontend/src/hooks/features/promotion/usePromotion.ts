@@ -42,16 +42,16 @@ export const usePromotion = () => {
     }, [adminApi.data, availableApi.data, claimedApi.data]);
 
     const getAvailable = useCallback(async () => {
-        return availableApiRef.current.execute(() => promotionApi.user.getAvailable());
+        return availableApiRef.current.execute(() => promotionApi.public.getAvailable());
     }, []);
 
     const getClaimed = useCallback(async () => {
-        return claimedApiRef.current.execute(() => promotionApi.user.getClaimed());
+        return claimedApiRef.current.execute(() => promotionApi.public.getClaimed());
     }, []);
 
     const claim = useCallback(async (request: ClaimPromotionRequest) => {
         return mutationApiRef.current.execute(
-            () => promotionApi.user.claim(request),
+            () => promotionApi.public.claim(request),
             { successMessage: `Promotion "${getPromotionTitle(request.promotionId)}" claimed successfully` }
         );
     }, [getPromotionTitle]);
