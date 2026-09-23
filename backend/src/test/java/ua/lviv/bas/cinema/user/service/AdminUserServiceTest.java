@@ -257,7 +257,7 @@ public class AdminUserServiceTest {
         Page<AdminUserProjection> projectionPage = new PageImpl<>(List.of(projection), pageable, 1);
 
         when(userRepository.findProjectionsByFilters(eq(search), eq("ROLE_USER"), eq("NOT_VERIFIED"), eq(true),
-                eq(pageable))).thenReturn(projectionPage);
+                any(Pageable.class))).thenReturn(projectionPage);
         when(userMapper.toAdminUserListResponse(projection)).thenReturn(response);
 
         Page<AdminUserListResponse> result = adminUserService.getUsers(search, role, verificationStatus, enabled,
@@ -275,7 +275,7 @@ public class AdminUserServiceTest {
         AdminUserProjection projection = createAdminUserProjection();
         Page<AdminUserProjection> projectionPage = new PageImpl<>(List.of(projection), pageable, 1);
 
-        when(userRepository.findProjectionsByFilters(eq(null), eq(null), eq(null), eq(null), eq(pageable)))
+        when(userRepository.findProjectionsByFilters(eq(null), eq(null), eq(null), eq(null), any(Pageable.class)))
                 .thenReturn(projectionPage);
         when(userMapper.toAdminUserListResponse(projection)).thenReturn(response);
 
@@ -291,7 +291,7 @@ public class AdminUserServiceTest {
 
         Page<AdminUserProjection> emptyPage = new PageImpl<>(List.of(), pageable, 0);
 
-        when(userRepository.findProjectionsByFilters(eq(null), eq(null), eq(null), eq(null), eq(pageable)))
+        when(userRepository.findProjectionsByFilters(eq(null), eq(null), eq(null), eq(null), any(Pageable.class)))
                 .thenReturn(emptyPage);
 
         Page<AdminUserListResponse> result = adminUserService.getUsers(null, null, null, null, pageable);

@@ -12,7 +12,18 @@ interface UserFiltersProps {
   onVerificationStatusChange: (value: string) => void;
   enabledFilter: string;
   onEnabledFilterChange: (value: string) => void;
+  sort: string;
+  onSortChange: (value: string) => void;
 }
+
+const SORT_OPTIONS = [
+  { value: "", label: "Newest first" },
+  { value: "createdDate,asc", label: "Oldest first" },
+  { value: "email,asc", label: "Email: A–Z" },
+  { value: "lastName,asc", label: "Last name: A–Z" },
+  { value: "lastActivity,desc", label: "Recently active" },
+  { value: "ticketsCount,desc", label: "Most tickets" },
+];
 
 const ENABLED_OPTIONS = [
   { value: "", label: "All Accounts" },
@@ -28,6 +39,8 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
   onVerificationStatusChange,
   enabledFilter,
   onEnabledFilterChange,
+  sort,
+  onSortChange,
 }) => {
   const roleOptions = useMemo(
     () => [
@@ -83,6 +96,14 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
           onChange={(value) => onEnabledFilterChange(String(value))}
           options={ENABLED_OPTIONS}
           placeholder="Account Status"
+          className={styles.select}
+        />
+
+        <Select
+          value={sort}
+          onChange={(value) => onSortChange(String(value))}
+          options={SORT_OPTIONS}
+          placeholder="Sort by"
           className={styles.select}
         />
       </div>

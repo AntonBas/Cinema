@@ -18,6 +18,7 @@ export const SectionUsers: React.FC = () => {
     VerificationStatus | ""
   >("");
   const [enabledFilter, setEnabledFilter] = useState<string>("");
+  const [sortOrder, setSortOrder] = useState("");
 
   const { params, setPage } = usePagination({
     size: DEFAULT_PAGE_SIZE_COMPACT,
@@ -40,6 +41,7 @@ export const SectionUsers: React.FC = () => {
         enabled: enabledFilter === "" ? undefined : enabledFilter === "true",
         page: page,
         size: pageSize,
+        sort: sortOrder || undefined,
       });
     },
     [
@@ -47,6 +49,7 @@ export const SectionUsers: React.FC = () => {
       roleFilter,
       verificationStatusFilter,
       enabledFilter,
+      sortOrder,
       pageSize,
       getAll,
       currentPage,
@@ -71,12 +74,14 @@ export const SectionUsers: React.FC = () => {
         enabled: enabledFilter === "" ? undefined : enabledFilter === "true",
         page: 0,
         size: pageSize,
+        sort: sortOrder || undefined,
       });
     },
     [
       roleFilter,
       verificationStatusFilter,
       enabledFilter,
+      sortOrder,
       pageSize,
       getAll,
       setPage,
@@ -95,12 +100,14 @@ export const SectionUsers: React.FC = () => {
         enabled: enabledFilter === "" ? undefined : enabledFilter === "true",
         page: 0,
         size: pageSize,
+        sort: sortOrder || undefined,
       });
     },
     [
       searchQuery,
       verificationStatusFilter,
       enabledFilter,
+      sortOrder,
       pageSize,
       getAll,
       setPage,
@@ -119,9 +126,18 @@ export const SectionUsers: React.FC = () => {
         enabled: enabledFilter === "" ? undefined : enabledFilter === "true",
         page: 0,
         size: pageSize,
+        sort: sortOrder || undefined,
       });
     },
-    [searchQuery, roleFilter, enabledFilter, pageSize, getAll, setPage],
+    [
+      searchQuery,
+      roleFilter,
+      enabledFilter,
+      sortOrder,
+      pageSize,
+      getAll,
+      setPage,
+    ],
   );
 
   const handleEnabledFilterChange = useCallback(
@@ -135,12 +151,14 @@ export const SectionUsers: React.FC = () => {
         enabled: value === "" ? undefined : value === "true",
         page: 0,
         size: pageSize,
+        sort: sortOrder || undefined,
       });
     },
     [
       searchQuery,
       roleFilter,
       verificationStatusFilter,
+      sortOrder,
       pageSize,
       getAll,
       setPage,
@@ -157,6 +175,33 @@ export const SectionUsers: React.FC = () => {
         enabled: enabledFilter === "" ? undefined : enabledFilter === "true",
         page: page,
         size: pageSize,
+        sort: sortOrder || undefined,
+      });
+    },
+    [
+      searchQuery,
+      roleFilter,
+      verificationStatusFilter,
+      enabledFilter,
+      sortOrder,
+      pageSize,
+      getAll,
+      setPage,
+    ],
+  );
+
+  const handleSortChange = useCallback(
+    (value: string) => {
+      setSortOrder(value);
+      setPage(0);
+      getAll({
+        query: searchQuery || undefined,
+        role: roleFilter || undefined,
+        verificationStatus: verificationStatusFilter || undefined,
+        enabled: enabledFilter === "" ? undefined : enabledFilter === "true",
+        page: 0,
+        size: pageSize,
+        sort: value || undefined,
       });
     },
     [
@@ -194,6 +239,8 @@ export const SectionUsers: React.FC = () => {
           onVerificationStatusChange={handleVerificationStatusChange}
           enabledFilter={enabledFilter}
           onEnabledFilterChange={handleEnabledFilterChange}
+          sort={sortOrder}
+          onSortChange={handleSortChange}
         />
       </div>
 

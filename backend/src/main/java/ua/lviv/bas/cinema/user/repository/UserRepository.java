@@ -62,9 +62,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
                 u.enabled,
                 u.verification_status as verificationStatus,
                 u.verified_at as verifiedAt,
-                COALESCE((SELECT COUNT(t.id) FROM tickets t WHERE t.user_id = u.id), 0) as ticketsCount,
+                u.tickets_count as ticketsCount,
                 u.last_modified_date as lastActivity
-            FROM users u
+            FROM (SELECT users.*,
+                         (SELECT COUNT(t.id) FROM tickets t WHERE t.user_id = users.id) AS tickets_count
+                  FROM users) u
             WHERE (:search IS NULL OR
                    u.email ILIKE CONCAT('%', CAST(:search AS text), '%') OR
                    u.first_name ILIKE CONCAT('%', CAST(:search AS text), '%') OR
@@ -72,7 +74,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
               AND (:role IS NULL OR u.user_role = CAST(:role AS text))
               AND (:verificationStatus IS NULL OR u.verification_status = CAST(:verificationStatus AS text))
               AND (:enabled IS NULL OR u.enabled = :enabled)
-            ORDER BY u.id DESC
             """, countQuery = """
             SELECT COUNT(*)
             FROM users u

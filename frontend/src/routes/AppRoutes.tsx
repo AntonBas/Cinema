@@ -73,6 +73,11 @@ const SectionTicketType = lazy(() =>
     (m) => ({ default: m.SectionTicketType }),
   ),
 );
+const SectionBookings = lazy(() =>
+  import("@/components/admin/SectionBookings/SectionBookings").then((m) => ({
+    default: m.SectionBookings,
+  })),
+);
 const SectionAuditLogs = lazy(() =>
   import("@/components/admin/SectionAuditLogs/SectionAuditLogs").then((m) => ({
     default: m.SectionAuditLogs,
@@ -267,6 +272,14 @@ export const AppRoutes: React.FC = () => {
           element={
             <AdminRoute allowedRoles={["ROLE_ADMIN", "ROLE_CASHIER"]}>
               <SectionUsers />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="bookings"
+          element={
+            <AdminRoute allowedRoles={["ROLE_ADMIN", "ROLE_CASHIER"]}>
+              <SectionBookings />
             </AdminRoute>
           }
         />

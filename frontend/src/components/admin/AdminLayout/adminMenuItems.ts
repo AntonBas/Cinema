@@ -8,6 +8,7 @@ import {
   Tag,
   Ticket,
   ScrollText,
+  ReceiptText,
 } from "lucide-react";
 
 export interface AdminMenuItem {
@@ -40,6 +41,12 @@ const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
     path: "/admin/users",
     label: "Users",
     icon: Users,
+    roles: ["ROLE_ADMIN", "ROLE_CASHIER"],
+  },
+  {
+    path: "/admin/bookings",
+    label: "Bookings",
+    icon: ReceiptText,
     roles: ["ROLE_ADMIN", "ROLE_CASHIER"],
   },
   {

@@ -1,11 +1,13 @@
 package ua.lviv.bas.cinema.user.service;
 
 import java.time.Instant;
+import java.util.Map;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,13 +29,22 @@ import ua.lviv.bas.cinema.user.repository.UserRepository;
 import ua.lviv.bas.cinema.user.repository.projection.AdminUserProjection;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
-import ua.lviv.bas.cinema.common.FixedOrderPageable;
+import ua.lviv.bas.cinema.common.SortWhitelist;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AdminUserService {
+
+    private static final SortWhitelist USER_SORT = SortWhitelist.of(
+            Map.of("createdDate", "created_date",
+                    "email", "email",
+                    "lastName", "last_name",
+                    "lastActivity", "last_modified_date",
+                    "ticketsCount", "tickets_count"),
+            Sort.by(Sort.Direction.DESC, "created_date"),
+            Sort.by(Sort.Direction.DESC, "id"));
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
@@ -105,7 +116,7 @@ public class AdminUserService {
         String verificationStatusStr = verificationStatus != null ? verificationStatus.name() : null;
 
         Page<AdminUserProjection> page = userRepository.findProjectionsByFilters(query, roleStr, verificationStatusStr,
-                enabled, FixedOrderPageable.of(pageable));
+                enabled, USER_SORT.apply(pageable));
 
         return page.map(userMapper::toAdminUserListResponse);
     }

@@ -1,0 +1,30 @@
+.linkButton {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--color-primary);
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.linkButton:hover {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}
+
+.customer {
+  word-break: break-all;
+}
+
+.primary {
+  display: block;
+}
+
+.secondary {
+  display: block;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
