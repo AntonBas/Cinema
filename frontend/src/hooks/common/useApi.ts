@@ -177,5 +177,10 @@ export const useApi = <T = unknown>() => {
         setState((prev) => ({ ...prev, data }));
       }
     },
+    updateData: (updater: (prev: T | null) => T | null) => {
+      if (mountedRef.current) {
+        setState((prev) => ({ ...prev, data: updater(prev.data) }));
+      }
+    },
   };
 };

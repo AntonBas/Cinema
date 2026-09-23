@@ -18,17 +18,17 @@ export interface SelectedSeat {
 
 export const useSeatReservation = (sessionId: string, maxSeats?: number) => {
   const [selectedSeats, setSelectedSeats] = useState<SelectedSeat[]>([]);
-  const [pendingSeatId, setPendingSeatId] = useState<number | null>(null);
+  const [pendingSeatIds, setPendingSeatIds] = useState<number[]>([]);
 
   const { showNotification } = useNotification();
   const seatApi = useApi<SeatReservationResponse>();
-  const holdApi = useApi<void>();
 
   const seatApiRef = useRef(seatApi);
-  const holdApiRef = useRef(holdApi);
+  const pendingSeatIdsRef = useRef(new Set<number>());
+  const selectedSeatsRef = useRef<SelectedSeat[]>([]);
 
   seatApiRef.current = seatApi;
-  holdApiRef.current = holdApi;
+  selectedSeatsRef.current = selectedSeats;
 
   const loading = useDelayedLoading(seatApi.loading, {
     delay: 150,
@@ -47,61 +47,72 @@ export const useSeatReservation = (sessionId: string, maxSeats?: number) => {
 
   const updateSeatLocally = useCallback(
     (seatId: number, updates: Partial<SeatInfo>) => {
-      if (!seatApi.data) return;
+      seatApiRef.current.updateData((current) => {
+        if (!current) return current;
 
-      const updatedSeats = seatApi.data.seats.map((seat) =>
-        seat.id === seatId ? { ...seat, ...updates } : seat,
-      );
+        const updatedSeats = current.seats.map((seat) =>
+          seat.id === seatId ? { ...seat, ...updates } : seat,
+        );
 
-      seatApi.setData({
-        ...seatApi.data,
-        seats: updatedSeats,
-        availableSeats: updatedSeats.filter((seat) => seat.available).length,
+        return {
+          ...current,
+          seats: updatedSeats,
+          availableSeats: updatedSeats.filter((seat) => seat.available).length,
+        };
       });
     },
-    [seatApi],
+    [],
   );
 
-  const temporaryHoldSeat = useCallback(
-    async (seatId: number) => {
-      setPendingSeatId(seatId);
-      try {
-        await holdApiRef.current.execute(() =>
-          seatReservationApi.hold(sessionId, seatId),
-        );
-        updateSeatLocally(seatId, {
-          available: false,
-          temporarilyReserved: true,
-        });
-        return true;
-      } catch {
-        return false;
-      } finally {
-        setPendingSeatId(null);
-      }
+  const markPending = useCallback((seatId: number) => {
+    if (pendingSeatIdsRef.current.has(seatId)) return false;
+    pendingSeatIdsRef.current.add(seatId);
+    setPendingSeatIds(Array.from(pendingSeatIdsRef.current));
+    return true;
+  }, []);
+
+  const unmarkPending = useCallback((seatId: number) => {
+    pendingSeatIdsRef.current.delete(seatId);
+    setPendingSeatIds(Array.from(pendingSeatIdsRef.current));
+  }, []);
+
+  const addSelectedSeat = useCallback((selectedSeat: SelectedSeat) => {
+    selectedSeatsRef.current = [...selectedSeatsRef.current, selectedSeat];
+    setSelectedSeats(selectedSeatsRef.current);
+  }, []);
+
+  const removeSelectedSeat = useCallback((seatId: number) => {
+    selectedSeatsRef.current = selectedSeatsRef.current.filter(
+      (selected) => selected.seat.id !== seatId,
+    );
+    setSelectedSeats(selectedSeatsRef.current);
+  }, []);
+
+  const notifyError = useCallback(
+    (error: unknown) => {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Operation failed";
+      showNotification(message, "error");
     },
-    [sessionId, updateSeatLocally],
+    [showNotification],
   );
 
-  const cancelTemporaryHold = useCallback(
+  const releaseHold = useCallback(
     async (seatId: number) => {
-      setPendingSeatId(seatId);
       try {
-        await holdApiRef.current.execute(() =>
-          seatReservationApi.release(sessionId, seatId),
-        );
+        await seatReservationApi.release(sessionId, seatId);
+        removeSelectedSeat(seatId);
         updateSeatLocally(seatId, {
           available: true,
           temporarilyReserved: false,
         });
-        return true;
-      } catch {
-        return false;
-      } finally {
-        setPendingSeatId(null);
+      } catch (error) {
+        notifyError(error);
       }
     },
-    [sessionId, updateSeatLocally],
+    [sessionId, removeSelectedSeat, updateSeatLocally, notifyError],
   );
 
   const getTicketPrice = useCallback(
@@ -120,7 +131,10 @@ export const useSeatReservation = (sessionId: string, maxSeats?: number) => {
 
   const selectSeat = useCallback(
     async (seat: SeatInfo, ticketTypeId?: number) => {
-      if (maxSeats && selectedSeats.length >= maxSeats) {
+      if (pendingSeatIdsRef.current.has(seat.id)) return;
+      if (selectedSeatsRef.current.some((s) => s.seat.id === seat.id)) return;
+
+      if (maxSeats && selectedSeatsRef.current.length >= maxSeats) {
         showNotification(`Maximum ${maxSeats} seats allowed`, "warning");
         return;
       }
@@ -136,36 +150,51 @@ export const useSeatReservation = (sessionId: string, maxSeats?: number) => {
         return;
       }
 
-      const success = await temporaryHoldSeat(seat.id);
-      if (success) {
-        setSelectedSeats((prev) => [
-          ...prev,
-          {
-            seat,
-            ticketTypeId: ticketPrice.ticketTypeId,
-            price: parseFloat(ticketPrice.finalPrice),
-            ticketTypeName: ticketPrice.ticketTypeName,
-          },
-        ]);
+      markPending(seat.id);
+      addSelectedSeat({
+        seat,
+        ticketTypeId: ticketPrice.ticketTypeId,
+        price: parseFloat(ticketPrice.finalPrice),
+        ticketTypeName: ticketPrice.ticketTypeName,
+      });
+
+      try {
+        await seatReservationApi.hold(sessionId, seat.id);
+        updateSeatLocally(seat.id, {
+          available: false,
+          temporarilyReserved: true,
+        });
+      } catch (error) {
+        removeSelectedSeat(seat.id);
+        notifyError(error);
+      } finally {
+        unmarkPending(seat.id);
       }
     },
     [
+      sessionId,
       maxSeats,
-      selectedSeats.length,
       getTicketPrice,
-      temporaryHoldSeat,
+      markPending,
+      unmarkPending,
+      addSelectedSeat,
+      removeSelectedSeat,
+      updateSeatLocally,
+      notifyError,
       showNotification,
     ],
   );
 
   const deselectSeat = useCallback(
     async (seatId: number) => {
-      const success = await cancelTemporaryHold(seatId);
-      if (success) {
-        setSelectedSeats((prev) => prev.filter((s) => s.seat.id !== seatId));
+      if (!markPending(seatId)) return;
+      try {
+        await releaseHold(seatId);
+      } finally {
+        unmarkPending(seatId);
       }
     },
-    [cancelTemporaryHold],
+    [markPending, unmarkPending, releaseHold],
   );
 
   const updateSeatTicketType = useCallback(
@@ -193,11 +222,10 @@ export const useSeatReservation = (sessionId: string, maxSeats?: number) => {
   );
 
   const clearSelection = useCallback(() => {
-    selectedSeats.forEach((seat) => {
-      cancelTemporaryHold(seat.seat.id);
+    selectedSeatsRef.current.forEach((selected) => {
+      deselectSeat(selected.seat.id);
     });
-    setSelectedSeats([]);
-  }, [selectedSeats, cancelTemporaryHold]);
+  }, [deselectSeat]);
 
   const isSeatSelected = useCallback(
     (seatId: number) => {
@@ -213,8 +241,8 @@ export const useSeatReservation = (sessionId: string, maxSeats?: number) => {
   return {
     data: seatApi.data,
     loading,
-    loadingSeats: pendingSeatId !== null ? [pendingSeatId] : [],
-    error: seatApi.error || holdApi.error,
+    loadingSeats: pendingSeatIds,
+    error: seatApi.error,
     selectedSeats,
     totalPrice,
     totalSelected: selectedSeats.length,
