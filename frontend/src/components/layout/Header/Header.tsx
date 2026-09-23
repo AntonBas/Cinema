@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Menu, X } from "lucide-react";
+import { buildLoginPath } from "@/utils/authRedirect";
 import styles from "./Header.module.css";
 
 interface NavLink {
@@ -25,7 +26,7 @@ export const Header: React.FC = () => {
     logout,
   } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
+  const loginPath = buildLoginPath(location.pathname + location.search);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLLIElement>(null);
@@ -57,7 +58,6 @@ export const Header: React.FC = () => {
     logout();
     setIsDropdownOpen(false);
     setIsMobileMenuOpen(false);
-    navigate("/");
   };
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
@@ -155,7 +155,7 @@ export const Header: React.FC = () => {
           ) : (
             <li>
               <Link
-                to="/login"
+                to={loginPath}
                 className={isActiveLink("/login") ? styles.active : ""}
               >
                 Login
@@ -217,7 +217,7 @@ export const Header: React.FC = () => {
               </div>
             ) : (
               <Link
-                to="/login"
+                to={loginPath}
                 className={isActiveLink("/login") ? styles.active : ""}
                 onClick={closeMobileMenu}
               >

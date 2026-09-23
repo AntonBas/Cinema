@@ -1,13 +1,19 @@
 import { useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useApi } from '@/hooks/common/useApi';
 import { authApi } from '@/api/authApi';
 import type { LoginRequest, RegisterRequest } from '@/types/auth';
 import { useAuth } from '@/context/AuthContext';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
+import {
+    consumeOAuth2Redirect,
+    getRedirectFromSearch,
+    rememberOAuth2Redirect,
+} from '@/utils/authRedirect';
 
 export const useAuthActions = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { refreshUser, logout: contextLogout } = useAuth();
 
     const authApiHook = useApi();
@@ -16,9 +22,9 @@ export const useAuthActions = () => {
 
     const loading = useDelayedLoading(authApiHook.loading, { delay: 150, minDisplayTime: 300 });
 
-    const handleAuthSuccess = useCallback(async () => {
+    const handleAuthSuccess = useCallback(async (redirectTarget: string) => {
         await refreshUser();
-        navigate('/');
+        navigate(redirectTarget, { replace: true });
     }, [refreshUser, navigate]);
 
     const login = useCallback(async (credentials: LoginRequest) => {
@@ -27,10 +33,10 @@ export const useAuthActions = () => {
             { successMessage: 'Login successful' }
         );
         if (response) {
-            await handleAuthSuccess();
+            await handleAuthSuccess(getRedirectFromSearch(searchParams));
         }
         return response;
-    }, [handleAuthSuccess]);
+    }, [handleAuthSuccess, searchParams]);
 
     const register = useCallback(async (userData: RegisterRequest) => {
         return authApiRef.current.execute(
@@ -63,14 +69,15 @@ export const useAuthActions = () => {
             { successMessage: 'Login successful' }
         );
         if (response) {
-            await handleAuthSuccess();
+            await handleAuthSuccess(consumeOAuth2Redirect());
         }
         return response;
     }, [handleAuthSuccess]);
 
     const loginWithGoogle = useCallback(() => {
+        rememberOAuth2Redirect(getRedirectFromSearch(searchParams));
         window.location.href = authApi.getGoogleAuthUrl();
-    }, []);
+    }, [searchParams]);
 
     return {
         loading,

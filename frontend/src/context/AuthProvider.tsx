@@ -39,10 +39,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return response.data;
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback((redirectTo = "/") => {
     authApi.logout().finally(() => {
       setUser(null);
-      window.location.href = "/login";
+      window.location.href = redirectTo;
     });
   }, []);
 

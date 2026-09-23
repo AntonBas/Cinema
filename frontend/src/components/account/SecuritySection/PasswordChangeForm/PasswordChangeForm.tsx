@@ -59,7 +59,7 @@ export const PasswordChangeForm: React.FC = () => {
         try {
             const result = await updatePassword(passwordData);
             if (result) {
-                logout();
+                logout("/login");
             }
         } catch (err) {
             if (isApiErrorException(err) && err.isValidationError()) {

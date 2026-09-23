@@ -1,5 +1,6 @@
 import React from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
+import { buildLoginPath } from "@/utils/authRedirect";
 import { useAuth } from "@/context/AuthContext";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
@@ -21,6 +22,7 @@ export const AdminRoute: React.FC<AdminRouteProps> = ({
   allowedRoles = ["ROLE_ADMIN", "ROLE_CONTENT_MANAGER", "ROLE_CASHIER"],
 }) => {
   const { user, loading, isAuthenticated } = useAuth();
+  const location = useLocation();
   const showLoading = useDelayedLoading(loading, {
     delay: 300,
     minDisplayTime: 500,
@@ -34,8 +36,14 @@ export const AdminRoute: React.FC<AdminRouteProps> = ({
     );
   }
 
+  if (loading) {
+    return null;
+  }
+
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return (
+      <Navigate to={buildLoginPath(location.pathname + location.search)} replace />
+    );
   }
 
   if (!user) {

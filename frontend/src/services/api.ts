@@ -1,5 +1,6 @@
 import axios from "axios";
 import { ApiErrorException } from "@/utils/apiErrorHandler";
+import { buildLoginPath } from "@/utils/authRedirect";
 
 interface ApiErrorResponse {
   status: string;
@@ -79,7 +80,7 @@ api.interceptors.response.use(
         onUnauthorized?.();
         const currentPath = window.location.pathname;
         if (currentPath !== "/login" && currentPath !== "/register") {
-          window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+          window.location.href = buildLoginPath(currentPath + window.location.search);
         }
       }
     }
