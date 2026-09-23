@@ -24,7 +24,7 @@ import ua.lviv.bas.cinema.audit.service.AuditQueryService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/admin/audit-logs")
+@RequestMapping("/api/admin/audit-logs")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 @Tag(name = "Audit Admin", description = "API for administrative audit log management")
@@ -44,7 +44,7 @@ public class AdminAuditController {
             @Parameter(description = "Filter by user who performed the action") @RequestParam(required = false) String changedBy,
             @PageableDefault(size = 20) Pageable pageable) {
 
-        Page<AuditLog> auditLogs = auditQueryService.findByFilters(entityType, action, changedBy, pageable);
+        Page<AuditLog> auditLogs = auditQueryService.getByFilters(entityType, action, changedBy, pageable);
         Page<AuditLogResponse> responsePage = auditLogs.map(auditLogMapper::toResponse);
 
         return ResponseEntity.ok(PageResponse.from(responsePage));
@@ -59,7 +59,7 @@ public class AdminAuditController {
             @Parameter(description = "Entity type (e.g., User, BonusRules)", required = true) @PathVariable String entityType,
             @Parameter(description = "Entity ID", required = true) @PathVariable Long entityId) {
 
-        List<AuditLog> auditLogs = auditQueryService.findByEntityTypeAndEntityId(entityType, entityId);
+        List<AuditLog> auditLogs = auditQueryService.getEntityHistory(entityType, entityId);
 
         if (auditLogs.isEmpty()) {
             throw new AuditHistoryNotFoundException(entityType, entityId);

@@ -23,11 +23,11 @@ public class UserMapperTest {
     private final UserMapper userMapper = Mappers.getMapper(UserMapper.class);
 
     @Test
-    void toUser_ShouldMapRegistrationRequest() {
+    void toEntity_ShouldMapRegistrationRequest() {
         UserRegistrationRequest request = new UserRegistrationRequest("test@example.com", "John", "Doe",
                 LocalDate.of(1990, 1, 1), "Kyiv", "+380501234567", "password", "password");
 
-        User user = userMapper.toUser(request);
+        User user = userMapper.toEntity(request);
 
         assertThat(user.getEmail()).isEqualTo("test@example.com");
         assertThat(user.getFirstName()).isEqualTo("John");
@@ -82,14 +82,14 @@ public class UserMapperTest {
     }
 
     @Test
-    void updateUserFromRequest_ShouldUpdateFields() {
+    void updateEntity_ShouldUpdateFields() {
         User user = User.builder().firstName("Old").lastName("User").dateOfBirth(LocalDate.of(1990, 1, 1))
                 .city("Old City").phoneNumber("+380501234567").build();
 
         UserUpdateRequest request = new UserUpdateRequest("New", "Name", LocalDate.of(1995, 5, 5), "Lviv",
                 "+380502345678");
 
-        userMapper.updateUserFromRequest(request, user);
+        userMapper.updateEntity(request, user);
 
         assertThat(user.getFirstName()).isEqualTo("New");
         assertThat(user.getLastName()).isEqualTo("Name");
@@ -99,13 +99,13 @@ public class UserMapperTest {
     }
 
     @Test
-    void updateUserFromRequest_WithNullValues_ShouldIgnoreNull() {
+    void updateEntity_WithNullValues_ShouldIgnoreNull() {
         User user = User.builder().firstName("Old").lastName("User").dateOfBirth(LocalDate.of(1990, 1, 1))
                 .city("Old City").phoneNumber("+380501234567").build();
 
         UserUpdateRequest request = new UserUpdateRequest(null, null, null, null, null);
 
-        userMapper.updateUserFromRequest(request, user);
+        userMapper.updateEntity(request, user);
 
         assertThat(user.getFirstName()).isEqualTo("Old");
         assertThat(user.getLastName()).isEqualTo("User");
@@ -217,8 +217,8 @@ public class UserMapperTest {
     }
 
     @Test
-    void toUser_WithNullRequest_ShouldReturnNull() {
-        User user = userMapper.toUser(null);
+    void toEntity_WithNullRequest_ShouldReturnNull() {
+        User user = userMapper.toEntity(null);
         assertThat(user).isNull();
     }
 

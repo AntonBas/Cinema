@@ -118,7 +118,7 @@ public class RefundServiceTest {
     @Test
     void getPreviewShouldSucceed() {
         var expectedDeadline = testSession.getStartTime().minusHours(2);
-        when(ticketService.findActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
+        when(ticketService.getActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
         when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(true);
         when(refundRules.getRefundPercentage(testSession.getStartTime())).thenReturn(PERCENTAGE);
         when(refundRules.getPolicyName(testSession.getStartTime())).thenReturn("Standard Refund");
@@ -138,7 +138,7 @@ public class RefundServiceTest {
     @Test
     void getPreviewWhenPaymentNotSuccessShouldReturnNonRefundable() {
         testPayment.setStatus(PaymentStatus.PENDING);
-        when(ticketService.findActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
+        when(ticketService.getActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
         when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(true);
 
         RefundPreviewResponse response = refundService.getPreview(previewRequest, USER_ID);
@@ -151,7 +151,7 @@ public class RefundServiceTest {
     @Test
     void getPreviewWhenTicketNotActiveShouldReturnNonRefundable() {
         testTicket.setStatus(TicketStatus.REFUNDED);
-        when(ticketService.findActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
+        when(ticketService.getActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
 
         RefundPreviewResponse response = refundService.getPreview(previewRequest, USER_ID);
 
@@ -162,7 +162,7 @@ public class RefundServiceTest {
 
     @Test
     void getPreviewWhenRefundNotAvailableShouldReturnNonRefundable() {
-        when(ticketService.findActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
+        when(ticketService.getActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
         when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(false);
 
         RefundPreviewResponse response = refundService.getPreview(previewRequest, USER_ID);
@@ -174,7 +174,7 @@ public class RefundServiceTest {
 
     @Test
     void getPreviewWhenTicketNotFoundShouldThrowException() {
-        when(ticketService.findActiveTicketForUser(TICKET_ID, USER_ID))
+        when(ticketService.getActiveTicketForUser(TICKET_ID, USER_ID))
                 .thenThrow(new TicketNotFoundException("Ticket not found or not active. Ticket ID: " + TICKET_ID));
 
         assertThatThrownBy(() -> refundService.getPreview(previewRequest, USER_ID))

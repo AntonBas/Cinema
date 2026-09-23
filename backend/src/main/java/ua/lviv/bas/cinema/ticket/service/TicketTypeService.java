@@ -51,13 +51,13 @@ public class TicketTypeService {
         validateAgeRange(request.minAge(), request.maxAge());
         validateTicketTypeUniqueness(request.displayName(), null);
 
-        var ticketType = ticketTypeMapper.toTicketType(request);
+        var ticketType = ticketTypeMapper.toEntity(request);
         var saved = ticketTypeRepository.save(ticketType);
 
         log.debug("Ticket type created with ID: {}", saved.getId());
         auditCreate(saved, request);
 
-        return ticketTypeMapper.toTicketTypeResponse(saved);
+        return ticketTypeMapper.toResponse(saved);
     }
 
     @Cacheable(value = "ticketTypes", key = "'list-' + #active + '-' + #category + '-' + #query + '-' + #pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
@@ -66,7 +66,7 @@ public class TicketTypeService {
         log.info("Getting ticket types: active={}, category={}, query={}, page={}, size={}", active, category, query,
                 pageable.getPageNumber(), pageable.getPageSize());
         var page = ticketTypeRepository.findProjectionsByFilters(active, category, query, FixedOrderPageable.of(pageable));
-        return page.map(ticketTypeMapper::toTicketTypeResponse);
+        return page.map(ticketTypeMapper::toResponse);
     }
 
     @CacheEvict(value = "ticketTypes", allEntries = true)
@@ -88,13 +88,13 @@ public class TicketTypeService {
         }
 
         var oldDetails = captureDetails(ticketType);
-        ticketTypeMapper.updateTicketTypeFromRequest(request, ticketType);
+        ticketTypeMapper.updateEntity(request, ticketType);
         var updated = ticketTypeRepository.save(ticketType);
 
         log.debug("Ticket type updated with ID: {}", updated.getId());
         auditUpdate(id, oldName, oldDetails, updated);
 
-        return ticketTypeMapper.toTicketTypeResponse(updated);
+        return ticketTypeMapper.toResponse(updated);
     }
 
     @CacheEvict(value = "ticketTypes", allEntries = true)
@@ -134,7 +134,7 @@ public class TicketTypeService {
         log.debug("Ticket type status toggled to: {} for ID: {}", updated.isActive(), id);
         auditToggleStatus(id, ticketType.getDisplayName(), oldStatus, updated.isActive());
 
-        return ticketTypeMapper.toTicketTypeResponse(updated);
+        return ticketTypeMapper.toResponse(updated);
     }
 
     private TicketType findTicketTypeById(Long id) {

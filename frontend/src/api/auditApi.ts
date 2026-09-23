@@ -2,7 +2,7 @@ import { api } from "@/services/api";
 import type { PageResponse, SearchParams } from "@/types/pagination";
 import type { AuditLogResponse } from "@/types/audit";
 
-const BASE_URL = "/admin/audit-logs";
+const BASE_URL = "/api/admin/audit-logs";
 
 export const auditApi = {
   admin: {

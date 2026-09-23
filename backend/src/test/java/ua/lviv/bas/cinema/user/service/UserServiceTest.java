@@ -90,7 +90,7 @@ public class UserServiceTest {
                 UserRole.ROLE_USER, false, VerificationStatus.NOT_VERIFIED);
 
         when(userRepository.existsByEmail(EMAIL)).thenReturn(false);
-        when(userMapper.toUser(request)).thenReturn(user);
+        when(userMapper.toEntity(request)).thenReturn(user);
         when(passwordEncoder.encode(PASSWORD)).thenReturn(ENCODED_PASSWORD);
         when(userRepository.save(user)).thenReturn(savedUser);
         when(userMapper.toUserResponse(savedUser)).thenReturn(response);
@@ -174,7 +174,7 @@ public class UserServiceTest {
         UserProfileResponse result = userService.update(USER_ID, request);
 
         assertThat(result).isEqualTo(profileResponse);
-        verify(userMapper).updateUserFromRequest(request, user);
+        verify(userMapper).updateEntity(request, user);
         verify(userRepository).save(user);
     }
 

@@ -53,7 +53,7 @@ public class GenreServiceTest {
         GenreResponse response = new GenreResponse(GENRE_ID, GENRE_NAME);
 
         when(genreRepository.existsByNameIgnoreCase(GENRE_NAME)).thenReturn(false);
-        when(genreMapper.toGenre(request)).thenReturn(genre);
+        when(genreMapper.toEntity(request)).thenReturn(genre);
         when(genreRepository.save(genre)).thenReturn(genre);
         when(genreMapper.toGenreResponse(genre)).thenReturn(response);
 
@@ -130,7 +130,7 @@ public class GenreServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result.name()).isEqualTo(GENRE_NAME);
-        verify(genreMapper).updateGenreFromRequest(request, existingGenre);
+        verify(genreMapper).updateEntity(request, existingGenre);
         verify(genreRepository).save(existingGenre);
     }
 

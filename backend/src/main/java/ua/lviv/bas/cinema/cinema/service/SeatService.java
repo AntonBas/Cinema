@@ -29,7 +29,7 @@ public class SeatService {
         var seat = findSeatInHall(hallId, seatId);
         seat.setSeatType(seatType);
         var updated = seatRepository.save(seat);
-        return seatMapper.toSeatResponse(updated);
+        return seatMapper.toResponse(updated);
     }
 
     @CacheEvict(value = {"cinemaHalls", "seatAvailability"}, allEntries = true)
@@ -39,7 +39,7 @@ public class SeatService {
         var seat = findSeatInHall(hallId, seatId);
         seat.setActive(active);
         var updated = seatRepository.save(seat);
-        return seatMapper.toSeatResponse(updated);
+        return seatMapper.toResponse(updated);
     }
 
     private Seat findSeatInHall(Long hallId, Long seatId) {

@@ -67,7 +67,7 @@ public abstract class CinemaHallMapper {
         }
         return seats.stream().collect(Collectors.groupingBy(Seat::getRow)).entrySet().stream()
                 .map(entry -> new HallLayoutResponse.SeatRowResponse(entry.getKey(), entry.getValue().size(),
-                        seatMapper.toSeatResponseList(entry.getValue())))
+                        seatMapper.toResponseList(entry.getValue())))
                 .sorted(Comparator.comparingInt(HallLayoutResponse.SeatRowResponse::rowNumber)).toList();
     }
 

@@ -101,12 +101,12 @@ public class AdminBonusServiceTest {
             if (req.active() != null)
                 r.setActive(req.active());
             return null;
-        }).when(bonusMapper).updateFromRequest(any(BonusRulesRequest.class), any(BonusRules.class));
+        }).when(bonusMapper).updateEntity(any(BonusRulesRequest.class), any(BonusRules.class));
 
         BonusRulesResponse result = adminBonusService.updateRule(WELCOME, request);
 
         assertThat(result).isEqualTo(response);
-        verify(bonusMapper).updateFromRequest(request, rule);
+        verify(bonusMapper).updateEntity(request, rule);
         verify(bonusRulesRepository).save(rule);
         verify(auditService).logChange(eq("BonusRules"), eq(1L), eq("WELCOME_BONUS"), eq(AuditAction.UPDATED), any(),
                 any());
@@ -145,7 +145,7 @@ public class AdminBonusServiceTest {
             if (req.maxPointsPerTransaction() != null)
                 r.setMaxPointsPerTransaction(req.maxPointsPerTransaction());
             return null;
-        }).when(bonusMapper).updateFromRequest(any(BonusRulesRequest.class), any(BonusRules.class));
+        }).when(bonusMapper).updateEntity(any(BonusRulesRequest.class), any(BonusRules.class));
 
         assertThatThrownBy(() -> adminBonusService.updateRule(SPEND, request))
                 .isInstanceOf(InvalidMinMaxPointsException.class);
@@ -163,7 +163,7 @@ public class AdminBonusServiceTest {
         when(bonusRulesRepository.save(rule)).thenReturn(rule);
         when(bonusMapper.toResponse(rule)).thenReturn(response);
 
-        doAnswer(invocation -> null).when(bonusMapper).updateFromRequest(any(), any());
+        doAnswer(invocation -> null).when(bonusMapper).updateEntity(any(), any());
 
         adminBonusService.updateRule(WELCOME, request);
 
@@ -195,7 +195,7 @@ public class AdminBonusServiceTest {
             r.setMaxPointsPerTransaction(req.maxPointsPerTransaction());
             r.setActive(req.active());
             return null;
-        }).when(bonusMapper).updateFromRequest(any(BonusRulesRequest.class), any(BonusRules.class));
+        }).when(bonusMapper).updateEntity(any(BonusRulesRequest.class), any(BonusRules.class));
 
         BonusRulesResponse result = adminBonusService.resetRuleToDefaults(WELCOME);
 

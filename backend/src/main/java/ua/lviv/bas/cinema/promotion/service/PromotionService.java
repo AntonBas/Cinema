@@ -56,7 +56,7 @@ public class PromotionService {
         validateTitleUniqueness(request.title(), null);
         validateDateRange(request);
 
-        var promotion = promotionMapper.toPromotion(request);
+        var promotion = promotionMapper.toEntity(request);
         var saved = promotionRepository.save(promotion);
 
         log.info("Promotion created with ID: {}", saved.getId());
@@ -101,7 +101,7 @@ public class PromotionService {
         var promotion = findByIdOrThrow(id);
         String oldTitle = promotion.getTitle();
 
-        promotionMapper.updatePromotionFromRequest(request, promotion);
+        promotionMapper.updateEntity(request, promotion);
         var updated = promotionRepository.save(promotion);
 
         log.info("Promotion updated with ID: {}", updated.getId());

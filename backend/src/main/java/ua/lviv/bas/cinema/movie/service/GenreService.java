@@ -38,7 +38,7 @@ public class GenreService {
         log.info("Creating genre: {}", request.name());
         validateGenreUniqueness(request.name(), null);
 
-        var genre = genreMapper.toGenre(request);
+        var genre = genreMapper.toEntity(request);
         var saved = genreRepository.save(genre);
 
         log.debug("Genre created with ID: {}", saved.getId());
@@ -60,7 +60,7 @@ public class GenreService {
         var genre = genreRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Genre", id));
         validateGenreUniqueness(request.name(), id);
 
-        genreMapper.updateGenreFromRequest(request, genre);
+        genreMapper.updateEntity(request, genre);
         var updated = genreRepository.save(genre);
 
         log.debug("Genre updated with ID: {}", updated.getId());

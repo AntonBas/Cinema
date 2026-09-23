@@ -28,7 +28,7 @@ public interface UserMapper {
     @Mapping(target = "verificationStatus", constant = "NOT_VERIFIED")
     @Mapping(target = "verifiedAt", ignore = true)
     @Mapping(target = "password", ignore = true)
-    User toUser(UserRegistrationRequest request);
+    User toEntity(UserRegistrationRequest request);
 
     UserResponse toUserResponse(User user);
 
@@ -50,7 +50,7 @@ public interface UserMapper {
     @Mapping(target = "createdDate", ignore = true)
     @Mapping(target = "lastModifiedBy", ignore = true)
     @Mapping(target = "lastModifiedDate", ignore = true)
-    void updateUserFromRequest(UserUpdateRequest request, @MappingTarget User user);
+    void updateEntity(UserUpdateRequest request, @MappingTarget User user);
 
     AdminUserListResponse toAdminUserListResponse(AdminUserProjection projection);
 

@@ -82,9 +82,9 @@ public class GenreMapperTest {
     }
 
     @Test
-    void toGenreShouldMapRequestToEntity() {
+    void toEntityShouldMapRequestToEntity() {
         GenreRequest request = new GenreRequest("Drama");
-        Genre genre = mapper.toGenre(request);
+        Genre genre = mapper.toEntity(request);
 
         assertThat(genre).isNotNull();
         assertThat(genre.getId()).isNull();
@@ -94,10 +94,10 @@ public class GenreMapperTest {
     }
 
     @Test
-    void updateGenreFromRequestShouldUpdateOnlyNonNullFields() {
+    void updateEntityShouldUpdateOnlyNonNullFields() {
         Genre existing = Genre.builder().id(1L).name("Old").movies(new HashSet<>()).build();
         GenreRequest request = new GenreRequest("New");
-        mapper.updateGenreFromRequest(request, existing);
+        mapper.updateEntity(request, existing);
 
         assertThat(existing.getId()).isEqualTo(1L);
         assertThat(existing.getName()).isEqualTo("New");
@@ -105,10 +105,10 @@ public class GenreMapperTest {
     }
 
     @Test
-    void updateGenreFromRequestWithSameNameShouldNotChange() {
+    void updateEntityWithSameNameShouldNotChange() {
         Genre existing = Genre.builder().id(1L).name("Action").build();
         GenreRequest request = new GenreRequest("Action");
-        mapper.updateGenreFromRequest(request, existing);
+        mapper.updateEntity(request, existing);
 
         assertThat(existing.getName()).isEqualTo("Action");
     }
@@ -126,15 +126,15 @@ public class GenreMapperTest {
     }
 
     @Test
-    void toGenreWithNullRequestShouldReturnNull() {
-        Genre genre = mapper.toGenre(null);
+    void toEntityWithNullRequestShouldReturnNull() {
+        Genre genre = mapper.toEntity(null);
         assertThat(genre).isNull();
     }
 
     @Test
-    void updateGenreFromRequestWithNullRequestShouldNotChange() {
+    void updateEntityWithNullRequestShouldNotChange() {
         Genre existing = Genre.builder().id(1L).name("Action").build();
-        mapper.updateGenreFromRequest(null, existing);
+        mapper.updateEntity(null, existing);
 
         assertThat(existing.getName()).isEqualTo("Action");
     }

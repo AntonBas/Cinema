@@ -137,7 +137,7 @@ public class MovieServiceTest {
     void createMovieShouldSucceed() {
         when(slugService.generateUniqueSlug(MOVIE_TITLE)).thenReturn(SLUG);
         when(movieRepository.findBySlug(SLUG)).thenReturn(Optional.empty());
-        when(movieMapper.toMovie(createRequest)).thenReturn(movie);
+        when(movieMapper.toEntity(createRequest)).thenReturn(movie);
         when(movieStatusCalculator.calculate(any(Movie.class), any(LocalDate.class)))
                 .thenReturn(MovieStatus.UPCOMING);
         when(posterService.uploadPoster(any())).thenReturn("poster.jpg");
@@ -301,7 +301,7 @@ public class MovieServiceTest {
         MovieAdminResponse result = movieService.updateMovie(MOVIE_ID, updateRequest);
 
         assertThat(result).isEqualTo(adminResponse);
-        verify(movieMapper).updateMovieFromRequest(updateRequest, existingMovie);
+        verify(movieMapper).updateEntity(updateRequest, existingMovie);
         verify(movieRepository).save(existingMovie);
     }
 

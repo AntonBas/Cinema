@@ -92,7 +92,7 @@ public class PromotionServiceTest {
     @Test
     void createPromotionShouldSucceed() {
         when(promotionRepository.existsByTitle(PROMOTION_TITLE)).thenReturn(false);
-        when(promotionMapper.toPromotion(createRequest)).thenReturn(promotion);
+        when(promotionMapper.toEntity(createRequest)).thenReturn(promotion);
         when(promotionRepository.save(promotion)).thenReturn(promotion);
         when(promotionMapper.toPromotionResponse(promotion)).thenReturn(promotionResponse);
 
@@ -231,7 +231,7 @@ public class PromotionServiceTest {
 
         assertThat(result).isEqualTo(updatedResponse);
         assertThat(result.title()).isEqualTo("Updated Title");
-        verify(promotionMapper).updatePromotionFromRequest(updateRequest, promotion);
+        verify(promotionMapper).updateEntity(updateRequest, promotion);
         verify(promotionRepository).save(promotion);
     }
 

@@ -22,7 +22,7 @@ public class AuditQueryService {
 
     private final AuditLogRepository auditLogRepository;
 
-    public Page<AuditLog> findByFilters(String entityType, AuditAction action, String changedBy, Pageable pageable) {
+    public Page<AuditLog> getByFilters(String entityType, AuditAction action, String changedBy, Pageable pageable) {
         Page<AuditLog> page = auditLogRepository.findByFilters(entityType, action, changedBy, FixedOrderPageable.of(pageable));
 
         if (page.isEmpty()) {
@@ -45,7 +45,7 @@ public class AuditQueryService {
         return page;
     }
 
-    public List<AuditLog> findByEntityTypeAndEntityId(String entityType, Long entityId) {
+    public List<AuditLog> getEntityHistory(String entityType, Long entityId) {
         return auditLogRepository.findByEntityTypeAndEntityIdOrderByChangedAtDesc(entityType, entityId);
     }
 }

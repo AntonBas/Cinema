@@ -26,7 +26,7 @@ public interface PromotionMapper {
 
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "userRedemptions", ignore = true)
-	Promotion toPromotion(PromotionRequest request);
+	Promotion toEntity(PromotionRequest request);
 
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	@Mapping(target = "id", ignore = true)
@@ -35,7 +35,7 @@ public interface PromotionMapper {
 	@Mapping(target = "createdDate", ignore = true)
 	@Mapping(target = "lastModifiedBy", ignore = true)
 	@Mapping(target = "lastModifiedDate", ignore = true)
-	void updatePromotionFromRequest(PromotionRequest request, @MappingTarget Promotion promotion);
+	void updateEntity(PromotionRequest request, @MappingTarget Promotion promotion);
 
 	@Mapping(target = "status", expression = "java(resolveStatus(promotion.getStartDate(), promotion.getEndDate()))")
 	PromotionResponse toPromotionResponse(Promotion promotion);

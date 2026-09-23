@@ -56,7 +56,7 @@ public class UserService {
         validatePasswordMatch(request.password(), request.passwordConfirm());
         validateEmailNotExists(request.email());
 
-        var user = userMapper.toUser(request);
+        var user = userMapper.toEntity(request);
         user.setPassword(passwordEncoder.encode(request.password()));
 
         var saved = userRepository.save(user);
@@ -73,7 +73,7 @@ public class UserService {
         var user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
         var oldDetails = captureDetails(user);
 
-        userMapper.updateUserFromRequest(request, user);
+        userMapper.updateEntity(request, user);
 
         if (isDateOfBirthChanged(request.dateOfBirth(), user.getDateOfBirth())) {
             revokeVerificationIfNeeded(user);

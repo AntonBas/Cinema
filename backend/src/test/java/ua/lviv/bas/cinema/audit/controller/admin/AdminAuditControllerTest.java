@@ -49,7 +49,7 @@ public class AdminAuditControllerTest {
 
         Page<AuditLog> auditLogPage = new PageImpl<>(List.of(auditLog), pageable, 1);
 
-        when(auditQueryService.findByFilters(entityType, action, changedBy, pageable)).thenReturn(auditLogPage);
+        when(auditQueryService.getByFilters(entityType, action, changedBy, pageable)).thenReturn(auditLogPage);
         when(auditLogMapper.toResponse(auditLog)).thenReturn(response);
 
         ResponseEntity<PageResponse<AuditLogResponse>> result = adminAuditController.getAuditLogs(entityType, action,
@@ -70,7 +70,7 @@ public class AdminAuditControllerTest {
 
         Page<AuditLog> auditLogPage = new PageImpl<>(List.of(auditLog), pageable, 1);
 
-        when(auditQueryService.findByFilters(null, null, null, pageable)).thenReturn(auditLogPage);
+        when(auditQueryService.getByFilters(null, null, null, pageable)).thenReturn(auditLogPage);
         when(auditLogMapper.toResponse(auditLog)).thenReturn(response);
 
         ResponseEntity<PageResponse<AuditLogResponse>> result = adminAuditController.getAuditLogs(null, null, null,
@@ -86,7 +86,7 @@ public class AdminAuditControllerTest {
         Pageable pageable = PageRequest.of(0, 20);
         Page<AuditLog> emptyPage = new PageImpl<>(List.of(), pageable, 0);
 
-        when(auditQueryService.findByFilters(null, null, null, pageable)).thenReturn(emptyPage);
+        when(auditQueryService.getByFilters(null, null, null, pageable)).thenReturn(emptyPage);
 
         ResponseEntity<PageResponse<AuditLogResponse>> result = adminAuditController.getAuditLogs(null, null, null,
                 pageable);
@@ -107,7 +107,7 @@ public class AdminAuditControllerTest {
         AuditLogResponse response1 = createAuditLogResponse(1L, entityType);
         AuditLogResponse response2 = createAuditLogResponse(2L, entityType);
 
-        when(auditQueryService.findByEntityTypeAndEntityId(entityType, entityId))
+        when(auditQueryService.getEntityHistory(entityType, entityId))
                 .thenReturn(List.of(auditLog1, auditLog2));
         when(auditLogMapper.toResponse(auditLog1)).thenReturn(response1);
         when(auditLogMapper.toResponse(auditLog2)).thenReturn(response2);
@@ -126,7 +126,7 @@ public class AdminAuditControllerTest {
         String entityType = "BonusRules";
         Long entityId = 999L;
 
-        when(auditQueryService.findByEntityTypeAndEntityId(entityType, entityId)).thenReturn(List.of());
+        when(auditQueryService.getEntityHistory(entityType, entityId)).thenReturn(List.of());
 
         assertThatThrownBy(() -> adminAuditController.getEntityHistory(entityType, entityId))
                 .isInstanceOf(AuditHistoryNotFoundException.class);
@@ -140,7 +140,7 @@ public class AdminAuditControllerTest {
         AuditLog auditLog = createAuditLog(1L, entityType, entityId);
         AuditLogResponse response = createAuditLogResponse(1L, entityType);
 
-        when(auditQueryService.findByEntityTypeAndEntityId(entityType, entityId)).thenReturn(List.of(auditLog));
+        when(auditQueryService.getEntityHistory(entityType, entityId)).thenReturn(List.of(auditLog));
         when(auditLogMapper.toResponse(auditLog)).thenReturn(response);
 
         ResponseEntity<List<AuditLogResponse>> result = adminAuditController.getEntityHistory(entityType, entityId);

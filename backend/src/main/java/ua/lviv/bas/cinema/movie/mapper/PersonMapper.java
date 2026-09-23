@@ -22,9 +22,9 @@ public interface PersonMapper {
     PersonResponse toPersonResponse(Person person);
 
     @Mapping(target = "id", ignore = true)
-    Person toPerson(PersonRequest request);
+    Person toEntity(PersonRequest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
-    void updatePersonFromRequest(PersonRequest request, @MappingTarget Person person);
+    void updateEntity(PersonRequest request, @MappingTarget Person person);
 }

@@ -67,7 +67,7 @@ public class PersonServiceTest {
     @Test
     void createPersonShouldSucceed() {
         when(personRepository.existsByNameAndRole(PERSON_NAME, PERSON_ROLE)).thenReturn(false);
-        when(personMapper.toPerson(request)).thenReturn(person);
+        when(personMapper.toEntity(request)).thenReturn(person);
         when(personRepository.save(person)).thenReturn(person);
         when(personMapper.toPersonResponse(person)).thenReturn(personResponse);
 
@@ -132,7 +132,7 @@ public class PersonServiceTest {
         PersonResponse result = personService.updatePerson(PERSON_ID, request);
 
         assertThat(result).isEqualTo(personResponse);
-        verify(personMapper).updatePersonFromRequest(request, existing);
+        verify(personMapper).updateEntity(request, existing);
     }
 
     @Test

@@ -16,7 +16,7 @@ import ua.lviv.bas.cinema.ticket.repository.projection.TicketTypeProjection;
 public interface TicketTypeMapper {
 
 	@Mapping(target = "id", ignore = true)
-	TicketType toTicketType(TicketTypeRequest request);
+	TicketType toEntity(TicketTypeRequest request);
 
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	@Mapping(target = "id", ignore = true)
@@ -24,9 +24,9 @@ public interface TicketTypeMapper {
 	@Mapping(target = "createdDate", ignore = true)
 	@Mapping(target = "lastModifiedBy", ignore = true)
 	@Mapping(target = "lastModifiedDate", ignore = true)
-	void updateTicketTypeFromRequest(TicketTypeRequest request, @MappingTarget TicketType ticketType);
+	void updateEntity(TicketTypeRequest request, @MappingTarget TicketType ticketType);
 
-	TicketTypeResponse toTicketTypeResponse(TicketType ticketType);
+	TicketTypeResponse toResponse(TicketType ticketType);
 
-	TicketTypeResponse toTicketTypeResponse(TicketTypeProjection projection);
+	TicketTypeResponse toResponse(TicketTypeProjection projection);
 }

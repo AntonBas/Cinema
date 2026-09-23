@@ -75,9 +75,9 @@ public class TicketTypeServiceTest {
         TicketTypeResponse response = createTicketTypeResponse();
 
         when(ticketTypeRepository.existsByDisplayName(DISPLAY_NAME)).thenReturn(false);
-        when(ticketTypeMapper.toTicketType(request)).thenReturn(ticketType);
+        when(ticketTypeMapper.toEntity(request)).thenReturn(ticketType);
         when(ticketTypeRepository.save(ticketType)).thenReturn(ticketType);
-        when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
+        when(ticketTypeMapper.toResponse(ticketType)).thenReturn(response);
 
         TicketTypeResponse result = ticketTypeService.createTicketType(request);
 
@@ -113,7 +113,7 @@ public class TicketTypeServiceTest {
 
         when(ticketTypeRepository.findProjectionsByFilters(true, TicketTypeCategory.STANDARD, "search", pageable))
                 .thenReturn(page);
-        when(ticketTypeMapper.toTicketTypeResponse(projection)).thenReturn(response);
+        when(ticketTypeMapper.toResponse(projection)).thenReturn(response);
 
         Page<TicketTypeResponse> result = ticketTypeService.getTicketTypes(true, TicketTypeCategory.STANDARD, "search",
                 pageable);
@@ -130,12 +130,12 @@ public class TicketTypeServiceTest {
 
         when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
         when(ticketTypeRepository.save(ticketType)).thenReturn(ticketType);
-        when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
+        when(ticketTypeMapper.toResponse(ticketType)).thenReturn(response);
 
         TicketTypeResponse result = ticketTypeService.updateTicketType(TICKET_TYPE_ID, request);
 
         assertThat(result).isEqualTo(response);
-        verify(ticketTypeMapper).updateTicketTypeFromRequest(request, ticketType);
+        verify(ticketTypeMapper).updateEntity(request, ticketType);
     }
 
     @Test
@@ -192,7 +192,7 @@ public class TicketTypeServiceTest {
 
         when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
         when(ticketTypeRepository.save(ticketType)).thenReturn(ticketType);
-        when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
+        when(ticketTypeMapper.toResponse(ticketType)).thenReturn(response);
 
         TicketTypeResponse result = ticketTypeService.toggleActiveStatus(TICKET_TYPE_ID);
 
@@ -210,7 +210,7 @@ public class TicketTypeServiceTest {
         when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
         when(ticketRepository.count(any(Specification.class))).thenReturn(0L);
         when(ticketTypeRepository.save(ticketType)).thenReturn(ticketType);
-        when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
+        when(ticketTypeMapper.toResponse(ticketType)).thenReturn(response);
 
         TicketTypeResponse result = ticketTypeService.toggleActiveStatus(TICKET_TYPE_ID);
 

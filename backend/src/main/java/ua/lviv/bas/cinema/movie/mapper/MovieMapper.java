@@ -34,7 +34,7 @@ public interface MovieMapper {
     @Mapping(target = "screenwriters", ignore = true)
     @Mapping(target = "genres", ignore = true)
     @Mapping(target = "posterFileName", ignore = true)
-    Movie toMovie(MovieCreateRequest request);
+    Movie toEntity(MovieCreateRequest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
@@ -46,7 +46,7 @@ public interface MovieMapper {
     @Mapping(target = "screenwriters", ignore = true)
     @Mapping(target = "genres", ignore = true)
     @Mapping(target = "posterFileName", ignore = true)
-    void updateMovieFromRequest(MovieUpdateRequest request, @MappingTarget Movie movie);
+    void updateEntity(MovieUpdateRequest request, @MappingTarget Movie movie);
 
     @SuppressWarnings("unused")
     default String getPosterUrl(Long id) {

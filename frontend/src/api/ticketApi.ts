@@ -7,7 +7,7 @@ import type {
 import type { PageResponse, SearchParams } from "@/types/pagination";
 
 const BASE_URL = "/api/tickets";
-const CASHIER_BASE_URL = "/api/admin/ticket";
+const ADMIN_BASE_URL = "/api/admin/tickets";
 
 export const ticketApi = {
   public: {
@@ -21,11 +21,11 @@ export const ticketApi = {
       }),
   },
   admin: {
-    getByCode: (uniqueCode: string) =>
-      api.get<TicketCashierResponse>(`${CASHIER_BASE_URL}/${uniqueCode}`),
-    validate: (uniqueCode: string) =>
+    getByCode: (ticketCode: string) =>
+      api.get<TicketCashierResponse>(`${ADMIN_BASE_URL}/${ticketCode}`),
+    validate: (ticketCode: string) =>
       api.post<TicketCashierResponse>(
-        `${CASHIER_BASE_URL}/${uniqueCode}/validate`,
+        `${ADMIN_BASE_URL}/${ticketCode}/validate`,
       ),
   },
 };

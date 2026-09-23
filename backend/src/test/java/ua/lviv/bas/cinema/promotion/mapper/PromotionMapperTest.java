@@ -64,11 +64,11 @@ public class PromotionMapperTest {
     }
 
     @Test
-    void toPromotionFromRequest() {
+    void toEntityFromRequest() {
         var request = new PromotionRequest("New Promotion", "New promotion description", 200, LocalDate.of(2024, 7, 1),
                 LocalDate.of(2024, 7, 31));
 
-        var promotion = mapper.toPromotion(request);
+        var promotion = mapper.toEntity(request);
 
         assertThat(promotion.getTitle()).isEqualTo("New Promotion");
         assertThat(promotion.getDescription()).isEqualTo("New promotion description");
@@ -80,14 +80,14 @@ public class PromotionMapperTest {
     }
 
     @Test
-    void updatePromotionFromRequest() {
+    void updateEntity() {
         var promotion = Promotion.builder().id(1L).title("Old Title").description("Old description").bonusPoints(100)
                 .build();
 
         var request = new PromotionRequest("New Title", "New description", 200, LocalDate.of(2024, 8, 1),
                 LocalDate.of(2024, 8, 31));
 
-        mapper.updatePromotionFromRequest(request, promotion);
+        mapper.updateEntity(request, promotion);
 
         assertThat(promotion.getTitle()).isEqualTo("New Title");
         assertThat(promotion.getDescription()).isEqualTo("New description");
@@ -97,13 +97,13 @@ public class PromotionMapperTest {
     }
 
     @Test
-    void updatePromotionFromRequestWithNullValues() {
+    void updateEntityWithNullValues() {
         var promotion = Promotion.builder().id(1L).title("Old Title").description("Old description").bonusPoints(100)
                 .startDate(LocalDate.of(2024, 1, 1)).endDate(LocalDate.of(2024, 1, 31)).build();
 
         var request = new PromotionRequest(null, null, null, null, null);
 
-        mapper.updatePromotionFromRequest(request, promotion);
+        mapper.updateEntity(request, promotion);
 
         assertThat(promotion.getTitle()).isEqualTo("Old Title");
         assertThat(promotion.getDescription()).isEqualTo("Old description");
@@ -143,8 +143,8 @@ public class PromotionMapperTest {
     }
 
     @Test
-    void toPromotionWithNullRequest() {
-        var promotion = mapper.toPromotion(null);
+    void toEntityWithNullRequest() {
+        var promotion = mapper.toEntity(null);
         assertThat(promotion).isNull();
     }
 

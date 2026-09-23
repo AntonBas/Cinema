@@ -75,7 +75,7 @@ public class MovieService {
             throw MovieValidationException.endShowingBeforeRelease(request.getReleaseDate(), request.getEndShowingDate());
         }
 
-        var movie = movieMapper.toMovie(request);
+        var movie = movieMapper.toEntity(request);
         movie.setSlug(generateUniqueSlug(request.getTitle(), null));
         movie.setStatus(movieStatusCalculator.calculate(movie, CinemaTime.today()));
 
@@ -189,7 +189,7 @@ public class MovieService {
             throw MovieValidationException.endShowingBeforeRelease(request.getReleaseDate(), request.getEndShowingDate());
         }
 
-        movieMapper.updateMovieFromRequest(request, movie);
+        movieMapper.updateEntity(request, movie);
 
         if (!movie.getTitle().equals(oldTitle)) {
             movie.setSlug(generateUniqueSlug(movie.getTitle(), id));

@@ -16,7 +16,7 @@ import ua.lviv.bas.cinema.ticket.service.TicketService;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/admin/ticket")
+@RequestMapping("/api/admin/tickets")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('CASHIER', 'ADMIN')")
 @Tag(name = "Cashier Ticket", description = "Endpoint for cashier to scan and validate tickets")
@@ -25,18 +25,18 @@ public class CashierTicketController {
 
     private final TicketService ticketService;
 
-    @GetMapping("/{uniqueCode}")
+    @GetMapping("/{ticketCode}")
     @Operation(summary = "Get ticket info by unique code", description = "Returns ticket details for cashier review before validation")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Ticket found"),
             @ApiResponse(responseCode = "403", description = "Access denied"),
             @ApiResponse(responseCode = "404", description = "Ticket not found")
     })
-    public ResponseEntity<TicketCashierResponse> getTicket(@PathVariable String uniqueCode) {
-        return ResponseEntity.ok(ticketService.getTicketForCashier(uniqueCode));
+    public ResponseEntity<TicketCashierResponse> getTicket(@PathVariable String ticketCode) {
+        return ResponseEntity.ok(ticketService.getTicketForCashier(ticketCode));
     }
 
-    @PostMapping("/{uniqueCode}/validate")
+    @PostMapping("/{ticketCode}/validate")
     @Operation(summary = "Validate and mark ticket as used", description = "Validates ticket and changes status to USED")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Ticket validated"),
@@ -44,7 +44,7 @@ public class CashierTicketController {
             @ApiResponse(responseCode = "404", description = "Ticket not found")
     })
     @RateLimit(value = 60, duration = 60, key = "user")
-    public ResponseEntity<TicketCashierResponse> validateTicket(@PathVariable String uniqueCode) {
-        return ResponseEntity.ok(ticketService.validate(uniqueCode));
+    public ResponseEntity<TicketCashierResponse> validateTicket(@PathVariable String ticketCode) {
+        return ResponseEntity.ok(ticketService.validate(ticketCode));
     }
 }

@@ -28,5 +28,5 @@ public interface BonusMapper {
 	@Mapping(target = "createdDate", ignore = true)
 	@Mapping(target = "lastModifiedBy", ignore = true)
 	@Mapping(target = "lastModifiedDate", ignore = true)
-	void updateFromRequest(BonusRulesRequest request, @MappingTarget BonusRules rules);
+	void updateEntity(BonusRulesRequest request, @MappingTarget BonusRules rules);
 }

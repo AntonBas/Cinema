@@ -11,7 +11,7 @@ import ua.lviv.bas.cinema.cinema.dto.hall.response.SeatResponse;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface SeatMapper {
 
-	SeatResponse toSeatResponse(Seat seat);
+	SeatResponse toResponse(Seat seat);
 
-	List<SeatResponse> toSeatResponseList(List<Seat> seats);
+	List<SeatResponse> toResponseList(List<Seat> seats);
 }

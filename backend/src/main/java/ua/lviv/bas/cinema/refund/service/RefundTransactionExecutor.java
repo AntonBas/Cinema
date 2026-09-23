@@ -39,7 +39,7 @@ public class RefundTransactionExecutor {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public RefundProcessingContext createProcessingRefund(Long ticketId, Long userId, String reason) {
-        var ticket = ticketService.findActiveTicketForUser(ticketId, userId);
+        var ticket = ticketService.getActiveTicketForUser(ticketId, userId);
 
         validateRefundable(ticket);
 
@@ -104,7 +104,7 @@ public class RefundTransactionExecutor {
             return refund;
         }
 
-        var ticket = ticketService.findById(ticketId);
+        var ticket = ticketService.getTicket(ticketId);
 
         var refundItem = refund.getItems().getFirst();
         var amount = refund.getTotalAmount();

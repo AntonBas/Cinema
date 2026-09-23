@@ -24,11 +24,11 @@ public class TicketTypeMapperTest {
     }
 
     @Test
-    void toTicketTypeShouldMapAllFieldsFromRequest() {
+    void toEntityShouldMapAllFieldsFromRequest() {
         TicketTypeRequest request = new TicketTypeRequest("Child Ticket", new BigDecimal("0.70"), 0, 12, true,
                 "Birth Certificate", true, TicketTypeCategory.CHILD);
 
-        TicketType entity = mapper.toTicketType(request);
+        TicketType entity = mapper.toEntity(request);
 
         assertThat(entity.getId()).isNull();
         assertThat(entity.getDisplayName()).isEqualTo("Child Ticket");
@@ -42,19 +42,19 @@ public class TicketTypeMapperTest {
     }
 
     @Test
-    void toTicketTypeShouldReturnNullWhenInputIsNull() {
-        assertThat(mapper.toTicketType(null)).isNull();
+    void toEntityShouldReturnNullWhenInputIsNull() {
+        assertThat(mapper.toEntity(null)).isNull();
     }
 
     @Test
-    void updateTicketTypeFromRequestShouldUpdateAllFields() {
+    void updateEntityShouldUpdateAllFields() {
         TicketType existing = TicketType.builder().id(1L).displayName("Old Name")
                 .priceMultiplier(new BigDecimal("1.00")).build();
 
         TicketTypeRequest updateRequest = new TicketTypeRequest("New Name", new BigDecimal("0.80"), 18, 65, true,
                 "ID Card", false, TicketTypeCategory.SENIOR);
 
-        mapper.updateTicketTypeFromRequest(updateRequest, existing);
+        mapper.updateEntity(updateRequest, existing);
 
         assertThat(existing.getId()).isEqualTo(1L);
         assertThat(existing.getDisplayName()).isEqualTo("New Name");
@@ -68,14 +68,14 @@ public class TicketTypeMapperTest {
     }
 
     @Test
-    void updateTicketTypeFromRequestShouldIgnoreNullValues() {
+    void updateEntityShouldIgnoreNullValues() {
         TicketType existing = TicketType.builder().id(1L).displayName("Original Name")
                 .priceMultiplier(new BigDecimal("1.00")).minAge(10).active(true).build();
 
         TicketTypeRequest updateRequest = new TicketTypeRequest("Updated Name", null, null, null, false, null, true,
                 null);
 
-        mapper.updateTicketTypeFromRequest(updateRequest, existing);
+        mapper.updateEntity(updateRequest, existing);
 
         assertThat(existing.getDisplayName()).isEqualTo("Updated Name");
         assertThat(existing.getPriceMultiplier()).isEqualByComparingTo("1.00");
@@ -84,12 +84,12 @@ public class TicketTypeMapperTest {
     }
 
     @Test
-    void toTicketTypeResponseShouldMapAllFieldsFromEntity() {
+    void toResponseShouldMapAllFieldsFromEntity() {
         TicketType entity = TicketType.builder().id(1L).displayName("Student Ticket")
                 .priceMultiplier(new BigDecimal("0.50")).minAge(18).maxAge(25).requiresDocument(true)
                 .documentType("Student ID").active(true).category(TicketTypeCategory.STUDENT).build();
 
-        TicketTypeResponse response = mapper.toTicketTypeResponse(entity);
+        TicketTypeResponse response = mapper.toResponse(entity);
 
         assertThat(response.id()).isEqualTo(1L);
         assertThat(response.displayName()).isEqualTo("Student Ticket");
@@ -103,7 +103,7 @@ public class TicketTypeMapperTest {
     }
 
     @Test
-    void toTicketTypeResponseShouldMapFromProjection() {
+    void toResponseShouldMapFromProjection() {
         TicketTypeProjection projection = mock(TicketTypeProjection.class);
 
         when(projection.getId()).thenReturn(1L);
@@ -116,7 +116,7 @@ public class TicketTypeMapperTest {
         when(projection.isActive()).thenReturn(true);
         when(projection.getCategory()).thenReturn(TicketTypeCategory.STANDARD);
 
-        TicketTypeResponse response = mapper.toTicketTypeResponse(projection);
+        TicketTypeResponse response = mapper.toResponse(projection);
 
         assertThat(response.id()).isEqualTo(1L);
         assertThat(response.displayName()).isEqualTo("Admin Projection");
@@ -130,11 +130,11 @@ public class TicketTypeMapperTest {
     }
 
     @Test
-    void updateTicketTypeFromRequestWithNullRequestShouldNotChange() {
+    void updateEntityWithNullRequestShouldNotChange() {
         TicketType existing = TicketType.builder().id(1L).displayName("Original Name")
                 .priceMultiplier(new BigDecimal("1.00")).build();
 
-        mapper.updateTicketTypeFromRequest(null, existing);
+        mapper.updateEntity(null, existing);
 
         assertThat(existing.getDisplayName()).isEqualTo("Original Name");
         assertThat(existing.getPriceMultiplier()).isEqualByComparingTo("1.00");

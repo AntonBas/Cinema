@@ -39,7 +39,7 @@ public class PersonService {
         log.info("Creating person: {}", request.name());
         validatePersonUniqueness(request.name(), request.role(), null);
 
-        var person = personMapper.toPerson(request);
+        var person = personMapper.toEntity(request);
         var saved = personRepository.save(person);
 
         log.debug("Person created with ID: {}", saved.getId());
@@ -63,7 +63,7 @@ public class PersonService {
         var person = personRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Person", id));
         validatePersonUniqueness(request.name(), request.role(), id);
 
-        personMapper.updatePersonFromRequest(request, person);
+        personMapper.updateEntity(request, person);
         var updated = personRepository.save(person);
 
         log.debug("Person updated with ID: {}", updated.getId());

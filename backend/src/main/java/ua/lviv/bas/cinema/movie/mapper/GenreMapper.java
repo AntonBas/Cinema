@@ -23,10 +23,10 @@ public interface GenreMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "movies", ignore = true)
-    Genre toGenre(GenreRequest genreRequest);
+    Genre toEntity(GenreRequest genreRequest);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "movies", ignore = true)
-    void updateGenreFromRequest(GenreRequest genreRequest, @MappingTarget Genre genre);
+    void updateEntity(GenreRequest genreRequest, @MappingTarget Genre genre);
 }

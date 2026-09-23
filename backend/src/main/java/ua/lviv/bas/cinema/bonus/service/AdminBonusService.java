@@ -56,7 +56,7 @@ public class AdminBonusService {
 		var rules = getRuleByType(type);
 		var oldValues = captureCurrentValues(rules);
 
-		bonusMapper.updateFromRequest(request, rules);
+		bonusMapper.updateEntity(request, rules);
 
 		if (type == BonusTransactionType.BOOKING_SPEND) {
 			validatePointsRange(rules.getMinPointsPerTransaction(), rules.getMaxPointsPerTransaction());
@@ -85,7 +85,7 @@ public class AdminBonusService {
 		if (defaults != null) {
 			var resetRequest = new BonusRulesRequest(defaults.getPoints(), defaults.getMoneyRatio(),
 					defaults.getMinPoints(), defaults.getMaxPoints(), true);
-			bonusMapper.updateFromRequest(resetRequest, rules);
+			bonusMapper.updateEntity(resetRequest, rules);
 			log.info("Reset bonus rule {} to defaults", type);
 		} else {
 			log.warn("No defaults found for bonus rule type: {}", type);

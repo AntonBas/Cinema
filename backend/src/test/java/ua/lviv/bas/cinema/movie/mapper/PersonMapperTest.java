@@ -91,9 +91,9 @@ public class PersonMapperTest {
     }
 
     @Test
-    void toPersonFromRequest() {
+    void toEntityFromRequest() {
         var request = new PersonRequest("New Person", PersonRole.SCREENWRITER);
-        var person = mapper.toPerson(request);
+        var person = mapper.toEntity(request);
 
         assertThat(person).isNotNull();
         assertThat(person.getId()).isNull();
@@ -102,10 +102,10 @@ public class PersonMapperTest {
     }
 
     @Test
-    void updatePersonFromRequest() {
+    void updateEntity() {
         var person = Person.builder().id(1L).name("Old Name").role(PersonRole.ACTOR).build();
         var request = new PersonRequest("New Name", PersonRole.DIRECTOR);
-        mapper.updatePersonFromRequest(request, person);
+        mapper.updateEntity(request, person);
 
         assertThat(person.getId()).isEqualTo(1L);
         assertThat(person.getName()).isEqualTo("New Name");
@@ -113,10 +113,10 @@ public class PersonMapperTest {
     }
 
     @Test
-    void updatePersonFromRequestWithNullFields() {
+    void updateEntityWithNullFields() {
         var person = Person.builder().id(1L).name("Old Name").role(PersonRole.ACTOR).build();
         var request = new PersonRequest(null, null);
-        mapper.updatePersonFromRequest(request, person);
+        mapper.updateEntity(request, person);
 
         assertThat(person.getId()).isEqualTo(1L);
         assertThat(person.getName()).isEqualTo("Old Name");
@@ -124,9 +124,9 @@ public class PersonMapperTest {
     }
 
     @Test
-    void updatePersonFromRequestWithNullRequest() {
+    void updateEntityWithNullRequest() {
         var person = Person.builder().id(1L).name("Old Name").role(PersonRole.ACTOR).build();
-        mapper.updatePersonFromRequest(null, person);
+        mapper.updateEntity(null, person);
 
         assertThat(person.getId()).isEqualTo(1L);
         assertThat(person.getName()).isEqualTo("Old Name");
@@ -146,8 +146,8 @@ public class PersonMapperTest {
     }
 
     @Test
-    void toPersonWithNullRequest() {
-        var person = mapper.toPerson(null);
+    void toEntityWithNullRequest() {
+        var person = mapper.toEntity(null);
         assertThat(person).isNull();
     }
 }

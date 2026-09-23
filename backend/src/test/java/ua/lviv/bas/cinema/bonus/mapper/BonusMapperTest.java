@@ -64,24 +64,24 @@ public class BonusMapperTest {
     }
 
     @Test
-    void updateFromRequest() {
+    void updateEntity() {
         var existing = BonusRules.builder().points(0).active(true).build();
         var request = new BonusRulesRequest(150, null, null, null, false);
 
-        mapper.updateFromRequest(request, existing);
+        mapper.updateEntity(request, existing);
 
         assertThat(existing.getPoints()).isEqualTo(150);
         assertThat(existing.getActive()).isFalse();
     }
 
     @Test
-    void updateFromRequestWithPartialUpdate() {
+    void updateEntityWithPartialUpdate() {
         var existing = BonusRules.builder().points(100).moneyRatio(new BigDecimal("0.05")).minPointsPerTransaction(10)
                 .maxPointsPerTransaction(500).active(true).build();
 
         var request = new BonusRulesRequest(200, null, null, null, null);
 
-        mapper.updateFromRequest(request, existing);
+        mapper.updateEntity(request, existing);
 
         assertThat(existing.getPoints()).isEqualTo(200);
         assertThat(existing.getMoneyRatio()).isEqualTo(new BigDecimal("0.05"));
@@ -91,11 +91,11 @@ public class BonusMapperTest {
     }
 
     @Test
-    void updateFromRequestWithAllFields() {
+    void updateEntityWithAllFields() {
         var existing = BonusRules.builder().build();
         var request = new BonusRulesRequest(200, new BigDecimal("0.10"), 50, 1000, false);
 
-        mapper.updateFromRequest(request, existing);
+        mapper.updateEntity(request, existing);
 
         assertThat(existing.getPoints()).isEqualTo(200);
         assertThat(existing.getMoneyRatio()).isEqualTo(new BigDecimal("0.10"));
@@ -105,10 +105,10 @@ public class BonusMapperTest {
     }
 
     @Test
-    void updateFromRequestWithNullRequest() {
+    void updateEntityWithNullRequest() {
         var existing = BonusRules.builder().points(100).active(true).build();
 
-        mapper.updateFromRequest(null, existing);
+        mapper.updateEntity(null, existing);
 
         assertThat(existing.getPoints()).isEqualTo(100);
         assertThat(existing.getActive()).isTrue();

@@ -62,7 +62,7 @@ public class SeatServiceTest {
     void updateSeatType_ShouldUpdateType() {
         when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.of(seat));
         when(seatRepository.save(seat)).thenReturn(seat);
-        when(seatMapper.toSeatResponse(seat)).thenReturn(response);
+        when(seatMapper.toResponse(seat)).thenReturn(response);
 
         SeatResponse result = seatService.updateSeatType(HALL_ID, SEAT_ID, SeatType.VIP);
 
@@ -87,7 +87,7 @@ public class SeatServiceTest {
 
         when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.of(seat));
         when(seatRepository.save(seat)).thenReturn(seat);
-        when(seatMapper.toSeatResponse(seat)).thenReturn(response);
+        when(seatMapper.toResponse(seat)).thenReturn(response);
 
         SeatResponse result = seatService.setSeatActiveStatus(HALL_ID, SEAT_ID, true);
 
