@@ -1,5 +1,5 @@
 .verificationContainer {
-  min-height: 100vh;
+  min-height: var(--page-min-height);
   display: flex;
   justify-content: center;
   align-items: center;

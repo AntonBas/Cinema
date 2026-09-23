@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Layout } from "@/components/layout/Layout/Layout";
-import { AccountSidebar } from "@/components/account/AccountSidebar/AccountSidebar";
+import { AccountPageLayout } from "@/components/account/AccountPageLayout/AccountPageLayout";
 import { TicketsList } from "@/components/account/TicketSection/TicketsList/TicketsList";
 import { TicketQRModal } from "@/components/account/TicketSection/TicketQRModal/TicketQRModal";
 import { TicketRefundModal } from "@/components/account/TicketSection/TicketRefundModal/TicketRefundModal";
@@ -69,126 +68,111 @@ export const TicketsPage: React.FC = () => {
   };
 
   return (
-    <Layout>
-      <div className={styles.ticketsPage}>
-        <div className={styles.container}>
-          <AccountSidebar />
-
-          <div className={styles.mainContent}>
-            <div className={styles.pageHeader}>
-              <h1 className={styles.pageTitle}>My Tickets</h1>
-              <p className={styles.pageSubtitle}>
-                Manage and view your movie tickets
-              </p>
-            </div>
-
-            <div className={styles.controlsSection}>
-              <div className={styles.searchBox}>
-                <SearchInput
-                  onSearch={setSearchQuery}
-                  placeholder="Search tickets by movie title..."
-                  delay={300}
-                />
-                {hasActiveFilters && (
-                  <Button
-                    variant="secondary"
-                    onClick={handleClearFilters}
-                    size="small"
-                  >
-                    Clear Filters
-                  </Button>
-                )}
-              </div>
-
-              <div className={styles.viewControls}>
-                <Button
-                  variant={viewMode === "grid" ? "primary" : "secondary"}
-                  onClick={() => setViewMode("grid")}
-                  size="small"
-                >
-                  Grid
-                </Button>
-                <Button
-                  variant={viewMode === "list" ? "primary" : "secondary"}
-                  onClick={() => setViewMode("list")}
-                  size="small"
-                >
-                  List
-                </Button>
-              </div>
-            </div>
-
-            <div className={styles.tabsSection}>
-              {TABS.map((tab) => (
-                <button
-                  key={tab.id}
-                  className={`${styles.filterTab} ${statusFilter === (tab.id === "all" ? undefined : tab.id) ? styles.active : ""}`}
-                  onClick={() =>
-                    handleStatusChange(tab.id === "all" ? undefined : tab.id)
-                  }
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            <div className={styles.ticketsSection}>
-              {loading ? (
-                <div className={styles.loadingState}>
-                  <div className={styles.spinner}></div>
-                  <p>Loading tickets...</p>
-                </div>
-              ) : (
-                <>
-                  <TicketsList
-                    tickets={tickets}
-                    viewMode={viewMode}
-                    onShowQR={(code) => {
-                      setSelectedQRCode(code);
-                      setShowQRModal(true);
-                    }}
-                    onRequestRefund={(ticket) => {
-                      setSelectedTicket(ticket);
-                      setShowRefundModal(true);
-                    }}
-                  />
-                  {pagination && pagination.totalPages > 1 && (
-                    <div className={styles.paginationContainer}>
-                      <Pagination
-                        currentPage={pagination.number}
-                        totalPages={pagination.totalPages}
-                        totalElements={pagination.totalElements}
-                        pageSize={pagination.size}
-                        onPageChange={setCurrentPage}
-                        variant="pages"
-                        showInfo={true}
-                      />
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
+    <AccountPageLayout title="My Tickets" subtitle="Manage and view your movie tickets">
+      <div className={styles.controlsSection}>
+        <div className={styles.searchBox}>
+          <SearchInput
+            onSearch={setSearchQuery}
+            placeholder="Search tickets by movie title..."
+            delay={300}
+          />
+          {hasActiveFilters && (
+            <Button
+              variant="secondary"
+              onClick={handleClearFilters}
+              size="small"
+            >
+              Clear Filters
+            </Button>
+          )}
         </div>
 
-        {showQRModal && (
-          <TicketQRModal
-            ticketCode={selectedQRCode}
-            onClose={() => setShowQRModal(false)}
-          />
-        )}
+        <div className={styles.viewControls}>
+          <Button
+            variant={viewMode === "grid" ? "primary" : "secondary"}
+            onClick={() => setViewMode("grid")}
+            size="small"
+          >
+            Grid
+          </Button>
+          <Button
+            variant={viewMode === "list" ? "primary" : "secondary"}
+            onClick={() => setViewMode("list")}
+            size="small"
+          >
+            List
+          </Button>
+        </div>
+      </div>
 
-        {showRefundModal && (
-          <TicketRefundModal
-            ticket={selectedTicket}
-            onClose={() => {
-              setShowRefundModal(false);
-              setSelectedTicket(null);
-            }}
-            onRefundSuccess={handleRefundSuccess}
-          />
+      <div className={styles.tabsSection}>
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            className={`${styles.filterTab} ${statusFilter === (tab.id === "all" ? undefined : tab.id) ? styles.active : ""}`}
+            onClick={() =>
+              handleStatusChange(tab.id === "all" ? undefined : tab.id)
+            }
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <div className={styles.ticketsSection}>
+        {loading ? (
+          <div className={styles.loadingState}>
+            <div className={styles.spinner}></div>
+            <p>Loading tickets...</p>
+          </div>
+        ) : (
+          <>
+            <TicketsList
+              tickets={tickets}
+              viewMode={viewMode}
+              onShowQR={(code) => {
+                setSelectedQRCode(code);
+                setShowQRModal(true);
+              }}
+              onRequestRefund={(ticket) => {
+                setSelectedTicket(ticket);
+                setShowRefundModal(true);
+              }}
+            />
+            {pagination && pagination.totalPages > 1 && (
+              <div className={styles.paginationContainer}>
+                <Pagination
+                  currentPage={pagination.number}
+                  totalPages={pagination.totalPages}
+                  totalElements={pagination.totalElements}
+                  pageSize={pagination.size}
+                  onPageChange={setCurrentPage}
+                  variant="pages"
+                  showInfo={true}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
-    </Layout>
+
+      {showQRModal && (
+        <TicketQRModal
+          ticketCode={selectedQRCode}
+          onClose={() => setShowQRModal(false)}
+        />
+      )}
+
+      {showRefundModal && (
+        <TicketRefundModal
+          ticket={selectedTicket}
+          onClose={() => {
+            setShowRefundModal(false);
+            setSelectedTicket(null);
+          }}
+          onRefundSuccess={handleRefundSuccess}
+        />
+      )}
+    </AccountPageLayout>
   );
 };

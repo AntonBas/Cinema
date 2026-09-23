@@ -6,6 +6,7 @@ import { api } from "@/services/api";
 import { Button, Input } from "@/components/ui";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { useResendVerification } from "@/hooks/features/auth/useResendVerification";
+import { Layout } from "@/components/layout/Layout/Layout";
 import styles from "./EmailVerificationPage.module.css";
 
 export const EmailVerificationPage: React.FC = () => {
@@ -54,76 +55,82 @@ export const EmailVerificationPage: React.FC = () => {
 
   if (status === "loading") {
     return (
-      <div className={styles.verificationContainer}>
-        <LoadingSpinner text="Verifying your email..." />
-      </div>
+      <Layout>
+        <div className={styles.verificationContainer}>
+          <LoadingSpinner text="Verifying your email..." />
+        </div>
+      </Layout>
     );
   }
 
   if (status === "error") {
     return (
-      <div className={styles.verificationContainer}>
-        <div className={`${styles.verificationCard} ${styles.error}`}>
-          <XCircle size={64} className={styles.icon} />
-          <h2>Verification Failed</h2>
-          <p>{errorMessage}</p>
-          <p className={styles.message}>
-            Enter your email to get a new verification link.
-          </p>
-
-          <Input
-            type="email"
-            label="Email"
-            value={email}
-            onChange={setEmail}
-            placeholder="your@email.com"
-          />
-
-          {message && (
-            <p
-              className={
-                messageType === "error"
-                  ? styles.messageError
-                  : styles.messageSuccess
-              }
-            >
-              {message}
+      <Layout>
+        <div className={styles.verificationContainer}>
+          <div className={`${styles.verificationCard} ${styles.error}`}>
+            <XCircle size={64} className={styles.icon} />
+            <h2>Verification Failed</h2>
+            <p>{errorMessage}</p>
+            <p className={styles.message}>
+              Enter your email to get a new verification link.
             </p>
-          )}
 
-          <div className={styles.errorActions}>
-            <Button
-              variant="primary"
-              loading={sending}
-              disabled={cooldown > 0 || !email}
-              onClick={() => resend(email)}
-            >
-              {cooldown > 0
-                ? `Resend in ${cooldown}s`
-                : "Resend verification email"}
-            </Button>
-            <Button variant="secondary" onClick={() => navigate("/login")}>
-              Go to Login
-            </Button>
+            <Input
+              type="email"
+              label="Email"
+              value={email}
+              onChange={setEmail}
+              placeholder="your@email.com"
+            />
+
+            {message && (
+              <p
+                className={
+                  messageType === "error"
+                    ? styles.messageError
+                    : styles.messageSuccess
+                }
+              >
+                {message}
+              </p>
+            )}
+
+            <div className={styles.errorActions}>
+              <Button
+                variant="primary"
+                loading={sending}
+                disabled={cooldown > 0 || !email}
+                onClick={() => resend(email)}
+              >
+                {cooldown > 0
+                  ? `Resend in ${cooldown}s`
+                  : "Resend verification email"}
+              </Button>
+              <Button variant="secondary" onClick={() => navigate("/login")}>
+                Go to Login
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   return (
-    <div className={styles.verificationContainer}>
-      <div className={`${styles.verificationCard} ${styles.success}`}>
-        <CheckCircle2 size={64} className={styles.icon} />
-        <h2>Email Verified Successfully!</h2>
-        <p>Your email has been verified.</p>
-        <p className={styles.redirectText}>
-          Redirecting to login page in 5 seconds...
-        </p>
-        <Button variant="primary" onClick={() => navigate("/login")}>
-          Go to Login Now
-        </Button>
+    <Layout>
+      <div className={styles.verificationContainer}>
+        <div className={`${styles.verificationCard} ${styles.success}`}>
+          <CheckCircle2 size={64} className={styles.icon} />
+          <h2>Email Verified Successfully!</h2>
+          <p>Your email has been verified.</p>
+          <p className={styles.redirectText}>
+            Redirecting to login page in 5 seconds...
+          </p>
+          <Button variant="primary" onClick={() => navigate("/login")}>
+            Go to Login Now
+          </Button>
+        </div>
       </div>
-    </div>
+    </Layout>
   );
 };

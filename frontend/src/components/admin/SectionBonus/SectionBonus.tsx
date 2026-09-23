@@ -10,6 +10,7 @@ import type { BonusRulesResponse, BonusTransactionType } from "@/types/bonus";
 import { BonusTransactionTypeDisplay } from "@/types/bonus";
 import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
+import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import styles from "./SectionBonus.module.css";
 
 const SectionBonus = () => {
@@ -66,12 +67,10 @@ const SectionBonus = () => {
 
   return (
     <div className={styles.section}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>Bonus Rules Configuration</h1>
-        <p className={styles.description}>
-          Configure how bonus points are awarded and used
-        </p>
-      </div>
+      <PageHeader
+        title="Bonus Rules"
+        subtitle="Configure how bonus points are awarded and used"
+      />
 
       <div className={tableStyles.wrapper}>
         <div className={tableStyles.container}>

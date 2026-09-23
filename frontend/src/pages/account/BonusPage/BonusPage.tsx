@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Layout } from "@/components/layout/Layout/Layout";
-import { AccountSidebar } from "@/components/account/AccountSidebar/AccountSidebar";
+import { AccountPageLayout } from "@/components/account/AccountPageLayout/AccountPageLayout";
 import { BonusBalanceCard } from "@/components/account/BonusSection/BonusBalanceCard/BonusBalanceCard";
 import { BonusTransactions } from "@/components/account/BonusSection/BonusTransactions/BonusTransactions";
 import { useBonus } from "@/hooks/features/bonus/useBonus";
@@ -34,52 +33,40 @@ export const BonusPage: React.FC = () => {
   }, [activeTab, params.page, params.size, getMyTransactions]);
 
   return (
-    <Layout>
-      <div className={styles.bonusPage}>
-        <div className={styles.container}>
-          <AccountSidebar />
-
-          <div className={styles.content}>
-            <div className={styles.header}>
-              <h1 className={styles.title}>My Bonus</h1>
-            </div>
-
-            <div className={styles.tabs}>
-              <button
-                className={`${styles.tab} ${activeTab === "balance" ? styles.active : ""}`}
-                onClick={() => setActiveTab("balance")}
-              >
-                Balance
-              </button>
-              <button
-                className={`${styles.tab} ${activeTab === "transactions" ? styles.active : ""}`}
-                onClick={() => setActiveTab("transactions")}
-              >
-                Transactions
-              </button>
-            </div>
-
-            <div className={styles.tabContent}>
-              {activeTab === "balance" ? (
-                <div className={styles.balanceContent}>
-                  <BonusBalanceCard balance={balance} loading={!balance} />
-                </div>
-              ) : (
-                <div className={styles.transactionsContent}>
-                  <BonusTransactions
-                    transactions={transactions}
-                    loading={!transactions.length}
-                    onPageChange={setPage}
-                    currentPage={transactionsPagination?.number || 0}
-                    totalPages={transactionsPagination?.totalPages || 1}
-                    totalElements={transactionsPagination?.totalElements || 0}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+    <AccountPageLayout title="My Bonus">
+      <div className={styles.tabs}>
+        <button
+          className={`${styles.tab} ${activeTab === "balance" ? styles.active : ""}`}
+          onClick={() => setActiveTab("balance")}
+        >
+          Balance
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === "transactions" ? styles.active : ""}`}
+          onClick={() => setActiveTab("transactions")}
+        >
+          Transactions
+        </button>
       </div>
-    </Layout>
+
+      <div className={styles.tabContent}>
+        {activeTab === "balance" ? (
+          <div className={styles.balanceContent}>
+            <BonusBalanceCard balance={balance} loading={!balance} />
+          </div>
+        ) : (
+          <div className={styles.transactionsContent}>
+            <BonusTransactions
+              transactions={transactions}
+              loading={!transactions.length}
+              onPageChange={setPage}
+              currentPage={transactionsPagination?.number || 0}
+              totalPages={transactionsPagination?.totalPages || 1}
+              totalElements={transactionsPagination?.totalElements || 0}
+            />
+          </div>
+        )}
+      </div>
+    </AccountPageLayout>
   );
 };

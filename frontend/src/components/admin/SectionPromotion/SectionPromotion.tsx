@@ -15,6 +15,7 @@ import type {
 import PromotionTable from "./PromotionTable/PromotionTable";
 import CreatePromotionModal from "./PromotionModal/CreatePromotionModal";
 import EditPromotionModal from "./PromotionModal/EditPromotionModal";
+import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import styles from "./SectionPromotion.module.css";
 
 const SectionPromotion: React.FC = () => {
@@ -126,15 +127,15 @@ const SectionPromotion: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <div>
-          <h1 className={styles.title}>Promotion Management</h1>
-          <p className={styles.subtitle}>Create and manage promotions</p>
-        </div>
-        <Button onClick={() => setShowCreateModal(true)} variant="primary">
-          Create Promotion
-        </Button>
-      </div>
+      <PageHeader
+        title="Promotions"
+        subtitle="Create and manage promotions"
+        actions={
+          <Button onClick={() => setShowCreateModal(true)} variant="primary">
+            Create Promotion
+          </Button>
+        }
+      />
 
       <div className={styles.filtersContainer}>
         <div className={styles.searchWrapper}>

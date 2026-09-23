@@ -8,6 +8,8 @@ import { MovieFilter } from "@/components/sessions/MovieFilter/MovieFilter";
 import { SessionList } from "@/components/sessions/SessionList/SessionList";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { Button } from "@/components/ui/Button/Button";
+import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
+import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import styles from "./SessionsPage.module.css";
 
 const getTodayString = (): string => new Date().toISOString().split("T")[0];
@@ -102,20 +104,18 @@ const SessionsPage: React.FC = () => {
 
   return (
     <Layout>
-      <div className={styles.container}>
-        <div className={styles.header}>
-          <div>
-            <h1 className={styles.title}>Schedule</h1>
-            <p className={styles.subtitle}>
-              Browse available movie sessions and book your tickets
-            </p>
-          </div>
-          {hasFilters && (
-            <Button variant="secondary" onClick={handleClearFilters}>
-              Clear Filters
-            </Button>
-          )}
-        </div>
+      <PageContainer>
+        <PageHeader
+          title="Schedule"
+          subtitle="Browse available movie sessions and book your tickets"
+          actions={
+            hasFilters && (
+              <Button variant="secondary" onClick={handleClearFilters}>
+                Clear Filters
+              </Button>
+            )
+          }
+        />
 
         <div className={styles.filtersSection}>
           <DateFilter
@@ -154,7 +154,7 @@ const SessionsPage: React.FC = () => {
             <p>Try selecting a different date or movie.</p>
           </div>
         )}
-      </div>
+      </PageContainer>
     </Layout>
   );
 };

@@ -1,5 +1,5 @@
 .container {
-    min-height: 100vh;
+    min-height: var(--page-min-height);
     background-color: var(--color-bg-primary);
     padding: 2rem 1rem;
     display: flex;
@@ -29,7 +29,7 @@
 }
 
 .loadingContainer {
-    min-height: 100vh;
+    min-height: var(--page-min-height);
     display: flex;
     flex-direction: column;
     align-items: center;

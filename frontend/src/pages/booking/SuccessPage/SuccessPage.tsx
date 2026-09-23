@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button/Button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import { CheckCircle2, Home, Ticket, AlertCircle, RefreshCw } from 'lucide-react';
 import type { PaymentResponse } from '@/types/payment';
+import { Layout } from '@/components/layout/Layout/Layout';
 import styles from './SuccessPage.module.css';
 
 const SuccessPage = () => {
@@ -63,9 +64,11 @@ const SuccessPage = () => {
 
     if (loading && !payment) {
         return (
-            <div className={styles.loadingContainer}>
-                <LoadingSpinner text="Loading payment information..." />
-            </div>
+            <Layout>
+                <div className={styles.loadingContainer}>
+                    <LoadingSpinner text="Loading payment information..." />
+                </div>
+            </Layout>
         );
     }
 
@@ -78,72 +81,74 @@ const SuccessPage = () => {
     const isProcessing = ['PENDING', 'PROCESSING'].includes(payment.status);
 
     return (
-        <div className={`${styles.container} ${isVisible ? styles.visible : ''}`}>
-            <div className={styles.card}>
-                <div className={isSuccess ? styles.successContainer : isFailed ? styles.errorContainer : styles.warningContainer}>
-                    <div className={`${styles.iconWrapper} ${isSuccess ? styles.successIconWrapper : isFailed ? styles.errorIconWrapper : styles.warningIconWrapper}`}>
-                        {isSuccess && <CheckCircle2 className={styles.successIcon} size={64} />}
-                        {isFailed && <AlertCircle className={styles.errorIcon} size={64} />}
-                        {isProcessing && <RefreshCw className={styles.warningIcon} size={64} />}
+        <Layout>
+            <div className={`${styles.container} ${isVisible ? styles.visible : ''}`}>
+                <div className={styles.card}>
+                    <div className={isSuccess ? styles.successContainer : isFailed ? styles.errorContainer : styles.warningContainer}>
+                        <div className={`${styles.iconWrapper} ${isSuccess ? styles.successIconWrapper : isFailed ? styles.errorIconWrapper : styles.warningIconWrapper}`}>
+                            {isSuccess && <CheckCircle2 className={styles.successIcon} size={64} />}
+                            {isFailed && <AlertCircle className={styles.errorIcon} size={64} />}
+                            {isProcessing && <RefreshCw className={styles.warningIcon} size={64} />}
+                        </div>
+
+                        <h1 className={styles.title}>
+                            {isSuccess && 'Payment Successful!'}
+                            {isFailed && 'Payment Failed'}
+                            {isProcessing && 'Payment Processing'}
+                        </h1>
+
+                        <p className={styles.message}>
+                            {isSuccess && 'Your tickets have been successfully paid and booked.'}
+                            {isFailed && 'Payment failed. Please try again or contact support.'}
+                            {isProcessing && 'Your payment is being processed. Please wait...'}
+                        </p>
+
+                        {isProcessing && pollingRef.current && (
+                            <div className={styles.pollingInfo}>
+                                <LoadingSpinner text="" />
+                                <span>Checking payment status... {pollingCount}/30</span>
+                            </div>
+                        )}
+
+                        <div className={styles.actions}>
+                            {isSuccess && (
+                                <>
+                                    <Button variant="primary" onClick={() => navigate('/account/tickets')}>
+                                        <Ticket size={18} /> View My Tickets
+                                    </Button>
+                                    <Button variant="secondary" onClick={() => navigate('/')}>
+                                        <Home size={18} /> Back to Home
+                                    </Button>
+                                </>
+                            )}
+                            {isFailed && (
+                                <>
+                                    {bookingId && (
+                                        <Button variant="primary" onClick={() => navigate(`/booking/payment/${bookingId}`)}>
+                                            <RefreshCw size={18} /> Try Again
+                                        </Button>
+                                    )}
+                                    <Button variant="secondary" onClick={() => navigate('/')}>
+                                        <Home size={18} /> Back to Home
+                                    </Button>
+                                </>
+                            )}
+                            {isProcessing && (
+                                <Button variant="secondary" onClick={() => navigate('/')}>
+                                    <Home size={18} /> Back to Home
+                                </Button>
+                            )}
+                        </div>
                     </div>
 
-                    <h1 className={styles.title}>
-                        {isSuccess && 'Payment Successful!'}
-                        {isFailed && 'Payment Failed'}
-                        {isProcessing && 'Payment Processing'}
-                    </h1>
-
-                    <p className={styles.message}>
-                        {isSuccess && 'Your tickets have been successfully paid and booked.'}
-                        {isFailed && 'Payment failed. Please try again or contact support.'}
-                        {isProcessing && 'Your payment is being processed. Please wait...'}
-                    </p>
-
-                    {isProcessing && pollingRef.current && (
-                        <div className={styles.pollingInfo}>
-                            <LoadingSpinner text="" />
-                            <span>Checking payment status... {pollingCount}/30</span>
+                    {isSuccess && (
+                        <div className={styles.footer}>
+                            <span className={styles.footerText}>Thank you for your purchase! Enjoy the movie!</span>
                         </div>
                     )}
-
-                    <div className={styles.actions}>
-                        {isSuccess && (
-                            <>
-                                <Button variant="primary" onClick={() => navigate('/account/tickets')}>
-                                    <Ticket size={18} /> View My Tickets
-                                </Button>
-                                <Button variant="secondary" onClick={() => navigate('/')}>
-                                    <Home size={18} /> Back to Home
-                                </Button>
-                            </>
-                        )}
-                        {isFailed && (
-                            <>
-                                {bookingId && (
-                                    <Button variant="primary" onClick={() => navigate(`/booking/payment/${bookingId}`)}>
-                                        <RefreshCw size={18} /> Try Again
-                                    </Button>
-                                )}
-                                <Button variant="secondary" onClick={() => navigate('/')}>
-                                    <Home size={18} /> Back to Home
-                                </Button>
-                            </>
-                        )}
-                        {isProcessing && (
-                            <Button variant="secondary" onClick={() => navigate('/')}>
-                                <Home size={18} /> Back to Home
-                            </Button>
-                        )}
-                    </div>
                 </div>
-
-                {isSuccess && (
-                    <div className={styles.footer}>
-                        <span className={styles.footerText}>Thank you for your purchase! Enjoy the movie!</span>
-                    </div>
-                )}
             </div>
-        </div>
+        </Layout>
     );
 };
 

@@ -7,6 +7,8 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { useBooking } from "@/hooks/features/booking/useBooking";
 import { parseServerInstant } from "@/utils/dateUtils";
+import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
+import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import styles from "./BookingSummaryPage.module.css";
 
 export const BookingSummaryPage: React.FC = () => {
@@ -100,19 +102,23 @@ export const BookingSummaryPage: React.FC = () => {
         variant="error"
       />
 
-      <div className={styles.summaryPage}>
+      <PageContainer size="narrow">
         <ProgressStepper
           steps={BOOKING_STEPS}
           currentStep={2}
           className={styles.stepper}
         />
 
-        <div className={styles.header}>
-          <h1>Booking Summary</h1>
-          <p className={styles.bookingNumber}>
-            Booking #: {booking.bookingNumber}
-          </p>
-        </div>
+        <PageHeader
+          align="center"
+          divider
+          title="Booking Summary"
+          subtitle={
+            <span className={styles.bookingNumber}>
+              Booking #: {booking.bookingNumber}
+            </span>
+          }
+        />
 
         <div className={styles.content}>
           <div className={styles.movieInfo}>
@@ -229,7 +235,7 @@ export const BookingSummaryPage: React.FC = () => {
             </button>
           </div>
         </div>
-      </div>
+      </PageContainer>
     </Layout>
   );
 };

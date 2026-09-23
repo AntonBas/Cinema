@@ -113,6 +113,11 @@
   --space-6: 1.5rem;
   --space-8: 2rem;
   --space-12: 3rem;
+
+  --container-sm: 800px;
+  --container-md: 1200px;
+  --container-lg: 1400px;
+  --page-min-height: calc(100vh - 70px - 250px);
 }
 
 html,

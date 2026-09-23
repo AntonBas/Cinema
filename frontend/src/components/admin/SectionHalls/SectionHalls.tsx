@@ -11,6 +11,7 @@ import { HallsTable } from './HallsTable/HallsTable';
 import { HallLayoutModal } from './HallLayoutModal/HallLayoutModal';
 import { useHallLayout } from './HallLayoutContext';
 import { HallLayoutProvider } from './HallLayoutProvider';
+import { PageHeader } from '@/components/ui/PageHeader/PageHeader';
 import styles from './SectionHalls.module.css';
 
 const SectionHallsContent: React.FC = () => {
@@ -99,17 +100,15 @@ const SectionHallsContent: React.FC = () => {
 
     return (
         <div className={styles.section}>
-            <div className={styles.header}>
-                <div className={styles.headerContent}>
-                    <h1 className={styles.title}>Cinema Halls Management</h1>
-                    <p className={styles.subtitle}>
-                        Manage your cinema halls, seating layouts and configurations
-                    </p>
-                </div>
-                <Button variant="primary" onClick={() => setShowCreateModal(true)} disabled={loading}>
-                    Add Hall
-                </Button>
-            </div>
+            <PageHeader
+                title="Cinema Halls"
+                subtitle="Manage your cinema halls, seating layouts and configurations"
+                actions={
+                    <Button variant="primary" onClick={() => setShowCreateModal(true)} disabled={loading}>
+                        Add Hall
+                    </Button>
+                }
+            />
 
             <div className={styles.content}>
                 <HallsTable

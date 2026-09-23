@@ -8,6 +8,7 @@ import { Pagination } from '@/components/ui/Pagination/Pagination';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import { DEFAULT_PAGE_SIZE_COMPACT } from '@/utils/paginationUtils';
 import type { UserRole, VerificationStatus } from '@/types/user';
+import { PageHeader } from '@/components/ui/PageHeader/PageHeader';
 import styles from './SectionUsers.module.css';
 
 export const SectionUsers: React.FC = () => {
@@ -117,10 +118,10 @@ export const SectionUsers: React.FC = () => {
 
     return (
         <div className={styles.container}>
-            <header className={styles.header}>
-                <h1>User Management</h1>
-                <p>Manage user roles, verification status and account settings</p>
-            </header>
+            <PageHeader
+                title="Users"
+                subtitle="Manage user roles, verification status and account settings"
+            />
 
             <div className={styles.searchSection}>
                 <UserFilters

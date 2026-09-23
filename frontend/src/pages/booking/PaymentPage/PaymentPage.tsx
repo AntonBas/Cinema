@@ -19,6 +19,8 @@ import {
 import type { PaymentResponse } from "@/types/payment";
 import { PaymentStatusDisplay } from "@/types/payment";
 import { parseServerInstant } from "@/utils/dateUtils";
+import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
+import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import styles from "./PaymentPage.module.css";
 
 interface BookingData {
@@ -263,18 +265,18 @@ export const PaymentPage: React.FC = () => {
 
   return (
     <Layout>
-      <div className={styles.container}>
+      <PageContainer>
         <ProgressStepper
           steps={BOOKING_STEPS}
           currentStep={3}
           className={styles.stepper}
         />
-        <div className={styles.header}>
-          <h1 className={styles.title}>Payment</h1>
-          <p className={styles.subtitle}>
-            Complete your booking by making a secure payment
-          </p>
-        </div>
+        <PageHeader
+          align="center"
+          divider
+          title="Payment"
+          subtitle="Complete your booking by making a secure payment"
+        />
         <div className={styles.content}>
           <div className={styles.paymentCard}>
             <div className={styles.paymentHeader}>
@@ -485,7 +487,7 @@ export const PaymentPage: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
+      </PageContainer>
     </Layout>
   );
 };

@@ -1,0 +1,35 @@
+.page {
+    background-color: var(--color-bg-secondary);
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    max-width: var(--container-md);
+    margin: 0 auto;
+    min-height: var(--page-min-height);
+}
+
+.content {
+    flex: 1;
+    min-width: 0;
+    padding: var(--space-8);
+}
+
+@media (min-width: 969px) {
+    .container {
+        flex-direction: row;
+    }
+}
+
+@media (max-width: 768px) {
+    .content {
+        padding: var(--space-4);
+    }
+}
+
+@media (max-width: 480px) {
+    .content {
+        padding: var(--space-3);
+    }
+}

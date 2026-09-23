@@ -6,6 +6,7 @@ import { EntityHistoryModal } from './EntityHistoryModal/EntityHistoryModal';
 import { Pagination } from '@/components/ui';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
+import { PageHeader } from '@/components/ui/PageHeader/PageHeader';
 import styles from './SectionAuditLogs.module.css';
 
 export const SectionAuditLogs: React.FC = () => {
@@ -59,12 +60,10 @@ export const SectionAuditLogs: React.FC = () => {
 
     return (
         <div className={styles.container}>
-            <div className={styles.header}>
-                <div>
-                    <h1 className={styles.title}>Audit Logs</h1>
-                    <p className={styles.subtitle}>Track all changes and user activities in the system</p>
-                </div>
-            </div>
+            <PageHeader
+                title="Audit Logs"
+                subtitle="Track all changes and user activities in the system"
+            />
 
             <AuditLogsFilters
                 entityType={filters.entityType || ''}

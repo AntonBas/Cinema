@@ -9,6 +9,7 @@ import TicketTypeFilters from './TicketTypeFilters/TicketTypeFilters';
 import TicketTypeFormModal from './TicketTypeModal/TicketTypeFormModal';
 import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import { DEFAULT_PAGE_SIZE_COMPACT } from '@/utils/paginationUtils';
+import { PageHeader } from '@/components/ui/PageHeader/PageHeader';
 import styles from './SectionTicketType.module.css';
 import type { TicketTypeResponse, TicketTypeCategory } from '@/types/ticketType';
 
@@ -131,15 +132,15 @@ const SectionTicketType = () => {
 
     return (
         <div className={styles.section}>
-            <div className={styles.header}>
-                <div>
-                    <h1 className={styles.title}>Ticket Types</h1>
-                    <p className={styles.description}>Configure ticket pricing and categories</p>
-                </div>
-                <Button variant="primary" onClick={() => setShowCreateModal(true)}>
-                    Create Ticket Type
-                </Button>
-            </div>
+            <PageHeader
+                title="Ticket Types"
+                subtitle="Configure ticket pricing and categories"
+                actions={
+                    <Button variant="primary" onClick={() => setShowCreateModal(true)}>
+                        Create Ticket Type
+                    </Button>
+                }
+            />
 
             <div className={styles.content}>
                 <TicketTypeFilters

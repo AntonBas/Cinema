@@ -15,6 +15,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
 import { DEFAULT_PAGE_SIZE_COMPACT } from '@/utils/paginationUtils';
 import type { SessionAdminResponse, SessionRequest, CinemaSessionStatus } from '@/types/session';
 import type { CinemaHallListResponse } from '@/types/cinemaHall';
+import { PageHeader } from '@/components/ui/PageHeader/PageHeader';
 import styles from './SectionSchedule.module.css';
 
 interface FiltersState {
@@ -126,15 +127,15 @@ export const SectionSchedule: React.FC = () => {
 
     return (
         <div className={styles.container}>
-            <div className={styles.header}>
-                <div className={styles.headerContent}>
-                    <h1 className={styles.title}>Session Schedule</h1>
-                    <p className={styles.subtitle}>Manage movie sessions, showtimes, and schedules</p>
-                </div>
-                <Button variant="primary" onClick={() => setIsCreateModalOpen(true)} disabled={loading}>
-                    Add Session
-                </Button>
-            </div>
+            <PageHeader
+                title="Session Schedule"
+                subtitle="Manage movie sessions, showtimes, and schedules"
+                actions={
+                    <Button variant="primary" onClick={() => setIsCreateModalOpen(true)} disabled={loading}>
+                        Add Session
+                    </Button>
+                }
+            />
 
             <SessionFilters
                 filters={filters}

@@ -12,6 +12,8 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { useNotification } from "@/context/NotificationContext";
 import { useAuth } from "@/context/AuthContext";
 import type { SeatInfo } from "@/types/seatReservation";
+import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
+import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import styles from "./BookingPage.module.css";
 
 export const BookingPage: React.FC = () => {
@@ -112,23 +114,27 @@ export const BookingPage: React.FC = () => {
 
   return (
     <Layout>
-      <div className={styles.bookingPage}>
+      <PageContainer size="wide" className={styles.bookingPage}>
         <ProgressStepper
           steps={BOOKING_STEPS}
           currentStep={1}
           className={styles.stepper}
         />
 
-        <div className={styles.header}>
-          <h1>{seatData.movieTitle}</h1>
-          <div className={styles.sessionInfo}>
-            <span>{seatData.hallName}</span>
-            <span>Available seats: {seatData.availableSeats}</span>
-            <span>
-              Base Price: {parseFloat(seatData.basePrice).toFixed(2)}₴
-            </span>
-          </div>
-        </div>
+        <PageHeader
+          align="center"
+          divider
+          title={seatData.movieTitle}
+          subtitle={
+            <div className={styles.sessionInfo}>
+              <span>{seatData.hallName}</span>
+              <span>Available seats: {seatData.availableSeats}</span>
+              <span>
+                Base Price: {parseFloat(seatData.basePrice).toFixed(2)}₴
+              </span>
+            </div>
+          }
+        />
 
         <div className={styles.content}>
           <div className={styles.hallSection}>
@@ -150,7 +156,7 @@ export const BookingPage: React.FC = () => {
             />
           </div>
         </div>
-      </div>
+      </PageContainer>
     </Layout>
   );
 };

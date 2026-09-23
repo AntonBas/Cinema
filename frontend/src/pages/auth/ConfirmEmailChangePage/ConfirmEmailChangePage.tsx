@@ -11,6 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 import { api } from "@/services/api";
 import { Button } from "@/components/ui/Button/Button";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { Layout } from "@/components/layout/Layout/Layout";
 import styles from "./ConfirmEmailChangePage.module.css";
 
 export const ConfirmEmailChangePage: React.FC = () => {
@@ -62,28 +63,58 @@ export const ConfirmEmailChangePage: React.FC = () => {
 
   if (status === "loading") {
     return (
-      <div className={styles.container}>
-        <div className={styles.card}>
-          <LoadingSpinner text="Confirming your email change..." />
+      <Layout>
+        <div className={styles.container}>
+          <div className={styles.card}>
+            <LoadingSpinner text="Confirming your email change..." />
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   if (status === "error") {
     return (
+      <Layout>
+        <section className={styles.container}>
+          <div className={styles.card}>
+            <h1 className={styles.title}>Confirmation Failed</h1>
+            <XCircle size={64} className={styles.icon} />
+            <p className={styles.message}>{errorMessage}</p>
+            <div className={styles.actions}>
+              <Button
+                variant="primary"
+                onClick={() => navigate("/login")}
+                fullWidth
+              >
+                Go to Login
+              </Button>
+            </div>
+            <div className={styles.bottom}>
+              <Link to="/">Back to Home</Link>
+            </div>
+          </div>
+        </section>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout>
       <section className={styles.container}>
         <div className={styles.card}>
-          <h1 className={styles.title}>Confirmation Failed</h1>
-          <XCircle size={64} className={styles.icon} />
-          <p className={styles.message}>{errorMessage}</p>
+          <h1 className={styles.title}>Email Changed!</h1>
+          <CheckCircle2 size={64} className={styles.icon} />
+          <p className={styles.message}>
+            Your email address has been successfully updated.
+          </p>
           <div className={styles.actions}>
             <Button
               variant="primary"
-              onClick={() => navigate("/login")}
+              onClick={() => navigate(isAuthenticated ? "/account" : "/login")}
               fullWidth
             >
-              Go to Login
+              {isAuthenticated ? "Go to Account" : "Go to Login"}
             </Button>
           </div>
           <div className={styles.bottom}>
@@ -91,30 +122,6 @@ export const ConfirmEmailChangePage: React.FC = () => {
           </div>
         </div>
       </section>
-    );
-  }
-
-  return (
-    <section className={styles.container}>
-      <div className={styles.card}>
-        <h1 className={styles.title}>Email Changed!</h1>
-        <CheckCircle2 size={64} className={styles.icon} />
-        <p className={styles.message}>
-          Your email address has been successfully updated.
-        </p>
-        <div className={styles.actions}>
-          <Button
-            variant="primary"
-            onClick={() => navigate(isAuthenticated ? "/account" : "/login")}
-            fullWidth
-          >
-            {isAuthenticated ? "Go to Account" : "Go to Login"}
-          </Button>
-        </div>
-        <div className={styles.bottom}>
-          <Link to="/">Back to Home</Link>
-        </div>
-      </div>
-    </section>
+    </Layout>
   );
 };
