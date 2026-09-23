@@ -9,7 +9,7 @@ import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
 import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,21 +25,21 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             + "LEFT JOIN FETCH b.seatReservations sr LEFT JOIN FETCH sr.seat WHERE p.id = :paymentId")
     Optional<Payment> findByIdWithDetails(@Param("paymentId") Long paymentId);
 
-    List<Payment> findByStatusAndCreatedDateBefore(PaymentStatus status, LocalDateTime createdDate);
+    List<Payment> findByStatusAndCreatedDateBefore(PaymentStatus status, Instant createdDate);
 
-    List<Payment> findByStatusAndLastModifiedDateBefore(PaymentStatus status, LocalDateTime lastModifiedDate);
+    List<Payment> findByStatusAndLastModifiedDateBefore(PaymentStatus status, Instant lastModifiedDate);
 
     @Query("SELECT DISTINCT p FROM Payment p JOIN FETCH p.booking b LEFT JOIN FETCH b.seatReservations JOIN FETCH b.session "
             + "WHERE p.status = :status AND p.createdDate < :createdDate")
     List<Payment> findByStatusAndCreatedDateBeforeWithBookingDetails(@Param("status") PaymentStatus status,
-            @Param("createdDate") LocalDateTime createdDate);
+            @Param("createdDate") Instant createdDate);
 
-    List<Payment> findByStatusInAndCreatedDateBefore(List<PaymentStatus> statuses, LocalDateTime createdDate);
+    List<Payment> findByStatusInAndCreatedDateBefore(List<PaymentStatus> statuses, Instant createdDate);
 
     @Query("SELECT p FROM Payment p WHERE p.status = :status AND p.booking.status = :bookingStatus "
             + "AND p.lastModifiedDate < :cutoff")
     List<Payment> findByStatusAndBookingStatusAndLastModifiedDateBefore(@Param("status") PaymentStatus status,
-            @Param("bookingStatus") BookingStatus bookingStatus, @Param("cutoff") LocalDateTime cutoff);
+            @Param("bookingStatus") BookingStatus bookingStatus, @Param("cutoff") Instant cutoff);
 
     @Modifying
     @Query("UPDATE Payment p SET p.status = :newStatus WHERE p.id = :id AND p.status IN :fromStatuses")

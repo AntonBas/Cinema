@@ -31,9 +31,10 @@ import ua.lviv.bas.cinema.ticket.repository.TicketRepository;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.integration.QRCodeService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -81,7 +82,7 @@ public class TicketServiceTest {
 
         testSession = new Session();
         testSession.setId(69L);
-        testSession.setStartTime(LocalDateTime.now().minusMinutes(30));
+        testSession.setStartTime(CinemaTime.now().minusMinutes(30));
         testSession.setStatus(CinemaSessionStatus.ONGOING);
 
         CinemaHall hall = new CinemaHall();
@@ -108,7 +109,7 @@ public class TicketServiceTest {
 
         cashierResponse = new TicketCashierResponse(
                 1L, TICKET_CODE, TicketStatus.USED, "Test Movie",
-                LocalDateTime.now(), "Hall A", "5", 10, "Standard",
+                CinemaTime.now(), "Hall A", "5", 10, "Standard",
                 false, null, "test@email.com", BigDecimal.ZERO
         );
 
@@ -181,7 +182,7 @@ public class TicketServiceTest {
 
         @Test
         void validateWhenTooEarlyShouldThrowException() {
-            testSession.setStartTime(LocalDateTime.now().plusHours(2));
+            testSession.setStartTime(CinemaTime.now().plusHours(2));
             testTicket.setStatus(TicketStatus.ACTIVE);
 
             when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
@@ -195,7 +196,7 @@ public class TicketServiceTest {
 
         @Test
         void validateWithin1HourBeforeSessionShouldSucceed() {
-            testSession.setStartTime(LocalDateTime.now().plusMinutes(30));
+            testSession.setStartTime(CinemaTime.now().plusMinutes(30));
             testSession.setStatus(CinemaSessionStatus.SCHEDULED);
             testTicket.setStatus(TicketStatus.ACTIVE);
 
@@ -213,7 +214,7 @@ public class TicketServiceTest {
 
         @Test
         void validateWhenSessionEndedMoreThan2HoursAgoShouldThrowException() {
-            testSession.setStartTime(LocalDateTime.now().minusHours(3));
+            testSession.setStartTime(CinemaTime.now().minusHours(3));
             testTicket.setStatus(TicketStatus.ACTIVE);
 
             when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
@@ -227,7 +228,7 @@ public class TicketServiceTest {
 
         @Test
         void validateWhenSessionCancelledShouldThrowException() {
-            testSession.setStartTime(LocalDateTime.now().minusMinutes(10));
+            testSession.setStartTime(CinemaTime.now().minusMinutes(10));
             testSession.setStatus(CinemaSessionStatus.CANCELLED);
             testTicket.setStatus(TicketStatus.ACTIVE);
 
@@ -247,8 +248,8 @@ public class TicketServiceTest {
         @Test
         void getTicketShouldSucceed() {
             TicketResponse mockResponse = new TicketResponse(1L, TICKET_CODE, "/qr", TicketStatus.ACTIVE,
-                    LocalDateTime.now(), BigDecimal.TEN, "Standard", "Test Movie",
-                    LocalDateTime.now(), "Hall A", 5, 10, null);
+                    Instant.now(), BigDecimal.TEN, "Standard", "Test Movie",
+                    CinemaTime.now(), "Hall A", 5, 10, null);
 
             when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
             when(ticketMapper.toTicketResponse(testTicket)).thenReturn(mockResponse);

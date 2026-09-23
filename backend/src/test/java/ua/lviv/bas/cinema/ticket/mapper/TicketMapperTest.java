@@ -16,6 +16,7 @@ import ua.lviv.bas.cinema.ticket.dto.response.TicketCashierResponse;
 import ua.lviv.bas.cinema.ticket.dto.response.TicketResponse;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,7 +36,7 @@ class TicketMapperTest {
 
         Ticket ticket = Ticket.builder().id(456L).booking(booking).uniqueCode("TKT-ABC123").ticketType(ticketType)
                 .finalPrice(new BigDecimal("250.00")).status(TicketStatus.ACTIVE)
-                .purchaseTime(LocalDateTime.of(2024, 1, 15, 14, 35)).build();
+                .purchaseTime(Instant.parse("2024-01-15T14:35:00Z")).build();
 
         TicketResponse response = mapper.toTicketResponse(ticket);
 

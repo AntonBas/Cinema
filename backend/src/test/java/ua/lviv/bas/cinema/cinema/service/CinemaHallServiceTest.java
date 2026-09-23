@@ -25,8 +25,8 @@ import ua.lviv.bas.cinema.cinema.repository.CinemaHallRepository;
 import ua.lviv.bas.cinema.cinema.repository.SeatRepository;
 import ua.lviv.bas.cinema.cinema.repository.projection.CinemaHallListProjection;
 import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -164,7 +164,7 @@ public class CinemaHallServiceTest {
     @Test
     void updateHallShouldThrowExceptionWhenHallHasFutureSessions() {
         CinemaHall hall = CinemaHall.builder().id(HALL_ID).name(HALL_NAME).build();
-        Session session = Session.builder().startTime(LocalDateTime.now().plusDays(1)).build();
+        Session session = Session.builder().startTime(CinemaTime.now().plusDays(1)).build();
         hall.setSessions(List.of(session));
 
         when(hallRepository.findByIdWithSeats(HALL_ID)).thenReturn(Optional.of(hall));
@@ -195,7 +195,7 @@ public class CinemaHallServiceTest {
     @Test
     void deleteHallShouldThrowExceptionWhenHallHasFutureSessions() {
         CinemaHall hall = CinemaHall.builder().id(HALL_ID).name(HALL_NAME).build();
-        Session session = Session.builder().startTime(LocalDateTime.now().plusDays(1)).build();
+        Session session = Session.builder().startTime(CinemaTime.now().plusDays(1)).build();
         hall.setSessions(List.of(session));
 
         when(hallRepository.findByIdWithSeats(HALL_ID)).thenReturn(Optional.of(hall));
@@ -346,7 +346,7 @@ public class CinemaHallServiceTest {
     @Test
     void updateLayoutShouldThrowWhenHallHasFutureSessions() {
         CinemaHall hall = CinemaHall.builder().id(HALL_ID).name(HALL_NAME).build();
-        Session session = Session.builder().startTime(LocalDateTime.now().plusDays(1)).build();
+        Session session = Session.builder().startTime(CinemaTime.now().plusDays(1)).build();
         hall.setSessions(List.of(session));
 
         when(hallRepository.findByIdWithSeats(HALL_ID)).thenReturn(Optional.of(hall));

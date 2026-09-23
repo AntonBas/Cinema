@@ -27,6 +27,7 @@ import ua.lviv.bas.cinema.bonus.repository.BonusCardRepository;
 import ua.lviv.bas.cinema.bonus.repository.BonusRulesRepository;
 import ua.lviv.bas.cinema.bonus.repository.BonusTransactionRepository;
 import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.time.LocalDate;
 import java.util.Map;
@@ -80,7 +81,7 @@ public class BonusLedgerService {
         if (!canReceiveBirthdayBonus(user)) {
             return;
         }
-        var today = LocalDate.now();
+        var today = CinemaTime.today();
         executeWithOptimisticLockRetry(() -> {
             var card = getOrCreateCard(user);
             if (alreadyReceivedBirthdayBonus(card, today)) {
@@ -309,7 +310,7 @@ public class BonusLedgerService {
 
     private boolean canReceiveBirthdayBonus(User user) {
         return user.getVerificationStatus() == VerificationStatus.VERIFIED && user.getDateOfBirth() != null
-                && isBirthdayToday(user.getDateOfBirth(), LocalDate.now());
+                && isBirthdayToday(user.getDateOfBirth(), CinemaTime.today());
     }
 
     private boolean isBirthdayToday(LocalDate birthDate, LocalDate today) {

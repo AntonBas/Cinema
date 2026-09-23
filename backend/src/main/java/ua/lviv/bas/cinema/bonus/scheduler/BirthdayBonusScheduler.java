@@ -12,6 +12,7 @@ import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.user.domain.VerificationStatus;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 @Slf4j
 @Component
@@ -25,7 +26,7 @@ public class BirthdayBonusScheduler {
 	public void awardBirthdayBonuses() {
 		log.info("Starting birthday bonus distribution");
 
-		LocalDate today = LocalDate.now();
+		LocalDate today = CinemaTime.today();
 		int dayOfMonth = today.getDayOfMonth();
 		int month = today.getMonthValue();
 

@@ -26,10 +26,10 @@ import ua.lviv.bas.cinema.user.repository.UserRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -73,7 +73,7 @@ class BookingCrossHallSeatVerificationTest {
         var seatInOtherHall = seatRepository.save(Seat.builder().hall(otherHall).row(1).number(1).x(0).y(0).build());
 
         var session = sessionRepository.save(Session.builder().movie(movie).hall(sessionHall)
-                .startTime(LocalDateTime.now().plusDays(1)).basePrice(new BigDecimal("200.00")).build());
+                .startTime(CinemaTime.now().plusDays(1)).basePrice(new BigDecimal("200.00")).build());
         var ticketType = ticketTypeRepository
                 .save(TicketType.builder().displayName("Adult").priceMultiplier(BigDecimal.ONE).build());
 

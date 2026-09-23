@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.user.scheduler;
 
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -28,7 +29,7 @@ public class UnverifiedAccountCleanupScheduler {
     public void cleanupUnverifiedAccounts() {
         log.debug("Starting unverified account cleanup");
 
-        LocalDateTime cutoff = LocalDateTime.now().minusHours(gracePeriodHours);
+        Instant cutoff = Instant.now().minus(Duration.ofHours(gracePeriodHours));
         int deletedTokens = tokenRepository.deleteAllByUnverifiedUserCreatedDateBefore(cutoff);
         int deletedAccounts = userRepository.deleteAllByEnabledFalseAndCreatedDateBefore(cutoff);
 

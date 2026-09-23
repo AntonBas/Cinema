@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -54,8 +55,9 @@ public record BookingResponse(
         @Schema(description = "LiqPay order ID", example = "ORDER_ABC123")
         String liqpayOrderId,
 
-        @Schema(description = "Booking expires at", example = "2024-01-15T14:50:00")
-        LocalDateTime expiresAt,
+        @Schema(description = "Booking expires at, as UTC instant",
+                example = "2024-01-15T14:50:00Z")
+        Instant expiresAt,
 
         @Schema(description = "List of seat reservations")
         List<SeatReservationInfo> seatReservations

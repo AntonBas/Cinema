@@ -1,6 +1,6 @@
 package ua.lviv.bas.cinema.promotion.domain;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -51,7 +51,7 @@ public class UserPromotion {
 	private Promotion promotion;
 
 	@Column(name = "redeemed_at", nullable = false)
-	private LocalDateTime redeemedAt;
+	private Instant redeemedAt;
 
 	@Column(name = "points_awarded", nullable = false)
 	private Integer pointsAwarded;

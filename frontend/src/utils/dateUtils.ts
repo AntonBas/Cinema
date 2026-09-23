@@ -45,7 +45,18 @@ export const safeFormatDate = (
   return toDisplayFormat(dateString);
 };
 
-export const parseServerUtcInstant = (dateTimeString: string): Date => {
+export const formatInstantDate = (
+  instantString: string | null | undefined,
+): string => {
+  if (!instantString) return "—";
+  const date = parseServerInstant(instantString);
+  if (isNaN(date.getTime())) return "—";
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${day}.${month}.${date.getFullYear()}`;
+};
+
+export const parseServerInstant = (dateTimeString: string): Date => {
   const hasTimezoneDesignator = /(Z|[+-]\d{2}:?\d{2})$/.test(dateTimeString);
   return new Date(
     hasTimezoneDesignator ? dateTimeString : `${dateTimeString}Z`,

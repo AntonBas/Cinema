@@ -6,6 +6,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -20,7 +21,7 @@ public class SessionSpecification {
             List<Predicate> predicates = new ArrayList<>();
 
             predicates.add(cb.equal(root.get("status"), CinemaSessionStatus.SCHEDULED));
-            predicates.add(cb.greaterThan(root.get("startTime"), LocalDateTime.now()));
+            predicates.add(cb.greaterThan(root.get("startTime"), CinemaTime.now()));
 
             if (movieId != null) {
                 predicates.add(cb.equal(root.join("movie").get("id"), movieId));

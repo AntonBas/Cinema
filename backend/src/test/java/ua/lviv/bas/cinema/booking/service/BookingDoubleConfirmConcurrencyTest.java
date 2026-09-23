@@ -26,10 +26,10 @@ import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.ticket.repository.TicketTypeRepository;
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -78,7 +78,7 @@ class BookingDoubleConfirmConcurrencyTest {
         var hall = cinemaHallRepository.save(CinemaHall.builder().name("Double Confirm Hall").build());
         var seat = seatRepository.save(Seat.builder().row(1).number(1).x(0).y(0).hall(hall).build());
         var session = sessionRepository.save(Session.builder().movie(movie).hall(hall)
-                .startTime(LocalDateTime.now().plusDays(1)).basePrice(new BigDecimal("100.00")).build());
+                .startTime(CinemaTime.now().plusDays(1)).basePrice(new BigDecimal("100.00")).build());
         var ticketType = ticketTypeRepository
                 .save(TicketType.builder().displayName("Standard").priceMultiplier(BigDecimal.ONE).build());
 

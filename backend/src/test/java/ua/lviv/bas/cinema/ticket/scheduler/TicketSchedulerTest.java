@@ -12,7 +12,7 @@ import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
 import ua.lviv.bas.cinema.ticket.repository.TicketRepository;
 import ua.lviv.bas.cinema.ticket.repository.specification.TicketSpecification;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -62,7 +62,7 @@ class TicketSchedulerTest {
     @Test
     void cleanupRefundedTicketsWhenNoneFoundShouldNotDelete() {
         when(ticketSpecification.hasStatus(TicketStatus.REFUNDED)).thenReturn(NOOP_SPEC);
-        when(ticketSpecification.purchaseTimeBefore(any(LocalDateTime.class))).thenReturn(NOOP_SPEC);
+        when(ticketSpecification.purchaseTimeBefore(any(Instant.class))).thenReturn(NOOP_SPEC);
         when(ticketRepository.findAll(any(Specification.class))).thenReturn(List.of());
 
         ticketScheduler.cleanupRefundedTickets();
@@ -75,7 +75,7 @@ class TicketSchedulerTest {
         var ticket = Ticket.builder().id(1L).status(TicketStatus.REFUNDED).build();
 
         when(ticketSpecification.hasStatus(TicketStatus.REFUNDED)).thenReturn(NOOP_SPEC);
-        when(ticketSpecification.purchaseTimeBefore(any(LocalDateTime.class))).thenReturn(NOOP_SPEC);
+        when(ticketSpecification.purchaseTimeBefore(any(Instant.class))).thenReturn(NOOP_SPEC);
         when(ticketRepository.findAll(any(Specification.class))).thenReturn(List.of(ticket));
 
         ticketScheduler.cleanupRefundedTickets();

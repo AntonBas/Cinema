@@ -27,8 +27,8 @@ import ua.lviv.bas.cinema.common.CacheableList;
 import ua.lviv.bas.cinema.common.UniquenessValidator;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -177,7 +177,7 @@ public class CinemaHallService {
 
     private void validateHallHasNoFutureSessions(CinemaHall hall) {
         boolean hasFutureSessions = hall.getSessions().stream()
-                .anyMatch(session -> session.getStartTime().isAfter(LocalDateTime.now()));
+                .anyMatch(session -> session.getStartTime().isAfter(CinemaTime.now()));
         if (hasFutureSessions) {
             throw new CinemaHallHasSessionsException(hall.getName(), hall.getId());
         }

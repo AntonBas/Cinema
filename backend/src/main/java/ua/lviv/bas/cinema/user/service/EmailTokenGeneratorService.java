@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.user.service;
 
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -56,11 +57,11 @@ public class EmailTokenGeneratorService {
 
     private EmailToken buildEmailToken(String token, User user, TokenType tokenType, String newEmail) {
         EmailToken.EmailTokenBuilder builder = EmailToken.builder().token(token).user(user).type(tokenType)
-                .createdAt(LocalDateTime.now());
+                .createdAt(Instant.now());
 
-        LocalDateTime expiresAt = switch (tokenType) {
-        case VERIFICATION, PASSWORD_RESET -> LocalDateTime.now().plusMinutes(10);
-        case EMAIL_CHANGE -> LocalDateTime.now().plusHours(24);
+        Instant expiresAt = switch (tokenType) {
+        case VERIFICATION, PASSWORD_RESET -> Instant.now().plus(Duration.ofMinutes(10));
+        case EMAIL_CHANGE -> Instant.now().plus(Duration.ofHours(24));
         };
         builder.expiresAt(expiresAt);
 

@@ -21,6 +21,7 @@ import ua.lviv.bas.cinema.payment.service.PaymentRefundService;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.common.SeatInfoFormatter;
 import ua.lviv.bas.cinema.ticket.service.TicketService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -91,8 +92,8 @@ public class RefundService {
     }
 
     private String formatRemainingTime(LocalDateTime sessionTime) {
-        var hours = ChronoUnit.HOURS.between(LocalDateTime.now(), sessionTime);
-        var minutes = ChronoUnit.MINUTES.between(LocalDateTime.now(), sessionTime) % 60;
+        var hours = ChronoUnit.HOURS.between(CinemaTime.now(), sessionTime);
+        var minutes = ChronoUnit.MINUTES.between(CinemaTime.now(), sessionTime) % 60;
 
         if (hours > 0 && minutes > 0)
             return String.format("%d hours %d minutes", hours, minutes);

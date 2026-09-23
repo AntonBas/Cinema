@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.payment.scheduler;
 
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
@@ -69,7 +70,7 @@ public class PaymentScheduler {
     @Scheduled(fixedRateString = "${scheduler.payment.expiration-interval:300000}")
     public void processExpiredPayments() {
         log.debug("Starting expired payments processing");
-        LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(paymentExpirationMinutes);
+        Instant cutoffTime = Instant.now().minus(Duration.ofMinutes(paymentExpirationMinutes));
         List<Payment> expiredPayments = paymentRepository
                 .findByStatusAndCreatedDateBeforeWithBookingDetails(PaymentStatus.PENDING, cutoffTime);
 
@@ -120,7 +121,7 @@ public class PaymentScheduler {
     @Scheduled(fixedRateString = "${scheduler.payment.processing-reconciliation-interval:600000}")
     public void reconcileStuckProcessingPayments() {
         log.debug("Starting stuck PROCESSING payments reconciliation");
-        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(processingTimeoutMinutes);
+        Instant cutoff = Instant.now().minus(Duration.ofMinutes(processingTimeoutMinutes));
         List<Payment> stuckPayments = paymentRepository
                 .findByStatusAndLastModifiedDateBefore(PaymentStatus.PROCESSING, cutoff);
 
@@ -161,7 +162,7 @@ public class PaymentScheduler {
     @Scheduled(fixedRateString = "${scheduler.payment.orchestration-reconciliation-interval:600000}")
     public void reconcileStuckSuccessfulPayments() {
         log.debug("Starting stuck post-payment orchestration reconciliation");
-        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(orchestrationStuckTimeoutMinutes);
+        Instant cutoff = Instant.now().minus(Duration.ofMinutes(orchestrationStuckTimeoutMinutes));
         List<Payment> stuckPayments = paymentRepository.findByStatusAndBookingStatusAndLastModifiedDateBefore(
                 PaymentStatus.SUCCESS, BookingStatus.PENDING, cutoff);
 
@@ -188,7 +189,7 @@ public class PaymentScheduler {
     @Transactional
     public void cleanupOldPayments() {
         log.debug("Starting old payments cleanup");
-        LocalDateTime ninetyDaysAgo = LocalDateTime.now().minusDays(90);
+        Instant ninetyDaysAgo = Instant.now().minus(Duration.ofDays(90));
         List<Payment> oldPayments = paymentRepository
                 .findByStatusInAndCreatedDateBefore(List.of(PaymentStatus.FAILED, PaymentStatus.EXPIRED),
                         ninetyDaysAgo);

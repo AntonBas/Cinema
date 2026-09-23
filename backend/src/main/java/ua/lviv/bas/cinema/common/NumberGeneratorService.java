@@ -3,8 +3,8 @@ package ua.lviv.bas.cinema.common;
 import org.springframework.stereotype.Service;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.refund.domain.Refund;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -17,7 +17,7 @@ public class NumberGeneratorService {
         if (booking.getCreatedDate() == null) {
             throw new IllegalStateException("Booking createdDate is required");
         }
-        var year = booking.getCreatedDate().getYear();
+        var year = booking.getCreatedDate().atZone(CinemaTime.ZONE).getYear();
         return String.format("BK-%d-%05d", year, booking.getId());
     }
 
@@ -39,6 +39,6 @@ public class NumberGeneratorService {
         if (refund.getId() == null) {
             throw new IllegalStateException("Refund ID is required");
         }
-        return String.format("RF-%04d-%06d", LocalDateTime.now().getYear(), refund.getId());
+        return String.format("RF-%04d-%06d", CinemaTime.now().getYear(), refund.getId());
     }
 }

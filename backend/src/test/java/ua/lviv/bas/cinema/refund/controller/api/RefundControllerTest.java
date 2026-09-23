@@ -12,9 +12,11 @@ import ua.lviv.bas.cinema.refund.dto.request.RefundRequest;
 import ua.lviv.bas.cinema.refund.dto.response.RefundPreviewResponse;
 import ua.lviv.bas.cinema.refund.dto.response.RefundResponse;
 import ua.lviv.bas.cinema.refund.service.RefundService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -39,16 +41,16 @@ public class RefundControllerTest {
 
     private RefundResponse createRefundResponse(Long id) {
         return new RefundResponse(id, "RF-2024-0001", "PROCESSING", new BigDecimal("200.00"), 90, "Change of plans",
-                "AUTO_SYSTEM", LocalDateTime.now(), LocalDateTime.now().minusMinutes(5), 456L, "CARD", null,
+                "AUTO_SYSTEM", Instant.now(), Instant.now().minus(Duration.ofMinutes(5)), 456L, "CARD", null,
                 "Refund processed successfully", "3-5 business days");
     }
 
     private RefundPreviewResponse createPreviewResponse(Long ticketId) {
-        return new RefundPreviewResponse(ticketId, "TK2024000123", "Interstellar", LocalDateTime.now().plusHours(3),
+        return new RefundPreviewResponse(ticketId, "TK2024000123", "Interstellar", CinemaTime.now().plusHours(3),
                 "Hall 1", "Row 5, Seat 12", new BigDecimal("200.00"), new BigDecimal("200.00"),
                 new BigDecimal("180.00"), new BigDecimal("90.00"), new BigDecimal("20.00"), new BigDecimal("10.00"),
                 100, 90, "Standard Refund", "90% refund 2-24 hours before session", true, null,
-                LocalDateTime.now().plusHours(1), "3 hours", LocalDateTime.now().minusHours(1).toString(),
+                CinemaTime.now().plusHours(1), "3 hours", CinemaTime.now().minusHours(1).toString(),
                 "Standard");
     }
 

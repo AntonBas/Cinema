@@ -12,9 +12,11 @@ import ua.lviv.bas.cinema.booking.dto.request.BookingCreateRequest;
 import ua.lviv.bas.cinema.booking.dto.response.BookingResponse;
 import ua.lviv.bas.cinema.booking.service.BookingService;
 import ua.lviv.bas.cinema.user.service.UserService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.UUID;
 
@@ -55,8 +57,8 @@ public class BookingControllerTest {
 
     private BookingResponse createBookingResponse() {
         return new BookingResponse(BOOKING_ID, BOOKING_PUBLIC_ID, "BK-2024-00123", BookingStatus.PENDING, SESSION_ID, null,
-                LocalDateTime.now().plusDays(1), "Test Movie", "Hall A", new BigDecimal("150.00"), 0, BigDecimal.ZERO,
-                new BigDecimal("150.00"), null, LocalDateTime.now().plusMinutes(15), Collections.emptyList());
+                CinemaTime.now().plusDays(1), "Test Movie", "Hall A", new BigDecimal("150.00"), 0, BigDecimal.ZERO,
+                new BigDecimal("150.00"), null, Instant.now().plus(Duration.ofMinutes(15)), Collections.emptyList());
     }
 
     @Test

@@ -25,7 +25,8 @@ import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.ticket.repository.TicketTypeRepository;
 import ua.lviv.bas.cinema.common.PriceCalculatorService;
 
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -101,7 +102,7 @@ public class SeatReservationService {
         validateSeat(seat, session);
 
         var reservation = SeatReservation.builder().seat(seat).session(session).ticketType(null).seatPrice(null)
-                .status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(tempHoldMinutes))
+                .status(ReservationStatus.PENDING).reservedUntil(Instant.now().plus(Duration.ofMinutes(tempHoldMinutes)))
                 .reservedByUser(user).build();
 
         var saved = seatReservationRepository.save(reservation);

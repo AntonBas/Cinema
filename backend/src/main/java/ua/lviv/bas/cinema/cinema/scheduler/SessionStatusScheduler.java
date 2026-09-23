@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 @Slf4j
 @Component
@@ -26,7 +27,7 @@ public class SessionStatusScheduler {
 	@Transactional
 	public void updateSessionStatuses() {
 		log.debug("Starting scheduled session status update");
-		LocalDateTime now = LocalDateTime.now();
+		LocalDateTime now = CinemaTime.now();
 
 		int startedCount = updateStatuses(sessionRepository.findSessionsToStart(now), CinemaSessionStatus.SCHEDULED,
 				CinemaSessionStatus.ONGOING);

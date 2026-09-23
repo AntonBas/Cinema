@@ -15,6 +15,7 @@ import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.movie.domain.status.MovieStatus;
 import ua.lviv.bas.cinema.movie.repository.MovieRepository;
 import ua.lviv.bas.cinema.movie.service.MovieStatusCalculator;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 @Slf4j
 @Component
@@ -34,7 +35,7 @@ public class MovieScheduler {
 	@Scheduled(cron = "${scheduler.movie-status.cron:0 */5 * * * *}")
 	@CacheEvict(value = {"singleMovies", "movieLists"}, allEntries = true)
 	public void updateMovieStatuses() {
-		LocalDate today = LocalDate.now();
+		LocalDate today = CinemaTime.today();
 		log.info("Starting movie status update for date: {}", today);
 
 		List<Movie> candidates = movieRepository.findCandidatesForStatusUpdate(today);

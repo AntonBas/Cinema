@@ -16,9 +16,10 @@ import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.ticket.dto.response.TicketResponse;
 import ua.lviv.bas.cinema.ticket.service.TicketService;
 import ua.lviv.bas.cinema.user.service.UserService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,8 +56,8 @@ public class TicketControllerTest {
     }
 
     private TicketResponse createTicketResponse() {
-        return new TicketResponse(1L, "TKT-20240115-ABC123", "/api/tickets/code/" + "TKT-20240115-ABC123" + "/qr", TicketStatus.ACTIVE, LocalDateTime.now(),
-                new BigDecimal("250.00"), "Adult", "Inception", LocalDateTime.now().plusDays(1), "Hall A", 1, 12, true);
+        return new TicketResponse(1L, "TKT-20240115-ABC123", "/api/tickets/code/" + "TKT-20240115-ABC123" + "/qr", TicketStatus.ACTIVE, Instant.now(),
+                new BigDecimal("250.00"), "Adult", "Inception", CinemaTime.now().plusDays(1), "Hall A", 1, 12, true);
     }
 
     @Test

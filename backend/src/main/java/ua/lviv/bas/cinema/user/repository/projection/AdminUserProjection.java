@@ -3,7 +3,7 @@ package ua.lviv.bas.cinema.user.repository.projection;
 import ua.lviv.bas.cinema.user.domain.UserRole;
 import ua.lviv.bas.cinema.user.domain.VerificationStatus;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public interface AdminUserProjection {
     Long getId();
@@ -20,9 +20,9 @@ public interface AdminUserProjection {
 
     VerificationStatus getVerificationStatus();
 
-    LocalDateTime getVerifiedAt();
+    Instant getVerifiedAt();
 
     Long getTicketsCount();
 
-    LocalDateTime getLastActivity();
+    Instant getLastActivity();
 }

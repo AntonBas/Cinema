@@ -1,5 +1,6 @@
 package ua.lviv.bas.cinema.config.properties;
 
+import ua.lviv.bas.cinema.common.CinemaTime;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -69,6 +70,6 @@ public class RefundRules {
     }
 
     private long minutesUntilSession(LocalDateTime sessionTime) {
-        return Duration.between(LocalDateTime.now(), sessionTime).toMinutes();
+        return Duration.between(CinemaTime.now(), sessionTime).toMinutes();
     }
 }

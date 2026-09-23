@@ -24,10 +24,10 @@ import ua.lviv.bas.cinema.cinema.repository.SeatRepository;
 import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -73,7 +73,7 @@ class SeatReservationConcurrencyTest {
         var hall = cinemaHallRepository.save(CinemaHall.builder().name("Concurrency Hall").build());
         var seat = seatRepository.save(Seat.builder().row(1).number(1).x(0).y(0).hall(hall).build());
         var session = sessionRepository.save(Session.builder().movie(movie).hall(hall)
-                .startTime(LocalDateTime.now().plusDays(1)).basePrice(new BigDecimal("100.00")).build());
+                .startTime(CinemaTime.now().plusDays(1)).basePrice(new BigDecimal("100.00")).build());
 
         seatId = seat.getId();
         sessionId = session.getId();

@@ -5,6 +5,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.movie.domain.status.MovieStatus;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ public class MovieSpecification {
             List<Predicate> predicates = new ArrayList<>();
 
             predicates.add(root.get("status").in(MovieStatus.CURRENT, MovieStatus.UPCOMING));
-            predicates.add(cb.greaterThanOrEqualTo(root.get("endShowingDate"), LocalDate.now()));
+            predicates.add(cb.greaterThanOrEqualTo(root.get("endShowingDate"), CinemaTime.today()));
 
             if (query != null && !query.isBlank()) {
                 predicates.add(cb.like(cb.lower(root.get("title")), "%" + query.toLowerCase() + "%"));
@@ -60,7 +61,7 @@ public class MovieSpecification {
             List<Predicate> predicates = new ArrayList<>();
 
             predicates.add(root.get("status").in(MovieStatus.CURRENT, MovieStatus.UPCOMING));
-            predicates.add(cb.greaterThanOrEqualTo(root.get("endShowingDate"), LocalDate.now()));
+            predicates.add(cb.greaterThanOrEqualTo(root.get("endShowingDate"), CinemaTime.today()));
             predicates.add(cb.between(cb.literal(date), root.get("releaseDate"), root.get("endShowingDate")));
 
             if (title != null && !title.isBlank()) {
@@ -73,7 +74,7 @@ public class MovieSpecification {
 
     public Specification<Movie> currentMovies() {
         return (root, cq, cb) -> {
-            LocalDate now = LocalDate.now();
+            LocalDate now = CinemaTime.today();
             return cb.and(
                     cb.equal(root.get("status"), MovieStatus.CURRENT),
                     cb.lessThanOrEqualTo(root.get("releaseDate"), now),
@@ -85,13 +86,13 @@ public class MovieSpecification {
     public Specification<Movie> upcomingMovies() {
         return (root, cq, cb) -> cb.and(
                 cb.equal(root.get("status"), MovieStatus.UPCOMING),
-                cb.greaterThan(root.get("releaseDate"), LocalDate.now())
+                cb.greaterThan(root.get("releaseDate"), CinemaTime.today())
         );
     }
 
     public Specification<Movie> leavingSoonMovies() {
         return (root, cq, cb) -> {
-            LocalDate now = LocalDate.now();
+            LocalDate now = CinemaTime.today();
             return cb.and(
                     cb.equal(root.get("status"), MovieStatus.CURRENT),
                     cb.between(root.get("endShowingDate"), now, now.plusDays(7))

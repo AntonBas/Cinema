@@ -33,7 +33,7 @@ import ua.lviv.bas.cinema.ticket.repository.TicketTypeRepository;
 import ua.lviv.bas.cinema.common.PriceCalculatorService;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -114,7 +114,7 @@ public class SeatReservationServiceTest {
         assertThat(saved.getSession()).isEqualTo(testSession);
         assertThat(saved.getStatus()).isEqualTo(ReservationStatus.PENDING);
         assertThat(saved.getReservedByUser()).isEqualTo(testUser);
-        assertThat(saved.getReservedUntil()).isAfter(LocalDateTime.now());
+        assertThat(saved.getReservedUntil()).isAfter(Instant.now());
     }
 
     @Test

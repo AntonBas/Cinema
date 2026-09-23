@@ -1,6 +1,6 @@
 package ua.lviv.bas.cinema.booking.scheduler;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -39,7 +39,7 @@ public class SeatReservationScheduler {
     @Scheduled(fixedRateString = "${scheduler.seat-reservation.expiration-interval:60000}")
     @Transactional(readOnly = true)
     public void expireTempSeatReservations() {
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         List<SeatReservation> expiredReservations = seatReservationRepository
                 .findByStatusAndReservedUntilBefore(ReservationStatus.PENDING, now);
 
@@ -68,7 +68,7 @@ public class SeatReservationScheduler {
                 affectedSessionIds);
     }
 
-    private int deleteIfStillExpired(Long reservationId, LocalDateTime cutoff) {
+    private int deleteIfStillExpired(Long reservationId, Instant cutoff) {
         return requiresNewTransactionTemplate.execute(status -> seatReservationRepository
                 .deleteByIdIfStillExpired(reservationId, ReservationStatus.PENDING, cutoff));
     }

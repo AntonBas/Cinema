@@ -23,10 +23,12 @@ import ua.lviv.bas.cinema.movie.repository.MovieRepository;
 import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -62,11 +64,11 @@ class BookingConcurrencyTest {
         var movie = movieRepository.save(buildMovie());
         var hall = cinemaHallRepository.save(CinemaHall.builder().name("Concurrency Lock Hall").build());
         var session = sessionRepository.save(Session.builder().movie(movie).hall(hall)
-                .startTime(LocalDateTime.now().plusDays(1)).basePrice(new BigDecimal("100.00")).build());
+                .startTime(CinemaTime.now().plusDays(1)).basePrice(new BigDecimal("100.00")).build());
 
         var booking = bookingRepository.save(Booking.builder().user(user).session(session)
                 .status(BookingStatus.PENDING).totalPrice(new BigDecimal("100.00"))
-                .finalPrice(new BigDecimal("100.00")).expiresAt(LocalDateTime.now().plusMinutes(20)).build());
+                .finalPrice(new BigDecimal("100.00")).expiresAt(Instant.now().plus(Duration.ofMinutes(20))).build());
         bookingId = booking.getId();
     }
 

@@ -32,6 +32,7 @@ import ua.lviv.bas.cinema.cinema.repository.specification.SessionSpecification;
 import ua.lviv.bas.cinema.booking.service.SeatReservationService;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -79,7 +80,7 @@ public class SessionService {
     }
 
     public List<SessionScheduleResponse> getSchedule(String searchTerm, LocalDate date, Long movieId) {
-        var scheduleDate = date != null ? date : LocalDate.now();
+        var scheduleDate = date != null ? date : CinemaTime.today();
         var schedule = sessionScheduleQueryService.getScheduleWithoutAvailability(searchTerm, scheduleDate, movieId);
 
         if (schedule.isEmpty()) {
@@ -95,7 +96,7 @@ public class SessionService {
     }
 
     public List<LocalDate> getScheduleDates(Long movieId) {
-        return sessionRepository.findScheduleDates(LocalDateTime.now(), movieId);
+        return sessionRepository.findScheduleDates(CinemaTime.now(), movieId);
     }
 
     @Cacheable(value = "sessions", key = "'admin:' + #hallId + ':' + #movieTitle + ':' + #status + ':' + #dateFrom + ':' + #dateTo + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort")
@@ -180,7 +181,7 @@ public class SessionService {
             throw SessionOperationException.cannotCancelInactive();
         }
 
-        if (session.getStartTime().minusHours(1).isBefore(LocalDateTime.now())) {
+        if (session.getStartTime().minusHours(1).isBefore(CinemaTime.now())) {
             throw SessionOperationException.cannotCancelTooLate();
         }
 
@@ -206,7 +207,7 @@ public class SessionService {
             throw SessionOperationException.onlyCancelledCanBeReactivated();
         }
 
-        if (session.getStartTime().isBefore(LocalDateTime.now())) {
+        if (session.getStartTime().isBefore(CinemaTime.now())) {
             throw SessionOperationException.cannotReactivatePast();
         }
 
@@ -234,7 +235,7 @@ public class SessionService {
     }
 
     private void validateStartTime(LocalDateTime startTime) {
-        if (startTime.isBefore(LocalDateTime.now().plusMinutes(30))) {
+        if (startTime.isBefore(CinemaTime.now().plusMinutes(30))) {
             throw SessionValidationException.tooCloseToStart(startTime);
         }
     }

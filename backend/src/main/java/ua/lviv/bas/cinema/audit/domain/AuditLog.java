@@ -1,6 +1,6 @@
 package ua.lviv.bas.cinema.audit.domain;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,7 +52,7 @@ public class AuditLog {
 	private String changedBy;
 
 	@Column(nullable = false)
-	private LocalDateTime changedAt;
+	private Instant changedAt;
 
 	@OneToMany(mappedBy = "auditLog", cascade = CascadeType.ALL, orphanRemoval = true)
 	@BatchSize(size = 20)

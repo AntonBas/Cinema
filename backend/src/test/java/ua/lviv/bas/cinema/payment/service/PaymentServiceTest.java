@@ -30,6 +30,8 @@ import ua.lviv.bas.cinema.notification.EmailService;
 import ua.lviv.bas.cinema.support.CinemaTestFixtures;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
@@ -94,12 +96,12 @@ public class PaymentServiceTest {
                 .status(ReservationStatus.CONFIRMED).build();
 
         testBooking = Booking.builder().id(BOOKING_ID).user(testUser).session(session).status(BookingStatus.PENDING)
-                .finalPrice(AMOUNT).expiresAt(LocalDateTime.now().plusHours(1))
+                .finalPrice(AMOUNT).expiresAt(Instant.now().plus(Duration.ofHours(1)))
                 .seatReservations(Collections.singletonList(seatReservation)).build();
 
         testPayment = Payment.builder().id(PAYMENT_ID).booking(testBooking).amount(AMOUNT).status(PaymentStatus.PENDING)
                 .liqpayOrderId("ORD_TEST123456789").build();
-        testPayment.setCreatedDate(LocalDateTime.now());
+        testPayment.setCreatedDate(Instant.now());
 
         createRequest = new PaymentCreateRequest(BOOKING_PUBLIC_ID);
 
@@ -127,7 +129,7 @@ public class PaymentServiceTest {
         assertThat(response.finalAmount()).isEqualTo(AMOUNT);
         assertThat(response.status()).isEqualTo(PaymentStatus.PENDING);
         assertThat(response.expiresAt())
-                .isEqualTo(testPayment.getCreatedDate().plusMinutes(PAYMENT_EXPIRATION_MINUTES));
+                .isEqualTo(testPayment.getCreatedDate().plus(Duration.ofMinutes(PAYMENT_EXPIRATION_MINUTES)));
 
         verify(paymentRepository).save(any(Payment.class));
     }

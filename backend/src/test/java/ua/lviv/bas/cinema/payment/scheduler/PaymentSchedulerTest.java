@@ -28,7 +28,7 @@ import ua.lviv.bas.cinema.payment.service.PaymentGatewayStatus;
 import ua.lviv.bas.cinema.payment.service.PaymentService;
 import ua.lviv.bas.cinema.payment.service.PaymentSuccessOrchestrator;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -80,7 +80,7 @@ class PaymentSchedulerTest {
     @Test
     void processExpiredPaymentsWhenNoneFoundShouldDoNothing() {
         when(paymentRepository.findByStatusAndCreatedDateBeforeWithBookingDetails(eq(PaymentStatus.PENDING),
-                any(LocalDateTime.class)))
+                any(Instant.class)))
                 .thenReturn(List.of());
 
         paymentScheduler.processExpiredPayments();
@@ -97,7 +97,7 @@ class PaymentSchedulerTest {
         var payment = Payment.builder().id(2L).booking(booking).status(PaymentStatus.PENDING).build();
 
         when(paymentRepository.findByStatusAndCreatedDateBeforeWithBookingDetails(eq(PaymentStatus.PENDING),
-                any(LocalDateTime.class)))
+                any(Instant.class)))
                 .thenReturn(List.of(payment));
         when(cacheManager.getCache(anyString())).thenReturn(cache);
 
@@ -122,7 +122,7 @@ class PaymentSchedulerTest {
         var payment = Payment.builder().id(2L).booking(booking).status(PaymentStatus.PENDING).build();
 
         when(paymentRepository.findByStatusAndCreatedDateBeforeWithBookingDetails(eq(PaymentStatus.PENDING),
-                any(LocalDateTime.class)))
+                any(Instant.class)))
                 .thenReturn(List.of(payment));
 
         paymentScheduler.processExpiredPayments();
@@ -144,7 +144,7 @@ class PaymentSchedulerTest {
         var payment = Payment.builder().id(2L).booking(booking).status(PaymentStatus.PENDING).build();
 
         when(paymentRepository.findByStatusAndCreatedDateBeforeWithBookingDetails(eq(PaymentStatus.PENDING),
-                any(LocalDateTime.class)))
+                any(Instant.class)))
                 .thenReturn(List.of(payment));
         when(cacheManager.getCache(anyString())).thenReturn(cache);
 
@@ -159,7 +159,7 @@ class PaymentSchedulerTest {
         var payment = Payment.builder().id(2L).booking(booking).status(PaymentStatus.PENDING).build();
 
         when(paymentRepository.findByStatusAndCreatedDateBeforeWithBookingDetails(eq(PaymentStatus.PENDING),
-                any(LocalDateTime.class)))
+                any(Instant.class)))
                 .thenReturn(List.of(payment));
         when(paymentRepository.save(payment))
                 .thenThrow(new ObjectOptimisticLockingFailureException(Payment.class, 2L));
@@ -174,7 +174,7 @@ class PaymentSchedulerTest {
     @Test
     void reconcileStuckProcessingPaymentsWhenNoneFoundShouldDoNothing() {
         when(paymentRepository.findByStatusAndLastModifiedDateBefore(eq(PaymentStatus.PROCESSING),
-                any(LocalDateTime.class))).thenReturn(List.of());
+                any(Instant.class))).thenReturn(List.of());
 
         paymentScheduler.reconcileStuckProcessingPayments();
 
@@ -188,7 +188,7 @@ class PaymentSchedulerTest {
                 .liqpayOrderId("ORD_2").build();
 
         when(paymentRepository.findByStatusAndLastModifiedDateBefore(eq(PaymentStatus.PROCESSING),
-                any(LocalDateTime.class))).thenReturn(List.of(payment));
+                any(Instant.class))).thenReturn(List.of(payment));
         when(paymentGatewayService.checkPaymentStatus("ORD_2"))
                 .thenReturn(new PaymentGatewayCheckResult(PaymentGatewayStatus.SUCCESS, Map.of("payment_id", "P1")));
 
@@ -205,7 +205,7 @@ class PaymentSchedulerTest {
                 .liqpayOrderId("ORD_2").build();
 
         when(paymentRepository.findByStatusAndLastModifiedDateBefore(eq(PaymentStatus.PROCESSING),
-                any(LocalDateTime.class))).thenReturn(List.of(payment));
+                any(Instant.class))).thenReturn(List.of(payment));
         when(paymentGatewayService.checkPaymentStatus("ORD_2")).thenReturn(
                 new PaymentGatewayCheckResult(PaymentGatewayStatus.FAILED, Map.of("err_description", "declined")));
 
@@ -222,7 +222,7 @@ class PaymentSchedulerTest {
                 .liqpayOrderId("ORD_2").build();
 
         when(paymentRepository.findByStatusAndLastModifiedDateBefore(eq(PaymentStatus.PROCESSING),
-                any(LocalDateTime.class))).thenReturn(List.of(payment));
+                any(Instant.class))).thenReturn(List.of(payment));
         when(paymentGatewayService.checkPaymentStatus("ORD_2"))
                 .thenReturn(new PaymentGatewayCheckResult(PaymentGatewayStatus.STILL_PROCESSING, Map.of()));
 
@@ -234,7 +234,7 @@ class PaymentSchedulerTest {
     @Test
     void reconcileStuckSuccessfulPaymentsWhenNoneFoundShouldDoNothing() {
         when(paymentRepository.findByStatusAndBookingStatusAndLastModifiedDateBefore(eq(PaymentStatus.SUCCESS),
-                eq(BookingStatus.PENDING), any(LocalDateTime.class))).thenReturn(List.of());
+                eq(BookingStatus.PENDING), any(Instant.class))).thenReturn(List.of());
 
         paymentScheduler.reconcileStuckSuccessfulPayments();
 
@@ -247,7 +247,7 @@ class PaymentSchedulerTest {
         var payment = Payment.builder().id(2L).booking(booking).status(PaymentStatus.SUCCESS).build();
 
         when(paymentRepository.findByStatusAndBookingStatusAndLastModifiedDateBefore(eq(PaymentStatus.SUCCESS),
-                eq(BookingStatus.PENDING), any(LocalDateTime.class))).thenReturn(List.of(payment));
+                eq(BookingStatus.PENDING), any(Instant.class))).thenReturn(List.of(payment));
 
         paymentScheduler.reconcileStuckSuccessfulPayments();
 
@@ -262,7 +262,7 @@ class PaymentSchedulerTest {
         var paymentB = Payment.builder().id(11L).booking(bookingB).status(PaymentStatus.SUCCESS).build();
 
         when(paymentRepository.findByStatusAndBookingStatusAndLastModifiedDateBefore(eq(PaymentStatus.SUCCESS),
-                eq(BookingStatus.PENDING), any(LocalDateTime.class))).thenReturn(List.of(paymentA, paymentB));
+                eq(BookingStatus.PENDING), any(Instant.class))).thenReturn(List.of(paymentA, paymentB));
         doThrow(new RuntimeException("still broken")).when(paymentSuccessOrchestrator).handle(10L);
 
         paymentScheduler.reconcileStuckSuccessfulPayments();
@@ -275,7 +275,7 @@ class PaymentSchedulerTest {
     void cleanupOldPaymentsShouldDeleteFailedAndExpiredPaymentsOlderThanNinetyDays() {
         var oldPayment = Payment.builder().id(3L).status(PaymentStatus.FAILED).build();
         when(paymentRepository.findByStatusInAndCreatedDateBefore(
-                eq(List.of(PaymentStatus.FAILED, PaymentStatus.EXPIRED)), any(LocalDateTime.class)))
+                eq(List.of(PaymentStatus.FAILED, PaymentStatus.EXPIRED)), any(Instant.class)))
                 .thenReturn(List.of(oldPayment));
 
         paymentScheduler.cleanupOldPayments();

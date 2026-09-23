@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import ua.lviv.bas.cinema.user.domain.UserRole;
 import ua.lviv.bas.cinema.user.domain.VerificationStatus;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Schema(description = "User information for admin list view")
 public record AdminUserListResponse(
@@ -30,12 +30,12 @@ public record AdminUserListResponse(
         VerificationStatus verificationStatus,
 
         @Schema(description = "Date and time when birth date was verified")
-        LocalDateTime verifiedAt,
+        Instant verifiedAt,
 
         @Schema(description = "Number of tickets purchased by the user", example = "15")
         Long ticketsCount,
 
         @Schema(description = "Date of user's last activity", example = "2024-01-15")
-        LocalDateTime lastActivity
+        Instant lastActivity
 ) {
 }

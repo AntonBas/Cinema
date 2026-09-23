@@ -7,7 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.user.repository.EmailTokenRepository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -24,28 +24,28 @@ class EmailTokenCleanupSchedulerTest {
 
     @Test
     void cleanupExpiredTokensShouldDeleteExpiredTokens() {
-        when(tokenRepository.deleteByExpiresAtBefore(any(LocalDateTime.class))).thenReturn(3);
+        when(tokenRepository.deleteByExpiresAtBefore(any(Instant.class))).thenReturn(3);
 
         emailTokenCleanupScheduler.cleanupExpiredTokens();
 
-        verify(tokenRepository).deleteByExpiresAtBefore(any(LocalDateTime.class));
+        verify(tokenRepository).deleteByExpiresAtBefore(any(Instant.class));
     }
 
     @Test
     void cleanupExpiredTokensWhenNoneFoundShouldStillCallRepository() {
-        when(tokenRepository.deleteByExpiresAtBefore(any(LocalDateTime.class))).thenReturn(0);
+        when(tokenRepository.deleteByExpiresAtBefore(any(Instant.class))).thenReturn(0);
 
         emailTokenCleanupScheduler.cleanupExpiredTokens();
 
-        verify(tokenRepository).deleteByExpiresAtBefore(any(LocalDateTime.class));
+        verify(tokenRepository).deleteByExpiresAtBefore(any(Instant.class));
     }
 
     @Test
     void cleanupOldConfirmedTokensShouldDeleteOldConfirmedTokens() {
-        when(tokenRepository.deleteByConfirmedTrueAndConfirmedAtBefore(any(LocalDateTime.class))).thenReturn(2);
+        when(tokenRepository.deleteByConfirmedTrueAndConfirmedAtBefore(any(Instant.class))).thenReturn(2);
 
         emailTokenCleanupScheduler.cleanupOldConfirmedTokens();
 
-        verify(tokenRepository).deleteByConfirmedTrueAndConfirmedAtBefore(any(LocalDateTime.class));
+        verify(tokenRepository).deleteByConfirmedTrueAndConfirmedAtBefore(any(Instant.class));
     }
 }

@@ -36,7 +36,8 @@ import ua.lviv.bas.cinema.ticket.service.TicketService;
 import ua.lviv.bas.cinema.support.CinemaTestFixtures;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -108,7 +109,7 @@ public class RefundServiceTest {
         testTicket = Ticket.builder().id(TICKET_ID).user(testUser).booking(booking).ticketType(ticketType)
                 .finalPrice(TICKET_PRICE).originalPrice(TICKET_PRICE).uniqueCode("TKT-123456")
                 .status(TicketStatus.ACTIVE).payment(testPayment).bonusPointsUsed(BONUS_POINTS_USED)
-                .purchaseTime(LocalDateTime.now().minusHours(1)).seatReservation(seatReservation).build();
+                .purchaseTime(Instant.now().minus(Duration.ofHours(1))).seatReservation(seatReservation).build();
         testRefund = Refund.builder().id(REFUND_ID).user(testUser).payment(testPayment).totalAmount(REFUND_AMOUNT)
                 .totalBonusPointsToDeduct(BONUS_POINTS_TO_REFUND).build();
         previewRequest = new RefundPreviewRequest(TICKET_ID);
@@ -195,7 +196,7 @@ public class RefundServiceTest {
         when(numberGenerator.generateRefundNumber(testRefund)).thenReturn("RF-2024-00001");
 
         RefundResponse mockResponse = new RefundResponse(1L, "RF-2024-00001", "PROCESSED", REFUND_AMOUNT,
-                BONUS_POINTS_TO_REFUND, "Test reason", "System", LocalDateTime.now(), LocalDateTime.now(), 1L, "CARD",
+                BONUS_POINTS_TO_REFUND, "Test reason", "System", Instant.now(), Instant.now(), 1L, "CARD",
                 null, "Refund processed successfully", "3-5 business days");
         when(refundMapper.toResponse(testRefund)).thenReturn(mockResponse);
 

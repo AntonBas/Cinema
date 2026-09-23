@@ -18,7 +18,7 @@ import ua.lviv.bas.cinema.exception.domain.audit.AuditHistoryNotFoundException;
 import ua.lviv.bas.cinema.audit.mapper.AuditLogMapper;
 import ua.lviv.bas.cinema.audit.service.AuditQueryService;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -152,11 +152,11 @@ public class AdminAuditControllerTest {
 
     private AuditLog createAuditLog(Long id, String entityType, Long entityId) {
         return AuditLog.builder().id(id).entityType(entityType).entityId(entityId).targetInfo("target")
-                .action(AuditAction.CREATED).changedBy("admin@example.com").changedAt(LocalDateTime.now()).build();
+                .action(AuditAction.CREATED).changedBy("admin@example.com").changedAt(Instant.now()).build();
     }
 
     private AuditLogResponse createAuditLogResponse(Long id, String entityType) {
         return new AuditLogResponse(id, entityType, 10L, "target", AuditAction.CREATED, "admin@example.com",
-                LocalDateTime.now(), List.of());
+                Instant.now(), List.of());
     }
 }

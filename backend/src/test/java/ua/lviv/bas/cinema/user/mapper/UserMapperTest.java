@@ -12,8 +12,8 @@ import ua.lviv.bas.cinema.user.dto.response.UserProfileResponse;
 import ua.lviv.bas.cinema.user.dto.response.UserResponse;
 import ua.lviv.bas.cinema.user.repository.projection.AdminUserProjection;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -153,8 +153,8 @@ public class UserMapperTest {
             }
 
             @Override
-            public LocalDateTime getVerifiedAt() {
-                return LocalDateTime.of(2024, 1, 15, 10, 30);
+            public Instant getVerifiedAt() {
+                return Instant.parse("2024-01-15T10:30:00Z");
             }
 
             @Override
@@ -163,8 +163,8 @@ public class UserMapperTest {
             }
 
             @Override
-            public LocalDateTime getLastActivity() {
-                return LocalDateTime.of(2024, 1, 20, 14, 0);
+            public Instant getLastActivity() {
+                return Instant.parse("2024-01-20T14:00:00Z");
             }
         };
 
@@ -177,16 +177,16 @@ public class UserMapperTest {
         assertThat(response.userRole()).isEqualTo(UserRole.ROLE_USER);
         assertThat(response.enabled()).isTrue();
         assertThat(response.verificationStatus()).isEqualTo(VerificationStatus.VERIFIED);
-        assertThat(response.verifiedAt()).isEqualTo(LocalDateTime.of(2024, 1, 15, 10, 30));
+        assertThat(response.verifiedAt()).isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
         assertThat(response.ticketsCount()).isEqualTo(5L);
-        assertThat(response.lastActivity()).isEqualTo(LocalDateTime.of(2024, 1, 20, 14, 0));
+        assertThat(response.lastActivity()).isEqualTo(Instant.parse("2024-01-20T14:00:00Z"));
     }
 
     @Test
     void toAdminUserListResponse_FromUser_ShouldMapAllFields() {
         User user = User.builder().id(1L).email("test@example.com").firstName("John").lastName("Doe")
                 .userRole(UserRole.ROLE_USER).enabled(true).verificationStatus(VerificationStatus.VERIFIED)
-                .verifiedAt(LocalDateTime.of(2024, 1, 15, 10, 30)).tickets(new ArrayList<>()).build();
+                .verifiedAt(Instant.parse("2024-01-15T10:30:00Z")).tickets(new ArrayList<>()).build();
 
         user.getTickets().add(null);
         user.getTickets().add(null);
@@ -200,7 +200,7 @@ public class UserMapperTest {
         assertThat(response.userRole()).isEqualTo(UserRole.ROLE_USER);
         assertThat(response.enabled()).isTrue();
         assertThat(response.verificationStatus()).isEqualTo(VerificationStatus.VERIFIED);
-        assertThat(response.verifiedAt()).isEqualTo(LocalDateTime.of(2024, 1, 15, 10, 30));
+        assertThat(response.verifiedAt()).isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
         assertThat(response.ticketsCount()).isEqualTo(2L);
         assertThat(response.lastActivity()).isNull();
     }

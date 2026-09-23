@@ -9,7 +9,7 @@ import ua.lviv.bas.cinema.bonus.dto.request.BonusRulesRequest;
 import ua.lviv.bas.cinema.bonus.repository.projection.BonusTransactionProjection;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -45,7 +45,7 @@ public class BonusMapperTest {
         Mockito.when(projection.getPointsChangeRaw()).thenReturn(50);
         Mockito.when(projection.getPointsChange()).thenReturn("+50");
         Mockito.when(projection.getNewBalance()).thenReturn(150);
-        Mockito.when(projection.getCreatedAt()).thenReturn(LocalDateTime.now());
+        Mockito.when(projection.getCreatedAt()).thenReturn(Instant.now());
 
         var response = mapper.toResponse(projection);
 

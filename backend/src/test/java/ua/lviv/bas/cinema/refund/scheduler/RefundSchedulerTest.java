@@ -12,7 +12,7 @@ import ua.lviv.bas.cinema.refund.repository.RefundRepository;
 import ua.lviv.bas.cinema.refund.repository.projection.StuckRefundProjection;
 import ua.lviv.bas.cinema.refund.service.RefundTransactionExecutor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -38,7 +38,7 @@ public class RefundSchedulerTest {
 
     @Test
     void completeStuckRefundsWhenNoneFoundShouldDoNothing() {
-        when(refundRepository.findStuckRefunds(eq(RefundStatus.PROCESSING), any(LocalDateTime.class)))
+        when(refundRepository.findStuckRefunds(eq(RefundStatus.PROCESSING), any(Instant.class)))
                 .thenReturn(List.of());
 
         refundScheduler.completeStuckRefunds();
@@ -55,7 +55,7 @@ public class RefundSchedulerTest {
         when(stuckRefund2.getTicketId()).thenReturn(20L);
         when(stuckRefund2.getLiqpayOrderId()).thenReturn("ORD_2");
 
-        when(refundRepository.findStuckRefunds(eq(RefundStatus.PROCESSING), any(LocalDateTime.class)))
+        when(refundRepository.findStuckRefunds(eq(RefundStatus.PROCESSING), any(Instant.class)))
                 .thenReturn(List.of(stuckRefund1, stuckRefund2));
         when(paymentGatewayService.checkRefundStatus("ORD_1")).thenReturn(RefundGatewayStatus.CONFIRMED);
         when(paymentGatewayService.checkRefundStatus("ORD_2")).thenReturn(RefundGatewayStatus.CONFIRMED);
@@ -73,7 +73,7 @@ public class RefundSchedulerTest {
         when(stuckRefund1.getTicketId()).thenReturn(10L);
         when(stuckRefund1.getLiqpayOrderId()).thenReturn("ORD_1");
 
-        when(refundRepository.findStuckRefunds(eq(RefundStatus.PROCESSING), any(LocalDateTime.class)))
+        when(refundRepository.findStuckRefunds(eq(RefundStatus.PROCESSING), any(Instant.class)))
                 .thenReturn(List.of(stuckRefund1));
         when(paymentGatewayService.checkRefundStatus("ORD_1")).thenReturn(RefundGatewayStatus.NOT_CONFIRMED);
 
@@ -89,7 +89,7 @@ public class RefundSchedulerTest {
         when(stuckRefund1.getTicketId()).thenReturn(10L);
         when(stuckRefund1.getLiqpayOrderId()).thenReturn("ORD_1");
 
-        when(refundRepository.findStuckRefunds(eq(RefundStatus.PROCESSING), any(LocalDateTime.class)))
+        when(refundRepository.findStuckRefunds(eq(RefundStatus.PROCESSING), any(Instant.class)))
                 .thenReturn(List.of(stuckRefund1));
         when(paymentGatewayService.checkRefundStatus("ORD_1")).thenReturn(RefundGatewayStatus.UNKNOWN);
 
@@ -107,7 +107,7 @@ public class RefundSchedulerTest {
         when(stuckRefund2.getTicketId()).thenReturn(20L);
         when(stuckRefund2.getLiqpayOrderId()).thenReturn("ORD_2");
 
-        when(refundRepository.findStuckRefunds(eq(RefundStatus.PROCESSING), any(LocalDateTime.class)))
+        when(refundRepository.findStuckRefunds(eq(RefundStatus.PROCESSING), any(Instant.class)))
                 .thenReturn(List.of(stuckRefund1, stuckRefund2));
         when(paymentGatewayService.checkRefundStatus("ORD_1")).thenReturn(RefundGatewayStatus.CONFIRMED);
         when(paymentGatewayService.checkRefundStatus("ORD_2")).thenReturn(RefundGatewayStatus.CONFIRMED);

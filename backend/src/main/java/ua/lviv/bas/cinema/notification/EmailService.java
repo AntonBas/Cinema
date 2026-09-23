@@ -8,9 +8,9 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import ua.lviv.bas.cinema.config.async.AsyncConfig;
 import ua.lviv.bas.cinema.exception.infrastructure.ExternalServiceException;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -114,7 +114,7 @@ public class EmailService {
         details.put("Refund Amount", refundAmount + " UAH");
         details.put("Reason", refundReason);
 
-        String processedAt = LocalDateTime.now().format(DATE_TIME_FORMATTER);
+        String processedAt = CinemaTime.now().format(DATE_TIME_FORMATTER);
         String html = buildDetailsEmail("Refund Confirmation - " + movieTitle, details,
                 "Your refund request has been successfully processed. The refunded amount will be returned to your "
                         + "original payment method within 3-5 business days.<br><br>"

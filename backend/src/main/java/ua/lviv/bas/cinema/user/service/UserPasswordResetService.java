@@ -19,8 +19,8 @@ import ua.lviv.bas.cinema.user.repository.UserRepository;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 
+import java.time.Instant;
 import java.time.Duration;
-import java.time.LocalDateTime;
 
 @Slf4j
 @Service
@@ -52,14 +52,14 @@ public class UserPasswordResetService {
         }
 
         var lastSentAt = user.getLastPasswordResetSentAt();
-        if (lastSentAt != null && Duration.between(LocalDateTime.now(), lastSentAt.plusSeconds(RESET_COOLDOWN_SECONDS))
+        if (lastSentAt != null && Duration.between(Instant.now(), lastSentAt.plusSeconds(RESET_COOLDOWN_SECONDS))
                 .isPositive()) {
             log.info("Password reset requested for {} within cooldown, skipping", email);
             return;
         }
 
         tokenGeneratorService.generatePasswordResetToken(user);
-        user.setLastPasswordResetSentAt(LocalDateTime.now());
+        user.setLastPasswordResetSentAt(Instant.now());
         userRepository.save(user);
         log.info("Password reset token generated for: {}", email);
         auditRequestReset(user);
@@ -85,7 +85,7 @@ public class UserPasswordResetService {
         emailService.sendPasswordChangedNotification(user.getEmail());
 
         resetToken.setConfirmed(true);
-        resetToken.setConfirmedAt(LocalDateTime.now());
+        resetToken.setConfirmedAt(Instant.now());
         tokenRepository.save(resetToken);
 
         log.info("Password reset successfully for user: {}", user.getEmail());
@@ -96,7 +96,7 @@ public class UserPasswordResetService {
         if (token.getType() != TokenType.PASSWORD_RESET) {
             throw new InvalidTokenException("password-reset");
         }
-        if (LocalDateTime.now().isAfter(token.getExpiresAt())) {
+        if (Instant.now().isAfter(token.getExpiresAt())) {
             throw new TokenExpiredException("password-reset");
         }
         if (token.isConfirmed()) {

@@ -9,7 +9,7 @@ import ua.lviv.bas.cinema.refund.domain.status.RefundStatus;
 import ua.lviv.bas.cinema.refund.repository.projection.StuckRefundProjection;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Repository
@@ -26,5 +26,5 @@ public interface RefundRepository extends JpaRepository<Refund, Long> {
     @Query("SELECT r.id as refundId, i.ticket.id as ticketId, r.payment.liqpayOrderId as liqpayOrderId "
             + "FROM Refund r JOIN r.items i WHERE r.status = :status AND r.createdDate < :cutoff")
     List<StuckRefundProjection> findStuckRefunds(@Param("status") RefundStatus status,
-                                                 @Param("cutoff") LocalDateTime cutoff);
+                                                 @Param("cutoff") Instant cutoff);
 }

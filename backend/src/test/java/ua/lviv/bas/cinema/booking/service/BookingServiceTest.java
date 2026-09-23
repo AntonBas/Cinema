@@ -25,8 +25,11 @@ import ua.lviv.bas.cinema.booking.mapper.BookingMapper;
 import ua.lviv.bas.cinema.booking.repository.BookingRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -86,7 +89,7 @@ public class BookingServiceTest {
 
         testUser = User.builder().id(USER_ID).email("test@example.com").build();
 
-        LocalDateTime sessionTime = LocalDateTime.now().plusHours(2);
+        LocalDateTime sessionTime = CinemaTime.now().plusHours(2);
         testSession = Session.builder().id(SESSION_ID).startTime(sessionTime).build();
 
         var seatSelection1 = new BookingCreateRequest.SeatSelectionRequest(SEAT_ID_1, TICKET_TYPE_ADULT_ID);
@@ -95,11 +98,11 @@ public class BookingServiceTest {
         savedBooking = Booking.builder().id(BOOKING_ID).user(testUser).session(testSession)
                 .status(BookingStatus.PENDING).totalPrice(TOTAL_PRICE).bonusPointsUsed(BONUS_POINTS_USED)
                 .bonusDiscountAmount(DISCOUNT_AMOUNT).finalPrice(FINAL_PRICE)
-                .expiresAt(LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES)).build();
+                .expiresAt(Instant.now().plus(Duration.ofMinutes(EXPIRATION_MINUTES))).build();
 
         bookingResponse = new BookingResponse(BOOKING_ID, BOOKING_PUBLIC_ID, BOOKING_NUMBER, BookingStatus.PENDING,
                 SESSION_ID, null, sessionTime, "Test Movie", "Hall A", TOTAL_PRICE, BONUS_POINTS_USED, DISCOUNT_AMOUNT,
-                FINAL_PRICE, null, sessionTime.plusMinutes(EXPIRATION_MINUTES), Collections.emptyList());
+                FINAL_PRICE, null, Instant.now().plus(Duration.ofMinutes(EXPIRATION_MINUTES)), Collections.emptyList());
     }
 
     @Test

@@ -23,8 +23,9 @@ import ua.lviv.bas.cinema.user.mapper.UserMapper;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -180,7 +181,7 @@ public class UserServiceTest {
     @Test
     void updateWhenDateOfBirthChangedShouldRevokeVerification() {
         User user = User.builder().id(USER_ID).firstName("John").lastName("Doe").dateOfBirth(DATE_OF_BIRTH).city(CITY)
-                .phoneNumber(PHONE).verificationStatus(VerificationStatus.VERIFIED).verifiedAt(LocalDateTime.now())
+                .phoneNumber(PHONE).verificationStatus(VerificationStatus.VERIFIED).verifiedAt(Instant.now())
                 .build();
 
         LocalDate newDateOfBirth = LocalDate.of(1995, 5, 5);
@@ -362,7 +363,7 @@ public class UserServiceTest {
     @Test
     void resendVerificationEmailShouldThrowResendCooldownExceptionWhenRequestedTooSoon() {
         User user = User.builder().id(USER_ID).email(EMAIL).enabled(false)
-                .lastVerificationEmailSentAt(LocalDateTime.now().minusSeconds(10)).build();
+                .lastVerificationEmailSentAt(Instant.now().minus(Duration.ofSeconds(10))).build();
 
         when(userRepository.findByEmailForUpdate(EMAIL)).thenReturn(Optional.of(user));
 
@@ -374,7 +375,7 @@ public class UserServiceTest {
     @Test
     void resendVerificationEmailShouldSucceedWhenCooldownAlreadyExpired() {
         User user = User.builder().id(USER_ID).email(EMAIL).enabled(false)
-                .lastVerificationEmailSentAt(LocalDateTime.now().minusSeconds(61)).build();
+                .lastVerificationEmailSentAt(Instant.now().minus(Duration.ofSeconds(61))).build();
 
         when(userRepository.findByEmailForUpdate(EMAIL)).thenReturn(Optional.of(user));
         when(userRepository.save(user)).thenReturn(user);
@@ -395,7 +396,7 @@ public class UserServiceTest {
     @Test
     void getResendCooldownStatusShouldReturnZeroWhenAlreadyEnabled() {
         User user = User.builder().email(EMAIL).enabled(true)
-                .lastVerificationEmailSentAt(LocalDateTime.now()).build();
+                .lastVerificationEmailSentAt(Instant.now()).build();
 
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
 
@@ -405,7 +406,7 @@ public class UserServiceTest {
     @Test
     void getResendCooldownStatusShouldReturnRemainingSecondsWithinCooldown() {
         User user = User.builder().email(EMAIL).enabled(false)
-                .lastVerificationEmailSentAt(LocalDateTime.now().minusSeconds(20)).build();
+                .lastVerificationEmailSentAt(Instant.now().minus(Duration.ofSeconds(20))).build();
 
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
 
@@ -417,7 +418,7 @@ public class UserServiceTest {
     @Test
     void getResendCooldownStatusShouldReturnZeroWhenCooldownExpired() {
         User user = User.builder().email(EMAIL).enabled(false)
-                .lastVerificationEmailSentAt(LocalDateTime.now().minusSeconds(120)).build();
+                .lastVerificationEmailSentAt(Instant.now().minus(Duration.ofSeconds(120))).build();
 
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
 

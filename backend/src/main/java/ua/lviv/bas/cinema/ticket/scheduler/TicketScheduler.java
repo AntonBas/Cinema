@@ -13,8 +13,9 @@ import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
 import ua.lviv.bas.cinema.ticket.repository.TicketRepository;
 import ua.lviv.bas.cinema.ticket.repository.specification.TicketSpecification;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Slf4j
@@ -54,7 +55,7 @@ public class TicketScheduler {
     @Transactional
     public void cleanupRefundedTickets() {
         log.debug("Starting refunded tickets cleanup");
-        LocalDateTime oneYearAgo = LocalDateTime.now().minusYears(1);
+        Instant oneYearAgo = CinemaTime.now().minusYears(1).atZone(CinemaTime.ZONE).toInstant();
 
         Specification<Ticket> spec = Specification
                 .where(ticketSpecification.hasStatus(TicketStatus.REFUNDED))

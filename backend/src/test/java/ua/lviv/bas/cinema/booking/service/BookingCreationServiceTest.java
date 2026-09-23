@@ -30,8 +30,11 @@ import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.ticket.repository.TicketTypeRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusQueryService;
 import ua.lviv.bas.cinema.common.PriceCalculatorService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -108,7 +111,7 @@ class BookingCreationServiceTest {
 
         Movie movie = Movie.builder().id(100L).title("Test Movie").durationMinutes(120).build();
         CinemaHall hall = CinemaHall.builder().id(200L).name("Hall A").build();
-        LocalDateTime sessionTime = LocalDateTime.now().plusHours(2);
+        LocalDateTime sessionTime = CinemaTime.now().plusHours(2);
 
         testSession = Session.builder().id(SESSION_ID).publicId(SESSION_PUBLIC_ID).movie(movie).hall(hall).basePrice(BASE_PRICE)
                 .status(CinemaSessionStatus.SCHEDULED).startTime(sessionTime).build();
@@ -130,16 +133,16 @@ class BookingCreationServiceTest {
         savedBooking = Booking.builder().id(BOOKING_ID).user(testUser).session(testSession)
                 .status(BookingStatus.PENDING).totalPrice(TOTAL_PRICE).bonusPointsUsed(BONUS_POINTS_USED)
                 .bonusDiscountAmount(DISCOUNT_AMOUNT).finalPrice(FINAL_PRICE)
-                .expiresAt(LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES)).build();
+                .expiresAt(Instant.now().plus(Duration.ofMinutes(EXPIRATION_MINUTES))).build();
     }
 
     @Test
     void createAndPersistShouldSucceed() {
         SeatReservation pendingReservation1 = SeatReservation.builder().id(1L).seat(testSeat1).session(testSession)
-                .status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(TEMP_HOLD_MINUTES))
+                .status(ReservationStatus.PENDING).reservedUntil(Instant.now().plus(Duration.ofMinutes(TEMP_HOLD_MINUTES)))
                 .reservedByUser(testUser).build();
         SeatReservation pendingReservation2 = SeatReservation.builder().id(2L).seat(testSeat2).session(testSession)
-                .status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(TEMP_HOLD_MINUTES))
+                .status(ReservationStatus.PENDING).reservedUntil(Instant.now().plus(Duration.ofMinutes(TEMP_HOLD_MINUTES)))
                 .reservedByUser(testUser).build();
 
         when(sessionRepository.findByPublicId(SESSION_PUBLIC_ID)).thenReturn(Optional.of(testSession));
@@ -174,10 +177,10 @@ class BookingCreationServiceTest {
     @Test
     void createAndPersistWhenNoExistingReservationShouldCreateNewOne() {
         SeatReservation newReservation1 = SeatReservation.builder().id(1L).seat(testSeat1).session(testSession)
-                .status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(TEMP_HOLD_MINUTES))
+                .status(ReservationStatus.PENDING).reservedUntil(Instant.now().plus(Duration.ofMinutes(TEMP_HOLD_MINUTES)))
                 .reservedByUser(testUser).build();
         SeatReservation newReservation2 = SeatReservation.builder().id(2L).seat(testSeat2).session(testSession)
-                .status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(TEMP_HOLD_MINUTES))
+                .status(ReservationStatus.PENDING).reservedUntil(Instant.now().plus(Duration.ofMinutes(TEMP_HOLD_MINUTES)))
                 .reservedByUser(testUser).build();
 
         when(sessionRepository.findByPublicId(SESSION_PUBLIC_ID)).thenReturn(Optional.of(testSession));
@@ -216,10 +219,10 @@ class BookingCreationServiceTest {
                 Arrays.asList(reversedSelection1, reversedSelection2), BONUS_POINTS_USED);
 
         SeatReservation newReservation1 = SeatReservation.builder().id(1L).seat(testSeat1).session(testSession)
-                .status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(TEMP_HOLD_MINUTES))
+                .status(ReservationStatus.PENDING).reservedUntil(Instant.now().plus(Duration.ofMinutes(TEMP_HOLD_MINUTES)))
                 .reservedByUser(testUser).build();
         SeatReservation newReservation2 = SeatReservation.builder().id(2L).seat(testSeat2).session(testSession)
-                .status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(TEMP_HOLD_MINUTES))
+                .status(ReservationStatus.PENDING).reservedUntil(Instant.now().plus(Duration.ofMinutes(TEMP_HOLD_MINUTES)))
                 .reservedByUser(testUser).build();
 
         when(sessionRepository.findByPublicId(SESSION_PUBLIC_ID)).thenReturn(Optional.of(testSession));
@@ -259,7 +262,7 @@ class BookingCreationServiceTest {
     @Test
     void createAndPersistWhenTicketTypeNotFoundShouldThrowException() {
         SeatReservation pendingReservation = SeatReservation.builder().id(1L).seat(testSeat1).session(testSession)
-                .status(ReservationStatus.PENDING).reservedUntil(LocalDateTime.now().plusMinutes(TEMP_HOLD_MINUTES))
+                .status(ReservationStatus.PENDING).reservedUntil(Instant.now().plus(Duration.ofMinutes(TEMP_HOLD_MINUTES)))
                 .reservedByUser(testUser).build();
 
         when(sessionRepository.findByPublicId(SESSION_PUBLIC_ID)).thenReturn(Optional.of(testSession));

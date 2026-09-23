@@ -4,7 +4,7 @@ import { Badge, Select, ConfirmModal } from '@/components/ui';
 import { useAdminUsers } from '@/hooks/features/admin/useAdminUsers';
 import { UserRoleDisplay, VerificationStatusDisplay } from '@/types/user';
 import type { AdminUserListResponse, UserRole, VerificationStatus } from '@/types/user';
-import { safeFormatDate } from '@/utils/dateUtils';
+import { formatInstantDate, parseServerInstant } from '@/utils/dateUtils';
 import { ActionIconButton } from '@/components/admin/shared/ActionIconButton/ActionIconButton';
 import tableStyles from '@/components/admin/shared/AdminTable/AdminTable.module.css';
 import styles from './UserTableRow.module.css';
@@ -21,8 +21,8 @@ const getVerificationColor = (status: VerificationStatus): 'success' | 'secondar
 const formatDateTime = (dateString: string | null | undefined): string => {
     if (!dateString) return 'Not verified';
     try {
-        const date = new Date(dateString);
-        const formattedDate = safeFormatDate(date.toISOString().split('T')[0]);
+        const date = parseServerInstant(dateString);
+        const formattedDate = formatInstantDate(dateString);
         const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         return `${formattedDate} ${time}`;
     } catch {
@@ -103,7 +103,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({ user, onUpdate }) =>
                 </td>
 
                 <td data-label="Last Activity">
-                    {safeFormatDate(user.lastActivity?.split('T')[0])}
+                    {formatInstantDate(user.lastActivity)}
                 </td>
 
                 <td data-label="Actions">

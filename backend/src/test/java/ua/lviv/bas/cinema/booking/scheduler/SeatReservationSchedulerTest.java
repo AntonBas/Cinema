@@ -13,7 +13,7 @@ import ua.lviv.bas.cinema.booking.domain.status.ReservationStatus;
 import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.booking.repository.SeatReservationRepository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -39,7 +39,7 @@ public class SeatReservationSchedulerTest {
     @Test
     void expireTempSeatReservationsWhenNoneFoundShouldDoNothing() {
         when(seatReservationRepository.findByStatusAndReservedUntilBefore(eq(ReservationStatus.PENDING),
-                any(LocalDateTime.class))).thenReturn(List.of());
+                any(Instant.class))).thenReturn(List.of());
 
         seatReservationScheduler.expireTempSeatReservations();
 
@@ -57,9 +57,9 @@ public class SeatReservationSchedulerTest {
                 .build();
 
         when(seatReservationRepository.findByStatusAndReservedUntilBefore(eq(ReservationStatus.PENDING),
-                any(LocalDateTime.class))).thenReturn(List.of(reservationA, reservationB));
+                any(Instant.class))).thenReturn(List.of(reservationA, reservationB));
         when(seatReservationRepository.deleteByIdIfStillExpired(any(), eq(ReservationStatus.PENDING),
-                any(LocalDateTime.class))).thenReturn(1);
+                any(Instant.class))).thenReturn(1);
         when(cacheManager.getCache(anyString())).thenReturn(cache);
 
         seatReservationScheduler.expireTempSeatReservations();
@@ -80,9 +80,9 @@ public class SeatReservationSchedulerTest {
                 .build();
 
         when(seatReservationRepository.findByStatusAndReservedUntilBefore(eq(ReservationStatus.PENDING),
-                any(LocalDateTime.class))).thenReturn(List.of(reservationA, reservationB));
+                any(Instant.class))).thenReturn(List.of(reservationA, reservationB));
         when(seatReservationRepository.deleteByIdIfStillExpired(any(), eq(ReservationStatus.PENDING),
-                any(LocalDateTime.class))).thenReturn(1);
+                any(Instant.class))).thenReturn(1);
         when(cacheManager.getCache(anyString())).thenReturn(cache);
 
         seatReservationScheduler.expireTempSeatReservations();
@@ -98,9 +98,9 @@ public class SeatReservationSchedulerTest {
                 .build();
 
         when(seatReservationRepository.findByStatusAndReservedUntilBefore(eq(ReservationStatus.PENDING),
-                any(LocalDateTime.class))).thenReturn(List.of(reservation));
+                any(Instant.class))).thenReturn(List.of(reservation));
         when(seatReservationRepository.deleteByIdIfStillExpired(any(), eq(ReservationStatus.PENDING),
-                any(LocalDateTime.class))).thenReturn(1);
+                any(Instant.class))).thenReturn(1);
         when(cacheManager.getCache(anyString())).thenReturn(null);
 
         seatReservationScheduler.expireTempSeatReservations();
@@ -116,9 +116,9 @@ public class SeatReservationSchedulerTest {
                 .build();
 
         when(seatReservationRepository.findByStatusAndReservedUntilBefore(eq(ReservationStatus.PENDING),
-                any(LocalDateTime.class))).thenReturn(List.of(reservation));
+                any(Instant.class))).thenReturn(List.of(reservation));
         when(seatReservationRepository.deleteByIdIfStillExpired(eq(10L), eq(ReservationStatus.PENDING),
-                any(LocalDateTime.class))).thenReturn(0);
+                any(Instant.class))).thenReturn(0);
 
         seatReservationScheduler.expireTempSeatReservations();
 

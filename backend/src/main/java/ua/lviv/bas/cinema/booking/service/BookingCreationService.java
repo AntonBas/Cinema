@@ -22,9 +22,11 @@ import ua.lviv.bas.cinema.exception.domain.booking.BookingValidationException;
 import ua.lviv.bas.cinema.ticket.domain.TicketType;
 import ua.lviv.bas.cinema.ticket.repository.TicketTypeRepository;
 import ua.lviv.bas.cinema.user.domain.User;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -66,7 +68,7 @@ class BookingCreationService {
                 BigDecimal::add);
 
         var priceResult = calculateFinalPrice(totalPrice, request.bonusPointsToUse(), user.getId());
-        var expiresAt = LocalDateTime.now().plusMinutes(expirationMinutes);
+        var expiresAt = Instant.now().plus(Duration.ofMinutes(expirationMinutes));
         var booking = createBookingEntity(user, session, seatReservations, priceResult, expiresAt);
         return confirmSeatsAndSaveBooking(booking, seatReservations, expiresAt);
     }
@@ -104,7 +106,7 @@ class BookingCreationService {
     }
 
     private Booking confirmSeatsAndSaveBooking(Booking booking, List<SeatReservation> seatReservations,
-                                               LocalDateTime expiresAt) {
+                                               Instant expiresAt) {
         seatReservations.forEach(sr -> {
             sr.setBooking(booking);
             sr.setStatus(ReservationStatus.CONFIRMED);
@@ -138,10 +140,10 @@ class BookingCreationService {
         if (session.getStatus() != CinemaSessionStatus.SCHEDULED) {
             throw BookingValidationException.sessionNotAvailable();
         }
-        if (session.getStartTime().isBefore(LocalDateTime.now())) {
+        if (session.getStartTime().isBefore(CinemaTime.now())) {
             throw BookingValidationException.sessionAlreadyStarted();
         }
-        if (session.getStartTime().isBefore(LocalDateTime.now().plusMinutes(sessionTooCloseMinutes))) {
+        if (session.getStartTime().isBefore(CinemaTime.now().plusMinutes(sessionTooCloseMinutes))) {
             throw BookingValidationException.sessionTooClose();
         }
     }
@@ -158,8 +160,8 @@ class BookingCreationService {
 
         if (existingReservation.isPresent()) {
             var reservation = existingReservation.get();
-            if (reservation.getReservedUntil().isBefore(LocalDateTime.now())) {
-                reservation.setReservedUntil(LocalDateTime.now().plusMinutes(tempHoldMinutes));
+            if (reservation.getReservedUntil().isBefore(Instant.now())) {
+                reservation.setReservedUntil(Instant.now().plus(Duration.ofMinutes(tempHoldMinutes)));
                 return seatReservationRepository.save(reservation);
             }
             return reservation;
@@ -181,7 +183,7 @@ class BookingCreationService {
     }
 
     private Booking createBookingEntity(User user, Session session, List<SeatReservation> seatReservations,
-                                        BookingPriceResult priceResult, LocalDateTime expiresAt) {
+                                        BookingPriceResult priceResult, Instant expiresAt) {
         return Booking.builder().user(user).session(session).status(BookingStatus.PENDING)
                 .totalPrice(priceResult.totalPrice()).bonusPointsUsed(priceResult.bonusPointsUsed())
                 .bonusDiscountAmount(priceResult.bonusDiscount()).finalPrice(priceResult.finalPrice())

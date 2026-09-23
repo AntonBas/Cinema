@@ -6,8 +6,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.refund.domain.Refund;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -26,7 +27,7 @@ public class NumberGeneratorServiceTest {
 
 	@Test
 	void generateBookingNumber_ShouldReturnCorrectFormat() {
-		when(booking.getCreatedDate()).thenReturn(LocalDateTime.of(2024, 1, 15, 14, 30));
+		when(booking.getCreatedDate()).thenReturn(Instant.parse("2024-01-15T14:30:00Z"));
 		when(booking.getId()).thenReturn(12345L);
 
 		String result = numberGeneratorService.generateBookingNumber(booking);
@@ -69,7 +70,7 @@ public class NumberGeneratorServiceTest {
 		when(refund.getId()).thenReturn(98765L);
 		String result = numberGeneratorService.generateRefundNumber(refund);
 		assertThat(result).startsWith("RF-");
-		assertThat(result).contains(String.valueOf(LocalDateTime.now().getYear()));
+		assertThat(result).contains(String.valueOf(CinemaTime.now().getYear()));
 	}
 
 	@Test

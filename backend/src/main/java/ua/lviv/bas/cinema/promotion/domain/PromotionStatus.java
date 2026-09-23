@@ -1,5 +1,6 @@
 package ua.lviv.bas.cinema.promotion.domain;
 
+import ua.lviv.bas.cinema.common.CinemaTime;
 import java.time.LocalDate;
 
 public enum PromotionStatus {
@@ -8,7 +9,7 @@ public enum PromotionStatus {
     EXPIRED;
 
     public static PromotionStatus of(LocalDate startDate, LocalDate endDate) {
-        LocalDate now = LocalDate.now();
+        LocalDate now = CinemaTime.today();
         if (startDate != null && now.isBefore(startDate)) {
             return UPCOMING;
         }

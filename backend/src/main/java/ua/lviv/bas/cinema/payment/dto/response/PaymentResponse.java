@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Schema(description = "Payment information response")
@@ -30,10 +31,11 @@ public record PaymentResponse(
         PaymentStatus status,
 
         @Schema(description = "Payment time", example = "2024-01-15T14:35:00")
-        LocalDateTime paymentTime,
+        Instant paymentTime,
 
-        @Schema(description = "Payment expires at (pending payments only)", example = "2024-01-15T15:05:00")
-        LocalDateTime expiresAt,
+        @Schema(description = "Payment expires at, as UTC instant (pending payments only)",
+                example = "2024-01-15T15:05:00Z")
+        Instant expiresAt,
 
         @Schema(description = "Masked card number", example = "****4832")
         String senderCardMask,

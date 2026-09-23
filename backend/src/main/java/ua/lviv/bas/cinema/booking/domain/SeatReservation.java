@@ -1,7 +1,7 @@
 package ua.lviv.bas.cinema.booking.domain;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -89,7 +89,7 @@ public class SeatReservation extends AuditableEntity {
 
     @NotNull
     @Column(name = "reserved_until", nullable = false)
-    private LocalDateTime reservedUntil;
+    private Instant reservedUntil;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")

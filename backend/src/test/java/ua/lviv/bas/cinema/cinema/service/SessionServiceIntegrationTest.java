@@ -1,6 +1,8 @@
 package ua.lviv.bas.cinema.cinema.service;
 
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -34,6 +36,7 @@ import ua.lviv.bas.cinema.movie.repository.MovieRepository;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.user.domain.UserRole;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -67,7 +70,7 @@ class SessionServiceIntegrationTest {
             seatRepository.save(Seat.builder().row(1).number(i).x(0).y(0).hall(hall).build());
         }
 
-        var startTime = LocalDateTime.now().plusDays(1);
+        var startTime = CinemaTime.now().plusDays(1);
         var session = sessionRepository.save(Session.builder().movie(movie).hall(hall)
                 .startTime(startTime).basePrice(new BigDecimal("100.00")).build());
 
@@ -93,7 +96,7 @@ class SessionServiceIntegrationTest {
     void getSessionsShouldListActiveSessionsSoonestFirstThenPastSessionsNewestFirst() {
         var movie = movieRepository.save(buildMovie("ZZTEST Order Movie", "zztest-order-movie"));
         var hall = cinemaHallRepository.save(CinemaHall.builder().name("ZZTEST Order Hall").build());
-        var now = LocalDateTime.now().withNano(0);
+        var now = CinemaTime.now().withNano(0);
 
         var laterScheduled = saveSession(movie, hall, now.plusDays(3), "100.00", CinemaSessionStatus.SCHEDULED);
         var soonerScheduled = saveSession(movie, hall, now.plusDays(1), "100.00", CinemaSessionStatus.SCHEDULED);
@@ -111,7 +114,7 @@ class SessionServiceIntegrationTest {
     void getSessionsShouldApplyRequestedSortWithStartTimeAsTiebreaker() {
         var movie = movieRepository.save(buildMovie("ZZTEST Sort Movie", "zztest-sort-movie"));
         var hall = cinemaHallRepository.save(CinemaHall.builder().name("ZZTEST Sort Hall").build());
-        var now = LocalDateTime.now().withNano(0);
+        var now = CinemaTime.now().withNano(0);
 
         var cheapLater = saveSession(movie, hall, now.plusDays(2), "100.00", CinemaSessionStatus.SCHEDULED);
         var expensive = saveSession(movie, hall, now.plusDays(3), "300.00", CinemaSessionStatus.SCHEDULED);
@@ -174,6 +177,6 @@ class SessionServiceIntegrationTest {
 
     private Booking buildBooking(User user, Session session, BookingStatus status, BigDecimal totalPrice) {
         return Booking.builder().user(user).session(session).status(status).totalPrice(totalPrice)
-                .finalPrice(totalPrice).expiresAt(LocalDateTime.now().plusMinutes(20)).build();
+                .finalPrice(totalPrice).expiresAt(Instant.now().plus(Duration.ofMinutes(20))).build();
     }
 }

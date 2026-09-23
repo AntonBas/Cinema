@@ -28,8 +28,8 @@ import ua.lviv.bas.cinema.common.UniquenessValidator;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 import ua.lviv.bas.cinema.common.FixedOrderPageable;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 
 @Slf4j
@@ -168,7 +168,7 @@ public class TicketTypeService {
         Specification<Ticket> spec = Specification
                 .where(ticketSpecification.hasStatus(TicketStatus.ACTIVE))
                 .and(ticketSpecification.hasTicketTypeId(ticketTypeId))
-                .and(ticketSpecification.sessionStartTimeAfter(LocalDateTime.now()));
+                .and(ticketSpecification.sessionStartTimeAfter(CinemaTime.now()));
 
         return ticketRepository.count(spec);
     }

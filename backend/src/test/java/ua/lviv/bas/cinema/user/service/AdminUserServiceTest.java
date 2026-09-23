@@ -27,7 +27,8 @@ import ua.lviv.bas.cinema.user.repository.UserRepository;
 import ua.lviv.bas.cinema.user.repository.projection.AdminUserProjection;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -219,7 +220,7 @@ public class AdminUserServiceTest {
 
     @Test
     void updateVerificationToNotVerifiedShouldSucceed() {
-        LocalDateTime verifiedTime = LocalDateTime.now().minusDays(1);
+        Instant verifiedTime = Instant.now().minus(Duration.ofDays(1));
         user.setVerificationStatus(VerificationStatus.VERIFIED);
         user.setVerifiedAt(verifiedTime);
 
@@ -356,7 +357,7 @@ public class AdminUserServiceTest {
             }
 
             @Override
-            public LocalDateTime getVerifiedAt() {
+            public Instant getVerifiedAt() {
                 return null;
             }
 
@@ -366,8 +367,8 @@ public class AdminUserServiceTest {
             }
 
             @Override
-            public LocalDateTime getLastActivity() {
-                return LocalDateTime.now().minusDays(1);
+            public Instant getLastActivity() {
+                return Instant.now().minus(Duration.ofDays(1));
             }
         };
     }

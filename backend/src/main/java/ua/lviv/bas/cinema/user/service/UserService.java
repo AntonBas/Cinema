@@ -1,8 +1,8 @@
 package ua.lviv.bas.cinema.user.service;
 
+import java.time.Instant;
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Map;
 
 import org.springframework.cache.annotation.CacheEvict;
@@ -143,7 +143,7 @@ public class UserService {
         }
 
         emailTokenGeneratorService.generateVerificationToken(user);
-        user.setLastVerificationEmailSentAt(LocalDateTime.now());
+        user.setLastVerificationEmailSentAt(Instant.now());
         userRepository.save(user);
         log.info("Verification email resent to: {}", email);
 
@@ -160,8 +160,8 @@ public class UserService {
                 .orElse(0);
     }
 
-    private long remainingCooldownSeconds(LocalDateTime lastSentAt) {
-        var remaining = Duration.between(LocalDateTime.now(), lastSentAt.plusSeconds(RESEND_COOLDOWN_SECONDS));
+    private long remainingCooldownSeconds(Instant lastSentAt) {
+        var remaining = Duration.between(Instant.now(), lastSentAt.plusSeconds(RESEND_COOLDOWN_SECONDS));
         return remaining.isNegative() ? 0 : remaining.toSeconds();
     }
 

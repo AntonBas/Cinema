@@ -1,6 +1,6 @@
 package ua.lviv.bas.cinema.user.service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -86,7 +86,7 @@ public class AdminUserService {
         var oldStatus = user.getVerificationStatus();
 
         user.setVerificationStatus(status);
-        user.setVerifiedAt(status == VerificationStatus.VERIFIED ? LocalDateTime.now() : null);
+        user.setVerifiedAt(status == VerificationStatus.VERIFIED ? Instant.now() : null);
 
         var updated = userRepository.save(user);
         log.info("Verification status updated: {} for user {}", status, userId);

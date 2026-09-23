@@ -6,7 +6,7 @@ import { Layout } from "@/components/layout/Layout/Layout";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { useBooking } from "@/hooks/features/booking/useBooking";
-import { parseServerUtcInstant } from "@/utils/dateUtils";
+import { parseServerInstant } from "@/utils/dateUtils";
 import styles from "./BookingSummaryPage.module.css";
 
 export const BookingSummaryPage: React.FC = () => {
@@ -79,7 +79,7 @@ export const BookingSummaryPage: React.FC = () => {
   }
 
   const sessionDate = new Date(booking.sessionTime);
-  const expiresAt = parseServerUtcInstant(booking.expiresAt);
+  const expiresAt = parseServerInstant(booking.expiresAt);
   const timeLeft = Math.max(
     0,
     Math.floor((expiresAt.getTime() - Date.now()) / (1000 * 60)),

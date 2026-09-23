@@ -8,7 +8,7 @@ import ua.lviv.bas.cinema.user.domain.EmailToken;
 import ua.lviv.bas.cinema.user.domain.TokenType;
 import ua.lviv.bas.cinema.user.domain.User;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Optional;
 
 public interface EmailTokenRepository extends JpaRepository<EmailToken, String> {
@@ -19,13 +19,13 @@ public interface EmailTokenRepository extends JpaRepository<EmailToken, String> 
 
     @Modifying
     @Query("DELETE FROM EmailToken t WHERE t.expiresAt < :now")
-    int deleteByExpiresAtBefore(@Param("now") LocalDateTime now);
+    int deleteByExpiresAtBefore(@Param("now") Instant now);
 
     @Modifying
     @Query("DELETE FROM EmailToken t WHERE t.confirmed = true AND t.confirmedAt < :date")
-    int deleteByConfirmedTrueAndConfirmedAtBefore(@Param("date") LocalDateTime date);
+    int deleteByConfirmedTrueAndConfirmedAtBefore(@Param("date") Instant date);
 
     @Modifying
     @Query("DELETE FROM EmailToken t WHERE t.user.enabled = false AND t.user.createdDate < :cutoff")
-    int deleteAllByUnverifiedUserCreatedDateBefore(@Param("cutoff") LocalDateTime cutoff);
+    int deleteAllByUnverifiedUserCreatedDateBefore(@Param("cutoff") Instant cutoff);
 }

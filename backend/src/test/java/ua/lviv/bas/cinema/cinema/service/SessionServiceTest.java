@@ -21,6 +21,7 @@ import ua.lviv.bas.cinema.movie.repository.MovieRepository;
 import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.booking.service.SeatReservationService;
 import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -75,7 +76,7 @@ public class SessionServiceTest {
 
         hall = CinemaHall.builder().id(HALL_ID).name(HALL_NAME).seats(new ArrayList<>()).build();
 
-        session = Session.builder().id(SESSION_ID).movie(movie).hall(hall).startTime(LocalDateTime.now().plusHours(2))
+        session = Session.builder().id(SESSION_ID).movie(movie).hall(hall).startTime(CinemaTime.now().plusHours(2))
                 .basePrice(BASE_PRICE).status(CinemaSessionStatus.SCHEDULED).build();
 
         sessionResponse = new SessionResponse(SESSION_ID, session.getStartTime(),
@@ -87,7 +88,7 @@ public class SessionServiceTest {
 
     @Test
     void createSessionShouldSucceed() {
-        LocalDateTime startTime = LocalDateTime.now().plusHours(2);
+        LocalDateTime startTime = CinemaTime.now().plusHours(2);
         SessionRequest request = new SessionRequest(startTime, BASE_PRICE, MOVIE_ID, HALL_ID);
 
         when(movieRepository.findById(MOVIE_ID)).thenReturn(Optional.of(movie));
@@ -105,7 +106,7 @@ public class SessionServiceTest {
 
     @Test
     void createSessionWhenTimeConflictShouldThrowException() {
-        LocalDateTime startTime = LocalDateTime.now().plusHours(2);
+        LocalDateTime startTime = CinemaTime.now().plusHours(2);
         SessionRequest request = new SessionRequest(startTime, BASE_PRICE, MOVIE_ID, HALL_ID);
 
         when(movieRepository.findById(MOVIE_ID)).thenReturn(Optional.of(movie));
@@ -137,7 +138,7 @@ public class SessionServiceTest {
 
     @Test
     void updateSessionWhenStartTimeChangedShouldSucceed() {
-        LocalDateTime newStartTime = LocalDateTime.now().plusHours(3);
+        LocalDateTime newStartTime = CinemaTime.now().plusHours(3);
         SessionRequest request = new SessionRequest(newStartTime, null, null, null);
 
         when(sessionRepository.findByIdWithLock(SESSION_ID)).thenReturn(Optional.of(session));
@@ -201,7 +202,7 @@ public class SessionServiceTest {
 
     @Test
     void cancelSessionWhenTooLateShouldThrowException() {
-        session.setStartTime(LocalDateTime.now().plusMinutes(30));
+        session.setStartTime(CinemaTime.now().plusMinutes(30));
         when(sessionRepository.findByIdWithLock(SESSION_ID)).thenReturn(Optional.of(session));
 
         assertThatThrownBy(() -> sessionService.cancelSession(SESSION_ID))

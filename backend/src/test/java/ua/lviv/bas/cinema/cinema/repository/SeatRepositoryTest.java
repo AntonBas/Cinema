@@ -28,10 +28,12 @@ import ua.lviv.bas.cinema.ticket.repository.TicketTypeRepository;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.user.domain.UserRole;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -69,14 +71,14 @@ class SeatRepositoryTest {
 
         var movie = movieRepository.save(buildMovie());
         var session = sessionRepository.save(Session.builder().movie(movie).hall(hall)
-                .startTime(LocalDateTime.now().plusDays(1)).basePrice(new BigDecimal("100.00")).build());
+                .startTime(CinemaTime.now().plusDays(1)).basePrice(new BigDecimal("100.00")).build());
         var user = userRepository.save(buildUser());
         var booking = bookingRepository.save(Booking.builder().user(user).session(session)
                 .status(BookingStatus.CONFIRMED).totalPrice(new BigDecimal("100.00"))
-                .finalPrice(new BigDecimal("100.00")).expiresAt(LocalDateTime.now().plusMinutes(20)).build());
+                .finalPrice(new BigDecimal("100.00")).expiresAt(Instant.now().plus(Duration.ofMinutes(20))).build());
         var seatReservation = seatReservationRepository.save(SeatReservation.builder().booking(booking)
                 .seat(ticketedSeat).session(session).status(ReservationStatus.CONFIRMED)
-                .reservedUntil(LocalDateTime.now().plusMinutes(20)).build());
+                .reservedUntil(Instant.now().plus(Duration.ofMinutes(20))).build());
         var ticketType = ticketTypeRepository.save(TicketType.builder().displayName("ZZTEST Standard").build());
         ticketRepository.save(Ticket.builder().booking(booking).user(user).ticketType(ticketType)
                 .seatReservation(seatReservation).originalPrice(new BigDecimal("100.00"))

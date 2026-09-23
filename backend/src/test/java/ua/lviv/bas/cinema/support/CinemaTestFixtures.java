@@ -3,8 +3,8 @@ package ua.lviv.bas.cinema.support;
 import ua.lviv.bas.cinema.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.cinema.domain.Session;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
-import java.time.LocalDateTime;
 
 public final class CinemaTestFixtures {
 
@@ -20,6 +20,6 @@ public final class CinemaTestFixtures {
     }
 
     public static Session session(Movie movie, CinemaHall hall) {
-        return Session.builder().movie(movie).hall(hall).startTime(LocalDateTime.now().plusHours(2)).build();
+        return Session.builder().movie(movie).hall(hall).startTime(CinemaTime.now().plusHours(2)).build();
     }
 }

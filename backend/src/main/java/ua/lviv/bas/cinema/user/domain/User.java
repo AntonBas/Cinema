@@ -13,7 +13,7 @@ import ua.lviv.bas.cinema.promotion.domain.UserPromotion;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,13 +60,13 @@ public class User extends AuditableEntity {
     private VerificationStatus verificationStatus = VerificationStatus.NOT_VERIFIED;
 
     @Column(name = "verified_at")
-    private LocalDateTime verifiedAt;
+    private Instant verifiedAt;
 
     @Column(name = "last_verification_email_sent_at")
-    private LocalDateTime lastVerificationEmailSentAt;
+    private Instant lastVerificationEmailSentAt;
 
     @Column(name = "last_password_reset_sent_at")
-    private LocalDateTime lastPasswordResetSentAt;
+    private Instant lastPasswordResetSentAt;
 
     @Column(name = "token_version", nullable = false)
     @Builder.Default

@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.booking.scheduler;
 
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -40,7 +41,7 @@ public class BookingScheduler {
 	@Scheduled(fixedRateString = "${scheduler.booking.expiration-interval:60000}")
 	public void processExpiredBookings() {
 		log.debug("Starting expired bookings processing");
-		LocalDateTime now = LocalDateTime.now();
+		Instant now = Instant.now();
 		List<Booking> expiredBookings = bookingRepository.findByStatusAndExpiresAtBefore(BookingStatus.PENDING, now);
 
 		if (expiredBookings.isEmpty()) {
@@ -82,7 +83,7 @@ public class BookingScheduler {
 	@Transactional
 	public void cleanupOldBookings() {
 		log.debug("Starting old bookings cleanup");
-		LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+		Instant thirtyDaysAgo = Instant.now().minus(Duration.ofDays(30));
 		int deletedCount = bookingRepository.deleteByStatusInAndCreatedDateBefore(
 				List.of(BookingStatus.EXPIRED, BookingStatus.CANCELLED), thirtyDaysAgo, EVER_PAID_STATUSES);
 

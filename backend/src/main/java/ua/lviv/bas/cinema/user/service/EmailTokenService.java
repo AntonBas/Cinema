@@ -19,7 +19,7 @@ import ua.lviv.bas.cinema.user.repository.UserRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.notification.EmailService;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Slf4j
 @Service
@@ -46,7 +46,7 @@ public class EmailTokenService {
         bonusLedgerService.awardWelcomeBonus(updatedUser);
 
         emailToken.setConfirmed(true);
-        emailToken.setConfirmedAt(LocalDateTime.now());
+        emailToken.setConfirmedAt(Instant.now());
         tokenRepository.save(emailToken);
 
         log.info("Email confirmed successfully for user: {}", user.getEmail());
@@ -82,7 +82,7 @@ public class EmailTokenService {
         emailService.sendEmailChangeNotification(oldEmail, newEmail);
 
         emailToken.setConfirmed(true);
-        emailToken.setConfirmedAt(LocalDateTime.now());
+        emailToken.setConfirmedAt(Instant.now());
         tokenRepository.save(emailToken);
 
         log.info("Email changed from {} to {} for user ID: {}", oldEmail, newEmail, user.getId());
@@ -102,7 +102,7 @@ public class EmailTokenService {
             throw new TokenAlreadyConfirmedException(expectedType.name().toLowerCase());
         }
 
-        if (emailToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+        if (emailToken.getExpiresAt().isBefore(Instant.now())) {
             throw new TokenExpiredException(expectedType.name().toLowerCase());
         }
 

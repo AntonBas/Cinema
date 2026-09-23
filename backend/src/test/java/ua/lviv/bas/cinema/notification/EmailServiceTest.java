@@ -8,9 +8,9 @@ import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 import ua.lviv.bas.cinema.exception.infrastructure.ExternalServiceException;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -209,7 +209,7 @@ class EmailServiceTest {
 
     @Test
     void sendRefundEmail_ShouldContainCurrentTimestamp() {
-        String expectedDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
+        String expectedDate = CinemaTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
 
         mockServer.expect(requestTo(BREVO_URL))
                 .andExpect(jsonPath("$.htmlContent", containsString(expectedDate)))

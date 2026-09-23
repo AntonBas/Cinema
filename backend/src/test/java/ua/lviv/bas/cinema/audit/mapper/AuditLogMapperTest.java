@@ -7,7 +7,7 @@ import ua.lviv.bas.cinema.audit.domain.AuditLog;
 import ua.lviv.bas.cinema.audit.domain.AuditLogDetail;
 import ua.lviv.bas.cinema.audit.dto.response.AuditLogResponse;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,7 +23,7 @@ public class AuditLogMapperTest {
 
         AuditLog auditLog = AuditLog.builder().id(1L).entityType("BonusRules").entityId(10L).targetInfo("WELCOME_BONUS")
                 .action(AuditAction.UPDATED).changedBy("admin@example.com")
-                .changedAt(LocalDateTime.of(2024, 1, 15, 10, 30)).details(List.of(detail)).build();
+                .changedAt(Instant.parse("2024-01-15T10:30:00Z")).details(List.of(detail)).build();
 
         AuditLogResponse response = mapper.toResponse(auditLog);
 
@@ -34,14 +34,14 @@ public class AuditLogMapperTest {
         assertThat(response.targetInfo()).isEqualTo("WELCOME_BONUS");
         assertThat(response.action()).isEqualTo(AuditAction.UPDATED);
         assertThat(response.changedBy()).isEqualTo("admin@example.com");
-        assertThat(response.changedAt()).isEqualTo(LocalDateTime.of(2024, 1, 15, 10, 30));
+        assertThat(response.changedAt()).isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
         assertThat(response.details()).hasSize(1);
     }
 
     @Test
     void toResponse_WhenAuditLogHasNoDetails_ShouldReturnEmptyDetails() {
         AuditLog auditLog = AuditLog.builder().id(1L).entityType("User").entityId(5L).targetInfo("user@example.com")
-                .action(AuditAction.CREATED).changedBy("system").changedAt(LocalDateTime.now()).details(List.of())
+                .action(AuditAction.CREATED).changedBy("system").changedAt(Instant.now()).details(List.of())
                 .build();
 
         AuditLogResponse response = mapper.toResponse(auditLog);
@@ -55,7 +55,7 @@ public class AuditLogMapperTest {
     @Test
     void toResponse_WhenAuditLogHasNullDetails_ShouldReturnNullDetails() {
         AuditLog auditLog = AuditLog.builder().id(1L).entityType("User").entityId(5L).targetInfo("user@example.com")
-                .action(AuditAction.CREATED).changedBy("system").changedAt(LocalDateTime.now()).details(null).build();
+                .action(AuditAction.CREATED).changedBy("system").changedAt(Instant.now()).details(null).build();
 
         AuditLogResponse response = mapper.toResponse(auditLog);
 
@@ -71,7 +71,7 @@ public class AuditLogMapperTest {
                 .build();
 
         AuditLog auditLog = AuditLog.builder().id(1L).entityType("BonusRules").entityId(10L).targetInfo("WELCOME_BONUS")
-                .action(AuditAction.UPDATED).changedBy("admin@example.com").changedAt(LocalDateTime.now())
+                .action(AuditAction.UPDATED).changedBy("admin@example.com").changedAt(Instant.now())
                 .details(List.of(detail1, detail2)).build();
 
         AuditLogResponse response = mapper.toResponse(auditLog);

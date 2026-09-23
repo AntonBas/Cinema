@@ -7,7 +7,7 @@ import ua.lviv.bas.cinema.refund.domain.status.RefundStatus;
 import ua.lviv.bas.cinema.user.domain.User;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -18,7 +18,7 @@ public class RefundMapperTest {
     @Test
     void toResponse() {
         var refund = createRefund(50L, 100L, "400.00", 20, "Changed my mind", RefundStatus.APPROVED,
-                LocalDateTime.of(2024, 1, 15, 14, 30), LocalDateTime.of(2024, 1, 15, 15, 0));
+                Instant.parse("2024-01-15T14:30:00Z"), Instant.parse("2024-01-15T15:00:00Z"));
 
         var response = refundMapper.toResponse(refund);
 
@@ -29,7 +29,7 @@ public class RefundMapperTest {
         assertThat(response.totalBonusPointsToDeduct()).isEqualTo(20);
         assertThat(response.reason()).isEqualTo("Changed my mind");
         assertThat(response.status()).isEqualTo("APPROVED");
-        assertThat(response.createdAt()).isEqualTo(LocalDateTime.of(2024, 1, 15, 14, 30));
+        assertThat(response.createdAt()).isEqualTo(Instant.parse("2024-01-15T14:30:00Z"));
         assertThat(response.processedAt()).isNull();
     }
 
@@ -105,8 +105,8 @@ public class RefundMapperTest {
     }
 
     private Refund createRefund(Long id, Long paymentId, String amount, Integer bonusPointsToDeduct,
-                                String reason, RefundStatus status, LocalDateTime createdDate,
-                                LocalDateTime lastModifiedDate) {
+                                String reason, RefundStatus status, Instant createdDate,
+                                Instant lastModifiedDate) {
         var user = User.builder().id(1L).email("user@example.com").build();
         var payment = paymentId != null ? Payment.builder().id(paymentId).build() : null;
         var refund = Refund.builder().id(id).user(user).payment(payment)

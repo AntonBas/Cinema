@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Getter
@@ -30,11 +30,11 @@ public class EmailToken {
 
     @NotNull
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @NotNull
     @Column(name = "expires_at", nullable = false)
-    private LocalDateTime expiresAt;
+    private Instant expiresAt;
 
     @NotNull
     @Enumerated(EnumType.STRING)
@@ -46,7 +46,7 @@ public class EmailToken {
     private boolean confirmed = false;
 
     @Column(name = "confirmed_at")
-    private LocalDateTime confirmedAt;
+    private Instant confirmedAt;
 
     @Column(name = "new_email")
     private String newEmail;

@@ -10,7 +10,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import ua.lviv.bas.cinema.user.repository.EmailTokenRepository;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -35,23 +35,23 @@ class UnverifiedAccountCleanupSchedulerTest {
 
     @Test
     void cleanupUnverifiedAccountsShouldDeleteTokensBeforeAccounts() {
-        when(tokenRepository.deleteAllByUnverifiedUserCreatedDateBefore(any(LocalDateTime.class))).thenReturn(2);
-        when(userRepository.deleteAllByEnabledFalseAndCreatedDateBefore(any(LocalDateTime.class))).thenReturn(1);
+        when(tokenRepository.deleteAllByUnverifiedUserCreatedDateBefore(any(Instant.class))).thenReturn(2);
+        when(userRepository.deleteAllByEnabledFalseAndCreatedDateBefore(any(Instant.class))).thenReturn(1);
 
         scheduler.cleanupUnverifiedAccounts();
 
-        verify(tokenRepository).deleteAllByUnverifiedUserCreatedDateBefore(any(LocalDateTime.class));
-        verify(userRepository).deleteAllByEnabledFalseAndCreatedDateBefore(any(LocalDateTime.class));
+        verify(tokenRepository).deleteAllByUnverifiedUserCreatedDateBefore(any(Instant.class));
+        verify(userRepository).deleteAllByEnabledFalseAndCreatedDateBefore(any(Instant.class));
     }
 
     @Test
     void cleanupUnverifiedAccountsWhenNoneFoundShouldStillCallRepositories() {
-        when(tokenRepository.deleteAllByUnverifiedUserCreatedDateBefore(any(LocalDateTime.class))).thenReturn(0);
-        when(userRepository.deleteAllByEnabledFalseAndCreatedDateBefore(any(LocalDateTime.class))).thenReturn(0);
+        when(tokenRepository.deleteAllByUnverifiedUserCreatedDateBefore(any(Instant.class))).thenReturn(0);
+        when(userRepository.deleteAllByEnabledFalseAndCreatedDateBefore(any(Instant.class))).thenReturn(0);
 
         scheduler.cleanupUnverifiedAccounts();
 
-        verify(tokenRepository).deleteAllByUnverifiedUserCreatedDateBefore(any(LocalDateTime.class));
-        verify(userRepository).deleteAllByEnabledFalseAndCreatedDateBefore(any(LocalDateTime.class));
+        verify(tokenRepository).deleteAllByUnverifiedUserCreatedDateBefore(any(Instant.class));
+        verify(userRepository).deleteAllByEnabledFalseAndCreatedDateBefore(any(Instant.class));
     }
 }

@@ -10,7 +10,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -42,7 +42,7 @@ public class AuditServiceTest {
         auditService.logChange("BonusRules", 10L, "WELCOME_BONUS", AuditAction.UPDATED, oldValues, newValues);
 
         verify(auditLogWriter).write(eq("BonusRules"), eq(10L), eq("WELCOME_BONUS"), eq(AuditAction.UPDATED),
-                eq("admin@example.com"), any(LocalDateTime.class), eq(oldValues), eq(newValues));
+                eq("admin@example.com"), any(Instant.class), eq(oldValues), eq(newValues));
     }
 
     @Test
@@ -52,7 +52,7 @@ public class AuditServiceTest {
         auditService.logChange("BonusRules", 10L, "WELCOME_BONUS", AuditAction.UPDATED, null, null);
 
         verify(auditLogWriter).write(eq("BonusRules"), eq(10L), eq("WELCOME_BONUS"), eq(AuditAction.UPDATED),
-                eq("system"), any(LocalDateTime.class), isNull(), isNull());
+                eq("system"), any(Instant.class), isNull(), isNull());
     }
 
     private void setupAuthentication() {

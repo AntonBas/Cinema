@@ -7,10 +7,10 @@ import ua.lviv.bas.cinema.config.properties.RefundRules;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
 import java.util.Comparator;
 
 @Component
@@ -30,7 +30,7 @@ public class RefundCalculator {
         if (ticket.getRefund() != null) {
             return "Ticket has already been refunded";
         }
-        if (sessionTime.isBefore(LocalDateTime.now())) {
+        if (sessionTime.isBefore(CinemaTime.now())) {
             return "Session has already started or finished";
         }
         var paymentStatus = ticket.getPayment().getStatus();

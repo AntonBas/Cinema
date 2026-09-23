@@ -21,9 +21,9 @@ import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.payment.dto.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentGatewayUnavailableException;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -59,7 +59,7 @@ class PaymentGatewayServiceTest {
         User user = User.builder().id(1L).email("test@example.com").build();
         Movie movie = Movie.builder().id(1L).title("Test Movie").durationMinutes(120).build();
         CinemaHall hall = CinemaHall.builder().id(1L).name("Hall A").build();
-        Session session = Session.builder().id(1L).movie(movie).hall(hall).startTime(LocalDateTime.now()).build();
+        Session session = Session.builder().id(1L).movie(movie).hall(hall).startTime(CinemaTime.now()).build();
         Booking booking = Booking.builder().id(1L).user(user).session(session).build();
         payment = Payment.builder().id(1L).booking(booking).amount(new BigDecimal("100.00")).liqpayOrderId("ORDER_123")
                 .status(PaymentStatus.PENDING).build();

@@ -28,7 +28,8 @@ import ua.lviv.bas.cinema.ticket.service.TicketService;
 import ua.lviv.bas.cinema.support.CinemaTestFixtures;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -85,7 +86,7 @@ public class RefundTransactionExecutorTest {
         testTicket = Ticket.builder().id(TICKET_ID).user(testUser).booking(booking).ticketType(ticketType)
                 .finalPrice(new BigDecimal("100.00")).uniqueCode("TKT-123456").status(TicketStatus.ACTIVE)
                 .payment(testPayment).seatReservation(seatReservation)
-                .purchaseTime(LocalDateTime.now().minusHours(1)).build();
+                .purchaseTime(Instant.now().minus(Duration.ofHours(1))).build();
 
         testRefund = Refund.builder().id(REFUND_ID).user(testUser).payment(testPayment).totalAmount(REFUND_AMOUNT)
                 .totalBonusPointsToDeduct(BONUS_POINTS_TO_REFUND).status(RefundStatus.PROCESSING).build();

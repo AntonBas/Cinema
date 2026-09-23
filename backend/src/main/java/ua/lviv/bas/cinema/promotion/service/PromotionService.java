@@ -31,9 +31,9 @@ import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 import ua.lviv.bas.cinema.common.FixedOrderPageable;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Slf4j
@@ -80,7 +80,7 @@ public class PromotionService {
 
     public List<PromotionResponse> getAvailablePromotions(User user) {
         log.debug("Getting available promotions for user: {}", user != null ? user.getEmail() : "anonymous");
-        return promotionRepository.findAllActivePromotions(LocalDate.now()).stream().map(promotionMapper::toPromotionResponse)
+        return promotionRepository.findAllActivePromotions(CinemaTime.today()).stream().map(promotionMapper::toPromotionResponse)
                 .toList();
     }
 
@@ -143,7 +143,7 @@ public class PromotionService {
             throw new AlreadyClaimedException(promotion.getTitle());
         }
 
-        var userPromotion = UserPromotion.builder().user(user).promotion(promotion).redeemedAt(LocalDateTime.now())
+        var userPromotion = UserPromotion.builder().user(user).promotion(promotion).redeemedAt(Instant.now())
                 .pointsAwarded(promotion.getBonusPoints()).build();
 
         userPromotionRepository.save(userPromotion);

@@ -11,6 +11,7 @@ import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,7 +62,7 @@ public class TicketSpecification {
         };
     }
 
-    public Specification<Ticket> purchaseTimeBefore(LocalDateTime time) {
+    public Specification<Ticket> purchaseTimeBefore(Instant time) {
         return (root, query, cb) -> cb.lessThan(root.get("purchaseTime"), time);
     }
 

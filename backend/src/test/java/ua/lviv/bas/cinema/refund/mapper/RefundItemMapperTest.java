@@ -7,7 +7,7 @@ import ua.lviv.bas.cinema.refund.domain.status.RefundItemStatus;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,8 +21,8 @@ public class RefundItemMapperTest {
         var refundItem = RefundItem.builder().id(1L).ticket(ticket).ticketPrice(new BigDecimal("300.00"))
                 .refundAmount(new BigDecimal("240.00")).status(RefundItemStatus.APPROVED).build();
 
-        refundItem.setCreatedDate(LocalDateTime.now());
-        refundItem.setLastModifiedDate(LocalDateTime.now());
+        refundItem.setCreatedDate(Instant.now());
+        refundItem.setLastModifiedDate(Instant.now());
 
         var response = mapper.toResponse(refundItem);
 

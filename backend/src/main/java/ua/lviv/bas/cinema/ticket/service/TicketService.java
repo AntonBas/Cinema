@@ -35,8 +35,9 @@ import ua.lviv.bas.cinema.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 import ua.lviv.bas.cinema.integration.QRCodeService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Slf4j
 @Service
@@ -82,7 +83,7 @@ public class TicketService {
         return Ticket.builder().booking(booking).user(booking.getUser()).ticketType(seatReservation.getTicketType())
                 .payment(payment).seatReservation(seatReservation).originalPrice(seatReservation.getSeatPrice())
                 .finalPrice(seatReservation.getSeatPrice()).uniqueCode(numberGenerator.generateTicketCode())
-                .status(TicketStatus.ACTIVE).purchaseTime(LocalDateTime.now()).build();
+                .status(TicketStatus.ACTIVE).purchaseTime(Instant.now()).build();
     }
 
     public Ticket findActiveTicketForUser(Long ticketId, Long userId) {
@@ -174,7 +175,7 @@ public class TicketService {
         }
 
         var session = ticket.getBooking().getSession();
-        var now = LocalDateTime.now();
+        var now = CinemaTime.now();
 
         if (session.getStartTime().isAfter(now.plusHours(1))) {
             throw new TicketValidationException("Too early. Entry allowed 1 hour before session start");
@@ -226,7 +227,7 @@ public class TicketService {
 
     private void auditValidate(Ticket ticket, TicketStatus oldStatus) {
         var oldDetails = AuditDetails.of().put("status", oldStatus).build();
-        var newDetails = AuditDetails.of().put("status", TicketStatus.USED).put("validatedAt", LocalDateTime.now())
+        var newDetails = AuditDetails.of().put("status", TicketStatus.USED).put("validatedAt", Instant.now())
                 .build();
         auditService.logChange("Ticket", ticket.getId(), "Ticket #" + ticket.getUniqueCode(), AuditAction.VALIDATED,
                 oldDetails, newDetails);

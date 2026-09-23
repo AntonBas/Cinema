@@ -19,7 +19,8 @@ import ua.lviv.bas.cinema.user.repository.EmailTokenRepository;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -107,7 +108,7 @@ public class UserPasswordResetServiceTest {
         User user = new User();
         user.setEmail(email);
         user.setEnabled(true);
-        user.setLastPasswordResetSentAt(LocalDateTime.now().minusSeconds(10));
+        user.setLastPasswordResetSentAt(Instant.now().minus(Duration.ofSeconds(10)));
 
         when(userRepository.findByEmailForUpdate(email)).thenReturn(Optional.of(user));
 
@@ -122,7 +123,7 @@ public class UserPasswordResetServiceTest {
         User user = new User();
         user.setEmail(email);
         user.setEnabled(true);
-        user.setLastPasswordResetSentAt(LocalDateTime.now().minusSeconds(61));
+        user.setLastPasswordResetSentAt(Instant.now().minus(Duration.ofSeconds(61)));
 
         when(userRepository.findByEmailForUpdate(email)).thenReturn(Optional.of(user));
 
@@ -145,7 +146,7 @@ public class UserPasswordResetServiceTest {
         int originalTokenVersion = user.getTokenVersion();
 
         EmailToken resetToken = EmailToken.builder().token(token).type(TokenType.PASSWORD_RESET)
-                .expiresAt(LocalDateTime.now().plusHours(1)).user(user).confirmed(false).build();
+                .expiresAt(Instant.now().plus(Duration.ofHours(1))).user(user).confirmed(false).build();
 
         when(tokenRepository.findByToken(token)).thenReturn(Optional.of(resetToken));
         when(passwordEncoder.matches(newPassword, "oldEncodedPassword")).thenReturn(false);
@@ -185,7 +186,7 @@ public class UserPasswordResetServiceTest {
 
         User user = new User();
         EmailToken resetToken = EmailToken.builder().token(token).type(TokenType.VERIFICATION)
-                .expiresAt(LocalDateTime.now().plusHours(1)).user(user).build();
+                .expiresAt(Instant.now().plus(Duration.ofHours(1))).user(user).build();
 
         when(tokenRepository.findByToken(token)).thenReturn(Optional.of(resetToken));
 
@@ -202,7 +203,7 @@ public class UserPasswordResetServiceTest {
 
         User user = new User();
         EmailToken resetToken = EmailToken.builder().token(token).type(TokenType.PASSWORD_RESET)
-                .expiresAt(LocalDateTime.now().minusHours(1)).user(user).confirmed(false).build();
+                .expiresAt(Instant.now().minus(Duration.ofHours(1))).user(user).confirmed(false).build();
 
         when(tokenRepository.findByToken(token)).thenReturn(Optional.of(resetToken));
 
@@ -219,7 +220,7 @@ public class UserPasswordResetServiceTest {
 
         User user = new User();
         EmailToken resetToken = EmailToken.builder().token(token).type(TokenType.PASSWORD_RESET)
-                .expiresAt(LocalDateTime.now().plusHours(1)).user(user).confirmed(true).build();
+                .expiresAt(Instant.now().plus(Duration.ofHours(1))).user(user).confirmed(true).build();
 
         when(tokenRepository.findByToken(token)).thenReturn(Optional.of(resetToken));
 
@@ -238,7 +239,7 @@ public class UserPasswordResetServiceTest {
         user.setPassword("oldEncodedPassword");
 
         EmailToken resetToken = EmailToken.builder().token(token).type(TokenType.PASSWORD_RESET)
-                .expiresAt(LocalDateTime.now().plusHours(1)).user(user).confirmed(false).build();
+                .expiresAt(Instant.now().plus(Duration.ofHours(1))).user(user).confirmed(false).build();
 
         when(tokenRepository.findByToken(token)).thenReturn(Optional.of(resetToken));
         when(passwordEncoder.matches(newPassword, "oldEncodedPassword")).thenReturn(true);

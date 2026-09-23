@@ -16,8 +16,8 @@ import ua.lviv.bas.cinema.user.domain.UserRole;
 import ua.lviv.bas.cinema.user.domain.VerificationStatus;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
-import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -69,7 +69,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             user = User.builder().email(email).firstName(firstName).lastName(lastName)
                     .password(UUID.randomUUID().toString()).userRole(UserRole.ROLE_USER).enabled(true)
                     .verificationStatus(VerificationStatus.NOT_VERIFIED).verifiedAt(null).city("").phoneNumber("")
-                    .dateOfBirth(LocalDate.now().minusYears(18)).build();
+                    .dateOfBirth(CinemaTime.today().minusYears(18)).build();
 
             user = userRepository.save(user);
             log.info("Created new OAuth2 user: {}", email);

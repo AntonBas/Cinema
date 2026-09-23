@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.refund.scheduler;
 
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -25,7 +26,7 @@ public class RefundScheduler {
 
 	@Scheduled(fixedRateString = "${scheduler.refund.reconciliation-interval:300000}")
 	public void completeStuckRefunds() {
-		LocalDateTime cutoff = LocalDateTime.now().minusMinutes(5);
+		Instant cutoff = Instant.now().minus(Duration.ofMinutes(5));
 		var stuckRefunds = refundRepository.findStuckRefunds(RefundStatus.PROCESSING, cutoff);
 
 		if (stuckRefunds.isEmpty()) {

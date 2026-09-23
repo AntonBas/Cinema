@@ -1,6 +1,6 @@
 package ua.lviv.bas.cinema.audit.domain;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
@@ -26,7 +26,7 @@ public abstract class AuditableEntity {
 
 	@CreatedDate
 	@Column(name = "created_date", updatable = false)
-	private LocalDateTime createdDate;
+	private Instant createdDate;
 
 	@LastModifiedBy
 	@Column(name = "last_modified_by")
@@ -34,5 +34,5 @@ public abstract class AuditableEntity {
 
 	@LastModifiedDate
 	@Column(name = "last_modified_date")
-	private LocalDateTime lastModifiedDate;
+	private Instant lastModifiedDate;
 }

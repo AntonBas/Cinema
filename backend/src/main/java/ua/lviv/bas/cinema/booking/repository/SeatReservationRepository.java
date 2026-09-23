@@ -9,7 +9,7 @@ import ua.lviv.bas.cinema.booking.domain.SeatReservation;
 import ua.lviv.bas.cinema.booking.domain.status.ReservationStatus;
 import ua.lviv.bas.cinema.booking.dto.response.SeatStatusResponse;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,12 +26,12 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
 
     List<SeatReservation> findByStatus(ReservationStatus status);
 
-    List<SeatReservation> findByStatusAndReservedUntilBefore(ReservationStatus status, LocalDateTime reservedUntil);
+    List<SeatReservation> findByStatusAndReservedUntilBefore(ReservationStatus status, Instant reservedUntil);
 
     @Modifying
     @Query("DELETE FROM SeatReservation sr WHERE sr.id = :id AND sr.status = :status AND sr.reservedUntil < :cutoff")
     int deleteByIdIfStillExpired(@Param("id") Long id, @Param("status") ReservationStatus status,
-                                 @Param("cutoff") LocalDateTime cutoff);
+                                 @Param("cutoff") Instant cutoff);
 
     Optional<SeatReservation> findBySessionIdAndSeatIdAndStatusAndReservedByUserId(Long sessionId, Long seatId,
                                                                                    ReservationStatus status, Long userId);

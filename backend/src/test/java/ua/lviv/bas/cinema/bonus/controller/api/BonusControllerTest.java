@@ -17,7 +17,7 @@ import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.bonus.service.BonusQueryService;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -67,10 +67,10 @@ public class BonusControllerTest {
         Pageable pageable = PageRequest.of(0, 20);
 
         BonusTransactionResponse transaction1 = new BonusTransactionResponse(1L, BonusTransactionType.WELCOME_BONUS,
-                "+150", LocalDateTime.now(), 150);
+                "+150", Instant.now(), 150);
 
         BonusTransactionResponse transaction2 = new BonusTransactionResponse(2L, BonusTransactionType.BOOKING_SPEND,
-                "-25", LocalDateTime.now(), 125);
+                "-25", Instant.now(), 125);
 
         Page<BonusTransactionResponse> page = new PageImpl<>(List.of(transaction1, transaction2), pageable, 2);
 
@@ -114,7 +114,7 @@ public class BonusControllerTest {
         Pageable pageable = PageRequest.of(1, 5);
 
         BonusTransactionResponse transaction = new BonusTransactionResponse(1L, BonusTransactionType.PAYMENT_ACCRUAL,
-                "+50", LocalDateTime.now(), 200);
+                "+50", Instant.now(), 200);
 
         Page<BonusTransactionResponse> page = new PageImpl<>(List.of(transaction), pageable, 10);
 

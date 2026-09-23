@@ -37,9 +37,9 @@ import ua.lviv.bas.cinema.common.UniquenessValidator;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 import ua.lviv.bas.cinema.integration.PosterService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -77,7 +77,7 @@ public class MovieService {
 
         var movie = movieMapper.toMovie(request);
         movie.setSlug(generateUniqueSlug(request.getTitle(), null));
-        movie.setStatus(movieStatusCalculator.calculate(movie, LocalDate.now()));
+        movie.setStatus(movieStatusCalculator.calculate(movie, CinemaTime.today()));
 
         String posterFileName = null;
         try {
@@ -112,7 +112,7 @@ public class MovieService {
             throw new EntityNotFoundException("Movie", slug);
         }
 
-        List<Session> sessions = movieRepository.findUpcomingSessionsByMovieSlug(slug, LocalDateTime.now());
+        List<Session> sessions = movieRepository.findUpcomingSessionsByMovieSlug(slug, CinemaTime.now());
 
         movie.setSessions(new LinkedHashSet<>(sessions));
 
@@ -196,7 +196,7 @@ public class MovieService {
         }
 
         handlePoster(movie, request.getPosterFile(), Boolean.TRUE.equals(request.getRemovePoster()));
-        movie.setStatus(movieStatusCalculator.calculate(movie, LocalDate.now()));
+        movie.setStatus(movieStatusCalculator.calculate(movie, CinemaTime.today()));
         setMovieRelations(movie, request.getGenreIds(), request.getActorIds(), request.getDirectorIds(),
                 request.getScreenwriterIds());
 

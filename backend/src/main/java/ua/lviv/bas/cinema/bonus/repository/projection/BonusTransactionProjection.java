@@ -1,6 +1,6 @@
 package ua.lviv.bas.cinema.bonus.repository.projection;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public interface BonusTransactionProjection {
     Long getId();
@@ -9,7 +9,7 @@ public interface BonusTransactionProjection {
 
     Integer getPointsChangeRaw();
 
-    LocalDateTime getCreatedAt();
+    Instant getCreatedAt();
 
     Integer getNewBalance();
 

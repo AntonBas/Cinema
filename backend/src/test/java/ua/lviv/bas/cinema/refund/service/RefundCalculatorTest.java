@@ -17,9 +17,11 @@ import ua.lviv.bas.cinema.support.CinemaTestFixtures;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
 import ua.lviv.bas.cinema.ticket.domain.TicketType;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 
@@ -53,7 +55,7 @@ class RefundCalculatorTest {
         TicketType ticketType = TicketType.builder().displayName("Standard").build();
         testTicket = Ticket.builder().booking(booking).payment(payment).ticketType(ticketType)
                 .finalPrice(new BigDecimal("100.00")).status(TicketStatus.ACTIVE)
-                .purchaseTime(LocalDateTime.now().minusHours(1)).seatReservation(seatReservation).build();
+                .purchaseTime(Instant.now().minus(Duration.ofHours(1))).seatReservation(seatReservation).build();
     }
 
     @Test
@@ -86,7 +88,7 @@ class RefundCalculatorTest {
 
     @Test
     void validateWhenSessionAlreadyStartedShouldReturnReason() {
-        testSession.setStartTime(LocalDateTime.now().minusHours(1));
+        testSession.setStartTime(CinemaTime.now().minusHours(1));
         when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(true);
 
         String reason = refundCalculator.validate(testTicket);
@@ -96,7 +98,7 @@ class RefundCalculatorTest {
 
     @Test
     void validateWhenPaymentNotSuccessOrPartiallyRefundedShouldReturnReason() {
-        testSession.setStartTime(LocalDateTime.now().plusHours(3));
+        testSession.setStartTime(CinemaTime.now().plusHours(3));
         when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(true);
         testTicket.getPayment().setStatus(PaymentStatus.PENDING);
 
@@ -107,7 +109,7 @@ class RefundCalculatorTest {
 
     @Test
     void validateWhenPaymentPartiallyRefundedShouldReturnNull() {
-        testSession.setStartTime(LocalDateTime.now().plusHours(3));
+        testSession.setStartTime(CinemaTime.now().plusHours(3));
         when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(true);
         testTicket.getPayment().setStatus(PaymentStatus.PARTIALLY_REFUNDED);
 
@@ -118,7 +120,7 @@ class RefundCalculatorTest {
 
     @Test
     void validateWhenEligibleShouldReturnNull() {
-        testSession.setStartTime(LocalDateTime.now().plusHours(3));
+        testSession.setStartTime(CinemaTime.now().plusHours(3));
         when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(true);
 
         String reason = refundCalculator.validate(testTicket);

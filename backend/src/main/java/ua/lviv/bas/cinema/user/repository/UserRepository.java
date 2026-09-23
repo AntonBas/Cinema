@@ -15,7 +15,7 @@ import ua.lviv.bas.cinema.user.domain.UserRole;
 import ua.lviv.bas.cinema.user.domain.VerificationStatus;
 import ua.lviv.bas.cinema.user.repository.projection.AdminUserProjection;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,7 +32,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.email = :email")
     Optional<User> findByEmailForUpdate(@Param("email") String email);
 
-    int deleteAllByEnabledFalseAndCreatedDateBefore(LocalDateTime cutoff);
+    int deleteAllByEnabledFalseAndCreatedDateBefore(Instant cutoff);
 
     @EntityGraph(attributePaths = {"bonusCard"})
     @Override

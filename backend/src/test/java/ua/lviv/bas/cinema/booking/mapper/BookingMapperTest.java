@@ -14,6 +14,7 @@ import ua.lviv.bas.cinema.ticket.domain.TicketType;
 import ua.lviv.bas.cinema.user.domain.User;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -22,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class BookingMapperTest {
 
+    private static final Instant EXPIRES_AT = Instant.parse("2024-01-15T14:50:00Z");
     private static final UUID SESSION_PUBLIC_ID = UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6");
 
     private final BookingMapper bookingMapper = new BookingMapperImpl();
@@ -43,9 +45,9 @@ public class BookingMapperTest {
         booking = Booking.builder().id(123L).user(user).session(session).status(BookingStatus.PENDING)
                 .totalPrice(new BigDecimal("500.00")).bonusPointsUsed(50).bonusDiscountAmount(new BigDecimal("25.00"))
                 .finalPrice(new BigDecimal("475.00")).payment(payment).seatReservations(List.of(seatReservation))
-                .build();
+                .expiresAt(EXPIRES_AT).build();
 
-        booking.setCreatedDate(LocalDateTime.of(2024, 1, 15, 14, 30));
+        booking.setCreatedDate(Instant.parse("2024-01-15T14:30:00Z"));
     }
 
     @Test
@@ -56,6 +58,7 @@ public class BookingMapperTest {
         assertThat(response.bookingNumber()).isEqualTo("BK-2024-00123");
         assertThat(response.sessionId()).isEqualTo(1L);
         assertThat(response.sessionPublicId()).isEqualTo(SESSION_PUBLIC_ID);
+        assertThat(response.expiresAt()).isEqualTo(EXPIRES_AT);
         assertThat(response.movieTitle()).isEqualTo("Inception");
         assertThat(response.hallName()).isEqualTo("Hall A");
         assertThat(response.liqpayOrderId()).isEqualTo("ORDER_ABC123");

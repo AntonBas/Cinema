@@ -1,7 +1,7 @@
 package ua.lviv.bas.cinema.ticket.domain;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -71,7 +71,7 @@ public class Ticket extends AuditableEntity {
 	@NotNull
 	@Column(name = "purchase_time", nullable = false)
 	@Builder.Default
-	private LocalDateTime purchaseTime = LocalDateTime.now();
+	private Instant purchaseTime = Instant.now();
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "payment_id")

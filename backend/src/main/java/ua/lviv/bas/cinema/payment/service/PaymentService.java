@@ -27,8 +27,10 @@ import ua.lviv.bas.cinema.audit.service.AuditService;
 import ua.lviv.bas.cinema.notification.EmailService;
 import ua.lviv.bas.cinema.common.DateTimeFormatterService;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -144,7 +146,7 @@ public class PaymentService {
                 return false;
             }
             payment.setStatus(PaymentStatus.SUCCESS);
-            payment.setPaymentTime(LocalDateTime.now());
+            payment.setPaymentTime(Instant.now());
             payment.setLiqpayPaymentId(callbackData.get("payment_id"));
             payment.setLiqpayTransactionId(callbackData.get("transaction_id"));
             payment.setLiqpaySenderCardMask(callbackData.get("sender_card_mask"));
@@ -211,10 +213,10 @@ public class PaymentService {
         if (booking.getStatus() != BookingStatus.PENDING) {
             throw PaymentProcessingException.bookingNotPending();
         }
-        if (booking.getExpiresAt().isBefore(LocalDateTime.now())) {
+        if (booking.getExpiresAt().isBefore(Instant.now())) {
             throw PaymentProcessingException.bookingExpired();
         }
-        if (booking.getSession().getStartTime().isBefore(LocalDateTime.now().plusMinutes(sessionTooCloseMinutes))) {
+        if (booking.getSession().getStartTime().isBefore(CinemaTime.now().plusMinutes(sessionTooCloseMinutes))) {
             throw new SessionTooCloseException(booking.getSession().getStartTime());
         }
         boolean allSeatsAvailable = booking.getSeatReservations().stream()
@@ -241,7 +243,7 @@ public class PaymentService {
     private PaymentResponse buildPaymentResponse(Payment payment) {
         var booking = payment.getBooking();
         var expiresAt = payment.getCreatedDate() != null
-                ? payment.getCreatedDate().plusMinutes(paymentExpirationMinutes)
+                ? payment.getCreatedDate().plus(Duration.ofMinutes(paymentExpirationMinutes))
                 : null;
         return new PaymentResponse(payment.getId(), numberGenerator.generateBookingNumber(booking),
                 booking.getSession().getMovie().getTitle(), booking.getSession().getStartTime(),

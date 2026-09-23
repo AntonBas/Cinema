@@ -23,6 +23,7 @@ import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.movie.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.movie.domain.status.MovieStatus;
 import ua.lviv.bas.cinema.movie.repository.MovieRepository;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -45,7 +46,7 @@ class MovieServiceIntegrationTest {
     void getMovieBySlugShouldReturnOnlyUpcomingScheduledSessionsInStartOrder() {
         var movie = movieRepository.save(buildMovie());
         var hall = cinemaHallRepository.save(CinemaHall.builder().name("ZZTEST Showtimes Hall").build());
-        var now = LocalDateTime.now().withNano(0);
+        var now = CinemaTime.now().withNano(0);
 
         var later = saveSession(movie, hall, now.plusDays(3), CinemaSessionStatus.SCHEDULED);
         var sooner = saveSession(movie, hall, now.plusDays(1), CinemaSessionStatus.SCHEDULED);
