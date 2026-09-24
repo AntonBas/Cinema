@@ -11,6 +11,7 @@
   text-decoration: none;
   justify-content: center;
   position: relative;
+  box-sizing: border-box;
 }
 
 .fullWidth {
@@ -102,7 +103,8 @@
 }
 
 .medium {
-  padding: var(--space-3) var(--space-6);
+  min-height: var(--control-height);
+  padding: var(--space-1) var(--space-6);
   font-size: var(--font-size-md);
 }
 

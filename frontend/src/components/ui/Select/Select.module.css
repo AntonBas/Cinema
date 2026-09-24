@@ -28,12 +28,11 @@
   box-sizing: border-box;
   padding: 0 var(--space-3);
   padding-right: calc(var(--space-8) + var(--space-2));
-  background: var(--color-bg-quaternary);
+  background: var(--color-bg-tertiary);
   border: 1px solid var(--color-border-medium);
   border-radius: var(--radius-md);
   color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
-  line-height: 1.5;
+  font-size: var(--font-size-md);
   cursor: pointer;
   transition: all var(--transition-fast);
   appearance: none;
@@ -43,13 +42,12 @@
 
 .select:hover:not(.disabled):not(.error) {
   border-color: var(--color-primary);
-  background: var(--color-bg-secondary);
 }
 
 .select:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), var(--opacity-low));
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.2);
 }
 
 .select.error {
@@ -69,7 +67,7 @@
 }
 
 .select option {
-  background: var(--color-bg-quaternary);
+  background: var(--color-bg-tertiary);
   color: var(--color-text-primary);
   padding: var(--space-2);
 }
@@ -105,7 +103,6 @@
 
 @media (max-width: 768px) {
   .select {
-    padding: 0 var(--space-2);
     padding-right: calc(var(--space-6) + var(--space-2));
   }
 
@@ -116,11 +113,5 @@
   .arrow svg {
     width: 14px;
     height: 14px;
-  }
-}
-
-@media (max-width: 480px) {
-  .select {
-    font-size: var(--font-size-xs);
   }
 }

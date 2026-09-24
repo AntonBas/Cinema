@@ -36,48 +36,6 @@
   white-space: nowrap;
 }
 
-.filterInput {
-  height: var(--control-height);
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--font-size-sm);
-  line-height: 1.5;
-  box-sizing: border-box;
-  width: 100%;
-  background: rgba(var(--color-panel-header-bg-rgb), 0.6);
-  border: 1px solid var(--color-panel-border);
-  color: var(--color-panel-text);
-  border-radius: var(--radius-md);
-  font-family: var(--font-family);
-}
-
-.filterSelectWrapper {
-  width: 100%;
-  height: var(--control-height);
-}
-
-.filterSelectWrapper :global(.select) {
-  height: var(--control-height);
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--font-size-sm);
-  line-height: 1.5;
-  box-sizing: border-box;
-}
-
-.filterSelectWrapper :global(.selectWrapper) {
-  height: var(--control-height);
-}
-
-.filterSelectWrapper select {
-  height: var(--control-height);
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--font-size-sm);
-  line-height: 1.5;
-  background: rgba(var(--color-panel-header-bg-rgb), 0.6);
-  border: 1px solid var(--color-panel-border);
-  color: var(--color-panel-text);
-  border-radius: var(--radius-md);
-}
-
 .movieFilterRow {
   padding: 0 var(--space-6) var(--space-4);
   position: relative;
@@ -101,20 +59,9 @@
   width: 100%;
 }
 
-.movieInput {
-  width: 100%;
+.movieInputWrapper .movieInput {
   cursor: pointer;
-  padding-right: var(--space-8);
-  background: rgba(var(--color-panel-header-bg-rgb), 0.6);
-  border: 1px solid var(--color-panel-border);
-  height: var(--control-height);
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--font-size-sm);
-  line-height: 1.5;
-  box-sizing: border-box;
-  color: var(--color-panel-text);
-  border-radius: var(--radius-md);
-  font-family: var(--font-family);
+  padding-right: var(--space-12);
 }
 
 .clearMovieButton {
@@ -243,7 +190,6 @@
 
 .clearButton {
   min-width: 100px;
-  height: var(--control-height);
 }
 
 @media (max-width: 1200px) {
@@ -257,12 +203,6 @@
     grid-template-columns: repeat(2, 1fr);
     gap: var(--space-4);
     padding: var(--space-4);
-  }
-
-  .filterInput,
-  .movieInput {
-    padding: var(--space-1) var(--space-2);
-    font-size: var(--font-size-xs);
   }
 
   .movieFilterRow {
@@ -302,12 +242,6 @@
     grid-template-columns: 1fr;
     gap: var(--space-3);
     padding: var(--space-3);
-  }
-
-  .filterInput,
-  .movieInput {
-    padding: var(--space-1) var(--space-2);
-    font-size: var(--font-size-xs);
   }
 
   .movieFilterRow {

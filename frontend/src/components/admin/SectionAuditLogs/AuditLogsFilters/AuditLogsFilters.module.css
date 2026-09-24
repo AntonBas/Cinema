@@ -25,7 +25,6 @@
 
 .clearButton {
   align-self: flex-end;
-  height: var(--control-height);
   white-space: nowrap;
 }
 

@@ -189,7 +189,6 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
             type="date"
             value={filters.dateFrom || ""}
             onChange={(value) => onDateFromChange(value || undefined)}
-            className={styles.filterInput}
           />
         </div>
 
@@ -202,7 +201,6 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
             type="date"
             value={filters.dateTo || ""}
             onChange={(value) => onDateToChange(value || undefined)}
-            className={styles.filterInput}
             min={filters.dateFrom}
           />
         </div>
