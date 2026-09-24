@@ -22,7 +22,11 @@ import {
   RefreshCw,
 } from "lucide-react";
 import type { PaymentResponse } from "@/types/payment";
-import { PaymentStatusDisplay } from "@/types/payment";
+import {
+  FINAL_PAYMENT_STATUSES,
+  LATE_PAYMENT_REFUND_STATUSES,
+  PaymentStatusDisplay,
+} from "@/types/payment";
 import { parseServerInstant } from "@/utils/dateUtils";
 import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
@@ -94,11 +98,7 @@ export const PaymentPage: React.FC = () => {
           )) as ExtendedPaymentResponse | null;
           if (payment) {
             setCurrentPayment(payment);
-            if (
-              ["SUCCESS", "FAILED", "CANCELLED", "EXPIRED"].includes(
-                payment.status,
-              )
-            ) {
+            if (FINAL_PAYMENT_STATUSES.includes(payment.status)) {
               stopPolling();
             }
             if (payment.expiresAt) {
@@ -198,6 +198,12 @@ export const PaymentPage: React.FC = () => {
     if (currentPayment.status === "SUCCESS") {
       setStep("success");
       stopPolling();
+    } else if (LATE_PAYMENT_REFUND_STATUSES.includes(currentPayment.status)) {
+      setStep("failed");
+      setErrorMessage(
+        "Your payment arrived after the booking had expired. The full amount is being refunded to your card.",
+      );
+      stopPolling();
     } else if (
       ["FAILED", "CANCELLED", "EXPIRED"].includes(currentPayment.status)
     ) {
@@ -207,6 +213,10 @@ export const PaymentPage: React.FC = () => {
     } else if (currentPayment.status === "PROCESSING" && step !== "paying")
       setStep("paying");
   }, [currentPayment, step, stopPolling]);
+
+  const isLateRefund =
+    !!currentPayment &&
+    LATE_PAYMENT_REFUND_STATUSES.includes(currentPayment.status);
 
   const handlePay = async () => {
     if (!currentPayment?.id) return;
@@ -388,7 +398,9 @@ export const PaymentPage: React.FC = () => {
               {step === "failed" && (
                 <div className={styles.statusContainer}>
                   <AlertCircle className={styles.errorIcon} size={64} />
-                  <h3 className={styles.statusTitle}>Payment Failed</h3>
+                  <h3 className={styles.statusTitle}>
+                    {isLateRefund ? "Payment Refunded" : "Payment Failed"}
+                  </h3>
                   <p className={styles.statusMessage}>
                     {errorMessage ||
                       "There was an issue processing your payment"}
@@ -408,14 +420,16 @@ export const PaymentPage: React.FC = () => {
                       <ArrowLeft size={20} />
                       Back to Summary
                     </Button>
-                    <Button
-                      onClick={handleRetry}
-                      variant="primary"
-                      className={styles.primaryButton}
-                    >
-                      <RefreshCw size={20} />
-                      Try Again
-                    </Button>
+                    {!isLateRefund && (
+                      <Button
+                        onClick={handleRetry}
+                        variant="primary"
+                        className={styles.primaryButton}
+                      >
+                        <RefreshCw size={20} />
+                        Try Again
+                      </Button>
+                    )}
                   </div>
                 </div>
               )}

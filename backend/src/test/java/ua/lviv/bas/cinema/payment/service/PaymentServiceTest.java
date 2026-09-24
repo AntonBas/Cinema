@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
+import ua.lviv.bas.cinema.audit.domain.AuditAction;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.booking.domain.SeatReservation;
@@ -35,6 +36,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -56,6 +58,8 @@ public class PaymentServiceTest {
     private NumberGeneratorService numberGenerator;
     @Mock
     private PaymentSuccessOrchestrator paymentSuccessOrchestrator;
+    @Mock
+    private LatePaymentRefundService latePaymentRefundService;
     @Mock
     private DateTimeFormatterService dateTimeFormatter;
     @Mock
@@ -79,12 +83,10 @@ public class PaymentServiceTest {
     private static final Long PAYMENT_ID = 3L;
     private static final BigDecimal AMOUNT = new BigDecimal("200.00");
     private static final int SESSION_TOO_CLOSE_MINUTES = 30;
-    private static final int PAYMENT_EXPIRATION_MINUTES = 30;
 
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(paymentService, "sessionTooCloseMinutes", SESSION_TOO_CLOSE_MINUTES);
-        ReflectionTestUtils.setField(paymentService, "paymentExpirationMinutes", PAYMENT_EXPIRATION_MINUTES);
 
         testUser = User.builder().id(USER_ID).email("test@example.com").build();
 
@@ -129,8 +131,7 @@ public class PaymentServiceTest {
         assertThat(response.hallName()).isEqualTo("Hall A");
         assertThat(response.finalAmount()).isEqualTo(AMOUNT);
         assertThat(response.status()).isEqualTo(PaymentStatus.PENDING);
-        assertThat(response.expiresAt())
-                .isEqualTo(testPayment.getCreatedDate().plus(Duration.ofMinutes(PAYMENT_EXPIRATION_MINUTES)));
+        assertThat(response.expiresAt()).isEqualTo(testBooking.getExpiresAt());
 
         verify(paymentRepository).save(any(Payment.class));
     }
@@ -244,6 +245,7 @@ public class PaymentServiceTest {
         callbackData.put("transaction_id", "TXN123");
         callbackData.put("sender_card_mask", "****1234");
 
+        when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
         when(paymentRepository.updateStatusIfCurrentIn(eq(PAYMENT_ID), anyList(), eq(PaymentStatus.SUCCESS)))
                 .thenReturn(1);
 
@@ -255,6 +257,67 @@ public class PaymentServiceTest {
         assertThat(testPayment.getPaymentTime()).isNotNull();
 
         verify(paymentSuccessOrchestrator).handle(testPayment.getId());
+        verifyNoInteractions(latePaymentRefundService);
+    }
+
+    @Test
+    void processSuccessShouldApplyGatewayDataToFreshlyLoadedPayment() {
+        var detachedPayment = Payment.builder().id(PAYMENT_ID).booking(testBooking).amount(AMOUNT)
+                .status(PaymentStatus.PROCESSING).build();
+
+        when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
+        when(paymentRepository.updateStatusIfCurrentIn(eq(PAYMENT_ID), anyList(), eq(PaymentStatus.SUCCESS)))
+                .thenReturn(1);
+
+        paymentService.processSuccess(detachedPayment, Map.of("payment_id", "PAY123"));
+
+        assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
+        assertThat(testPayment.getLiqpayPaymentId()).isEqualTo("PAY123");
+        assertThat(detachedPayment.getLiqpayPaymentId()).isNull();
+    }
+
+    @Test
+    void processSuccessWhenBookingExpiredShouldMarkRefundRequiredAndRefund() {
+        testBooking.setStatus(BookingStatus.EXPIRED);
+        when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
+        when(paymentRepository.updateStatusIfCurrentIn(eq(PAYMENT_ID), anyList(),
+                eq(PaymentStatus.REFUND_REQUIRED))).thenReturn(1);
+
+        paymentService.processSuccess(testPayment, Map.of("payment_id", "PAY123"));
+
+        assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.REFUND_REQUIRED);
+        assertThat(testPayment.getLiqpayPaymentId()).isEqualTo("PAY123");
+        verify(paymentRepository, never()).updateStatusIfCurrentIn(any(), anyList(), eq(PaymentStatus.SUCCESS));
+        verify(latePaymentRefundService).refund(PAYMENT_ID);
+        verify(paymentSuccessOrchestrator, never()).handle(any(Long.class));
+    }
+
+    @Test
+    void processSuccessWhenPaymentAlreadyExpiredShouldMarkRefundRequiredFromExpired() {
+        testPayment.setStatus(PaymentStatus.EXPIRED);
+        testBooking.setStatus(BookingStatus.EXPIRED);
+        when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
+        when(paymentRepository.updateStatusIfCurrentIn(eq(PAYMENT_ID),
+                argThat(statuses -> statuses.contains(PaymentStatus.EXPIRED)
+                        && !statuses.contains(PaymentStatus.SUCCESS)),
+                eq(PaymentStatus.REFUND_REQUIRED))).thenReturn(1);
+
+        paymentService.processSuccess(testPayment, Map.of("payment_id", "PAY123"));
+
+        verify(latePaymentRefundService).refund(PAYMENT_ID);
+        verify(paymentSuccessOrchestrator, never()).handle(any(Long.class));
+    }
+
+    @Test
+    void refundUnfulfillableSuccessShouldMarkOnlySuccessfulPaymentAndRefund() {
+        when(paymentRepository.updateStatusIfCurrentIn(PAYMENT_ID, List.of(PaymentStatus.SUCCESS),
+                PaymentStatus.REFUND_REQUIRED)).thenReturn(1);
+
+        paymentService.refundUnfulfillableSuccess(PAYMENT_ID);
+
+        verify(auditService).logChange(eq("Payment"), eq(PAYMENT_ID), anyString(), eq(AuditAction.STATUS_CHANGED),
+                any(), any());
+        verify(latePaymentRefundService).refund(PAYMENT_ID);
     }
 
     @Test
@@ -264,6 +327,7 @@ public class PaymentServiceTest {
         callbackData.put("transaction_id", "TXN123");
         callbackData.put("sender_card_mask", "****1234");
 
+        when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
         when(paymentRepository.updateStatusIfCurrentIn(eq(PAYMENT_ID), anyList(), eq(PaymentStatus.SUCCESS)))
                 .thenReturn(1);
         doThrow(new RuntimeException("booking already expired")).when(paymentSuccessOrchestrator)
@@ -286,6 +350,7 @@ public class PaymentServiceTest {
         callbackData.put("payment_id", "PAY_DUPLICATE");
         callbackData.put("transaction_id", "TXN_DUPLICATE");
         callbackData.put("sender_card_mask", "****9999");
+        when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
 
         paymentService.processSuccess(testPayment, callbackData);
 

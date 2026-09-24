@@ -103,6 +103,24 @@ public class EmailService {
     }
 
     @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendLatePaymentRefundEmail(String toEmail, String bookingNumber, String movieTitle,
+                                           String sessionTime, BigDecimal refundAmount) {
+        Map<String, String> details = new LinkedHashMap<>();
+        details.put("Booking Number", bookingNumber);
+        details.put("Movie", movieTitle);
+        details.put("Time", sessionTime);
+        details.put("Refund Amount", refundAmount + " UAH");
+
+        String html = buildDetailsEmail("Payment Refunded - " + movieTitle, details,
+                "Your payment arrived after the booking had already expired, so no tickets were issued. "
+                        + "The full amount has been refunded to your original payment method and will arrive "
+                        + "within 3-5 business days.",
+                "This is an automated email. Please do not reply.");
+
+        sendNonCriticalEmail(toEmail, "Payment Refunded: " + movieTitle, html);
+    }
+
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
     public void sendRefundEmail(String toEmail, String bookingNumber, String movieTitle, String sessionTime,
                                 String hallName, BigDecimal refundAmount, String seatInfo, String refundReason) {
         Map<String, String> details = new LinkedHashMap<>();

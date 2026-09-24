@@ -29,7 +29,6 @@ import ua.lviv.bas.cinema.common.DateTimeFormatterService;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.common.CinemaTime;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -44,11 +43,18 @@ public class PaymentService {
 
     private static final List<PaymentStatus> ACTIVE_STATUSES = Arrays.stream(PaymentStatus.values())
             .filter(PaymentStatus::isActive).toList();
+    private static final List<PaymentStatus> LATE_SUCCESS_STATUSES = Arrays.stream(PaymentStatus.values())
+            .filter(PaymentStatus::canReceiveLateSuccess).toList();
+
+    private enum SuccessOutcome {
+        CONFIRMED, REFUND_REQUIRED, ALREADY_PROCESSED
+    }
 
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
     private final NumberGeneratorService numberGenerator;
     private final PaymentSuccessOrchestrator paymentSuccessOrchestrator;
+    private final LatePaymentRefundService latePaymentRefundService;
     private final AuditService auditService;
     private final EmailService emailService;
     private final DateTimeFormatterService dateTimeFormatter;
@@ -57,17 +63,15 @@ public class PaymentService {
     @Value("${booking.session-too-close-minutes:30}")
     private int sessionTooCloseMinutes;
 
-    @Value("${payment.expiration-minutes:30}")
-    private int paymentExpirationMinutes;
-
     public PaymentService(PaymentRepository paymentRepository, BookingRepository bookingRepository,
             NumberGeneratorService numberGenerator, PaymentSuccessOrchestrator paymentSuccessOrchestrator,
-            AuditService auditService, EmailService emailService, DateTimeFormatterService dateTimeFormatter,
-            PlatformTransactionManager transactionManager) {
+            LatePaymentRefundService latePaymentRefundService, AuditService auditService, EmailService emailService,
+            DateTimeFormatterService dateTimeFormatter, PlatformTransactionManager transactionManager) {
         this.paymentRepository = paymentRepository;
         this.bookingRepository = bookingRepository;
         this.numberGenerator = numberGenerator;
         this.paymentSuccessOrchestrator = paymentSuccessOrchestrator;
+        this.latePaymentRefundService = latePaymentRefundService;
         this.auditService = auditService;
         this.emailService = emailService;
         this.dateTimeFormatter = dateTimeFormatter;
@@ -146,41 +150,74 @@ public class PaymentService {
     }
 
     public void processSuccess(Payment payment, Map<String, String> callbackData) {
+        var paymentId = payment.getId();
         var oldStatus = payment.getStatus();
 
-        boolean flipped = requiresNewTransactionTemplate.execute(status -> {
-            int updated = paymentRepository.updateStatusIfCurrentIn(payment.getId(), ACTIVE_STATUSES,
-                    PaymentStatus.SUCCESS);
-            if (updated == 0) {
-                return false;
+        var outcome = requiresNewTransactionTemplate.execute(status -> applyGatewaySuccess(paymentId, callbackData));
+
+        switch (outcome) {
+            case ALREADY_PROCESSED -> log.warn("Payment {} already processed (status={}), ignoring duplicate callback",
+                    paymentId, oldStatus);
+            case REFUND_REQUIRED -> {
+                log.warn("Payment {} succeeded at the gateway after its booking was no longer payable, "
+                        + "refunding it automatically", paymentId);
+                auditRefundRequired(paymentId, oldStatus);
+                latePaymentRefundService.refund(paymentId);
             }
-            payment.setStatus(PaymentStatus.SUCCESS);
-            payment.setPaymentTime(Instant.now());
-            payment.setLiqpayPaymentId(callbackData.get("payment_id"));
-            payment.setLiqpayTransactionId(callbackData.get("transaction_id"));
-            payment.setLiqpaySenderCardMask(callbackData.get("sender_card_mask"));
-            return true;
-        });
-
-        if (!flipped) {
-            log.warn("Payment {} already processed (status={}), ignoring duplicate callback", payment.getId(),
-                    oldStatus);
-            return;
+            case CONFIRMED -> {
+                log.info("Payment {} marked SUCCESS", paymentId);
+                auditSuccess(paymentId, oldStatus);
+                runSuccessOrchestration(paymentId);
+            }
         }
+    }
 
-        log.info("Payment {} marked SUCCESS", payment.getId());
-        auditSuccess(payment, oldStatus);
+    private SuccessOutcome applyGatewaySuccess(Long paymentId, Map<String, String> callbackData) {
+        var payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new EntityNotFoundException("Payment", paymentId));
 
+        if (payment.getBooking().getStatus() == BookingStatus.PENDING
+                && paymentRepository.updateStatusIfCurrentIn(paymentId, ACTIVE_STATUSES, PaymentStatus.SUCCESS) == 1) {
+            applyGatewayData(payment, PaymentStatus.SUCCESS, callbackData);
+            return SuccessOutcome.CONFIRMED;
+        }
+        if (paymentRepository.updateStatusIfCurrentIn(paymentId, LATE_SUCCESS_STATUSES,
+                PaymentStatus.REFUND_REQUIRED) == 1) {
+            applyGatewayData(payment, PaymentStatus.REFUND_REQUIRED, callbackData);
+            return SuccessOutcome.REFUND_REQUIRED;
+        }
+        return SuccessOutcome.ALREADY_PROCESSED;
+    }
+
+    private void applyGatewayData(Payment payment, PaymentStatus status, Map<String, String> callbackData) {
+        payment.setStatus(status);
+        payment.setPaymentTime(Instant.now());
+        payment.setLiqpayPaymentId(callbackData.get("payment_id"));
+        payment.setLiqpayTransactionId(callbackData.get("transaction_id"));
+        payment.setLiqpaySenderCardMask(callbackData.get("sender_card_mask"));
+    }
+
+    private void runSuccessOrchestration(Long paymentId) {
         try {
-            paymentSuccessOrchestrator.handle(payment.getId());
-            log.info("Payment {} completed successfully", payment.getId());
+            paymentSuccessOrchestrator.handle(paymentId);
+            log.info("Payment {} completed successfully", paymentId);
         } catch (RuntimeException e) {
-            log.error(
-                    "Post-payment processing failed for payment {} (booking {}) after status was already committed "
-                            + "as SUCCESS - tickets/booking confirmation/bonus accrual may be incomplete, "
-                            + "PaymentScheduler.reconcileStuckSuccessfulPayments will retry automatically",
-                    payment.getId(), payment.getBooking().getId(), e);
+            log.error("Post-payment processing failed for payment {} after status was already committed as SUCCESS "
+                    + "- tickets/booking confirmation/bonus accrual may be incomplete, PaymentScheduler will "
+                    + "retry or refund automatically", paymentId, e);
         }
+    }
+
+    public void refundUnfulfillableSuccess(Long paymentId) {
+        boolean marked = Boolean.TRUE.equals(requiresNewTransactionTemplate.execute(status -> paymentRepository
+                .updateStatusIfCurrentIn(paymentId, List.of(PaymentStatus.SUCCESS),
+                        PaymentStatus.REFUND_REQUIRED) == 1));
+        if (marked) {
+            log.warn("Payment {} is SUCCESS but its booking was cancelled or expired before tickets were issued, "
+                    + "refunding it automatically", paymentId);
+            auditRefundRequired(paymentId, PaymentStatus.SUCCESS);
+        }
+        latePaymentRefundService.refund(paymentId);
     }
 
     public void processFailure(Payment payment, Map<String, String> callbackData) {
@@ -251,13 +288,10 @@ public class PaymentService {
 
     private PaymentResponse buildPaymentResponse(Payment payment) {
         var booking = payment.getBooking();
-        var expiresAt = payment.getCreatedDate() != null
-                ? payment.getCreatedDate().plus(Duration.ofMinutes(paymentExpirationMinutes))
-                : null;
         return new PaymentResponse(payment.getId(), numberGenerator.generateBookingNumber(booking),
                 booking.getSession().getMovie().getTitle(), booking.getSession().getStartTime(),
                 booking.getSession().getHall().getName(), payment.getAmount(), payment.getStatus(),
-                payment.getPaymentTime(), expiresAt, payment.getLiqpaySenderCardMask(),
+                payment.getPaymentTime(), booking.getExpiresAt(), payment.getLiqpaySenderCardMask(),
                 payment.getLiqpayErrorDescription());
     }
 
@@ -277,13 +311,21 @@ public class PaymentService {
         auditService.logChange("Payment", paymentId, "Payment #" + paymentId, AuditAction.RETRY, null, details);
     }
 
-    private void auditSuccess(Payment payment, PaymentStatus oldStatus) {
+    private void auditSuccess(Long paymentId, PaymentStatus oldStatus) {
+        auditStatusChange(paymentId, oldStatus, PaymentStatus.SUCCESS, AuditAction.SUCCESS);
+    }
+
+    private void auditRefundRequired(Long paymentId, PaymentStatus oldStatus) {
+        auditStatusChange(paymentId, oldStatus, PaymentStatus.REFUND_REQUIRED, AuditAction.STATUS_CHANGED);
+    }
+
+    private void auditStatusChange(Long paymentId, PaymentStatus oldStatus, PaymentStatus newStatus,
+                                   AuditAction action) {
         Map<String, Object> oldDetails = new HashMap<>();
         oldDetails.put("status", oldStatus);
         Map<String, Object> newDetails = new HashMap<>();
-        newDetails.put("status", PaymentStatus.SUCCESS);
-        auditService.logChange("Payment", payment.getId(), "Payment #" + payment.getId(), AuditAction.SUCCESS,
-                oldDetails, newDetails);
+        newDetails.put("status", newStatus);
+        auditService.logChange("Payment", paymentId, "Payment #" + paymentId, action, oldDetails, newDetails);
     }
 
     private void auditFailure(Payment payment, PaymentStatus oldStatus, Map<String, String> callbackData) {

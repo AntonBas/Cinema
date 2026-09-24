@@ -35,9 +35,11 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
     Optional<Booking> findByPublicIdAndUserId(UUID publicId, Long userId);
 
     @Query("SELECT DISTINCT b FROM Booking b LEFT JOIN FETCH b.seatReservations "
-            + "WHERE b.status = :status AND b.expiresAt < :expiresAt")
-    List<Booking> findByStatusAndExpiresAtBefore(@Param("status") BookingStatus status,
-                                                  @Param("expiresAt") Instant expiresAt);
+            + "WHERE b.status = :status AND b.expiresAt < :expiresAt "
+            + "AND NOT EXISTS (SELECT 1 FROM Payment p WHERE p.booking = b AND p.status IN :activePaymentStatuses)")
+    List<Booking> findExpiredWithoutActivePayment(@Param("status") BookingStatus status,
+            @Param("expiresAt") Instant expiresAt,
+            @Param("activePaymentStatuses") List<PaymentStatus> activePaymentStatuses);
 
     @Modifying
     @Query("DELETE FROM Booking b WHERE b.status IN :statuses AND b.createdDate < :cutoffDate "

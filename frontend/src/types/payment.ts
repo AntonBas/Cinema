@@ -6,7 +6,8 @@ export type PaymentStatus =
   | "CANCELLED"
   | "EXPIRED"
   | "REFUNDED"
-  | "PARTIALLY_REFUNDED";
+  | "PARTIALLY_REFUNDED"
+  | "REFUND_REQUIRED";
 
 export interface PaymentCreateRequest {
   bookingId: string;
@@ -38,6 +39,20 @@ export interface PaymentResponse {
   errorDescription?: string;
 }
 
+export const FINAL_PAYMENT_STATUSES: PaymentStatus[] = [
+  "SUCCESS",
+  "FAILED",
+  "CANCELLED",
+  "EXPIRED",
+  "REFUND_REQUIRED",
+  "REFUNDED",
+];
+
+export const LATE_PAYMENT_REFUND_STATUSES: PaymentStatus[] = [
+  "REFUND_REQUIRED",
+  "REFUNDED",
+];
+
 export const PaymentStatusDisplay: Record<PaymentStatus, string> = {
   PENDING: "Pending",
   PROCESSING: "Processing",
@@ -47,4 +62,5 @@ export const PaymentStatusDisplay: Record<PaymentStatus, string> = {
   EXPIRED: "Expired",
   REFUNDED: "Refunded",
   PARTIALLY_REFUNDED: "Partially Refunded",
+  REFUND_REQUIRED: "Refund in Progress",
 };

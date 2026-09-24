@@ -10,7 +10,11 @@ import {
   AlertCircle,
   RefreshCw,
 } from "lucide-react";
-import type { PaymentResponse } from "@/types/payment";
+import {
+  FINAL_PAYMENT_STATUSES,
+  LATE_PAYMENT_REFUND_STATUSES,
+  type PaymentResponse,
+} from "@/types/payment";
 import { Layout } from "@/components/layout/Layout/Layout";
 import styles from "./SuccessPage.module.css";
 
@@ -53,10 +57,7 @@ export const SuccessPage = () => {
   }, [paymentId, getById, navigate]);
 
   useEffect(() => {
-    if (
-      payment &&
-      ["SUCCESS", "FAILED", "CANCELLED", "EXPIRED"].includes(payment.status)
-    ) {
+    if (payment && FINAL_PAYMENT_STATUSES.includes(payment.status)) {
       if (pollingRef.current) {
         clearInterval(pollingRef.current);
         pollingRef.current = null;
@@ -87,6 +88,7 @@ export const SuccessPage = () => {
   const isSuccess = payment.status === "SUCCESS";
   const isFailed = ["FAILED", "CANCELLED", "EXPIRED"].includes(payment.status);
   const isProcessing = ["PENDING", "PROCESSING"].includes(payment.status);
+  const isRefunded = LATE_PAYMENT_REFUND_STATUSES.includes(payment.status);
 
   return (
     <Layout>
@@ -113,12 +115,16 @@ export const SuccessPage = () => {
               {isProcessing && (
                 <RefreshCw className={styles.warningIcon} size={64} />
               )}
+              {isRefunded && (
+                <AlertCircle className={styles.warningIcon} size={64} />
+              )}
             </div>
 
             <h1 className={styles.title}>
               {isSuccess && "Payment Successful!"}
               {isFailed && "Payment Failed"}
               {isProcessing && "Payment Processing"}
+              {isRefunded && "Payment Refunded"}
             </h1>
 
             <p className={styles.message}>
@@ -128,6 +134,8 @@ export const SuccessPage = () => {
                 "Payment failed. Please try again or contact support."}
               {isProcessing &&
                 "Your payment is being processed. Please wait..."}
+              {isRefunded &&
+                "Your payment arrived after the booking had expired, so no tickets were issued. The full amount is being returned to your card."}
             </p>
 
             {isProcessing && pollingRef.current && (
@@ -166,7 +174,7 @@ export const SuccessPage = () => {
                   </Button>
                 </>
               )}
-              {isProcessing && (
+              {(isProcessing || isRefunded) && (
                 <Button variant="secondary" onClick={() => navigate("/")}>
                   <Home size={18} /> Back to Home
                 </Button>

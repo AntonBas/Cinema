@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,7 @@ import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.movie.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.movie.domain.status.MovieStatus;
 import ua.lviv.bas.cinema.movie.repository.MovieRepository;
+import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.user.domain.UserRole;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
@@ -61,8 +63,8 @@ class BookingMomentPersistenceIntegrationTest {
         var expired = bookingRepository.save(buildBooking(user, session, now.minus(Duration.ofMinutes(1))));
         var active = bookingRepository.save(buildBooking(user, session, now.plus(Duration.ofMinutes(10))));
 
-        var expiredIds = bookingRepository.findByStatusAndExpiresAtBefore(BookingStatus.PENDING, now).stream()
-                .map(Booking::getId).toList();
+        var expiredIds = bookingRepository.findExpiredWithoutActivePayment(BookingStatus.PENDING, now,
+                List.of(PaymentStatus.PENDING, PaymentStatus.PROCESSING)).stream().map(Booking::getId).toList();
         assertThat(expiredIds).contains(expired.getId()).doesNotContain(active.getId());
 
         assertThat(bookingRepository.findById(active.getId()).orElseThrow().getExpiresAt())

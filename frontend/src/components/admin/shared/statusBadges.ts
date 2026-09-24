@@ -22,6 +22,7 @@ export const PAYMENT_STATUS_VARIANT: Record<PaymentStatus, BadgeVariant> = {
   EXPIRED: "secondary",
   REFUNDED: "info",
   PARTIALLY_REFUNDED: "info",
+  REFUND_REQUIRED: "warning",
 };
 
 export const TICKET_STATUS_VARIANT: Record<TicketStatus, BadgeVariant> = {

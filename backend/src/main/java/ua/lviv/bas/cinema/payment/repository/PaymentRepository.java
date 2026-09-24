@@ -30,9 +30,9 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     List<Payment> findByStatusAndLastModifiedDateBefore(PaymentStatus status, Instant lastModifiedDate);
 
     @Query("SELECT DISTINCT p FROM Payment p JOIN FETCH p.booking b LEFT JOIN FETCH b.seatReservations JOIN FETCH b.session "
-            + "WHERE p.status = :status AND p.createdDate < :createdDate")
-    List<Payment> findByStatusAndCreatedDateBeforeWithBookingDetails(@Param("status") PaymentStatus status,
-            @Param("createdDate") Instant createdDate);
+            + "WHERE p.status IN :statuses AND b.status = :bookingStatus AND b.expiresAt < :expiresAt")
+    List<Payment> findByStatusInAndBookingExpiredBefore(@Param("statuses") List<PaymentStatus> statuses,
+            @Param("bookingStatus") BookingStatus bookingStatus, @Param("expiresAt") Instant expiresAt);
 
     List<Payment> findByStatusInAndCreatedDateBefore(List<PaymentStatus> statuses, Instant createdDate);
 
@@ -40,6 +40,11 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             + "AND p.lastModifiedDate < :cutoff")
     List<Payment> findByStatusAndBookingStatusAndLastModifiedDateBefore(@Param("status") PaymentStatus status,
             @Param("bookingStatus") BookingStatus bookingStatus, @Param("cutoff") Instant cutoff);
+
+    @Query("SELECT p FROM Payment p WHERE p.status = :status AND p.booking.status IN :bookingStatuses "
+            + "AND p.lastModifiedDate < :cutoff AND NOT EXISTS (SELECT 1 FROM Ticket t WHERE t.payment = p)")
+    List<Payment> findWithoutTicketsByStatusAndBookingStatusIn(@Param("status") PaymentStatus status,
+            @Param("bookingStatuses") List<BookingStatus> bookingStatuses, @Param("cutoff") Instant cutoff);
 
     @Modifying
     @Query("UPDATE Payment p SET p.status = :newStatus WHERE p.id = :id AND p.status IN :fromStatuses")

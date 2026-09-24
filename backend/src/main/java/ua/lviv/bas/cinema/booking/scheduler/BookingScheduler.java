@@ -23,7 +23,9 @@ import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 @Component
 public class BookingScheduler {
 	private static final List<PaymentStatus> EVER_PAID_STATUSES = List.of(PaymentStatus.SUCCESS,
-			PaymentStatus.REFUNDED, PaymentStatus.PARTIALLY_REFUNDED);
+			PaymentStatus.REFUNDED, PaymentStatus.PARTIALLY_REFUNDED, PaymentStatus.REFUND_REQUIRED);
+	private static final List<PaymentStatus> ACTIVE_PAYMENT_STATUSES = List.of(PaymentStatus.PENDING,
+			PaymentStatus.PROCESSING);
 
 	private final BookingRepository bookingRepository;
 	private final SeatReservationService seatReservationService;
@@ -42,7 +44,8 @@ public class BookingScheduler {
 	public void processExpiredBookings() {
 		log.debug("Starting expired bookings processing");
 		Instant now = Instant.now();
-		List<Booking> expiredBookings = bookingRepository.findByStatusAndExpiresAtBefore(BookingStatus.PENDING, now);
+		List<Booking> expiredBookings = bookingRepository.findExpiredWithoutActivePayment(BookingStatus.PENDING, now,
+				ACTIVE_PAYMENT_STATUSES);
 
 		if (expiredBookings.isEmpty()) {
 			log.debug("No expired bookings found");

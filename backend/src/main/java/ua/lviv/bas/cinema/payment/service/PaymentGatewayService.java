@@ -20,6 +20,7 @@ import java.math.RoundingMode;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -49,6 +50,8 @@ public class PaymentGatewayService {
     private String liqpayApiUrl;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+    private static final DateTimeFormatter EXPIRED_DATE_FORMATTER = DateTimeFormatter
+            .ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneOffset.UTC);
 
     private final RestTemplate restTemplate;
 
@@ -266,6 +269,7 @@ public class PaymentGatewayService {
         params.put("server_url", liqpayCallbackUrl);
         params.put("language", "uk");
         params.put("email", payment.getBooking().getUser().getEmail());
+        params.put("expired_date", EXPIRED_DATE_FORMATTER.format(payment.getBooking().getExpiresAt()));
 
         if (sandboxMode) {
             params.put("sandbox", "1");

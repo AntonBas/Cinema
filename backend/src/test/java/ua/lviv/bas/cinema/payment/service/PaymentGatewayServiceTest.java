@@ -25,6 +25,7 @@ import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.Map;
 
@@ -62,7 +63,8 @@ class PaymentGatewayServiceTest {
         Movie movie = Movie.builder().id(1L).title("Test Movie").durationMinutes(120).build();
         CinemaHall hall = CinemaHall.builder().id(1L).name("Hall A").build();
         Session session = Session.builder().id(1L).movie(movie).hall(hall).startTime(CinemaTime.now()).build();
-        Booking booking = Booking.builder().id(1L).user(user).session(session).build();
+        Booking booking = Booking.builder().id(1L).user(user).session(session)
+                .expiresAt(Instant.parse("2026-09-24T18:30:00Z")).build();
         payment = Payment.builder().id(1L).booking(booking).amount(new BigDecimal("100.00")).liqpayOrderId("ORDER_123")
                 .status(PaymentStatus.PENDING).build();
     }
@@ -86,6 +88,15 @@ class PaymentGatewayServiceTest {
 
         assertThat(decoded).contains("/booking/success?bookingId=" + payment.getBooking().getPublicId()
                 + "&paymentId=" + payment.getId());
+    }
+
+    @Test
+    void prepareLiqPayPaymentDataShouldLimitCheckoutToBookingExpiryInUtc() {
+        PaymentLiqPayDataResponse response = paymentGatewayService.prepareLiqPayPaymentData(payment);
+
+        String decoded = new String(Base64.getDecoder().decode(response.data()), StandardCharsets.UTF_8);
+
+        assertThat(decoded).contains("\"expired_date\":\"2026-09-24 18:30:00\"");
     }
 
     @Test
