@@ -57,6 +57,7 @@ public interface SessionMapper {
 
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "version", ignore = true)
+	@Mapping(target = "publicId", ignore = true)
 	@Mapping(target = "movie", ignore = true)
 	@Mapping(target = "hall", ignore = true)
 	@Mapping(target = "status", constant = "SCHEDULED")
@@ -67,6 +68,7 @@ public interface SessionMapper {
 	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 	@Mapping(target = "id", ignore = true)
 	@Mapping(target = "version", ignore = true)
+	@Mapping(target = "publicId", ignore = true)
 	@Mapping(target = "movie", ignore = true)
 	@Mapping(target = "hall", ignore = true)
 	@Mapping(target = "status", ignore = true)

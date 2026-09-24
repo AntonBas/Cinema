@@ -60,7 +60,7 @@ class ApiErrorHandlerTest {
     @Test
     void handleMaxUploadSizeExceededShouldReturnPayloadTooLarge() throws Exception {
         mockMvc.perform(get("/test/max-upload-size"))
-                .andExpect(status().isPayloadTooLarge())
+                .andExpect(status().isContentTooLarge())
                 .andExpect(jsonPath("$.message").value("Uploaded file is too large"));
     }
 

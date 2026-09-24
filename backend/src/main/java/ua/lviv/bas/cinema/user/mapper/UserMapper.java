@@ -29,6 +29,9 @@ public interface UserMapper {
     @Mapping(target = "verificationStatus", constant = "NOT_VERIFIED")
     @Mapping(target = "verifiedAt", ignore = true)
     @Mapping(target = "password", ignore = true)
+    @Mapping(target = "lastVerificationEmailSentAt", ignore = true)
+    @Mapping(target = "lastPasswordResetSentAt", ignore = true)
+    @Mapping(target = "tokenVersion", ignore = true)
     User toEntity(UserRegistrationRequest request);
 
     UserResponse toUserResponse(User user);
@@ -47,6 +50,10 @@ public interface UserMapper {
     @Mapping(target = "userRole", ignore = true)
     @Mapping(target = "verificationStatus", ignore = true)
     @Mapping(target = "verifiedAt", ignore = true)
+    @Mapping(target = "emailVerified", ignore = true)
+    @Mapping(target = "lastVerificationEmailSentAt", ignore = true)
+    @Mapping(target = "lastPasswordResetSentAt", ignore = true)
+    @Mapping(target = "tokenVersion", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "createdDate", ignore = true)
     @Mapping(target = "lastModifiedBy", ignore = true)
