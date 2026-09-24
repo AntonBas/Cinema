@@ -80,6 +80,14 @@ export const RefundTable: React.FC<RefundTableProps> = ({
                       −{refund.totalBonusPointsToDeduct} pts
                     </span>
                   )}
+                  {refund.liqpayOrderId && (
+                    <span
+                      className={`${styles.secondary} ${styles.mono}`}
+                      title="LiqPay order ID"
+                    >
+                      {refund.liqpayOrderId}
+                    </span>
+                  )}
                 </td>
                 <td data-label="Status">
                   <Badge variant={REFUND_STATUS_VARIANT[refund.status]}>
