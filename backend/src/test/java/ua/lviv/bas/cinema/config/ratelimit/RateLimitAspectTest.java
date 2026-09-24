@@ -73,6 +73,34 @@ class RateLimitAspectTest {
         verify(rateLimitService, org.mockito.Mockito.times(2)).tryConsume(eq("10.0.0.5"), anyInt(), anyInt(), anyInt());
     }
 
+    @Test
+    void checkRateLimitWithConfiguredClientIpHeaderShouldUseItInsteadOfForwardedFor() throws Throwable {
+        ReflectionTestUtils.setField(rateLimitAspect, "clientIpHeader", "True-Client-IP");
+        request.setRemoteAddr("1.2.3.4");
+        request.addHeader("X-Forwarded-For", "1.2.3.4, 81.97.145.24, 172.71.195.123");
+        request.addHeader("True-Client-IP", "81.97.145.24");
+
+        when(rateLimitService.tryConsume(eq("81.97.145.24"), anyInt(), anyInt(), anyInt())).thenReturn(true);
+        when(joinPoint.proceed()).thenReturn("ok");
+
+        rateLimitAspect.checkRateLimit(joinPoint, ipRateLimit());
+
+        verify(rateLimitService).tryConsume(eq("81.97.145.24"), anyInt(), anyInt(), anyInt());
+    }
+
+    @Test
+    void checkRateLimitWhenConfiguredClientIpHeaderMissingShouldFallBackToRemoteAddr() throws Throwable {
+        ReflectionTestUtils.setField(rateLimitAspect, "clientIpHeader", "True-Client-IP");
+        request.setRemoteAddr("10.0.0.5");
+
+        when(rateLimitService.tryConsume(eq("10.0.0.5"), anyInt(), anyInt(), anyInt())).thenReturn(true);
+        when(joinPoint.proceed()).thenReturn("ok");
+
+        rateLimitAspect.checkRateLimit(joinPoint, ipRateLimit());
+
+        verify(rateLimitService).tryConsume(eq("10.0.0.5"), anyInt(), anyInt(), anyInt());
+    }
+
     private RateLimit ipRateLimit() {
         try {
             return Holder.class.getMethod("annotated").getAnnotation(RateLimit.class);

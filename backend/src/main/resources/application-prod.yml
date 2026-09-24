@@ -29,6 +29,8 @@ springdoc:
     enabled: false
 
 app:
+  rate-limit:
+    client-ip-header: ${RATE_LIMIT_CLIENT_IP_HEADER:True-Client-IP}
   jwt:
     cookie-secure: true
     cookie-same-site: ${JWT_COOKIE_SAME_SITE:None}
