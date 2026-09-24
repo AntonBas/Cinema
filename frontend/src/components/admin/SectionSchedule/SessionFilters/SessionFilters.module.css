@@ -37,7 +37,7 @@
 }
 
 .filterInput {
-  height: 40px;
+  height: var(--control-height);
   padding: var(--space-2) var(--space-3);
   font-size: var(--font-size-sm);
   line-height: 1.5;
@@ -52,11 +52,11 @@
 
 .filterSelectWrapper {
   width: 100%;
-  height: 40px;
+  height: var(--control-height);
 }
 
 .filterSelectWrapper :global(.select) {
-  height: 40px;
+  height: var(--control-height);
   padding: var(--space-2) var(--space-3);
   font-size: var(--font-size-sm);
   line-height: 1.5;
@@ -64,11 +64,11 @@
 }
 
 .filterSelectWrapper :global(.selectWrapper) {
-  height: 40px;
+  height: var(--control-height);
 }
 
 .filterSelectWrapper select {
-  height: 40px;
+  height: var(--control-height);
   padding: var(--space-2) var(--space-3);
   font-size: var(--font-size-sm);
   line-height: 1.5;
@@ -107,7 +107,7 @@
   padding-right: var(--space-8);
   background: rgba(var(--color-panel-header-bg-rgb), 0.6);
   border: 1px solid var(--color-panel-border);
-  height: 40px;
+  height: var(--control-height);
   padding: var(--space-2) var(--space-3);
   font-size: var(--font-size-sm);
   line-height: 1.5;
@@ -243,7 +243,7 @@
 
 .clearButton {
   min-width: 100px;
-  height: 36px;
+  height: var(--control-height);
 }
 
 @media (max-width: 1200px) {
@@ -257,14 +257,6 @@
     grid-template-columns: repeat(2, 1fr);
     gap: var(--space-4);
     padding: var(--space-4);
-  }
-
-  .filterInput,
-  .movieInput,
-  .filterSelectWrapper,
-  .filterSelectWrapper :global(.select),
-  .filterSelectWrapper select {
-    height: 38px;
   }
 
   .filterInput,
@@ -302,7 +294,6 @@
   .clearButton {
     width: 100%;
     min-width: unset;
-    height: 38px;
   }
 }
 
@@ -311,14 +302,6 @@
     grid-template-columns: 1fr;
     gap: var(--space-3);
     padding: var(--space-3);
-  }
-
-  .filterInput,
-  .movieInput,
-  .filterSelectWrapper,
-  .filterSelectWrapper :global(.select),
-  .filterSelectWrapper select {
-    height: 36px;
   }
 
   .filterInput,
@@ -346,7 +329,6 @@
 
   .clearButton {
     font-size: var(--font-size-sm);
-    height: 36px;
   }
 
   .clearMovieButton {

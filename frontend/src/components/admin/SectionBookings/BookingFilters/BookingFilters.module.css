@@ -38,7 +38,7 @@
 }
 
 .clearButton {
-  height: 40px;
+  height: var(--control-height);
   white-space: nowrap;
 }
 

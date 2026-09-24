@@ -129,6 +129,8 @@
   --space-16: 4rem;
   --space-20: 5rem;
 
+  --control-height: 2.75rem;
+
   --container-sm: 800px;
   --container-md: 1200px;
   --container-lg: 1400px;
@@ -731,6 +733,7 @@ h5,
 
 @media (max-width: 768px) {
   :root {
+    --control-height: 2.5rem;
     --font-size-4xl: 1.875rem;
     --font-size-3xl: 1.5rem;
     --font-size-2xl: 1.25rem;
