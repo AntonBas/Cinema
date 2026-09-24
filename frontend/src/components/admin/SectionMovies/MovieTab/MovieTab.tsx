@@ -271,12 +271,6 @@ export const MovieTab: React.FC = () => {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <div>
-          <h2 className={styles.title}>Movies</h2>
-          <p className={styles.description}>
-            Manage movie catalog, posters, cast and crew
-          </p>
-        </div>
         <Button onClick={handleAddNew} variant="primary">
           Add Movie
         </Button>

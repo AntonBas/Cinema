@@ -104,12 +104,6 @@ export const GenreTab: React.FC = () => {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <div className={styles.headerContent}>
-          <h2>Genres</h2>
-          <p className={styles.subtitle}>
-            Manage movie genres and their statistics
-          </p>
-        </div>
         <Button
           variant="primary"
           onClick={() => {

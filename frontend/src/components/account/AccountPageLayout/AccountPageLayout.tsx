@@ -5,8 +5,8 @@ import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import styles from "./AccountPageLayout.module.css";
 
 export interface AccountPageLayoutProps {
-  title?: React.ReactNode;
-  subtitle?: React.ReactNode;
+  title: React.ReactNode;
+  subtitle: React.ReactNode;
   actions?: React.ReactNode;
   children: React.ReactNode;
 }
@@ -22,9 +22,7 @@ export const AccountPageLayout: React.FC<AccountPageLayoutProps> = ({
       <div className={styles.container}>
         <AccountSidebar />
         <div className={styles.content}>
-          {title && (
-            <PageHeader title={title} subtitle={subtitle} actions={actions} />
-          )}
+          <PageHeader title={title} subtitle={subtitle} actions={actions} />
           {children}
         </div>
       </div>

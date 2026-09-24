@@ -121,7 +121,7 @@ const SectionHallsContent: React.FC = () => {
   return (
     <div className={styles.section}>
       <PageHeader
-        title="Cinema Halls"
+        title="Halls"
         subtitle="Manage your cinema halls, seating layouts and configurations"
         actions={
           <Button

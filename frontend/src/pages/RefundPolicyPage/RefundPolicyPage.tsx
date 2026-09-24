@@ -16,7 +16,10 @@ export const RefundPolicyPage: React.FC = () => {
   return (
     <Layout>
       <PageContainer size="narrow">
-        <PageHeader title="Refund Policy" />
+        <PageHeader
+          title="Refund Policy"
+          subtitle="How much you get back depending on when you cancel"
+        />
 
         {loading ? (
           <div className={styles.loading}>

@@ -187,7 +187,7 @@ export const SectionSchedule: React.FC = () => {
   return (
     <div className={styles.container}>
       <PageHeader
-        title="Session Schedule"
+        title="Schedule"
         subtitle="Manage movie sessions, showtimes, and schedules"
         actions={
           <Button

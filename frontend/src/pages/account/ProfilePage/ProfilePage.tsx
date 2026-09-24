@@ -8,6 +8,8 @@ import type { UserUpdateRequest } from "@/types/user";
 import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import styles from "./ProfilePage.module.css";
 
+const PROFILE_SUBTITLE = "View and manage your personal information";
+
 export const ProfilePage: React.FC = () => {
   const { profile, loading, profileError, getProfile, updateProfile } =
     useUser();
@@ -24,7 +26,7 @@ export const ProfilePage: React.FC = () => {
 
   if (loading && !profile) {
     return (
-      <AccountPageLayout>
+      <AccountPageLayout title="My Profile" subtitle={PROFILE_SUBTITLE}>
         <div className={styles.loading}>
           <LoadingSpinner text="Loading your account..." />
         </div>
@@ -34,7 +36,7 @@ export const ProfilePage: React.FC = () => {
 
   if (profileError || !profile) {
     return (
-      <AccountPageLayout>
+      <AccountPageLayout title="My Profile" subtitle={PROFILE_SUBTITLE}>
         <EmptyState
           variant="error"
           title="Failed to Load Profile"
@@ -45,7 +47,12 @@ export const ProfilePage: React.FC = () => {
   }
 
   return (
-    <AccountPageLayout title={isEditing ? "Edit Profile" : "My Profile"}>
+    <AccountPageLayout
+      title={isEditing ? "Edit Profile" : "My Profile"}
+      subtitle={
+        isEditing ? "Update your personal information" : PROFILE_SUBTITLE
+      }
+    >
       {profile.verificationStatus === "NOT_VERIFIED" && (
         <div className={styles.verificationBanner}>
           <span>📅</span>

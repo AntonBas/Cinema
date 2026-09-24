@@ -94,7 +94,7 @@ export const SectionPromotion: React.FC = () => {
     <div className={styles.container}>
       <PageHeader
         title="Promotions"
-        subtitle="Create and manage promotions"
+        subtitle="Run time-limited campaigns that award bonus points"
         actions={
           <Button onClick={() => setShowCreateModal(true)} variant="primary">
             Create Promotion

@@ -106,12 +106,6 @@ export const PersonTab: React.FC = () => {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <div>
-          <h2>People</h2>
-          <p className={styles.description}>
-            Manage actors, directors and screenwriters
-          </p>
-        </div>
         <Button variant="primary" onClick={() => setIsModalOpen(true)}>
           Add Person
         </Button>

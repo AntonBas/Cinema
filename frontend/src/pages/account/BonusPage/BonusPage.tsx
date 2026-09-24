@@ -51,7 +51,10 @@ export const BonusPage: React.FC = () => {
   }, [activeTab, page, getTransactions]);
 
   return (
-    <AccountPageLayout title="My Bonuses">
+    <AccountPageLayout
+      title="My Bonuses"
+      subtitle="Track your points balance and transaction history"
+    >
       <Tabs
         items={BONUS_TABS}
         activeId={activeTab}
