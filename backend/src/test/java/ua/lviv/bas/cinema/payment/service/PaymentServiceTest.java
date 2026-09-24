@@ -42,6 +42,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -153,6 +154,23 @@ public class PaymentServiceTest {
         assertThat(response).isNotNull();
         assertThat(response.bookingNumber()).isEqualTo("BK-2024-00001");
         verify(paymentRepository, never()).save(any());
+    }
+
+    @Test
+    void createPaymentWhenPreviousPaymentFailedShouldRestartItInsteadOfInsertingNew() {
+        testPayment.setStatus(PaymentStatus.FAILED);
+        when(bookingRepository.findByPublicIdAndUserId(BOOKING_PUBLIC_ID, USER_ID)).thenReturn(Optional.of(testBooking));
+        when(paymentRepository.findByBookingId(BOOKING_ID)).thenReturn(Optional.of(testPayment));
+        when(numberGenerator.generateLiqpayOrderId()).thenReturn("ORD_RETRY123456789");
+        when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
+        when(paymentRepository.save(testPayment)).thenReturn(testPayment);
+
+        PaymentResponse response = paymentService.createPayment(createRequest, testUser);
+
+        assertThat(response.status()).isEqualTo(PaymentStatus.PENDING);
+        assertThat(testPayment.getLiqpayOrderId()).isEqualTo("ORD_RETRY123456789");
+        verify(paymentRepository).save(testPayment);
+        verify(paymentRepository, never()).save(argThat(payment -> payment != testPayment));
     }
 
     @Test

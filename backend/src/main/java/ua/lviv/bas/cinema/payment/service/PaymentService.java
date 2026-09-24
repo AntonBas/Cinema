@@ -84,10 +84,15 @@ public class PaymentService {
         validateBookingForPayment(booking);
 
         Optional<Payment> existingPayment = paymentRepository.findByBookingId(booking.getId());
-        if (existingPayment.isPresent() && existingPayment.get().getStatus().isActive()) {
-            log.info("Returning existing active payment {} for booking {}", existingPayment.get().getId(),
-                    booking.getId());
-            return buildPaymentResponse(existingPayment.get());
+        if (existingPayment.isPresent()) {
+            var existing = existingPayment.get();
+            if (existing.getStatus().isActive()) {
+                log.info("Returning existing active payment {} for booking {}", existing.getId(), booking.getId());
+                return buildPaymentResponse(existing);
+            }
+            if (existing.getStatus().isFailed()) {
+                return restartPayment(existing);
+            }
         }
 
         var payment = Payment.builder().booking(booking).amount(booking.getFinalPrice()).status(PaymentStatus.PENDING)
@@ -126,12 +131,16 @@ public class PaymentService {
 
         validateBookingForPayment(payment.getBooking());
 
+        return restartPayment(payment);
+    }
+
+    private PaymentResponse restartPayment(Payment payment) {
         payment.setStatus(PaymentStatus.PENDING);
         payment.setLiqpayOrderId(numberGenerator.generateLiqpayOrderId());
 
         var saved = paymentRepository.save(payment);
-        log.info("Retried payment {} for booking {}", paymentId, payment.getBooking().getId());
-        auditRetry(paymentId);
+        log.info("Restarted payment {} for booking {}", payment.getId(), payment.getBooking().getId());
+        auditRetry(payment.getId());
 
         return buildPaymentResponse(saved);
     }

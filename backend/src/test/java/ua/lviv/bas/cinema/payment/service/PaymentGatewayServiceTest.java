@@ -24,6 +24,8 @@ import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingEx
 import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -74,6 +76,16 @@ class PaymentGatewayServiceTest {
         assertThat(response.signature()).isNotBlank();
         assertThat(response.paymentUrl()).isNotBlank();
         assertThat(response.liqpayOrderId()).isEqualTo("ORDER_123");
+    }
+
+    @Test
+    void prepareLiqPayPaymentDataShouldReturnToSuccessPageWithPublicBookingId() {
+        PaymentLiqPayDataResponse response = paymentGatewayService.prepareLiqPayPaymentData(payment);
+
+        String decoded = new String(Base64.getDecoder().decode(response.data()), StandardCharsets.UTF_8);
+
+        assertThat(decoded).contains("/booking/success?bookingId=" + payment.getBooking().getPublicId()
+                + "&paymentId=" + payment.getId());
     }
 
     @Test

@@ -281,7 +281,7 @@ public class PaymentGatewayService {
     }
 
     private String buildResultUrl(Payment payment) {
-        return frontendUrl + "/booking/success?bookingId=" + payment.getBooking().getId() + "&paymentId="
+        return frontendUrl + "/booking/success?bookingId=" + payment.getBooking().getPublicId() + "&paymentId="
                 + payment.getId();
     }
 }

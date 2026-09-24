@@ -29,15 +29,14 @@ export const SuccessPage = () => {
 
   useEffect(() => {
     setIsVisible(true);
-    const id = paymentId || bookingId;
-    if (!id) {
-      navigate("/");
+    if (!paymentId) {
+      navigate("/", { replace: true });
       return;
     }
 
     const fetchPayment = async () => {
       try {
-        const result = await getById(parseInt(id));
+        const result = await getById(Number(paymentId));
         setPayment(result);
         setPollingCount((prev) => prev + 1);
       } catch {
@@ -51,7 +50,7 @@ export const SuccessPage = () => {
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
-  }, [paymentId, bookingId, getById, navigate]);
+  }, [paymentId, getById, navigate]);
 
   useEffect(() => {
     if (
@@ -157,7 +156,7 @@ export const SuccessPage = () => {
                   {bookingId && (
                     <Button
                       variant="primary"
-                      onClick={() => navigate(`/booking/payment/${bookingId}`)}
+                      onClick={() => navigate(`/booking/summary/${bookingId}`)}
                     >
                       <RefreshCw size={18} /> Try Again
                     </Button>

@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import {
+  useParams,
+  useNavigate,
+  useLocation,
+  Navigate,
+} from "react-router-dom";
 import { usePayment } from "@/hooks/features/payment/usePayment";
 import { ProgressStepper } from "@/components/booking/ProgressStepper/ProgressStepper";
 import { BOOKING_STEPS } from "@/components/booking/ProgressStepper/bookingSteps";
@@ -22,7 +27,6 @@ import { parseServerInstant } from "@/utils/dateUtils";
 import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import { formatFullDateTime, formatPrice } from "@/utils/formatters";
-import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import styles from "./PaymentPage.module.css";
 
 interface BookingData {
@@ -185,9 +189,9 @@ export const PaymentPage: React.FC = () => {
   ]);
 
   useEffect(() => {
-    if (bookingId && step === "init") initPayment();
+    if (bookingId && bookingData && step === "init") initPayment();
     return () => stopPolling();
-  }, [bookingId, step, initPayment, stopPolling]);
+  }, [bookingId, bookingData, step, initPayment, stopPolling]);
 
   useEffect(() => {
     if (!currentPayment) return;
@@ -245,11 +249,10 @@ export const PaymentPage: React.FC = () => {
 
   if (!bookingData)
     return (
-      <Layout>
-        <PageContainer size="narrow">
-          <EmptyState variant="error" title="Booking Data Not Found" />
-        </PageContainer>
-      </Layout>
+      <Navigate
+        to={bookingId ? `/booking/summary/${bookingId}` : "/"}
+        replace
+      />
     );
 
   return (
