@@ -27,6 +27,16 @@ public class SessionOperationException extends ValidationException {
                 "ONLY_CANCELLED_CAN_REACTIVATE");
     }
 
+    public static SessionOperationException cannotDeleteWithBookings() {
+        return new SessionOperationException("Cannot delete a session that has bookings, cancel it instead",
+                "CANNOT_DELETE_WITH_BOOKINGS");
+    }
+
+    public static SessionOperationException cannotChangeHallWithReservations() {
+        return new SessionOperationException("Cannot move a session with booked or held seats to another hall",
+                "CANNOT_CHANGE_HALL_WITH_RESERVATIONS");
+    }
+
     public static SessionOperationException cannotReactivatePast() {
         return new SessionOperationException("Cannot reactivate past session", "CANNOT_REACTIVATE_PAST");
     }

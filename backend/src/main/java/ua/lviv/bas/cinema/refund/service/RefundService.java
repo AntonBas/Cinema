@@ -32,6 +32,9 @@ import java.time.temporal.ChronoUnit;
 public class RefundService {
 
     private static final int MAX_APPLY_SUCCESS_ATTEMPTS = 2;
+    private static final String CANCELLED_SESSION_POLICY_NAME = "Session Cancelled";
+    private static final String CANCELLED_SESSION_POLICY_DESCRIPTION =
+            "100% refund — the session was cancelled by the cinema";
 
     private final TicketService ticketService;
     private final PaymentRefundService paymentRefundService;
@@ -117,10 +120,20 @@ public class RefundService {
                 booking.getSession().getHall().getName(), seatInfo, ticket.getOriginalPrice(),
                 ticket.getFinalPrice(), calculation.refundAmount(), calculation.percentage(), calculation.feeAmount(),
                 calculation.feePercentage(), calculation.bonusPointsUsed(),
-                calculation.bonusPointsToRefund(), refundRules.getPolicyName(sessionTime),
-                refundRules.getPolicyDescription(sessionTime), true, null, refundRules.getRefundDeadline(sessionTime),
+                calculation.bonusPointsToRefund(), policyName(ticket, sessionTime),
+                policyDescription(ticket, sessionTime), true, null, refundRules.getRefundDeadline(sessionTime),
                 formatRemainingTime(sessionTime), ticket.getPurchaseTime().toString(),
                 ticket.getTicketType().getDisplayName());
+    }
+
+    private String policyName(Ticket ticket, LocalDateTime sessionTime) {
+        return refundCalculator.isSessionCancelled(ticket) ? CANCELLED_SESSION_POLICY_NAME
+                : refundRules.getPolicyName(sessionTime);
+    }
+
+    private String policyDescription(Ticket ticket, LocalDateTime sessionTime) {
+        return refundCalculator.isSessionCancelled(ticket) ? CANCELLED_SESSION_POLICY_DESCRIPTION
+                : refundRules.getPolicyDescription(sessionTime);
     }
 
     private RefundPreviewResponse createNonRefundablePreview(Ticket ticket, String reason) {

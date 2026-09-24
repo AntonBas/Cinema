@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.booking.domain.Booking;
+import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.booking.domain.SeatReservation;
 import ua.lviv.bas.cinema.cinema.domain.Seat;
 import ua.lviv.bas.cinema.cinema.domain.Session;
@@ -26,6 +27,9 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -281,5 +285,29 @@ class RefundCalculatorTest {
         assertThat(result.bonusPointsToRefund()).isEqualTo(35);
         assertThat(result.feeAmount()).isEqualByComparingTo("30.00");
         assertThat(result.feePercentage()).isEqualByComparingTo("30");
+    }
+
+    @Test
+    void validateWhenSessionCancelledShouldIgnoreRefundWindowAndStartTime() {
+        testSession.setStatus(CinemaSessionStatus.CANCELLED);
+        testSession.setStartTime(CinemaTime.now().minusMinutes(10));
+
+        String reason = refundCalculator.validate(testTicket);
+
+        assertThat(reason).isNull();
+        verify(refundRules, never()).isRefundable(any());
+    }
+
+    @Test
+    void calculateWhenSessionCancelledShouldRefundCashAndBonusPointsInFull() {
+        testSession.setStatus(CinemaSessionStatus.CANCELLED);
+        testTicket.getBooking().setBonusPointsUsed(40);
+
+        RefundCalculator.RefundCalculation result = refundCalculator.calculate(testTicket);
+
+        assertThat(result.percentage()).isEqualByComparingTo("100");
+        assertThat(result.refundAmount()).isEqualByComparingTo("100.00");
+        assertThat(result.bonusPointsToRefund()).isEqualTo(40);
+        verify(refundRules, never()).getRefundPercentage(any());
     }
 }

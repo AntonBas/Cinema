@@ -282,7 +282,7 @@ export const SectionSchedule: React.FC = () => {
         onConfirm={handleCancelSession}
         onCancel={() => setCancellingSession(null)}
         title="Cancel Session"
-        message={`Are you sure you want to cancel the session "${cancellingSession?.movieTitle}"?`}
+        message={`Are you sure you want to cancel the session "${cancellingSession?.movieTitle}"? Pending bookings will be cancelled and every sold ticket refunded in full — reactivating the session later does not undo this.`}
         confirmText="Cancel Session"
         variant="error"
         isLoading={loading}

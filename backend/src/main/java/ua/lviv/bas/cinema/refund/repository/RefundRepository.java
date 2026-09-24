@@ -9,9 +9,12 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.refund.domain.Refund;
 import ua.lviv.bas.cinema.refund.domain.status.RefundStatus;
 import ua.lviv.bas.cinema.refund.repository.projection.StuckRefundProjection;
+import ua.lviv.bas.cinema.refund.repository.projection.TicketRefundCandidateProjection;
+import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -37,4 +40,11 @@ public interface RefundRepository extends JpaRepository<Refund, Long>, JpaSpecif
             + "FROM Refund r JOIN r.items i WHERE r.status = :status AND r.createdDate < :cutoff")
     List<StuckRefundProjection> findStuckRefunds(@Param("status") RefundStatus status,
                                                  @Param("cutoff") Instant cutoff);
+
+    @Query("SELECT t.id as ticketId, t.user.id as userId FROM Ticket t WHERE t.status = :ticketStatus "
+            + "AND t.booking.session.status = :sessionStatus AND NOT EXISTS (SELECT 1 FROM Refund r JOIN r.items i "
+            + "WHERE i.ticket = t AND r.status IN :blockingRefundStatuses)")
+    List<TicketRefundCandidateProjection> findRefundCandidates(@Param("ticketStatus") TicketStatus ticketStatus,
+            @Param("sessionStatus") CinemaSessionStatus sessionStatus,
+            @Param("blockingRefundStatuses") List<RefundStatus> blockingRefundStatuses);
 }

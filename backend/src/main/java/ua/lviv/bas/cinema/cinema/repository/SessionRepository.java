@@ -135,4 +135,10 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
             WHERE s.id IN (:ids)
             """, nativeQuery = true)
     List<SessionAdminProjection> findAdminProjectionsByIds(@Param("ids") List<Long> ids);
+
+    @Query("SELECT COUNT(b) > 0 FROM Booking b WHERE b.session.id = :sessionId")
+    boolean hasBookings(@Param("sessionId") Long sessionId);
+
+    @Query("SELECT COUNT(sr) > 0 FROM SeatReservation sr WHERE sr.session.id = :sessionId")
+    boolean hasSeatReservations(@Param("sessionId") Long sessionId);
 }

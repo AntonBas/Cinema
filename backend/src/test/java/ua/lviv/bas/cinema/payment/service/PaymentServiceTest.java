@@ -16,6 +16,8 @@ import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.booking.domain.status.ReservationStatus;
 import ua.lviv.bas.cinema.cinema.domain.Seat;
+import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
+import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.payment.dto.request.PaymentCreateRequest;
 import ua.lviv.bas.cinema.payment.dto.response.PaymentResponse;
@@ -134,6 +136,16 @@ public class PaymentServiceTest {
         assertThat(response.expiresAt()).isEqualTo(testBooking.getExpiresAt());
 
         verify(paymentRepository).save(any(Payment.class));
+    }
+
+    @Test
+    void createPaymentWhenSessionCancelledShouldThrowException() {
+        testBooking.getSession().setStatus(CinemaSessionStatus.CANCELLED);
+        when(bookingRepository.findByPublicIdAndUserId(BOOKING_PUBLIC_ID, USER_ID)).thenReturn(Optional.of(testBooking));
+
+        assertThatThrownBy(() -> paymentService.createPayment(createRequest, testUser))
+                .isInstanceOf(PaymentProcessingException.class);
+        verify(paymentRepository, never()).save(any());
     }
 
     @Test

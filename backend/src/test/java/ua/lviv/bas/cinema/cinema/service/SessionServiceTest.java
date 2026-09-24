@@ -14,6 +14,7 @@ import ua.lviv.bas.cinema.cinema.dto.session.request.SessionRequest;
 import ua.lviv.bas.cinema.cinema.dto.session.response.SessionResponse;
 import ua.lviv.bas.cinema.cinema.dto.session.response.SessionScheduleResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.cinema.SessionValidationException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionOperationException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
 import ua.lviv.bas.cinema.cinema.mapper.SessionMapper;
@@ -151,6 +152,63 @@ public class SessionServiceTest {
         assertThat(result).isEqualTo(sessionResponse);
         verify(sessionMapper).updateEntity(request, session);
         verify(sessionRepository).save(session);
+    }
+
+    @Test
+    void updateSessionWhenMovieAndHallChangedShouldApplyThemAndValidateAgainstNewValues() {
+        Movie newMovie = Movie.builder().id(20L).title("New Movie").durationMinutes(90)
+                .releaseDate(LocalDate.now().minusDays(1)).build();
+        CinemaHall newHall = CinemaHall.builder().id(30L).name("Hall 2").seats(new ArrayList<>()).build();
+        SessionRequest request = new SessionRequest(null, null, 20L, 30L);
+
+        when(sessionRepository.findByIdWithLock(SESSION_ID)).thenReturn(Optional.of(session));
+        when(movieRepository.findById(20L)).thenReturn(Optional.of(newMovie));
+        when(sessionRepository.hasSeatReservations(SESSION_ID)).thenReturn(false);
+        when(cinemaHallService.getHallEntity(30L)).thenReturn(newHall);
+        when(sessionRepository.existsConflictingSession(eq(30L), any(), any(), eq(SESSION_ID))).thenReturn(false);
+        when(sessionRepository.save(session)).thenReturn(session);
+        when(sessionMapper.toSessionResponse(session)).thenReturn(sessionResponse);
+
+        sessionService.updateSession(SESSION_ID, request);
+
+        assertThat(session.getMovie()).isEqualTo(newMovie);
+        assertThat(session.getHall()).isEqualTo(newHall);
+        verify(sessionRepository).existsConflictingSession(30L, session.getStartTime(),
+                session.getStartTime().plusMinutes(90), SESSION_ID);
+    }
+
+    @Test
+    void updateSessionWhenNewMovieNotReleasedYetShouldThrowException() {
+        Movie futureMovie = Movie.builder().id(20L).title("Future").durationMinutes(90)
+                .releaseDate(LocalDate.now().plusMonths(1)).build();
+
+        when(sessionRepository.findByIdWithLock(SESSION_ID)).thenReturn(Optional.of(session));
+        when(movieRepository.findById(20L)).thenReturn(Optional.of(futureMovie));
+
+        assertThatThrownBy(() -> sessionService.updateSession(SESSION_ID, new SessionRequest(null, null, 20L, null)))
+                .isInstanceOf(SessionValidationException.class);
+        verify(sessionRepository, never()).save(any());
+    }
+
+    @Test
+    void updateSessionWhenHallChangedWithReservationsShouldThrowException() {
+        when(sessionRepository.findByIdWithLock(SESSION_ID)).thenReturn(Optional.of(session));
+        when(sessionRepository.hasSeatReservations(SESSION_ID)).thenReturn(true);
+
+        assertThatThrownBy(() -> sessionService.updateSession(SESSION_ID, new SessionRequest(null, null, null, 30L)))
+                .isInstanceOf(SessionOperationException.class);
+        assertThat(session.getHall()).isEqualTo(hall);
+        verify(sessionRepository, never()).save(any());
+    }
+
+    @Test
+    void deleteSessionWithBookingsShouldThrowException() {
+        when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(session));
+        when(sessionRepository.hasBookings(SESSION_ID)).thenReturn(true);
+
+        assertThatThrownBy(() -> sessionService.deleteSession(SESSION_ID))
+                .isInstanceOf(SessionOperationException.class);
+        verify(sessionRepository, never()).deleteById(any());
     }
 
     @Test

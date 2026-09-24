@@ -13,6 +13,7 @@ import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.booking.domain.status.ReservationStatus;
 import ua.lviv.bas.cinema.cinema.domain.Session;
+import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.booking.repository.BookingRepository;
 import ua.lviv.bas.cinema.booking.service.SeatReservationService;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
@@ -117,6 +118,23 @@ public class BookingSchedulerTest {
         assertThat(okBooking.getStatus()).isEqualTo(BookingStatus.EXPIRED);
         verify(bookingRepository).save(okBooking);
         verify(bookingRepository, never()).save(failingBooking);
+    }
+
+    @Test
+    void cancelPendingBookingsOfCancelledSessionsShouldCancelReleaseSeatsAndRefundBonusPoints() {
+        var seat = SeatReservation.builder().status(ReservationStatus.PENDING).build();
+        var booking = Booking.builder().id(5L).session(testSession).status(BookingStatus.PENDING)
+                .seatReservations(List.of(seat)).bonusPointsUsed(30).build();
+
+        when(bookingRepository.findByStatusAndSessionStatus(BookingStatus.PENDING, CinemaSessionStatus.CANCELLED))
+                .thenReturn(List.of(booking));
+
+        bookingScheduler.cancelPendingBookingsOfCancelledSessions();
+
+        assertThat(booking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
+        verify(seatReservationService).releaseReservations(List.of(seat), SESSION_ID);
+        verify(bonusLedgerService).refundPoints(booking);
+        verify(bookingRepository).save(booking);
     }
 
     @Test

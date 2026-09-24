@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
+import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 
 import java.time.Instant;
@@ -40,6 +41,11 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
     List<Booking> findExpiredWithoutActivePayment(@Param("status") BookingStatus status,
             @Param("expiresAt") Instant expiresAt,
             @Param("activePaymentStatuses") List<PaymentStatus> activePaymentStatuses);
+
+    @Query("SELECT DISTINCT b FROM Booking b LEFT JOIN FETCH b.seatReservations JOIN FETCH b.session s "
+            + "WHERE b.status = :status AND s.status = :sessionStatus")
+    List<Booking> findByStatusAndSessionStatus(@Param("status") BookingStatus status,
+            @Param("sessionStatus") CinemaSessionStatus sessionStatus);
 
     @Modifying
     @Query("DELETE FROM Booking b WHERE b.status IN :statuses AND b.createdDate < :cutoffDate "

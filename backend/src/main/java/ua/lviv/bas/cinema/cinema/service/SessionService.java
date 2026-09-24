@@ -130,13 +130,26 @@ public class SessionService {
 
         var oldDetails = captureSessionDetails(session);
 
-        if (request.startTime() != null && !request.startTime().equals(session.getStartTime())) {
+        boolean startTimeChanged = request.startTime() != null && !request.startTime().equals(session.getStartTime());
+        if (startTimeChanged) {
             validateStartTime(request.startTime());
         }
 
-        sessionMapper.updateEntity(request, session);
+        boolean movieChanged = request.movieId() != null && !request.movieId().equals(session.getMovie().getId());
+        var movie = movieChanged ? movieRepository.findById(request.movieId())
+                .orElseThrow(() -> new EntityNotFoundException("Movie", request.movieId())) : session.getMovie();
 
-        if (request.movieId() != null) {
+        boolean hallChanged = request.hallId() != null && !request.hallId().equals(session.getHall().getId());
+        if (hallChanged && sessionRepository.hasSeatReservations(id)) {
+            throw SessionOperationException.cannotChangeHallWithReservations();
+        }
+        var hall = hallChanged ? cinemaHallService.getHallEntity(request.hallId()) : session.getHall();
+
+        sessionMapper.updateEntity(request, session);
+        session.setMovie(movie);
+        session.setHall(hall);
+
+        if (movieChanged || startTimeChanged) {
             validateMovieAvailability(session.getMovie(), session.getStartTime());
         }
 
@@ -161,6 +174,10 @@ public class SessionService {
     @Transactional
     public void deleteSession(Long id) {
         var session = sessionRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Session", id));
+
+        if (sessionRepository.hasBookings(id)) {
+            throw SessionOperationException.cannotDeleteWithBookings();
+        }
 
         sessionRepository.deleteById(id);
         log.info("Session deleted with ID: {}", id);

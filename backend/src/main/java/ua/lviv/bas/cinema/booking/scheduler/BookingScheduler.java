@@ -14,6 +14,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
+import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.booking.repository.BookingRepository;
 import ua.lviv.bas.cinema.booking.service.SeatReservationService;
@@ -58,7 +59,7 @@ public class BookingScheduler {
 		for (Booking booking : expiredBookings) {
 			Long bookingId = booking.getId();
 			try {
-				transactionTemplate.executeWithoutResult(status -> expireBooking(booking));
+				transactionTemplate.executeWithoutResult(status -> closeBooking(booking, BookingStatus.EXPIRED));
 				expiredCount++;
 			} catch (ObjectOptimisticLockingFailureException e) {
 				log.warn("Skipped expiring booking {} due to concurrent update, will retry on next run", bookingId);
@@ -70,8 +71,24 @@ public class BookingScheduler {
 		log.info("Successfully expired {} of {} bookings", expiredCount, expiredBookings.size());
 	}
 
-	private void expireBooking(Booking booking) {
-		booking.setStatus(BookingStatus.EXPIRED);
+	@Scheduled(fixedRateString = "${scheduler.booking.cancelled-session-interval:60000}")
+	public void cancelPendingBookingsOfCancelledSessions() {
+		List<Booking> bookings = bookingRepository.findByStatusAndSessionStatus(BookingStatus.PENDING,
+				CinemaSessionStatus.CANCELLED);
+
+		for (Booking booking : bookings) {
+			try {
+				transactionTemplate.executeWithoutResult(status -> closeBooking(booking, BookingStatus.CANCELLED));
+				log.info("Cancelled pending booking {} because its session was cancelled", booking.getId());
+			} catch (RuntimeException e) {
+				log.error("Failed to cancel pending booking {} of a cancelled session, will retry on next run",
+						booking.getId(), e);
+			}
+		}
+	}
+
+	private void closeBooking(Booking booking, BookingStatus finalStatus) {
+		booking.setStatus(finalStatus);
 
 		seatReservationService.releaseReservations(booking.getSeatReservations(), booking.getSession().getId());
 
