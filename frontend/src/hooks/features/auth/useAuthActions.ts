@@ -37,7 +37,7 @@ export const useAuthActions = () => {
     async (credentials: LoginRequest) => {
       const response = await authApiRef.current.execute(
         () => authApi.login(credentials),
-        { successMessage: "Login successful", dedupeKey: "login" },
+        { dedupeKey: "login" },
       );
       if (response) {
         await handleAuthSuccess(getRedirectFromSearch(searchParams));
@@ -60,7 +60,6 @@ export const useAuthActions = () => {
 
   const forgotPassword = useCallback(async (email: string) => {
     return authApiRef.current.execute(() => authApi.forgotPassword(email), {
-      successMessage: "Password reset instructions sent to your email",
       dedupeKey: "forgotPassword",
     });
   }, []);
@@ -79,7 +78,7 @@ export const useAuthActions = () => {
     async (code: string) => {
       const response = await authApiRef.current.execute(
         () => authApi.oauth2Exchange(code),
-        { successMessage: "Login successful", dedupeKey: "oauth2Exchange" },
+        { dedupeKey: "oauth2Exchange" },
       );
       if (response) {
         await handleAuthSuccess(consumeOAuth2Redirect());

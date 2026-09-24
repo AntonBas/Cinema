@@ -21,7 +21,6 @@ export const useBooking = () => {
 
   const create = useCallback(async (request: BookingCreateRequest) => {
     return mutationApiRef.current.execute(() => bookingApi.create(request), {
-      successMessage: "Booking created successfully",
       dedupeKey: "create",
     });
   }, []);

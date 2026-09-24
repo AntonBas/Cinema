@@ -16,7 +16,11 @@ export const ForgotPasswordForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await forgotPassword(email);
+    try {
+      await forgotPassword(email);
+    } catch {
+      return;
+    }
     setShowSuccessModal(true);
   };
 
