@@ -28,9 +28,13 @@ public class CorsConfig {
                             + "leave CORS_ALLOWED_ORIGINS unset (not blank) to fall back to the frontend URL, "
                             + "or set it explicitly");
         }
+        origins.stream().filter(origin -> origin.contains("*")).findFirst().ifPresent(origin -> {
+            throw new IllegalStateException("app.cors.allowed-origins must list exact origins, but got pattern '"
+                    + origin + "' — a wildcard on a shared domain like vercel.app matches other people's sites");
+        });
 
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(origins);
+        configuration.setAllowedOrigins(origins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("Content-Type", "X-Requested-With", "Cache-Control"));
         configuration.setAllowCredentials(true);
