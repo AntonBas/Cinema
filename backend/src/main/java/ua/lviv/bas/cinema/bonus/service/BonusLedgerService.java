@@ -21,7 +21,6 @@ import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.user.domain.VerificationStatus;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusCardConcurrentModificationException;
-import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusRuleNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusValidationException;
 import ua.lviv.bas.cinema.bonus.repository.BonusCardRepository;
 import ua.lviv.bas.cinema.bonus.repository.BonusRulesRepository;
@@ -31,6 +30,7 @@ import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.time.LocalDate;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 @Slf4j
@@ -67,9 +67,15 @@ public class BonusLedgerService {
             if (card.isWelcomeBonusReceived()) {
                 return;
             }
-            var rule = getActiveRule(BonusTransactionType.WELCOME_BONUS);
-            addPointsToCard(card, rule.getPoints());
-            createTransaction(card, rule.getPoints(), BonusTransactionType.WELCOME_BONUS, "USER_" + user.getId());
+            var rule = findActiveRule(BonusTransactionType.WELCOME_BONUS);
+            if (rule.isEmpty()) {
+                log.info("Welcome bonus rule is disabled, user {} gets a bonus card without welcome points",
+                        user.getId());
+                return;
+            }
+            addPointsToCard(card, rule.get().getPoints());
+            createTransaction(card, rule.get().getPoints(), BonusTransactionType.WELCOME_BONUS,
+                    "USER_" + user.getId());
             card.setWelcomeBonusReceived(true);
             bonusCardRepository.save(card);
         });
@@ -87,9 +93,13 @@ public class BonusLedgerService {
             if (alreadyReceivedBirthdayBonus(card, today)) {
                 return;
             }
-            var rule = getActiveRule(BonusTransactionType.BIRTHDAY_BONUS);
-            addPointsToCard(card, rule.getPoints());
-            createTransaction(card, rule.getPoints(), BonusTransactionType.BIRTHDAY_BONUS,
+            var rule = findActiveRule(BonusTransactionType.BIRTHDAY_BONUS);
+            if (rule.isEmpty()) {
+                log.debug("Birthday bonus rule is disabled, skipping user {}", user.getId());
+                return;
+            }
+            addPointsToCard(card, rule.get().getPoints());
+            createTransaction(card, rule.get().getPoints(), BonusTransactionType.BIRTHDAY_BONUS,
                     "BIRTHDAY_" + user.getId() + "_" + today.getYear());
             card.setLastBirthdayBonusDate(today);
             bonusCardRepository.save(card);
@@ -98,12 +108,12 @@ public class BonusLedgerService {
     }
 
     @CacheEvict(value = "bonus", key = "'balance:' + #user.id")
-    public void addPromotionPoints(User user, Integer points, String promotionTitle) {
+    public void addPromotionPoints(User user, Long promotionId, Integer points, String promotionTitle) {
         validatePositivePoints(points);
         var card = executeWithOptimisticLockRetry(() -> {
             var c = getOrCreateCard(user);
             addPointsToCard(c, points);
-            createTransaction(c, points, BonusTransactionType.PROMOTION_BONUS, "PROMOTION_" + promotionTitle);
+            createTransaction(c, points, BonusTransactionType.PROMOTION_BONUS, "PROMOTION_" + promotionId);
             return c;
         });
         evictTransactionsCache(user.getId());
@@ -281,9 +291,8 @@ public class BonusLedgerService {
                 .orElseThrow(() -> new EntityNotFoundException("Bonus card", userId));
     }
 
-    private BonusRules getActiveRule(BonusTransactionType type) {
-        return bonusRulesRepository.findByBonusTypeAndActiveTrue(type)
-                .orElseThrow(() -> new BonusRuleNotFoundException(type));
+    private Optional<BonusRules> findActiveRule(BonusTransactionType type) {
+        return bonusRulesRepository.findByBonusTypeAndActiveTrue(type);
     }
 
     private void addPointsToCard(BonusCard card, Integer points) {

@@ -20,6 +20,7 @@ import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeDuplicateException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeInUseException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeValidationException;
 import ua.lviv.bas.cinema.ticket.mapper.TicketTypeMapper;
+import ua.lviv.bas.cinema.booking.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.ticket.repository.TicketRepository;
 import ua.lviv.bas.cinema.ticket.repository.TicketTypeRepository;
 import ua.lviv.bas.cinema.ticket.repository.projection.TicketTypeProjection;
@@ -43,6 +44,9 @@ public class TicketTypeServiceTest {
 
     @Mock
     private TicketRepository ticketRepository;
+
+    @Mock
+    private SeatReservationRepository seatReservationRepository;
 
     @Mock
     private TicketTypeMapper ticketTypeMapper;
@@ -166,7 +170,8 @@ public class TicketTypeServiceTest {
         TicketType ticketType = createTicketType();
 
         when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
-        when(ticketRepository.count(any(Specification.class))).thenReturn(0L);
+        when(ticketRepository.countByTicketTypeId(TICKET_TYPE_ID)).thenReturn(0L);
+        when(seatReservationRepository.existsByTicketTypeId(TICKET_TYPE_ID)).thenReturn(false);
 
         ticketTypeService.deleteTicketType(TICKET_TYPE_ID);
 
@@ -174,14 +179,28 @@ public class TicketTypeServiceTest {
     }
 
     @Test
-    void deleteTicketTypeWithFutureTicketsShouldThrowException() {
+    void deleteTicketTypeWithAnyTicketsIncludingPastOnesShouldThrowException() {
         TicketType ticketType = createTicketType();
 
         when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
-        when(ticketRepository.count(any(Specification.class))).thenReturn(3L);
+        when(ticketRepository.countByTicketTypeId(TICKET_TYPE_ID)).thenReturn(3L);
 
         assertThatThrownBy(() -> ticketTypeService.deleteTicketType(TICKET_TYPE_ID))
                 .isInstanceOf(TicketTypeInUseException.class);
+        verify(ticketTypeRepository, never()).delete(any(TicketType.class));
+    }
+
+    @Test
+    void deleteTicketTypeUsedByReservationShouldThrowException() {
+        TicketType ticketType = createTicketType();
+
+        when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
+        when(ticketRepository.countByTicketTypeId(TICKET_TYPE_ID)).thenReturn(0L);
+        when(seatReservationRepository.existsByTicketTypeId(TICKET_TYPE_ID)).thenReturn(true);
+
+        assertThatThrownBy(() -> ticketTypeService.deleteTicketType(TICKET_TYPE_ID))
+                .isInstanceOf(TicketTypeInUseException.class);
+        verify(ticketTypeRepository, never()).delete(any(TicketType.class));
     }
 
     @Test

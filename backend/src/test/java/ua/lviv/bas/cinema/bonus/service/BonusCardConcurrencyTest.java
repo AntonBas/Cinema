@@ -57,8 +57,8 @@ class BonusCardConcurrencyTest {
         var startLatch = new CountDownLatch(1);
         ExecutorService executor = Executors.newFixedThreadPool(2);
 
-        Callable<Exception> addPointsA = () -> attemptAddPoints(readyLatch, startLatch, POINTS_A, "Promo A");
-        Callable<Exception> addPointsB = () -> attemptAddPoints(readyLatch, startLatch, POINTS_B, "Promo B");
+        Callable<Exception> addPointsA = () -> attemptAddPoints(readyLatch, startLatch, 1L, POINTS_A, "Promo A");
+        Callable<Exception> addPointsB = () -> attemptAddPoints(readyLatch, startLatch, 2L, POINTS_B, "Promo B");
 
         Future<Exception> resultA = executor.submit(addPointsA);
         Future<Exception> resultB = executor.submit(addPointsB);
@@ -117,12 +117,12 @@ class BonusCardConcurrencyTest {
         }
     }
 
-    private Exception attemptAddPoints(CountDownLatch readyLatch, CountDownLatch startLatch, int points,
-                                       String promotionTitle) {
+    private Exception attemptAddPoints(CountDownLatch readyLatch, CountDownLatch startLatch, Long promotionId,
+                                       int points, String promotionTitle) {
         try {
             readyLatch.countDown();
             startLatch.await();
-            bonusLedgerService.addPromotionPoints(user, points, promotionTitle);
+            bonusLedgerService.addPromotionPoints(user, promotionId, points, promotionTitle);
             return null;
         } catch (Exception e) {
             return e;

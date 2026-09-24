@@ -147,7 +147,8 @@ public class PromotionService {
                 .pointsAwarded(promotion.getBonusPoints()).build();
 
         userPromotionRepository.save(userPromotion);
-        bonusLedgerService.addPromotionPoints(user, promotion.getBonusPoints(), promotion.getTitle());
+        bonusLedgerService.addPromotionPoints(user, promotion.getId(), promotion.getBonusPoints(),
+                promotion.getTitle());
 
         log.info("Promotion claimed successfully. User received {} points", promotion.getBonusPoints());
         auditClaim(promotion, user);

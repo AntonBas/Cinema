@@ -292,7 +292,7 @@ public class PromotionServiceTest {
         PromotionResponse result = promotionService.claimPromotion(claimRequest, user);
 
         assertThat(result).isEqualTo(promotionResponse);
-        verify(bonusLedgerService).addPromotionPoints(user, BONUS_POINTS, PROMOTION_TITLE);
+        verify(bonusLedgerService).addPromotionPoints(user, PROMOTION_ID, BONUS_POINTS, PROMOTION_TITLE);
         verify(userPromotionRepository).save(any(UserPromotion.class));
     }
 
@@ -306,7 +306,7 @@ public class PromotionServiceTest {
         assertThatThrownBy(() -> promotionService.claimPromotion(claimRequest, user))
                 .isInstanceOf(PromotionNotActiveException.class);
 
-        verify(bonusLedgerService, never()).addPromotionPoints(any(), any(), any());
+        verify(bonusLedgerService, never()).addPromotionPoints(any(), any(), any(), any());
         verify(userPromotionRepository, never()).save(any());
     }
 
@@ -318,7 +318,7 @@ public class PromotionServiceTest {
         assertThatThrownBy(() -> promotionService.claimPromotion(claimRequest, user))
                 .isInstanceOf(AlreadyClaimedException.class);
 
-        verify(bonusLedgerService, never()).addPromotionPoints(any(), any(), any());
+        verify(bonusLedgerService, never()).addPromotionPoints(any(), any(), any(), any());
         verify(userPromotionRepository, never()).save(any());
     }
 

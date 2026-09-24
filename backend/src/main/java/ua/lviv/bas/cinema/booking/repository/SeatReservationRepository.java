@@ -59,4 +59,6 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
             "GROUP BY sr.session.id")
     List<Object[]> findBookedCountBySessionIds(@Param("sessionIds") List<Long> sessionIds,
                                                @Param("statuses") List<ReservationStatus> statuses);
+
+    boolean existsByTicketTypeId(Long ticketTypeId);
 }

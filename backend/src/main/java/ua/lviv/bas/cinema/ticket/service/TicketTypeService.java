@@ -10,6 +10,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
+import ua.lviv.bas.cinema.booking.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
 import ua.lviv.bas.cinema.ticket.domain.TicketType;
@@ -40,6 +41,7 @@ public class TicketTypeService {
 
     private final TicketTypeRepository ticketTypeRepository;
     private final TicketRepository ticketRepository;
+    private final SeatReservationRepository seatReservationRepository;
     private final TicketTypeMapper ticketTypeMapper;
     private final AuditService auditService;
     private final TicketSpecification ticketSpecification;
@@ -105,9 +107,10 @@ public class TicketTypeService {
         var ticketType = findTicketTypeById(id);
         String ticketTypeName = ticketType.getDisplayName();
 
-        if (hasFutureTickets(id)) {
-            throw new TicketTypeInUseException(id,
-                    "Cannot delete ticket type. It is used in " + countFutureTickets(id) + " future ticket(s)");
+        long ticketCount = ticketRepository.countByTicketTypeId(id);
+        if (ticketCount > 0 || seatReservationRepository.existsByTicketTypeId(id)) {
+            throw new TicketTypeInUseException(id, "Cannot delete ticket type. It is used in " + ticketCount
+                    + " ticket(s) or active reservations, deactivate it instead");
         }
 
         ticketTypeRepository.delete(ticketType);

@@ -116,6 +116,36 @@ public class BonusLedgerServiceTest {
     }
 
     @Test
+    void awardWelcomeBonusWhenRuleDisabledShouldSkipPointsWithoutFailing() {
+        User user = User.builder().id(USER_ID).build();
+        BonusCard card = BonusCard.builder().pointsBalance(0).welcomeBonusReceived(false).build();
+
+        when(bonusCardRepository.findByUserId(USER_ID)).thenReturn(Optional.of(card));
+        when(bonusRulesRepository.findByBonusTypeAndActiveTrue(WELCOME)).thenReturn(Optional.empty());
+
+        assertThatCode(() -> bonusLedgerService.awardWelcomeBonus(user)).doesNotThrowAnyException();
+
+        assertThat(card.getPointsBalance()).isZero();
+        assertThat(card.isWelcomeBonusReceived()).isFalse();
+        verifyNoInteractions(bonusTransactionRepository);
+    }
+
+    @Test
+    void awardBirthdayBonusWhenRuleDisabledShouldSkipWithoutFailing() {
+        User user = User.builder().id(USER_ID).verificationStatus(VerificationStatus.VERIFIED)
+                .dateOfBirth(CinemaTime.today()).build();
+        BonusCard card = BonusCard.builder().pointsBalance(0).build();
+
+        when(bonusCardRepository.findByUserId(USER_ID)).thenReturn(Optional.of(card));
+        when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BIRTHDAY)).thenReturn(Optional.empty());
+
+        assertThatCode(() -> bonusLedgerService.awardBirthdayBonus(user)).doesNotThrowAnyException();
+
+        assertThat(card.getLastBirthdayBonusDate()).isNull();
+        verifyNoInteractions(bonusTransactionRepository);
+    }
+
+    @Test
     void awardWelcomeBonusWhenAlreadyReceivedShouldDoNothing() {
         User user = User.builder().id(USER_ID).build();
         BonusCard card = BonusCard.builder().welcomeBonusReceived(true).build();
@@ -189,20 +219,21 @@ public class BonusLedgerServiceTest {
         when(bonusCardRepository.findByUserId(USER_ID)).thenReturn(Optional.of(card));
         when(bonusTransactionRepository.save(any(BonusTransaction.class))).thenAnswer(i -> i.getArgument(0));
 
-        bonusLedgerService.addPromotionPoints(user, 50, "PROMO");
+        bonusLedgerService.addPromotionPoints(user, 7L, 50, "A promotion title that is much longer than fifty chars");
 
         assertThat(card.getPointsBalance()).isEqualTo(150);
         verify(bonusCardRepository).findByUserId(USER_ID);
-        verify(bonusTransactionRepository).save(any(BonusTransaction.class));
+        verify(bonusTransactionRepository)
+                .save(argThat(transaction -> "PROMOTION_7".equals(transaction.getReferenceId())));
     }
 
     @Test
     void addPromotionPointsWhenPointsInvalidShouldThrowException() {
         User user = User.builder().id(USER_ID).build();
 
-        assertThatThrownBy(() -> bonusLedgerService.addPromotionPoints(user, 0, "PROMO"))
+        assertThatThrownBy(() -> bonusLedgerService.addPromotionPoints(user, 7L, 0, "PROMO"))
                 .isInstanceOf(BonusValidationException.class);
-        assertThatThrownBy(() -> bonusLedgerService.addPromotionPoints(user, null, "PROMO"))
+        assertThatThrownBy(() -> bonusLedgerService.addPromotionPoints(user, 7L, null, "PROMO"))
                 .isInstanceOf(BonusValidationException.class);
     }
 

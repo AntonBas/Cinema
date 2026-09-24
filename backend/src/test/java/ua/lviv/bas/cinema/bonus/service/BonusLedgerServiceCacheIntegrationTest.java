@@ -68,7 +68,7 @@ class BonusLedgerServiceCacheIntegrationTest {
         cardB.setPointsBalance(999);
         bonusCardRepository.save(cardB);
 
-        bonusLedgerService.addPromotionPoints(userA, 20, "TEST_PROMO");
+        bonusLedgerService.addPromotionPoints(userA, 901L, 20, "TEST_PROMO");
 
         assertThat(bonusQueryService.getBalance(userA.getId()).pointsBalance()).isEqualTo(70);
         assertThat(bonusQueryService.getBalance(userB.getId()).pointsBalance())
@@ -91,7 +91,7 @@ class BonusLedgerServiceCacheIntegrationTest {
                 .type(BonusTransactionType.PROMOTION_BONUS).pointsChange(30).balanceAfter(30)
                 .referenceId("PROMOTION_direct-db-write").build());
 
-        bonusLedgerService.addPromotionPoints(userA, 20, "TEST_PROMO_TX");
+        bonusLedgerService.addPromotionPoints(userA, 902L, 20, "TEST_PROMO_TX");
 
         assertThat(bonusQueryService.getTransactions(userA.getId(), pageable))
                 .as("user A's transaction cache must be refreshed after A's own mutation")
