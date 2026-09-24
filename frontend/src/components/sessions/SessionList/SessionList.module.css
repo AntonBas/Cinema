@@ -188,9 +188,10 @@
 
 .sessionInfo {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-3) var(--space-4);
 }
 
 .price {
@@ -219,11 +220,12 @@
 }
 
 .sessionStatus {
-  flex-shrink: 0;
+  flex-basis: 100%;
 }
 
 .statusBadge {
-  display: inline-block;
+  display: block;
+  text-align: center;
   padding: var(--space-2) var(--space-4);
   background: var(--color-primary);
   color: white;
@@ -258,47 +260,6 @@
 
   .movieMeta {
     justify-content: center;
-  }
-
-  .sessionsGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .sessionTime {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-2);
-  }
-
-  .timeRange {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.125rem;
-  }
-
-  .startTime,
-  .endTime {
-    font-size: var(--font-size-md);
-  }
-
-  .timeSeparator {
-    display: none;
-  }
-
-  .endTime::before {
-    content: "to ";
-    color: var(--color-text-muted);
-  }
-
-  .sessionInfo {
-    flex-direction: column;
-    gap: var(--space-3);
-    align-items: flex-start;
-  }
-
-  .statusBadge {
-    width: 100%;
-    text-align: center;
   }
 }
 
