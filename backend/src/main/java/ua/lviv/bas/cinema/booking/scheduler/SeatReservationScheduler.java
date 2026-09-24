@@ -76,7 +76,8 @@ public class SeatReservationScheduler {
     @Scheduled(fixedRateString = "${scheduler.seat-reservation.cleanup-expired-interval:300000}")
     @Transactional
     public void cleanupExpiredReservations() {
-        List<SeatReservation> expiredReservations = seatReservationRepository.findByStatus(ReservationStatus.EXPIRED);
+        List<SeatReservation> expiredReservations = seatReservationRepository
+                .findByStatusWithoutTickets(ReservationStatus.EXPIRED);
 
         if (expiredReservations.isEmpty()) {
             return;

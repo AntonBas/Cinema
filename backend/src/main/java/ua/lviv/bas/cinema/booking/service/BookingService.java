@@ -155,7 +155,7 @@ public class BookingService {
     }
 
     private boolean canCancel(Booking booking) {
-        return booking.getStatus() == BookingStatus.PENDING || booking.getStatus() == BookingStatus.CONFIRMED;
+        return booking.getStatus() == BookingStatus.PENDING;
     }
 
     private void auditCreate(Booking booking, User user) {

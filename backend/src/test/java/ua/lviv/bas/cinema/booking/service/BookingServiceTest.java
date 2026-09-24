@@ -245,6 +245,23 @@ public class BookingServiceTest {
     }
 
     @Test
+    void cancelBookingWhenConfirmedShouldThrowAndKeepSeatsAndBonusPoints() {
+        Booking booking = Booking.builder().id(BOOKING_ID).user(testUser).session(testSession)
+                .status(BookingStatus.CONFIRMED).bonusPointsUsed(50)
+                .seatReservations(List.of(SeatReservation.builder().status(ReservationStatus.CONFIRMED).build()))
+                .build();
+
+        when(bookingRepository.findByPublicIdAndUserId(BOOKING_PUBLIC_ID, USER_ID)).thenReturn(Optional.of(booking));
+
+        assertThatThrownBy(() -> bookingService.cancelBooking(BOOKING_PUBLIC_ID, testUser))
+                .isInstanceOf(BookingValidationException.class);
+
+        assertThat(booking.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
+        verifyNoInteractions(seatReservationService, bonusLedgerService);
+        verify(bookingRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
     void confirmBookingShouldSucceed() {
         Booking booking = Booking.builder().id(BOOKING_ID).status(BookingStatus.PENDING).session(testSession)
                 .seatReservations(Arrays.asList(SeatReservation.builder().build(), SeatReservation.builder().build()))

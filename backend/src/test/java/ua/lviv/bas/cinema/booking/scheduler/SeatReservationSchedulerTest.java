@@ -125,4 +125,15 @@ public class SeatReservationSchedulerTest {
         verify(seatReservationRepository).deleteByIdIfStillExpired(eq(10L), eq(ReservationStatus.PENDING), any());
         verifyNoInteractions(cacheManager);
     }
+
+    @Test
+    void cleanupExpiredReservationsShouldDeleteOnlyReservationsWithoutTickets() {
+        var reservation = SeatReservation.builder().id(20L).status(ReservationStatus.EXPIRED).build();
+        when(seatReservationRepository.findByStatusWithoutTickets(ReservationStatus.EXPIRED))
+                .thenReturn(List.of(reservation));
+
+        seatReservationScheduler.cleanupExpiredReservations();
+
+        verify(seatReservationRepository).deleteAll(List.of(reservation));
+    }
 }
