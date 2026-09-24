@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import type { GenreListResponse } from "@/types/genre";
 import { useGenre } from "@/hooks/features/genre/useGenre";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
-import { usePagination } from "@/hooks/common/usePagination";
+import { useUrlParams } from "@/hooks/common/useUrlParams";
 import { SearchInput } from "@/components/ui/SearchInput/SearchInput";
 import { Button } from "@/components/ui/Button/Button";
 import { Pagination } from "@/components/ui/Pagination/Pagination";
@@ -32,9 +32,7 @@ export const GenreTab: React.FC = () => {
     totalPages: 0,
   });
 
-  const { params, setPage, setSearch } = usePagination({
-    size: DEFAULT_PAGE_SIZE_COMPACT,
-  });
+  const { page, query, setPage, setSearch } = useUrlParams();
   const { loading, getAll, create, update, remove } = useGenre();
   const showDelayedLoading = useDelayedLoading(loading, {
     delay: 150,
@@ -43,9 +41,9 @@ export const GenreTab: React.FC = () => {
 
   const loadGenres = useCallback(async () => {
     const response = await getAll({
-      query: params.query,
-      page: params.page || 0,
-      size: params.size || 10,
+      query,
+      page,
+      size: DEFAULT_PAGE_SIZE_COMPACT,
     });
     if (response) {
       setTabData({
@@ -54,19 +52,11 @@ export const GenreTab: React.FC = () => {
         totalPages: response.totalPages,
       });
     }
-  }, [getAll, params.query, params.page, params.size]);
+  }, [getAll, query, page]);
 
   useEffect(() => {
     loadGenres();
   }, [loadGenres]);
-
-  const handleSearch = useCallback(
-    (query: string) => {
-      setSearch(query);
-      setPage(0);
-    },
-    [setSearch, setPage],
-  );
 
   const handleSubmit = useCallback(
     async (name: string) => {
@@ -92,10 +82,8 @@ export const GenreTab: React.FC = () => {
 
   const paginationInfo = useMemo(() => {
     const total = tabData.total;
-    const page = params.page || 0;
-    const pageSize = params.size || 10;
-    const start = total > 0 ? page * pageSize + 1 : 0;
-    const end = Math.min(start + pageSize - 1, total);
+    const start = total > 0 ? page * DEFAULT_PAGE_SIZE_COMPACT + 1 : 0;
+    const end = Math.min(start + DEFAULT_PAGE_SIZE_COMPACT - 1, total);
     return {
       total,
       start,
@@ -103,7 +91,7 @@ export const GenreTab: React.FC = () => {
       totalPages: tabData.totalPages,
       showPagination: tabData.totalPages > 1,
     };
-  }, [tabData.total, tabData.totalPages, params.page, params.size]);
+  }, [tabData.total, tabData.totalPages, page]);
 
   if (showDelayedLoading && !tabData.data.length) {
     return (
@@ -135,7 +123,8 @@ export const GenreTab: React.FC = () => {
 
       <div className={styles.searchSection}>
         <SearchInput
-          onSearch={handleSearch}
+          onSearch={setSearch}
+          value={query}
           placeholder="Search genres..."
           delay={300}
         />
@@ -145,7 +134,7 @@ export const GenreTab: React.FC = () => {
         <div className={styles.resultsInfo}>
           Showing {paginationInfo.start}-{paginationInfo.end} of{" "}
           {paginationInfo.total} genres
-          {params.query && ` for "${params.query}"`}
+          {query && ` for "${query}"`}
         </div>
       )}
 
@@ -164,10 +153,10 @@ export const GenreTab: React.FC = () => {
       {paginationInfo.showPagination && (
         <div className={styles.paginationWrapper}>
           <Pagination
-            currentPage={params.page || 0}
+            currentPage={page}
             totalPages={paginationInfo.totalPages}
             totalElements={paginationInfo.total}
-            pageSize={params.size || 10}
+            pageSize={DEFAULT_PAGE_SIZE_COMPACT}
             onPageChange={setPage}
             variant="pages"
             showInfo={false}

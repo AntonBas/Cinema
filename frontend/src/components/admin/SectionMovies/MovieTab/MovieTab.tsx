@@ -12,7 +12,11 @@ import type {
 } from "@/types/movie";
 import type { PageResponse } from "@/types/pagination";
 import { useMovie } from "@/hooks/features/movie/useMovie";
-import { usePagination } from "@/hooks/common/usePagination";
+import {
+  parseEnumParam,
+  toUrlEnumValue,
+  useUrlParams,
+} from "@/hooks/common/useUrlParams";
 import { useNotification } from "@/context/NotificationContext";
 import { isApiErrorException } from "@/utils/apiErrorHandler";
 import { DEFAULT_PAGE_SIZE } from "@/utils/paginationUtils";
@@ -42,6 +46,8 @@ const MOVIE_TABS: ReadonlyArray<TabItem<MovieTabType>> = [
   { id: "ARCHIVED", label: "Archived" },
 ];
 
+const MOVIE_TAB_IDS = MOVIE_TABS.map((tab) => tab.id);
+
 export const MovieTab: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -51,7 +57,6 @@ export const MovieTab: React.FC = () => {
   const [deletingMovie, setDeletingMovie] = useState<MovieCardResponse | null>(
     null,
   );
-  const [activeTab, setActiveTab] = useState<MovieTabType>("CURRENT");
   const [tabData, setTabData] = useState<Record<MovieTabType, TabData>>({
     CURRENT: { data: [], total: 0, pagination: null },
     UPCOMING: { data: [], total: 0, pagination: null },
@@ -59,9 +64,13 @@ export const MovieTab: React.FC = () => {
   });
   const [loadingMovie, setLoadingMovie] = useState(false);
 
-  const { params, setPage, setSearch } = usePagination({
-    size: DEFAULT_PAGE_SIZE,
-  });
+  const { page, query, getParam, setParams, setPage, setSearch } =
+    useUrlParams();
+  const activeTab = parseEnumParam(
+    getParam("status"),
+    MOVIE_TAB_IDS,
+    "CURRENT",
+  );
   const { loading: moviesLoading, remove } = useMovie();
   const { showNotification } = useNotification();
   const showLoading = useDelayedLoading(moviesLoading || loadingMovie, {
@@ -149,12 +158,12 @@ export const MovieTab: React.FC = () => {
   );
 
   useEffect(() => {
-    loadAllTabCounts(params.query);
-  }, [loadAllTabCounts, params.query]);
+    loadAllTabCounts(query);
+  }, [loadAllTabCounts, query]);
 
   useEffect(() => {
-    loadTabData(activeTab, params.page || 0, params.query);
-  }, [activeTab, params.page, params.query, loadTabData]);
+    loadTabData(activeTab, page, query);
+  }, [activeTab, page, query, loadTabData]);
 
   const currentTabData = useMemo(
     () => tabData[activeTab],
@@ -163,12 +172,10 @@ export const MovieTab: React.FC = () => {
 
   const paginationInfo = useMemo(() => {
     const total = currentTabData.total;
-    const page = params.page || 0;
-    const pageSize = params.size || 12;
-    const start = total > 0 ? page * pageSize + 1 : 0;
-    const end = Math.min(start + pageSize - 1, total);
+    const start = total > 0 ? page * DEFAULT_PAGE_SIZE + 1 : 0;
+    const end = Math.min(start + DEFAULT_PAGE_SIZE - 1, total);
     return { start, end };
-  }, [currentTabData.total, params.page, params.size]);
+  }, [currentTabData.total, page]);
 
   const handleSearch = useCallback(
     (query: string) => {
@@ -179,10 +186,9 @@ export const MovieTab: React.FC = () => {
 
   const handleTabChange = useCallback(
     (tab: MovieTabType) => {
-      setActiveTab(tab);
-      setPage(0);
+      setParams({ status: toUrlEnumValue(tab, "CURRENT"), page: undefined });
     },
-    [setPage],
+    [setParams],
   );
 
   const handlePageChange = useCallback(
@@ -216,22 +222,20 @@ export const MovieTab: React.FC = () => {
     await remove(deletingMovie.id);
 
     const newPage =
-      currentTabData.data.length === 1 && params.page && params.page > 0
-        ? params.page - 1
-        : params.page || 0;
+      currentTabData.data.length === 1 && page > 0 ? page - 1 : page;
 
     setPage(newPage);
     setIsDeleteModalOpen(false);
     setDeletingMovie(null);
 
-    await loadTabData(activeTab, newPage, params.query);
-    await loadAllTabCounts(params.query);
+    await loadTabData(activeTab, newPage, query);
+    await loadAllTabCounts(query);
   }, [
     deletingMovie,
     remove,
     activeTab,
-    params.page,
-    params.query,
+    page,
+    query,
     currentTabData.data.length,
     setPage,
     loadTabData,
@@ -241,16 +245,16 @@ export const MovieTab: React.FC = () => {
   const handleFormSuccess = useCallback(async () => {
     setIsModalOpen(false);
     setEditingMovie(null);
-    await loadTabData(activeTab, params.page || 0, params.query);
-    await loadAllTabCounts(params.query);
-  }, [activeTab, params.page, params.query, loadTabData, loadAllTabCounts]);
+    await loadTabData(activeTab, page, query);
+    await loadAllTabCounts(query);
+  }, [activeTab, page, query, loadTabData, loadAllTabCounts]);
 
   const handleAddNew = useCallback(() => {
     setEditingMovie(null);
     setIsModalOpen(true);
   }, []);
 
-  if (showLoading && !currentTabData.data.length && !params.query) {
+  if (showLoading && !currentTabData.data.length && !query) {
     return (
       <div className={styles.loading}>
         <LoadingSpinner text={`Loading ${activeTab.toLowerCase()} movies...`} />
@@ -281,6 +285,7 @@ export const MovieTab: React.FC = () => {
       <div className={styles.searchContainer}>
         <SearchInput
           onSearch={handleSearch}
+          value={query}
           placeholder="Search movies by title..."
           delay={300}
         />
@@ -297,7 +302,7 @@ export const MovieTab: React.FC = () => {
         <div className={styles.resultsInfo}>
           Showing {paginationInfo.start}-{paginationInfo.end} of{" "}
           {currentTabData.total} movies
-          {params.query && ` for "${params.query}"`}
+          {query && ` for "${query}"`}
         </div>
       )}
 
@@ -315,10 +320,10 @@ export const MovieTab: React.FC = () => {
         currentTabData.pagination.totalPages > 1 && (
           <div className={styles.paginationContainer}>
             <Pagination
-              currentPage={params.page || 0}
+              currentPage={page}
               totalPages={currentTabData.pagination.totalPages}
               totalElements={currentTabData.total}
-              pageSize={params.size || 12}
+              pageSize={DEFAULT_PAGE_SIZE}
               onPageChange={handlePageChange}
               variant="pages"
               showInfo={false}

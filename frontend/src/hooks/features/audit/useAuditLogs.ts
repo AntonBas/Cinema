@@ -1,26 +1,27 @@
+import { useCallback, useRef } from "react";
 import { useApi } from "@/hooks/common/useApi";
-import { usePagination } from "@/hooks/common/usePagination";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 import { auditApi } from "@/api/auditApi";
 import { DEFAULT_PAGE_SIZE_ADMIN } from "@/utils/paginationUtils";
 import type { AuditLogResponse } from "@/types/audit";
 import type { PageResponse } from "@/types/pagination";
-import { useCallback, useState, useRef } from "react";
 
-export const useAuditLogs = () => {
-  const [entityType, setEntityType] = useState<string>();
-  const [action, setAction] = useState<string>();
-  const [changedBy, setChangedBy] = useState<string>();
+interface AuditLogFilters {
+  entityType?: string;
+  action?: string;
+  changedBy?: string;
+}
 
-  const { params, setPage, setSize, setSort } = usePagination(
-    {},
-    DEFAULT_PAGE_SIZE_ADMIN,
-  );
+interface AuditLogsQuery {
+  filters: AuditLogFilters;
+  page: number;
+}
+
+export const useAuditLogs = ({ filters, page }: AuditLogsQuery) => {
   const {
     execute,
     loading: apiLoading,
     data,
-    reset,
   } = useApi<PageResponse<AuditLogResponse>>();
 
   const executeRef = useRef(execute);
@@ -31,49 +32,20 @@ export const useAuditLogs = () => {
     minDisplayTime: 300,
   });
 
-  const fetchAuditLogs = useCallback(async () => {
+  const refresh = useCallback(() => {
     return executeRef.current(() =>
       auditApi.admin.getAll({
-        ...params,
-        entityType,
-        action,
-        changedBy,
+        page,
+        size: DEFAULT_PAGE_SIZE_ADMIN,
+        ...filters,
       }),
     );
-  }, [params, entityType, action, changedBy]);
-
-  const refresh = useCallback(() => {
-    return fetchAuditLogs();
-  }, [fetchAuditLogs]);
-
-  const applyFilters = useCallback(
-    (filters: { entityType?: string; action?: string; changedBy?: string }) => {
-      setEntityType(filters.entityType);
-      setAction(filters.action);
-      setChangedBy(filters.changedBy);
-      setPage(0);
-    },
-    [setPage],
-  );
-
-  const clearFilters = useCallback(() => {
-    setEntityType(undefined);
-    setAction(undefined);
-    setChangedBy(undefined);
-    setPage(0);
-  }, [setPage]);
+  }, [page, filters]);
 
   return {
     auditLogs: data?.content || [],
     pagination: data,
     loading,
-    filters: { entityType, action, changedBy },
-    setPage,
-    setSize,
-    setSort,
-    applyFilters,
-    clearFilters,
     refresh,
-    reset,
   };
 };

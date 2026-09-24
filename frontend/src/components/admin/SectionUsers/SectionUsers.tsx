@@ -1,218 +1,89 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useEffect, useCallback } from "react";
 import { UserTable } from "./UserTable/UserTable";
 import { UserFilters } from "./UserFilters/UserFilters";
 import { useAdminUsers } from "@/hooks/features/user/useAdminUsers";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
-import { usePagination } from "@/hooks/common/usePagination";
+import {
+  parseBooleanParam,
+  parseOptionalEnumParam,
+  useUrlParams,
+} from "@/hooks/common/useUrlParams";
 import { Pagination } from "@/components/ui/Pagination/Pagination";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { DEFAULT_PAGE_SIZE_COMPACT } from "@/utils/paginationUtils";
-import type { UserRole, VerificationStatus } from "@/types/user";
+import {
+  UserRoleDisplay,
+  VerificationStatusDisplay,
+  type UserRole,
+  type VerificationStatus,
+} from "@/types/user";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import styles from "./SectionUsers.module.css";
 
-export const SectionUsers: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState<UserRole | "">("");
-  const [verificationStatusFilter, setVerificationStatusFilter] = useState<
-    VerificationStatus | ""
-  >("");
-  const [enabledFilter, setEnabledFilter] = useState<string>("");
-  const [sortOrder, setSortOrder] = useState("");
+const USER_ROLES = Object.keys(UserRoleDisplay) as UserRole[];
+const VERIFICATION_STATUSES = Object.keys(
+  VerificationStatusDisplay,
+) as VerificationStatus[];
 
-  const { params, setPage } = usePagination({
-    size: DEFAULT_PAGE_SIZE_COMPACT,
-  });
+export const SectionUsers: React.FC = () => {
+  const {
+    page,
+    query,
+    sort,
+    getParam,
+    setFilters,
+    setPage,
+    setSearch,
+    setSort,
+  } = useUrlParams();
+  const role = parseOptionalEnumParam(getParam("role"), USER_ROLES);
+  const verificationStatus = parseOptionalEnumParam(
+    getParam("verification"),
+    VERIFICATION_STATUSES,
+  );
+  const enabled = parseBooleanParam(getParam("enabled"));
+
   const { users, pagination, loading, getAll } = useAdminUsers();
   const showDelayedLoading = useDelayedLoading(loading, {
     delay: 150,
     minDisplayTime: 300,
   });
 
-  const currentPage = params.page ?? 0;
-  const pageSize = params.size ?? DEFAULT_PAGE_SIZE_COMPACT;
+  const loadUsers = useCallback(() => {
+    getAll({
+      query,
+      role,
+      verificationStatus,
+      enabled,
+      page,
+      size: DEFAULT_PAGE_SIZE_COMPACT,
+      sort,
+    });
+  }, [query, role, verificationStatus, enabled, page, sort, getAll]);
 
-  const loadUsers = useCallback(
-    (page: number = currentPage) => {
-      getAll({
-        query: searchQuery || undefined,
-        role: roleFilter || undefined,
-        verificationStatus: verificationStatusFilter || undefined,
-        enabled: enabledFilter === "" ? undefined : enabledFilter === "true",
-        page: page,
-        size: pageSize,
-        sort: sortOrder || undefined,
-      });
-    },
-    [
-      searchQuery,
-      roleFilter,
-      verificationStatusFilter,
-      enabledFilter,
-      sortOrder,
-      pageSize,
-      getAll,
-      currentPage,
-    ],
-  );
-
-  const didLoadRef = useRef(false);
   useEffect(() => {
-    if (didLoadRef.current) return;
-    didLoadRef.current = true;
-    loadUsers(0);
+    loadUsers();
   }, [loadUsers]);
-
-  const handleSearch = useCallback(
-    (query: string) => {
-      setSearchQuery(query);
-      setPage(0);
-      getAll({
-        query: query || undefined,
-        role: roleFilter || undefined,
-        verificationStatus: verificationStatusFilter || undefined,
-        enabled: enabledFilter === "" ? undefined : enabledFilter === "true",
-        page: 0,
-        size: pageSize,
-        sort: sortOrder || undefined,
-      });
-    },
-    [
-      roleFilter,
-      verificationStatusFilter,
-      enabledFilter,
-      sortOrder,
-      pageSize,
-      getAll,
-      setPage,
-    ],
-  );
 
   const handleRoleFilterChange = useCallback(
     (value: string) => {
-      const newRole = value as UserRole | "";
-      setRoleFilter(newRole);
-      setPage(0);
-      getAll({
-        query: searchQuery || undefined,
-        role: newRole || undefined,
-        verificationStatus: verificationStatusFilter || undefined,
-        enabled: enabledFilter === "" ? undefined : enabledFilter === "true",
-        page: 0,
-        size: pageSize,
-        sort: sortOrder || undefined,
-      });
+      setFilters({ role: value.toLowerCase() });
     },
-    [
-      searchQuery,
-      verificationStatusFilter,
-      enabledFilter,
-      sortOrder,
-      pageSize,
-      getAll,
-      setPage,
-    ],
+    [setFilters],
   );
 
   const handleVerificationStatusChange = useCallback(
     (value: string) => {
-      const newStatus = value as VerificationStatus | "";
-      setVerificationStatusFilter(newStatus);
-      setPage(0);
-      getAll({
-        query: searchQuery || undefined,
-        role: roleFilter || undefined,
-        verificationStatus: newStatus || undefined,
-        enabled: enabledFilter === "" ? undefined : enabledFilter === "true",
-        page: 0,
-        size: pageSize,
-        sort: sortOrder || undefined,
-      });
+      setFilters({ verification: value.toLowerCase() });
     },
-    [
-      searchQuery,
-      roleFilter,
-      enabledFilter,
-      sortOrder,
-      pageSize,
-      getAll,
-      setPage,
-    ],
+    [setFilters],
   );
 
   const handleEnabledFilterChange = useCallback(
     (value: string) => {
-      setEnabledFilter(value);
-      setPage(0);
-      getAll({
-        query: searchQuery || undefined,
-        role: roleFilter || undefined,
-        verificationStatus: verificationStatusFilter || undefined,
-        enabled: value === "" ? undefined : value === "true",
-        page: 0,
-        size: pageSize,
-        sort: sortOrder || undefined,
-      });
+      setFilters({ enabled: value });
     },
-    [
-      searchQuery,
-      roleFilter,
-      verificationStatusFilter,
-      sortOrder,
-      pageSize,
-      getAll,
-      setPage,
-    ],
-  );
-
-  const handlePageChange = useCallback(
-    (page: number) => {
-      setPage(page);
-      getAll({
-        query: searchQuery || undefined,
-        role: roleFilter || undefined,
-        verificationStatus: verificationStatusFilter || undefined,
-        enabled: enabledFilter === "" ? undefined : enabledFilter === "true",
-        page: page,
-        size: pageSize,
-        sort: sortOrder || undefined,
-      });
-    },
-    [
-      searchQuery,
-      roleFilter,
-      verificationStatusFilter,
-      enabledFilter,
-      sortOrder,
-      pageSize,
-      getAll,
-      setPage,
-    ],
-  );
-
-  const handleSortChange = useCallback(
-    (value: string) => {
-      setSortOrder(value);
-      setPage(0);
-      getAll({
-        query: searchQuery || undefined,
-        role: roleFilter || undefined,
-        verificationStatus: verificationStatusFilter || undefined,
-        enabled: enabledFilter === "" ? undefined : enabledFilter === "true",
-        page: 0,
-        size: pageSize,
-        sort: value || undefined,
-      });
-    },
-    [
-      searchQuery,
-      roleFilter,
-      verificationStatusFilter,
-      enabledFilter,
-      pageSize,
-      getAll,
-      setPage,
-    ],
+    [setFilters],
   );
 
   if (showDelayedLoading && !users.length) {
@@ -232,15 +103,16 @@ export const SectionUsers: React.FC = () => {
 
       <div className={styles.searchSection}>
         <UserFilters
-          onSearchChange={handleSearch}
-          roleFilter={roleFilter}
+          searchValue={query}
+          onSearchChange={setSearch}
+          roleFilter={role ?? ""}
           onRoleFilterChange={handleRoleFilterChange}
-          verificationStatusFilter={verificationStatusFilter}
+          verificationStatusFilter={verificationStatus ?? ""}
           onVerificationStatusChange={handleVerificationStatusChange}
-          enabledFilter={enabledFilter}
+          enabledFilter={enabled === undefined ? "" : String(enabled)}
           onEnabledFilterChange={handleEnabledFilterChange}
-          sort={sortOrder}
-          onSortChange={handleSortChange}
+          sort={sort ?? ""}
+          onSortChange={setSort}
         />
       </div>
 
@@ -256,17 +128,17 @@ export const SectionUsers: React.FC = () => {
       )}
 
       <div className={styles.content}>
-        <UserTable users={users} onRefresh={() => loadUsers(currentPage)} />
+        <UserTable users={users} onRefresh={loadUsers} />
       </div>
 
       {pagination && pagination.totalPages > 1 && (
         <div className={styles.paginationWrapper}>
           <Pagination
-            currentPage={currentPage}
+            currentPage={page}
             totalPages={pagination.totalPages}
             totalElements={pagination.totalElements}
-            pageSize={pageSize}
-            onPageChange={handlePageChange}
+            pageSize={DEFAULT_PAGE_SIZE_COMPACT}
+            onPageChange={setPage}
             variant="pages"
             showInfo={false}
           />

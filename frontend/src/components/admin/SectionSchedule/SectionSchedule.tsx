@@ -2,7 +2,12 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "@/hooks/features/session/useSession";
 import { useCinemaHall } from "@/hooks/features/cinemaHall/useCinemaHall";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
-import { usePagination } from "@/hooks/common/usePagination";
+import {
+  parseNumberParam,
+  parseOptionalEnumParam,
+  toUrlEnumValue,
+  useUrlParams,
+} from "@/hooks/common/useUrlParams";
 import { SessionFilters } from "./SessionFilters/SessionFilters";
 import { SessionTable } from "./SessionTable/SessionTable";
 import { SessionFormModal } from "./SessionFormModal/SessionFormModal";
@@ -12,10 +17,11 @@ import { Pagination } from "@/components/ui/Pagination/Pagination";
 import { Button } from "@/components/ui/Button/Button";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { DEFAULT_PAGE_SIZE_COMPACT } from "@/utils/paginationUtils";
-import type {
-  SessionAdminResponse,
-  SessionRequest,
-  CinemaSessionStatus,
+import {
+  SessionStatusDisplay,
+  type SessionAdminResponse,
+  type SessionRequest,
+  type CinemaSessionStatus,
 } from "@/types/session";
 import type { CinemaHallListResponse } from "@/types/cinemaHall";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
@@ -29,13 +35,38 @@ interface FiltersState {
   status?: CinemaSessionStatus;
 }
 
+const SESSION_STATUSES = Object.keys(
+  SessionStatusDisplay,
+) as CinemaSessionStatus[];
+
+const FILTER_URL_KEYS: Record<keyof FiltersState, string> = {
+  dateFrom: "from",
+  dateTo: "to",
+  hallId: "hall",
+  movieTitle: "movie",
+  status: "status",
+};
+
 export const SectionSchedule: React.FC = () => {
   const { halls, getAll } = useCinemaHall();
-  const { params, setPage, setSort } = usePagination({
-    size: DEFAULT_PAGE_SIZE_COMPACT,
-  });
+  const { page, sort, getParam, setFilters, setPage, setSort } = useUrlParams();
+  const dateFrom = getParam(FILTER_URL_KEYS.dateFrom);
+  const dateTo = getParam(FILTER_URL_KEYS.dateTo);
+  const hallParam = getParam(FILTER_URL_KEYS.hallId);
+  const movieTitle = getParam(FILTER_URL_KEYS.movieTitle);
+  const statusParam = getParam(FILTER_URL_KEYS.status);
 
-  const [filters, setFilters] = useState<FiltersState>({});
+  const filters = useMemo<FiltersState>(
+    () => ({
+      dateFrom,
+      dateTo,
+      hallId: parseNumberParam(hallParam),
+      movieTitle,
+      status: parseOptionalEnumParam(statusParam, SESSION_STATUSES),
+    }),
+    [dateFrom, dateTo, hallParam, movieTitle, statusParam],
+  );
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingSession, setEditingSession] =
     useState<SessionAdminResponse | null>(null);
@@ -70,12 +101,12 @@ export const SectionSchedule: React.FC = () => {
   const reloadSessions = useCallback(
     () =>
       getAdminSessions({
-        page: params.page ?? 0,
-        size: params.size,
-        sort: params.sort,
+        page,
+        size: DEFAULT_PAGE_SIZE_COMPACT,
+        sort,
         ...filters,
       }),
-    [params.page, params.size, params.sort, filters, getAdminSessions],
+    [page, sort, filters, getAdminSessions],
   );
 
   useEffect(() => {
@@ -84,16 +115,18 @@ export const SectionSchedule: React.FC = () => {
 
   const handleFilterChange = useCallback(
     <K extends keyof FiltersState>(key: K, value: FiltersState[K]) => {
-      setFilters((prev) => ({ ...prev, [key]: value }));
-      setPage(0);
+      const urlValue =
+        key === "status"
+          ? toUrlEnumValue(value as CinemaSessionStatus | undefined)
+          : value;
+      setFilters({ [FILTER_URL_KEYS[key]]: urlValue });
     },
-    [setPage],
+    [setFilters],
   );
 
   const handleClearFilters = useCallback(() => {
-    setFilters({});
-    setPage(0);
-  }, [setPage]);
+    setFilters({ sort }, { reset: true });
+  }, [sort, setFilters]);
 
   const handleCreateSession = useCallback(
     async (data: SessionRequest) => {
@@ -174,7 +207,7 @@ export const SectionSchedule: React.FC = () => {
         onHallChange={(v) => handleFilterChange("hallId", v)}
         onMovieTitleChange={(v) => handleFilterChange("movieTitle", v)}
         onStatusChange={(v) => handleFilterChange("status", v)}
-        sort={params.sort}
+        sort={sort}
         onSortChange={setSort}
         onClearFilters={handleClearFilters}
         halls={hallsForSelect}

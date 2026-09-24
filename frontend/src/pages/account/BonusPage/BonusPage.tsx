@@ -1,24 +1,36 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect } from "react";
 import { AccountPageLayout } from "@/components/account/AccountPageLayout/AccountPageLayout";
 import { BonusBalanceCard } from "@/components/account/BonusSection/BonusBalanceCard/BonusBalanceCard";
 import { BonusTransactions } from "@/components/account/BonusSection/BonusTransactions/BonusTransactions";
 import { useBonus } from "@/hooks/features/bonus/useBonus";
-import { usePagination } from "@/hooks/common/usePagination";
+import {
+  parseEnumParam,
+  toUrlEnumValue,
+  useUrlParams,
+} from "@/hooks/common/useUrlParams";
 import { DEFAULT_PAGE_SIZE_ADMIN } from "@/utils/paginationUtils";
 import { Tabs, type TabItem } from "@/components/ui/Tabs/Tabs";
 import styles from "./BonusPage.module.css";
 
-const BONUS_TABS: ReadonlyArray<TabItem<"balance" | "transactions">> = [
+type BonusTab = "balance" | "transactions";
+
+const BONUS_TABS: ReadonlyArray<TabItem<BonusTab>> = [
   { id: "balance", label: "Balance" },
   { id: "transactions", label: "Transactions" },
 ];
 
-export const BonusPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<"balance" | "transactions">(
-    "balance",
-  );
+const BONUS_TAB_IDS = BONUS_TABS.map((tab) => tab.id);
 
-  const { params, setPage } = usePagination({ size: DEFAULT_PAGE_SIZE_ADMIN });
+export const BonusPage: React.FC = () => {
+  const { page, getParam, setParams, setPage } = useUrlParams();
+  const activeTab = parseEnumParam(getParam("tab"), BONUS_TAB_IDS, "balance");
+
+  const handleTabChange = useCallback(
+    (tab: BonusTab) => {
+      setParams({ tab: toUrlEnumValue(tab, "balance") }, { reset: true });
+    },
+    [setParams],
+  );
 
   const {
     balance,
@@ -34,16 +46,16 @@ export const BonusPage: React.FC = () => {
 
   useEffect(() => {
     if (activeTab === "transactions") {
-      getTransactions({ page: params.page, size: params.size }).catch(() => {});
+      getTransactions({ page, size: DEFAULT_PAGE_SIZE_ADMIN }).catch(() => {});
     }
-  }, [activeTab, params.page, params.size, getTransactions]);
+  }, [activeTab, page, getTransactions]);
 
   return (
     <AccountPageLayout title="My Bonuses">
       <Tabs
         items={BONUS_TABS}
         activeId={activeTab}
-        onChange={setActiveTab}
+        onChange={handleTabChange}
         ariaLabel="Bonus sections"
       />
 

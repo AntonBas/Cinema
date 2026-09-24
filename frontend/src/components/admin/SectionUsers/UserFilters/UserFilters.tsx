@@ -5,6 +5,7 @@ import { UserRoleDisplay, VerificationStatusDisplay } from "@/types/user";
 import styles from "./UserFilters.module.css";
 
 interface UserFiltersProps {
+  searchValue?: string;
   onSearchChange: (value: string) => void;
   roleFilter: string;
   onRoleFilterChange: (value: string) => void;
@@ -32,6 +33,7 @@ const ENABLED_OPTIONS = [
 ];
 
 export const UserFilters: React.FC<UserFiltersProps> = ({
+  searchValue,
   onSearchChange,
   roleFilter,
   onRoleFilterChange,
@@ -68,6 +70,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
     <div className={styles.filters}>
       <div className={styles.search}>
         <SearchInput
+          value={searchValue}
           onSearch={onSearchChange}
           placeholder="Search by email or name..."
           delay={500}

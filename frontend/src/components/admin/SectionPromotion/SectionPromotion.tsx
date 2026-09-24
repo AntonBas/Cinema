@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/Button/Button";
 import { SearchInput } from "@/components/ui/SearchInput/SearchInput";
 import { Pagination } from "@/components/ui/Pagination/Pagination";
@@ -6,7 +6,7 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { usePromotion } from "@/hooks/features/promotion/usePromotion";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
-import { usePagination } from "@/hooks/common/usePagination";
+import { useUrlParams } from "@/hooks/common/useUrlParams";
 import { DEFAULT_PAGE_SIZE_COMPACT } from "@/utils/paginationUtils";
 import type {
   PromotionResponse,
@@ -18,7 +18,6 @@ import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import styles from "./SectionPromotion.module.css";
 
 export const SectionPromotion: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState<string>("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingPromotion, setEditingPromotion] =
     useState<PromotionResponse | null>(null);
@@ -27,9 +26,7 @@ export const SectionPromotion: React.FC = () => {
     title: string;
   } | null>(null);
 
-  const { params, setPage } = usePagination({
-    size: DEFAULT_PAGE_SIZE_COMPACT,
-  });
+  const { page, query, setPage, setSearch } = useUrlParams();
   const {
     adminPromotions,
     pagination,
@@ -43,61 +40,27 @@ export const SectionPromotion: React.FC = () => {
     minDisplayTime: 300,
   });
 
-  const currentPage = params.page ?? 0;
-  const pageSize = params.size ?? 10;
+  const loadPromotions = useCallback(() => {
+    getAdminPromotions({
+      query,
+      page,
+      size: DEFAULT_PAGE_SIZE_COMPACT,
+    });
+  }, [query, page, getAdminPromotions]);
 
-  const loadPromotions = useCallback(
-    (page: number = currentPage) => {
-      getAdminPromotions({
-        query: searchQuery || undefined,
-        page: page,
-        size: pageSize,
-      });
-    },
-    [searchQuery, pageSize, getAdminPromotions, currentPage],
-  );
-
-  const didLoadRef = useRef(false);
   useEffect(() => {
-    if (didLoadRef.current) return;
-    didLoadRef.current = true;
-    loadPromotions(0);
+    loadPromotions();
   }, [loadPromotions]);
-
-  const handleSearch = useCallback(
-    (query: string) => {
-      setSearchQuery(query);
-      setPage(0);
-      getAdminPromotions({
-        query: query || undefined,
-        page: 0,
-        size: pageSize,
-      });
-    },
-    [pageSize, getAdminPromotions, setPage],
-  );
-
-  const handlePageChange = useCallback(
-    (page: number) => {
-      setPage(page);
-      getAdminPromotions({
-        query: searchQuery || undefined,
-        page: page,
-        size: pageSize,
-      });
-    },
-    [searchQuery, pageSize, getAdminPromotions, setPage],
-  );
 
   const handleCreateSuccess = useCallback(() => {
     setShowCreateModal(false);
-    loadPromotions(currentPage);
-  }, [currentPage, loadPromotions]);
+    loadPromotions();
+  }, [loadPromotions]);
 
   const handleUpdateSuccess = useCallback(() => {
     setEditingPromotion(null);
-    loadPromotions(currentPage);
-  }, [currentPage, loadPromotions]);
+    loadPromotions();
+  }, [loadPromotions]);
 
   const handleDeleteConfirm = async () => {
     if (!deletingPromotion) return;
@@ -105,15 +68,10 @@ export const SectionPromotion: React.FC = () => {
     await remove(deletingPromotion.id);
     setDeletingPromotion(null);
 
-    if (adminPromotions.length === 1 && currentPage > 0) {
-      setPage(currentPage - 1);
-      getAdminPromotions({
-        query: searchQuery || undefined,
-        page: currentPage - 1,
-        size: pageSize,
-      });
+    if (adminPromotions.length === 1 && page > 0) {
+      setPage(page - 1);
     } else {
-      loadPromotions(currentPage);
+      loadPromotions();
     }
   };
 
@@ -147,7 +105,8 @@ export const SectionPromotion: React.FC = () => {
       <div className={styles.filtersContainer}>
         <div className={styles.searchWrapper}>
           <SearchInput
-            onSearch={handleSearch}
+            value={query}
+            onSearch={setSearch}
             placeholder="Search promotions..."
             delay={300}
           />
@@ -162,7 +121,7 @@ export const SectionPromotion: React.FC = () => {
             pagination.totalElements,
           )}{" "}
           of {pagination.totalElements} promotions
-          {searchQuery && ` for "${searchQuery}"`}
+          {query && ` for "${query}"`}
         </div>
       )}
 
@@ -179,7 +138,7 @@ export const SectionPromotion: React.FC = () => {
             totalPages={pagination.totalPages}
             totalElements={pagination.totalElements}
             pageSize={pagination.size}
-            onPageChange={handlePageChange}
+            onPageChange={setPage}
             variant="pages"
             showInfo={false}
           />

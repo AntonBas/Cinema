@@ -1,7 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTicketType } from "@/hooks/features/ticketType/useTicketType";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
-import { usePagination } from "@/hooks/common/usePagination";
+import {
+  parseEnumParam,
+  toUrlEnumValue,
+  useUrlParams,
+} from "@/hooks/common/useUrlParams";
 import { Button } from "@/components/ui/Button/Button";
 import { Pagination } from "@/components/ui/Pagination/Pagination";
 import { TicketTypeTable } from "./TicketTypeTable/TicketTypeTable";
@@ -12,26 +16,38 @@ import { DEFAULT_PAGE_SIZE_COMPACT } from "@/utils/paginationUtils";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import styles from "./SectionTicketType.module.css";
-import type {
-  TicketTypeResponse,
-  TicketTypeCategory,
+import {
+  TicketTypeCategoryDisplay,
+  type TicketTypeResponse,
+  type TicketTypeCategory,
 } from "@/types/ticketType";
 
+type StatusFilter = "all" | "active" | "inactive";
+
+const STATUS_FILTERS: StatusFilter[] = ["all", "active", "inactive"];
+const CATEGORY_FILTERS = [
+  "all",
+  ...Object.keys(TicketTypeCategoryDisplay),
+] as Array<TicketTypeCategory | "all">;
+
 export const SectionTicketType = () => {
-  const [searchQuery, setSearchQuery] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingTicketType, setEditingTicketType] =
     useState<TicketTypeResponse | null>(null);
-  const [statusFilter, setStatusFilter] = useState<
-    "all" | "active" | "inactive"
-  >("all");
-  const [categoryFilter, setCategoryFilter] = useState<
-    TicketTypeCategory | "all"
-  >("all");
 
-  const { params, setPage } = usePagination({
-    size: DEFAULT_PAGE_SIZE_COMPACT,
-  });
+  const { page, query, getParam, setFilters, setPage, setSearch } =
+    useUrlParams();
+  const statusFilter = parseEnumParam(
+    getParam("status"),
+    STATUS_FILTERS,
+    "all",
+  );
+  const categoryFilter = parseEnumParam(
+    getParam("category"),
+    CATEGORY_FILTERS,
+    "all",
+  );
+
   const {
     ticketTypes: ticketTypesData,
     pagination,
@@ -45,135 +61,62 @@ export const SectionTicketType = () => {
     minDisplayTime: 300,
   });
 
-  const currentPage = params.page ?? 0;
-  const pageSize = params.size ?? 10;
+  const loadTicketTypes = useCallback(() => {
+    getAll({
+      page,
+      size: DEFAULT_PAGE_SIZE_COMPACT,
+      query,
+      active: statusFilter === "all" ? undefined : statusFilter === "active",
+      category: categoryFilter === "all" ? undefined : categoryFilter,
+    });
+  }, [page, query, statusFilter, categoryFilter, getAll]);
 
-  const loadTicketTypes = useCallback(
-    (page: number = currentPage) => {
-      getAll({
-        page: page,
-        size: pageSize,
-        query: searchQuery || undefined,
-        active: statusFilter === "all" ? undefined : statusFilter === "active",
-        category: categoryFilter === "all" ? undefined : categoryFilter,
-      });
-    },
-    [pageSize, searchQuery, statusFilter, categoryFilter, getAll, currentPage],
-  );
-
-  const didLoadRef = useRef(false);
   useEffect(() => {
-    if (didLoadRef.current) return;
-    didLoadRef.current = true;
-    loadTicketTypes(0);
+    loadTicketTypes();
   }, [loadTicketTypes]);
 
-  const handleSearch = useCallback(
-    (query: string) => {
-      setSearchQuery(query);
-      setPage(0);
-      getAll({
-        page: 0,
-        size: pageSize,
-        query: query || undefined,
-        active: statusFilter === "all" ? undefined : statusFilter === "active",
-        category: categoryFilter === "all" ? undefined : categoryFilter,
-      });
-    },
-    [pageSize, statusFilter, categoryFilter, getAll, setPage],
-  );
-
   const handleStatusChange = useCallback(
-    (status: "all" | "active" | "inactive") => {
-      setStatusFilter(status);
-      setPage(0);
-      getAll({
-        page: 0,
-        size: pageSize,
-        query: searchQuery || undefined,
-        active: status === "all" ? undefined : status === "active",
-        category: categoryFilter === "all" ? undefined : categoryFilter,
-      });
+    (status: StatusFilter) => {
+      setFilters({ status: toUrlEnumValue(status, "all") });
     },
-    [pageSize, searchQuery, categoryFilter, getAll, setPage],
+    [setFilters],
   );
 
   const handleCategoryChange = useCallback(
     (category: TicketTypeCategory | "all") => {
-      setCategoryFilter(category);
-      setPage(0);
-      getAll({
-        page: 0,
-        size: pageSize,
-        query: searchQuery || undefined,
-        active: statusFilter === "all" ? undefined : statusFilter === "active",
-        category: category === "all" ? undefined : category,
-      });
+      setFilters({ category: toUrlEnumValue(category, "all") });
     },
-    [pageSize, searchQuery, statusFilter, getAll, setPage],
-  );
-
-  const handlePageChange = useCallback(
-    (page: number) => {
-      setPage(page);
-      getAll({
-        page: page,
-        size: pageSize,
-        query: searchQuery || undefined,
-        active: statusFilter === "all" ? undefined : statusFilter === "active",
-        category: categoryFilter === "all" ? undefined : categoryFilter,
-      });
-    },
-    [pageSize, searchQuery, statusFilter, categoryFilter, getAll, setPage],
+    [setFilters],
   );
 
   const handleCreateSuccess = useCallback(() => {
     setShowCreateModal(false);
-    loadTicketTypes(currentPage);
-  }, [currentPage, loadTicketTypes]);
+    loadTicketTypes();
+  }, [loadTicketTypes]);
 
   const handleEditSuccess = useCallback(() => {
     setEditingTicketType(null);
-    loadTicketTypes(currentPage);
-  }, [currentPage, loadTicketTypes]);
+    loadTicketTypes();
+  }, [loadTicketTypes]);
 
   const handleDelete = useCallback(
     async (id: number) => {
       await remove(id);
-      if (ticketTypesData.length === 1 && currentPage > 0) {
-        setPage(currentPage - 1);
-        getAll({
-          page: currentPage - 1,
-          size: pageSize,
-          query: searchQuery || undefined,
-          active:
-            statusFilter === "all" ? undefined : statusFilter === "active",
-          category: categoryFilter === "all" ? undefined : categoryFilter,
-        });
+      if (ticketTypesData.length === 1 && page > 0) {
+        setPage(page - 1);
       } else {
-        loadTicketTypes(currentPage);
+        loadTicketTypes();
       }
     },
-    [
-      ticketTypesData.length,
-      currentPage,
-      pageSize,
-      searchQuery,
-      statusFilter,
-      categoryFilter,
-      getAll,
-      setPage,
-      loadTicketTypes,
-      remove,
-    ],
+    [ticketTypesData.length, page, setPage, loadTicketTypes, remove],
   );
 
   const handleToggleActive = useCallback(
     async (id: number) => {
       await toggleActive(id);
-      loadTicketTypes(currentPage);
+      loadTicketTypes();
     },
-    [currentPage, loadTicketTypes, toggleActive],
+    [loadTicketTypes, toggleActive],
   );
 
   if (showDelayedLoading && !ticketTypesData.length) {
@@ -198,7 +141,8 @@ export const SectionTicketType = () => {
 
       <div className={styles.content}>
         <TicketTypeFilters
-          onSearchChange={handleSearch}
+          searchValue={query}
+          onSearchChange={setSearch}
           statusFilter={statusFilter}
           onStatusChange={handleStatusChange}
           categoryFilter={categoryFilter}
@@ -213,7 +157,7 @@ export const SectionTicketType = () => {
               pagination.totalElements,
             )}{" "}
             of {pagination.totalElements} ticket types
-            {searchQuery && ` for "${searchQuery}"`}
+            {query && ` for "${query}"`}
           </div>
         )}
 
@@ -236,7 +180,7 @@ export const SectionTicketType = () => {
                   totalPages={pagination.totalPages}
                   totalElements={pagination.totalElements}
                   pageSize={pagination.size}
-                  onPageChange={handlePageChange}
+                  onPageChange={setPage}
                   variant="pages"
                   showInfo={false}
                 />

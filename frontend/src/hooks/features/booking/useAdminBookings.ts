@@ -1,6 +1,5 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef } from "react";
 import { useApi } from "@/hooks/common/useApi";
-import { usePagination } from "@/hooks/common/usePagination";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 import { bookingApi } from "@/api/bookingApi";
 import { DEFAULT_PAGE_SIZE_ADMIN } from "@/utils/paginationUtils";
@@ -10,12 +9,17 @@ import type {
 } from "@/types/booking";
 import type { PageResponse } from "@/types/pagination";
 
-export const useAdminBookings = (initialFilters: AdminBookingFilters = {}) => {
-  const [filters, setFilters] = useState<AdminBookingFilters>(initialFilters);
-  const { params, setPage, setSort } = usePagination(
-    {},
-    DEFAULT_PAGE_SIZE_ADMIN,
-  );
+interface AdminBookingsQuery {
+  filters: AdminBookingFilters;
+  page: number;
+  sort?: string;
+}
+
+export const useAdminBookings = ({
+  filters,
+  page,
+  sort,
+}: AdminBookingsQuery) => {
   const {
     execute,
     loading: apiLoading,
@@ -32,33 +36,19 @@ export const useAdminBookings = (initialFilters: AdminBookingFilters = {}) => {
 
   const refresh = useCallback(() => {
     return executeRef.current(() =>
-      bookingApi.admin.getAll({ ...params, ...filters }),
+      bookingApi.admin.getAll({
+        page,
+        size: DEFAULT_PAGE_SIZE_ADMIN,
+        sort,
+        ...filters,
+      }),
     );
-  }, [params, filters]);
-
-  const applyFilters = useCallback(
-    (changes: Partial<AdminBookingFilters>) => {
-      setFilters((prev) => ({ ...prev, ...changes }));
-      setPage(0);
-    },
-    [setPage],
-  );
-
-  const clearFilters = useCallback(() => {
-    setFilters({});
-    setPage(0);
-  }, [setPage]);
+  }, [page, sort, filters]);
 
   return {
     bookings: data?.content || [],
     pagination: data,
     loading,
-    filters,
-    sort: params.sort,
-    setPage,
-    setSort,
-    applyFilters,
-    clearFilters,
     refresh,
   };
 };

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Modal } from "@/components/ui/Modal/Modal";
 import { Tabs } from "@/components/ui/Tabs/Tabs";
 import type { TabItem } from "@/components/ui/Tabs/Tabs";
@@ -35,8 +35,11 @@ interface TabProps {
 }
 
 const UserBookingsTab: React.FC<TabProps> = ({ userId, onOpenBooking }) => {
-  const { bookings, pagination, loading, setPage, refresh } = useAdminBookings({
-    userId,
+  const [page, setPage] = useState(0);
+  const filters = useMemo(() => ({ userId }), [userId]);
+  const { bookings, pagination, loading, refresh } = useAdminBookings({
+    filters,
+    page,
   });
 
   useEffect(() => {
@@ -70,8 +73,11 @@ const UserBookingsTab: React.FC<TabProps> = ({ userId, onOpenBooking }) => {
 const UserRefundsTab: React.FC<
   TabProps & { onOpenHistory: (refundId: number) => void }
 > = ({ userId, onOpenBooking, onOpenHistory }) => {
-  const { refunds, pagination, loading, setPage, refresh } = useAdminRefunds({
-    userId,
+  const [page, setPage] = useState(0);
+  const filters = useMemo(() => ({ userId }), [userId]);
+  const { refunds, pagination, loading, refresh } = useAdminRefunds({
+    filters,
+    page,
   });
 
   useEffect(() => {

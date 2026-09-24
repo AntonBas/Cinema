@@ -1,5 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useAuditLogs } from "@/hooks/features/audit/useAuditLogs";
+import {
+  parseOptionalEnumParam,
+  useUrlParams,
+} from "@/hooks/common/useUrlParams";
 import { AuditLogsFilters } from "./AuditLogsFilters/AuditLogsFilters";
 import { AuditLogsTable } from "./AuditLogsTable/AuditLogsTable";
 import { EntityHistoryModal } from "./EntityHistoryModal/EntityHistoryModal";
@@ -9,17 +13,43 @@ import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import styles from "./SectionAuditLogs.module.css";
 
+const ENTITY_TYPES = [
+  "User",
+  "Bonus",
+  "Promotion",
+  "TicketType",
+  "Movie",
+  "Session",
+];
+
+const ACTIONS = [
+  "CREATED",
+  "UPDATED",
+  "DELETED",
+  "TOGGLE",
+  "CLAIMED",
+  "REFUNDED",
+];
+
 export const SectionAuditLogs: React.FC = () => {
-  const {
-    auditLogs,
-    pagination,
-    loading,
-    setPage,
+  const { page, getParam, setFilters, clearParams, setPage } = useUrlParams();
+  const typeParam = getParam("type");
+  const actionParam = getParam("action");
+  const changedBy = getParam("changedBy");
+
+  const filters = useMemo(
+    () => ({
+      entityType: parseOptionalEnumParam(typeParam, ENTITY_TYPES),
+      action: parseOptionalEnumParam(actionParam, ACTIONS),
+      changedBy,
+    }),
+    [typeParam, actionParam, changedBy],
+  );
+
+  const { auditLogs, pagination, loading, refresh } = useAuditLogs({
     filters,
-    applyFilters,
-    clearFilters,
-    refresh,
-  } = useAuditLogs();
+    page,
+  });
 
   const [selectedEntity, setSelectedEntity] = useState<{
     entityType: string;
@@ -32,37 +62,16 @@ export const SectionAuditLogs: React.FC = () => {
   });
 
   const handleEntityTypeChange = (value: string) => {
-    applyFilters({ entityType: value || undefined });
+    setFilters({ type: value.toLowerCase() });
   };
 
   const handleActionChange = (value: string) => {
-    applyFilters({ action: value || undefined });
+    setFilters({ action: value.toLowerCase() });
   };
 
   const handleChangedByChange = (value: string) => {
-    applyFilters({ changedBy: value || undefined });
+    setFilters({ changedBy: value }, { replace: true });
   };
-
-  const handleClearFilters = () => {
-    clearFilters();
-  };
-
-  const entityTypes = [
-    "User",
-    "Bonus",
-    "Promotion",
-    "TicketType",
-    "Movie",
-    "Session",
-  ];
-  const actions = [
-    "CREATED",
-    "UPDATED",
-    "DELETED",
-    "TOGGLE",
-    "CLAIMED",
-    "REFUNDED",
-  ];
 
   const hasActiveFilters = !!(
     filters.entityType ||
@@ -96,9 +105,9 @@ export const SectionAuditLogs: React.FC = () => {
         onEntityTypeChange={handleEntityTypeChange}
         onActionChange={handleActionChange}
         onChangedByChange={handleChangedByChange}
-        onClear={handleClearFilters}
-        entityTypes={entityTypes}
-        actions={actions}
+        onClear={clearParams}
+        entityTypes={ENTITY_TYPES}
+        actions={ACTIONS}
       />
 
       {pagination && pagination.totalElements > 0 && (

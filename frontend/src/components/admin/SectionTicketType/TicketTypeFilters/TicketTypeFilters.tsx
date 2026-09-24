@@ -6,6 +6,7 @@ import { TicketTypeCategoryDisplay } from "@/types/ticketType";
 import styles from "./TicketTypeFilters.module.css";
 
 interface TicketTypeFiltersProps {
+  searchValue?: string;
   onSearchChange: (query: string) => void;
   statusFilter: "all" | "active" | "inactive";
   onStatusChange: (filter: "all" | "active" | "inactive") => void;
@@ -14,6 +15,7 @@ interface TicketTypeFiltersProps {
 }
 
 export const TicketTypeFilters: React.FC<TicketTypeFiltersProps> = ({
+  searchValue,
   onSearchChange,
   statusFilter,
   onStatusChange,
@@ -38,6 +40,7 @@ export const TicketTypeFilters: React.FC<TicketTypeFiltersProps> = ({
     <div className={styles.filters}>
       <div className={styles.search}>
         <SearchInput
+          value={searchValue}
           onSearch={onSearchChange}
           placeholder="Search ticket types..."
           delay={300}

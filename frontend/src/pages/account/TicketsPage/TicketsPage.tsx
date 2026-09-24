@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { AccountPageLayout } from "@/components/account/AccountPageLayout/AccountPageLayout";
 import { TicketsList } from "@/components/account/TicketSection/TicketsList/TicketsList";
 import { TicketQRModal } from "@/components/account/TicketSection/TicketQRModal/TicketQRModal";
@@ -7,6 +7,11 @@ import { Pagination } from "@/components/ui/Pagination/Pagination";
 import { Button } from "@/components/ui/Button/Button";
 import { SearchInput } from "@/components/ui/SearchInput/SearchInput";
 import { useTicket } from "@/hooks/features/ticket/useTicket";
+import {
+  parseEnumParam,
+  toUrlEnumValue,
+  useUrlParams,
+} from "@/hooks/common/useUrlParams";
 import { DEFAULT_PAGE_SIZE_COMPACT } from "@/utils/paginationUtils";
 import type { TicketResponse, TicketStatus } from "@/types/ticket";
 import { Tabs, type TabItem } from "@/components/ui/Tabs/Tabs";
@@ -21,6 +26,8 @@ const TABS: ReadonlyArray<TabItem<TicketStatus | "all">> = [
   { id: "EXPIRED", label: "Expired" },
 ];
 
+const TAB_IDS = TABS.map((tab) => tab.id);
+
 export const TicketsPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showQRModal, setShowQRModal] = useState(false);
@@ -29,44 +36,30 @@ export const TicketsPage: React.FC = () => {
   const [selectedTicket, setSelectedTicket] = useState<TicketResponse | null>(
     null,
   );
-  const [statusFilter, setStatusFilter] = useState<TicketStatus | undefined>(
-    undefined,
-  );
-  const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(0);
+  const { page, query, getParam, setFilters, clearParams, setPage, setSearch } =
+    useUrlParams();
+  const activeTab = parseEnumParam(getParam("status"), TAB_IDS, "all");
+  const statusFilter = activeTab === "all" ? undefined : activeTab;
 
   const { tickets, pagination, loading, getMine } = useTicket();
 
+  const loadTickets = useCallback(() => {
+    getMine({
+      page,
+      size: DEFAULT_PAGE_SIZE_COMPACT,
+      status: statusFilter,
+      movieTitle: query,
+    });
+  }, [page, statusFilter, query, getMine]);
+
   useEffect(() => {
-    getMine({
-      page: currentPage,
-      size: DEFAULT_PAGE_SIZE_COMPACT,
-      status: statusFilter,
-      movieTitle: searchQuery || undefined,
-    });
-  }, [currentPage, statusFilter, searchQuery, getMine]);
+    loadTickets();
+  }, [loadTickets]);
 
-  const hasActiveFilters =
-    searchQuery.trim() !== "" || statusFilter !== undefined;
+  const hasActiveFilters = query !== undefined || statusFilter !== undefined;
 
-  const handleStatusChange = (status: TicketStatus | undefined) => {
-    setStatusFilter(status);
-    setCurrentPage(0);
-  };
-
-  const handleClearFilters = () => {
-    setStatusFilter(undefined);
-    setSearchQuery("");
-    setCurrentPage(0);
-  };
-
-  const handleRefundSuccess = () => {
-    getMine({
-      page: currentPage,
-      size: DEFAULT_PAGE_SIZE_COMPACT,
-      status: statusFilter,
-      movieTitle: searchQuery || undefined,
-    });
+  const handleStatusChange = (tab: TicketStatus | "all") => {
+    setFilters({ status: toUrlEnumValue(tab, "all") });
   };
 
   return (
@@ -77,16 +70,13 @@ export const TicketsPage: React.FC = () => {
       <div className={styles.controlsSection}>
         <div className={styles.searchBox}>
           <SearchInput
-            onSearch={setSearchQuery}
+            value={query}
+            onSearch={setSearch}
             placeholder="Search tickets by movie title..."
             delay={300}
           />
           {hasActiveFilters && (
-            <Button
-              variant="secondary"
-              onClick={handleClearFilters}
-              size="small"
-            >
+            <Button variant="secondary" onClick={clearParams} size="small">
               Clear Filters
             </Button>
           )}
@@ -112,8 +102,8 @@ export const TicketsPage: React.FC = () => {
 
       <Tabs
         items={TABS}
-        activeId={statusFilter ?? "all"}
-        onChange={(id) => handleStatusChange(id === "all" ? undefined : id)}
+        activeId={activeTab}
+        onChange={handleStatusChange}
         ariaLabel="Ticket status"
       />
 
@@ -141,7 +131,7 @@ export const TicketsPage: React.FC = () => {
                   totalPages={pagination.totalPages}
                   totalElements={pagination.totalElements}
                   pageSize={pagination.size}
-                  onPageChange={setCurrentPage}
+                  onPageChange={setPage}
                   variant="pages"
                   showInfo={true}
                 />
@@ -165,7 +155,7 @@ export const TicketsPage: React.FC = () => {
             setShowRefundModal(false);
             setSelectedTicket(null);
           }}
-          onRefundSuccess={handleRefundSuccess}
+          onRefundSuccess={loadTickets}
         />
       )}
     </AccountPageLayout>

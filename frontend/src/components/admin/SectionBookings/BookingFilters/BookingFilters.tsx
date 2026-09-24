@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Select } from "@/components/ui/Select/Select";
 import { Input } from "@/components/ui/Input/Input";
 import { Button } from "@/components/ui/Button/Button";
@@ -57,19 +57,13 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
   onSortChange,
   onClear,
 }) => {
-  const [searchKey, setSearchKey] = useState(0);
   const hasActiveFilters = Object.values(filters).some(Boolean) || !!sort;
-
-  const handleClear = () => {
-    setSearchKey((key) => key + 1);
-    onClear();
-  };
 
   return (
     <div className={styles.filters}>
       <div className={styles.search}>
         <SearchInput
-          key={searchKey}
+          value={filters.query}
           onSearch={(query) => onChange({ query: query || undefined })}
           placeholder="Booking number, email, movie or LiqPay order..."
           delay={500}
@@ -138,7 +132,7 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
         {hasActiveFilters && (
           <Button
             variant="secondary"
-            onClick={handleClear}
+            onClick={onClear}
             className={styles.clearButton}
           >
             Clear
