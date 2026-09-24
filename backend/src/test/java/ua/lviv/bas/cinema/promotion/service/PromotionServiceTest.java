@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.promotion.domain.Promotion;
 import ua.lviv.bas.cinema.promotion.domain.PromotionStatus;
 import ua.lviv.bas.cinema.promotion.domain.UserPromotion;
@@ -58,8 +59,8 @@ public class PromotionServiceTest {
     private final Long PROMOTION_ID = 1L;
     private final String PROMOTION_TITLE = "Summer Sale";
     private final Integer BONUS_POINTS = 100;
-    private final LocalDate START_DATE = LocalDate.now().minusDays(1);
-    private final LocalDate END_DATE = LocalDate.now().plusDays(30);
+    private final LocalDate START_DATE = CinemaTime.today().minusDays(1);
+    private final LocalDate END_DATE = CinemaTime.today().plusDays(30);
 
     private User user;
     private Promotion promotion;
@@ -299,7 +300,7 @@ public class PromotionServiceTest {
     @Test
     void claimPromotionWhenNotActiveShouldThrowException() {
         Promotion inactivePromotion = Promotion.builder().id(PROMOTION_ID).title(PROMOTION_TITLE)
-                .startDate(LocalDate.now().plusDays(1)).endDate(LocalDate.now().plusDays(30)).build();
+                .startDate(CinemaTime.today().plusDays(1)).endDate(CinemaTime.today().plusDays(30)).build();
 
         when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(inactivePromotion));
 

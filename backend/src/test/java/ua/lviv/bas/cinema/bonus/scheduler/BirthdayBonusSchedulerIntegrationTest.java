@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.bonus.domain.BonusCard;
 import ua.lviv.bas.cinema.bonus.repository.BonusCardRepository;
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
@@ -37,7 +38,7 @@ class BirthdayBonusSchedulerIntegrationTest {
 
     @Test
     void awardBirthdayBonusesWhenOneUserFailsShouldStillPersistTheOthers() {
-        LocalDate today = LocalDate.now();
+        LocalDate today = CinemaTime.today();
         LocalDate dateOfBirth = LocalDate.of(1990, today.getMonthValue(), today.getDayOfMonth());
 
         var failingUser = userRepository.save(buildUser("failing.birthday@test.com", dateOfBirth));

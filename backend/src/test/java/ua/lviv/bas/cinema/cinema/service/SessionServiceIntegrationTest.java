@@ -131,14 +131,14 @@ class SessionServiceIntegrationTest {
     void getScheduleDatesShouldReturnDistinctUpcomingScheduledDatesInOrder() {
         var movie = movieRepository.save(buildMovie("ZZTEST Dates Movie", "zztest-dates-movie"));
         var hall = cinemaHallRepository.save(CinemaHall.builder().name("ZZTEST Dates Hall").build());
-        var inTwoDays = LocalDate.now().plusDays(2);
-        var inFiveDays = LocalDate.now().plusDays(5);
+        var inTwoDays = CinemaTime.today().plusDays(2);
+        var inFiveDays = CinemaTime.today().plusDays(5);
 
         saveSession(movie, hall, inFiveDays.atTime(18, 0), "100.00", CinemaSessionStatus.SCHEDULED);
         saveSession(movie, hall, inTwoDays.atTime(12, 0), "100.00", CinemaSessionStatus.SCHEDULED);
         saveSession(movie, hall, inTwoDays.atTime(20, 0), "100.00", CinemaSessionStatus.SCHEDULED);
-        saveSession(movie, hall, LocalDate.now().plusDays(3).atTime(15, 0), "100.00", CinemaSessionStatus.CANCELLED);
-        saveSession(movie, hall, LocalDate.now().minusDays(1).atTime(15, 0), "100.00", CinemaSessionStatus.COMPLETED);
+        saveSession(movie, hall, CinemaTime.today().plusDays(3).atTime(15, 0), "100.00", CinemaSessionStatus.CANCELLED);
+        saveSession(movie, hall, CinemaTime.today().minusDays(1).atTime(15, 0), "100.00", CinemaSessionStatus.COMPLETED);
 
         assertThat(sessionService.getScheduleDates(movie.getId())).containsExactly(inTwoDays, inFiveDays);
     }
@@ -164,8 +164,8 @@ class SessionServiceIntegrationTest {
     private Movie buildMovie(String title, String slug) {
         return Movie.builder().title(title).slug(slug)
                 .trailerUrl("https://example.com/trailer").description("Test movie for session regression test")
-                .durationMinutes(120).releaseDate(LocalDate.now().minusDays(1))
-                .endShowingDate(LocalDate.now().plusMonths(1)).status(MovieStatus.CURRENT)
+                .durationMinutes(120).releaseDate(CinemaTime.today().minusDays(1))
+                .endShowingDate(CinemaTime.today().plusMonths(1)).status(MovieStatus.CURRENT)
                 .posterFileName("poster.jpg").ageRating(AgeRating.PEGI_12).build();
     }
 

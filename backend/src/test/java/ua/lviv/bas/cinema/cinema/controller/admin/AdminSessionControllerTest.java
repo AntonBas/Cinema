@@ -103,8 +103,8 @@ public class AdminSessionControllerTest {
         Long hallId = 1L;
         String movieTitle = "Test";
         CinemaSessionStatus status = CinemaSessionStatus.SCHEDULED;
-        LocalDate dateFrom = LocalDate.now();
-        LocalDate dateTo = LocalDate.now().plusDays(7);
+        LocalDate dateFrom = CinemaTime.today();
+        LocalDate dateTo = CinemaTime.today().plusDays(7);
         BigDecimal price = BigDecimal.valueOf(250);
 
         SessionAdminResponse response = createSessionAdminResponse(price);

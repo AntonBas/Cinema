@@ -102,7 +102,7 @@ class PaymentExpiryQueriesIntegrationTest {
         var movie = movieRepository.save(Movie.builder().title("ZZTEST Expiry Movie " + suffix)
                 .slug("zztest-expiry-movie-" + suffix).trailerUrl("https://example.com/trailer")
                 .description("Test movie for payment expiry queries").durationMinutes(100)
-                .releaseDate(LocalDate.now().minusDays(1)).endShowingDate(LocalDate.now().plusMonths(1))
+                .releaseDate(CinemaTime.today().minusDays(1)).endShowingDate(CinemaTime.today().plusMonths(1))
                 .status(MovieStatus.CURRENT).posterFileName("poster.jpg").ageRating(AgeRating.PEGI_12).build());
         var hall = cinemaHallRepository.save(CinemaHall.builder().name("ZZ Exp " + suffix % 100_000).build());
         return sessionRepository.save(Session.builder().movie(movie).hall(hall)

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.promotion.domain.PromotionStatus;
@@ -15,7 +16,6 @@ import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionNotActiv
 import ua.lviv.bas.cinema.promotion.service.PromotionService;
 import ua.lviv.bas.cinema.user.service.UserService;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,8 +54,8 @@ public class PromotionControllerTest {
 
     private PromotionResponse createPromotionResponse() {
         Integer BONUS_POINTS = 100;
-        return new PromotionResponse(PROMOTION_ID, TITLE, "Description", BONUS_POINTS, LocalDate.now().minusDays(1),
-                LocalDate.now().plusDays(5), PromotionStatus.ACTIVE);
+        return new PromotionResponse(PROMOTION_ID, TITLE, "Description", BONUS_POINTS, CinemaTime.today().minusDays(1),
+                CinemaTime.today().plusDays(5), PromotionStatus.ACTIVE);
     }
 
     @Test

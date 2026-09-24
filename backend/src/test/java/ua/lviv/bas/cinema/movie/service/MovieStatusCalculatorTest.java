@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.movie.service;
 
 import org.junit.jupiter.api.Test;
+import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.movie.domain.status.MovieStatus;
 
@@ -14,7 +15,7 @@ public class MovieStatusCalculatorTest {
 
     @Test
     void calculateWhenMovieIsNullShouldReturnUnknown() {
-        MovieStatus result = calculator.calculate(null, LocalDate.now());
+        MovieStatus result = calculator.calculate(null, CinemaTime.today());
 
         assertThat(result).isEqualTo(MovieStatus.UNKNOWN);
     }
@@ -23,16 +24,16 @@ public class MovieStatusCalculatorTest {
     void calculateWhenReleaseDateIsNullShouldReturnUnknown() {
         Movie movie = Movie.builder().releaseDate(null).build();
 
-        MovieStatus result = calculator.calculate(movie, LocalDate.now());
+        MovieStatus result = calculator.calculate(movie, CinemaTime.today());
 
         assertThat(result).isEqualTo(MovieStatus.UNKNOWN);
     }
 
     @Test
     void calculateWhenReferenceDateBeforeReleaseDateShouldReturnUpcoming() {
-        Movie movie = Movie.builder().releaseDate(LocalDate.now().plusDays(5)).build();
+        Movie movie = Movie.builder().releaseDate(CinemaTime.today().plusDays(5)).build();
 
-        MovieStatus result = calculator.calculate(movie, LocalDate.now());
+        MovieStatus result = calculator.calculate(movie, CinemaTime.today());
 
         assertThat(result).isEqualTo(MovieStatus.UPCOMING);
     }
@@ -40,11 +41,11 @@ public class MovieStatusCalculatorTest {
     @Test
     void calculateWhenReferenceDateAfterEndShowingDateShouldReturnArchived() {
         Movie movie = Movie.builder()
-                .releaseDate(LocalDate.now().minusDays(30))
-                .endShowingDate(LocalDate.now().minusDays(1))
+                .releaseDate(CinemaTime.today().minusDays(30))
+                .endShowingDate(CinemaTime.today().minusDays(1))
                 .build();
 
-        MovieStatus result = calculator.calculate(movie, LocalDate.now());
+        MovieStatus result = calculator.calculate(movie, CinemaTime.today());
 
         assertThat(result).isEqualTo(MovieStatus.ARCHIVED);
     }
@@ -52,11 +53,11 @@ public class MovieStatusCalculatorTest {
     @Test
     void calculateWhenWithinShowingPeriodShouldReturnCurrent() {
         Movie movie = Movie.builder()
-                .releaseDate(LocalDate.now().minusDays(5))
-                .endShowingDate(LocalDate.now().plusDays(5))
+                .releaseDate(CinemaTime.today().minusDays(5))
+                .endShowingDate(CinemaTime.today().plusDays(5))
                 .build();
 
-        MovieStatus result = calculator.calculate(movie, LocalDate.now());
+        MovieStatus result = calculator.calculate(movie, CinemaTime.today());
 
         assertThat(result).isEqualTo(MovieStatus.CURRENT);
     }
@@ -64,18 +65,18 @@ public class MovieStatusCalculatorTest {
     @Test
     void calculateWhenEndShowingDateIsNullAndReleasedShouldReturnCurrent() {
         Movie movie = Movie.builder()
-                .releaseDate(LocalDate.now().minusDays(5))
+                .releaseDate(CinemaTime.today().minusDays(5))
                 .endShowingDate(null)
                 .build();
 
-        MovieStatus result = calculator.calculate(movie, LocalDate.now());
+        MovieStatus result = calculator.calculate(movie, CinemaTime.today());
 
         assertThat(result).isEqualTo(MovieStatus.CURRENT);
     }
 
     @Test
     void calculateWhenReferenceDateEqualsReleaseDateShouldReturnCurrent() {
-        LocalDate releaseDate = LocalDate.now();
+        LocalDate releaseDate = CinemaTime.today();
         Movie movie = Movie.builder().releaseDate(releaseDate).build();
 
         MovieStatus result = calculator.calculate(movie, releaseDate);
@@ -85,9 +86,9 @@ public class MovieStatusCalculatorTest {
 
     @Test
     void calculateWhenReferenceDateEqualsEndShowingDateShouldReturnCurrent() {
-        LocalDate endShowingDate = LocalDate.now();
+        LocalDate endShowingDate = CinemaTime.today();
         Movie movie = Movie.builder()
-                .releaseDate(LocalDate.now().minusDays(5))
+                .releaseDate(CinemaTime.today().minusDays(5))
                 .endShowingDate(endShowingDate)
                 .build();
 

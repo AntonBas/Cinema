@@ -68,7 +68,7 @@ class BookingBonusSpendIntegrationTest {
         var movie = movieRepository.save(Movie.builder().title("Bonus Spend Test Movie")
                 .slug("bonus-spend-test-movie").trailerUrl("https://example.com/trailer")
                 .description("Test movie for bonus spend integration test").durationMinutes(120)
-                .releaseDate(LocalDate.now().minusDays(1)).endShowingDate(LocalDate.now().plusMonths(1))
+                .releaseDate(CinemaTime.today().minusDays(1)).endShowingDate(CinemaTime.today().plusMonths(1))
                 .status(MovieStatus.CURRENT).posterFileName("poster.jpg").ageRating(AgeRating.PEGI_12).build());
         var hall = cinemaHallRepository.save(CinemaHall.builder().name("Bonus Spend Hall").build());
         var seat = seatRepository.save(Seat.builder().hall(hall).row(1).number(1).x(0).y(0).build());

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -20,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import jakarta.servlet.http.Cookie;
+import ua.lviv.bas.cinema.config.ratelimit.RateLimitConfig;
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
 import ua.lviv.bas.cinema.config.security.CustomUserDetailsService;
@@ -37,6 +39,7 @@ import ua.lviv.bas.cinema.user.mapper.UserMapper;
 import ua.lviv.bas.cinema.user.service.UserPasswordResetService;
 import ua.lviv.bas.cinema.user.service.UserService;
 
+import java.util.Map;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -66,6 +69,9 @@ public class AuthControllerTest {
     private WebApplicationContext context;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Autowired
+    private RateLimitConfig rateLimitConfig;
 
     @MockitoBean
     private UserService userService;
@@ -99,6 +105,7 @@ public class AuthControllerTest {
 
     @BeforeEach
     void setUp() {
+        ((Map<?, ?>) ReflectionTestUtils.getField(rateLimitConfig, "buckets")).clear();
         mockMvc = MockMvcBuilders
                 .webAppContextSetup(context)
                 .apply(SecurityMockMvcConfigurers.springSecurity())

@@ -7,6 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
 import org.springframework.mock.web.MockMultipartFile;
+import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.movie.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.movie.domain.status.MovieStatus;
 import ua.lviv.bas.cinema.common.PageResponse;
@@ -17,7 +18,6 @@ import ua.lviv.bas.cinema.movie.dto.response.MovieCardResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.movie.service.MovieService;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,8 +35,8 @@ public class AdminMovieControllerTest {
     private AdminMovieController movieController;
 
     private MovieAdminResponse createMovieAdminResponse(String title) {
-        return new MovieAdminResponse(1L, title, "trailer.mp4", "Description", 120, LocalDate.now().plusDays(1),
-                LocalDate.now().plusDays(30), AgeRating.PEGI_12, MovieStatus.UPCOMING,
+        return new MovieAdminResponse(1L, title, "trailer.mp4", "Description", 120, CinemaTime.today().plusDays(1),
+                CinemaTime.today().plusDays(30), AgeRating.PEGI_12, MovieStatus.UPCOMING,
                 "/api/movies/" + 1L + "/poster", List.of(), List.of(), List.of(), List.of());
     }
 

@@ -172,8 +172,8 @@ class PaymentCallbackConcurrencyTest {
     private Movie buildMovie() {
         return Movie.builder().title("Callback Concurrency Test Movie").slug("callback-concurrency-test-movie")
                 .trailerUrl("https://example.com/trailer").description("Test movie for callback concurrency testing")
-                .durationMinutes(120).releaseDate(LocalDate.now().minusDays(1))
-                .endShowingDate(LocalDate.now().plusMonths(1)).status(MovieStatus.CURRENT)
+                .durationMinutes(120).releaseDate(CinemaTime.today().minusDays(1))
+                .endShowingDate(CinemaTime.today().plusMonths(1)).status(MovieStatus.CURRENT)
                 .posterFileName("poster.jpg").ageRating(AgeRating.PEGI_12).build();
     }
 }

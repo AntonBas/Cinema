@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.movie.service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.Test;
@@ -68,8 +67,8 @@ class MovieServiceIntegrationTest {
     private Movie buildMovie() {
         return Movie.builder().title("ZZTEST Showtimes Movie").slug("zztest-showtimes-movie")
                 .trailerUrl("https://example.com/trailer").description("Test movie for showtimes filtering")
-                .durationMinutes(120).releaseDate(LocalDate.now().minusDays(7))
-                .endShowingDate(LocalDate.now().plusMonths(1)).status(MovieStatus.CURRENT)
+                .durationMinutes(120).releaseDate(CinemaTime.today().minusDays(7))
+                .endShowingDate(CinemaTime.today().plusMonths(1)).status(MovieStatus.CURRENT)
                 .posterFileName("poster.jpg").ageRating(AgeRating.PEGI_12).build();
     }
 }

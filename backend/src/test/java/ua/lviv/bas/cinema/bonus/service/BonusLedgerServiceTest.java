@@ -27,7 +27,6 @@ import ua.lviv.bas.cinema.bonus.repository.BonusRulesRepository;
 import ua.lviv.bas.cinema.bonus.repository.BonusTransactionRepository;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 
-import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -161,7 +160,7 @@ public class BonusLedgerServiceTest {
     @Test
     void awardBirthdayBonusWhenBirthdayShouldAddPoints() {
         User user = User.builder().id(USER_ID).verificationStatus(VerificationStatus.VERIFIED)
-                .dateOfBirth(LocalDate.now()).build();
+                .dateOfBirth(CinemaTime.today()).build();
         BonusCard card = BonusCard.builder().pointsBalance(0).lastBirthdayBonusDate(null).build();
         BonusRules rule = BonusRules.builder().points(100).build();
 
@@ -173,7 +172,7 @@ public class BonusLedgerServiceTest {
         bonusLedgerService.awardBirthdayBonus(user);
 
         assertThat(card.getPointsBalance()).isEqualTo(100);
-        assertThat(card.getLastBirthdayBonusDate()).isEqualTo(LocalDate.now());
+        assertThat(card.getLastBirthdayBonusDate()).isEqualTo(CinemaTime.today());
         verify(bonusCardRepository).save(any(BonusCard.class));
         verify(bonusTransactionRepository).save(argThat(transaction -> transaction.getReferenceId()
                 .equals("BIRTHDAY_" + USER_ID + "_" + CinemaTime.today().getYear())));
@@ -200,8 +199,8 @@ public class BonusLedgerServiceTest {
     @Test
     void awardBirthdayBonusWhenAlreadyReceivedThisYearShouldDoNothing() {
         User user = User.builder().id(USER_ID).verificationStatus(VerificationStatus.VERIFIED)
-                .dateOfBirth(LocalDate.now()).build();
-        BonusCard card = BonusCard.builder().pointsBalance(0).lastBirthdayBonusDate(LocalDate.now()).build();
+                .dateOfBirth(CinemaTime.today()).build();
+        BonusCard card = BonusCard.builder().pointsBalance(0).lastBirthdayBonusDate(CinemaTime.today()).build();
 
         when(bonusCardRepository.findByUserId(USER_ID)).thenReturn(Optional.of(card));
 

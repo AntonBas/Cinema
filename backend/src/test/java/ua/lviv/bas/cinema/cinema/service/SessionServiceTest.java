@@ -73,7 +73,7 @@ public class SessionServiceTest {
     @BeforeEach
     void setUp() {
         movie = Movie.builder().id(MOVIE_ID).title(MOVIE_TITLE).durationMinutes(120)
-                .releaseDate(LocalDate.now().minusDays(1)).build();
+                .releaseDate(CinemaTime.today().minusDays(1)).build();
 
         hall = CinemaHall.builder().id(HALL_ID).name(HALL_NAME).seats(new ArrayList<>()).build();
 
@@ -157,7 +157,7 @@ public class SessionServiceTest {
     @Test
     void updateSessionWhenMovieAndHallChangedShouldApplyThemAndValidateAgainstNewValues() {
         Movie newMovie = Movie.builder().id(20L).title("New Movie").durationMinutes(90)
-                .releaseDate(LocalDate.now().minusDays(1)).build();
+                .releaseDate(CinemaTime.today().minusDays(1)).build();
         CinemaHall newHall = CinemaHall.builder().id(30L).name("Hall 2").seats(new ArrayList<>()).build();
         SessionRequest request = new SessionRequest(null, null, 20L, 30L);
 
@@ -180,7 +180,7 @@ public class SessionServiceTest {
     @Test
     void updateSessionWhenNewMovieNotReleasedYetShouldThrowException() {
         Movie futureMovie = Movie.builder().id(20L).title("Future").durationMinutes(90)
-                .releaseDate(LocalDate.now().plusMonths(1)).build();
+                .releaseDate(CinemaTime.today().plusMonths(1)).build();
 
         when(sessionRepository.findByIdWithLock(SESSION_ID)).thenReturn(Optional.of(session));
         when(movieRepository.findById(20L)).thenReturn(Optional.of(futureMovie));
@@ -331,7 +331,7 @@ public class SessionServiceTest {
                 MOVIE_ID, MOVIE_TITLE, null, null, null, null, HALL_ID, HALL_NAME, null);
         SessionScheduleResponse withSeats = schedule.withAvailableSeats(42);
 
-        when(sessionScheduleQueryService.getScheduleWithoutAvailability(null, LocalDate.now(), null))
+        when(sessionScheduleQueryService.getScheduleWithoutAvailability(null, CinemaTime.today(), null))
                 .thenReturn(List.of(schedule));
         when(seatReservationService.getAvailableSeatsBatch(List.of(SESSION_ID)))
                 .thenReturn(Map.of(SESSION_ID, 42));

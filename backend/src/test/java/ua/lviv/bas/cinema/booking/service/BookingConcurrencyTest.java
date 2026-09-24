@@ -76,10 +76,13 @@ class BookingConcurrencyTest {
     void concurrentUpdatesToSameBookingOnlyOneShouldSucceed() throws Exception {
         var readyLatch = new CountDownLatch(2);
         var startLatch = new CountDownLatch(1);
+        var bothLoadedLatch = new CountDownLatch(2);
         ExecutorService executor = Executors.newFixedThreadPool(2);
 
-        Callable<Exception> updateToConfirmed = () -> attemptUpdate(readyLatch, startLatch, BookingStatus.CONFIRMED);
-        Callable<Exception> updateToExpired = () -> attemptUpdate(readyLatch, startLatch, BookingStatus.EXPIRED);
+        Callable<Exception> updateToConfirmed = () -> attemptUpdate(readyLatch, startLatch, bothLoadedLatch,
+                BookingStatus.CONFIRMED);
+        Callable<Exception> updateToExpired = () -> attemptUpdate(readyLatch, startLatch, bothLoadedLatch,
+                BookingStatus.EXPIRED);
 
         Future<Exception> resultA = executor.submit(updateToConfirmed);
         Future<Exception> resultB = executor.submit(updateToExpired);
@@ -102,11 +105,14 @@ class BookingConcurrencyTest {
         assertThat(finalBooking.getVersion()).isEqualTo(1L);
     }
 
-    private Exception attemptUpdate(CountDownLatch readyLatch, CountDownLatch startLatch, BookingStatus status) {
+    private Exception attemptUpdate(CountDownLatch readyLatch, CountDownLatch startLatch,
+                                    CountDownLatch bothLoadedLatch, BookingStatus status) {
         try {
             readyLatch.countDown();
             startLatch.await();
             var booking = bookingRepository.findById(bookingId).orElseThrow();
+            bothLoadedLatch.countDown();
+            bothLoadedLatch.await(5, TimeUnit.SECONDS);
             booking.setStatus(status);
             bookingRepository.saveAndFlush(booking);
             return null;
@@ -124,8 +130,8 @@ class BookingConcurrencyTest {
     private Movie buildMovie() {
         return Movie.builder().title("Concurrency Lock Test Movie").slug("concurrency-lock-test-movie")
                 .trailerUrl("https://example.com/trailer").description("Test movie for optimistic lock testing")
-                .durationMinutes(120).releaseDate(LocalDate.now().minusDays(1))
-                .endShowingDate(LocalDate.now().plusMonths(1)).status(MovieStatus.CURRENT)
+                .durationMinutes(120).releaseDate(CinemaTime.today().minusDays(1))
+                .endShowingDate(CinemaTime.today().plusMonths(1)).status(MovieStatus.CURRENT)
                 .posterFileName("poster.jpg").ageRating(AgeRating.PEGI_12).build();
     }
 }

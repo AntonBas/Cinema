@@ -144,8 +144,8 @@ class BonusRefundPointsRetryConcurrencyTest {
         var uniqueSuffix = UUID.randomUUID().toString().substring(0, 8);
         return Movie.builder().title("Refund Retry " + uniqueSuffix).slug("refund-retry-" + uniqueSuffix)
                 .trailerUrl("https://example.com/trailer").description("Test movie for bonus refund retry testing")
-                .durationMinutes(120).releaseDate(LocalDate.now().minusDays(1))
-                .endShowingDate(LocalDate.now().plusMonths(1)).status(MovieStatus.CURRENT)
+                .durationMinutes(120).releaseDate(CinemaTime.today().minusDays(1))
+                .endShowingDate(CinemaTime.today().plusMonths(1)).status(MovieStatus.CURRENT)
                 .posterFileName("poster.jpg").ageRating(AgeRating.PEGI_12).build();
     }
 }

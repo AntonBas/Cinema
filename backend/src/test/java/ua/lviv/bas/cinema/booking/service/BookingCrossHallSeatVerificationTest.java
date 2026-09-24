@@ -64,7 +64,7 @@ class BookingCrossHallSeatVerificationTest {
         var movie = movieRepository.save(Movie.builder().title("Cross Hall Test Movie")
                 .slug("cross-hall-test-movie").trailerUrl("https://example.com/trailer")
                 .description("Test movie for cross-hall seat verification").durationMinutes(120)
-                .releaseDate(LocalDate.now().minusDays(1)).endShowingDate(LocalDate.now().plusMonths(1))
+                .releaseDate(CinemaTime.today().minusDays(1)).endShowingDate(CinemaTime.today().plusMonths(1))
                 .status(MovieStatus.CURRENT).posterFileName("poster.jpg").ageRating(AgeRating.PEGI_12).build());
 
         var sessionHall = cinemaHallRepository.save(CinemaHall.builder().name("Session Hall").build());

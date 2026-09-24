@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.movie.mapper;
 
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
+import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.movie.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.movie.domain.status.MovieStatus;
@@ -57,7 +58,7 @@ public class MovieMapperTest {
     @Test
     void toEntityFromCreateRequest() {
         var request = MovieCreateRequest.builder().title("New").trailerUrl("url").description("desc")
-                .durationMinutes(120).releaseDate(LocalDate.now()).endShowingDate(LocalDate.now().plusDays(1))
+                .durationMinutes(120).releaseDate(CinemaTime.today()).endShowingDate(CinemaTime.today().plusDays(1))
                 .ageRating(AgeRating.PEGI_12).genreIds(List.of(1L)).actorIds(List.of(1L)).build();
         var result = mapper.toEntity(request);
 

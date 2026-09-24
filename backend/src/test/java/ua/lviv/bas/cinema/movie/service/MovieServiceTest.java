@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
+import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.movie.domain.Genre;
 import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.movie.domain.Person;
@@ -94,33 +95,33 @@ public class MovieServiceTest {
         movie.setTrailerUrl("trailer.mp4");
         movie.setDescription("Description");
         movie.setDurationMinutes(120);
-        movie.setReleaseDate(LocalDate.now().plusDays(1));
-        movie.setEndShowingDate(LocalDate.now().plusDays(30));
+        movie.setReleaseDate(CinemaTime.today().plusDays(1));
+        movie.setEndShowingDate(CinemaTime.today().plusDays(30));
         movie.setAgeRating(AgeRating.PEGI_12);
         movie.setStatus(MovieStatus.UPCOMING);
         movie.setPosterFileName("poster.jpg");
         movie.setSessions(new HashSet<>());
 
         adminResponse = new MovieAdminResponse(MOVIE_ID, MOVIE_TITLE, "trailer.mp4", "Description", 120,
-                LocalDate.now().plusDays(1), LocalDate.now().plusDays(30), AgeRating.PEGI_12, MovieStatus.UPCOMING,
+                CinemaTime.today().plusDays(1), CinemaTime.today().plusDays(30), AgeRating.PEGI_12, MovieStatus.UPCOMING,
                 "/api/movies/1/poster", List.of(), List.of(), List.of(), List.of());
 
         detailResponse = new MovieDetailResponse(MOVIE_ID, MOVIE_TITLE, SLUG, "trailer.mp4", "Description", 120,
-                LocalDate.now().plusDays(1), LocalDate.now().plusDays(30), AgeRating.PEGI_12, MovieStatus.UPCOMING,
+                CinemaTime.today().plusDays(1), CinemaTime.today().plusDays(30), AgeRating.PEGI_12, MovieStatus.UPCOMING,
                 "/api/movies/1/poster", List.of(), List.of(), List.of(), List.of(), List.of());
 
         cardResponse = new MovieCardResponse(MOVIE_ID, SLUG, MOVIE_TITLE, "/api/movies/1/poster", 120,
                 AgeRating.PEGI_12, MovieStatus.UPCOMING);
 
         createRequest = MovieCreateRequest.builder().title(MOVIE_TITLE).trailerUrl("trailer.mp4")
-                .description("Description").durationMinutes(120).releaseDate(LocalDate.now().plusDays(1))
-                .endShowingDate(LocalDate.now().plusDays(30)).ageRating(AgeRating.PEGI_12).genreIds(List.of(1L, 2L))
+                .description("Description").durationMinutes(120).releaseDate(CinemaTime.today().plusDays(1))
+                .endShowingDate(CinemaTime.today().plusDays(30)).ageRating(AgeRating.PEGI_12).genreIds(List.of(1L, 2L))
                 .actorIds(List.of(3L, 4L)).directorIds(List.of(5L)).screenwriterIds(List.of(6L))
                 .posterFile(mock(MultipartFile.class)).build();
 
         updateRequest = MovieUpdateRequest.builder().title("Updated Title").trailerUrl("new-trailer.mp4")
-                .description("New Description").durationMinutes(130).releaseDate(LocalDate.now().plusDays(2))
-                .endShowingDate(LocalDate.now().plusDays(40)).ageRating(AgeRating.PEGI_16).genreIds(List.of(1L))
+                .description("New Description").durationMinutes(130).releaseDate(CinemaTime.today().plusDays(2))
+                .endShowingDate(CinemaTime.today().plusDays(40)).ageRating(AgeRating.PEGI_16).genreIds(List.of(1L))
                 .actorIds(List.of(3L)).directorIds(List.of(5L, 7L)).screenwriterIds(List.of(6L, 8L)).removePoster(false)
                 .build();
 
@@ -275,8 +276,8 @@ public class MovieServiceTest {
         existingMovie.setId(MOVIE_ID);
         existingMovie.setTitle("Old Title");
         existingMovie.setSlug("old-title");
-        existingMovie.setReleaseDate(LocalDate.now().plusDays(1));
-        existingMovie.setEndShowingDate(LocalDate.now().plusDays(30));
+        existingMovie.setReleaseDate(CinemaTime.today().plusDays(1));
+        existingMovie.setEndShowingDate(CinemaTime.today().plusDays(30));
         existingMovie.setSessions(new HashSet<>());
 
         when(movieRepository.findMovieById(MOVIE_ID)).thenReturn(Optional.of(existingMovie));
@@ -324,12 +325,12 @@ public class MovieServiceTest {
         existingMovie.setId(MOVIE_ID);
         existingMovie.setTitle("Same Title");
         existingMovie.setSlug("same-title");
-        existingMovie.setReleaseDate(LocalDate.now().plusDays(1));
-        existingMovie.setEndShowingDate(LocalDate.now().plusDays(30));
+        existingMovie.setReleaseDate(CinemaTime.today().plusDays(1));
+        existingMovie.setEndShowingDate(CinemaTime.today().plusDays(30));
         existingMovie.setSessions(new HashSet<>());
 
         MovieUpdateRequest sameTitleRequest = MovieUpdateRequest.builder().title("Same Title")
-                .releaseDate(LocalDate.now().plusDays(2)).endShowingDate(LocalDate.now().plusDays(40))
+                .releaseDate(CinemaTime.today().plusDays(2)).endShowingDate(CinemaTime.today().plusDays(40))
                 .genreIds(List.of(1L)).actorIds(List.of(1L)).directorIds(List.of(1L)).screenwriterIds(List.of(1L))
                 .build();
 
@@ -410,7 +411,7 @@ public class MovieServiceTest {
 
     @Test
     void searchMoviesByDateShouldReturnList() {
-        LocalDate date = LocalDate.now();
+        LocalDate date = CinemaTime.today();
         when(movieRepository.findAll(any(Specification.class), any(org.springframework.data.domain.Sort.class))).thenReturn(List.of(movie));
         when(movieMapper.toMovieSessionSearchResponse(movie))
                 .thenReturn(new MovieSessionSearchResponse(MOVIE_ID, MOVIE_TITLE, 120));

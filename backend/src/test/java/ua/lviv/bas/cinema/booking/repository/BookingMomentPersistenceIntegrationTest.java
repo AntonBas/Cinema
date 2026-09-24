@@ -35,7 +35,8 @@ import ua.lviv.bas.cinema.common.CinemaTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(properties = "spring.datasource.hikari.connection-init-sql=SET TIME ZONE 'America/New_York'")
+@SpringBootTest(properties = {"spring.datasource.hikari.connection-init-sql=SET TIME ZONE 'America/New_York'",
+        "scheduler.booking.expiration-interval=3600000"})
 @ActiveProfiles("ci")
 @Import({TestcontainersConfig.class, NoOpCacheTestConfig.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -79,8 +80,8 @@ class BookingMomentPersistenceIntegrationTest {
     private Session saveSession() {
         var movie = movieRepository.save(Movie.builder().title("ZZTEST Moment Movie").slug("zztest-moment-movie")
                 .trailerUrl("https://example.com/trailer").description("Test movie for moment persistence")
-                .durationMinutes(100).releaseDate(LocalDate.now().minusDays(1))
-                .endShowingDate(LocalDate.now().plusMonths(1)).status(MovieStatus.CURRENT)
+                .durationMinutes(100).releaseDate(CinemaTime.today().minusDays(1))
+                .endShowingDate(CinemaTime.today().plusMonths(1)).status(MovieStatus.CURRENT)
                 .posterFileName("poster.jpg").ageRating(AgeRating.PEGI_12).build());
         var hall = cinemaHallRepository.save(CinemaHall.builder().name("ZZTEST Moment Hall").build());
         return sessionRepository.save(Session.builder().movie(movie).hall(hall)
