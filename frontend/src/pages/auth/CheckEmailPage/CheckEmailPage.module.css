@@ -1,0 +1,62 @@
+.card {
+  text-align: center;
+}
+
+.icon {
+  margin: 0 auto;
+  padding-bottom: var(--space-6);
+  color: var(--color-primary);
+}
+
+.message {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+  line-height: 1.6;
+  margin: 0 0 var(--space-2);
+}
+
+.email {
+  color: var(--color-text-primary);
+  font-weight: 600;
+  margin: 0 0 var(--space-6);
+  word-break: break-all;
+}
+
+.actions {
+  margin-top: var(--space-4);
+}
+
+.messageError,
+.messageSuccess {
+  font-size: var(--font-size-sm);
+  margin: var(--space-2) 0 0;
+}
+
+.messageError {
+  color: var(--color-error);
+}
+
+.messageSuccess {
+  color: var(--color-success);
+}
+
+.hint {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  margin: var(--space-4) 0 0;
+}
+
+.bottom {
+  margin-top: var(--space-6);
+}
+
+.bottom a {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+  transition: color var(--transition-normal);
+}
+
+.bottom a:hover {
+  color: var(--color-primary);
+}

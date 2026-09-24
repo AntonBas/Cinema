@@ -79,6 +79,17 @@
   border-color: rgba(var(--color-error-rgb), var(--opacity-medium));
 }
 
+.notificationLink {
+  display: block;
+  margin-top: var(--space-2);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.notificationLink:hover {
+  color: var(--color-primary-hover);
+}
+
 @keyframes slideDown {
   from {
     opacity: 0;

@@ -3,7 +3,6 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuthActions } from "@/hooks/features/auth/useAuthActions";
 import { Input } from "@/components/ui/Input/Input";
 import { Button } from "@/components/ui/Button/Button";
-import { Modal } from "@/components/ui/Modal/Modal";
 import type { RegisterRequest } from "@/types/auth";
 import { isApiErrorException } from "@/utils/apiErrorHandler";
 import {
@@ -13,38 +12,6 @@ import {
 } from "@/utils/formValidation";
 import { AuthCard } from "@/components/auth/AuthCard/AuthCard";
 import styles from "./RegisterForm.module.css";
-
-interface SuccessModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  email: string;
-}
-
-const RegistrationSuccessModal: React.FC<SuccessModalProps> = ({
-  isOpen,
-  onClose,
-  email,
-}) => (
-  <Modal isOpen={isOpen} onClose={onClose} size="small">
-    <div className={styles.successContent}>
-      <div className={styles.successText}>
-        <h3 className={styles.successTitle}>Registration Successful!</h3>
-        <p className={styles.successMessage}>
-          We've sent a confirmation email to
-        </p>
-        <p className={styles.emailHighlight}>{email}</p>
-      </div>
-      <div className={styles.modalActions}>
-        <Button variant="primary" onClick={onClose} fullWidth>
-          Continue to Login
-        </Button>
-      </div>
-      <p className={styles.helpText}>
-        Check your spam folder if you don't see the email
-      </p>
-    </div>
-  </Modal>
-);
 
 export const RegisterForm: React.FC = () => {
   const navigate = useNavigate();
@@ -60,7 +27,6 @@ export const RegisterForm: React.FC = () => {
     password: "",
     passwordConfirm: "",
   });
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const handleChange = (field: keyof RegisterRequest, value: string) => {
@@ -98,7 +64,7 @@ export const RegisterForm: React.FC = () => {
     try {
       const result = await register(formData);
       if (result) {
-        setShowSuccessModal(true);
+        navigate("/check-email", { state: { email: formData.email } });
       }
     } catch (err) {
       if (isApiErrorException(err) && err.isValidationError()) {
@@ -107,121 +73,108 @@ export const RegisterForm: React.FC = () => {
     }
   };
 
-  const handleModalClose = () => {
-    setShowSuccessModal(false);
-    navigate("/login");
-  };
-
   return (
-    <>
-      <AuthCard title="Create an Account" wide>
-        <div className={styles.registrationTop}>
-          <span>Already have an account?</span>
-          <Link to="/login">Login</Link>
+    <AuthCard title="Create an Account" wide>
+      <div className={styles.registrationTop}>
+        <span>Already have an account?</span>
+        <Link to="/login">Login</Link>
+      </div>
+
+      <form className={styles.registrationForm} onSubmit={handleSubmit}>
+        {error && (
+          <div className={styles.notification} data-type="error">
+            {error.message}
+          </div>
+        )}
+
+        <div className={styles.formSection}>
+          <h2 className={styles.sectionTitle}>Personal Information</h2>
+          <div className={styles.inputGroup}>
+            <Input
+              placeholder="First Name"
+              value={formData.firstName}
+              onChange={(v) => handleChange("firstName", v)}
+              disabled={loading}
+              error={formErrors.firstName}
+            />
+            <Input
+              placeholder="Last Name"
+              value={formData.lastName}
+              onChange={(v) => handleChange("lastName", v)}
+              disabled={loading}
+              error={formErrors.lastName}
+            />
+          </div>
+          <div className={styles.inputGroup}>
+            <Input
+              type="date"
+              placeholder="Date of Birth"
+              value={formData.dateOfBirth}
+              onChange={(v) => handleChange("dateOfBirth", v)}
+              disabled={loading}
+              error={formErrors.dateOfBirth}
+            />
+            <Input
+              placeholder="Your City"
+              value={formData.city}
+              onChange={(v) => handleChange("city", v)}
+              disabled={loading}
+              error={formErrors.city}
+            />
+          </div>
         </div>
 
-        <form className={styles.registrationForm} onSubmit={handleSubmit}>
-          {error && (
-            <div className={styles.notification} data-type="error">
-              {error.message}
-            </div>
-          )}
-
-          <div className={styles.formSection}>
-            <h2 className={styles.sectionTitle}>Personal Information</h2>
-            <div className={styles.inputGroup}>
-              <Input
-                placeholder="First Name"
-                value={formData.firstName}
-                onChange={(v) => handleChange("firstName", v)}
-                disabled={loading}
-                error={formErrors.firstName}
-              />
-              <Input
-                placeholder="Last Name"
-                value={formData.lastName}
-                onChange={(v) => handleChange("lastName", v)}
-                disabled={loading}
-                error={formErrors.lastName}
-              />
-            </div>
-            <div className={styles.inputGroup}>
-              <Input
-                type="date"
-                placeholder="Date of Birth"
-                value={formData.dateOfBirth}
-                onChange={(v) => handleChange("dateOfBirth", v)}
-                disabled={loading}
-                error={formErrors.dateOfBirth}
-              />
-              <Input
-                placeholder="Your City"
-                value={formData.city}
-                onChange={(v) => handleChange("city", v)}
-                disabled={loading}
-                error={formErrors.city}
-              />
-            </div>
-          </div>
-
-          <div className={styles.formSection}>
-            <h2 className={styles.sectionTitle}>Contact Information</h2>
-            <Input
-              type="email"
-              placeholder="E-mail"
-              value={formData.email}
-              onChange={(v) => handleChange("email", v)}
-              disabled={loading}
-              error={formErrors.email}
-            />
-            <Input
-              placeholder="Phone number"
-              value={formData.phoneNumber}
-              onChange={(v) => handleChange("phoneNumber", v)}
-              disabled={loading}
-              error={formErrors.phoneNumber}
-            />
-          </div>
-
-          <div className={styles.formSection}>
-            <h2 className={styles.sectionTitle}>Create a Password</h2>
-            <Input
-              type="password"
-              placeholder="Enter Password"
-              value={formData.password}
-              onChange={(v) => handleChange("password", v)}
-              disabled={loading}
-              error={formErrors.password}
-            />
-            <Input
-              type="password"
-              placeholder="Confirm Password"
-              value={formData.passwordConfirm}
-              onChange={(v) => handleChange("passwordConfirm", v)}
-              disabled={loading}
-              error={formErrors.passwordConfirm}
-            />
-          </div>
-
-          <Button
-            type="submit"
-            variant="primary"
-            size="large"
-            loading={loading}
+        <div className={styles.formSection}>
+          <h2 className={styles.sectionTitle}>Contact Information</h2>
+          <Input
+            type="email"
+            placeholder="E-mail"
+            value={formData.email}
+            onChange={(v) => handleChange("email", v)}
             disabled={loading}
-            fullWidth
-            style={{ marginTop: "1rem" }}
-          >
-            {loading ? "Creating account..." : "Sign Up"}
-          </Button>
-        </form>
-      </AuthCard>
+            error={formErrors.email}
+          />
+          <Input
+            placeholder="Phone number"
+            value={formData.phoneNumber}
+            onChange={(v) => handleChange("phoneNumber", v)}
+            disabled={loading}
+            error={formErrors.phoneNumber}
+          />
+        </div>
 
-      <RegistrationSuccessModal
-        isOpen={showSuccessModal}
-        onClose={handleModalClose}
-        email={formData.email}
-      />
-    </>
+        <div className={styles.formSection}>
+          <h2 className={styles.sectionTitle}>Create a Password</h2>
+          <Input
+            type="password"
+            placeholder="Enter Password"
+            value={formData.password}
+            onChange={(v) => handleChange("password", v)}
+            disabled={loading}
+            error={formErrors.password}
+          />
+          <Input
+            type="password"
+            placeholder="Confirm Password"
+            value={formData.passwordConfirm}
+            onChange={(v) => handleChange("passwordConfirm", v)}
+            disabled={loading}
+            error={formErrors.passwordConfirm}
+          />
+        </div>
+
+        <Button
+          type="submit"
+          variant="primary"
+          size="large"
+          loading={loading}
+          disabled={loading}
+          fullWidth
+          style={{ marginTop: "1rem" }}
+        >
+          {loading ? "Creating account..." : "Sign Up"}
+        </Button>
+      </form>
+    </AuthCard>
   );
 };

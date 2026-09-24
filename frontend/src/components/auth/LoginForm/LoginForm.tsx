@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/Input/Input";
 import { Button } from "@/components/ui/Button/Button";
 import { Chrome } from "lucide-react";
 import { AuthCard } from "@/components/auth/AuthCard/AuthCard";
+import { isApiErrorException } from "@/utils/apiErrorHandler";
 import styles from "./LoginForm.module.css";
 
 export const LoginForm: React.FC = () => {
@@ -13,9 +14,16 @@ export const LoginForm: React.FC = () => {
 
   const { loading, error, login, loginWithGoogle } = useAuthActions();
 
+  const needsEmailConfirmation =
+    isApiErrorException(error) && error.isForbidden();
+
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-    await login({ email, password });
+    try {
+      await login({ email, password });
+    } catch {
+      return;
+    }
   };
 
   const handleGoogleLogin = (e: React.MouseEvent) => {
@@ -34,6 +42,15 @@ export const LoginForm: React.FC = () => {
         {error && (
           <div className={styles.notification} data-type="error">
             {error.message}
+            {needsEmailConfirmation && (
+              <Link
+                to="/check-email"
+                state={{ email, fromLogin: true }}
+                className={styles.notificationLink}
+              >
+                Resend confirmation email
+              </Link>
+            )}
           </div>
         )}
 
