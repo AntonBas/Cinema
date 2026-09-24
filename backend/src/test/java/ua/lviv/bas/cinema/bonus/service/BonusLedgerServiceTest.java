@@ -18,6 +18,7 @@ import ua.lviv.bas.cinema.bonus.domain.BonusTransaction;
 import ua.lviv.bas.cinema.bonus.domain.BonusTransactionType;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.payment.domain.Payment;
+import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.user.domain.VerificationStatus;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusValidationException;
@@ -144,7 +145,8 @@ public class BonusLedgerServiceTest {
         assertThat(card.getPointsBalance()).isEqualTo(100);
         assertThat(card.getLastBirthdayBonusDate()).isEqualTo(LocalDate.now());
         verify(bonusCardRepository).save(any(BonusCard.class));
-        verify(bonusTransactionRepository).save(any(BonusTransaction.class));
+        verify(bonusTransactionRepository).save(argThat(transaction -> transaction.getReferenceId()
+                .equals("BIRTHDAY_" + USER_ID + "_" + CinemaTime.today().getYear())));
     }
 
     @Test

@@ -89,7 +89,8 @@ public class BonusLedgerService {
             }
             var rule = getActiveRule(BonusTransactionType.BIRTHDAY_BONUS);
             addPointsToCard(card, rule.getPoints());
-            createTransaction(card, rule.getPoints(), BonusTransactionType.BIRTHDAY_BONUS, "USER_" + user.getId());
+            createTransaction(card, rule.getPoints(), BonusTransactionType.BIRTHDAY_BONUS,
+                    "BIRTHDAY_" + user.getId() + "_" + today.getYear());
             card.setLastBirthdayBonusDate(today);
             bonusCardRepository.save(card);
         });
