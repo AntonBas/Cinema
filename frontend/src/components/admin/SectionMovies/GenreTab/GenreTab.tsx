@@ -5,6 +5,7 @@ import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 import { useUrlParams } from "@/hooks/common/useUrlParams";
 import { SearchInput } from "@/components/ui/SearchInput/SearchInput";
 import { Button } from "@/components/ui/Button/Button";
+import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import { Pagination } from "@/components/ui/Pagination/Pagination";
 import { DeleteConfirmModal } from "@/components/ui/DeleteConfirmModal/DeleteConfirmModal";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
@@ -103,17 +104,22 @@ export const GenreTab: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <Button
-          variant="primary"
-          onClick={() => {
-            setEditingGenre(null);
-            setIsFormModalOpen(true);
-          }}
-        >
-          Add Genre
-        </Button>
-      </div>
+      <PageHeader
+        title="Genres"
+        subtitle="Manage movie genres and their statistics"
+        divider
+        actions={
+          <Button
+            variant="primary"
+            onClick={() => {
+              setEditingGenre(null);
+              setIsFormModalOpen(true);
+            }}
+          >
+            Add Genre
+          </Button>
+        }
+      />
 
       <div className={styles.searchSection}>
         <SearchInput

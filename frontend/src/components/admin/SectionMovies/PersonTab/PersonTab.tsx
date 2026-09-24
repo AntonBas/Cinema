@@ -3,6 +3,7 @@ import { PersonTable } from "./PersonTable/PersonTable";
 import { PersonForm } from "./PersonForm/PersonForm";
 import { DeleteConfirmModal } from "@/components/ui/DeleteConfirmModal/DeleteConfirmModal";
 import { Button } from "@/components/ui/Button/Button";
+import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import { Pagination } from "@/components/ui/Pagination/Pagination";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { SearchInput } from "@/components/ui/SearchInput/SearchInput";
@@ -105,11 +106,16 @@ export const PersonTab: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <Button variant="primary" onClick={() => setIsModalOpen(true)}>
-          Add Person
-        </Button>
-      </div>
+      <PageHeader
+        title="People"
+        subtitle="Manage actors, directors and screenwriters"
+        divider
+        actions={
+          <Button variant="primary" onClick={() => setIsModalOpen(true)}>
+            Add Person
+          </Button>
+        }
+      />
 
       <div className={styles.searchSection}>
         <SearchInput

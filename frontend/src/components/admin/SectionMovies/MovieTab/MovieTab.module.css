@@ -3,12 +3,6 @@
   margin: 0 auto;
 }
 
-.header {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: var(--space-6);
-}
-
 .searchContainer {
   margin-bottom: var(--space-6);
 }
@@ -39,11 +33,6 @@
 @media (max-width: 768px) {
   .container {
     padding: var(--space-4);
-  }
-
-  .header {
-    flex-direction: column;
-    align-items: stretch;
   }
 
   .searchContainer {

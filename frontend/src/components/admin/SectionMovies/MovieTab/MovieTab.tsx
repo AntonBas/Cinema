@@ -24,6 +24,7 @@ import { MovieList } from "./MovieList/MovieList";
 import { MovieForm } from "./MovieForm/MovieForm";
 import { DeleteConfirmModal } from "@/components/ui/DeleteConfirmModal/DeleteConfirmModal";
 import { Button } from "@/components/ui/Button/Button";
+import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import { SearchInput } from "@/components/ui/SearchInput/SearchInput";
 import { Pagination } from "@/components/ui/Pagination/Pagination";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
@@ -270,11 +271,16 @@ export const MovieTab: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <Button onClick={handleAddNew} variant="primary">
-          Add Movie
-        </Button>
-      </div>
+      <PageHeader
+        title="Movies"
+        subtitle="Manage movie catalog, posters, cast and crew"
+        divider
+        actions={
+          <Button onClick={handleAddNew} variant="primary">
+            Add Movie
+          </Button>
+        }
+      />
 
       <div className={styles.searchContainer}>
         <SearchInput

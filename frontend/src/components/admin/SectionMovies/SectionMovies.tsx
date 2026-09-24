@@ -3,7 +3,6 @@ import { MovieTab } from "./MovieTab/MovieTab";
 import { GenreTab } from "./GenreTab/GenreTab";
 import { PersonTab } from "./PersonTab/PersonTab";
 import { Tabs, type TabItem } from "@/components/ui/Tabs/Tabs";
-import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import {
   parseEnumParam,
   toUrlEnumValue,
@@ -47,11 +46,6 @@ export const SectionMovies: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <PageHeader
-        title="Movies"
-        subtitle="Manage the movie catalog, genres, cast and crew"
-      />
-
       <div className={styles.tabsContainer}>
         <Tabs
           items={SECTION_TABS}
