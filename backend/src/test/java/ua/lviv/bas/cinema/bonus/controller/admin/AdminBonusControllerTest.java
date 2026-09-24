@@ -7,6 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import ua.lviv.bas.cinema.bonus.domain.BonusRuleField;
 import ua.lviv.bas.cinema.bonus.domain.BonusTransactionType;
 import ua.lviv.bas.cinema.bonus.dto.request.BonusRulesRequest;
 import ua.lviv.bas.cinema.bonus.dto.response.BonusRulesResponse;
@@ -36,9 +37,9 @@ public class AdminBonusControllerTest {
     @Test
     void getRulesShouldReturnRulesList() {
         BonusRulesResponse rule1 = new BonusRulesResponse(1L, BonusTransactionType.WELCOME_BONUS, 100, null, null, null,
-                true);
+                true, List.of(BonusRuleField.POINTS), List.of());
         BonusRulesResponse rule2 = new BonusRulesResponse(2L, BonusTransactionType.BIRTHDAY_BONUS, 200, null, null,
-                null, true);
+                null, true, List.of(BonusRuleField.POINTS), List.of());
 
         List<BonusRulesResponse> rules = List.of(rule1, rule2);
 
@@ -68,7 +69,7 @@ public class AdminBonusControllerTest {
         BonusRulesRequest request = new BonusRulesRequest(200, null, null, null, true);
 
         BonusRulesResponse response = new BonusRulesResponse(1L, BonusTransactionType.WELCOME_BONUS, 200, null, null,
-                null, true);
+                null, true, List.of(BonusRuleField.POINTS), List.of());
 
         when(bonusAdminService.updateRule(eq(type), any(BonusRulesRequest.class))).thenReturn(response);
 
@@ -83,7 +84,7 @@ public class AdminBonusControllerTest {
     void resetRuleShouldResetAndReturnRule() {
         BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
         BonusRulesResponse response = new BonusRulesResponse(1L, BonusTransactionType.WELCOME_BONUS, 150, null, null,
-                null, true);
+                null, true, List.of(BonusRuleField.POINTS), List.of());
 
         when(bonusAdminService.resetRuleToDefaults(type)).thenReturn(response);
 

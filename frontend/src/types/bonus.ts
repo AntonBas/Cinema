@@ -11,12 +11,18 @@ export interface UseBonusPointsRequest {
   pointsToUse: number;
 }
 
+export type BonusRuleField =
+  | "points"
+  | "moneyRatio"
+  | "minPointsPerTransaction"
+  | "maxPointsPerTransaction";
+
 export interface BonusRulesRequest {
-  points?: number | null;
-  moneyRatio?: string | null;
-  minPointsPerTransaction?: number | null;
-  maxPointsPerTransaction?: number | null;
-  active?: boolean | null;
+  points: number | null;
+  moneyRatio: string | null;
+  minPointsPerTransaction: number | null;
+  maxPointsPerTransaction: number | null;
+  active: boolean;
 }
 
 export interface BonusBalanceResponse {
@@ -38,6 +44,8 @@ export interface BonusRulesResponse {
   minPointsPerTransaction?: number | null;
   maxPointsPerTransaction?: number | null;
   active: boolean;
+  requiredFields: BonusRuleField[];
+  optionalFields: BonusRuleField[];
 }
 
 export interface BonusTransactionResponse {

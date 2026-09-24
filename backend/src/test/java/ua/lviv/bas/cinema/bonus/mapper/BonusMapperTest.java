@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.bonus.mapper;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 import org.mockito.Mockito;
+import ua.lviv.bas.cinema.bonus.domain.BonusRuleField;
 import ua.lviv.bas.cinema.bonus.domain.BonusRules;
 import ua.lviv.bas.cinema.bonus.domain.BonusTransactionType;
 import ua.lviv.bas.cinema.bonus.dto.request.BonusRulesRequest;
@@ -29,6 +30,29 @@ public class BonusMapperTest {
         assertThat(response.bonusType()).isEqualTo(BonusTransactionType.WELCOME_BONUS);
         assertThat(response.points()).isEqualTo(100);
         assertThat(response.active()).isTrue();
+        assertThat(response.requiredFields()).containsExactly(BonusRuleField.POINTS);
+        assertThat(response.optionalFields()).isEmpty();
+    }
+
+    @Test
+    void toResponseShouldExposeFieldsOfPaymentAccrualRule() {
+        var rules = BonusRules.builder().id(4L).bonusType(BonusTransactionType.PAYMENT_ACCRUAL)
+                .moneyRatio(new BigDecimal("0.05")).active(true).build();
+
+        var response = mapper.toResponse(rules);
+
+        assertThat(response.requiredFields()).containsExactly(BonusRuleField.MONEY_RATIO);
+        assertThat(response.optionalFields()).containsExactly(BonusRuleField.MIN_POINTS, BonusRuleField.MAX_POINTS);
+    }
+
+    @Test
+    void toResponseShouldExposeNoFieldsForNonConfigurableRule() {
+        var rules = BonusRules.builder().id(5L).bonusType(BonusTransactionType.REFUND_RETURN).active(true).build();
+
+        var response = mapper.toResponse(rules);
+
+        assertThat(response.requiredFields()).isEmpty();
+        assertThat(response.optionalFields()).isEmpty();
     }
 
     @Test
@@ -75,18 +99,18 @@ public class BonusMapperTest {
     }
 
     @Test
-    void updateEntityWithPartialUpdate() {
+    void updateEntityShouldClearFieldsMissingFromRequest() {
         var existing = BonusRules.builder().points(100).moneyRatio(new BigDecimal("0.05")).minPointsPerTransaction(10)
                 .maxPointsPerTransaction(500).active(true).build();
 
-        var request = new BonusRulesRequest(200, null, null, null, null);
+        var request = new BonusRulesRequest(null, new BigDecimal("0.10"), 20, null, true);
 
         mapper.updateEntity(request, existing);
 
-        assertThat(existing.getPoints()).isEqualTo(200);
-        assertThat(existing.getMoneyRatio()).isEqualTo(new BigDecimal("0.05"));
-        assertThat(existing.getMinPointsPerTransaction()).isEqualTo(10);
-        assertThat(existing.getMaxPointsPerTransaction()).isEqualTo(500);
+        assertThat(existing.getPoints()).isNull();
+        assertThat(existing.getMoneyRatio()).isEqualTo(new BigDecimal("0.10"));
+        assertThat(existing.getMinPointsPerTransaction()).isEqualTo(20);
+        assertThat(existing.getMaxPointsPerTransaction()).isNull();
         assertThat(existing.getActive()).isTrue();
     }
 

@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.bonus.service;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -13,6 +14,7 @@ import ua.lviv.bas.cinema.bonus.dto.request.BonusRulesRequest;
 import ua.lviv.bas.cinema.bonus.dto.response.BonusRulesResponse;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusRuleNotConfigurableException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusRuleNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.financial.bonus.InvalidBonusRuleFieldException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.InvalidMinMaxPointsException;
 import ua.lviv.bas.cinema.bonus.mapper.BonusMapper;
 import ua.lviv.bas.cinema.bonus.repository.BonusRulesRepository;
@@ -63,7 +65,7 @@ public class AdminBonusServiceTest {
         when(bonusRulesRepository.findAll())
                 .thenReturn(List.of(welcomeRule, birthdayRule, spendRule, accuracyRule, refundRule));
         when(bonusMapper.toResponse(any(BonusRules.class))).thenAnswer(inv -> new BonusRulesResponse(1L,
-                inv.getArgument(0, BonusRules.class).getBonusType(), 100, new BigDecimal("0.05"), 10, 500, true));
+                inv.getArgument(0, BonusRules.class).getBonusType(), 100, new BigDecimal("0.05"), 10, 500, true, List.of(), List.of()));
 
         List<BonusRulesResponse> result = adminBonusService.getRules();
 
@@ -87,7 +89,7 @@ public class AdminBonusServiceTest {
     void updateRuleShouldUpdateSuccessfully() {
         BonusRules rule = createRuleWithValues(WELCOME, 50, new BigDecimal("0.05"), 10, 500);
         BonusRulesRequest request = new BonusRulesRequest(100, null, null, null, false);
-        BonusRulesResponse response = new BonusRulesResponse(1L, WELCOME, 100, new BigDecimal("0.05"), 10, 500, false);
+        BonusRulesResponse response = new BonusRulesResponse(1L, WELCOME, 100, new BigDecimal("0.05"), 10, 500, false, List.of(), List.of());
 
         when(bonusRulesRepository.findByBonusType(WELCOME)).thenReturn(Optional.of(rule));
         when(bonusRulesRepository.save(rule)).thenReturn(rule);
@@ -132,20 +134,7 @@ public class AdminBonusServiceTest {
 
     @Test
     void updateRuleShouldValidatePointsRangeForBookingSpend() {
-        BonusRules rule = createRuleWithValues(SPEND, null, null, null, null);
-        BonusRulesRequest request = new BonusRulesRequest(null, null, 500, 100, null);
-
-        when(bonusRulesRepository.findByBonusType(SPEND)).thenReturn(Optional.of(rule));
-
-        doAnswer(invocation -> {
-            BonusRulesRequest req = invocation.getArgument(0);
-            BonusRules r = invocation.getArgument(1);
-            if (req.minPointsPerTransaction() != null)
-                r.setMinPointsPerTransaction(req.minPointsPerTransaction());
-            if (req.maxPointsPerTransaction() != null)
-                r.setMaxPointsPerTransaction(req.maxPointsPerTransaction());
-            return null;
-        }).when(bonusMapper).updateEntity(any(BonusRulesRequest.class), any(BonusRules.class));
+        BonusRulesRequest request = new BonusRulesRequest(null, null, 500, 100, true);
 
         assertThatThrownBy(() -> adminBonusService.updateRule(SPEND, request))
                 .isInstanceOf(InvalidMinMaxPointsException.class);
@@ -154,10 +143,56 @@ public class AdminBonusServiceTest {
     }
 
     @Test
+    void updateRuleShouldValidatePointsRangeForPaymentAccrual() {
+        BonusRulesRequest request = new BonusRulesRequest(null, new BigDecimal("0.05"), 500, 100, true);
+
+        assertThatThrownBy(() -> adminBonusService.updateRule(ACCRUAL, request))
+                .isInstanceOf(InvalidMinMaxPointsException.class);
+
+        verify(bonusRulesRepository, never()).save(any());
+    }
+
+    @Test
+    void updateRuleShouldRejectFieldNotUsedByRuleType() {
+        BonusRulesRequest request = new BonusRulesRequest(100, new BigDecimal("0.05"), null, null, true);
+
+        assertThatThrownBy(() -> adminBonusService.updateRule(WELCOME, request))
+                .isInstanceOf(InvalidBonusRuleFieldException.class)
+                .hasMessageContaining("moneyRatio");
+
+        verify(bonusRulesRepository, never()).save(any());
+    }
+
+    @Test
+    void updateRuleShouldRejectMissingRequiredField() {
+        BonusRulesRequest request = new BonusRulesRequest(null, null, 10, null, true);
+
+        assertThatThrownBy(() -> adminBonusService.updateRule(ACCRUAL, request))
+                .isInstanceOf(InvalidBonusRuleFieldException.class)
+                .hasMessageContaining("moneyRatio");
+
+        verify(bonusRulesRepository, never()).save(any());
+    }
+
+    @Test
+    void updateRuleShouldAllowClearingOptionalLimits() {
+        BonusRules rule = createRuleWithValues(SPEND, null, null, 100, 1000);
+        BonusRulesRequest request = new BonusRulesRequest(null, null, null, null, true);
+
+        when(bonusRulesRepository.findByBonusType(SPEND)).thenReturn(Optional.of(rule));
+        when(bonusRulesRepository.save(rule)).thenReturn(rule);
+
+        adminBonusService.updateRule(SPEND, request);
+
+        verify(bonusMapper).updateEntity(request, rule);
+        verify(bonusRulesRepository).save(rule);
+    }
+
+    @Test
     void updateRuleShouldNotLogAuditWhenNoChanges() {
         BonusRules rule = createRuleWithValues(WELCOME, 100, new BigDecimal("0.05"), 10, 500);
         BonusRulesRequest request = new BonusRulesRequest(100, null, null, null, true);
-        BonusRulesResponse response = new BonusRulesResponse(1L, WELCOME, 100, new BigDecimal("0.05"), 10, 500, true);
+        BonusRulesResponse response = new BonusRulesResponse(1L, WELCOME, 100, new BigDecimal("0.05"), 10, 500, true, List.of(), List.of());
 
         when(bonusRulesRepository.findByBonusType(WELCOME)).thenReturn(Optional.of(rule));
         when(bonusRulesRepository.save(rule)).thenReturn(rule);
@@ -173,7 +208,7 @@ public class AdminBonusServiceTest {
     @Test
     void resetRuleToDefaultsShouldResetWhenDefaultsExist() {
         BonusRules rule = createRuleWithValues(WELCOME, 100, new BigDecimal("0.05"), 10, 500);
-        BonusRulesResponse response = new BonusRulesResponse(1L, WELCOME, 200, new BigDecimal("0.10"), 50, 500, true);
+        BonusRulesResponse response = new BonusRulesResponse(1L, WELCOME, 200, new BigDecimal("0.10"), 50, 500, true, List.of(), List.of());
 
         BonusProperties.RuleDefaults defaults = new BonusProperties.RuleDefaults();
         defaults.setPoints(200);
@@ -206,9 +241,30 @@ public class AdminBonusServiceTest {
     }
 
     @Test
+    void resetRuleToDefaultsShouldIgnoreDefaultsNotUsedByRuleTypeAndClearMissingOnes() {
+        BonusRules rule = createRuleWithValues(ACCRUAL, null, new BigDecimal("0.20"), 50, 500);
+
+        BonusProperties.RuleDefaults defaults = new BonusProperties.RuleDefaults();
+        defaults.setPoints(999);
+        defaults.setMoneyRatio(new BigDecimal("0.05"));
+        defaults.setMinPoints(10);
+
+        when(bonusRulesRepository.findByBonusType(ACCRUAL)).thenReturn(Optional.of(rule));
+        when(bonusProperties.getDefaults()).thenReturn(Map.of(ACCRUAL, defaults));
+        when(bonusRulesRepository.save(rule)).thenReturn(rule);
+
+        adminBonusService.resetRuleToDefaults(ACCRUAL);
+
+        ArgumentCaptor<BonusRulesRequest> captor = ArgumentCaptor.forClass(BonusRulesRequest.class);
+        verify(bonusMapper).updateEntity(captor.capture(), eq(rule));
+        assertThat(captor.getValue())
+                .isEqualTo(new BonusRulesRequest(null, new BigDecimal("0.05"), 10, null, true));
+    }
+
+    @Test
     void resetRuleToDefaultsShouldNotChangeWhenDefaultsNull() {
         BonusRules rule = createRuleWithValues(WELCOME, 100, null, null, null);
-        BonusRulesResponse response = new BonusRulesResponse(1L, WELCOME, 100, null, null, null, true);
+        BonusRulesResponse response = new BonusRulesResponse(1L, WELCOME, 100, null, null, null, true, List.of(), List.of());
 
         when(bonusRulesRepository.findByBonusType(WELCOME)).thenReturn(Optional.of(rule));
         when(bonusProperties.getDefaults()).thenReturn(Map.of());
