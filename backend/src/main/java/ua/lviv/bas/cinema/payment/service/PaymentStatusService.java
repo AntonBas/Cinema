@@ -9,7 +9,6 @@ import ua.lviv.bas.cinema.payment.dto.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentAccessDeniedException;
 import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
-import ua.lviv.bas.cinema.payment.service.PaymentGatewayService;
 import ua.lviv.bas.cinema.user.domain.User;
 
 @Slf4j
@@ -45,21 +44,19 @@ public class PaymentStatusService {
         var payment = paymentRepository.findByLiqpayOrderId(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Payment", orderId));
 
-        switch (status == null ? "" : status.toLowerCase()) {
-        case "success":
-        case "sandbox":
-            paymentService.processSuccess(payment, decodedData);
-            break;
-        case "failure":
-        case "error":
-            paymentService.processFailure(payment, decodedData);
-            break;
-        case "wait_secure":
-            paymentService.markProcessing(payment);
-            break;
-        default:
-            log.warn("Unknown payment status: {} for payment {}", status, payment.getId());
-            paymentService.processFailure(payment, decodedData);
+        if (status == null || status.isBlank()) {
+            log.warn("LiqPay callback for payment {} has no status, ignoring it", payment.getId());
+            return;
+        }
+
+        switch (status.toLowerCase()) {
+            case "success", "sandbox" -> paymentService.processSuccess(payment, decodedData);
+            case "failure", "error" -> paymentService.processFailure(payment, decodedData);
+            default -> {
+                log.info("LiqPay reported intermediate status {} for payment {}, marking it PROCESSING", status,
+                        payment.getId());
+                paymentService.markProcessing(payment);
+            }
         }
     }
 }

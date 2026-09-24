@@ -2,6 +2,8 @@ package ua.lviv.bas.cinema.payment.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -232,5 +234,18 @@ class PaymentGatewayServiceTest {
                 .thenThrow(new RestClientException("Connection timed out"));
 
         assertThat(paymentGatewayService.checkRefundStatus("ORDER_123")).isEqualTo(RefundGatewayStatus.UNKNOWN);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"success,SUCCESS", "sandbox,SUCCESS", "failure,FAILED", "error,FAILED",
+            "processing,STILL_PROCESSING", "wait_secure,STILL_PROCESSING", "wait_accept,STILL_PROCESSING",
+            "3ds_verify,STILL_PROCESSING", "otp_verify,STILL_PROCESSING", "reversed,UNKNOWN"})
+    void checkPaymentStatusShouldMapLiqPayStatuses(String liqpayStatus, PaymentGatewayStatus expected) {
+        ReflectionTestUtils.setField(paymentGatewayService, "sandboxMode", false);
+        String responseBody = LiqPayDecoder.encodeToBase64(Map.of("status", liqpayStatus));
+        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
+                .thenReturn(ResponseEntity.ok(responseBody));
+
+        assertThat(paymentGatewayService.checkPaymentStatus("ORDER_123").status()).isEqualTo(expected);
     }
 }

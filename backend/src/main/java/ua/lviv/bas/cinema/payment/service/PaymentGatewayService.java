@@ -169,8 +169,10 @@ public class PaymentGatewayService {
         return switch (status) {
             case "success", "sandbox" -> PaymentGatewayStatus.SUCCESS;
             case "failure", "error" -> PaymentGatewayStatus.FAILED;
-            case "wait_secure", "wait_accept", "processing", "wait_reserve" -> PaymentGatewayStatus.STILL_PROCESSING;
-            default -> PaymentGatewayStatus.UNKNOWN;
+            case "processing", "prepared", "cash_wait", "hold_wait", "invoice_wait" ->
+                    PaymentGatewayStatus.STILL_PROCESSING;
+            default -> status.startsWith("wait_") || status.endsWith("_verify") ? PaymentGatewayStatus.STILL_PROCESSING
+                    : PaymentGatewayStatus.UNKNOWN;
         };
     }
 

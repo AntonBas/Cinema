@@ -2,6 +2,8 @@ package ua.lviv.bas.cinema.payment.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -182,25 +184,27 @@ public class PaymentStatusServiceTest {
         verify(paymentService, never()).processFailure(any(), any());
     }
 
-    @Test
-    void handleCallbackWithUnknownStatusShouldDelegateToProcessFailure() {
+    @ParameterizedTest
+    @ValueSource(strings = {"processing", "3ds_verify", "wait_accept", "otp_verify", "cvv_verify", "some_new_status"})
+    void handleCallbackWithIntermediateOrUnknownStatusShouldMarkProcessingNotFailed(String status) {
         String data = "encoded_data";
         String signature = "test_signature";
         Map<String, String> decodedData = new HashMap<>();
         decodedData.put("order_id", ORDER_ID);
-        decodedData.put("status", "unknown");
+        decodedData.put("status", status);
 
         when(paymentGatewayService.processCallback(data, signature)).thenReturn(decodedData);
         when(paymentRepository.findByLiqpayOrderId(ORDER_ID)).thenReturn(Optional.of(testPayment));
 
         paymentStatusService.handleCallback(data, signature);
 
-        verify(paymentService).processFailure(testPayment, decodedData);
+        verify(paymentService).markProcessing(testPayment);
+        verify(paymentService, never()).processFailure(any(), any());
         verify(paymentService, never()).processSuccess(any(), any());
     }
 
     @Test
-    void handleCallbackWithMissingStatusShouldDelegateToProcessFailure() {
+    void handleCallbackWithMissingStatusShouldIgnoreIt() {
         String data = "encoded_data";
         String signature = "test_signature";
         Map<String, String> decodedData = new HashMap<>();
@@ -211,9 +215,7 @@ public class PaymentStatusServiceTest {
 
         paymentStatusService.handleCallback(data, signature);
 
-        verify(paymentService).processFailure(testPayment, decodedData);
-        verify(paymentService, never()).processSuccess(any(), any());
-        verify(paymentService, never()).markProcessing(any());
+        verifyNoInteractions(paymentService);
     }
 
     @Test
