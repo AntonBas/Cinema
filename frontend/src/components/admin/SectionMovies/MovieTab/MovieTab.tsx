@@ -112,38 +112,45 @@ export const MovieTab: React.FC = () => {
     [showNotification],
   );
 
-  const loadTabCount = useCallback(async (tab: MovieTabType) => {
-    try {
-      const status = tab as MovieStatus;
-      const response = await movieApi.admin.getAll({
-        page: 0,
-        size: 1,
-        status,
-      });
+  const loadTabCount = useCallback(
+    async (tab: MovieTabType, search?: string) => {
+      try {
+        const status = tab as MovieStatus;
+        const response = await movieApi.admin.getAll({
+          page: 0,
+          size: 1,
+          ...(search ? { query: search } : {}),
+          status,
+        });
 
-      setTabData((prev) => ({
-        ...prev,
-        [tab]: {
-          ...prev[tab],
-          total: response?.data?.totalElements || 0,
-        },
-      }));
-    } catch (error) {
-      console.error(`Failed to load ${tab} count:`, error);
-    }
-  }, []);
+        setTabData((prev) => ({
+          ...prev,
+          [tab]: {
+            ...prev[tab],
+            total: response?.data?.totalElements || 0,
+          },
+        }));
+      } catch {
+        return;
+      }
+    },
+    [],
+  );
 
-  const loadAllTabCounts = useCallback(async () => {
-    await Promise.all([
-      loadTabCount("CURRENT"),
-      loadTabCount("UPCOMING"),
-      loadTabCount("ARCHIVED"),
-    ]);
-  }, [loadTabCount]);
+  const loadAllTabCounts = useCallback(
+    async (search?: string) => {
+      await Promise.all([
+        loadTabCount("CURRENT", search),
+        loadTabCount("UPCOMING", search),
+        loadTabCount("ARCHIVED", search),
+      ]);
+    },
+    [loadTabCount],
+  );
 
   useEffect(() => {
-    loadAllTabCounts();
-  }, [loadAllTabCounts]);
+    loadAllTabCounts(params.query);
+  }, [loadAllTabCounts, params.query]);
 
   useEffect(() => {
     loadTabData(activeTab, params.page || 0, params.query);
@@ -218,7 +225,7 @@ export const MovieTab: React.FC = () => {
     setDeletingMovie(null);
 
     await loadTabData(activeTab, newPage, params.query);
-    await loadAllTabCounts();
+    await loadAllTabCounts(params.query);
   }, [
     deletingMovie,
     remove,
@@ -235,7 +242,7 @@ export const MovieTab: React.FC = () => {
     setIsModalOpen(false);
     setEditingMovie(null);
     await loadTabData(activeTab, params.page || 0, params.query);
-    await loadAllTabCounts();
+    await loadAllTabCounts(params.query);
   }, [activeTab, params.page, params.query, loadTabData, loadAllTabCounts]);
 
   const handleAddNew = useCallback(() => {
