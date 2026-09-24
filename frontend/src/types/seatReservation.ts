@@ -7,6 +7,7 @@ export interface SeatReservationResponse {
   movieTitle: string;
   basePrice: string;
   hallName: string;
+  sessionTime: string;
   availableSeats: number;
   seats: SeatInfo[];
 }

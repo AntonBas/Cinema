@@ -13,6 +13,7 @@ import ua.lviv.bas.cinema.booking.service.SeatReservationService;
 import ua.lviv.bas.cinema.user.service.UserService;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,7 +42,8 @@ public class SeatReservationControllerTest {
         SeatReservationResponse.SeatInfo seat1 = new SeatReservationResponse.SeatInfo(1L, 1, 1, SeatType.STANDARD, 0, 0,
                 true, false, true, List.of(ticketPriceInfo));
 
-        return new SeatReservationResponse(sessionId, "Inception", new BigDecimal("200.00"), "Hall A", 75,
+        return new SeatReservationResponse(sessionId, "Inception", new BigDecimal("200.00"), "Hall A",
+                LocalDateTime.of(2024, 1, 15, 18, 30), 75,
                 List.of(seat1));
     }
 

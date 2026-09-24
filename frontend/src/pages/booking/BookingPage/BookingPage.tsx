@@ -14,7 +14,7 @@ import { useAuth } from "@/context/AuthContext";
 import type { SeatInfo } from "@/types/seatReservation";
 import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
-import { formatPrice } from "@/utils/formatters";
+import { formatFullDate, formatPrice, formatTime } from "@/utils/formatters";
 import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import styles from "./BookingPage.module.css";
 
@@ -138,6 +138,8 @@ export const BookingPage: React.FC = () => {
           title={seatData.movieTitle}
           subtitle={
             <div className={styles.sessionInfo}>
+              <span>{formatFullDate(seatData.sessionTime)}</span>
+              <span>{formatTime(seatData.sessionTime)}</span>
               <span>{seatData.hallName}</span>
               <span>Available seats: {seatData.availableSeats}</span>
               <span>Base Price: {formatPrice(seatData.basePrice)}</span>

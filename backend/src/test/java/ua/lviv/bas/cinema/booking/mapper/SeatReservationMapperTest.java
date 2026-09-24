@@ -11,6 +11,7 @@ import ua.lviv.bas.cinema.ticket.domain.TicketType;
 import ua.lviv.bas.cinema.booking.dto.response.SeatReservationResponse;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SeatReservationMapperTest {
 
     private final SeatReservationMapper seatReservationMapper = new SeatReservationMapperImpl();
+    private static final LocalDateTime SESSION_START_TIME = LocalDateTime.of(2024, 1, 15, 18, 30);
+
     private Session session;
     private Seat seat1;
     private TicketType adultTicketType;
@@ -28,7 +31,8 @@ public class SeatReservationMapperTest {
     void setUp() {
         var movie = Movie.builder().id(1L).title("Inception").build();
         var hall = CinemaHall.builder().id(1L).name("Hall A").build();
-        session = Session.builder().id(1L).movie(movie).hall(hall).basePrice(new BigDecimal("250.00")).build();
+        session = Session.builder().id(1L).movie(movie).hall(hall).basePrice(new BigDecimal("250.00"))
+                .startTime(SESSION_START_TIME).build();
 
         seat1 = Seat.builder().id(1L).row(5).number(12).seatType(SeatType.STANDARD).x(660).y(280).active(true)
                 .build();
@@ -66,6 +70,7 @@ public class SeatReservationMapperTest {
         assertThat(response.movieTitle()).isEqualTo("Inception");
         assertThat(response.basePrice()).isEqualTo(new BigDecimal("250.00"));
         assertThat(response.hallName()).isEqualTo("Hall A");
+        assertThat(response.sessionTime()).isEqualTo(SESSION_START_TIME);
         assertThat(response.availableSeats()).isEqualTo(2);
         assertThat(response.seats()).hasSize(2);
     }
@@ -89,6 +94,7 @@ public class SeatReservationMapperTest {
         assertThat(response.movieTitle()).isNull();
         assertThat(response.basePrice()).isNull();
         assertThat(response.hallName()).isNull();
+        assertThat(response.sessionTime()).isNull();
         assertThat(response.availableSeats()).isEqualTo(2);
         assertThat(response.seats()).hasSize(2);
     }

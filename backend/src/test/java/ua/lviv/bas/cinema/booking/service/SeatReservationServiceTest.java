@@ -34,6 +34,7 @@ import ua.lviv.bas.cinema.common.PriceCalculatorService;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -337,7 +338,7 @@ public class SeatReservationServiceTest {
         when(seatReservationMapper.toSeatInfo(testSeat, true, false, List.of(priceInfo))).thenReturn(seatInfo);
 
         SeatReservationResponse expected = new SeatReservationResponse(SESSION_ID, "Test Movie", BASE_PRICE, "Hall A",
-                1, List.of(seatInfo));
+                LocalDateTime.of(2024, 1, 15, 18, 30), 1, List.of(seatInfo));
         when(seatReservationMapper.toResponse(testSession, List.of(seatInfo), 1)).thenReturn(expected);
 
         SeatReservationResponse result = seatReservationService.getAvailability(SESSION_ID);

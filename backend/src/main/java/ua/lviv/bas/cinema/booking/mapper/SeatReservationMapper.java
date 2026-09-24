@@ -19,6 +19,7 @@ public interface SeatReservationMapper {
 	@Mapping(target = "movieTitle", source = "session.movie.title")
 	@Mapping(target = "basePrice", source = "session.basePrice")
 	@Mapping(target = "hallName", source = "session.hall.name")
+	@Mapping(target = "sessionTime", source = "session.startTime")
 	@Mapping(target = "availableSeats", source = "availableSeatsCount")
 	@Mapping(target = "seats", source = "seatInfos")
 	SeatReservationResponse toResponse(Session session, List<SeatReservationResponse.SeatInfo> seatInfos,
