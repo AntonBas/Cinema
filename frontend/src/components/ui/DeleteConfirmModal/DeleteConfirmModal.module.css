@@ -73,7 +73,7 @@
 .actions {
   display: flex;
   gap: var(--space-3);
-  justify-content: center;
+  justify-content: flex-end;
 }
 
 .cancelButton {
@@ -166,7 +166,7 @@
   }
 
   .actions {
-    flex-direction: column;
+    flex-direction: column-reverse;
   }
 
   .cancelButton,

@@ -190,7 +190,7 @@ export const PersonForm: React.FC<PersonFormProps> = React.memo(
               loading={isLoading}
               disabled={isLoading}
             >
-              {person ? "Update Person" : "Create Person"}
+              {person ? "Save Changes" : "Create Person"}
             </Button>
           </div>
         </form>

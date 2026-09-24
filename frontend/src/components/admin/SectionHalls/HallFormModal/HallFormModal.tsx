@@ -80,7 +80,7 @@ export const HallFormModal: React.FC<HallFormModalProps> = ({
             disabled={!isNameValid || !hasChanges || loading}
             loading={loading}
           >
-            {isEditing ? "Save Name" : "Create Hall"}
+            {isEditing ? "Save Changes" : "Create Hall"}
           </Button>
         </div>
       </form>

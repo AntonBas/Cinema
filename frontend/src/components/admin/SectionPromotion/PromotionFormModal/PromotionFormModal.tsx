@@ -167,7 +167,7 @@ export const PromotionFormModal: React.FC<PromotionFormModalProps> = ({
             Cancel
           </Button>
           <Button type="submit" variant="primary" loading={loading}>
-            {isEditing ? "Update" : "Create"}
+            {isEditing ? "Save Changes" : "Create Promotion"}
           </Button>
         </div>
       </form>

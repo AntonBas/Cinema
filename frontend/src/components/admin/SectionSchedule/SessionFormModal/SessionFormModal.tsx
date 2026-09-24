@@ -313,11 +313,11 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
           </Button>
           <Button
             type="submit"
-            variant="success"
+            variant="primary"
             disabled={loading}
             loading={loading}
           >
-            {isEditing ? "Update Session" : "Create Session"}
+            {isEditing ? "Save Changes" : "Create Session"}
           </Button>
         </div>
       </form>

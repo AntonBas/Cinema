@@ -106,15 +106,15 @@ export const TicketQRModal: React.FC<TicketQRModalProps> = ({
         </div>
 
         <div className={styles.modalFooter}>
+          <Button variant="secondary" onClick={onClose}>
+            Close
+          </Button>
           <Button
             variant="primary"
             onClick={handleDownload}
             disabled={!qrImage || loading}
           >
             Download QR Code
-          </Button>
-          <Button variant="secondary" onClick={onClose}>
-            Close
           </Button>
         </div>
       </div>

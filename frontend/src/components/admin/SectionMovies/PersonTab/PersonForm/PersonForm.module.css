@@ -42,7 +42,7 @@
 
 @media (max-width: 768px) {
   .formActions {
-    flex-direction: column;
+    flex-direction: column-reverse;
   }
 
   .formActions button {

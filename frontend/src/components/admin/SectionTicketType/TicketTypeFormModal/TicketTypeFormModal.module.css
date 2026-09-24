@@ -88,7 +88,7 @@
   }
 
   .actions {
-    flex-direction: column;
+    flex-direction: column-reverse;
     gap: var(--space-2);
   }
 

@@ -157,7 +157,7 @@
   }
 
   .modalActions {
-    flex-direction: column;
+    flex-direction: column-reverse;
   }
 
   .modalActions button {
@@ -165,7 +165,7 @@
   }
 
   .formActions {
-    flex-direction: column;
+    flex-direction: column-reverse;
   }
 
   .formActions button {

@@ -398,20 +398,20 @@ export const PaymentPage: React.FC = () => {
                   )}
                   <div className={styles.actions}>
                     <Button
-                      onClick={handleRetry}
-                      variant="primary"
-                      className={styles.primaryButton}
-                    >
-                      <RefreshCw size={20} />
-                      Try Again
-                    </Button>
-                    <Button
                       onClick={handleBack}
                       variant="secondary"
                       className={styles.secondaryButton}
                     >
                       <ArrowLeft size={20} />
                       Back to Summary
+                    </Button>
+                    <Button
+                      onClick={handleRetry}
+                      variant="primary"
+                      className={styles.primaryButton}
+                    >
+                      <RefreshCw size={20} />
+                      Try Again
                     </Button>
                   </div>
                 </div>

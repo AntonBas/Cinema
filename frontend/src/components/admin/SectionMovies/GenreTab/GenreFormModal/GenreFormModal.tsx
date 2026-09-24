@@ -149,7 +149,7 @@ export const GenreFormModal: React.FC<GenreFormModalProps> = ({
             loading={loading}
             disabled={loading || !isValid}
           >
-            {isEditing ? "Update" : "Create"} Genre
+            {isEditing ? "Save Changes" : "Create Genre"}
           </Button>
         </div>
       </form>

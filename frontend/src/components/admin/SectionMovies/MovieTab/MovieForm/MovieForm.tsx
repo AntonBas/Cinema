@@ -498,7 +498,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(
               loading={loading}
               disabled={loading}
             >
-              {movie ? "Update Movie" : "Create Movie"}
+              {movie ? "Save Changes" : "Create Movie"}
             </Button>
           </div>
         </form>

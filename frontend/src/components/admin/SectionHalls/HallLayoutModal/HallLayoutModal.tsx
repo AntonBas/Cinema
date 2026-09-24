@@ -300,7 +300,7 @@ export const HallLayoutModal: React.FC = () => {
                   onClick={handleClose}
                   disabled={saving}
                 >
-                  Close
+                  Cancel
                 </Button>
                 <Button
                   variant="primary"
