@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   useParams,
   useSearchParams,
@@ -6,9 +6,9 @@ import {
   Link,
 } from "react-router-dom";
 import { XCircle, CheckCircle2 } from "lucide-react";
-import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/services/api";
+import { isApiErrorException } from "@/utils/apiErrorHandler";
 import { Button } from "@/components/ui/Button/Button";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { AuthPageLayout } from "@/components/auth/AuthPageLayout/AuthPageLayout";
@@ -25,10 +25,15 @@ export const ConfirmEmailChangePage: React.FC = () => {
     "loading",
   );
   const [errorMessage, setErrorMessage] = useState("");
+  const [alreadyConfirmed, setAlreadyConfirmed] = useState(false);
+  const requestedRef = useRef(false);
 
   const confirmationToken = token || searchParams.get("token");
 
   useEffect(() => {
+    if (requestedRef.current) return;
+    requestedRef.current = true;
+
     if (!confirmationToken) {
       setStatus("error");
       setErrorMessage("Invalid or missing confirmation token.");
@@ -40,17 +45,17 @@ export const ConfirmEmailChangePage: React.FC = () => {
         await api.post(
           `/api/tokens/email/change/confirm?token=${confirmationToken}`,
         );
+        await refreshUser();
         setStatus("success");
-        if (isAuthenticated) {
-          await refreshUser();
-        }
       } catch (error) {
+        if (isApiErrorException(error) && error.isConflict()) {
+          await refreshUser();
+          setAlreadyConfirmed(true);
+          setStatus("success");
+          return;
+        }
         setStatus("error");
-        const message = axios.isAxiosError(error)
-          ? (error.response?.data as { message?: string } | undefined)?.message
-          : error instanceof Error
-            ? error.message
-            : undefined;
+        const message = error instanceof Error ? error.message : undefined;
         setErrorMessage(
           message ||
             "Failed to confirm email change. The token may be invalid or expired.",
@@ -59,7 +64,7 @@ export const ConfirmEmailChangePage: React.FC = () => {
     };
 
     confirmEmailChange();
-  }, [confirmationToken, isAuthenticated, refreshUser]);
+  }, [confirmationToken, refreshUser]);
 
   if (status === "loading") {
     return (
@@ -94,15 +99,25 @@ export const ConfirmEmailChangePage: React.FC = () => {
 
   return (
     <AuthPageLayout>
-      <AuthCard title="Email Changed!" className={styles.card}>
+      <AuthCard
+        title={alreadyConfirmed ? "Already Confirmed" : "Email Changed!"}
+        className={styles.card}
+      >
         <CheckCircle2 size={64} className={styles.icon} />
         <p className={styles.message}>
-          Your email address has been successfully updated.
+          {alreadyConfirmed
+            ? "This email change has already been confirmed."
+            : "Your email address has been successfully updated."}
+          {!isAuthenticated && " Sign in with your new email address."}
         </p>
         <div className={styles.actions}>
           <Button
             variant="primary"
-            onClick={() => navigate(isAuthenticated ? "/account" : "/login")}
+            onClick={() =>
+              navigate(
+                isAuthenticated ? "/account" : "/login?reason=email-changed",
+              )
+            }
             fullWidth
           >
             {isAuthenticated ? "Go to Account" : "Go to Login"}

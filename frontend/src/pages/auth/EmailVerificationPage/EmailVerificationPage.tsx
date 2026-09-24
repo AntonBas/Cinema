@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { XCircle, CheckCircle2 } from "lucide-react";
-import axios from "axios";
 import { api } from "@/services/api";
+import { isApiErrorException } from "@/utils/apiErrorHandler";
 import { Button } from "@/components/ui/Button/Button";
 import { Input } from "@/components/ui/Input/Input";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
@@ -19,6 +19,8 @@ export const EmailVerificationPage: React.FC = () => {
     "loading",
   );
   const [errorMessage, setErrorMessage] = useState("");
+  const [alreadyVerified, setAlreadyVerified] = useState(false);
+  const requestedRef = useRef(false);
   const [email, setEmail] = useState(searchParams.get("email") || "");
   const { resend, cooldown, sending, message, messageType } =
     useResendVerification();
@@ -26,6 +28,9 @@ export const EmailVerificationPage: React.FC = () => {
   const verificationToken = token || searchParams.get("token");
 
   useEffect(() => {
+    if (requestedRef.current) return;
+    requestedRef.current = true;
+
     if (!verificationToken) {
       setStatus("error");
       setErrorMessage("Invalid or missing verification token.");
@@ -36,14 +41,14 @@ export const EmailVerificationPage: React.FC = () => {
       try {
         await api.post(`/api/tokens/email/verify?token=${verificationToken}`);
         setStatus("success");
-        setTimeout(() => navigate("/login"), 5000);
       } catch (error) {
+        if (isApiErrorException(error) && error.isConflict()) {
+          setAlreadyVerified(true);
+          setStatus("success");
+          return;
+        }
         setStatus("error");
-        const message = axios.isAxiosError(error)
-          ? (error.response?.data as { message?: string } | undefined)?.message
-          : error instanceof Error
-            ? error.message
-            : undefined;
+        const message = error instanceof Error ? error.message : undefined;
         setErrorMessage(
           message ||
             "Failed to verify email. The token may be invalid or expired.",
@@ -52,7 +57,13 @@ export const EmailVerificationPage: React.FC = () => {
     };
 
     verifyEmail();
-  }, [verificationToken, navigate]);
+  }, [verificationToken]);
+
+  useEffect(() => {
+    if (status !== "success") return;
+    const timerId = setTimeout(() => navigate("/login"), 5000);
+    return () => clearTimeout(timerId);
+  }, [status, navigate]);
 
   if (status === "loading") {
     return (
@@ -118,11 +129,19 @@ export const EmailVerificationPage: React.FC = () => {
   return (
     <AuthPageLayout>
       <AuthCard
-        title="Email Verified Successfully!"
+        title={
+          alreadyVerified
+            ? "Email Already Verified"
+            : "Email Verified Successfully!"
+        }
         className={`${styles.verificationCard} ${styles.success}`}
       >
         <CheckCircle2 size={64} className={styles.icon} />
-        <p>Your email has been verified.</p>
+        <p>
+          {alreadyVerified
+            ? "This email address has already been confirmed. You can sign in."
+            : "Your email has been verified."}
+        </p>
         <p className={styles.redirectText}>
           Redirecting to login page in 5 seconds...
         </p>
