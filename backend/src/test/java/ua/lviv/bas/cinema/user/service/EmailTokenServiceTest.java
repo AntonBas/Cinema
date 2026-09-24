@@ -21,6 +21,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -66,8 +68,8 @@ public class EmailTokenServiceTest {
         assertThat(user.isEmailVerified()).isTrue();
         assertThat(emailToken.isConfirmed()).isTrue();
         verify(userRepository).save(user);
-        verify(bonusUserService).getOrCreateCard(user);
         verify(bonusUserService).awardWelcomeBonus(user);
+        verify(bonusUserService, never()).getOrCreateCard(any());
     }
 
     @Test

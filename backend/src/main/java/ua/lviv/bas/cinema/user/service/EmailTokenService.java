@@ -42,7 +42,6 @@ public class EmailTokenService {
         var updatedUser = userRepository.save(user);
         customUserDetailsService.evict(user.getEmail());
 
-        bonusLedgerService.getOrCreateCard(updatedUser);
         bonusLedgerService.awardWelcomeBonus(updatedUser);
 
         emailToken.setConfirmed(true);
