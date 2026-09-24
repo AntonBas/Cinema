@@ -73,10 +73,11 @@ public class UserService {
     public UserProfileResponse update(Long userId, UserUpdateRequest request) {
         var user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
         var oldDetails = captureDetails(user);
+        var oldDateOfBirth = user.getDateOfBirth();
 
         userMapper.updateEntity(request, user);
 
-        if (isDateOfBirthChanged(request.dateOfBirth(), user.getDateOfBirth())) {
+        if (isDateOfBirthChanged(request.dateOfBirth(), oldDateOfBirth)) {
             revokeVerificationIfNeeded(user);
         }
 

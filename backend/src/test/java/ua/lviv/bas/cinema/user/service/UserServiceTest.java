@@ -192,6 +192,10 @@ public class UserServiceTest {
                 CITY, PHONE, VerificationStatus.NOT_VERIFIED);
 
         when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        doAnswer(invocation -> {
+            user.setDateOfBirth(request.dateOfBirth());
+            return null;
+        }).when(userMapper).updateEntity(request, user);
         when(userRepository.save(user)).thenReturn(user);
         when(userMapper.toUserProfileResponse(user)).thenReturn(profileResponse);
 
@@ -200,6 +204,26 @@ public class UserServiceTest {
         assertThat(result).isEqualTo(profileResponse);
         assertThat(user.getVerificationStatus()).isEqualTo(VerificationStatus.NOT_VERIFIED);
         assertThat(user.getVerifiedAt()).isNull();
+    }
+
+    @Test
+    void updateWhenDateOfBirthUnchangedShouldKeepVerification() {
+        Instant verifiedAt = Instant.now();
+        User user = User.builder().id(USER_ID).firstName("John").lastName("Doe").dateOfBirth(DATE_OF_BIRTH).city(CITY)
+                .phoneNumber(PHONE).verificationStatus(VerificationStatus.VERIFIED).verifiedAt(verifiedAt).build();
+        UserUpdateRequest request = new UserUpdateRequest("Johnny", "Doe", DATE_OF_BIRTH, CITY, PHONE);
+
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        doAnswer(invocation -> {
+            user.setDateOfBirth(request.dateOfBirth());
+            return null;
+        }).when(userMapper).updateEntity(request, user);
+        when(userRepository.save(user)).thenReturn(user);
+
+        userService.update(USER_ID, request);
+
+        assertThat(user.getVerificationStatus()).isEqualTo(VerificationStatus.VERIFIED);
+        assertThat(user.getVerifiedAt()).isEqualTo(verifiedAt);
     }
 
     @Test
