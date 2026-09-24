@@ -12,6 +12,7 @@ export const genreApi = {
   admin: {
     getAll: (params?: SearchParams & { query?: string }) =>
       api.get<PageResponse<GenreListResponse>>(BASE_URL, { params }),
+    getAllOptions: () => api.get<GenreResponse[]>(`${BASE_URL}/all`),
     create: (request: GenreRequest) =>
       api.post<GenreResponse>(BASE_URL, request),
     update: (id: number, request: GenreRequest) =>

@@ -1,5 +1,7 @@
 package ua.lviv.bas.cinema.movie.service;
 
+import java.util.stream.IntStream;
+import org.springframework.data.domain.Sort;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -214,5 +216,20 @@ public class GenreServiceTest {
         public Integer getMovieCount() {
             return getMovieCount;
         }
+    }
+
+    @Test
+    void getAllGenresShouldReturnEveryGenreSortedByNameWithoutPaging() {
+        var genres = IntStream.rangeClosed(1, 15).mapToObj(i -> Genre.builder().id((long) i).name("Genre " + i).build())
+                .toList();
+        when(genreRepository.findAll(Sort.by("name"))).thenReturn(genres);
+        when(genreMapper.toGenreResponse(any(Genre.class)))
+                .thenAnswer(invocation -> new GenreResponse(invocation.<Genre>getArgument(0).getId(),
+                        invocation.<Genre>getArgument(0).getName()));
+
+        List<GenreResponse> result = genreService.getAllGenres();
+
+        assertThat(result).hasSize(15);
+        assertThat(result.getFirst().name()).isEqualTo("Genre 1");
     }
 }

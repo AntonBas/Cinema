@@ -63,7 +63,7 @@ const BACKEND_TO_FORM_FIELD: Record<string, string> = {
 export const MovieForm: React.FC<MovieFormProps> = React.memo(
   ({ movie, onSuccess, onCancel }) => {
     const { create, update, loading } = useMovie();
-    const { genres, getAll: getAllGenres } = useGenre();
+    const { allGenres, getAllOptions: getAllGenres } = useGenre();
 
     const [selectedActors, setSelectedActors] = useState<PersonResponse[]>([]);
     const [selectedDirectors, setSelectedDirectors] = useState<
@@ -93,7 +93,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(
     });
 
     useEffect(() => {
-      getAllGenres({});
+      getAllGenres();
     }, [getAllGenres]);
 
     useEffect(() => {
@@ -424,7 +424,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(
               Genres <span className={styles.required}>*</span>
             </label>
             <GenreSearchList
-              genres={genres}
+              genres={allGenres}
               selectedIds={formData.selectedGenres}
               onChange={handleGenreChange}
             />

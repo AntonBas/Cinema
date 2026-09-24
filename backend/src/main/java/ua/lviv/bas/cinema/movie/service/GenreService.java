@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.movie.service;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.movie.domain.Genre;
 import ua.lviv.bas.cinema.movie.dto.request.GenreRequest;
+import ua.lviv.bas.cinema.common.CacheableList;
 import ua.lviv.bas.cinema.movie.dto.response.GenreListResponse;
 import ua.lviv.bas.cinema.movie.dto.response.GenreResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
@@ -21,6 +23,8 @@ import ua.lviv.bas.cinema.movie.repository.GenreRepository;
 import ua.lviv.bas.cinema.movie.repository.MovieRepository;
 import ua.lviv.bas.cinema.common.UniquenessValidator;
 import ua.lviv.bas.cinema.common.FixedOrderPageable;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -50,6 +54,12 @@ public class GenreService {
         log.info("Getting genres: query='{}', page={}, size={}", query, pageable.getPageNumber(),
                 pageable.getPageSize());
         return genreRepository.findGenresByFilters(query, FixedOrderPageable.of(pageable)).map(genreMapper::toGenreListResponse);
+    }
+
+    @Cacheable(value = "genres", key = "'all'")
+    public List<GenreResponse> getAllGenres() {
+        return new CacheableList<>(genreRepository.findAll(Sort.by("name")).stream().map(genreMapper::toGenreResponse)
+                .toList());
     }
 
     @CacheEvict(value = "genres", allEntries = true)

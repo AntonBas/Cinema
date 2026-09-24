@@ -12,11 +12,14 @@ import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 export const useGenre = () => {
   const genresApi = useApi<PageResponse<GenreListResponse>>();
   const mutationApi = useApi<GenreResponse | void>();
+  const allGenresApi = useApi<GenreResponse[]>();
 
   const genresApiRef = useRef(genresApi);
+  const allGenresApiRef = useRef(allGenresApi);
   const mutationApiRef = useRef(mutationApi);
 
   genresApiRef.current = genresApi;
+  allGenresApiRef.current = allGenresApi;
   mutationApiRef.current = mutationApi;
 
   const loading = useDelayedLoading(genresApi.loading || mutationApi.loading, {
@@ -30,6 +33,12 @@ export const useGenre = () => {
     },
     [],
   );
+
+  const getAllOptions = useCallback(async () => {
+    return allGenresApiRef.current.execute(() =>
+      genreApi.admin.getAllOptions(),
+    );
+  }, []);
 
   const create = useCallback(async (request: GenreRequest) => {
     return mutationApiRef.current.execute(
@@ -56,11 +65,13 @@ export const useGenre = () => {
 
   return {
     genres: genresApi.data?.content || [],
+    allGenres: allGenresApi.data || [],
     pagination: genresApi.data,
     loading,
     genresError: genresApi.error,
     mutationError: mutationApi.error,
     getAll,
+    getAllOptions,
     create,
     update,
     remove,
