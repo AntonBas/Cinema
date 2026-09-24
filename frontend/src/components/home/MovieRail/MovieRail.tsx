@@ -16,6 +16,7 @@ interface MovieRailProps {
 }
 
 const AUTO_PLAY_INTERVAL = 5000;
+const SWIPE_THRESHOLD = 50;
 
 const getInitialItemsToShow = () => {
   return window.innerWidth <= 768 ? 1 : 3;
@@ -30,9 +31,9 @@ export const MovieRail: React.FC<MovieRailProps> = ({
 }) => {
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [itemsToShow, setItemsToShow] = useState(getInitialItemsToShow);
-  const timerRef = useRef<number | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -54,14 +55,42 @@ export const MovieRail: React.FC<MovieRailProps> = ({
   };
 
   useEffect(() => {
-    if (isHovered || loading || movies.length <= itemsToShow) return;
+    if (isPaused || loading || movies.length <= itemsToShow) return;
 
-    timerRef.current = window.setInterval(nextSlide, AUTO_PLAY_INTERVAL);
+    const timer = window.setTimeout(nextSlide, AUTO_PLAY_INTERVAL);
+    return () => clearTimeout(timer);
+  }, [isPaused, loading, movies.length, itemsToShow, nextSlide, currentIndex]);
 
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [isHovered, loading, movies.length, itemsToShow, nextSlide]);
+  const handlePointerEnter = (event: React.PointerEvent) => {
+    if (event.pointerType === "mouse") setIsPaused(true);
+  };
+
+  const handlePointerLeave = (event: React.PointerEvent) => {
+    if (event.pointerType === "mouse") setIsPaused(false);
+  };
+
+  const handleTouchStart = (event: React.TouchEvent) => {
+    const touch = event.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleTouchEnd = (event: React.TouchEvent) => {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    if (!start) return;
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    if (
+      Math.abs(deltaX) < SWIPE_THRESHOLD ||
+      Math.abs(deltaX) < Math.abs(deltaY)
+    )
+      return;
+
+    if (deltaX < 0) nextSlide();
+    else prevSlide();
+  };
 
   if (loading) {
     return (
@@ -88,8 +117,6 @@ export const MovieRail: React.FC<MovieRailProps> = ({
   return (
     <section
       className={`${styles.section} ${highlighted ? styles.highlighted : ""}`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       <div className={styles.container}>
         <div className={styles.sectionHeader}>
@@ -105,7 +132,11 @@ export const MovieRail: React.FC<MovieRailProps> = ({
           )}
         </div>
 
-        <div className={styles.carouselContainer}>
+        <div
+          className={styles.carouselContainer}
+          onPointerEnter={handlePointerEnter}
+          onPointerLeave={handlePointerLeave}
+        >
           {showCarousel && (
             <Button
               variant="outline"
@@ -117,7 +148,11 @@ export const MovieRail: React.FC<MovieRailProps> = ({
             </Button>
           )}
 
-          <div className={styles.carouselWrapper}>
+          <div
+            className={styles.carouselWrapper}
+            onTouchStart={showCarousel ? handleTouchStart : undefined}
+            onTouchEnd={showCarousel ? handleTouchEnd : undefined}
+          >
             <div
               className={`${styles.moviesGrid} ${!showCarousel ? styles.moviesGridCentered : ""}`}
             >

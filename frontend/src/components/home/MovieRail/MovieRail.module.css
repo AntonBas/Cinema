@@ -43,6 +43,7 @@
   flex: 1;
   overflow: visible;
   padding-top: var(--space-1);
+  touch-action: pan-y;
 }
 
 .moviesGrid {
