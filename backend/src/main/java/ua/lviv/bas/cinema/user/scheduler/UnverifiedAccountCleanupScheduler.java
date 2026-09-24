@@ -31,7 +31,7 @@ public class UnverifiedAccountCleanupScheduler {
 
         Instant cutoff = Instant.now().minus(Duration.ofHours(gracePeriodHours));
         int deletedTokens = tokenRepository.deleteAllByUnverifiedUserCreatedDateBefore(cutoff);
-        int deletedAccounts = userRepository.deleteAllByEnabledFalseAndCreatedDateBefore(cutoff);
+        int deletedAccounts = userRepository.deleteAllByEmailVerifiedFalseAndCreatedDateBefore(cutoff);
 
         if (deletedAccounts > 0) {
             log.info("Cleaned up {} unverified accounts ({} tokens) older than {}h", deletedAccounts, deletedTokens,

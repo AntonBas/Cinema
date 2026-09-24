@@ -167,7 +167,7 @@ class AdminBookingServiceIntegrationTest {
     private User buildUser() {
         return User.builder().email(EMAIL).firstName("Admin").lastName("Booking")
                 .dateOfBirth(LocalDate.of(1995, 1, 1)).city("Lviv").phoneNumber("+380000000201")
-                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).build();
+                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).build();
     }
 
     private Movie buildMovie() {

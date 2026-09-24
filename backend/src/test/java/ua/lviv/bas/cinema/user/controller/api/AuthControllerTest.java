@@ -127,6 +127,7 @@ public class AuthControllerTest {
         user.setPassword("encodedPassword");
         user.setUserRole(UserRole.ROLE_USER);
         user.setEnabled(true);
+        user.setEmailVerified(true);
         user.setVerificationStatus(VerificationStatus.NOT_VERIFIED);
 
         userDetails = new CustomUserDetails(user);
@@ -176,6 +177,23 @@ public class AuthControllerTest {
                 .andExpect(cookie().exists(JwtCookieService.COOKIE_NAME))
                 .andExpect(cookie().httpOnly(JwtCookieService.COOKIE_NAME, true))
                 .andExpect(cookie().value(JwtCookieService.COOKIE_NAME, "jwtToken"));
+    }
+
+    @Test
+    void loginShouldReturnForbiddenWithoutCookieWhenEmailNotVerified() throws Exception {
+        user.setEmailVerified(false);
+        CustomUserDetails unverifiedDetails = new CustomUserDetails(user);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(unverifiedDetails, null,
+                unverifiedDetails.getAuthorities());
+
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenReturn(authentication);
+
+        mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest))).andExpect(status().isForbidden())
+                .andExpect(cookie().doesNotExist(JwtCookieService.COOKIE_NAME));
+
+        verify(jwtTokenProvider, never()).generateToken(any());
     }
 
     @Test

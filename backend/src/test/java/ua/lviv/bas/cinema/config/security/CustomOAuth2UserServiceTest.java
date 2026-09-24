@@ -8,6 +8,7 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import ua.lviv.bas.cinema.config.security.CustomOAuth2UserService;
 import ua.lviv.bas.cinema.user.domain.User;
@@ -23,6 +24,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -92,10 +94,10 @@ public class CustomOAuth2UserServiceTest {
     }
 
     @Test
-    void loadUser_EnablesExistingUser_WhenUserIsDisabled() throws Exception {
+    void loadUser_VerifiesExistingUser_WhenEmailNotVerified() throws Exception {
         String originalPassword = "attacker-set-password-hash";
-        User existingUser = User.builder().email(EMAIL).firstName(FIRST_NAME).lastName(LAST_NAME).enabled(false)
-                .password(originalPassword).build();
+        User existingUser = User.builder().email(EMAIL).firstName(FIRST_NAME).lastName(LAST_NAME).enabled(true)
+                .emailVerified(false).password(originalPassword).build();
 
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(existingUser));
 
@@ -103,20 +105,37 @@ public class CustomOAuth2UserServiceTest {
         processMethod.setAccessible(true);
         OAuth2User result = (OAuth2User) processMethod.invoke(customOAuth2UserService, oAuth2User);
 
-        assertThat(existingUser.isEnabled()).isTrue();
+        assertThat(existingUser.isEmailVerified()).isTrue();
         assertThat(existingUser.getPassword()).isNotEqualTo(originalPassword);
         assertThat(UUID.fromString(existingUser.getPassword())).isNotNull();
         verify(userRepository).save(existingUser);
         verify(customUserDetailsService).evict(EMAIL);
         assertThat(result).isEqualTo(oAuth2User);
 
-        verify(bonusLedgerService, never()).getOrCreateCard(any());
-        verify(bonusLedgerService, never()).awardWelcomeBonus(any());
+        verify(bonusLedgerService).getOrCreateCard(existingUser);
+        verify(bonusLedgerService).awardWelcomeBonus(existingUser);
     }
 
     @Test
-    void loadUser_DoesNotModifyExistingUser_WhenUserIsEnabled() throws Exception {
-        User existingUser = User.builder().email(EMAIL).firstName(FIRST_NAME).lastName(LAST_NAME).enabled(true).build();
+    void loadUser_RejectsBlockedUser() throws Exception {
+        User existingUser = User.builder().email(EMAIL).firstName(FIRST_NAME).lastName(LAST_NAME).enabled(false)
+                .emailVerified(true).build();
+
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(existingUser));
+
+        Method processMethod = CustomOAuth2UserService.class.getDeclaredMethod("processOAuth2User", OAuth2User.class);
+        processMethod.setAccessible(true);
+
+        assertThatThrownBy(() -> processMethod.invoke(customOAuth2UserService, oAuth2User))
+                .hasCauseInstanceOf(OAuth2AuthenticationException.class);
+        assertThat(existingUser.isEnabled()).isFalse();
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void loadUser_DoesNotModifyExistingUser_WhenUserIsVerified() throws Exception {
+        User existingUser = User.builder().email(EMAIL).firstName(FIRST_NAME).lastName(LAST_NAME).enabled(true)
+                .emailVerified(true).build();
 
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(existingUser));
 

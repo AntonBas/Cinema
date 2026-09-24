@@ -70,10 +70,10 @@ public class AdminUserServiceTest {
     void setUp() {
         SecurityContextHolder.setContext(securityContext);
 
-        user = User.builder().id(USER_ID).email(USER_EMAIL).userRole(UserRole.ROLE_USER).enabled(true)
+        user = User.builder().id(USER_ID).email(USER_EMAIL).userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true)
                 .verificationStatus(VerificationStatus.NOT_VERIFIED).build();
 
-        adminUser = User.builder().id(ADMIN_ID).email(ADMIN_EMAIL).userRole(UserRole.ROLE_ADMIN).enabled(true)
+        adminUser = User.builder().id(ADMIN_ID).email(ADMIN_EMAIL).userRole(UserRole.ROLE_ADMIN).enabled(true).emailVerified(true)
                 .verificationStatus(VerificationStatus.VERIFIED).build();
 
         response = new AdminUserListResponse(USER_ID, USER_EMAIL, "John", "Doe", UserRole.ROLE_USER, true,

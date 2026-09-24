@@ -32,7 +32,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         });
 
         if (!user.isEnabled()) {
-            log.warn("User {} is disabled but trying to login", email);
+            log.warn("User {} is blocked but trying to login", email);
         }
 
         log.debug("User loaded successfully: {}, role: {}, enabled: {}", email, user.getUserRole(), user.isEnabled());

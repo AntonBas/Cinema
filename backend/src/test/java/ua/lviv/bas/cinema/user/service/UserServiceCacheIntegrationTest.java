@@ -63,6 +63,6 @@ class UserServiceCacheIntegrationTest {
     private User buildUser(String firstName) {
         return User.builder().email("zztest.cache.user@test.com").firstName(firstName).lastName("User")
                 .dateOfBirth(LocalDate.of(1995, 1, 1)).city("Lviv").phoneNumber("+380000000017")
-                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).build();
+                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).build();
     }
 }

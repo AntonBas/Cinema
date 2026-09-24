@@ -66,6 +66,7 @@ public class UserPasswordResetServiceTest {
         User user = new User();
         user.setEmail(email);
         user.setEnabled(true);
+        user.setEmailVerified(true);
         user.setId(1L);
 
         when(userRepository.findByEmailForUpdate(email)).thenReturn(Optional.of(user));
@@ -89,10 +90,25 @@ public class UserPasswordResetServiceTest {
     }
 
     @Test
-    void requestResetShouldSilentlyReturnWhenUserNotEnabled() {
+    void requestResetShouldSilentlyReturnWhenEmailNotVerified() {
         String email = "test@example.com";
         User user = new User();
         user.setEmail(email);
+        user.setEmailVerified(false);
+
+        when(userRepository.findByEmailForUpdate(email)).thenReturn(Optional.of(user));
+
+        userPasswordResetService.requestReset(email);
+
+        verify(tokenGeneratorService, never()).generatePasswordResetToken(any());
+    }
+
+    @Test
+    void requestResetShouldSilentlyReturnWhenUserBlocked() {
+        String email = "test@example.com";
+        User user = new User();
+        user.setEmail(email);
+        user.setEmailVerified(true);
         user.setEnabled(false);
 
         when(userRepository.findByEmailForUpdate(email)).thenReturn(Optional.of(user));
@@ -108,6 +124,7 @@ public class UserPasswordResetServiceTest {
         User user = new User();
         user.setEmail(email);
         user.setEnabled(true);
+        user.setEmailVerified(true);
         user.setLastPasswordResetSentAt(Instant.now().minus(Duration.ofSeconds(10)));
 
         when(userRepository.findByEmailForUpdate(email)).thenReturn(Optional.of(user));
@@ -123,6 +140,7 @@ public class UserPasswordResetServiceTest {
         User user = new User();
         user.setEmail(email);
         user.setEnabled(true);
+        user.setEmailVerified(true);
         user.setLastPasswordResetSentAt(Instant.now().minus(Duration.ofSeconds(61)));
 
         when(userRepository.findByEmailForUpdate(email)).thenReturn(Optional.of(user));
@@ -143,6 +161,7 @@ public class UserPasswordResetServiceTest {
         user.setEmail("test@example.com");
         user.setPassword("oldEncodedPassword");
         user.setEnabled(true);
+        user.setEmailVerified(true);
         int originalTokenVersion = user.getTokenVersion();
 
         EmailToken resetToken = EmailToken.builder().token(token).type(TokenType.PASSWORD_RESET)

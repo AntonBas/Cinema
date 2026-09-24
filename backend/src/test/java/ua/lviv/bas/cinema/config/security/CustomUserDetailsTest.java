@@ -10,8 +10,8 @@ class CustomUserDetailsTest {
 
     @Test
     void isAccountNonLockedShouldAlwaysBeTrueRegardlessOfEnabledFlag() {
-        var enabledUser = new CustomUserDetails(1L, "user@test.com", "hash", true, "ROLE_USER", 0);
-        var disabledUser = new CustomUserDetails(2L, "unverified@test.com", "hash", false, "ROLE_USER", 0);
+        var enabledUser = new CustomUserDetails(1L, "user@test.com", "hash", true, true, "ROLE_USER", 0);
+        var disabledUser = new CustomUserDetails(2L, "unverified@test.com", "hash", false, true, "ROLE_USER", 0);
 
         assertThat(enabledUser.isAccountNonLocked()).isTrue();
         assertThat(disabledUser.isAccountNonLocked())
@@ -21,8 +21,8 @@ class CustomUserDetailsTest {
 
     @Test
     void isEnabledShouldReflectTheEnabledFlag() {
-        var enabledUser = new CustomUserDetails(1L, "user@test.com", "hash", true, "ROLE_USER", 0);
-        var disabledUser = new CustomUserDetails(2L, "unverified@test.com", "hash", false, "ROLE_USER", 0);
+        var enabledUser = new CustomUserDetails(1L, "user@test.com", "hash", true, true, "ROLE_USER", 0);
+        var disabledUser = new CustomUserDetails(2L, "unverified@test.com", "hash", false, true, "ROLE_USER", 0);
 
         assertThat(enabledUser.isEnabled()).isTrue();
         assertThat(disabledUser.isEnabled()).isFalse();
@@ -30,7 +30,7 @@ class CustomUserDetailsTest {
 
     @Test
     void constructorFromUserShouldCarryTokenVersion() {
-        User user = User.builder().id(1L).email("user@test.com").password("hash").enabled(true)
+        User user = User.builder().id(1L).email("user@test.com").password("hash").enabled(true).emailVerified(true)
                 .userRole(UserRole.ROLE_USER).tokenVersion(3).build();
 
         var userDetails = new CustomUserDetails(user);

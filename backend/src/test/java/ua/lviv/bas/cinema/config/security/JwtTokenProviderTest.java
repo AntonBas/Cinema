@@ -25,7 +25,7 @@ class JwtTokenProviderTest {
 
     @Test
     void generateTokenShouldEmbedTokenVersionClaimForCustomUserDetails() {
-        var userDetails = new CustomUserDetails(1L, "user@test.com", "hash", true, "ROLE_USER", 5);
+        var userDetails = new CustomUserDetails(1L, "user@test.com", "hash", true, true, "ROLE_USER", 5);
         Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null,
                 userDetails.getAuthorities());
 
@@ -53,7 +53,7 @@ class JwtTokenProviderTest {
 
     @Test
     void generateTokenShouldEmbedUniqueJti() {
-        var userDetails = new CustomUserDetails(1L, "user@test.com", "hash", true, "ROLE_USER", 0);
+        var userDetails = new CustomUserDetails(1L, "user@test.com", "hash", true, true, "ROLE_USER", 0);
         Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null,
                 userDetails.getAuthorities());
 
@@ -66,7 +66,7 @@ class JwtTokenProviderTest {
 
     @Test
     void getExpirationFromTokenShouldMatchConfiguredExpiration() {
-        var userDetails = new CustomUserDetails(1L, "user@test.com", "hash", true, "ROLE_USER", 0);
+        var userDetails = new CustomUserDetails(1L, "user@test.com", "hash", true, true, "ROLE_USER", 0);
         Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null,
                 userDetails.getAuthorities());
         Instant before = Instant.now();

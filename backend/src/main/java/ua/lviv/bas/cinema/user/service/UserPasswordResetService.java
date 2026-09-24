@@ -46,8 +46,8 @@ public class UserPasswordResetService {
         }
 
         var user = userOpt.get();
-        if (!user.isEnabled()) {
-            log.info("Password reset requested for unverified email: {}", email);
+        if (!user.isEmailVerified() || !user.isEnabled()) {
+            log.info("Password reset requested for unverified or blocked account: {}", email);
             return;
         }
 

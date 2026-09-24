@@ -52,7 +52,7 @@ public class EmailTokenServiceTest {
     @Test
     void confirmEmail_Success() {
         User user = createUser();
-        user.setEnabled(false);
+        user.setEmailVerified(false);
 
         EmailToken emailToken = EmailToken.builder().token(TOKEN).type(TokenType.VERIFICATION).confirmed(false)
                 .expiresAt(Instant.now().plus(Duration.ofHours(1))).user(user).build();
@@ -63,7 +63,7 @@ public class EmailTokenServiceTest {
         String result = emailTokenService.confirmEmail(TOKEN);
 
         assertThat(result).contains("successfully");
-        assertThat(user.isEnabled()).isTrue();
+        assertThat(user.isEmailVerified()).isTrue();
         assertThat(emailToken.isConfirmed()).isTrue();
         verify(userRepository).save(user);
         verify(bonusUserService).getOrCreateCard(user);
@@ -158,7 +158,7 @@ public class EmailTokenServiceTest {
         User user = new User();
         user.setId(1L);
         user.setEmail(USER_EMAIL);
-        user.setEnabled(true);
+        user.setEmailVerified(true);
         return user;
     }
 }

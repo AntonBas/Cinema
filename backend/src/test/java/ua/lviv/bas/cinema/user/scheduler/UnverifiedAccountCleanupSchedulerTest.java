@@ -36,22 +36,22 @@ class UnverifiedAccountCleanupSchedulerTest {
     @Test
     void cleanupUnverifiedAccountsShouldDeleteTokensBeforeAccounts() {
         when(tokenRepository.deleteAllByUnverifiedUserCreatedDateBefore(any(Instant.class))).thenReturn(2);
-        when(userRepository.deleteAllByEnabledFalseAndCreatedDateBefore(any(Instant.class))).thenReturn(1);
+        when(userRepository.deleteAllByEmailVerifiedFalseAndCreatedDateBefore(any(Instant.class))).thenReturn(1);
 
         scheduler.cleanupUnverifiedAccounts();
 
         verify(tokenRepository).deleteAllByUnverifiedUserCreatedDateBefore(any(Instant.class));
-        verify(userRepository).deleteAllByEnabledFalseAndCreatedDateBefore(any(Instant.class));
+        verify(userRepository).deleteAllByEmailVerifiedFalseAndCreatedDateBefore(any(Instant.class));
     }
 
     @Test
     void cleanupUnverifiedAccountsWhenNoneFoundShouldStillCallRepositories() {
         when(tokenRepository.deleteAllByUnverifiedUserCreatedDateBefore(any(Instant.class))).thenReturn(0);
-        when(userRepository.deleteAllByEnabledFalseAndCreatedDateBefore(any(Instant.class))).thenReturn(0);
+        when(userRepository.deleteAllByEmailVerifiedFalseAndCreatedDateBefore(any(Instant.class))).thenReturn(0);
 
         scheduler.cleanupUnverifiedAccounts();
 
         verify(tokenRepository).deleteAllByUnverifiedUserCreatedDateBefore(any(Instant.class));
-        verify(userRepository).deleteAllByEnabledFalseAndCreatedDateBefore(any(Instant.class));
+        verify(userRepository).deleteAllByEmailVerifiedFalseAndCreatedDateBefore(any(Instant.class));
     }
 }

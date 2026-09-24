@@ -83,7 +83,7 @@ public class UserServiceTest {
         savedUser.setCity(CITY);
         savedUser.setPhoneNumber(PHONE);
         savedUser.setUserRole(UserRole.ROLE_USER);
-        savedUser.setEnabled(false);
+        savedUser.setEmailVerified(false);
         savedUser.setVerificationStatus(VerificationStatus.NOT_VERIFIED);
 
         UserResponse response = new UserResponse(USER_ID, EMAIL, "John", "Doe", DATE_OF_BIRTH, CITY, PHONE,
@@ -100,6 +100,7 @@ public class UserServiceTest {
         assertThat(result).isEqualTo(response);
         verify(userRepository).save(user);
         verify(emailTokenGeneratorService).generateVerificationToken(savedUser);
+        assertThat(savedUser.getLastVerificationEmailSentAt()).isNotNull();
     }
 
     @Test
@@ -325,8 +326,8 @@ public class UserServiceTest {
     }
 
     @Test
-    void resendVerificationEmailShouldGenerateNewTokenWhenNotEnabledAndNoCooldown() {
-        User user = User.builder().id(USER_ID).email(EMAIL).enabled(false).build();
+    void resendVerificationEmailShouldGenerateNewTokenWhenNotVerifiedAndNoCooldown() {
+        User user = User.builder().id(USER_ID).email(EMAIL).emailVerified(false).build();
 
         when(userRepository.findByEmailForUpdate(EMAIL)).thenReturn(Optional.of(user));
         when(userRepository.save(user)).thenReturn(user);
@@ -350,8 +351,8 @@ public class UserServiceTest {
     }
 
     @Test
-    void resendVerificationEmailShouldThrowWhenAlreadyEnabled() {
-        User user = User.builder().id(USER_ID).email(EMAIL).enabled(true).build();
+    void resendVerificationEmailShouldThrowWhenAlreadyVerified() {
+        User user = User.builder().id(USER_ID).email(EMAIL).emailVerified(true).build();
 
         when(userRepository.findByEmailForUpdate(EMAIL)).thenReturn(Optional.of(user));
 
@@ -362,7 +363,7 @@ public class UserServiceTest {
 
     @Test
     void resendVerificationEmailShouldThrowResendCooldownExceptionWhenRequestedTooSoon() {
-        User user = User.builder().id(USER_ID).email(EMAIL).enabled(false)
+        User user = User.builder().id(USER_ID).email(EMAIL).emailVerified(false)
                 .lastVerificationEmailSentAt(Instant.now().minus(Duration.ofSeconds(10))).build();
 
         when(userRepository.findByEmailForUpdate(EMAIL)).thenReturn(Optional.of(user));
@@ -374,7 +375,7 @@ public class UserServiceTest {
 
     @Test
     void resendVerificationEmailShouldSucceedWhenCooldownAlreadyExpired() {
-        User user = User.builder().id(USER_ID).email(EMAIL).enabled(false)
+        User user = User.builder().id(USER_ID).email(EMAIL).emailVerified(false)
                 .lastVerificationEmailSentAt(Instant.now().minus(Duration.ofSeconds(61))).build();
 
         when(userRepository.findByEmailForUpdate(EMAIL)).thenReturn(Optional.of(user));
@@ -394,8 +395,8 @@ public class UserServiceTest {
     }
 
     @Test
-    void getResendCooldownStatusShouldReturnZeroWhenAlreadyEnabled() {
-        User user = User.builder().email(EMAIL).enabled(true)
+    void getResendCooldownStatusShouldReturnZeroWhenAlreadyVerified() {
+        User user = User.builder().email(EMAIL).emailVerified(true)
                 .lastVerificationEmailSentAt(Instant.now()).build();
 
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
@@ -405,7 +406,7 @@ public class UserServiceTest {
 
     @Test
     void getResendCooldownStatusShouldReturnRemainingSecondsWithinCooldown() {
-        User user = User.builder().email(EMAIL).enabled(false)
+        User user = User.builder().email(EMAIL).emailVerified(false)
                 .lastVerificationEmailSentAt(Instant.now().minus(Duration.ofSeconds(20))).build();
 
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
@@ -417,7 +418,7 @@ public class UserServiceTest {
 
     @Test
     void getResendCooldownStatusShouldReturnZeroWhenCooldownExpired() {
-        User user = User.builder().email(EMAIL).enabled(false)
+        User user = User.builder().email(EMAIL).emailVerified(false)
                 .lastVerificationEmailSentAt(Instant.now().minus(Duration.ofSeconds(120))).build();
 
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));

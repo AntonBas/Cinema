@@ -62,6 +62,7 @@ public class UserService {
         var saved = userRepository.save(user);
         log.info("User registered: {}", request.email());
         emailTokenGeneratorService.generateVerificationToken(saved);
+        saved.setLastVerificationEmailSentAt(Instant.now());
         auditRegister(saved);
 
         return userMapper.toUserResponse(saved);
@@ -130,7 +131,7 @@ public class UserService {
         }
 
         var user = userOpt.get();
-        if (user.isEnabled()) {
+        if (user.isEmailVerified()) {
             throw new EmailAlreadyVerifiedException();
         }
 
@@ -152,7 +153,7 @@ public class UserService {
 
     public int getResendCooldownStatus(String email) {
         return userRepository.findByEmail(email)
-                .filter(user -> !user.isEnabled())
+                .filter(user -> !user.isEmailVerified())
                 .map(User::getLastVerificationEmailSentAt)
                 .map(this::remainingCooldownSeconds)
                 .filter(remaining -> remaining > 0)

@@ -33,6 +33,7 @@ import ua.lviv.bas.cinema.config.security.JwtBlacklistService;
 import ua.lviv.bas.cinema.config.security.JwtCookieService;
 import ua.lviv.bas.cinema.config.security.JwtTokenProvider;
 import ua.lviv.bas.cinema.config.security.OAuth2ExchangeCodeService;
+import ua.lviv.bas.cinema.exception.domain.auth.EmailNotVerifiedException;
 import ua.lviv.bas.cinema.exception.domain.auth.InvalidTokenException;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.user.dto.request.OAuth2ExchangeRequest;
@@ -86,7 +87,8 @@ public class AuthController {
     @Operation(summary = "User login")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Login successful"),
-            @ApiResponse(responseCode = "401", description = "Invalid email or password")
+            @ApiResponse(responseCode = "401", description = "Invalid email or password, or account blocked"),
+            @ApiResponse(responseCode = "403", description = "Email address not confirmed yet")
     })
     @SecurityRequirements()
     public AuthResponse login(@Valid @RequestBody UserLoginRequest request, HttpServletResponse response) {
@@ -95,10 +97,14 @@ public class AuthController {
         var authentication = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
 
+        var userDetails = (CustomUserDetails) authentication.getPrincipal();
+        if (!userDetails.isEmailVerified()) {
+            throw new EmailNotVerifiedException();
+        }
+
         var token = jwtTokenProvider.generateToken(authentication);
         jwtCookieService.addTokenCookie(response, token);
 
-        var userDetails = (CustomUserDetails) authentication.getPrincipal();
         var userResponse = userService.getUserResponse(userDetails.getUserId());
 
         return new AuthResponse(userResponse);

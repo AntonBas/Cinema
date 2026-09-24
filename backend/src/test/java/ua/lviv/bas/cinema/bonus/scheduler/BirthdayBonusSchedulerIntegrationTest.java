@@ -57,6 +57,6 @@ class BirthdayBonusSchedulerIntegrationTest {
     private User buildUser(String email, LocalDate dateOfBirth) {
         return User.builder().email(email).firstName("Test").lastName("User").dateOfBirth(dateOfBirth).city("Lviv")
                 .phoneNumber("+380000000030").password("hashed-password").userRole(UserRole.ROLE_USER)
-                .verificationStatus(VerificationStatus.VERIFIED).enabled(true).build();
+                .verificationStatus(VerificationStatus.VERIFIED).enabled(true).emailVerified(true).build();
     }
 }

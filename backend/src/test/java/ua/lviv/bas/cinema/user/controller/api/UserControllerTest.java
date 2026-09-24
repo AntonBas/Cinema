@@ -38,7 +38,7 @@ public class UserControllerTest {
 	private CustomUserDetails createMockUserDetails(Long userId) {
 		User user = User.builder().id(userId).email("user@example.com").firstName("John").lastName("Doe")
 				.dateOfBirth(LocalDate.of(1990, 1, 1)).city("Kyiv").phoneNumber("+380123456789").password("password")
-				.userRole(UserRole.ROLE_USER).enabled(true).build();
+				.userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).build();
 
 		return new CustomUserDetails(user);
 	}

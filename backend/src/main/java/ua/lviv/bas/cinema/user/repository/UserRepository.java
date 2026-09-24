@@ -32,7 +32,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.email = :email")
     Optional<User> findByEmailForUpdate(@Param("email") String email);
 
-    int deleteAllByEnabledFalseAndCreatedDateBefore(Instant cutoff);
+    int deleteAllByEmailVerifiedFalseAndCreatedDateBefore(Instant cutoff);
 
     @EntityGraph(attributePaths = {"bonusCard"})
     @Override
@@ -44,6 +44,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             SELECT u FROM User u
             WHERE u.verificationStatus = :status
               AND u.enabled = true
+              AND u.emailVerified = true
               AND EXTRACT(DAY FROM u.dateOfBirth) = :day
               AND EXTRACT(MONTH FROM u.dateOfBirth) = :month
             """)

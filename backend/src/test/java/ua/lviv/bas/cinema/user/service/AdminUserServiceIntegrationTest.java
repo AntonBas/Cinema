@@ -90,6 +90,6 @@ class AdminUserServiceIntegrationTest {
     private User buildUser(String email, String lastName, String phone) {
         return User.builder().email(email).firstName("Test").lastName(lastName)
                 .dateOfBirth(LocalDate.of(1995, 1, 1)).city("Lviv").phoneNumber(phone)
-                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).build();
+                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).build();
     }
 }

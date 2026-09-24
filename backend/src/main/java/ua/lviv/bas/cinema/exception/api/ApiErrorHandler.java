@@ -217,7 +217,7 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(DisabledException.class)
     protected ResponseEntity<Object> handleDisabled(@Nonnull DisabledException ex, @Nonnull WebRequest request) {
-        ApiError apiError = new ApiError(UNAUTHORIZED, "Account is disabled");
+        ApiError apiError = new ApiError(UNAUTHORIZED, "Account is blocked");
         log.warn("Disabled account attempt: {}", ex.getMessage());
         return buildResponseEntity(apiError, request);
     }

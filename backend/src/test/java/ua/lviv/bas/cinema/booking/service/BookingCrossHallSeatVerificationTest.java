@@ -59,7 +59,7 @@ class BookingCrossHallSeatVerificationTest {
     void createAndPersistShouldRejectASeatFromADifferentHallThanTheSession() {
         var user = userRepository.save(User.builder().email("cross.hall.seat@test.com").firstName("Test")
                 .lastName("User").dateOfBirth(LocalDate.of(1995, 1, 1)).city("Lviv").phoneNumber("+380000000077")
-                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).build());
+                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).build());
 
         var movie = movieRepository.save(Movie.builder().title("Cross Hall Test Movie")
                 .slug("cross-hall-test-movie").trailerUrl("https://example.com/trailer")

@@ -94,7 +94,11 @@ public class User extends AuditableEntity {
 
     @Column(nullable = false)
     @Builder.Default
-    private boolean enabled = false;
+    private boolean enabled = true;
+
+    @Column(name = "email_verified", nullable = false)
+    @Builder.Default
+    private boolean emailVerified = false;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private BonusCard bonusCard;

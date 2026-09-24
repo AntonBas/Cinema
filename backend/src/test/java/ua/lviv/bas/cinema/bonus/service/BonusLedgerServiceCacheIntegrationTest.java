@@ -104,6 +104,6 @@ class BonusLedgerServiceCacheIntegrationTest {
     private User buildUser(String email) {
         return User.builder().email(email).firstName("Test").lastName("User").dateOfBirth(LocalDate.of(1995, 1, 1))
                 .city("Lviv").phoneNumber("+380000000018").password("hashed-password").userRole(UserRole.ROLE_USER)
-                .enabled(true).build();
+                .enabled(true).emailVerified(true).build();
     }
 }

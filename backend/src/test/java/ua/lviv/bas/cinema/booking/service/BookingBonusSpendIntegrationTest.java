@@ -62,7 +62,7 @@ class BookingBonusSpendIntegrationTest {
     void creatingBookingWithBonusPointsShouldNotHangOrFailOnCrossTransactionSpend() {
         var user = userRepository.save(User.builder().email("bonus.spend.integration@test.com").firstName("Test")
                 .lastName("User").dateOfBirth(LocalDate.of(1995, 1, 1)).city("Lviv").phoneNumber("+380000000099")
-                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).build());
+                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).build());
         bonusCardRepository.save(BonusCard.builder().user(user).pointsBalance(150).build());
 
         var movie = movieRepository.save(Movie.builder().title("Bonus Spend Test Movie")

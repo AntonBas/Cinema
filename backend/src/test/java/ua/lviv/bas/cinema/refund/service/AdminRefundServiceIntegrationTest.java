@@ -153,7 +153,7 @@ class AdminRefundServiceIntegrationTest {
     private User buildUser() {
         return User.builder().email(EMAIL).firstName("Admin").lastName("Refund")
                 .dateOfBirth(LocalDate.of(1995, 1, 1)).city("Lviv").phoneNumber("+380000000301")
-                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).build();
+                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).build();
     }
 
     private Movie buildMovie() {

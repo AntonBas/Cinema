@@ -37,7 +37,8 @@ public class UserMapperTest {
         assertThat(user.getPhoneNumber()).isEqualTo("+380501234567");
         assertThat(user.getUserRole()).isEqualTo(UserRole.ROLE_USER);
         assertThat(user.getVerificationStatus()).isEqualTo(VerificationStatus.NOT_VERIFIED);
-        assertThat(user.isEnabled()).isFalse();
+        assertThat(user.isEnabled()).isTrue();
+        assertThat(user.isEmailVerified()).isFalse();
         assertThat(user.getId()).isNull();
         assertThat(user.getTickets()).isEmpty();
         assertThat(user.getBonusCard()).isNull();
@@ -47,7 +48,7 @@ public class UserMapperTest {
     void toUserResponse_ShouldMapUser() {
         User user = User.builder().id(1L).email("test@example.com").firstName("John").lastName("Doe")
                 .dateOfBirth(LocalDate.of(1990, 1, 1)).city("Kyiv").phoneNumber("+380501234567")
-                .userRole(UserRole.ROLE_USER).enabled(true).verificationStatus(VerificationStatus.VERIFIED).build();
+                .userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).verificationStatus(VerificationStatus.VERIFIED).build();
 
         UserResponse response = userMapper.toUserResponse(user);
 
@@ -185,7 +186,7 @@ public class UserMapperTest {
     @Test
     void toAdminUserListResponse_FromUser_ShouldMapAllFields() {
         User user = User.builder().id(1L).email("test@example.com").firstName("John").lastName("Doe")
-                .userRole(UserRole.ROLE_USER).enabled(true).verificationStatus(VerificationStatus.VERIFIED)
+                .userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).verificationStatus(VerificationStatus.VERIFIED)
                 .verifiedAt(Instant.parse("2024-01-15T10:30:00Z")).tickets(new ArrayList<>()).build();
 
         user.getTickets().add(null);
@@ -208,7 +209,7 @@ public class UserMapperTest {
     @Test
     void toAdminUserListResponse_FromUser_WithNullTickets_ShouldReturnZeroCount() {
         User user = User.builder().id(1L).email("test@example.com").firstName("John").lastName("Doe")
-                .userRole(UserRole.ROLE_USER).enabled(true).verificationStatus(VerificationStatus.VERIFIED)
+                .userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).verificationStatus(VerificationStatus.VERIFIED)
                 .tickets(null).build();
 
         AdminUserListResponse response = userMapper.toAdminUserListResponse(user);

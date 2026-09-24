@@ -59,15 +59,22 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         if (userOptional.isPresent()) {
             user = userOptional.get();
             if (!user.isEnabled()) {
-                user.setEnabled(true);
+                log.warn("Blocked user {} tried to sign in with OAuth2", email);
+                throw new OAuth2AuthenticationException(
+                        new OAuth2Error("account_blocked", "Account is blocked", null));
+            }
+            if (!user.isEmailVerified()) {
+                user.setEmailVerified(true);
                 user.setPassword(UUID.randomUUID().toString());
                 userRepository.save(user);
                 customUserDetailsService.evict(email);
-                log.info("Enabled existing OAuth2 user {} and invalidated local password", email);
+                bonusLedgerService.getOrCreateCard(user);
+                bonusLedgerService.awardWelcomeBonus(user);
+                log.info("Verified existing OAuth2 user {} and invalidated local password", email);
             }
         } else {
             user = User.builder().email(email).firstName(firstName).lastName(lastName)
-                    .password(UUID.randomUUID().toString()).userRole(UserRole.ROLE_USER).enabled(true)
+                    .password(UUID.randomUUID().toString()).userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true)
                     .verificationStatus(VerificationStatus.NOT_VERIFIED).verifiedAt(null).city("").phoneNumber("")
                     .dateOfBirth(CinemaTime.today().minusYears(18)).build();
 

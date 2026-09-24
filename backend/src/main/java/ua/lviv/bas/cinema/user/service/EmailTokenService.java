@@ -38,7 +38,7 @@ public class EmailTokenService {
         var emailToken = validateToken(token, TokenType.VERIFICATION);
         var user = emailToken.getUser();
 
-        user.setEnabled(true);
+        user.setEmailVerified(true);
         var updatedUser = userRepository.save(user);
         customUserDetailsService.evict(user.getEmail());
 
