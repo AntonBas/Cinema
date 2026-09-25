@@ -35,7 +35,8 @@ import ua.lviv.bas.cinema.user.repository.UserRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
+@SpringBootTest(properties = {"scheduler.booking.expiration-interval=3600000",
+        "scheduler.payment.expiration-interval=3600000"})
 @ActiveProfiles("ci")
 @Import({TestcontainersConfig.class, NoOpCacheTestConfig.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)

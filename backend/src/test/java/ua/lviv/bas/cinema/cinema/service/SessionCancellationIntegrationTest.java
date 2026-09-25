@@ -53,7 +53,8 @@ import ua.lviv.bas.cinema.user.repository.UserRepository;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@SpringBootTest
+@SpringBootTest(properties = {"scheduler.booking.cancelled-session-interval=3600000",
+        "scheduler.refund.cancelled-session-interval=3600000", "scheduler.booking.expiration-interval=3600000"})
 @ActiveProfiles("ci")
 @Import({TestcontainersConfig.class, NoOpCacheTestConfig.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
