@@ -65,6 +65,10 @@ public class Promotion extends AuditableEntity {
 	@Column(name = "end_date")
 	private LocalDate endDate;
 
+	@Builder.Default
+	@Column(nullable = false)
+	private boolean active = true;
+
 	@OneToMany(mappedBy = "promotion", fetch = FetchType.LAZY)
 	@BatchSize(size = 20)
 	@Builder.Default

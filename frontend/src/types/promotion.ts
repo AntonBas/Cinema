@@ -4,13 +4,14 @@ export interface PromotionRequest {
   bonusPoints: number;
   startDate?: string;
   endDate?: string;
+  active?: boolean;
 }
 
 export interface ClaimPromotionRequest {
   promotionId: number;
 }
 
-export type PromotionStatus = "UPCOMING" | "ACTIVE" | "EXPIRED";
+export type PromotionStatus = "UPCOMING" | "ACTIVE" | "EXPIRED" | "INACTIVE";
 
 export interface PromotionResponse {
   id: number;
@@ -19,6 +20,7 @@ export interface PromotionResponse {
   bonusPoints: number;
   startDate?: string;
   endDate?: string;
+  active: boolean;
   status: PromotionStatus;
 }
 
@@ -28,5 +30,6 @@ export interface PromotionListResponse {
   bonusPoints: number;
   startDate?: string;
   endDate?: string;
+  active: boolean;
   status: PromotionStatus;
 }

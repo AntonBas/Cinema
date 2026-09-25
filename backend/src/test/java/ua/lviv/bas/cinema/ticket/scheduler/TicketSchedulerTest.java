@@ -12,7 +12,6 @@ import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
 import ua.lviv.bas.cinema.ticket.repository.TicketRepository;
 import ua.lviv.bas.cinema.ticket.repository.specification.TicketSpecification;
 
-import java.time.Instant;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -57,29 +56,5 @@ class TicketSchedulerTest {
 
         verify(ticketRepository).updateStatusIfCurrentForIds(List.of(1L, 2L), TicketStatus.ACTIVE,
                 TicketStatus.EXPIRED);
-    }
-
-    @Test
-    void cleanupRefundedTicketsWhenNoneFoundShouldNotDelete() {
-        when(ticketSpecification.hasStatus(TicketStatus.REFUNDED)).thenReturn(NOOP_SPEC);
-        when(ticketSpecification.purchaseTimeBefore(any(Instant.class))).thenReturn(NOOP_SPEC);
-        when(ticketRepository.findAll(any(Specification.class))).thenReturn(List.of());
-
-        ticketScheduler.cleanupRefundedTickets();
-
-        verify(ticketRepository, never()).deleteAll(any());
-    }
-
-    @Test
-    void cleanupRefundedTicketsShouldDeleteFoundTickets() {
-        var ticket = Ticket.builder().id(1L).status(TicketStatus.REFUNDED).build();
-
-        when(ticketSpecification.hasStatus(TicketStatus.REFUNDED)).thenReturn(NOOP_SPEC);
-        when(ticketSpecification.purchaseTimeBefore(any(Instant.class))).thenReturn(NOOP_SPEC);
-        when(ticketRepository.findAll(any(Specification.class))).thenReturn(List.of(ticket));
-
-        ticketScheduler.cleanupRefundedTickets();
-
-        verify(ticketRepository).deleteAll(List.of(ticket));
     }
 }

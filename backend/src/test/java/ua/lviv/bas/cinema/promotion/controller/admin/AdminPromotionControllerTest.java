@@ -37,18 +37,18 @@ public class AdminPromotionControllerTest {
 
     private PromotionResponse createPromotionResponse() {
         return new PromotionResponse(PROMOTION_ID, TITLE, "Description", BONUS_POINTS, CinemaTime.today().plusDays(1),
-                CinemaTime.today().plusDays(10), PromotionStatus.UPCOMING);
+                CinemaTime.today().plusDays(10), true, PromotionStatus.UPCOMING);
     }
 
     private PromotionListResponse createPromotionListResponse() {
         return new PromotionListResponse(PROMOTION_ID, TITLE, BONUS_POINTS, CinemaTime.today().plusDays(1),
-                CinemaTime.today().plusDays(10), PromotionStatus.UPCOMING);
+                CinemaTime.today().plusDays(10), true, PromotionStatus.UPCOMING);
     }
 
     @Test
     void createPromotionShouldReturnCreated() {
         PromotionRequest request = new PromotionRequest(TITLE, "Description", BONUS_POINTS, CinemaTime.today().plusDays(1),
-                CinemaTime.today().plusDays(10));
+                CinemaTime.today().plusDays(10), null);
         PromotionResponse response = createPromotionResponse();
 
         when(promotionService.createPromotion(any(PromotionRequest.class))).thenReturn(response);
@@ -135,9 +135,9 @@ public class AdminPromotionControllerTest {
     @Test
     void updatePromotionShouldReturnUpdated() {
         PromotionRequest request = new PromotionRequest("Updated Title", "Updated Description", 200,
-                CinemaTime.today().plusDays(1), CinemaTime.today().plusDays(10));
+                CinemaTime.today().plusDays(1), CinemaTime.today().plusDays(10), null);
         PromotionResponse response = new PromotionResponse(PROMOTION_ID, "Updated Title", "Updated Description", 200,
-                CinemaTime.today().plusDays(1), CinemaTime.today().plusDays(10), PromotionStatus.UPCOMING);
+                CinemaTime.today().plusDays(1), CinemaTime.today().plusDays(10), true, PromotionStatus.UPCOMING);
 
         when(promotionService.updatePromotion(eq(PROMOTION_ID), any(PromotionRequest.class))).thenReturn(response);
 
@@ -153,7 +153,7 @@ public class AdminPromotionControllerTest {
     @Test
     void updatePromotionShouldThrowWhenNotFound() {
         PromotionRequest request = new PromotionRequest("Updated Title", "Updated Description", 200,
-                CinemaTime.today().plusDays(1), CinemaTime.today().plusDays(10));
+                CinemaTime.today().plusDays(1), CinemaTime.today().plusDays(10), null);
 
         when(promotionService.updatePromotion(eq(999L), any(PromotionRequest.class)))
                 .thenThrow(new EntityNotFoundException("Promotion", 999L));

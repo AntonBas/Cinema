@@ -25,6 +25,9 @@ public record PromotionResponse(
         @Schema(description = "End date of the promotion", example = "2024-07-10T00:00:00")
         LocalDate endDate,
 
+        @Schema(description = "Whether the promotion is enabled by an administrator", example = "true")
+        boolean active,
+
         @Schema(description = "Current promotion status relative to today", example = "ACTIVE")
         PromotionStatus status
 ) {

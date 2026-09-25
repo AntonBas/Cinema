@@ -166,6 +166,20 @@ public class TicketTypeServiceTest {
     }
 
     @Test
+    void updateTicketTypeDeactivatingWithFutureTicketsShouldThrowException() {
+        TicketType ticketType = createTicketType();
+        ticketType.setActive(true);
+        TicketTypeRequest request = new TicketTypeRequest(null, null, null, null, false, null, false, null);
+
+        when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
+        when(ticketRepository.count(any(Specification.class))).thenReturn(2L);
+
+        assertThatThrownBy(() -> ticketTypeService.updateTicketType(TICKET_TYPE_ID, request))
+                .isInstanceOf(TicketTypeInUseException.class);
+        verify(ticketTypeRepository, never()).save(any());
+    }
+
+    @Test
     void deleteTicketTypeShouldSucceed() {
         TicketType ticketType = createTicketType();
 

@@ -29,6 +29,7 @@ export const PromotionFormModal: React.FC<PromotionFormModalProps> = ({
     bonusPoints: promotion?.bonusPoints.toString() ?? "100",
     startDate: promotion?.startDate?.split("T")[0] ?? "",
     endDate: promotion?.endDate?.split("T")[0] ?? "",
+    active: promotion?.active ?? true,
   });
   const [dateError, setDateError] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -54,6 +55,7 @@ export const PromotionFormModal: React.FC<PromotionFormModalProps> = ({
         ? toBackendFormat(formData.startDate)
         : undefined,
       endDate: formData.endDate ? toBackendFormat(formData.endDate) : undefined,
+      active: formData.active,
     };
 
     try {
@@ -161,6 +163,20 @@ export const PromotionFormModal: React.FC<PromotionFormModalProps> = ({
         </div>
 
         {dateError && <div className={styles.error}>{dateError}</div>}
+
+        <div className={styles.checkboxGroup}>
+          <input
+            type="checkbox"
+            id="promotionActive"
+            checked={formData.active}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, active: e.target.checked }))
+            }
+          />
+          <label htmlFor="promotionActive" className={styles.checkboxLabel}>
+            Active
+          </label>
+        </div>
 
         <div className={styles.actions}>
           <Button type="button" variant="cancel" onClick={onClose}>

@@ -78,12 +78,12 @@ public class PromotionServiceTest {
                 .build();
 
         promotionResponse = new PromotionResponse(PROMOTION_ID, PROMOTION_TITLE, "Summer special promotion",
-                BONUS_POINTS, START_DATE, END_DATE, PromotionStatus.ACTIVE);
+                BONUS_POINTS, START_DATE, END_DATE, true, PromotionStatus.ACTIVE);
 
-        createRequest = new PromotionRequest(PROMOTION_TITLE, "Summer special promotion", BONUS_POINTS, START_DATE,
-                END_DATE);
+        createRequest = new PromotionRequest(PROMOTION_TITLE, "Summer special promotion", BONUS_POINTS,
+                CinemaTime.today(), END_DATE, null);
 
-        updateRequest = new PromotionRequest("Updated Title", "Updated description", 200, START_DATE, END_DATE);
+        updateRequest = new PromotionRequest("Updated Title", "Updated description", 200, START_DATE, END_DATE, null);
 
         claimRequest = new ClaimPromotionRequest(PROMOTION_ID);
 
@@ -116,7 +116,7 @@ public class PromotionServiceTest {
     @Test
     void createPromotionWithEndDateBeforeStartDateShouldThrowException() {
         var invalidRequest = new PromotionRequest(PROMOTION_TITLE, "Summer special promotion", BONUS_POINTS,
-                END_DATE, START_DATE);
+                END_DATE, START_DATE, null);
         when(promotionRepository.existsByTitle(PROMOTION_TITLE)).thenReturn(false);
 
         assertThatThrownBy(() -> promotionService.createPromotion(invalidRequest))
@@ -126,8 +126,35 @@ public class PromotionServiceTest {
     }
 
     @Test
-    void updatePromotionWithEndDateBeforeStartDateShouldThrowException() {
-        var invalidRequest = new PromotionRequest("Updated Title", "Updated description", 200, END_DATE, START_DATE);
+    void createPromotionWithStartDateInPastShouldThrowException() {
+        var pastRequest = new PromotionRequest(PROMOTION_TITLE, "Summer special promotion", BONUS_POINTS, START_DATE,
+                END_DATE, null);
+        when(promotionRepository.existsByTitle(PROMOTION_TITLE)).thenReturn(false);
+
+        assertThatThrownBy(() -> promotionService.createPromotion(pastRequest))
+                .isInstanceOf(InvalidPromotionDateRangeException.class);
+
+        verify(promotionRepository, never()).save(any());
+    }
+
+    @Test
+    void updatePromotionWithEndDateBeforeStoredStartDateShouldThrowException() {
+        promotion.setStartDate(CinemaTime.today().plusDays(10));
+        var invalidRequest = new PromotionRequest("Updated Title", "Updated description", 200, null,
+                CinemaTime.today().plusDays(5), null);
+        when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(promotion));
+
+        assertThatThrownBy(() -> promotionService.updatePromotion(PROMOTION_ID, invalidRequest))
+                .isInstanceOf(InvalidPromotionDateRangeException.class);
+
+        verify(promotionRepository, never()).save(any());
+    }
+
+    @Test
+    void updatePromotionWithChangedEndDateInPastShouldThrowException() {
+        var invalidRequest = new PromotionRequest("Updated Title", "Updated description", 200, START_DATE,
+                CinemaTime.today().minusDays(1), null);
+        when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(promotion));
 
         assertThatThrownBy(() -> promotionService.updatePromotion(PROMOTION_ID, invalidRequest))
                 .isInstanceOf(InvalidPromotionDateRangeException.class);
@@ -142,7 +169,7 @@ public class PromotionServiceTest {
         PromotionListProjection projection = createAdminProjection();
         Page<PromotionListProjection> page = new PageImpl<>(List.of(projection), pageable, 1);
         PromotionListResponse listResponse = new PromotionListResponse(PROMOTION_ID, PROMOTION_TITLE, BONUS_POINTS,
-                START_DATE, END_DATE, PromotionStatus.ACTIVE);
+                START_DATE, END_DATE, true, PromotionStatus.ACTIVE);
 
         when(promotionRepository.findAllAdminProjections(eq(query), eq(pageable))).thenReturn(page);
         when(promotionMapper.toPromotionListResponse(projection)).thenReturn(listResponse);
@@ -159,7 +186,7 @@ public class PromotionServiceTest {
         PromotionListProjection projection = createAdminProjection();
         Page<PromotionListProjection> page = new PageImpl<>(List.of(projection), pageable, 1);
         PromotionListResponse listResponse = new PromotionListResponse(PROMOTION_ID, PROMOTION_TITLE, BONUS_POINTS,
-                START_DATE, END_DATE, PromotionStatus.ACTIVE);
+                START_DATE, END_DATE, true, PromotionStatus.ACTIVE);
 
         when(promotionRepository.findAllAdminProjections(eq(null), eq(pageable))).thenReturn(page);
         when(promotionMapper.toPromotionListResponse(projection)).thenReturn(listResponse);
@@ -222,7 +249,7 @@ public class PromotionServiceTest {
                 .description("Updated description").bonusPoints(200).startDate(START_DATE).endDate(END_DATE).build();
 
         PromotionResponse updatedResponse = new PromotionResponse(PROMOTION_ID, "Updated Title", "Updated description",
-                200, START_DATE, END_DATE, PromotionStatus.ACTIVE);
+                200, START_DATE, END_DATE, true, PromotionStatus.ACTIVE);
 
         when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(promotion));
         when(promotionRepository.save(promotion)).thenReturn(updatedPromotion);
@@ -312,6 +339,17 @@ public class PromotionServiceTest {
     }
 
     @Test
+    void claimPromotionWhenDisabledShouldThrowException() {
+        promotion.setActive(false);
+        when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(promotion));
+
+        assertThatThrownBy(() -> promotionService.claimPromotion(claimRequest, user))
+                .isInstanceOf(PromotionNotActiveException.class);
+
+        verify(userPromotionRepository, never()).save(any());
+    }
+
+    @Test
     void claimPromotionWhenAlreadyClaimedShouldThrowException() {
         when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(promotion));
         when(userPromotionRepository.existsByUserAndPromotionId(user, PROMOTION_ID)).thenReturn(true);
@@ -367,6 +405,11 @@ public class PromotionServiceTest {
             public LocalDate getEndDate() {
                 return END_DATE;
             }
+
+            @Override
+            public boolean getActive() {
+                return true;
+            }
         };
     }
 
@@ -400,6 +443,11 @@ public class PromotionServiceTest {
             @Override
             public LocalDate getEndDate() {
                 return END_DATE;
+            }
+
+            @Override
+            public boolean getActive() {
+                return true;
             }
         };
     }

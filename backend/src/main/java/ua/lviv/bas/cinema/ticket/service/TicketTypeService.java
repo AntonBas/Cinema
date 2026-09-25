@@ -89,6 +89,10 @@ public class TicketTypeService {
             validateAgeRange(minAge, maxAge);
         }
 
+        if (ticketType.isActive() && !request.active()) {
+            validateCanDeactivate(id);
+        }
+
         var oldDetails = captureDetails(ticketType);
         ticketTypeMapper.updateEntity(request, ticketType);
         var updated = ticketTypeRepository.save(ticketType);
@@ -126,9 +130,8 @@ public class TicketTypeService {
         var ticketType = findTicketTypeById(id);
         boolean oldStatus = ticketType.isActive();
 
-        if (ticketType.isActive() && hasFutureTickets(id)) {
-            throw new TicketTypeInUseException(id,
-                    "Cannot deactivate ticket type. It is used in " + countFutureTickets(id) + " future ticket(s)");
+        if (ticketType.isActive()) {
+            validateCanDeactivate(id);
         }
 
         ticketType.setActive(!ticketType.isActive());
@@ -163,8 +166,12 @@ public class TicketTypeService {
         }
     }
 
-    private boolean hasFutureTickets(Long ticketTypeId) {
-        return countFutureTickets(ticketTypeId) > 0;
+    private void validateCanDeactivate(Long ticketTypeId) {
+        long futureTickets = countFutureTickets(ticketTypeId);
+        if (futureTickets > 0) {
+            throw new TicketTypeInUseException(ticketTypeId,
+                    "Cannot deactivate ticket type. It is used in " + futureTickets + " future ticket(s)");
+        }
     }
 
     private long countFutureTickets(Long ticketTypeId) {

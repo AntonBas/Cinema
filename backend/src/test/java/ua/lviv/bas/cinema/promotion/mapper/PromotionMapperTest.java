@@ -51,6 +51,7 @@ public class PromotionMapperTest {
         when(responseProjection.getBonusPoints()).thenReturn(300);
         when(responseProjection.getStartDate()).thenReturn(LocalDate.of(2024, 7, 1));
         when(responseProjection.getEndDate()).thenReturn(LocalDate.of(2024, 7, 31));
+        when(responseProjection.getActive()).thenReturn(true);
 
         var response = mapper.toPromotionResponse(responseProjection);
 
@@ -66,7 +67,7 @@ public class PromotionMapperTest {
     @Test
     void toEntityFromRequest() {
         var request = new PromotionRequest("New Promotion", "New promotion description", 200, LocalDate.of(2024, 7, 1),
-                LocalDate.of(2024, 7, 31));
+                LocalDate.of(2024, 7, 31), null);
 
         var promotion = mapper.toEntity(request);
 
@@ -85,7 +86,7 @@ public class PromotionMapperTest {
                 .build();
 
         var request = new PromotionRequest("New Title", "New description", 200, LocalDate.of(2024, 8, 1),
-                LocalDate.of(2024, 8, 31));
+                LocalDate.of(2024, 8, 31), null);
 
         mapper.updateEntity(request, promotion);
 
@@ -101,7 +102,7 @@ public class PromotionMapperTest {
         var promotion = Promotion.builder().id(1L).title("Old Title").description("Old description").bonusPoints(100)
                 .startDate(LocalDate.of(2024, 1, 1)).endDate(LocalDate.of(2024, 1, 31)).build();
 
-        var request = new PromotionRequest(null, null, null, null, null);
+        var request = new PromotionRequest(null, null, null, null, null, null);
 
         mapper.updateEntity(request, promotion);
 
@@ -119,6 +120,7 @@ public class PromotionMapperTest {
         when(listProjection.getBonusPoints()).thenReturn(250);
         when(listProjection.getStartDate()).thenReturn(LocalDate.of(2024, 10, 1));
         when(listProjection.getEndDate()).thenReturn(LocalDate.of(2024, 10, 31));
+        when(listProjection.getActive()).thenReturn(true);
 
         var response = mapper.toPromotionListResponse(listProjection);
 

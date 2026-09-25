@@ -34,7 +34,9 @@ import ua.lviv.bas.cinema.common.FixedOrderPageable;
 import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -54,7 +56,9 @@ public class PromotionService {
         log.info("Creating new promotion: {}", request.title());
 
         validateTitleUniqueness(request.title(), null);
-        validateDateRange(request);
+        validateNotInPast("startDate", request.startDate());
+        validateNotInPast("endDate", request.endDate());
+        validateDateRange(request.startDate(), request.endDate());
 
         var promotion = promotionMapper.toEntity(request);
         var saved = promotionRepository.save(promotion);
@@ -96,10 +100,10 @@ public class PromotionService {
         log.info("Updating promotion with ID: {}", id);
 
         validateTitleUniqueness(request.title(), id);
-        validateDateRange(request);
 
         var promotion = findByIdOrThrow(id);
         String oldTitle = promotion.getTitle();
+        validateDatesForUpdate(request, promotion);
 
         promotionMapper.updateEntity(request, promotion);
         var updated = promotionRepository.save(promotion);
@@ -170,16 +174,33 @@ public class PromotionService {
                 () -> PromotionAlreadyExistsException.forTitle(title));
     }
 
-    private void validateDateRange(PromotionRequest request) {
-        var startDate = request.startDate();
-        var endDate = request.endDate();
+    private void validateDatesForUpdate(PromotionRequest request, Promotion promotion) {
+        if (!Objects.equals(request.startDate(), promotion.getStartDate())) {
+            validateNotInPast("startDate", request.startDate());
+        }
+        if (!Objects.equals(request.endDate(), promotion.getEndDate())) {
+            validateNotInPast("endDate", request.endDate());
+        }
+        var startDate = request.startDate() != null ? request.startDate() : promotion.getStartDate();
+        var endDate = request.endDate() != null ? request.endDate() : promotion.getEndDate();
+        validateDateRange(startDate, endDate);
+    }
+
+    private void validateNotInPast(String field, LocalDate date) {
+        if (date != null && date.isBefore(CinemaTime.today())) {
+            throw InvalidPromotionDateRangeException.inPast(field, date);
+        }
+    }
+
+    private void validateDateRange(LocalDate startDate, LocalDate endDate) {
         if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
             throw new InvalidPromotionDateRangeException(startDate, endDate);
         }
     }
 
     private boolean isPromotionActive(Promotion promotion) {
-        return PromotionStatus.of(promotion.getStartDate(), promotion.getEndDate()) == PromotionStatus.ACTIVE;
+        return PromotionStatus.of(promotion.isActive(), promotion.getStartDate(), promotion.getEndDate())
+                == PromotionStatus.ACTIVE;
     }
 
     private void auditCreate(Promotion promotion) {

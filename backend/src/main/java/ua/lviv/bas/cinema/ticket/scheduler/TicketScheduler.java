@@ -13,9 +13,7 @@ import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
 import ua.lviv.bas.cinema.ticket.repository.TicketRepository;
 import ua.lviv.bas.cinema.ticket.repository.specification.TicketSpecification;
-import ua.lviv.bas.cinema.common.CinemaTime;
 
-import java.time.Instant;
 import java.util.List;
 
 @Slf4j
@@ -49,25 +47,5 @@ public class TicketScheduler {
         int expiredCount = ticketRepository.updateStatusIfCurrentForIds(ticketIds, TicketStatus.ACTIVE,
                 TicketStatus.EXPIRED);
         log.info("Successfully marked {} of {} tickets as expired", expiredCount, ticketIds.size());
-    }
-
-    @Scheduled(cron = "${scheduler.ticket.cleanup-cron:0 0 3 * * *}")
-    @Transactional
-    public void cleanupRefundedTickets() {
-        log.debug("Starting refunded tickets cleanup");
-        Instant oneYearAgo = CinemaTime.now().minusYears(1).atZone(CinemaTime.ZONE).toInstant();
-
-        Specification<Ticket> spec = Specification
-                .where(ticketSpecification.hasStatus(TicketStatus.REFUNDED))
-                .and(ticketSpecification.purchaseTimeBefore(oneYearAgo));
-
-        List<Ticket> tickets = ticketRepository.findAll(spec);
-
-        if (!tickets.isEmpty()) {
-            ticketRepository.deleteAll(tickets);
-            log.info("Cleaned up {} refunded tickets", tickets.size());
-        } else {
-            log.debug("No refunded tickets to clean up");
-        }
     }
 }

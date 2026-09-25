@@ -22,6 +22,8 @@ const getStatusDisplay = (status: PromotionStatus): string => {
       return "Upcoming";
     case "EXPIRED":
       return "Expired";
+    case "INACTIVE":
+      return "Inactive";
   }
 };
 
@@ -33,6 +35,8 @@ const getStatusVariant = (status: PromotionStatus) => {
       return "warning";
     case "EXPIRED":
       return "error";
+    case "INACTIVE":
+      return "secondary";
   }
 };
 

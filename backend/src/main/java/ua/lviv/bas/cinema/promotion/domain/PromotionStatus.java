@@ -6,9 +6,13 @@ import java.time.LocalDate;
 public enum PromotionStatus {
     UPCOMING,
     ACTIVE,
-    EXPIRED;
+    EXPIRED,
+    INACTIVE;
 
-    public static PromotionStatus of(LocalDate startDate, LocalDate endDate) {
+    public static PromotionStatus of(boolean active, LocalDate startDate, LocalDate endDate) {
+        if (!active) {
+            return INACTIVE;
+        }
         LocalDate now = CinemaTime.today();
         if (startDate != null && now.isBefore(startDate)) {
             return UPCOMING;

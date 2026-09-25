@@ -55,7 +55,7 @@ public class PromotionControllerTest {
     private PromotionResponse createPromotionResponse() {
         Integer BONUS_POINTS = 100;
         return new PromotionResponse(PROMOTION_ID, TITLE, "Description", BONUS_POINTS, CinemaTime.today().minusDays(1),
-                CinemaTime.today().plusDays(5), PromotionStatus.ACTIVE);
+                CinemaTime.today().plusDays(5), true, PromotionStatus.ACTIVE);
     }
 
     @Test
