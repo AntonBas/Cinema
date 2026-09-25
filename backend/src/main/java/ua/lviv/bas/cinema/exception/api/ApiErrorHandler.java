@@ -30,6 +30,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import ua.lviv.bas.cinema.exception.core.BusinessException;
 import ua.lviv.bas.cinema.exception.core.NotFoundException;
 import ua.lviv.bas.cinema.exception.domain.auth.ResendCooldownException;
+import ua.lviv.bas.cinema.exception.infrastructure.RateLimitExceededException;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -103,6 +104,21 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
         log.warn("Business exception [{}]: {}", ex.getClass().getSimpleName(), ex.getMessage());
 
         return buildResponseEntity(apiError, request);
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    protected ResponseEntity<Object> handleRateLimitExceeded(@Nonnull RateLimitExceededException ex,
+                                                             @Nonnull WebRequest request) {
+        ApiError apiError = new ApiError(ex.getStatus());
+        apiError.setMessage(ex.getMessage());
+        apiError.setDebugMessage(ex.getDebugMessage());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.RETRY_AFTER, String.valueOf(ex.getRetryAfterSeconds()));
+        headers.add("X-Rate-Limit-Limit", String.valueOf(ex.getLimit()));
+        headers.add("X-Rate-Limit-Remaining", "0");
+
+        return buildResponseEntity(apiError, request, headers);
     }
 
     @ExceptionHandler(ResendCooldownException.class)

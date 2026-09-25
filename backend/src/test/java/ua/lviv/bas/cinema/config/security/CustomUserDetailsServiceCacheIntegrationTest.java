@@ -1,6 +1,8 @@
 package ua.lviv.bas.cinema.config.security;
 
 import java.time.LocalDate;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +12,8 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -41,6 +45,8 @@ class CustomUserDetailsServiceCacheIntegrationTest {
     private CustomUserDetailsService customUserDetailsService;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     @Test
     void loadUserByUsernameShouldBeServedFromCacheAfterFirstLoad() {
@@ -70,6 +76,31 @@ class CustomUserDetailsServiceCacheIntegrationTest {
 
         var freshLoad = (CustomUserDetails) customUserDetailsService.loadUserByUsername(saved.getEmail());
         assertThat(freshLoad.getRole()).isEqualTo(UserRole.ROLE_ADMIN.name());
+    }
+
+    @Test
+    void evictInsideTransactionShouldNotLetConcurrentReaderCacheStaleValueBeforeCommit() throws Exception {
+        var saved = userRepository.save(buildUser("tx.evict@test.com", UserRole.ROLE_USER));
+        customUserDetailsService.loadUserByUsername(saved.getEmail());
+        var transactionTemplate = new TransactionTemplate(transactionManager);
+        var executor = Executors.newSingleThreadExecutor();
+
+        transactionTemplate.executeWithoutResult(status -> {
+            var user = userRepository.findById(saved.getId()).orElseThrow();
+            user.setUserRole(UserRole.ROLE_ADMIN);
+            userRepository.saveAndFlush(user);
+            customUserDetailsService.evict(saved.getEmail());
+            try {
+                executor.submit(() -> customUserDetailsService.loadUserByUsername(saved.getEmail()))
+                        .get(10, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+        });
+        executor.shutdown();
+
+        var afterCommit = (CustomUserDetails) customUserDetailsService.loadUserByUsername(saved.getEmail());
+        assertThat(afterCommit.getRole()).isEqualTo(UserRole.ROLE_ADMIN.name());
     }
 
     private User buildUser(String email, UserRole role) {

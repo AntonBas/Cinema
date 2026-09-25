@@ -24,12 +24,14 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     @EntityGraph(attributePaths = {"bonusCard"})
-    Optional<User> findByEmail(String email);
+    @Query("SELECT u FROM User u WHERE lower(u.email) = lower(:email)")
+    Optional<User> findByEmail(@Param("email") String email);
 
-    boolean existsByEmail(String email);
+    @Query("SELECT COUNT(u) > 0 FROM User u WHERE lower(u.email) = lower(:email)")
+    boolean existsByEmail(@Param("email") String email);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT u FROM User u WHERE u.email = :email")
+    @Query("SELECT u FROM User u WHERE lower(u.email) = lower(:email)")
     Optional<User> findByEmailForUpdate(@Param("email") String email);
 
     int deleteAllByEmailVerifiedFalseAndCreatedDateBefore(Instant cutoff);

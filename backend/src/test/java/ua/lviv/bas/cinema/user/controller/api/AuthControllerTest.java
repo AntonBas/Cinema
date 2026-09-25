@@ -54,6 +54,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -229,6 +230,23 @@ public class AuthControllerTest {
     }
 
     @Test
+    void loginShouldReturnTooManyRequestsWithApiErrorAfterLimitIsExhausted() throws Exception {
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new BadCredentialsException("Bad credentials"));
+        var body = objectMapper.writeValueAsString(loginRequest);
+
+        for (int attempt = 0; attempt < 5; attempt++) {
+            mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content(body))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(header().string("Retry-After", "60"))
+                .andExpect(jsonPath("$.statusCode").value(429));
+    }
+
+    @Test
     void forgotPasswordShouldReturnOk() throws Exception {
         mockMvc.perform(post("/api/auth/password/forgot").param("email", "anton@example.com"))
                 .andExpect(status().isOk());
@@ -246,21 +264,52 @@ public class AuthControllerTest {
     }
 
     @Test
-    void resetPasswordShouldReturnOk() throws Exception {
-        mockMvc.perform(post("/api/auth/password/reset").param("token", "token123").param("newPassword", "newPass"))
+    void resetPasswordShouldReadTokenAndPasswordFromBody() throws Exception {
+        mockMvc.perform(post("/api/auth/password/reset").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"token\":\"token123\",\"newPassword\":\"newPass123\"}"))
                 .andExpect(status().isOk());
+
+        verify(passwordResetService).reset("token123", "newPass123");
     }
 
     @Test
     void resetPasswordShouldReturnBadRequestWhenTokenIsBlank() throws Exception {
-        mockMvc.perform(post("/api/auth/password/reset").param("token", "").param("newPassword", "newPass"))
+        mockMvc.perform(post("/api/auth/password/reset").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"token\":\"\",\"newPassword\":\"newPass123\"}"))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
-    void resetPasswordShouldReturnBadRequestWhenNewPasswordIsBlank() throws Exception {
-        mockMvc.perform(post("/api/auth/password/reset").param("token", "token123").param("newPassword", ""))
+    void resetPasswordShouldReturnBadRequestWhenNewPasswordTooShortOrTooLong() throws Exception {
+        mockMvc.perform(post("/api/auth/password/reset").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"token\":\"token123\",\"newPassword\":\"short\"}"))
                 .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/api/auth/password/reset").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"token\":\"token123\",\"newPassword\":\"" + "x".repeat(33) + "\"}"))
+                .andExpect(status().isBadRequest());
+
+        verify(passwordResetService, never()).reset(any(), any());
+    }
+
+    @Test
+    void resetPasswordShouldRejectCredentialsInQueryString() throws Exception {
+        mockMvc.perform(post("/api/auth/password/reset").param("token", "token123").param("newPassword", "newPass123"))
+                .andExpect(status().is4xxClientError());
+
+        verify(passwordResetService, never()).reset(any(), any());
+    }
+
+    @Test
+    void checkEmailShouldBeRateLimited() throws Exception {
+        when(userService.emailExists(anyString())).thenReturn(false);
+
+        for (int attempt = 0; attempt < 10; attempt++) {
+            mockMvc.perform(get("/api/auth/email/check").param("email", "probe" + attempt + "@example.com"))
+                    .andExpect(status().isOk());
+        }
+
+        mockMvc.perform(get("/api/auth/email/check").param("email", "probe@example.com"))
+                .andExpect(status().isTooManyRequests());
     }
 
     @Test

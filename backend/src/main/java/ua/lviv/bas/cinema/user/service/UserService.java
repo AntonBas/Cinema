@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.common.EmailNormalizer;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
 import ua.lviv.bas.cinema.config.security.CustomUserDetailsService;
 import ua.lviv.bas.cinema.user.domain.User;
@@ -57,6 +58,7 @@ public class UserService {
         validateEmailNotExists(request.email());
 
         var user = userMapper.toEntity(request);
+        user.setEmail(EmailNormalizer.normalize(request.email()));
         user.setPassword(passwordEncoder.encode(request.password()));
 
         var saved = userRepository.save(user);
@@ -98,7 +100,7 @@ public class UserService {
         validateNewEmail(user.getEmail(), newEmail);
         validateEmailNotExists(newEmail);
 
-        emailTokenGeneratorService.generateEmailChangeToken(user, newEmail);
+        emailTokenGeneratorService.generateEmailChangeToken(user, EmailNormalizer.normalize(newEmail));
         log.info("Email change requested for user {} to {}", userId, newEmail);
         auditEmailChangeRequested(userId, oldEmail, newEmail);
     }

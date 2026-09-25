@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 class AsyncConfigTest {
 
@@ -56,5 +57,33 @@ class AsyncConfigTest {
         assertThat(secondLatch.await(5, TimeUnit.SECONDS)).isTrue();
         assertThat(leakedId.get()).isNull();
         executor.shutdown();
+    }
+
+    @Test
+    void saturatedAuditExecutorShouldRunTaskInCallerInsteadOfThrowing() throws InterruptedException {
+        var executor = asyncConfig.auditLogTaskExecutor();
+        var release = new CountDownLatch(1);
+        try {
+            int capacity = executor.getMaxPoolSize() + executor.getQueueCapacity();
+            for (int i = 0; i < capacity; i++) {
+                executor.execute(() -> awaitQuietly(release));
+            }
+            var runner = new AtomicReference<Thread>();
+
+            assertThatCode(() -> executor.execute(() -> runner.set(Thread.currentThread())))
+                    .doesNotThrowAnyException();
+            assertThat(runner.get()).isEqualTo(Thread.currentThread());
+        } finally {
+            release.countDown();
+            executor.shutdown();
+        }
+    }
+
+    private static void awaitQuietly(CountDownLatch latch) {
+        try {
+            latch.await(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 }

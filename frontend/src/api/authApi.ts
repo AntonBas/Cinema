@@ -29,9 +29,7 @@ export const authApi = {
     }),
 
   resetPassword: (token: string, newPassword: string) =>
-    api.post<void>(`${API_URL}/password/reset`, null, {
-      params: { token, newPassword },
-    }),
+    api.post<void>(`${API_URL}/password/reset`, { token, newPassword }),
 
   oauth2Exchange: (code: string) =>
     api.post<AuthResponse>(`${API_URL}/oauth2/exchange`, { code }),

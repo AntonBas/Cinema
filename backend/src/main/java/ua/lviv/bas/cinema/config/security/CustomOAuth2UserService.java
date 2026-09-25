@@ -8,6 +8,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import ua.lviv.bas.cinema.common.EmailNormalizer;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
@@ -41,12 +42,16 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private OAuth2User processOAuth2User(OAuth2User oAuth2User) {
         Map<String, Object> attributes = oAuth2User.getAttributes();
 
-        String email = (String) attributes.get("email");
+        String email = EmailNormalizer.normalize((String) attributes.get("email"));
         String name = (String) attributes.get("name");
 
         if (email == null || email.isBlank()) {
             throw new OAuth2AuthenticationException(
                     new OAuth2Error("email_not_provided", "OAuth2 provider did not return an email address", null));
+        }
+        if (!isEmailVerified(attributes.get("email_verified"))) {
+            throw new OAuth2AuthenticationException(
+                    new OAuth2Error("email_not_verified", "OAuth2 provider has not verified this email address", null));
         }
 
         String[] nameParts = name != null ? name.split(" ", 2) : new String[0];
@@ -88,6 +93,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         }
 
         return oAuth2User;
+    }
+
+    private boolean isEmailVerified(Object emailVerified) {
+        return Boolean.TRUE.equals(emailVerified) || "true".equalsIgnoreCase(String.valueOf(emailVerified));
     }
 
     private void auditRegister(User user) {

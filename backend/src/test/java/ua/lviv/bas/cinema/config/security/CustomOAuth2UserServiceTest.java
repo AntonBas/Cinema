@@ -59,7 +59,7 @@ public class CustomOAuth2UserServiceTest {
     @BeforeEach
     void setUp() {
         String FULL_NAME = "John Doe";
-        Map<String, Object> attributes = Map.of("email", EMAIL, "name", FULL_NAME);
+        Map<String, Object> attributes = Map.of("email", EMAIL, "email_verified", true, "name", FULL_NAME);
         when(oAuth2User.getAttributes()).thenReturn(attributes);
     }
 
@@ -133,6 +133,20 @@ public class CustomOAuth2UserServiceTest {
     }
 
     @Test
+    void loadUser_RejectsEmailNotVerifiedByProvider() throws Exception {
+        when(oAuth2User.getAttributes())
+                .thenReturn(Map.of("email", EMAIL, "email_verified", false, "name", "John Doe"));
+
+        Method processMethod = CustomOAuth2UserService.class.getDeclaredMethod("processOAuth2User", OAuth2User.class);
+        processMethod.setAccessible(true);
+
+        assertThatThrownBy(() -> processMethod.invoke(customOAuth2UserService, oAuth2User))
+                .hasCauseInstanceOf(OAuth2AuthenticationException.class);
+        verify(userRepository, never()).findByEmail(any());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
     void loadUser_DoesNotModifyExistingUser_WhenUserIsVerified() throws Exception {
         User existingUser = User.builder().email(EMAIL).firstName(FIRST_NAME).lastName(LAST_NAME).enabled(true)
                 .emailVerified(true).build();
@@ -152,7 +166,7 @@ public class CustomOAuth2UserServiceTest {
 
     @Test
     void loadUser_HandlesNameWithMultipleParts() throws Exception {
-        Map<String, Object> attributes = Map.of("email", EMAIL, "name", "John Michael Doe");
+        Map<String, Object> attributes = Map.of("email", EMAIL, "email_verified", true, "name", "John Michael Doe");
         when(oAuth2User.getAttributes()).thenReturn(attributes);
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -173,7 +187,7 @@ public class CustomOAuth2UserServiceTest {
 
     @Test
     void loadUser_HandlesNameWithSinglePart() throws Exception {
-        Map<String, Object> attributes = Map.of("email", EMAIL, "name", "John");
+        Map<String, Object> attributes = Map.of("email", EMAIL, "email_verified", true, "name", "John");
         when(oAuth2User.getAttributes()).thenReturn(attributes);
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -196,6 +210,7 @@ public class CustomOAuth2UserServiceTest {
     void loadUser_HandlesMissingName() throws Exception {
         Map<String, Object> attributes = new java.util.HashMap<>();
         attributes.put("email", EMAIL);
+        attributes.put("email_verified", true);
         attributes.put("name", null);
         when(oAuth2User.getAttributes()).thenReturn(attributes);
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
