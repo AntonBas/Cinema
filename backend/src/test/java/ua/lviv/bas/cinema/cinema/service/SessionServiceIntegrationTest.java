@@ -33,6 +33,17 @@ import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.movie.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.movie.domain.status.MovieStatus;
 import ua.lviv.bas.cinema.movie.repository.MovieRepository;
+import ua.lviv.bas.cinema.payment.domain.Payment;
+import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
+import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
+import ua.lviv.bas.cinema.refund.domain.Refund;
+import ua.lviv.bas.cinema.refund.domain.status.RefundStatus;
+import ua.lviv.bas.cinema.refund.repository.RefundRepository;
+import ua.lviv.bas.cinema.ticket.domain.Ticket;
+import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
+import ua.lviv.bas.cinema.ticket.domain.TicketType;
+import ua.lviv.bas.cinema.ticket.repository.TicketRepository;
+import ua.lviv.bas.cinema.ticket.repository.TicketTypeRepository;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.user.domain.UserRole;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
@@ -58,6 +69,14 @@ class SessionServiceIntegrationTest {
     @Autowired
     private SeatRepository seatRepository;
     @Autowired
+    private TicketTypeRepository ticketTypeRepository;
+    @Autowired
+    private TicketRepository ticketRepository;
+    @Autowired
+    private PaymentRepository paymentRepository;
+    @Autowired
+    private RefundRepository refundRepository;
+    @Autowired
     private BookingRepository bookingRepository;
     @Autowired
     private UserRepository userRepository;
@@ -75,8 +94,23 @@ class SessionServiceIntegrationTest {
                 .startTime(startTime).basePrice(new BigDecimal("100.00")).build());
 
         var user = userRepository.save(buildUser());
-        bookingRepository.save(buildBooking(user, session, BookingStatus.CONFIRMED, new BigDecimal("100.00")));
-        bookingRepository.save(buildBooking(user, session, BookingStatus.CONFIRMED, new BigDecimal("150.00")));
+        var ticketType = ticketTypeRepository.save(TicketType.builder().displayName("ZZTEST Aggregation").build());
+
+        var discountedBooking = buildBooking(user, session, BookingStatus.CONFIRMED, new BigDecimal("100.00"));
+        discountedBooking.setFinalPrice(new BigDecimal("90.00"));
+        bookingRepository.save(discountedBooking);
+        saveTicket(discountedBooking, ticketType, "ZZTEST-A1", TicketStatus.ACTIVE);
+        saveTicket(discountedBooking, ticketType, "ZZTEST-A2", TicketStatus.ACTIVE);
+
+        var partlyRefundedBooking = bookingRepository
+                .save(buildBooking(user, session, BookingStatus.CONFIRMED, new BigDecimal("150.00")));
+        saveTicket(partlyRefundedBooking, ticketType, "ZZTEST-B1", TicketStatus.ACTIVE);
+        var refundedTicket = saveTicket(partlyRefundedBooking, ticketType, "ZZTEST-B2", TicketStatus.REFUNDED);
+        var payment = paymentRepository.save(Payment.builder().booking(partlyRefundedBooking)
+                .amount(new BigDecimal("150.00")).status(PaymentStatus.SUCCESS).build());
+        refundRepository.save(Refund.builder().payment(payment).user(user).ticket(refundedTicket)
+                .totalAmount(new BigDecimal("60.00")).status(RefundStatus.PROCESSED).build());
+
         bookingRepository.save(buildBooking(user, session, BookingStatus.PENDING, new BigDecimal("999.00")));
 
         var schedule = sessionService.getSchedule(null, startTime.toLocalDate(), movie.getId());
@@ -88,8 +122,8 @@ class SessionServiceIntegrationTest {
         var adminEntry = adminPage.getContent().stream().filter(s -> s.id().equals(session.getId())).findFirst()
                 .orElseThrow();
         assertThat(adminEntry.hallCapacity()).isEqualTo(5);
-        assertThat(adminEntry.ticketsSold()).isEqualTo(2);
-        assertThat(adminEntry.totalRevenue()).isEqualByComparingTo(new BigDecimal("250.00"));
+        assertThat(adminEntry.ticketsSold()).isEqualTo(3);
+        assertThat(adminEntry.totalRevenue()).isEqualByComparingTo(new BigDecimal("180.00"));
     }
 
     @Test
@@ -173,6 +207,12 @@ class SessionServiceIntegrationTest {
         return User.builder().email("zztest.session@test.com").firstName("Test").lastName("User")
                 .dateOfBirth(LocalDate.of(1995, 1, 1)).city("Lviv").phoneNumber("+380000000015")
                 .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).build();
+    }
+
+    private Ticket saveTicket(Booking booking, TicketType ticketType, String code, TicketStatus status) {
+        return ticketRepository.save(Ticket.builder().booking(booking).user(booking.getUser()).ticketType(ticketType)
+                .originalPrice(new BigDecimal("75.00")).finalPrice(new BigDecimal("75.00")).uniqueCode(code)
+                .status(status).build());
     }
 
     private Booking buildBooking(User user, Session session, BookingStatus status, BigDecimal totalPrice) {

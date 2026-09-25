@@ -7,12 +7,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
+import jakarta.persistence.OptimisticLockException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -20,6 +24,7 @@ import org.springframework.security.authentication.InsufficientAuthenticationExc
 import org.springframework.security.authentication.LockedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
@@ -162,6 +167,13 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
         return buildResponseEntity(apiError, request);
     }
 
+    @ExceptionHandler({OptimisticLockingFailureException.class, OptimisticLockException.class})
+    protected ResponseEntity<Object> handleOptimisticLock(@Nonnull Exception ex, @Nonnull WebRequest request) {
+        ApiError apiError = new ApiError(CONFLICT, "The resource was modified concurrently, please retry", ex);
+        log.warn("Optimistic lock conflict: {}", ex.getMessage());
+        return buildResponseEntity(apiError, request);
+    }
+
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     protected ResponseEntity<Object> handleMethodArgumentTypeMismatch(@Nonnull MethodArgumentTypeMismatchException ex,
                                                                       @Nonnull WebRequest request) {
@@ -259,6 +271,20 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
         ApiError apiError = new ApiError(FORBIDDEN, "Access denied");
         log.warn("Access denied: {}", ex.getMessage());
         return buildResponseEntity(apiError, request);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleExceptionInternal(@Nonnull Exception ex, @Nullable Object body,
+                                                             @Nonnull HttpHeaders headers, @Nonnull HttpStatusCode statusCode, @Nonnull WebRequest request) {
+        HttpStatus status = Optional.ofNullable(HttpStatus.resolve(statusCode.value())).orElse(INTERNAL_SERVER_ERROR);
+        String message = ex instanceof ErrorResponse errorResponse && errorResponse.getBody().getDetail() != null
+                ? errorResponse.getBody().getDetail()
+                : status.getReasonPhrase();
+        ApiError apiError = new ApiError(status, message, ex);
+
+        log.warn("Request rejected with {}: {}", status.value(), ex.getMessage());
+
+        return buildResponseEntity(apiError, request, headers);
     }
 
     @ExceptionHandler(Exception.class)

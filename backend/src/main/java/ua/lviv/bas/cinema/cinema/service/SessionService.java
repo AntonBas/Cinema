@@ -62,7 +62,7 @@ public class SessionService {
 
         var movie = movieRepository.findById(request.movieId())
                 .orElseThrow(() -> new EntityNotFoundException("Movie", request.movieId()));
-        var hall = cinemaHallService.getHallEntity(request.hallId());
+        var hall = cinemaHallService.lockHall(request.hallId());
 
         validateMovieAvailability(movie, request.startTime());
         validateNoTimeConflict(hall.getId(), hall.getName(), request.startTime(),
@@ -128,6 +128,10 @@ public class SessionService {
         var session = sessionRepository.findByIdWithLock(id)
                 .orElseThrow(() -> new EntityNotFoundException("Session", id));
 
+        if (session.getStatus() == CinemaSessionStatus.ONGOING || session.getStatus() == CinemaSessionStatus.COMPLETED) {
+            throw SessionOperationException.cannotEditStarted();
+        }
+
         var oldDetails = captureSessionDetails(session);
 
         boolean startTimeChanged = request.startTime() != null && !request.startTime().equals(session.getStartTime());
@@ -140,10 +144,10 @@ public class SessionService {
                 .orElseThrow(() -> new EntityNotFoundException("Movie", request.movieId())) : session.getMovie();
 
         boolean hallChanged = request.hallId() != null && !request.hallId().equals(session.getHall().getId());
-        if (hallChanged && sessionRepository.hasSeatReservations(id)) {
-            throw SessionOperationException.cannotChangeHallWithReservations();
+        if ((startTimeChanged || movieChanged || hallChanged) && sessionRepository.hasSeatReservations(id)) {
+            throw SessionOperationException.cannotRescheduleWithReservations();
         }
-        var hall = hallChanged ? cinemaHallService.getHallEntity(request.hallId()) : session.getHall();
+        var hall = cinemaHallService.lockHall(hallChanged ? request.hallId() : session.getHall().getId());
 
         sessionMapper.updateEntity(request, session);
         session.setMovie(movie);
@@ -227,6 +231,8 @@ public class SessionService {
         if (session.getStartTime().isBefore(CinemaTime.now())) {
             throw SessionOperationException.cannotReactivatePast();
         }
+
+        cinemaHallService.lockHall(session.getHall().getId());
 
         validateNoTimeConflict(session.getHall().getId(), session.getHall().getName(), session.getStartTime(),
                 session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes()), sessionId);

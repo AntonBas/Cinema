@@ -83,9 +83,9 @@ public class CinemaHallService {
         return hallMapper.toHallLayoutResponse(hall);
     }
 
-    public CinemaHall getHallEntity(Long id) {
-        log.debug("Retrieving cinema hall entity by id: {}", id);
-        return hallRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Cinema hall", id));
+    @Transactional
+    public CinemaHall lockHall(Long id) {
+        return hallRepository.findByIdForUpdate(id).orElseThrow(() -> new EntityNotFoundException("Cinema hall", id));
     }
 
     @CacheEvict(value = "cinemaHalls", allEntries = true)
@@ -123,6 +123,7 @@ public class CinemaHallService {
         var existingById = hall.getSeats().stream().collect(Collectors.toMap(Seat::getId, s -> s));
         var requestedIds = request.seats().stream().map(SeatLayoutItemRequest::id).filter(Objects::nonNull)
                 .collect(Collectors.toSet());
+        validateSeatsBelongToHall(requestedIds, existingById.keySet());
 
         var removedIds = existingById.keySet().stream().filter(id -> !requestedIds.contains(id)).toList();
         var repositionedIds = request.seats().stream()
@@ -162,7 +163,9 @@ public class CinemaHallService {
                 .orElseThrow(() -> new EntityNotFoundException("Cinema hall", id));
         String hallName = hall.getName();
 
-        validateHallHasNoFutureSessions(hall);
+        if (!hall.getSessions().isEmpty()) {
+            throw CinemaHallHasSessionsException.cannotDelete(hall.getName(), hall.getId());
+        }
         hallRepository.delete(hall);
 
         log.debug("Cinema hall deleted with ID: {}", id);
@@ -190,6 +193,12 @@ public class CinemaHallService {
                 throw new DuplicateSeatPositionException(item.row(), item.number());
             }
         }
+    }
+
+    private void validateSeatsBelongToHall(Set<Long> requestedIds, Set<Long> hallSeatIds) {
+        requestedIds.stream().filter(id -> !hallSeatIds.contains(id)).findFirst().ifPresent(id -> {
+            throw new EntityNotFoundException("Seat", id);
+        });
     }
 
     private void validateNoTicketsOn(List<Long> seatIds) {

@@ -1,6 +1,8 @@
 package ua.lviv.bas.cinema.cinema.repository;
 
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -31,4 +33,8 @@ public interface CinemaHallRepository extends JpaRepository<CinemaHall, Long> {
 
     @Query("SELECT ch FROM CinemaHall ch LEFT JOIN FETCH ch.seats WHERE ch.id = :id")
     Optional<CinemaHall> findByIdWithSeats(@Param("id") Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT h FROM CinemaHall h WHERE h.id = :id")
+    Optional<CinemaHall> findByIdForUpdate(@Param("id") Long id);
 }

@@ -32,9 +32,15 @@ public class SessionOperationException extends ValidationException {
                 "CANNOT_DELETE_WITH_BOOKINGS");
     }
 
-    public static SessionOperationException cannotChangeHallWithReservations() {
-        return new SessionOperationException("Cannot move a session with booked or held seats to another hall",
-                "CANNOT_CHANGE_HALL_WITH_RESERVATIONS");
+    public static SessionOperationException cannotRescheduleWithReservations() {
+        return new SessionOperationException(
+                "Cannot change the movie, hall or start time of a session with booked or held seats",
+                "CANNOT_RESCHEDULE_WITH_RESERVATIONS");
+    }
+
+    public static SessionOperationException cannotEditStarted() {
+        return new SessionOperationException("Cannot edit a session that has already started or completed",
+                "CANNOT_EDIT_STARTED_SESSION");
     }
 
     public static SessionOperationException cannotReactivatePast() {

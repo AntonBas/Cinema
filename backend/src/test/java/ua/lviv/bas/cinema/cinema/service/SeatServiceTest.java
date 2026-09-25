@@ -12,12 +12,17 @@ import ua.lviv.bas.cinema.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.cinema.dto.hall.response.SeatResponse;
 import ua.lviv.bas.cinema.cinema.mapper.SeatMapper;
 import ua.lviv.bas.cinema.cinema.repository.SeatRepository;
+import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
+import ua.lviv.bas.cinema.exception.domain.hall.CinemaHallHasSessionsException;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,6 +35,9 @@ public class SeatServiceTest {
 
     @Mock
     private SeatMapper seatMapper;
+
+    @Mock
+    private SessionRepository sessionRepository;
 
     @InjectMocks
     private SeatService seatService;
@@ -69,6 +77,18 @@ public class SeatServiceTest {
         assertThat(result).isEqualTo(response);
         assertThat(seat.getSeatType()).isEqualTo(SeatType.VIP);
         verify(seatRepository).save(seat);
+    }
+
+    @Test
+    void updateSeatType_WhenHallHasFutureSessions_ShouldThrow() {
+        when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.of(seat));
+        when(sessionRepository.existsByHallIdAndStartTimeAfter(eq(HALL_ID), any(LocalDateTime.class)))
+                .thenReturn(true);
+
+        assertThatThrownBy(() -> seatService.updateSeatType(HALL_ID, SEAT_ID, SeatType.VIP))
+                .isInstanceOf(CinemaHallHasSessionsException.class);
+
+        verify(seatRepository, never()).save(seat);
     }
 
     @Test

@@ -60,6 +60,14 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
             """)
     List<LocalDate> findScheduleDates(@Param("now") LocalDateTime now, @Param("movieId") Long movieId);
 
+    boolean existsByHallIdAndStartTimeAfter(Long hallId, LocalDateTime time);
+
+    @Query("SELECT MIN(s.startTime) FROM Session s WHERE s.movie.id = :movieId AND s.status IN ('SCHEDULED', 'ONGOING')")
+    LocalDateTime findFirstActiveSessionStart(@Param("movieId") Long movieId);
+
+    @Query("SELECT MAX(s.startTime) FROM Session s WHERE s.movie.id = :movieId AND s.status IN ('SCHEDULED', 'ONGOING')")
+    LocalDateTime findLastActiveSessionStart(@Param("movieId") Long movieId);
+
     @Query("SELECT COUNT(s) FROM Session s WHERE s.movie.id = :movieId")
     long countByMovieId(@Param("movieId") Long movieId);
 
@@ -127,10 +135,20 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
                 GROUP BY hall_id
             ) sc ON sc.hall_id = h.id
             LEFT JOIN (
-                SELECT session_id, COUNT(id) as tickets_sold, SUM(total_price) as total_revenue
-                FROM bookings
-                WHERE status = 'CONFIRMED' AND session_id IN (:ids)
-                GROUP BY session_id
+                SELECT b.session_id,
+                       CAST(SUM(bt.sold) AS BIGINT) as tickets_sold,
+                       SUM(b.final_price) - COALESCE(SUM(bt.refunded), 0) as total_revenue
+                FROM bookings b
+                JOIN (
+                    SELECT t.booking_id,
+                           COUNT(t.id) FILTER (WHERE t.status <> 'REFUNDED') as sold,
+                           SUM(r.total_amount) as refunded
+                    FROM tickets t
+                    LEFT JOIN refunds r ON r.ticket_id = t.id AND r.status = 'PROCESSED'
+                    GROUP BY t.booking_id
+                ) bt ON bt.booking_id = b.id
+                WHERE b.session_id IN (:ids)
+                GROUP BY b.session_id
             ) bs ON bs.session_id = s.id
             WHERE s.id IN (:ids)
             """, nativeQuery = true)

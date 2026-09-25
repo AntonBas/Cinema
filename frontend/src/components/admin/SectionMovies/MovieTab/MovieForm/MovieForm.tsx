@@ -159,6 +159,11 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(
       async (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (!formData.posterFile && (!movie || formData.removePoster)) {
+          setErrors({ posterFile: "Poster is required" });
+          return;
+        }
+
         const baseRequest = {
           title: formData.title,
           trailerUrl: formData.trailerUrl,
@@ -286,6 +291,9 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(
                 </div>
               )}
             </div>
+            {errors.posterFile && (
+              <div className={styles.errorText}>{errors.posterFile}</div>
+            )}
           </div>
 
           <div className={styles.formGroup}>

@@ -66,6 +66,9 @@ class WebSecurityConfigIntegrationTest {
         var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         assertThat(response.statusCode()).isEqualTo(403);
+        assertThat(response.headers().firstValue("Content-Type")).hasValueSatisfying(
+                contentType -> assertThat(contentType).startsWith("application/json"));
+        assertThat(response.body()).contains("\"statusCode\":403").contains("X-Requested-With");
     }
 
     @Test

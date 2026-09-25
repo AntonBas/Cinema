@@ -18,6 +18,7 @@ import ua.lviv.bas.cinema.movie.domain.Genre;
 import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.movie.domain.Person;
 import ua.lviv.bas.cinema.movie.domain.enums.AgeRating;
+import ua.lviv.bas.cinema.movie.domain.enums.PersonRole;
 import ua.lviv.bas.cinema.movie.domain.status.MovieStatus;
 import ua.lviv.bas.cinema.movie.dto.request.MovieCreateRequest;
 import ua.lviv.bas.cinema.movie.dto.request.MovieUpdateRequest;
@@ -26,6 +27,7 @@ import ua.lviv.bas.cinema.movie.dto.response.MovieCardResponse;
 import ua.lviv.bas.cinema.movie.dto.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.movie.dto.response.MovieSessionSearchResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
+import ua.lviv.bas.cinema.exception.domain.cinema.MovieValidationException;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.MovieHasSessionsException;
 import ua.lviv.bas.cinema.movie.mapper.MovieMapper;
@@ -40,6 +42,7 @@ import ua.lviv.bas.cinema.integration.PosterService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -144,10 +147,10 @@ public class MovieServiceTest {
         when(posterService.uploadPoster(any())).thenReturn("poster.jpg");
         doNothing().when(auditService).logChange(anyString(), any(), anyString(), any(), any(), any());
 
-        List<Genre> genres = List.of(new Genre(), new Genre());
-        List<Person> actors = List.of(new Person(), new Person());
-        List<Person> directors = List.of(new Person());
-        List<Person> screenwriters = List.of(new Person());
+        List<Genre> genres = genres(1L, 2L);
+        List<Person> actors = persons(PersonRole.ACTOR, 3L, 4L);
+        List<Person> directors = persons(PersonRole.DIRECTOR, 5L);
+        List<Person> screenwriters = persons(PersonRole.SCREENWRITER, 6L);
 
         when(genreRepository.findAllById(createRequest.getGenreIds())).thenReturn(genres);
         when(personRepository.findAllById(createRequest.getActorIds())).thenReturn(actors);
@@ -286,10 +289,10 @@ public class MovieServiceTest {
                 .thenReturn(MovieStatus.UPCOMING);
         doNothing().when(auditService).logChange(anyString(), any(), anyString(), any(), any(), any());
 
-        List<Genre> genres = List.of(new Genre());
-        List<Person> actors = List.of(new Person());
-        List<Person> directors = List.of(new Person(), new Person());
-        List<Person> screenwriters = List.of(new Person(), new Person());
+        List<Genre> genres = genres(1L);
+        List<Person> actors = persons(PersonRole.ACTOR, 3L);
+        List<Person> directors = persons(PersonRole.DIRECTOR, 5L, 7L);
+        List<Person> screenwriters = persons(PersonRole.SCREENWRITER, 6L, 8L);
 
         when(genreRepository.findAllById(updateRequest.getGenreIds())).thenReturn(genres);
         when(personRepository.findAllById(updateRequest.getActorIds())).thenReturn(actors);
@@ -331,21 +334,92 @@ public class MovieServiceTest {
 
         MovieUpdateRequest sameTitleRequest = MovieUpdateRequest.builder().title("Same Title")
                 .releaseDate(CinemaTime.today().plusDays(2)).endShowingDate(CinemaTime.today().plusDays(40))
-                .genreIds(List.of(1L)).actorIds(List.of(1L)).directorIds(List.of(1L)).screenwriterIds(List.of(1L))
+                .genreIds(List.of(1L)).actorIds(List.of(1L)).directorIds(List.of(2L)).screenwriterIds(List.of(3L))
                 .build();
 
         when(movieRepository.findMovieById(MOVIE_ID)).thenReturn(Optional.of(existingMovie));
         when(movieStatusCalculator.calculate(any(Movie.class), any(LocalDate.class)))
                 .thenReturn(MovieStatus.UPCOMING);
         doNothing().when(auditService).logChange(anyString(), any(), anyString(), any(), any(), any());
-        when(genreRepository.findAllById(anyList())).thenReturn(List.of());
-        when(personRepository.findAllById(anyList())).thenReturn(List.of());
+        when(genreRepository.findAllById(List.of(1L))).thenReturn(genres(1L));
+        when(personRepository.findAllById(List.of(1L))).thenReturn(persons(PersonRole.ACTOR, 1L));
+        when(personRepository.findAllById(List.of(2L))).thenReturn(persons(PersonRole.DIRECTOR, 2L));
+        when(personRepository.findAllById(List.of(3L))).thenReturn(persons(PersonRole.SCREENWRITER, 3L));
         when(movieRepository.save(existingMovie)).thenReturn(existingMovie);
         when(movieMapper.toMovieAdminResponse(existingMovie)).thenReturn(adminResponse);
 
         movieService.updateMovie(MOVIE_ID, sameTitleRequest);
 
         verify(slugService, never()).generateUniqueSlug(anyString());
+    }
+
+    @Test
+    void updateMovieWithRemovedPosterAndNoReplacementShouldThrow() {
+        movie.setTitle("Updated Title");
+        updateRequest.setRemovePoster(true);
+        when(movieRepository.findMovieById(MOVIE_ID)).thenReturn(Optional.of(movie));
+        stubUpdateRelations();
+
+        assertThatThrownBy(() -> movieService.updateMovie(MOVIE_ID, updateRequest))
+                .isInstanceOf(MovieValidationException.class).hasMessageContaining("poster");
+        verify(posterService, never()).deletePoster(anyString());
+        verify(movieRepository, never()).save(any());
+    }
+
+    @Test
+    void updateMovieWithPersonOfWrongRoleShouldThrow() {
+        movie.setTitle("Updated Title");
+        when(movieRepository.findMovieById(MOVIE_ID)).thenReturn(Optional.of(movie));
+        when(genreRepository.findAllById(updateRequest.getGenreIds())).thenReturn(genres(1L));
+        when(personRepository.findAllById(updateRequest.getActorIds())).thenReturn(persons(PersonRole.DIRECTOR, 3L));
+
+        assertThatThrownBy(() -> movieService.updateMovie(MOVIE_ID, updateRequest))
+                .isInstanceOf(MovieValidationException.class);
+        verify(movieRepository, never()).save(any());
+    }
+
+    @Test
+    void updateMovieWithUnknownGenreShouldThrowNotFound() {
+        movie.setTitle("Updated Title");
+        when(movieRepository.findMovieById(MOVIE_ID)).thenReturn(Optional.of(movie));
+        when(genreRepository.findAllById(updateRequest.getGenreIds())).thenReturn(List.of());
+
+        assertThatThrownBy(() -> movieService.updateMovie(MOVIE_ID, updateRequest))
+                .isInstanceOf(EntityNotFoundException.class);
+        verify(movieRepository, never()).save(any());
+    }
+
+    @Test
+    void updateMovieDurationWithActiveSessionsShouldThrow() {
+        movie.setTitle("Updated Title");
+        when(movieRepository.findMovieById(MOVIE_ID)).thenReturn(Optional.of(movie));
+        when(sessionRepository.findFirstActiveSessionStart(MOVIE_ID)).thenReturn(CinemaTime.now().plusDays(5));
+
+        assertThatThrownBy(() -> movieService.updateMovie(MOVIE_ID, updateRequest))
+                .isInstanceOf(MovieValidationException.class).hasMessageContaining("duration");
+        verify(movieRepository, never()).save(any());
+    }
+
+    @Test
+    void updateMovieEndingBeforeLastActiveSessionShouldThrow() {
+        movie.setTitle("Updated Title");
+        movie.setDurationMinutes(updateRequest.getDurationMinutes());
+        when(movieRepository.findMovieById(MOVIE_ID)).thenReturn(Optional.of(movie));
+        when(sessionRepository.findFirstActiveSessionStart(MOVIE_ID)).thenReturn(CinemaTime.now().plusDays(5));
+        when(sessionRepository.findLastActiveSessionStart(MOVIE_ID)).thenReturn(CinemaTime.now().plusDays(60));
+
+        assertThatThrownBy(() -> movieService.updateMovie(MOVIE_ID, updateRequest))
+                .isInstanceOf(MovieValidationException.class).hasMessageContaining("showing period");
+        verify(movieRepository, never()).save(any());
+    }
+
+    private void stubUpdateRelations() {
+        when(genreRepository.findAllById(updateRequest.getGenreIds())).thenReturn(genres(1L));
+        when(personRepository.findAllById(updateRequest.getActorIds())).thenReturn(persons(PersonRole.ACTOR, 3L));
+        when(personRepository.findAllById(updateRequest.getDirectorIds()))
+                .thenReturn(persons(PersonRole.DIRECTOR, 5L, 7L));
+        when(personRepository.findAllById(updateRequest.getScreenwriterIds()))
+                .thenReturn(persons(PersonRole.SCREENWRITER, 6L, 8L));
     }
 
     @Test
@@ -451,5 +525,13 @@ public class MovieServiceTest {
         ResponseEntity<byte[]> result = movieService.getPoster(MOVIE_ID);
 
         assertThat(result.getStatusCode().is4xxClientError()).isTrue();
+    }
+
+    private List<Genre> genres(Long... ids) {
+        return Arrays.stream(ids).map(id -> Genre.builder().id(id).build()).toList();
+    }
+
+    private List<Person> persons(PersonRole role, Long... ids) {
+        return Arrays.stream(ids).map(id -> Person.builder().id(id).role(role).build()).toList();
     }
 }

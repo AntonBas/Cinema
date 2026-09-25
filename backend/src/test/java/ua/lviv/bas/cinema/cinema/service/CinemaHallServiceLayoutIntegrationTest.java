@@ -52,4 +52,24 @@ class CinemaHallServiceLayoutIntegrationTest {
         assertThat(seatRepository.findByHallId(hall.getId())).hasSize(2)
                 .allMatch(seat -> seat.getSeatType() == SeatType.VIP);
     }
+
+    @Test
+    void updateLayoutShouldSwapNumbersOfExistingSeats() {
+        var hall = cinemaHallRepository.save(CinemaHall.builder().name("ZZTEST Swap").build());
+        var first = seatRepository.save(Seat.builder().row(1).number(1).x(0).y(0).hall(hall)
+                .seatType(SeatType.STANDARD).build());
+        var second = seatRepository.save(Seat.builder().row(1).number(2).x(60).y(0).hall(hall)
+                .seatType(SeatType.STANDARD).build());
+
+        var request = new HallLayoutRequest(List.of(
+                new SeatLayoutItemRequest(first.getId(), 1, 2, SeatType.STANDARD, 0, 0, true),
+                new SeatLayoutItemRequest(second.getId(), 1, 1, SeatType.STANDARD, 60, 0, true)));
+
+        cinemaHallService.updateLayout(hall.getId(), request);
+
+        assertThat(seatRepository.findById(first.getId())).hasValueSatisfying(
+                seat -> assertThat(seat.getNumber()).isEqualTo(2));
+        assertThat(seatRepository.findById(second.getId())).hasValueSatisfying(
+                seat -> assertThat(seat.getNumber()).isEqualTo(1));
+    }
 }

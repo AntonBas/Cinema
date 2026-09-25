@@ -93,7 +93,7 @@ public class SessionServiceTest {
         SessionRequest request = new SessionRequest(startTime, BASE_PRICE, MOVIE_ID, HALL_ID);
 
         when(movieRepository.findById(MOVIE_ID)).thenReturn(Optional.of(movie));
-        when(cinemaHallService.getHallEntity(HALL_ID)).thenReturn(hall);
+        when(cinemaHallService.lockHall(HALL_ID)).thenReturn(hall);
         when(sessionRepository.existsConflictingSession(eq(HALL_ID), any(), any(), isNull())).thenReturn(false);
         when(sessionMapper.toEntity(request)).thenReturn(session);
         when(sessionRepository.save(session)).thenReturn(session);
@@ -111,7 +111,7 @@ public class SessionServiceTest {
         SessionRequest request = new SessionRequest(startTime, BASE_PRICE, MOVIE_ID, HALL_ID);
 
         when(movieRepository.findById(MOVIE_ID)).thenReturn(Optional.of(movie));
-        when(cinemaHallService.getHallEntity(HALL_ID)).thenReturn(hall);
+        when(cinemaHallService.lockHall(HALL_ID)).thenReturn(hall);
         when(sessionRepository.existsConflictingSession(eq(HALL_ID), any(), any(), isNull())).thenReturn(true);
 
         assertThatThrownBy(() -> sessionService.createSession(request))
@@ -143,6 +143,7 @@ public class SessionServiceTest {
         SessionRequest request = new SessionRequest(newStartTime, null, null, null);
 
         when(sessionRepository.findByIdWithLock(SESSION_ID)).thenReturn(Optional.of(session));
+        when(cinemaHallService.lockHall(HALL_ID)).thenReturn(hall);
         when(sessionRepository.existsConflictingSession(eq(HALL_ID), any(), any(), eq(SESSION_ID))).thenReturn(false);
         when(sessionRepository.save(session)).thenReturn(session);
         when(sessionMapper.toSessionResponse(session)).thenReturn(sessionResponse);
@@ -164,7 +165,7 @@ public class SessionServiceTest {
         when(sessionRepository.findByIdWithLock(SESSION_ID)).thenReturn(Optional.of(session));
         when(movieRepository.findById(20L)).thenReturn(Optional.of(newMovie));
         when(sessionRepository.hasSeatReservations(SESSION_ID)).thenReturn(false);
-        when(cinemaHallService.getHallEntity(30L)).thenReturn(newHall);
+        when(cinemaHallService.lockHall(30L)).thenReturn(newHall);
         when(sessionRepository.existsConflictingSession(eq(30L), any(), any(), eq(SESSION_ID))).thenReturn(false);
         when(sessionRepository.save(session)).thenReturn(session);
         when(sessionMapper.toSessionResponse(session)).thenReturn(sessionResponse);
@@ -198,6 +199,30 @@ public class SessionServiceTest {
         assertThatThrownBy(() -> sessionService.updateSession(SESSION_ID, new SessionRequest(null, null, null, 30L)))
                 .isInstanceOf(SessionOperationException.class);
         assertThat(session.getHall()).isEqualTo(hall);
+        verify(sessionRepository, never()).save(any());
+    }
+
+    @Test
+    void updateSessionWhenStartTimeChangedWithReservationsShouldThrowException() {
+        var originalStart = session.getStartTime();
+        when(sessionRepository.findByIdWithLock(SESSION_ID)).thenReturn(Optional.of(session));
+        when(sessionRepository.hasSeatReservations(SESSION_ID)).thenReturn(true);
+
+        assertThatThrownBy(() -> sessionService.updateSession(SESSION_ID,
+                new SessionRequest(CinemaTime.now().plusDays(1), null, null, null)))
+                .isInstanceOf(SessionOperationException.class);
+        assertThat(session.getStartTime()).isEqualTo(originalStart);
+        verify(sessionRepository, never()).save(any());
+    }
+
+    @Test
+    void updateSessionWhenCompletedShouldThrowException() {
+        session.setStatus(CinemaSessionStatus.COMPLETED);
+        when(sessionRepository.findByIdWithLock(SESSION_ID)).thenReturn(Optional.of(session));
+
+        assertThatThrownBy(() -> sessionService.updateSession(SESSION_ID,
+                new SessionRequest(null, new BigDecimal("150.00"), null, null)))
+                .isInstanceOf(SessionOperationException.class);
         verify(sessionRepository, never()).save(any());
     }
 

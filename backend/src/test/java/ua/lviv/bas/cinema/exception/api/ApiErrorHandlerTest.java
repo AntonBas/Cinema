@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.exception.api;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.data.core.TypeInformation;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -16,6 +17,7 @@ import ua.lviv.bas.cinema.exception.domain.auth.ResendCooldownException;
 import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -39,6 +41,11 @@ class ApiErrorHandlerTest {
         @GetMapping("/test/resend-cooldown")
         void triggerResendCooldown() {
             throw new ResendCooldownException(42);
+        }
+
+        @GetMapping("/test/optimistic-lock")
+        void triggerOptimisticLock() {
+            throw new ObjectOptimisticLockingFailureException("Payment", 1L);
         }
 
         @GetMapping("/test/invalid-sort")
@@ -69,6 +76,24 @@ class ApiErrorHandlerTest {
         mockMvc.perform(get("/test/constraint-violation"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("Database constraint violation"));
+    }
+
+    @Test
+    void handleOptimisticLockShouldReturnConflict() throws Exception {
+        mockMvc.perform(get("/test/optimistic-lock"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.statusCode").value(409))
+                .andExpect(jsonPath("$.message").value("The resource was modified concurrently, please retry"));
+    }
+
+    @Test
+    void unsupportedMethodShouldReturnApiErrorWithAllowHeader() throws Exception {
+        mockMvc.perform(post("/test/max-upload-size"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(header().exists("Allow"))
+                .andExpect(jsonPath("$.statusCode").value(405))
+                .andExpect(jsonPath("$.path").value("/test/max-upload-size"))
+                .andExpect(jsonPath("$.message").exists());
     }
 
     @Test

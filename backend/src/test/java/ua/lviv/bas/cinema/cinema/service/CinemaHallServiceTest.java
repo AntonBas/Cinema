@@ -227,17 +227,6 @@ public class CinemaHallServiceTest {
     }
 
     @Test
-    void getHallEntityShouldReturnHall() {
-        CinemaHall hall = CinemaHall.builder().id(HALL_ID).build();
-
-        when(hallRepository.findById(HALL_ID)).thenReturn(Optional.of(hall));
-
-        CinemaHall result = cinemaHallService.getHallEntity(HALL_ID);
-
-        assertThat(result.getId()).isEqualTo(HALL_ID);
-    }
-
-    @Test
     void updateLayoutShouldAddNewSeatAndRemoveMissingSeat() {
         CinemaHall hall = CinemaHall.builder().id(HALL_ID).name(HALL_NAME).build();
         hall.setSessions(List.of());
@@ -260,6 +249,35 @@ public class CinemaHallServiceTest {
         assertThat(hall.getSeats()).hasSize(1);
         assertThat(hall.getSeats().getFirst().getNumber()).isEqualTo(2);
         assertThat(hall.getSeats().getFirst().getSeatType()).isEqualTo(SeatType.VIP);
+    }
+
+    @Test
+    void deleteHallShouldThrowExceptionWhenHallHasOnlyPastSessions() {
+        CinemaHall hall = CinemaHall.builder().id(HALL_ID).name(HALL_NAME).build();
+        hall.setSessions(List.of(Session.builder().startTime(CinemaTime.now().minusDays(10)).build()));
+
+        when(hallRepository.findByIdWithSeats(HALL_ID)).thenReturn(Optional.of(hall));
+
+        assertThatThrownBy(() -> cinemaHallService.deleteHall(HALL_ID))
+                .isInstanceOf(CinemaHallHasSessionsException.class)
+                .hasMessageContaining("cannot be deleted");
+        verify(hallRepository, never()).delete(any());
+    }
+
+    @Test
+    void updateLayoutShouldThrowWhenSeatBelongsToAnotherHall() {
+        CinemaHall hall = CinemaHall.builder().id(HALL_ID).name(HALL_NAME).build();
+        hall.setSessions(List.of());
+        hall.setSeats(new ArrayList<>());
+
+        HallLayoutRequest request = new HallLayoutRequest(
+                List.of(new SeatLayoutItemRequest(999L, 1, 1, SeatType.STANDARD, 0, 0, true)));
+
+        when(hallRepository.findByIdWithSeats(HALL_ID)).thenReturn(Optional.of(hall));
+
+        assertThatThrownBy(() -> cinemaHallService.updateLayout(HALL_ID, request))
+                .isInstanceOf(EntityNotFoundException.class);
+        verify(hallRepository, never()).save(any());
     }
 
     @Test
