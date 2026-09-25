@@ -35,6 +35,7 @@ const getBadgeVariant = (
     case "REFUND_RETURN":
       return "warning";
     case "BOOKING_CANCEL":
+    case "ACCRUAL_REVERSAL":
       return "error";
     default:
       return "secondary";

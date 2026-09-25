@@ -402,4 +402,41 @@ public class BonusLedgerServiceTest {
         assertThat(result.isWelcomeBonusReceived()).isFalse();
         verify(bonusCardRepository).save(any(BonusCard.class));
     }
+
+    @Test
+    void revokeAccruedPointsShouldDeductPointsAndRecordReversal() {
+        BonusCard card = BonusCard.builder().id(1L).pointsBalance(40).build();
+        when(bonusTransactionRepository.existsByReferenceId("REFUND_ACCRUAL_TICKET_5")).thenReturn(false);
+        when(bonusCardRepository.findByUserId(USER_ID)).thenReturn(Optional.of(card));
+        when(bonusCardRepository.save(any(BonusCard.class))).thenAnswer(i -> i.getArgument(0));
+
+        bonusLedgerService.revokeAccruedPoints(USER_ID, 15, "REFUND_ACCRUAL_TICKET_5");
+
+        assertThat(card.getPointsBalance()).isEqualTo(25);
+        verify(bonusTransactionRepository).save(argThat(transaction -> transaction.getPointsChange() == -15
+                && transaction.getType() == BonusTransactionType.ACCRUAL_REVERSAL));
+    }
+
+    @Test
+    void revokeAccruedPointsWhenBalanceTooLowShouldNotGoNegative() {
+        BonusCard card = BonusCard.builder().id(1L).pointsBalance(4).build();
+        when(bonusTransactionRepository.existsByReferenceId("REFUND_ACCRUAL_TICKET_5")).thenReturn(false);
+        when(bonusCardRepository.findByUserId(USER_ID)).thenReturn(Optional.of(card));
+        when(bonusCardRepository.save(any(BonusCard.class))).thenAnswer(i -> i.getArgument(0));
+
+        bonusLedgerService.revokeAccruedPoints(USER_ID, 15, "REFUND_ACCRUAL_TICKET_5");
+
+        assertThat(card.getPointsBalance()).isZero();
+        verify(bonusTransactionRepository).save(argThat(transaction -> transaction.getPointsChange() == -4));
+    }
+
+    @Test
+    void revokeAccruedPointsWhenAlreadyAppliedShouldDoNothing() {
+        when(bonusTransactionRepository.existsByReferenceId("REFUND_ACCRUAL_TICKET_5")).thenReturn(true);
+
+        bonusLedgerService.revokeAccruedPoints(USER_ID, 15, "REFUND_ACCRUAL_TICKET_5");
+
+        verify(bonusCardRepository, never()).save(any());
+        verify(bonusTransactionRepository, never()).save(any());
+    }
 }

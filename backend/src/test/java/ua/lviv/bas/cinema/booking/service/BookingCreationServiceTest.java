@@ -260,6 +260,18 @@ class BookingCreationServiceTest {
     }
 
     @Test
+    void createAndPersistWhenTicketTypeInactiveShouldThrowBeforeHoldingSeats() {
+        childTicketType.setActive(false);
+        when(sessionRepository.findByPublicId(SESSION_PUBLIC_ID)).thenReturn(Optional.of(testSession));
+        when(ticketTypeRepository.findAllById(List.of(TICKET_TYPE_ADULT_ID, TICKET_TYPE_CHILD_ID)))
+                .thenReturn(List.of(adultTicketType, childTicketType));
+
+        assertThatThrownBy(() -> bookingCreationService.createAndPersist(createRequest, testUser))
+                .isInstanceOf(BookingValidationException.class).hasMessageContaining("Child");
+        verifyNoInteractions(seatReservationRepository);
+    }
+
+    @Test
     void createAndPersistWhenTicketTypeNotFoundShouldThrowException() {
         SeatReservation pendingReservation = SeatReservation.builder().id(1L).seat(testSeat1).session(testSession)
                 .status(ReservationStatus.PENDING).reservedUntil(Instant.now().plus(Duration.ofMinutes(TEMP_HOLD_MINUTES)))

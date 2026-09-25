@@ -215,6 +215,46 @@ public class BonusLedgerService {
     }
 
     @CacheEvict(value = "bonus", key = "'balance:' + #userId")
+    public void revokeAccruedPoints(Long userId, Integer points, String referenceId) {
+        if (points == null || points <= 0) {
+            return;
+        }
+        CardBalanceChange result;
+        try {
+            result = executeWithOptimisticLockRetry(() -> {
+                if (bonusTransactionRepository.existsByReferenceId(referenceId)) {
+                    log.debug("Accrual reversal for reference {} already applied, skipping", referenceId);
+                    return null;
+                }
+                var card = getCardByUserId(userId);
+                int oldBalance = card.getPointsBalance();
+                int revoked = Math.min(points, oldBalance);
+                if (revoked < points) {
+                    log.warn("User {} already spent part of the earned points, revoking {} of {} for {}", userId,
+                            revoked, points, referenceId);
+                }
+                if (revoked == 0) {
+                    return null;
+                }
+                subtractPointsFromCard(card, revoked);
+                bonusCardRepository.save(card);
+                createTransaction(card, -revoked, BonusTransactionType.ACCRUAL_REVERSAL, referenceId);
+                return new CardBalanceChange(card, oldBalance);
+            });
+        } catch (DataIntegrityViolationException e) {
+            log.debug("Accrual reversal for reference {} already applied concurrently, skipping", referenceId);
+            return;
+        }
+
+        if (result == null) {
+            return;
+        }
+        evictTransactionsCache(userId);
+        auditBonusChange(result.card().getId(), "Accrual reversal " + referenceId, AuditAction.POINTS_SPENT,
+                Map.of("points", result.oldBalance()), Map.of("points", result.card().getPointsBalance()));
+    }
+
+    @CacheEvict(value = "bonus", key = "'balance:' + #userId")
     public void refundPointsForTicket(Long userId, Integer points, String referenceId) {
         if (points == null || points <= 0) {
             return;

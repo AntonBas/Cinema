@@ -53,6 +53,7 @@ export interface RefundPreviewResponse {
   remainingTime?: string;
   purchaseTime: string;
   ticketType: string;
+  earnedPointsToRevoke: number | null;
 }
 
 export interface RefundResponse {

@@ -123,8 +123,7 @@ public class PaymentService {
     }
 
     public PaymentResponse retryPayment(Long paymentId, User user) {
-        var payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new EntityNotFoundException("Payment", paymentId));
+        var payment = findPayment(paymentId);
 
         if (!payment.getBooking().getUser().getId().equals(user.getId())) {
             throw new PaymentAccessDeniedException(paymentId, user.getId());
@@ -174,24 +173,27 @@ public class PaymentService {
     }
 
     private SuccessOutcome applyGatewaySuccess(Long paymentId, Map<String, String> callbackData) {
-        var payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new EntityNotFoundException("Payment", paymentId));
+        var bookingPending = findPayment(paymentId).getBooking().getStatus() == BookingStatus.PENDING;
 
-        if (payment.getBooking().getStatus() == BookingStatus.PENDING
+        if (bookingPending
                 && paymentRepository.updateStatusIfCurrentIn(paymentId, ACTIVE_STATUSES, PaymentStatus.SUCCESS) == 1) {
-            applyGatewayData(payment, PaymentStatus.SUCCESS, callbackData);
+            applyGatewayData(findPayment(paymentId), callbackData);
             return SuccessOutcome.CONFIRMED;
         }
         if (paymentRepository.updateStatusIfCurrentIn(paymentId, LATE_SUCCESS_STATUSES,
                 PaymentStatus.REFUND_REQUIRED) == 1) {
-            applyGatewayData(payment, PaymentStatus.REFUND_REQUIRED, callbackData);
+            applyGatewayData(findPayment(paymentId), callbackData);
             return SuccessOutcome.REFUND_REQUIRED;
         }
         return SuccessOutcome.ALREADY_PROCESSED;
     }
 
-    private void applyGatewayData(Payment payment, PaymentStatus status, Map<String, String> callbackData) {
-        payment.setStatus(status);
+    private Payment findPayment(Long paymentId) {
+        return paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new EntityNotFoundException("Payment", paymentId));
+    }
+
+    private void applyGatewayData(Payment payment, Map<String, String> callbackData) {
         payment.setPaymentTime(Instant.now());
         payment.setLiqpayPaymentId(callbackData.get("payment_id"));
         payment.setLiqpayTransactionId(callbackData.get("transaction_id"));
@@ -232,13 +234,13 @@ public class PaymentService {
             return;
         }
 
-        payment.setStatus(PaymentStatus.FAILED);
-        payment.setLiqpayErrorCode(callbackData.get("err_code"));
-        payment.setLiqpayErrorDescription(callbackData.get("err_description"));
+        var failed = findPayment(payment.getId());
+        failed.setLiqpayErrorCode(callbackData.get("err_code"));
+        failed.setLiqpayErrorDescription(callbackData.get("err_description"));
 
-        sendFailureEmail(payment, payment.getBooking());
-        log.warn("Payment {} failed: {}", payment.getId(), callbackData.get("err_description"));
-        auditFailure(payment, oldStatus, callbackData);
+        sendFailureEmail(failed, failed.getBooking());
+        log.warn("Payment {} failed: {}", failed.getId(), callbackData.get("err_description"));
+        auditFailure(failed, oldStatus, callbackData);
     }
 
     public void markProcessing(Payment payment) {
@@ -252,7 +254,6 @@ public class PaymentService {
             return;
         }
 
-        payment.setStatus(PaymentStatus.PROCESSING);
         log.info("Payment {} marked PROCESSING", payment.getId());
     }
 

@@ -263,7 +263,6 @@ public class PaymentServiceTest {
 
         paymentService.processSuccess(testPayment, callbackData);
 
-        assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
         assertThat(testPayment.getLiqpayPaymentId()).isEqualTo("PAY123");
         assertThat(testPayment.getLiqpaySenderCardMask()).isEqualTo("****1234");
         assertThat(testPayment.getPaymentTime()).isNotNull();
@@ -283,7 +282,6 @@ public class PaymentServiceTest {
 
         paymentService.processSuccess(detachedPayment, Map.of("payment_id", "PAY123"));
 
-        assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
         assertThat(testPayment.getLiqpayPaymentId()).isEqualTo("PAY123");
         assertThat(detachedPayment.getLiqpayPaymentId()).isNull();
     }
@@ -297,7 +295,6 @@ public class PaymentServiceTest {
 
         paymentService.processSuccess(testPayment, Map.of("payment_id", "PAY123"));
 
-        assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.REFUND_REQUIRED);
         assertThat(testPayment.getLiqpayPaymentId()).isEqualTo("PAY123");
         verify(paymentRepository, never()).updateStatusIfCurrentIn(any(), anyList(), eq(PaymentStatus.SUCCESS));
         verify(latePaymentRefundService).refund(PAYMENT_ID);
@@ -347,7 +344,6 @@ public class PaymentServiceTest {
 
         paymentService.processSuccess(testPayment, callbackData);
 
-        assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
         assertThat(testPayment.getLiqpayPaymentId()).isEqualTo("PAY123");
         verify(auditService).logChange(anyString(), anyLong(), anyString(), any(), any(), any());
     }
@@ -366,7 +362,6 @@ public class PaymentServiceTest {
 
         paymentService.processSuccess(testPayment, callbackData);
 
-        assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
         assertThat(testPayment.getLiqpayPaymentId()).isEqualTo("PAY_ORIGINAL");
         assertThat(testPayment.getLiqpayTransactionId()).isEqualTo("TXN_ORIGINAL");
 
@@ -384,10 +379,10 @@ public class PaymentServiceTest {
         when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
         when(paymentRepository.updateStatusIfCurrentIn(eq(PAYMENT_ID), anyList(), eq(PaymentStatus.FAILED)))
                 .thenReturn(1);
+        when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
 
         paymentService.processFailure(testPayment, callbackData);
 
-        assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.FAILED);
         assertThat(testPayment.getLiqpayErrorCode()).isEqualTo("ERR_001");
         assertThat(testPayment.getLiqpayErrorDescription()).isEqualTo("Insufficient funds");
     }

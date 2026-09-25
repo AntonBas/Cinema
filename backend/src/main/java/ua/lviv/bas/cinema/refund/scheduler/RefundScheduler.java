@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.refund.scheduler;
 import java.time.Duration;
 import java.time.Instant;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +24,9 @@ public class RefundScheduler {
 	private final RefundRepository refundRepository;
 	private final RefundTransactionExecutor refundTransactionExecutor;
 	private final PaymentGatewayService paymentGatewayService;
+
+	@Value("${scheduler.refund.manual-review-after-hours:24}")
+	private int manualReviewAfterHours;
 
 	@Scheduled(fixedRateString = "${scheduler.refund.reconciliation-interval:300000}")
 	public void completeStuckRefunds() {
@@ -47,7 +51,10 @@ public class RefundScheduler {
 	}
 
 	private void reconcile(StuckRefundProjection stuck) {
-		var gatewayStatus = paymentGatewayService.checkRefundStatus(stuck.getLiqpayOrderId());
+		var alreadyRefunded = refundRepository.sumAmountByPaymentIdAndStatus(stuck.getPaymentId(),
+				RefundStatus.PROCESSED);
+		var gatewayStatus = paymentGatewayService.checkRefundStatus(stuck.getLiqpayOrderId(),
+				alreadyRefunded.add(stuck.getRefundAmount()), stuck.getPaymentAmount());
 
 		switch (gatewayStatus) {
 			case CONFIRMED -> {
@@ -61,10 +68,19 @@ public class RefundScheduler {
 				log.warn("Refund {} (ticket {}) marked REJECTED - LiqPay confirmed the refund did not succeed",
 						stuck.getRefundId(), stuck.getTicketId());
 			}
-			case UNKNOWN -> log.warn(
-					"Could not yet confirm refund {} (ticket {}) status with LiqPay, will retry on next run",
-					stuck.getRefundId(), stuck.getTicketId());
+			case UNKNOWN -> logUnconfirmed(stuck);
 			default -> throw new IllegalStateException("Unexpected LiqPay reconciliation status: " + gatewayStatus);
 		}
+	}
+
+	private void logUnconfirmed(StuckRefundProjection stuck) {
+		if (stuck.getCreatedDate().isBefore(Instant.now().minus(Duration.ofHours(manualReviewAfterHours)))) {
+			log.error("Refund {} (ticket {}, order {}) has been PROCESSING since {} and LiqPay still does not confirm "
+					+ "it - manual review in the LiqPay dashboard is required", stuck.getRefundId(), stuck.getTicketId(),
+					stuck.getLiqpayOrderId(), stuck.getCreatedDate());
+			return;
+		}
+		log.warn("Could not yet confirm refund {} (ticket {}) status with LiqPay, will retry on next run",
+				stuck.getRefundId(), stuck.getTicketId());
 	}
 }

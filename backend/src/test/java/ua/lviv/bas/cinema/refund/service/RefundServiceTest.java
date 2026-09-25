@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import ua.lviv.bas.cinema.bonus.service.BonusQueryService;
 import ua.lviv.bas.cinema.config.properties.RefundRules;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.payment.domain.Payment;
@@ -64,6 +65,8 @@ public class RefundServiceTest {
     private NumberGeneratorService numberGenerator;
     @Mock
     private SeatInfoFormatter seatInfoFormatter;
+    @Mock
+    private BonusQueryService bonusQueryService;
 
     private RefundCalculator refundCalculator;
     private RefundService refundService;
@@ -86,7 +89,7 @@ public class RefundServiceTest {
 
     @BeforeEach
     void setUp() {
-        refundCalculator = new RefundCalculator(refundRules);
+        refundCalculator = new RefundCalculator(refundRules, bonusQueryService);
         refundService = new RefundService(ticketService, paymentRefundService, refundCalculator,
                 refundTransactionExecutor, refundRules, refundMapper, refundItemMapper, numberGenerator,
                 seatInfoFormatter);

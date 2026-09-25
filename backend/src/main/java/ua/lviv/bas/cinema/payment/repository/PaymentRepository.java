@@ -46,8 +46,9 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     List<Payment> findWithoutTicketsByStatusAndBookingStatusIn(@Param("status") PaymentStatus status,
             @Param("bookingStatuses") List<BookingStatus> bookingStatuses, @Param("cutoff") Instant cutoff);
 
-    @Modifying
-    @Query("UPDATE Payment p SET p.status = :newStatus WHERE p.id = :id AND p.status IN :fromStatuses")
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE Payment p SET p.status = :newStatus, p.version = p.version + 1 "
+            + "WHERE p.id = :id AND p.status IN :fromStatuses")
     int updateStatusIfCurrentIn(@Param("id") Long id, @Param("fromStatuses") List<PaymentStatus> fromStatuses,
                                 @Param("newStatus") PaymentStatus newStatus);
 }

@@ -29,6 +29,10 @@ public class BookingValidationException extends ValidationException {
         return new BookingValidationException("Booking cannot be cancelled");
     }
 
+    public static BookingValidationException ticketTypeNotAvailable(String ticketTypeName) {
+        return new BookingValidationException("Ticket type '" + ticketTypeName + "' is no longer available");
+    }
+
     public static BookingValidationException duplicateSeatSelection() {
         return new BookingValidationException("Duplicate seat selection is not allowed");
     }

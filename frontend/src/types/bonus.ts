@@ -5,7 +5,8 @@ export type BonusTransactionType =
   | "BOOKING_SPEND"
   | "PAYMENT_ACCRUAL"
   | "REFUND_RETURN"
-  | "BOOKING_CANCEL";
+  | "BOOKING_CANCEL"
+  | "ACCRUAL_REVERSAL";
 
 export interface UseBonusPointsRequest {
   pointsToUse: number;
@@ -65,4 +66,5 @@ export const BonusTransactionTypeDisplay: Record<BonusTransactionType, string> =
     PAYMENT_ACCRUAL: "Payment Accrual",
     REFUND_RETURN: "Refund Return",
     BOOKING_CANCEL: "Booking Cancel",
+    ACCRUAL_REVERSAL: "Earned Points Reversed",
   };

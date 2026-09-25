@@ -191,7 +191,7 @@ class PaymentGatewayServiceTest {
 
     @Test
     void checkRefundStatusInSandboxModeShouldReturnConfirmedWithoutCallingGateway() {
-        RefundGatewayStatus result = paymentGatewayService.checkRefundStatus("ORDER_123");
+        RefundGatewayStatus result = checkFullRefund();
 
         assertThat(result).isEqualTo(RefundGatewayStatus.CONFIRMED);
         verify(restTemplate, never()).postForEntity(any(String.class), any(), eq(String.class));
@@ -204,7 +204,40 @@ class PaymentGatewayServiceTest {
         when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
                 .thenReturn(ResponseEntity.ok(responseBody));
 
-        assertThat(paymentGatewayService.checkRefundStatus("ORDER_123")).isEqualTo(RefundGatewayStatus.CONFIRMED);
+        assertThat(checkFullRefund()).isEqualTo(RefundGatewayStatus.CONFIRMED);
+    }
+
+    @Test
+    void checkRefundStatusWhenReversedButOnlyPartOfOrderRefundedShouldNotConfirm() {
+        ReflectionTestUtils.setField(paymentGatewayService, "sandboxMode", false);
+        String responseBody = LiqPayDecoder.encodeToBase64(Map.of("status", "reversed"));
+        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
+                .thenReturn(ResponseEntity.ok(responseBody));
+
+        assertThat(paymentGatewayService.checkRefundStatus("ORDER_123", new BigDecimal("50.00"),
+                new BigDecimal("100.00"))).isEqualTo(RefundGatewayStatus.UNKNOWN);
+    }
+
+    @Test
+    void checkRefundStatusWhenGatewayRefundedTotalCoversExpectedShouldConfirm() {
+        ReflectionTestUtils.setField(paymentGatewayService, "sandboxMode", false);
+        String responseBody = LiqPayDecoder.encodeToBase64(Map.of("status", "reversed", "refund_amount", 50));
+        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
+                .thenReturn(ResponseEntity.ok(responseBody));
+
+        assertThat(paymentGatewayService.checkRefundStatus("ORDER_123", new BigDecimal("50.00"),
+                new BigDecimal("100.00"))).isEqualTo(RefundGatewayStatus.CONFIRMED);
+    }
+
+    @Test
+    void checkRefundStatusWhenGatewayRefundedTotalBelowExpectedShouldNotConfirm() {
+        ReflectionTestUtils.setField(paymentGatewayService, "sandboxMode", false);
+        String responseBody = LiqPayDecoder.encodeToBase64(Map.of("status", "reversed", "refund_amount", 50));
+        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
+                .thenReturn(ResponseEntity.ok(responseBody));
+
+        assertThat(paymentGatewayService.checkRefundStatus("ORDER_123", new BigDecimal("100.00"),
+                new BigDecimal("100.00"))).isEqualTo(RefundGatewayStatus.UNKNOWN);
     }
 
     @Test
@@ -214,7 +247,7 @@ class PaymentGatewayServiceTest {
         when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
                 .thenReturn(ResponseEntity.ok(responseBody));
 
-        assertThat(paymentGatewayService.checkRefundStatus("ORDER_123")).isEqualTo(RefundGatewayStatus.NOT_CONFIRMED);
+        assertThat(checkFullRefund()).isEqualTo(RefundGatewayStatus.NOT_CONFIRMED);
     }
 
     @Test
@@ -224,7 +257,7 @@ class PaymentGatewayServiceTest {
         when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
                 .thenReturn(ResponseEntity.ok(responseBody));
 
-        assertThat(paymentGatewayService.checkRefundStatus("ORDER_123")).isEqualTo(RefundGatewayStatus.UNKNOWN);
+        assertThat(checkFullRefund()).isEqualTo(RefundGatewayStatus.UNKNOWN);
     }
 
     @Test
@@ -233,7 +266,7 @@ class PaymentGatewayServiceTest {
         when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
                 .thenThrow(new RestClientException("Connection timed out"));
 
-        assertThat(paymentGatewayService.checkRefundStatus("ORDER_123")).isEqualTo(RefundGatewayStatus.UNKNOWN);
+        assertThat(checkFullRefund()).isEqualTo(RefundGatewayStatus.UNKNOWN);
     }
 
     @ParameterizedTest
@@ -247,5 +280,10 @@ class PaymentGatewayServiceTest {
                 .thenReturn(ResponseEntity.ok(responseBody));
 
         assertThat(paymentGatewayService.checkPaymentStatus("ORDER_123").status()).isEqualTo(expected);
+    }
+
+    private RefundGatewayStatus checkFullRefund() {
+        return paymentGatewayService.checkRefundStatus("ORDER_123", new BigDecimal("100.00"),
+                new BigDecimal("100.00"));
     }
 }

@@ -7,9 +7,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.payment.dto.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
+import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
+import ua.lviv.bas.cinema.exception.domain.financial.payment.InvalidPaymentStatusException;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentAccessDeniedException;
+import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
+import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
 import ua.lviv.bas.cinema.user.domain.User;
+
+import java.time.Instant;
 
 @Slf4j
 @Service
@@ -27,6 +33,13 @@ public class PaymentStatusService {
 
         if (!payment.getBooking().getUser().getId().equals(user.getId())) {
             throw new PaymentAccessDeniedException(paymentId, user.getId());
+        }
+        if (payment.getStatus() != PaymentStatus.PENDING) {
+            throw new InvalidPaymentStatusException(payment.getStatus(), PaymentStatus.PENDING);
+        }
+        var booking = payment.getBooking();
+        if (booking.getStatus() != BookingStatus.PENDING || booking.getExpiresAt().isBefore(Instant.now())) {
+            throw PaymentProcessingException.bookingExpired();
         }
 
         return paymentGatewayService.prepareLiqPayPaymentData(payment);

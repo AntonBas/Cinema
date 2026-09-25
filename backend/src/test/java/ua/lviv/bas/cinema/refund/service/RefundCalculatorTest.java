@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import ua.lviv.bas.cinema.bonus.service.BonusQueryService;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.booking.domain.SeatReservation;
@@ -37,6 +38,8 @@ class RefundCalculatorTest {
 
     @Mock
     private RefundRules refundRules;
+    @Mock
+    private BonusQueryService bonusQueryService;
 
     private RefundCalculator refundCalculator;
 
@@ -45,7 +48,7 @@ class RefundCalculatorTest {
 
     @BeforeEach
     void setUp() {
-        refundCalculator = new RefundCalculator(refundRules);
+        refundCalculator = new RefundCalculator(refundRules, bonusQueryService);
 
         var movie = CinemaTestFixtures.movie();
         var hall = CinemaTestFixtures.hall();
@@ -309,5 +312,27 @@ class RefundCalculatorTest {
         assertThat(result.refundAmount()).isEqualByComparingTo("100.00");
         assertThat(result.bonusPointsToRefund()).isEqualTo(40);
         verify(refundRules, never()).getRefundPercentage(any());
+    }
+
+    @Test
+    void calculateEarnedPointsToRevokeShouldTakeTicketShareTimesRefundPercentage() {
+        testTicket.getPayment().setId(9L);
+        testTicket.getPayment().setAmount(new BigDecimal("200.00"));
+        testTicket.getBooking().setTotalPrice(new BigDecimal("200.00"));
+        testTicket.getBooking().setTickets(List.of(testTicket, Ticket.builder().id(2L)
+                .finalPrice(new BigDecimal("100.00")).build()));
+        testTicket.setId(1L);
+        when(bonusQueryService.getAccruedPointsForPayment(9L)).thenReturn(20);
+
+        assertThat(refundCalculator.calculateEarnedPointsToRevoke(testTicket, new BigDecimal("50"))).isEqualTo(5);
+        assertThat(refundCalculator.calculateEarnedPointsToRevoke(testTicket, new BigDecimal("100"))).isEqualTo(10);
+    }
+
+    @Test
+    void calculateEarnedPointsToRevokeWhenNothingEarnedShouldReturnZero() {
+        testTicket.getPayment().setId(9L);
+        when(bonusQueryService.getAccruedPointsForPayment(9L)).thenReturn(0);
+
+        assertThat(refundCalculator.calculateEarnedPointsToRevoke(testTicket, new BigDecimal("100"))).isZero();
     }
 }

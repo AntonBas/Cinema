@@ -125,25 +125,43 @@ public class PaymentGatewayService {
         checkRefundResult(responseMap);
     }
 
-    public RefundGatewayStatus checkRefundStatus(String orderId) {
+    public RefundGatewayStatus checkRefundStatus(String orderId, BigDecimal expectedRefundedTotal,
+                                                 BigDecimal paymentAmount) {
         if (sandboxMode) {
             log.debug("Sandbox mode - treating refund for order {} as confirmed by gateway", orderId);
             return RefundGatewayStatus.CONFIRMED;
         }
         try {
-            var status = (String) fetchOrderStatus(orderId).get("status");
+            var response = fetchOrderStatus(orderId);
+            var status = (String) response.get("status");
 
-            if ("reversed".equals(status)) {
-                return RefundGatewayStatus.CONFIRMED;
-            }
             if ("failure".equals(status) || "error".equals(status)) {
                 return RefundGatewayStatus.NOT_CONFIRMED;
             }
-            log.warn("Ambiguous LiqPay status '{}' for order {} while reconciling a stuck refund", status, orderId);
+            var gatewayRefundedTotal = parseAmount(response.get("refund_amount"));
+            boolean confirmed = gatewayRefundedTotal != null
+                    ? gatewayRefundedTotal.compareTo(expectedRefundedTotal) >= 0
+                    : "reversed".equals(status) && expectedRefundedTotal.compareTo(paymentAmount) >= 0;
+            if (confirmed) {
+                return RefundGatewayStatus.CONFIRMED;
+            }
+            log.warn("LiqPay status '{}' (refunded {}) for order {} does not prove a refund total of {}", status,
+                    gatewayRefundedTotal, orderId, expectedRefundedTotal);
             return RefundGatewayStatus.UNKNOWN;
         } catch (Exception e) {
             log.warn("Failed to check LiqPay refund status for order {}", orderId, e);
             return RefundGatewayStatus.UNKNOWN;
+        }
+    }
+
+    private BigDecimal parseAmount(Object value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return new BigDecimal(value.toString());
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 

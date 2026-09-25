@@ -74,6 +74,9 @@ public record RefundPreviewResponse(
         String purchaseTime,
 
         @Schema(description = "Ticket type", example = "Standard")
-        String ticketType
+        String ticketType,
+
+        @Schema(description = "Bonus points earned from this purchase that the refund takes back", example = "12")
+        Integer earnedPointsToRevoke
 ) {
 }

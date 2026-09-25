@@ -218,6 +218,12 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
                   {formatPrice(previewResult.feeAmount)} (
                   {previewResult.feePercentage}%)
                 </span>
+                {!!previewResult.earnedPointsToRevoke && (
+                  <span className={styles.estimateNote}>
+                    {previewResult.earnedPointsToRevoke} bonus points earned
+                    from this purchase will be deducted
+                  </span>
+                )}
               </>
             )}
           </div>

@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.refund.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import ua.lviv.bas.cinema.bonus.service.BonusQueryService;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.config.properties.RefundRules;
@@ -21,6 +22,7 @@ public class RefundCalculator {
     private static final BigDecimal FULL_REFUND_PERCENTAGE = BigDecimal.valueOf(100);
 
     private final RefundRules refundRules;
+    private final BonusQueryService bonusQueryService;
 
     public String validate(Ticket ticket) {
         if (ticket.getStatus() != TicketStatus.ACTIVE) {
@@ -54,7 +56,25 @@ public class RefundCalculator {
         var refundAmount = calculateRefundAmount(cashAmount, percentage);
         var bonusPointsUsed = totalSeats > 0 ? distributeBonusPointsShare(ticket, booking, totalSeats) : 0;
         var bonusPointsToRefund = calculateBonusRefund(bonusPointsUsed, percentage);
-        return new RefundCalculation(percentage, cashAmount, refundAmount, bonusPointsUsed, bonusPointsToRefund);
+        var earnedPointsToRevoke = calculateEarnedPointsToRevoke(ticket, percentage);
+        return new RefundCalculation(percentage, cashAmount, refundAmount, bonusPointsUsed, bonusPointsToRefund,
+                earnedPointsToRevoke);
+    }
+
+    public int calculateEarnedPointsToRevoke(Ticket ticket, BigDecimal percentage) {
+        var paymentAmount = ticket.getPayment().getAmount();
+        if (paymentAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            return 0;
+        }
+        var earnedPoints = bonusQueryService.getAccruedPointsForPayment(ticket.getPayment().getId());
+        if (earnedPoints <= 0) {
+            return 0;
+        }
+        return BigDecimal.valueOf(earnedPoints)
+                .multiply(calculateCashAmount(ticket))
+                .multiply(percentage)
+                .divide(paymentAmount.multiply(BigDecimal.valueOf(100)), 0, RoundingMode.DOWN)
+                .intValue();
     }
 
     public boolean isSessionCancelled(Ticket ticket) {
@@ -122,7 +142,8 @@ public class RefundCalculator {
     }
 
     public record RefundCalculation(BigDecimal percentage, BigDecimal cashAmount, BigDecimal refundAmount,
-                                    Integer bonusPointsUsed, Integer bonusPointsToRefund) {
+                                    Integer bonusPointsUsed, Integer bonusPointsToRefund,
+                                    Integer earnedPointsToRevoke) {
 
         public BigDecimal feeAmount() {
             return cashAmount.subtract(refundAmount);

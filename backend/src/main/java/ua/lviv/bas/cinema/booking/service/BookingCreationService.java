@@ -101,8 +101,11 @@ class BookingCreationService {
             List<BookingCreateRequest.SeatSelectionRequest> seatSelections) {
         var distinctIds = seatSelections.stream().map(BookingCreateRequest.SeatSelectionRequest::ticketTypeId)
                 .distinct().toList();
-        return ticketTypeRepository.findAllById(distinctIds).stream()
-                .collect(Collectors.toMap(TicketType::getId, Function.identity()));
+        var ticketTypes = ticketTypeRepository.findAllById(distinctIds);
+        ticketTypes.stream().filter(ticketType -> !ticketType.isActive()).findFirst().ifPresent(ticketType -> {
+            throw BookingValidationException.ticketTypeNotAvailable(ticketType.getDisplayName());
+        });
+        return ticketTypes.stream().collect(Collectors.toMap(TicketType::getId, Function.identity()));
     }
 
     private Booking confirmSeatsAndSaveBooking(Booking booking, List<SeatReservation> seatReservations,

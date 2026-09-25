@@ -35,6 +35,12 @@ public class BonusQueryService {
     private final BonusMapper bonusMapper;
     private final BonusProperties bonusProperties;
 
+    @Transactional(readOnly = true)
+    public int getAccruedPointsForPayment(Long paymentId) {
+        return bonusTransactionRepository.sumPointsByReferenceIdAndType("PAYMENT_" + paymentId,
+                BonusTransactionType.PAYMENT_ACCRUAL);
+    }
+
     @Cacheable(value = "bonus", key = "'balance:' + #userId")
     @Transactional(readOnly = true)
     public BonusBalanceResponse getBalance(Long userId) {

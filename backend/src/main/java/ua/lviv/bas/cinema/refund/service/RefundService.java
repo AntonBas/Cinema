@@ -112,8 +112,8 @@ public class RefundService {
         var booking = ticket.getBooking();
         var calculation = refundCalculator.calculate(ticket);
 
-        var bookedSeat = booking.getSeatReservations().getFirst();
-        var seatInfo = seatInfoFormatter.format(bookedSeat.getSeat().getRow(), bookedSeat.getSeat().getNumber());
+        var ticketSeat = ticket.getSeatReservation().getSeat();
+        var seatInfo = seatInfoFormatter.format(ticketSeat.getRow(), ticketSeat.getNumber());
 
         return new RefundPreviewResponse(ticket.getId(), ticket.getUniqueCode(),
                 booking.getSession().getMovie().getTitle(), sessionTime,
@@ -123,7 +123,7 @@ public class RefundService {
                 calculation.bonusPointsToRefund(), policyName(ticket, sessionTime),
                 policyDescription(ticket, sessionTime), true, null, refundRules.getRefundDeadline(sessionTime),
                 formatRemainingTime(sessionTime), ticket.getPurchaseTime().toString(),
-                ticket.getTicketType().getDisplayName());
+                ticket.getTicketType().getDisplayName(), calculation.earnedPointsToRevoke());
     }
 
     private String policyName(Ticket ticket, LocalDateTime sessionTime) {
@@ -140,7 +140,7 @@ public class RefundService {
         return new RefundPreviewResponse(ticket.getId(), ticket.getUniqueCode(),
                 ticket.getBooking().getSession().getMovie().getTitle(), ticket.getBooking().getSession().getStartTime(),
                 null, null, null, null, null, null, null, null, null, null, null, null, false, reason, null, null, null,
-                null);
+                null, null);
     }
 
     private RefundResponse buildResponse(Refund refund) {

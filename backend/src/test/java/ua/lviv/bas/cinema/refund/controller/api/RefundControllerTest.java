@@ -51,7 +51,7 @@ public class RefundControllerTest {
                 new BigDecimal("180.00"), new BigDecimal("90.00"), new BigDecimal("20.00"), new BigDecimal("10.00"),
                 100, 90, "Standard Refund", "90% refund 2-24 hours before session", true, null,
                 CinemaTime.now().plusHours(1), "3 hours", CinemaTime.now().minusHours(1).toString(),
-                "Standard");
+                "Standard", 0);
     }
 
     @Test

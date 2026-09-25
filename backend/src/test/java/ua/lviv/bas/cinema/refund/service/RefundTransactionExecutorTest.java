@@ -105,7 +105,7 @@ public class RefundTransactionExecutorTest {
         when(refundRepository.existsByItemsTicketIdAndStatus(TICKET_ID, RefundStatus.PROCESSING)).thenReturn(false);
         when(refundCalculator.calculate(testTicket))
                 .thenReturn(new RefundCalculator.RefundCalculation(PERCENTAGE, REFUND_AMOUNT, REFUND_AMOUNT,
-                        BONUS_POINTS_TO_REFUND, BONUS_POINTS_TO_REFUND));
+                        BONUS_POINTS_TO_REFUND, BONUS_POINTS_TO_REFUND, 0));
         when(refundRepository.save(any(Refund.class))).thenAnswer(i -> {
             Refund r = i.getArgument(0);
             r.setId(REFUND_ID);
@@ -158,7 +158,7 @@ public class RefundTransactionExecutorTest {
         when(refundRepository.existsByItemsTicketIdAndStatus(TICKET_ID, RefundStatus.PROCESSING)).thenReturn(false);
         when(refundCalculator.calculate(testTicket))
                 .thenReturn(new RefundCalculator.RefundCalculation(PERCENTAGE, REFUND_AMOUNT, REFUND_AMOUNT,
-                        BONUS_POINTS_TO_REFUND, BONUS_POINTS_TO_REFUND));
+                        BONUS_POINTS_TO_REFUND, BONUS_POINTS_TO_REFUND, 0));
         when(refundRepository.save(any(Refund.class)))
                 .thenThrow(new org.springframework.dao.DataIntegrityViolationException("duplicate key"));
 
@@ -183,6 +183,21 @@ public class RefundTransactionExecutorTest {
                 any(String.class), eq(testTicket));
         verify(bonusLedgerService).refundPointsForTicket(USER_ID, BONUS_POINTS_TO_REFUND, "REFUND_TICKET_" + TICKET_ID);
         verify(ticketService).markAsRefunded(testTicket, testRefund);
+    }
+
+    @Test
+    void applySuccessShouldRevokeEarnedPointsUsingTheStoredRefundPercentage() {
+        when(refundRepository.findById(REFUND_ID)).thenReturn(Optional.of(testRefund));
+        when(ticketService.getTicket(TICKET_ID)).thenReturn(testTicket);
+        when(refundRepository.save(any(Refund.class))).thenAnswer(i -> i.getArgument(0));
+        when(refundRepository.sumAmountByPaymentIdAndStatus(testPayment.getId(), RefundStatus.PROCESSED))
+                .thenReturn(BigDecimal.ZERO);
+        when(refundCalculator.calculateEarnedPointsToRevoke(testTicket, testRefundItem.getRefundPercentage()))
+                .thenReturn(7);
+
+        refundTransactionExecutor.applySuccess(REFUND_ID, TICKET_ID);
+
+        verify(bonusLedgerService).revokeAccruedPoints(USER_ID, 7, "REFUND_ACCRUAL_TICKET_" + TICKET_ID);
     }
 
     @Test

@@ -123,6 +123,10 @@ public class RefundTransactionExecutor {
                     "REFUND_TICKET_" + ticket.getId());
         }
 
+        bonusLedgerService.revokeAccruedPoints(refund.getUser().getId(),
+                refundCalculator.calculateEarnedPointsToRevoke(ticket, percentage),
+                "REFUND_ACCRUAL_TICKET_" + ticket.getId());
+
         ticketService.markAsRefunded(ticket, refund);
 
         refundItem.setStatus(RefundItemStatus.PROCESSED);

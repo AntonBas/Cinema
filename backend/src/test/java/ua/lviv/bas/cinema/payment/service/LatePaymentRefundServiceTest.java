@@ -74,7 +74,7 @@ class LatePaymentRefundServiceTest {
     @Test
     void refundShouldCallGatewayAndMarkPaymentRefunded() {
         when(paymentRepository.findByIdWithDetails(PAYMENT_ID)).thenReturn(Optional.of(payment));
-        when(paymentGatewayService.checkRefundStatus("ORD_7")).thenReturn(RefundGatewayStatus.UNKNOWN);
+        when(paymentGatewayService.checkRefundStatus("ORD_7", AMOUNT, AMOUNT)).thenReturn(RefundGatewayStatus.UNKNOWN);
         when(paymentRepository.updateStatusIfCurrentIn(PAYMENT_ID, List.of(PaymentStatus.REFUND_REQUIRED),
                 PaymentStatus.REFUNDED)).thenReturn(1);
 
@@ -89,7 +89,7 @@ class LatePaymentRefundServiceTest {
     @Test
     void refundWhenGatewayAlreadyReversedShouldOnlyMarkRefunded() {
         when(paymentRepository.findByIdWithDetails(PAYMENT_ID)).thenReturn(Optional.of(payment));
-        when(paymentGatewayService.checkRefundStatus("ORD_7")).thenReturn(RefundGatewayStatus.CONFIRMED);
+        when(paymentGatewayService.checkRefundStatus("ORD_7", AMOUNT, AMOUNT)).thenReturn(RefundGatewayStatus.CONFIRMED);
         when(paymentRepository.updateStatusIfCurrentIn(PAYMENT_ID, List.of(PaymentStatus.REFUND_REQUIRED),
                 PaymentStatus.REFUNDED)).thenReturn(1);
 
@@ -103,7 +103,7 @@ class LatePaymentRefundServiceTest {
     @Test
     void refundWhenGatewayFailsShouldKeepRefundRequired() {
         when(paymentRepository.findByIdWithDetails(PAYMENT_ID)).thenReturn(Optional.of(payment));
-        when(paymentGatewayService.checkRefundStatus("ORD_7")).thenReturn(RefundGatewayStatus.UNKNOWN);
+        when(paymentGatewayService.checkRefundStatus("ORD_7", AMOUNT, AMOUNT)).thenReturn(RefundGatewayStatus.UNKNOWN);
         doThrow(new PaymentGatewayUnavailableException("timeout", null))
                 .when(paymentRefundService).callLiqPayRefund(any(), any(), any(), any());
 

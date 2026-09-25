@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import ua.lviv.bas.cinema.bonus.domain.BonusTransaction;
+import ua.lviv.bas.cinema.bonus.domain.BonusTransactionType;
 import ua.lviv.bas.cinema.bonus.repository.projection.BonusTransactionProjection;
 
 @SuppressWarnings({"SqlResolve", "SqlNoDataSourceInspection"})
@@ -31,4 +32,9 @@ public interface BonusTransactionRepository extends JpaRepository<BonusTransacti
     Page<BonusTransactionProjection> findProjectionsByUserId(@Param("userId") Long userId, Pageable pageable);
 
     boolean existsByReferenceId(String referenceId);
+
+    @Query("SELECT COALESCE(SUM(t.pointsChange), 0) FROM BonusTransaction t "
+            + "WHERE t.referenceId = :referenceId AND t.type = :type")
+    int sumPointsByReferenceIdAndType(@Param("referenceId") String referenceId,
+                                      @Param("type") BonusTransactionType type);
 }

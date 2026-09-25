@@ -59,7 +59,8 @@ public class LatePaymentRefundService {
         }
 
         try {
-            if (paymentGatewayService.checkRefundStatus(payment.getLiqpayOrderId()) != RefundGatewayStatus.CONFIRMED) {
+            if (paymentGatewayService.checkRefundStatus(payment.getLiqpayOrderId(), payment.getAmount(),
+                    payment.getAmount()) != RefundGatewayStatus.CONFIRMED) {
                 paymentRefundService.callLiqPayRefund(payment.getLiqpayPaymentId(), payment.getLiqpayOrderId(),
                         payment.getAmount(), REFUND_DESCRIPTION);
             }
