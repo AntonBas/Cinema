@@ -56,7 +56,7 @@ export const PersonTab: React.FC = () => {
       role: activeTab === "ALL" ? undefined : activeTab,
       page,
       size: DEFAULT_PAGE_SIZE,
-    });
+    }).catch(() => {});
   }, [query, activeTab, page, getAll]);
 
   useEffect(() => {
@@ -86,9 +86,14 @@ export const PersonTab: React.FC = () => {
 
   const handleDelete = useCallback(async () => {
     if (!personToDelete) return;
-    await remove(personToDelete.id);
-    setIsDeleteModalOpen(false);
-    setPersonToDelete(null);
+    try {
+      await remove(personToDelete.id);
+    } catch {
+      return;
+    } finally {
+      setIsDeleteModalOpen(false);
+      setPersonToDelete(null);
+    }
     if (persons.length === 1 && page > 0) {
       setPage(page - 1);
     } else {

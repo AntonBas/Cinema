@@ -31,7 +31,7 @@ export const CashierScanPage: React.FC = () => {
 
   useEffect(() => {
     if (uniqueCode) {
-      getAdminByCode(uniqueCode);
+      getAdminByCode(uniqueCode).catch(() => {});
     }
   }, [uniqueCode, getAdminByCode]);
 
@@ -76,7 +76,7 @@ export const CashierScanPage: React.FC = () => {
 
   const handleValidate = () => {
     if (uniqueCode) {
-      validate(uniqueCode);
+      validate(uniqueCode).catch(() => {});
     }
   };
 

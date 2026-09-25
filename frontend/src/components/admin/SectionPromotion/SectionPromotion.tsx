@@ -45,7 +45,7 @@ export const SectionPromotion: React.FC = () => {
       query,
       page,
       size: DEFAULT_PAGE_SIZE_COMPACT,
-    });
+    }).catch(() => {});
   }, [query, page, getAdminPromotions]);
 
   useEffect(() => {
@@ -65,8 +65,13 @@ export const SectionPromotion: React.FC = () => {
   const handleDeleteConfirm = async () => {
     if (!deletingPromotion) return;
 
-    await remove(deletingPromotion.id);
-    setDeletingPromotion(null);
+    try {
+      await remove(deletingPromotion.id);
+    } catch {
+      return;
+    } finally {
+      setDeletingPromotion(null);
+    }
 
     if (adminPromotions.length === 1 && page > 0) {
       setPage(page - 1);
@@ -76,9 +81,13 @@ export const SectionPromotion: React.FC = () => {
   };
 
   const handleEdit = async (id: number) => {
-    const promotion = await getAdminById(id);
-    if (promotion) {
-      setEditingPromotion(promotion);
+    try {
+      const promotion = await getAdminById(id);
+      if (promotion) {
+        setEditingPromotion(promotion);
+      }
+    } catch {
+      return;
     }
   };
 

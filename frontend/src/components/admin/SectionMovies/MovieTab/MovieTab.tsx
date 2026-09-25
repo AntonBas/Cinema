@@ -79,17 +79,16 @@ export const MovieTab: React.FC = () => {
     minDisplayTime: 300,
   });
 
-  const loadingDataRef = useRef<Record<MovieTabType, boolean>>({
-    CURRENT: false,
-    UPCOMING: false,
-    ARCHIVED: false,
+  const latestRequestRef = useRef<Record<MovieTabType, number>>({
+    CURRENT: 0,
+    UPCOMING: 0,
+    ARCHIVED: 0,
   });
 
   const loadTabData = useCallback(
     async (tab: MovieTabType, page: number, search?: string) => {
-      if (loadingDataRef.current[tab]) return;
-
-      loadingDataRef.current[tab] = true;
+      const requestId = ++latestRequestRef.current[tab];
+      const isLatest = () => requestId === latestRequestRef.current[tab];
 
       try {
         const status = tab as MovieStatus;
@@ -101,6 +100,7 @@ export const MovieTab: React.FC = () => {
         };
 
         const response = await movieApi.admin.getAll(requestParams);
+        if (!isLatest()) return;
 
         setTabData((prev) => ({
           ...prev,
@@ -111,12 +111,11 @@ export const MovieTab: React.FC = () => {
           },
         }));
       } catch (error) {
+        if (!isLatest()) return;
         const message = isApiErrorException(error)
           ? error.message
           : `Failed to load ${tab.toLowerCase()} movies`;
         showNotification(message, "error");
-      } finally {
-        loadingDataRef.current[tab] = false;
       }
     },
     [showNotification],
@@ -199,18 +198,26 @@ export const MovieTab: React.FC = () => {
     [setPage],
   );
 
-  const handleEdit = useCallback(async (movie: MovieCardResponse) => {
-    setLoadingMovie(true);
-    try {
-      const response = await movieApi.admin.getById(movie.id);
-      if (response?.data) {
-        setEditingMovie(response.data);
-        setIsModalOpen(true);
+  const handleEdit = useCallback(
+    async (movie: MovieCardResponse) => {
+      setLoadingMovie(true);
+      try {
+        const response = await movieApi.admin.getById(movie.id);
+        if (response?.data) {
+          setEditingMovie(response.data);
+          setIsModalOpen(true);
+        }
+      } catch (error) {
+        showNotification(
+          isApiErrorException(error) ? error.message : "Failed to load movie",
+          "error",
+        );
+      } finally {
+        setLoadingMovie(false);
       }
-    } finally {
-      setLoadingMovie(false);
-    }
-  }, []);
+    },
+    [showNotification],
+  );
 
   const handleDeleteClick = useCallback((movie: MovieCardResponse) => {
     setDeletingMovie(movie);
@@ -220,7 +227,13 @@ export const MovieTab: React.FC = () => {
   const handleDeleteConfirm = useCallback(async () => {
     if (!deletingMovie?.id) return;
 
-    await remove(deletingMovie.id);
+    try {
+      await remove(deletingMovie.id);
+    } catch {
+      setIsDeleteModalOpen(false);
+      setDeletingMovie(null);
+      return;
+    }
 
     const newPage =
       currentTabData.data.length === 1 && page > 0 ? page - 1 : page;

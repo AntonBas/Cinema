@@ -11,25 +11,12 @@ import { Pagination } from "@/components/ui/Pagination/Pagination";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
+import { ActionDisplay, EntityTypeDisplay } from "@/types/audit";
 import styles from "./SectionAuditLogs.module.css";
 
-const ENTITY_TYPES = [
-  "User",
-  "Bonus",
-  "Promotion",
-  "TicketType",
-  "Movie",
-  "Session",
-];
+const ENTITY_TYPES = Object.keys(EntityTypeDisplay);
 
-const ACTIONS = [
-  "CREATED",
-  "UPDATED",
-  "DELETED",
-  "TOGGLE",
-  "CLAIMED",
-  "REFUNDED",
-];
+const ACTIONS = Object.keys(ActionDisplay);
 
 export const SectionAuditLogs: React.FC = () => {
   const { page, getParam, setFilters, clearParams, setPage } = useUrlParams();

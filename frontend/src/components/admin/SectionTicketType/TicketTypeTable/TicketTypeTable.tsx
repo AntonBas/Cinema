@@ -41,24 +41,34 @@ export const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
 
   const handleConfirmDelete = async () => {
     if (!selectedTicketType) return;
-    await onDelete(selectedTicketType.id);
-    setDeleteModalOpen(false);
-    setSelectedTicketType(null);
+    try {
+      await onDelete(selectedTicketType.id);
+    } catch {
+      return;
+    } finally {
+      setDeleteModalOpen(false);
+      setSelectedTicketType(null);
+    }
   };
 
   const handleToggleActive = async (id: number) => {
     setTogglingId(id);
-    await onToggleActive(id);
-    setTogglingId(null);
+    try {
+      await onToggleActive(id);
+    } catch {
+      return;
+    } finally {
+      setTogglingId(null);
+    }
   };
 
   const formatAgeRange = (ticketType: TicketTypeResponse) => {
-    const { minAge, maxAge } = ticketType;
-    if (minAge === undefined && maxAge === undefined) return "Any age";
-    if (minAge !== undefined && maxAge !== undefined)
-      return `${minAge}-${maxAge} years`;
-    if (minAge !== undefined) return `≥ ${minAge} years`;
-    if (maxAge !== undefined) return `≤ ${maxAge} years`;
+    const hasMinAge = ticketType.minAge != null;
+    const hasMaxAge = ticketType.maxAge != null;
+    if (hasMinAge && hasMaxAge)
+      return `${ticketType.minAge}-${ticketType.maxAge} years`;
+    if (hasMinAge) return `≥ ${ticketType.minAge} years`;
+    if (hasMaxAge) return `≤ ${ticketType.maxAge} years`;
     return "Any age";
   };
 

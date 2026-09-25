@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/Badge/Badge";
 import { Select } from "@/components/ui/Select/Select";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 import { useAdminUsers } from "@/hooks/features/user/useAdminUsers";
+import { useAuth } from "@/context/AuthContext";
 import { UserRoleDisplay, VerificationStatusDisplay } from "@/types/user";
 import type {
   AdminUserListResponse,
@@ -34,29 +35,51 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [pendingRole, setPendingRole] = useState<UserRole | null>(null);
 
+  const { isAdmin } = useAuth();
   const { updateRole, updateStatus, updateBirthDateVerification, loading } =
     useAdminUsers();
 
-  const handleRoleChange = async (value: string | number) => {
+  const handleRoleSelect = (value: string | number) => {
     const newRole = value as UserRole;
-    if (newRole === user.userRole) return;
-    await updateRole(user.id, newRole);
-    onUpdate();
+    if (newRole !== user.userRole) setPendingRole(newRole);
+  };
+
+  const handleRoleChange = async () => {
+    if (!pendingRole) return;
+    try {
+      await updateRole(user.id, pendingRole);
+      onUpdate();
+    } catch {
+      return;
+    } finally {
+      setPendingRole(null);
+    }
   };
 
   const handleStatusChange = async () => {
-    await updateStatus(user.id, !user.enabled);
-    setShowStatusModal(false);
-    onUpdate();
+    try {
+      await updateStatus(user.id, !user.enabled);
+      onUpdate();
+    } catch {
+      return;
+    } finally {
+      setShowStatusModal(false);
+    }
   };
 
   const handleVerificationChange = async () => {
     const newStatus: VerificationStatus =
       user.verificationStatus === "VERIFIED" ? "NOT_VERIFIED" : "VERIFIED";
-    await updateBirthDateVerification(user.id, newStatus);
-    setShowVerificationModal(false);
-    onUpdate();
+    try {
+      await updateBirthDateVerification(user.id, newStatus);
+      onUpdate();
+    } catch {
+      return;
+    } finally {
+      setShowVerificationModal(false);
+    }
   };
 
   const roleOptions = useMemo(
@@ -84,13 +107,19 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
         </td>
 
         <td data-label="Role">
-          <Select
-            value={user.userRole}
-            onChange={handleRoleChange}
-            options={roleOptions}
-            disabled={loading}
-            className={styles.roleSelect}
-          />
+          {isAdmin ? (
+            <Select
+              value={user.userRole}
+              onChange={handleRoleSelect}
+              options={roleOptions}
+              disabled={loading}
+              className={styles.roleSelect}
+            />
+          ) : (
+            <Badge variant="secondary" size="small">
+              {UserRoleDisplay[user.userRole]}
+            </Badge>
+          )}
         </td>
 
         <td data-label="Verification">
@@ -136,13 +165,15 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
               loading={loading}
               onClick={() => setShowVerificationModal(true)}
             />
-            <ActionIconButton
-              icon={isEnabled ? <UserX /> : <UserCheck />}
-              label={isEnabled ? "Block user" : "Activate user"}
-              variant={isEnabled ? "error" : "success"}
-              loading={loading}
-              onClick={() => setShowStatusModal(true)}
-            />
+            {isAdmin && (
+              <ActionIconButton
+                icon={isEnabled ? <UserX /> : <UserCheck />}
+                label={isEnabled ? "Block user" : "Activate user"}
+                variant={isEnabled ? "error" : "success"}
+                loading={loading}
+                onClick={() => setShowStatusModal(true)}
+              />
+            )}
           </div>
         </td>
       </tr>
@@ -162,6 +193,17 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
         message={`Are you sure you want to ${isEnabled ? "block" : "activate"} ${user.firstName} ${user.lastName}?`}
         confirmText={isEnabled ? "Block" : "Activate"}
         variant={isEnabled ? "error" : "success"}
+        isLoading={loading}
+      />
+
+      <ConfirmModal
+        isOpen={pendingRole !== null}
+        onConfirm={handleRoleChange}
+        onCancel={() => setPendingRole(null)}
+        title="Change Role"
+        message={`Change the role of ${user.firstName} ${user.lastName} from ${UserRoleDisplay[user.userRole]} to ${pendingRole ? UserRoleDisplay[pendingRole] : ""}?`}
+        confirmText="Change Role"
+        variant="primary"
         isLoading={loading}
       />
 

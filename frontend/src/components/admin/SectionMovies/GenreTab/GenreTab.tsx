@@ -56,30 +56,43 @@ export const GenreTab: React.FC = () => {
   }, [getAll, query, page]);
 
   useEffect(() => {
-    loadGenres();
+    loadGenres().catch(() => {});
   }, [loadGenres]);
 
   const handleSubmit = useCallback(
     async (name: string) => {
-      if (editingGenre) {
-        await update(editingGenre.id, { name });
-      } else {
-        await create({ name });
+      try {
+        if (editingGenre) {
+          await update(editingGenre.id, { name });
+        } else {
+          await create({ name });
+        }
+      } catch {
+        return;
       }
       setIsFormModalOpen(false);
       setEditingGenre(null);
-      loadGenres();
+      loadGenres().catch(() => {});
     },
     [editingGenre, create, update, loadGenres],
   );
 
   const handleDeleteConfirm = useCallback(async () => {
     if (!deletingGenre) return;
-    await remove(deletingGenre.id);
-    setIsDeleteModalOpen(false);
-    setDeletingGenre(null);
-    loadGenres();
-  }, [deletingGenre, remove, loadGenres]);
+    try {
+      await remove(deletingGenre.id);
+    } catch {
+      return;
+    } finally {
+      setIsDeleteModalOpen(false);
+      setDeletingGenre(null);
+    }
+    if (tabData.data.length === 1 && page > 0) {
+      setPage(page - 1);
+    } else {
+      loadGenres().catch(() => {});
+    }
+  }, [deletingGenre, remove, loadGenres, tabData.data.length, page, setPage]);
 
   const paginationInfo = useMemo(() => {
     const total = tabData.total;

@@ -38,6 +38,7 @@ export const HallLayoutProvider: React.FC<{ children: React.ReactNode }> = ({
   const [seats, setSeats] = useState<DraftSeat[]>([]);
   const [isDirty, setIsDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [layoutSaveCount, setLayoutSaveCount] = useState(0);
   const localKeyCounter = useRef(0);
 
   const { getLayout, updateLayout } = useCinemaHall();
@@ -45,10 +46,18 @@ export const HallLayoutProvider: React.FC<{ children: React.ReactNode }> = ({
   const openLayout = useCallback(
     async (hall: CinemaHallResponse) => {
       setCurrentHall(hall);
-      const layoutData = await getLayout(hall.id);
-      setLayout(layoutData ?? null);
-      setSeats(toDraftSeats(layoutData ?? null));
-      setIsDirty(false);
+      try {
+        const layoutData = await getLayout(hall.id);
+        if (!layoutData) {
+          setCurrentHall(null);
+          return;
+        }
+        setLayout(layoutData);
+        setSeats(toDraftSeats(layoutData));
+        setIsDirty(false);
+      } catch {
+        setCurrentHall(null);
+      }
     },
     [getLayout],
   );
@@ -103,7 +112,16 @@ export const HallLayoutProvider: React.FC<{ children: React.ReactNode }> = ({
   const moveSeat = useCallback(
     (key: string, col: number, gridRow: number) => {
       setSeats((prev) => {
-        if (isCellOccupied(col, gridRow, key, prev)) return prev;
+        const seat = prev.find((s) => s.key === key);
+        if (!seat) return prev;
+        const targetCols =
+          seat.seatType === SeatType.COUPLE ? [col, col + 1] : [col];
+        const blocked = targetCols.some(
+          (targetCol) =>
+            targetCol >= GRID_COLS ||
+            isCellOccupied(targetCol, gridRow, key, prev),
+        );
+        if (blocked) return prev;
         return prev.map((seat) =>
           seat.key === key ? { ...seat, col, gridRow } : seat,
         );
@@ -182,8 +200,11 @@ export const HallLayoutProvider: React.FC<{ children: React.ReactNode }> = ({
         setLayout(updated);
         setSeats(toDraftSeats(updated));
         setIsDirty(false);
+        setLayoutSaveCount((count) => count + 1);
         return true;
       }
+      return false;
+    } catch {
       return false;
     } finally {
       setSaving(false);
@@ -201,6 +222,7 @@ export const HallLayoutProvider: React.FC<{ children: React.ReactNode }> = ({
         isDirty,
         saving,
         loading,
+        layoutSaveCount,
         openLayout,
         closeLayout,
         addSeat,

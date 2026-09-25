@@ -68,7 +68,7 @@ export const SectionTicketType = () => {
       query,
       active: statusFilter === "all" ? undefined : statusFilter === "active",
       category: categoryFilter === "all" ? undefined : categoryFilter,
-    });
+    }).catch(() => {});
   }, [page, query, statusFilter, categoryFilter, getAll]);
 
   useEffect(() => {

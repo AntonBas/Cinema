@@ -21,6 +21,7 @@ export interface HallLayoutContextType {
   isDirty: boolean;
   saving: boolean;
   loading: boolean;
+  layoutSaveCount: number;
   openLayout: (hall: CinemaHallResponse) => void;
   closeLayout: () => void;
   addSeat: (col: number, gridRow: number) => void;

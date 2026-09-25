@@ -8,6 +8,7 @@ import { REFUND_STATUS_VARIANT } from "@/components/admin/shared/statusBadges";
 import { formatDateTime, formatPrice } from "@/utils/formatters";
 import type { AdminRefundListResponse } from "@/types/refund";
 import { RefundStatusDisplay } from "@/types/refund";
+import { useAuth } from "@/context/AuthContext";
 
 interface RefundTableProps {
   refunds: AdminRefundListResponse[];
@@ -20,6 +21,8 @@ export const RefundTable: React.FC<RefundTableProps> = ({
   onOpenBooking,
   onOpenHistory,
 }) => {
+  const { isAdmin } = useAuth();
+
   if (refunds.length === 0) {
     return (
       <EmptyState
@@ -41,7 +44,7 @@ export const RefundTable: React.FC<RefundTableProps> = ({
               <th>Ticket</th>
               <th>Amount</th>
               <th>Status</th>
-              <th>History</th>
+              {isAdmin && <th>History</th>}
             </tr>
           </thead>
           <tbody>
@@ -97,15 +100,17 @@ export const RefundTable: React.FC<RefundTableProps> = ({
                     <span className={styles.secondary}>{refund.reason}</span>
                   )}
                 </td>
-                <td data-label="History">
-                  <Button
-                    variant="secondary"
-                    size="small"
-                    onClick={() => onOpenHistory(refund.id)}
-                  >
-                    View
-                  </Button>
-                </td>
+                {isAdmin && (
+                  <td data-label="History">
+                    <Button
+                      variant="secondary"
+                      size="small"
+                      onClick={() => onOpenHistory(refund.id)}
+                    >
+                      View
+                    </Button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

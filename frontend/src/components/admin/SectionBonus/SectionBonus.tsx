@@ -26,14 +26,14 @@ export const SectionBonus = () => {
     getRules().catch(() => {});
   }, [getRules]);
 
-  const handleEditSuccess = async () => {
+  const handleEditSuccess = () => {
     setEditingRule(null);
-    await getRules();
+    getRules().catch(() => {});
   };
 
-  const handleResetSuccess = async () => {
+  const handleResetSuccess = () => {
     setResettingRuleType(null);
-    await getRules();
+    getRules().catch(() => {});
   };
 
   const getRuleStatus = (rule: BonusRulesResponse) => {

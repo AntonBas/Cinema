@@ -110,7 +110,7 @@ export const SectionSchedule: React.FC = () => {
   );
 
   useEffect(() => {
-    reloadSessions();
+    reloadSessions().catch(() => {});
   }, [reloadSessions]);
 
   const handleFilterChange = useCallback(
@@ -132,7 +132,7 @@ export const SectionSchedule: React.FC = () => {
     async (data: SessionRequest) => {
       await create(data);
       setIsCreateModalOpen(false);
-      reloadSessions();
+      reloadSessions().catch(() => {});
     },
     [create, reloadSessions],
   );
@@ -141,30 +141,45 @@ export const SectionSchedule: React.FC = () => {
     async (id: number, data: SessionRequest) => {
       await update(id, data);
       setEditingSession(null);
-      reloadSessions();
+      reloadSessions().catch(() => {});
     },
     [update, reloadSessions],
   );
 
   const handleDeleteSession = useCallback(async () => {
     if (!deletingSession) return;
-    await remove(deletingSession.id);
-    setDeletingSession(null);
-    reloadSessions();
+    try {
+      await remove(deletingSession.id);
+    } catch {
+      return;
+    } finally {
+      setDeletingSession(null);
+    }
+    reloadSessions().catch(() => {});
   }, [deletingSession, remove, reloadSessions]);
 
   const handleCancelSession = useCallback(async () => {
     if (!cancellingSession) return;
-    await cancel(cancellingSession.id);
-    setCancellingSession(null);
-    reloadSessions();
+    try {
+      await cancel(cancellingSession.id);
+    } catch {
+      return;
+    } finally {
+      setCancellingSession(null);
+    }
+    reloadSessions().catch(() => {});
   }, [cancellingSession, cancel, reloadSessions]);
 
   const handleReactivateSession = useCallback(async () => {
     if (!reactivatingSession) return;
-    await reactivate(reactivatingSession.id);
-    setReactivatingSession(null);
-    reloadSessions();
+    try {
+      await reactivate(reactivatingSession.id);
+    } catch {
+      return;
+    } finally {
+      setReactivatingSession(null);
+    }
+    reloadSessions().catch(() => {});
   }, [reactivatingSession, reactivate, reloadSessions]);
 
   const activeFilterCount = useMemo(() => {

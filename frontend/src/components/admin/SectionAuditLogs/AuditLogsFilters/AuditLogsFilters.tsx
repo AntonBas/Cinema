@@ -3,6 +3,7 @@ import { Select } from "@/components/ui/Select/Select";
 import { Input } from "@/components/ui/Input/Input";
 import { Button } from "@/components/ui/Button/Button";
 import type { SelectOption } from "@/components/ui/Select/Select";
+import { getActionDisplay, getEntityTypeDisplay } from "@/types/audit";
 import styles from "./AuditLogsFilters.module.css";
 
 interface AuditLogsFiltersProps {
@@ -33,12 +34,15 @@ export const AuditLogsFilters: React.FC<AuditLogsFiltersProps> = ({
 
   const entityTypeOptions: SelectOption[] = [
     { value: "", label: "All Types" },
-    ...entityTypes.map((type) => ({ value: type, label: type })),
+    ...entityTypes.map((type) => ({
+      value: type,
+      label: getEntityTypeDisplay(type),
+    })),
   ];
 
   const actionOptions: SelectOption[] = [
     { value: "", label: "All Actions" },
-    ...actions.map((act) => ({ value: act, label: act })),
+    ...actions.map((act) => ({ value: act, label: getActionDisplay(act) })),
   ];
 
   return (

@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 import { useAdminBookingDetails } from "@/hooks/features/booking/useAdminBookingDetails";
 import { EntityHistoryModal } from "@/components/admin/SectionAuditLogs/EntityHistoryModal/EntityHistoryModal";
+import { useAuth } from "@/context/AuthContext";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
 import { formatDateTime, formatPrice } from "@/utils/formatters";
 import { BookingStatusDisplay } from "@/types/booking";
@@ -34,6 +35,7 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
   onClose,
 }) => {
   const { booking, loading, error, getBooking } = useAdminBookingDetails();
+  const { isAdmin } = useAuth();
   const showLoading = useDelayedLoading(loading);
   const [historyTarget, setHistoryTarget] = useState<HistoryTarget | null>(
     null,
@@ -67,15 +69,20 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
           <Badge variant={BOOKING_STATUS_VARIANT[booking.status]}>
             {BookingStatusDisplay[booking.status]}
           </Badge>
-          <Button
-            variant="secondary"
-            size="small"
-            onClick={() =>
-              setHistoryTarget({ entityType: "Booking", entityId: booking.id })
-            }
-          >
-            Booking history
-          </Button>
+          {isAdmin && (
+            <Button
+              variant="secondary"
+              size="small"
+              onClick={() =>
+                setHistoryTarget({
+                  entityType: "Booking",
+                  entityId: booking.id,
+                })
+              }
+            >
+              Booking history
+            </Button>
+          )}
         </div>
 
         <section className={styles.grid}>
@@ -119,7 +126,7 @@ export const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
             <h4 className={styles.sectionTitle}>Payment</h4>
-            {payment && (
+            {isAdmin && payment && (
               <Button
                 variant="secondary"
                 size="small"

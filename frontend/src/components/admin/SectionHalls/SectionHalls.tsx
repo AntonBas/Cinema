@@ -19,7 +19,7 @@ import styles from "./SectionHalls.module.css";
 
 const SectionHallsContent: React.FC = () => {
   const { loading, getAll, getById, create, update, remove } = useCinemaHall();
-  const { openLayout } = useHallLayout();
+  const { openLayout, layoutSaveCount } = useHallLayout();
 
   const showDelayedLoading = useDelayedLoading(loading, {
     delay: 150,
@@ -44,8 +44,8 @@ const SectionHallsContent: React.FC = () => {
   }, [getAll]);
 
   useEffect(() => {
-    loadHalls();
-  }, [loadHalls]);
+    loadHalls().catch(() => {});
+  }, [loadHalls, layoutSaveCount]);
 
   const handleCreateHall = useCallback(
     async (request: CinemaHallRequest) => {
@@ -91,10 +91,14 @@ const SectionHallsContent: React.FC = () => {
 
   const handleEdit = useCallback(
     async (hall: CinemaHallListResponse) => {
-      const response = await getById(hall.id);
-      if (response) {
-        setSelectedHall(response);
-        setShowEditModal(true);
+      try {
+        const response = await getById(hall.id);
+        if (response) {
+          setSelectedHall(response);
+          setShowEditModal(true);
+        }
+      } catch {
+        return;
       }
     },
     [getById],
@@ -102,9 +106,13 @@ const SectionHallsContent: React.FC = () => {
 
   const handleShowLayout = useCallback(
     async (hall: CinemaHallListResponse) => {
-      const response = await getById(hall.id);
-      if (response) {
-        openLayout(response);
+      try {
+        const response = await getById(hall.id);
+        if (response) {
+          openLayout(response);
+        }
+      } catch {
+        return;
       }
     },
     [getById, openLayout],

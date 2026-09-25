@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useMemo,
-  useCallback,
-  useRef,
-  useEffect,
-} from "react";
+import React, { useState, useMemo } from "react";
 import type { GenreResponse } from "@/types/genre";
 import { Input } from "@/components/ui/Input/Input";
 import { Badge } from "@/components/ui/Badge/Badge";
@@ -21,25 +15,6 @@ interface GenreSearchListProps {
 export const GenreSearchList: React.FC<GenreSearchListProps> = React.memo(
   ({ genres = [], selectedIds, onChange, isLoading = false }) => {
     const [localSearchQuery, setLocalSearchQuery] = useState("");
-    const timeoutRef = useRef<number | null>(null);
-
-    useEffect(() => {
-      return () => {
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-        }
-      };
-    }, []);
-
-    const handleSearchChange = useCallback((value: string) => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-
-      timeoutRef.current = window.setTimeout(() => {
-        setLocalSearchQuery(value);
-      }, 300);
-    }, []);
 
     const filteredGenres = useMemo(() => {
       if (!localSearchQuery.trim()) return genres;
@@ -67,7 +42,7 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = React.memo(
           <Input
             type="text"
             value={localSearchQuery}
-            onChange={handleSearchChange}
+            onChange={setLocalSearchQuery}
             placeholder="Type to filter genres..."
             className={styles.searchInput}
           />
