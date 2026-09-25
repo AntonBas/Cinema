@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
+import org.springframework.data.redis.cache.RedisCacheWriter;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
@@ -59,7 +60,10 @@ public class CacheConfig {
         cacheConfigurations.put("bonus", defaultConfig.entryTtl(Duration.ofMinutes(30)));
         cacheConfigurations.put("promotions", defaultConfig.entryTtl(Duration.ofHours(1)));
 
-        return RedisCacheManager.builder(connectionFactory)
+        RedisCacheWriter cacheWriter = RedisCacheWriter.create(connectionFactory,
+                RedisCacheWriter.RedisCacheWriterConfigurer::immediateWrites);
+
+        return RedisCacheManager.builder(cacheWriter)
                 .cacheDefaults(defaultConfig)
                 .withInitialCacheConfigurations(cacheConfigurations)
                 .transactionAware()
