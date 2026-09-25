@@ -186,6 +186,10 @@ public class MovieService {
         if (!request.getEndShowingDate().isAfter(request.getReleaseDate())) {
             throw MovieValidationException.endShowingBeforeRelease(request.getReleaseDate(), request.getEndShowingDate());
         }
+        if (!request.getEndShowingDate().equals(movie.getEndShowingDate())
+                && request.getEndShowingDate().isBefore(CinemaTime.today())) {
+            throw MovieValidationException.endShowingInPast(request.getEndShowingDate());
+        }
 
         validateActiveSessionsStillFit(movie, request);
         setMovieRelations(movie, request.getGenreIds(), request.getActorIds(), request.getDirectorIds(),

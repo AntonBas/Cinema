@@ -10,6 +10,7 @@ import ua.lviv.bas.cinema.movie.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.cinema.dto.session.request.SessionRequest;
 import ua.lviv.bas.cinema.cinema.dto.session.response.SessionAdminResponse;
+import ua.lviv.bas.cinema.cinema.dto.session.response.SessionMovieInfoResponse;
 import ua.lviv.bas.cinema.cinema.dto.session.response.SessionResponse;
 import ua.lviv.bas.cinema.cinema.dto.session.response.SessionScheduleResponse;
 import ua.lviv.bas.cinema.cinema.repository.projection.SessionAdminProjection;
@@ -66,6 +67,20 @@ public class SessionMapperTest {
         assertThat(response.movieId()).isNull();
         assertThat(response.movieTitle()).isNull();
         assertThat(response.movieDuration()).isNull();
+    }
+
+    @Test
+    void toSessionMovieInfoResponse_ShouldCalculateEndTimeFromMovieDuration() {
+        Movie movie = Movie.builder().id(1L).title("Test Movie").durationMinutes(95).build();
+        CinemaHall hall = CinemaHall.builder().id(1L).name("Hall 1").build();
+        Session session = Session.builder().id(1L).startTime(fixedTime).basePrice(new BigDecimal("250.00")).movie(movie)
+                .hall(hall).status(CinemaSessionStatus.SCHEDULED).build();
+
+        SessionMovieInfoResponse response = mapper.toSessionMovieInfoResponse(session);
+
+        assertThat(response.startTime()).isEqualTo(fixedTime);
+        assertThat(response.endTime()).isEqualTo(fixedTime.plusMinutes(95));
+        assertThat(response.hallName()).isEqualTo("Hall 1");
     }
 
     @Test

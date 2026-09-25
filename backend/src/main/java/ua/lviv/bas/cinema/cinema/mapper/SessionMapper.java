@@ -51,6 +51,7 @@ public interface SessionMapper {
     @Mapping(target = "withAvailableSeats", ignore = true)
     SessionScheduleResponse toSessionScheduleResponse(SessionScheduleProjection projection);
 
+    @Mapping(target = "endTime", expression = "java(calculateEndTime(session.getStartTime(), session.getMovie() != null ? session.getMovie().getDurationMinutes() : null))")
     @Mapping(target = "hallName", source = "hall.name")
     @Mapping(target = "availableSeats", ignore = true)
     SessionMovieInfoResponse toSessionMovieInfoResponse(Session session);

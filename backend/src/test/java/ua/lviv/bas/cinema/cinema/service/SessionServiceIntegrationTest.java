@@ -5,6 +5,13 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +31,7 @@ import ua.lviv.bas.cinema.cinema.domain.Seat;
 import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.cinema.dto.session.response.SessionAdminResponse;
+import ua.lviv.bas.cinema.cinema.dto.session.request.SessionRequest;
 import ua.lviv.bas.cinema.cinema.repository.CinemaHallRepository;
 import ua.lviv.bas.cinema.cinema.repository.SeatRepository;
 import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
@@ -189,6 +197,43 @@ class SessionServiceIntegrationTest {
                                 CinemaSessionStatus status) {
         return sessionRepository.save(Session.builder().movie(movie).hall(hall).startTime(startTime)
                 .basePrice(new BigDecimal(basePrice)).status(status).build());
+    }
+
+    @Test
+    void concurrentCreationOfOverlappingSessionsInOneHallShouldLetOnlyOneSucceed() throws Exception {
+        var movie = movieRepository.save(buildMovie("ZZTEST Concurrent Movie", "zztest-concurrent-movie"));
+        var hall = cinemaHallRepository.save(CinemaHall.builder().name("ZZTEST Concurrent Hall").build());
+        var startTime = CinemaTime.now().plusDays(2).withSecond(0).withNano(0);
+        var first = new SessionRequest(startTime, new BigDecimal("100.00"), movie.getId(), hall.getId());
+        var overlapping = new SessionRequest(startTime.plusMinutes(30), new BigDecimal("100.00"), movie.getId(),
+                hall.getId());
+
+        var readyLatch = new CountDownLatch(2);
+        var startLatch = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        Future<Exception> resultA = executor.submit(() -> attemptCreate(readyLatch, startLatch, first));
+        Future<Exception> resultB = executor.submit(() -> attemptCreate(readyLatch, startLatch, overlapping));
+
+        readyLatch.await(5, TimeUnit.SECONDS);
+        startLatch.countDown();
+        var outcomes = List.of(Optional.ofNullable(resultA.get(20, TimeUnit.SECONDS)),
+                Optional.ofNullable(resultB.get(20, TimeUnit.SECONDS)));
+        executor.shutdown();
+
+        assertThat(outcomes).filteredOn(Optional::isEmpty).hasSize(1);
+        assertThat(sessionRepository.findAll()).filteredOn(s -> s.getHall().getId().equals(hall.getId()))
+                .hasSize(1);
+    }
+
+    private Exception attemptCreate(CountDownLatch readyLatch, CountDownLatch startLatch, SessionRequest request) {
+        try {
+            readyLatch.countDown();
+            startLatch.await();
+            sessionService.createSession(request);
+            return null;
+        } catch (Exception e) {
+            return e;
+        }
     }
 
     private Movie buildMovie() {

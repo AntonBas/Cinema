@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.movie.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -50,7 +49,6 @@ public class MovieUpdateRequest {
 
     @Schema(description = "Date when the movie stops showing in cinemas", example = "2024-03-15", requiredMode = Schema.RequiredMode.REQUIRED, type = "string", format = "date")
     @NotNull(message = "End showing date is required")
-    @Future(message = "End showing date must be in the future")
     private LocalDate endShowingDate;
 
     @Schema(description = "Age rating of the movie", example = "PEGI_12", requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = {"PEGI_3", "PEGI_7", "PEGI_12", "PEGI_16", "PEGI_18"})

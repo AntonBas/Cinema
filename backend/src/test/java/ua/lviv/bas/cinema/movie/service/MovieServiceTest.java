@@ -412,6 +412,47 @@ public class MovieServiceTest {
         verify(movieRepository, never()).save(any());
     }
 
+    @Test
+    void updateMovieMovingEndShowingDateIntoPastShouldThrow() {
+        movie.setTitle("Updated Title");
+        var request = MovieUpdateRequest.builder().title("Updated Title").releaseDate(CinemaTime.today().minusDays(30))
+                .endShowingDate(CinemaTime.today().minusDays(1)).genreIds(List.of(1L)).actorIds(List.of(1L))
+                .directorIds(List.of(2L)).screenwriterIds(List.of(3L)).build();
+        when(movieRepository.findMovieById(MOVIE_ID)).thenReturn(Optional.of(movie));
+
+        assertThatThrownBy(() -> movieService.updateMovie(MOVIE_ID, request))
+                .isInstanceOf(MovieValidationException.class).hasMessageContaining("into the past");
+        verify(movieRepository, never()).save(any());
+    }
+
+    @Test
+    void updateMovieOnItsLastShowingDayShouldSucceed() {
+        Movie existingMovie = new Movie();
+        existingMovie.setId(MOVIE_ID);
+        existingMovie.setTitle("Same Title");
+        existingMovie.setReleaseDate(CinemaTime.today().minusDays(30));
+        existingMovie.setEndShowingDate(CinemaTime.today());
+        existingMovie.setSessions(new HashSet<>());
+
+        var request = MovieUpdateRequest.builder().title("Same Title").releaseDate(CinemaTime.today().minusDays(30))
+                .endShowingDate(CinemaTime.today()).genreIds(List.of(1L)).actorIds(List.of(1L))
+                .directorIds(List.of(2L)).screenwriterIds(List.of(3L)).build();
+
+        when(movieRepository.findMovieById(MOVIE_ID)).thenReturn(Optional.of(existingMovie));
+        when(movieStatusCalculator.calculate(any(Movie.class), any(LocalDate.class))).thenReturn(MovieStatus.CURRENT);
+        doNothing().when(auditService).logChange(anyString(), any(), anyString(), any(), any(), any());
+        when(genreRepository.findAllById(List.of(1L))).thenReturn(genres(1L));
+        when(personRepository.findAllById(List.of(1L))).thenReturn(persons(PersonRole.ACTOR, 1L));
+        when(personRepository.findAllById(List.of(2L))).thenReturn(persons(PersonRole.DIRECTOR, 2L));
+        when(personRepository.findAllById(List.of(3L))).thenReturn(persons(PersonRole.SCREENWRITER, 3L));
+        when(movieRepository.save(existingMovie)).thenReturn(existingMovie);
+        when(movieMapper.toMovieAdminResponse(existingMovie)).thenReturn(adminResponse);
+
+        movieService.updateMovie(MOVIE_ID, request);
+
+        verify(movieRepository).save(existingMovie);
+    }
+
     private void stubUpdateRelations() {
         when(genreRepository.findAllById(updateRequest.getGenreIds())).thenReturn(genres(1L));
         when(personRepository.findAllById(updateRequest.getActorIds())).thenReturn(persons(PersonRole.ACTOR, 3L));

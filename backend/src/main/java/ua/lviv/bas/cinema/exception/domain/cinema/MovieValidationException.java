@@ -22,6 +22,12 @@ public class MovieValidationException extends ValidationException {
                 "END_SHOWING_BEFORE_RELEASE");
     }
 
+    public static MovieValidationException endShowingInPast(LocalDate endShowingDate) {
+        return new MovieValidationException(
+                String.format("End showing date %s cannot be moved into the past", endShowingDate),
+                "END_SHOWING_IN_PAST");
+    }
+
     public static MovieValidationException durationChangeWithSessions() {
         return new MovieValidationException("Cannot change the duration of a movie that has scheduled sessions",
                 "DURATION_CHANGE_WITH_SESSIONS");
