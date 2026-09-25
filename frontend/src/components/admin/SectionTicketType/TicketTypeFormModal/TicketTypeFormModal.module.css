@@ -71,16 +71,6 @@
   border-top: 1px solid var(--color-border);
 }
 
-.error {
-  margin-top: var(--space-3);
-  color: var(--color-error);
-  font-size: var(--font-size-sm);
-  background: rgba(var(--color-error-rgb), 0.1);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(var(--color-error-rgb), 0.3);
-}
-
 @media (max-width: 768px) {
   .formRow {
     grid-template-columns: 1fr;

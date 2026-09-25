@@ -19,10 +19,6 @@
   grid-template-columns: 1fr 1fr 1fr;
 }
 
-.searchWrapper {
-  width: 100%;
-}
-
 .clearButton {
   align-self: flex-end;
   white-space: nowrap;

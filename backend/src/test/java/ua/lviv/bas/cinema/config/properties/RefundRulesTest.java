@@ -3,7 +3,6 @@ package ua.lviv.bas.cinema.config.properties;
 import ua.lviv.bas.cinema.common.CinemaTime;
 import org.junit.jupiter.api.Test;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 class RefundRulesTest {

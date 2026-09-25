@@ -20,7 +20,6 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
     boolean existsBySessionIdAndSeatIdAndStatusIn(@Param("sessionId") Long sessionId, @Param("seatId") Long seatId,
                                                   @Param("statuses") List<ReservationStatus> statuses);
 
-
     @Query("SELECT sr FROM SeatReservation sr WHERE sr.status = :status "
             + "AND NOT EXISTS (SELECT 1 FROM Ticket t WHERE t.seatReservation = sr)")
     List<SeatReservation> findByStatusWithoutTickets(@Param("status") ReservationStatus status);

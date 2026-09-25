@@ -67,6 +67,14 @@ Fill in the required values. See [.env.docker.example](https://github.com/AntonB
 docker compose up -d
 ```
 
+To receive LiqPay callbacks locally, also start the ngrok tunnel: `docker compose --profile tunnel up -d`.
+
+When updating an existing setup, rebuild the images and recreate the anonymous `node_modules` volume so the frontend container (which runs as a non-root user) can write to it:
+
+```bash
+docker compose up -d --build -V
+```
+
 **4. Access the application**
 
 | Service         | URL                                   |
@@ -76,7 +84,7 @@ docker compose up -d
 | Swagger UI      | http://localhost:8080/swagger-ui.html |
 | Ngrok Dashboard | http://localhost:4040                 |
 
-> **Ngrok Dashboard** shows incoming webhook requests from LiqPay during local development.
+> **Ngrok Dashboard** is available only with the `tunnel` profile and shows incoming webhook requests from LiqPay during local development.
 
 **5. Stop services**
 
@@ -447,7 +455,7 @@ Three tabs for complete movie content management:
 - Unique hall name validation
 - **Grid Layout Editor (Modal):** click an empty cell to add a seat, click a seat to cycle its type (Standard / VIP / Couple — a couple seat spans two cells), right-click to deactivate/activate, drag to reposition, × to delete
 - Row and seat numbers are assigned automatically left-to-right per row; duplicate positions are rejected
-- Protected from edit/delete if hall has future scheduled sessions; seats that already have tickets can't be removed
+- Layout and hall edits are blocked while the hall has future scheduled sessions; a hall with any sessions, past or future, can't be deleted; seats that already have tickets can't be removed
 
 ---
 

@@ -27,10 +27,6 @@
   color: var(--color-primary);
 }
 
-.copyButton {
-  flex-shrink: 0;
-}
-
 .qrContainer {
   display: flex;
   justify-content: center;
@@ -105,10 +101,6 @@
     flex-direction: column;
     align-items: stretch;
     gap: var(--space-2);
-  }
-
-  .copyButton {
-    align-self: flex-start;
   }
 
   .qrContainer {

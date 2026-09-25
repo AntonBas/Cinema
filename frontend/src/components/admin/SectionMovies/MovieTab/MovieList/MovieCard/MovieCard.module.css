@@ -63,45 +63,8 @@
     opacity var(--transition-normal);
 }
 
-.poster.hidden {
-  opacity: 0;
-}
-
 .card:hover .poster {
   transform: scale(1.05);
-}
-
-.posterPlaceholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-overlay-light);
-  border-radius: var(--radius-md);
-}
-
-.loadingSpinner {
-  width: 24px;
-  height: 24px;
-  border: 2px solid var(--color-border-medium);
-  border-top: 2px solid var(--color-primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-.posterError {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(var(--color-error-rgb), 0.1);
-  color: var(--color-error-alt);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  border: 1px dashed var(--color-error-alt);
 }
 
 .info {
@@ -136,46 +99,10 @@
   flex-wrap: wrap;
 }
 
-.releaseDate {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-xs);
-  margin-top: var(--space-1);
-  font-weight: 500;
-}
-
 .actions {
   display: flex;
   gap: var(--space-2);
   margin-top: auto;
-}
-
-.editButton,
-.deleteButton {
-  flex: 1;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-.poster:not(.hidden) {
-  animation: fadeIn 0.3s ease-in-out;
 }
 
 @media (max-width: 768px) {
@@ -201,12 +128,6 @@
 
   .actions {
     flex-direction: column;
-  }
-
-  .editButton,
-  .deleteButton {
-    padding: var(--space-2) var(--space-4);
-    font-size: var(--font-size-sm);
   }
 }
 

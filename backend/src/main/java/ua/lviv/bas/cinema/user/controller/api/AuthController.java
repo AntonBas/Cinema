@@ -38,7 +38,6 @@ import ua.lviv.bas.cinema.user.service.AuthService;
 import ua.lviv.bas.cinema.user.service.UserPasswordResetService;
 import ua.lviv.bas.cinema.user.service.UserService;
 
-
 @Slf4j
 @RestController
 @RequestMapping("/api/auth")

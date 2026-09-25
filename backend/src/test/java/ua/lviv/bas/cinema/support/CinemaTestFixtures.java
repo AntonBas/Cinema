@@ -5,7 +5,6 @@ import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.common.CinemaTime;
 
-
 public final class CinemaTestFixtures {
 
     private CinemaTestFixtures() {

@@ -60,12 +60,6 @@
   line-height: 1.2;
 }
 
-.movieButton {
-  padding: var(--space-1) var(--space-3);
-  font-size: var(--font-size-sm);
-  flex-shrink: 0;
-}
-
 .movieMeta {
   display: flex;
   align-items: center;
@@ -214,16 +208,6 @@
   flex-shrink: 0;
 }
 
-.seatsCount {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-}
-
-.seatsTotal {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
-}
-
 .sessionStatus {
   flex-basis: 100%;
 }
@@ -239,15 +223,6 @@
   font-weight: 600;
   transition: all 0.2s ease;
   white-space: nowrap;
-}
-
-.statusBadge.disabled {
-  background: var(--color-text-disabled);
-  cursor: not-allowed;
-}
-
-.sessionCard.available:hover .statusBadge:not(.disabled) {
-  background: var(--color-primary-hover);
 }
 
 @media (max-width: 768px) {

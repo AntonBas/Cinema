@@ -33,13 +33,6 @@
   color: var(--color-text-muted);
 }
 
-.spinner {
-  position: absolute;
-  right: 40px;
-  color: var(--color-primary);
-  font-size: var(--font-size-sm);
-}
-
 .clearButton {
   position: absolute;
   right: var(--space-3);

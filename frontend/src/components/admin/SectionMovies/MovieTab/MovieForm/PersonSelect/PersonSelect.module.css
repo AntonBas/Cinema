@@ -233,13 +233,6 @@
   word-break: break-word;
 }
 
-.alreadySelected {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
-  margin-left: var(--space-2);
-  font-style: italic;
-}
-
 .noResults {
   padding: var(--space-4);
   color: var(--color-text-muted);

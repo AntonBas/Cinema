@@ -104,32 +104,6 @@
   cursor: not-allowed;
 }
 
-.loadMoreButton.loading {
-  position: relative;
-  color: transparent;
-}
-
-.loadMoreButton.loading::after {
-  content: "";
-  position: absolute;
-  width: 18px;
-  height: 18px;
-  top: 50%;
-  left: 50%;
-  margin-left: -9px;
-  margin-top: -9px;
-  border: 2px solid rgba(var(--color-primary-rgb), 0.2);
-  border-top-color: var(--color-primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 @media (max-width: 768px) {
   .pagination {
     justify-content: center;
