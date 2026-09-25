@@ -25,13 +25,12 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             + "LEFT JOIN FETCH b.seatReservations sr LEFT JOIN FETCH sr.seat WHERE p.id = :paymentId")
     Optional<Payment> findByIdWithDetails(@Param("paymentId") Long paymentId);
 
-
     List<Payment> findByStatusAndLastModifiedDateBefore(PaymentStatus status, Instant lastModifiedDate);
 
     @Query("SELECT DISTINCT p FROM Payment p JOIN FETCH p.booking b LEFT JOIN FETCH b.seatReservations JOIN FETCH b.session "
-            + "WHERE p.status IN :statuses AND b.status = :bookingStatus AND b.expiresAt < :expiresAt")
-    List<Payment> findByStatusInAndBookingExpiredBefore(@Param("statuses") List<PaymentStatus> statuses,
-            @Param("bookingStatus") BookingStatus bookingStatus, @Param("expiresAt") Instant expiresAt);
+            + "WHERE p.status IN :statuses AND b.status IN :bookingStatuses AND b.expiresAt < :expiresAt")
+    List<Payment> findByStatusInAndBookingStatusInAndBookingExpiredBefore(
+            @Param("statuses") List<PaymentStatus> statuses, @Param("bookingStatuses") List<BookingStatus> bookingStatuses, @Param("expiresAt") Instant expiresAt);
 
     List<Payment> findByStatusInAndCreatedDateBefore(List<PaymentStatus> statuses, Instant createdDate);
 

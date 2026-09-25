@@ -46,11 +46,16 @@ export const FINAL_PAYMENT_STATUSES: PaymentStatus[] = [
   "EXPIRED",
   "REFUND_REQUIRED",
   "REFUNDED",
+  "PARTIALLY_REFUNDED",
 ];
 
 export const LATE_PAYMENT_REFUND_STATUSES: PaymentStatus[] = [
   "REFUND_REQUIRED",
+];
+
+export const REFUNDED_PAYMENT_STATUSES: PaymentStatus[] = [
   "REFUNDED",
+  "PARTIALLY_REFUNDED",
 ];
 
 export const PaymentStatusDisplay: Record<PaymentStatus, string> = {

@@ -72,11 +72,31 @@ class PaymentExpiryQueriesIntegrationTest {
 
         var bookingIds = bookingRepository.findExpiredWithoutActivePayment(BookingStatus.PENDING, now,
                 ACTIVE_STATUSES).stream().map(Booking::getId).toList();
-        var paymentIds = paymentRepository.findByStatusInAndBookingExpiredBefore(ACTIVE_STATUSES,
-                BookingStatus.PENDING, now).stream().map(Payment::getId).toList();
+        var paymentIds = paymentRepository.findByStatusInAndBookingStatusInAndBookingExpiredBefore(ACTIVE_STATUSES,
+                List.of(BookingStatus.PENDING), now).stream().map(Payment::getId).toList();
 
         assertThat(bookingIds).contains(withoutPayment.getId()).doesNotContain(withPayment.getId());
         assertThat(paymentIds).contains(payment.getId());
+    }
+
+    @Test
+    void activePaymentOfCancelledBookingShouldBeFoundOnlyAfterBookingWindowEnds() {
+        var session = saveSession();
+        var user = userRepository.save(buildUser());
+        var now = Instant.now();
+
+        var windowEnded = bookingRepository.save(buildBooking(user, session, BookingStatus.CANCELLED,
+                now.minus(Duration.ofMinutes(1))));
+        var windowOpen = bookingRepository.save(buildBooking(user, session, BookingStatus.CANCELLED,
+                now.plus(Duration.ofMinutes(10))));
+        var abandoned = paymentRepository.save(buildPayment(windowEnded, PaymentStatus.PENDING, "ORD_ZZTEST_EXP_4"));
+        var stillPayable = paymentRepository.save(buildPayment(windowOpen, PaymentStatus.PENDING, "ORD_ZZTEST_EXP_5"));
+
+        var ids = paymentRepository.findByStatusInAndBookingStatusInAndBookingExpiredBefore(ACTIVE_STATUSES,
+                List.of(BookingStatus.PENDING, BookingStatus.EXPIRED, BookingStatus.CANCELLED), now).stream()
+                .map(Payment::getId).toList();
+
+        assertThat(ids).contains(abandoned.getId()).doesNotContain(stillPayable.getId());
     }
 
     @Test

@@ -25,6 +25,7 @@ import type { PaymentResponse } from "@/types/payment";
 import {
   FINAL_PAYMENT_STATUSES,
   LATE_PAYMENT_REFUND_STATUSES,
+  REFUNDED_PAYMENT_STATUSES,
   PaymentStatusDisplay,
 } from "@/types/payment";
 import { parseServerInstant } from "@/utils/dateUtils";
@@ -131,6 +132,7 @@ export const PaymentPage: React.FC = () => {
       if (payment?.id) {
         setCurrentPayment(payment);
         startPolling(payment.id);
+        if (payment.status === "PROCESSING") return;
         const liqPayData = await getLiqPayData(payment.id);
         setStep(liqPayData?.paymentUrl ? "ready" : "failed");
         if (!liqPayData?.paymentUrl)
@@ -166,6 +168,10 @@ export const PaymentPage: React.FC = () => {
         "Your payment arrived after the booking had expired. The full amount is being refunded to your card.",
       );
       stopPolling();
+    } else if (REFUNDED_PAYMENT_STATUSES.includes(currentPayment.status)) {
+      setStep("failed");
+      setErrorMessage("This payment has been refunded to your card.");
+      stopPolling();
     } else if (
       ["FAILED", "CANCELLED", "EXPIRED"].includes(currentPayment.status)
     ) {
@@ -176,9 +182,13 @@ export const PaymentPage: React.FC = () => {
       setStep("paying");
   }, [currentPayment, step, stopPolling]);
 
-  const isLateRefund =
+  const isAwaitingConfirmation = currentPayment?.status === "PROCESSING";
+
+  const isRefundedPayment =
     !!currentPayment &&
-    LATE_PAYMENT_REFUND_STATUSES.includes(currentPayment.status);
+    [...LATE_PAYMENT_REFUND_STATUSES, ...REFUNDED_PAYMENT_STATUSES].includes(
+      currentPayment.status,
+    );
 
   const handlePay = async () => {
     if (!currentPayment?.id) return;
@@ -200,7 +210,7 @@ export const PaymentPage: React.FC = () => {
 
   const handleRetry = async () => {
     stopPolling();
-    if (!currentPayment?.id) {
+    if (currentPayment?.status !== "FAILED") {
       await initPayment();
       return;
     }
@@ -260,7 +270,10 @@ export const PaymentPage: React.FC = () => {
               <h3 className={styles.paymentTitle}>Payment Details</h3>
               <p className={styles.paymentDescription}>
                 {step === "ready" && "Select payment method and proceed"}
-                {step === "paying" && "Redirecting to payment page"}
+                {step === "paying" &&
+                  (isAwaitingConfirmation
+                    ? "Waiting for payment confirmation"
+                    : "Redirecting to payment page")}
                 {step === "success" && "Payment completed successfully"}
                 {step === "failed" && "Payment processing failed"}
                 {step === "processing" && "Setting up your payment"}
@@ -319,9 +332,15 @@ export const PaymentPage: React.FC = () => {
               {step === "paying" && (
                 <div className={styles.statusContainer}>
                   <Loader2 className={styles.loadingSpinner} size={64} />
-                  <h3 className={styles.statusTitle}>Redirecting to Payment</h3>
+                  <h3 className={styles.statusTitle}>
+                    {isAwaitingConfirmation
+                      ? "Payment Processing"
+                      : "Redirecting to Payment"}
+                  </h3>
                   <p className={styles.statusMessage}>
-                    You will be redirected to the payment page
+                    {isAwaitingConfirmation
+                      ? "Your bank is confirming the payment, this page will update automatically"
+                      : "You will be redirected to the payment page"}
                   </p>
                   {paymentTimeLeft && (
                     <p className={styles.statusMessage}>
@@ -330,7 +349,11 @@ export const PaymentPage: React.FC = () => {
                   )}
                   <div className={styles.alertContainer}>
                     <AlertCircle size={16} />
-                    <p>Please complete the payment on the next page</p>
+                    <p>
+                      {isAwaitingConfirmation
+                        ? "Please do not pay again while the payment is processing"
+                        : "Please complete the payment on the next page"}
+                    </p>
                   </div>
                 </div>
               )}
@@ -376,7 +399,7 @@ export const PaymentPage: React.FC = () => {
                 <div className={styles.statusContainer}>
                   <AlertCircle className={styles.errorIcon} size={64} />
                   <h3 className={styles.statusTitle}>
-                    {isLateRefund ? "Payment Refunded" : "Payment Failed"}
+                    {isRefundedPayment ? "Payment Refunded" : "Payment Failed"}
                   </h3>
                   <p className={styles.statusMessage}>
                     {errorMessage ||
@@ -397,7 +420,7 @@ export const PaymentPage: React.FC = () => {
                       <ArrowLeft size={20} />
                       Back to Summary
                     </Button>
-                    {!isLateRefund && (
+                    {!isRefundedPayment && (
                       <Button
                         onClick={handleRetry}
                         variant="primary"

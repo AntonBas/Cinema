@@ -47,6 +47,8 @@ public class PaymentScheduler {
 
     private static final List<PaymentStatus> ACTIVE_STATUSES = List.of(PaymentStatus.PENDING,
             PaymentStatus.PROCESSING);
+    private static final List<BookingStatus> EXPIRABLE_BOOKING_STATUSES = List.of(BookingStatus.PENDING,
+            BookingStatus.EXPIRED, BookingStatus.CANCELLED);
     private static final List<BookingStatus> UNFULFILLABLE_BOOKING_STATUSES = List.of(BookingStatus.EXPIRED,
             BookingStatus.CANCELLED);
 
@@ -77,8 +79,8 @@ public class PaymentScheduler {
     public void processExpiredPayments() {
         log.debug("Starting expired payments processing");
         Instant now = Instant.now();
-        List<Payment> expiredPayments = paymentRepository.findByStatusInAndBookingExpiredBefore(ACTIVE_STATUSES,
-                BookingStatus.PENDING, now);
+        List<Payment> expiredPayments = paymentRepository.findByStatusInAndBookingStatusInAndBookingExpiredBefore(
+                ACTIVE_STATUSES, EXPIRABLE_BOOKING_STATUSES, now);
 
         if (expiredPayments.isEmpty()) {
             log.debug("No expired payments found");

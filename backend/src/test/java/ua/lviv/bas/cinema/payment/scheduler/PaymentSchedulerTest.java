@@ -77,6 +77,8 @@ class PaymentSchedulerTest {
     private static final Long SESSION_ID = 10L;
     private static final List<PaymentStatus> ACTIVE_STATUSES = List.of(PaymentStatus.PENDING,
             PaymentStatus.PROCESSING);
+    private static final List<BookingStatus> EXPIRABLE_BOOKING_STATUSES = List.of(BookingStatus.PENDING,
+            BookingStatus.EXPIRED, BookingStatus.CANCELLED);
 
     private Session testSession;
 
@@ -89,8 +91,8 @@ class PaymentSchedulerTest {
 
     @Test
     void processExpiredPaymentsWhenNoneFoundShouldDoNothing() {
-        when(paymentRepository.findByStatusInAndBookingExpiredBefore(eq(ACTIVE_STATUSES), eq(BookingStatus.PENDING),
-                any(Instant.class))).thenReturn(List.of());
+        when(paymentRepository.findByStatusInAndBookingStatusInAndBookingExpiredBefore(eq(ACTIVE_STATUSES),
+                eq(EXPIRABLE_BOOKING_STATUSES), any(Instant.class))).thenReturn(List.of());
 
         paymentScheduler.processExpiredPayments();
 
@@ -120,6 +122,40 @@ class PaymentSchedulerTest {
         verify(cache, times(1)).evict(SESSION_ID);
         verify(bookingRepository).save(booking);
         verify(paymentService, never()).processSuccess(any(), any());
+    }
+
+    @Test
+    void processExpiredPaymentsWhenBookingAlreadyCancelledShouldExpireOnlyThePayment() {
+        var booking = pendingBooking(Instant.now().minusSeconds(60), List.of());
+        booking.setStatus(BookingStatus.CANCELLED);
+        booking.setBonusPointsUsed(75);
+        var payment = activePayment(2L, booking);
+
+        stubExpiredPayments(payment);
+        stubGateway(PaymentGatewayStatus.UNKNOWN);
+        when(paymentRepository.updateStatusIfCurrentIn(2L, ACTIVE_STATUSES, PaymentStatus.EXPIRED)).thenReturn(1);
+
+        paymentScheduler.processExpiredPayments();
+
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.EXPIRED);
+        assertThat(booking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
+        verifyNoInteractions(seatReservationRepository, cacheManager, bonusLedgerService);
+        verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
+    void processExpiredPaymentsWhenCancelledBookingWasPaidShouldHandOverToProcessSuccess() {
+        var booking = pendingBooking(Instant.now().minusSeconds(60), List.of());
+        booking.setStatus(BookingStatus.CANCELLED);
+        var payment = activePayment(2L, booking);
+
+        stubExpiredPayments(payment);
+        stubGateway(PaymentGatewayStatus.SUCCESS);
+
+        paymentScheduler.processExpiredPayments();
+
+        verify(paymentService).processSuccess(eq(payment), any());
+        verify(paymentRepository, never()).updateStatusIfCurrentIn(any(), anyList(), any());
     }
 
     @Test
@@ -208,8 +244,8 @@ class PaymentSchedulerTest {
         var paymentA = activePayment(2L, bookingA);
         var paymentB = activePayment(3L, bookingB);
 
-        when(paymentRepository.findByStatusInAndBookingExpiredBefore(eq(ACTIVE_STATUSES), eq(BookingStatus.PENDING),
-                any(Instant.class))).thenReturn(List.of(paymentA, paymentB));
+        when(paymentRepository.findByStatusInAndBookingStatusInAndBookingExpiredBefore(eq(ACTIVE_STATUSES),
+                eq(EXPIRABLE_BOOKING_STATUSES), any(Instant.class))).thenReturn(List.of(paymentA, paymentB));
         when(paymentGatewayService.checkPaymentStatus(anyString()))
                 .thenReturn(new PaymentGatewayCheckResult(PaymentGatewayStatus.UNKNOWN, Map.of()));
         when(paymentRepository.updateStatusIfCurrentIn(2L, ACTIVE_STATUSES, PaymentStatus.EXPIRED))
@@ -265,8 +301,8 @@ class PaymentSchedulerTest {
     }
 
     private void stubExpiredPayments(Payment payment) {
-        when(paymentRepository.findByStatusInAndBookingExpiredBefore(eq(ACTIVE_STATUSES), eq(BookingStatus.PENDING),
-                any(Instant.class))).thenReturn(List.of(payment));
+        when(paymentRepository.findByStatusInAndBookingStatusInAndBookingExpiredBefore(eq(ACTIVE_STATUSES),
+                eq(EXPIRABLE_BOOKING_STATUSES), any(Instant.class))).thenReturn(List.of(payment));
     }
 
     private void stubGateway(PaymentGatewayStatus status) {

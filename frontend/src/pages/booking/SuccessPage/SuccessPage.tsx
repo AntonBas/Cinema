@@ -13,6 +13,7 @@ import {
 import {
   FINAL_PAYMENT_STATUSES,
   LATE_PAYMENT_REFUND_STATUSES,
+  REFUNDED_PAYMENT_STATUSES,
   type PaymentResponse,
 } from "@/types/payment";
 import { Layout } from "@/components/layout/Layout/Layout";
@@ -132,7 +133,8 @@ export const SuccessPage = () => {
   const isSuccess = payment.status === "SUCCESS";
   const isFailed = ["FAILED", "CANCELLED", "EXPIRED"].includes(payment.status);
   const isProcessing = ["PENDING", "PROCESSING"].includes(payment.status);
-  const isRefunded = LATE_PAYMENT_REFUND_STATUSES.includes(payment.status);
+  const isLateRefund = LATE_PAYMENT_REFUND_STATUSES.includes(payment.status);
+  const isRefunded = REFUNDED_PAYMENT_STATUSES.includes(payment.status);
 
   return (
     <Layout>
@@ -159,7 +161,7 @@ export const SuccessPage = () => {
               {isProcessing && (
                 <RefreshCw className={styles.warningIcon} size={64} />
               )}
-              {isRefunded && (
+              {(isLateRefund || isRefunded) && (
                 <AlertCircle className={styles.warningIcon} size={64} />
               )}
             </div>
@@ -168,7 +170,11 @@ export const SuccessPage = () => {
               {isSuccess && "Payment Successful!"}
               {isFailed && "Payment Failed"}
               {isProcessing && "Payment Processing"}
-              {isRefunded && "Payment Refunded"}
+              {isLateRefund && "Payment Refunded"}
+              {isRefunded &&
+                (payment.status === "PARTIALLY_REFUNDED"
+                  ? "Payment Partially Refunded"
+                  : "Payment Refunded")}
             </h1>
 
             <p className={styles.message}>
@@ -179,6 +185,8 @@ export const SuccessPage = () => {
               {isProcessing &&
                 "Your payment is being processed. Please wait..."}
               {isRefunded &&
+                "Refunded tickets are returned to your card. Refund details are available in your account."}
+              {isLateRefund &&
                 "Your payment arrived after the booking had expired, so no tickets were issued. The full amount is being returned to your card."}
             </p>
 
@@ -218,7 +226,15 @@ export const SuccessPage = () => {
                   </Button>
                 </>
               )}
-              {(isProcessing || isRefunded) && (
+              {isRefunded && (
+                <Button
+                  variant="primary"
+                  onClick={() => navigate("/account/tickets")}
+                >
+                  <Ticket size={18} /> My Tickets
+                </Button>
+              )}
+              {(isProcessing || isLateRefund || isRefunded) && (
                 <Button variant="secondary" onClick={() => navigate("/")}>
                   <Home size={18} /> Back to Home
                 </Button>
