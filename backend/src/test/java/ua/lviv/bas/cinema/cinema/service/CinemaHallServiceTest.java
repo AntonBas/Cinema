@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.cinema.domain.Seat;
@@ -21,6 +22,8 @@ import ua.lviv.bas.cinema.exception.domain.hall.CinemaHallHasSessionsException;
 import ua.lviv.bas.cinema.exception.domain.hall.DuplicateSeatPositionException;
 import ua.lviv.bas.cinema.exception.domain.hall.SeatHasTicketsException;
 import ua.lviv.bas.cinema.cinema.mapper.CinemaHallMapper;
+import ua.lviv.bas.cinema.cinema.mapper.SeatMapper;
+import ua.lviv.bas.cinema.cinema.mapper.SeatMapperImpl;
 import ua.lviv.bas.cinema.cinema.repository.CinemaHallRepository;
 import ua.lviv.bas.cinema.cinema.repository.SeatRepository;
 import ua.lviv.bas.cinema.cinema.repository.projection.CinemaHallListProjection;
@@ -34,7 +37,9 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class CinemaHallServiceTest {
@@ -47,6 +52,9 @@ public class CinemaHallServiceTest {
     private CinemaHallMapper hallMapper;
     @Mock
     private AuditService auditService;
+
+    @Spy
+    private SeatMapper seatMapper = new SeatMapperImpl();
 
     @InjectMocks
     private CinemaHallService cinemaHallService;
@@ -61,6 +69,7 @@ public class CinemaHallServiceTest {
         CinemaHallResponse response = new CinemaHallResponse(HALL_ID, HALL_NAME, 0);
 
         when(hallRepository.existsByName(HALL_NAME)).thenReturn(false);
+        when(hallMapper.toEntity(request)).thenReturn(CinemaHall.builder().name(HALL_NAME).build());
         when(hallRepository.save(any(CinemaHall.class))).thenReturn(hall);
         when(hallMapper.toCinemaHallResponse(hall)).thenReturn(response);
 

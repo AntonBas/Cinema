@@ -8,7 +8,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -38,9 +37,9 @@ import ua.lviv.bas.cinema.movie.repository.PersonRepository;
 import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.movie.repository.specification.MovieSpecification;
 import ua.lviv.bas.cinema.common.CacheableList;
-import ua.lviv.bas.cinema.common.UniquenessValidator;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.integration.PosterImage;
 import ua.lviv.bas.cinema.integration.PosterService;
 import ua.lviv.bas.cinema.common.CinemaTime;
 
@@ -50,6 +49,7 @@ import java.time.format.DateTimeParseException;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -84,7 +84,7 @@ public class MovieService {
         }
 
         var movie = movieMapper.toEntity(request);
-        movie.setSlug(generateUniqueSlug(request.getTitle(), null));
+        movie.setSlug(slugService.generateUniqueSlug(request.getTitle(), null));
         movie.setStatus(movieStatusCalculator.calculate(movie, CinemaTime.today()));
 
         setMovieRelations(movie, request.getGenreIds(), request.getActorIds(), request.getDirectorIds(),
@@ -167,9 +167,8 @@ public class MovieService {
                 .toList();
     }
 
-    public ResponseEntity<byte[]> getPoster(Long id) {
-        return movieRepository.findPosterFileNameById(id).map(posterService::getPosterResponse)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public Optional<PosterImage> getPoster(Long id) {
+        return movieRepository.findPosterFileNameById(id).flatMap(posterService::loadPoster);
     }
 
     @CacheEvict(value = {"singleMovies", "movieLists"}, allEntries = true)
@@ -194,7 +193,7 @@ public class MovieService {
         movieMapper.updateEntity(request, movie);
 
         if (!movie.getTitle().equals(oldTitle)) {
-            movie.setSlug(generateUniqueSlug(movie.getTitle(), id));
+            movie.setSlug(slugService.generateUniqueSlug(movie.getTitle(), id));
         }
 
         handlePoster(movie, request.getPosterFile(), Boolean.TRUE.equals(request.getRemovePoster()));
@@ -221,14 +220,6 @@ public class MovieService {
         movieRepository.delete(movie);
         log.info("Movie deleted successfully with id: {}", id);
         auditDelete(id, movie.getTitle());
-    }
-
-    private String generateUniqueSlug(String title, Long excludeId) {
-        String slug = slugService.generateUniqueSlug(title);
-        UniquenessValidator.validate(excludeId, () -> movieRepository.findBySlug(slug).isPresent(),
-                id -> !slugService.isSlugAvailableForMovie(slug, id),
-                () -> new DuplicateEntityException("Movie", "slug " + slug));
-        return slug;
     }
 
     private void validateActiveSessionsStillFit(Movie movie, MovieUpdateRequest request) {

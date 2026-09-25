@@ -24,14 +24,11 @@
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^5.0.0",
-    "ajv": "^8.18.0",
     "eslint": "^10.11.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",
     "globals": "^16.3.0",
-    "minimatch": "^9.0.6",
     "prettier": "3.9.9",
-    "rollup": "^4.59.0",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.70.1",
     "vite": "^7.3.2"
@@ -39,5 +36,8 @@
   "allowScripts": {
     "esbuild": true,
     "fsevents": false
+  },
+  "overrides": {
+    "rollup": "^4.59.0"
   }
 }

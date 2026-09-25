@@ -14,7 +14,10 @@ import { isApiErrorException } from "@/utils/apiErrorHandler";
 import type { SessionAdminResponse, SessionRequest } from "@/types/session";
 import type { MovieSessionSearchResponse } from "@/types/movie";
 import type { CinemaHallListResponse } from "@/types/cinemaHall";
+import { getCinemaDateTimeLocal } from "@/utils/dateUtils";
 import styles from "./SessionFormModal.module.css";
+
+const SEARCH_DEBOUNCE_MS = 300;
 
 interface SessionFormModalProps {
   isOpen: boolean;
@@ -56,6 +59,15 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
   const [isSearching, setIsSearching] = useState(false);
   const movieSearchRef = useRef<HTMLDivElement>(null);
   const hasLoadedRef = useRef(false);
+  const latestSearchRef = useRef("");
+  const searchTimeoutRef = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -105,16 +117,19 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
         return;
       }
 
+      const searchQuery = query || "";
+      latestSearchRef.current = searchQuery;
       setIsSearching(true);
       try {
         const date = formData.startTime.split("T")[0];
-        const results = await search(query || "", date);
+        const results = await search(searchQuery, date);
+        if (latestSearchRef.current !== searchQuery) return;
         setMovieResults(results || []);
         setShowMovieResults(true);
       } catch {
-        setMovieResults([]);
+        if (latestSearchRef.current === searchQuery) setMovieResults([]);
       } finally {
-        setIsSearching(false);
+        if (latestSearchRef.current === searchQuery) setIsSearching(false);
       }
     },
     [formData.startTime, search],
@@ -194,11 +209,7 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
     [halls],
   );
 
-  const minDateTime = useMemo(() => {
-    const now = new Date();
-    now.setMinutes(now.getMinutes() + 30);
-    return now.toISOString().slice(0, 16);
-  }, []);
+  const minDateTime = useMemo(() => getCinemaDateTimeLocal(30), []);
 
   return (
     <Modal
@@ -210,8 +221,14 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.formRow}>
           <div className={styles.formGroup}>
-            <label className={styles.label}>Start Time *</label>
+            <label
+              htmlFor="session-form-modal-start-time"
+              className={styles.label}
+            >
+              Start Time *
+            </label>
             <Input
+              id="session-form-modal-start-time"
               type="datetime-local"
               value={formData.startTime}
               onChange={handleStartTimeChange}
@@ -221,8 +238,14 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
           </div>
 
           <div className={styles.formGroup}>
-            <label className={styles.label}>Base Price (₴) *</label>
+            <label
+              htmlFor="session-form-modal-base-price"
+              className={styles.label}
+            >
+              Base Price (₴) *
+            </label>
             <Input
+              id="session-form-modal-base-price"
               type="number"
               step="0.01"
               min="10"
@@ -237,14 +260,23 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
         </div>
 
         <div className={styles.formGroup}>
-          <label className={styles.label}>Movie *</label>
+          <label htmlFor="session-form-modal-movie" className={styles.label}>
+            Movie *
+          </label>
           <div className={styles.movieSearch} ref={movieSearchRef}>
             <Input
+              id="session-form-modal-movie"
               type="text"
               value={movieSearchTerm}
               onChange={(value) => {
                 setMovieSearchTerm(value);
-                handleMovieSearch(value);
+                if (searchTimeoutRef.current) {
+                  clearTimeout(searchTimeoutRef.current);
+                }
+                searchTimeoutRef.current = window.setTimeout(
+                  () => handleMovieSearch(value),
+                  SEARCH_DEBOUNCE_MS,
+                );
                 hasLoadedRef.current = true;
               }}
               onClick={handleMovieClick}
@@ -289,8 +321,11 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
         </div>
 
         <div className={styles.formGroup}>
-          <label className={styles.label}>Hall *</label>
+          <label htmlFor="session-form-modal-hall" className={styles.label}>
+            Hall *
+          </label>
           <Select
+            id="session-form-modal-hall"
             value={formData.hallId}
             onChange={(value) =>
               setFormData((prev) => ({ ...prev, hallId: value.toString() }))

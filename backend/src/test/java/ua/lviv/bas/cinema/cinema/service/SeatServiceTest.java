@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.cinema.domain.Seat;
+import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.cinema.dto.hall.response.SeatResponse;
 import ua.lviv.bas.cinema.cinema.mapper.SeatMapper;
@@ -82,7 +83,8 @@ public class SeatServiceTest {
     @Test
     void updateSeatType_WhenHallHasFutureSessions_ShouldThrow() {
         when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.of(seat));
-        when(sessionRepository.existsByHallIdAndStartTimeAfter(eq(HALL_ID), any(LocalDateTime.class)))
+        when(sessionRepository.existsByHallIdAndStartTimeAfterAndStatusNot(eq(HALL_ID), any(LocalDateTime.class),
+                eq(CinemaSessionStatus.CANCELLED)))
                 .thenReturn(true);
 
         assertThatThrownBy(() -> seatService.updateSeatType(HALL_ID, SEAT_ID, SeatType.VIP))

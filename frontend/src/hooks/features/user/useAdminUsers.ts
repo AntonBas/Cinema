@@ -34,14 +34,6 @@ export const useAdminUsers = () => {
     minDisplayTime: 300,
   });
 
-  const getUserName = useCallback(
-    (userId: number): string => {
-      const user = usersApi.data?.content?.find((u) => u.id === userId);
-      return user ? `${user.firstName} ${user.lastName}` : "User";
-    },
-    [usersApi.data],
-  );
-
   const getAll = useCallback(async (params?: AdminUsersParams) => {
     return usersApiRef.current.execute(() =>
       userApi.admin.getAll(params || {}),
@@ -49,37 +41,41 @@ export const useAdminUsers = () => {
   }, []);
 
   const updateRole = useCallback(
-    async (userId: number, userRole: UserRole) => {
+    async (userId: number, userRole: UserRole, userName: string) => {
       const roleData: UserRoleUpdateRequest = { userRole };
       return mutationApiRef.current.execute(
         () => userApi.admin.updateRole(userId, roleData),
         {
-          successMessage: `${getUserName(userId)} role updated successfully`,
+          successMessage: `${userName} role updated successfully`,
           dedupeKey: `updateRole:${userId}`,
         },
       );
     },
-    [getUserName],
+    [],
   );
 
   const updateStatus = useCallback(
-    async (userId: number, enabled: boolean) => {
+    async (userId: number, enabled: boolean, userName: string) => {
       const statusData: UserStatusUpdateRequest = { enabled };
       return mutationApiRef.current.execute(
         () => userApi.admin.updateStatus(userId, statusData),
         {
           successMessage: enabled
-            ? `${getUserName(userId)} activated successfully`
-            : `${getUserName(userId)} deactivated successfully`,
+            ? `${userName} activated successfully`
+            : `${userName} deactivated successfully`,
           dedupeKey: `updateStatus:${userId}`,
         },
       );
     },
-    [getUserName],
+    [],
   );
 
   const updateBirthDateVerification = useCallback(
-    async (userId: number, verificationStatus: VerificationStatus) => {
+    async (
+      userId: number,
+      verificationStatus: VerificationStatus,
+      userName: string,
+    ) => {
       const verificationData: VerificationBirthDateRequest = {
         verificationStatus,
       };
@@ -89,12 +85,12 @@ export const useAdminUsers = () => {
         () =>
           userApi.admin.updateBirthDateVerification(userId, verificationData),
         {
-          successMessage: `${getUserName(userId)} birth date ${statusText}`,
+          successMessage: `${userName} birth date ${statusText}`,
           dedupeKey: `updateBirthDateVerification:${userId}`,
         },
       );
     },
-    [getUserName],
+    [],
   );
 
   return {

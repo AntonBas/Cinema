@@ -15,18 +15,18 @@ import ua.lviv.bas.cinema.bonus.repository.projection.BonusTransactionProjection
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN, imports = BonusRuleSpec.class)
 public interface BonusMapper {
 
-	@Mapping(target = "requiredFields", expression = "java(BonusRuleSpec.requiredFieldsOf(rules.getBonusType()))")
-	@Mapping(target = "optionalFields", expression = "java(BonusRuleSpec.optionalFieldsOf(rules.getBonusType()))")
-	BonusRulesResponse toResponse(BonusRules rules);
+    @Mapping(target = "requiredFields", expression = "java(BonusRuleSpec.requiredFieldsOf(rules.getBonusType()))")
+    @Mapping(target = "optionalFields", expression = "java(BonusRuleSpec.optionalFieldsOf(rules.getBonusType()))")
+    BonusRulesResponse toResponse(BonusRules rules);
 
-	@Mapping(target = "pointsChange", expression = "java(projection.getPointsChange())")
-	BonusTransactionResponse toResponse(BonusTransactionProjection projection);
+    @Mapping(target = "pointsChange", expression = "java(projection.getPointsChange())")
+    BonusTransactionResponse toResponse(BonusTransactionProjection projection);
 
-	@Mapping(target = "id", ignore = true)
-	@Mapping(target = "bonusType", ignore = true)
-	@Mapping(target = "createdBy", ignore = true)
-	@Mapping(target = "createdDate", ignore = true)
-	@Mapping(target = "lastModifiedBy", ignore = true)
-	@Mapping(target = "lastModifiedDate", ignore = true)
-	void updateEntity(BonusRulesRequest request, @MappingTarget BonusRules rules);
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "bonusType", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "createdDate", ignore = true)
+    @Mapping(target = "lastModifiedBy", ignore = true)
+    @Mapping(target = "lastModifiedDate", ignore = true)
+    void updateEntity(BonusRulesRequest request, @MappingTarget BonusRules rules);
 }

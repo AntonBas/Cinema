@@ -38,15 +38,6 @@ export const Footer: React.FC = () => {
         </div>
 
         <div className={styles.footerSection}>
-          <h4>Follow Us</h4>
-          {/* <div className={styles.socialIcons}>
-                        <a href="#" className={styles.socialIcon} aria-label="Facebook"></a>
-                        <a href="#" className={styles.socialIcon} aria-label="Instagram"></a>
-                        <a href="#" className={styles.socialIcon} aria-label="Twitter"></a>
-                    </div> */}
-        </div>
-
-        <div className={styles.footerSection}>
           <h4>Information</h4>
           <ul>
             <li>

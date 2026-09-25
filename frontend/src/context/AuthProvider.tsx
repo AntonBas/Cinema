@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { authApi } from "@/api/authApi";
 import { setUnauthorizedHandler } from "@/services/api";
 import type { UserResponse } from "@/types/user";
-import type { LoginRequest, RegisterRequest } from "@/types/auth";
 import { AuthContext } from "./AuthContext";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -29,16 +28,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => setUnauthorizedHandler(null);
   }, []);
 
-  const login = useCallback(async (credentials: LoginRequest) => {
-    const response = await authApi.login(credentials);
-    setUser(response.data.user);
-  }, []);
-
-  const register = useCallback(async (userData: RegisterRequest) => {
-    const response = await authApi.register(userData);
-    return response.data;
-  }, []);
-
   const logout = useCallback((redirectTo = "/") => {
     authApi.logout().finally(() => {
       setUser(null);
@@ -50,8 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const response = await authApi.getCurrentUser();
       setUser(response.data);
-    } catch (error) {
-      console.error("Failed to refresh user:", error);
+    } catch {
       setUser(null);
     }
   }, []);
@@ -64,8 +52,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       isAdmin,
       isCashier,
       isContentManager,
-      login,
-      register,
       logout,
       refreshUser,
     }),
@@ -76,8 +62,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       isAdmin,
       isCashier,
       isContentManager,
-      login,
-      register,
       logout,
       refreshUser,
     ],

@@ -56,6 +56,7 @@ export const GenreSearchList: React.FC<GenreSearchListProps> = React.memo(
                 variant="primary"
                 onClick={() => onChange(genre.id)}
                 className={styles.selectedTag}
+                ariaLabel={`Remove ${genre.name}`}
               >
                 {genre.name} <span>×</span>
               </Badge>

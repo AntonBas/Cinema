@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.config.security;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -24,14 +25,11 @@ import org.springframework.web.cors.CorsConfigurationSource;
 @RequiredArgsConstructor
 public class WebSecurityConfig {
 
-    private final JwtTokenProvider jwtTokenProvider;
-    private final CustomUserDetailsService userDetailsService;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
     private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
-    private final JwtCookieService jwtCookieService;
-    private final JwtBlacklistService jwtBlacklistService;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CsrfHeaderFilter csrfHeaderFilter;
     private final CorsConfigurationSource corsConfigurationSource;
 
@@ -46,8 +44,17 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService, jwtCookieService, jwtBlacklistService);
+    FilterRegistrationBean<JwtAuthenticationFilter> jwtAuthenticationFilterRegistration() {
+        var registration = new FilterRegistrationBean<>(jwtAuthenticationFilter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
+    @Bean
+    FilterRegistrationBean<CsrfHeaderFilter> csrfHeaderFilterRegistration() {
+        var registration = new FilterRegistrationBean<>(csrfHeaderFilter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean
@@ -101,7 +108,7 @@ public class WebSecurityConfig {
                         .failureHandler(oAuth2AuthenticationFailureHandler)
                 )
                 .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(restAuthenticationEntryPoint))
-                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(csrfHeaderFilter, JwtAuthenticationFilter.class)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)

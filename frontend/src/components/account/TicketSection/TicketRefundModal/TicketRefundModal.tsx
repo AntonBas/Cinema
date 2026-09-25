@@ -50,9 +50,6 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
 
   if (!ticket) return null;
 
-  const sessionDate = new Date(ticket.sessionTime);
-  const hoursUntilSession =
-    (sessionDate.getTime() - Date.now()) / (1000 * 60 * 60);
   const canRequestRefund =
     previewLoading || !previewResult
       ? ticket.refundable
@@ -92,7 +89,7 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
                 {previewResult?.nonRefundableReason ??
                   (ticket.status !== "ACTIVE"
                     ? "Only active tickets can be refunded"
-                    : "Refunds are only available more than 2 hours before the session")}
+                    : "This ticket can no longer be refunded")}
               </p>
             </div>
           </div>
@@ -244,7 +241,9 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
             <polyline points="12 6 12 12 16 14" />
           </svg>
           <span>
-            {Math.floor(hoursUntilSession)} hours until session starts
+            {previewResult?.remainingTime
+              ? `${previewResult.remainingTime} until session starts`
+              : "Calculating time until session…"}
           </span>
         </div>
 

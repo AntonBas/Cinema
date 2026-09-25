@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.HtmlUtils;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import ua.lviv.bas.cinema.config.async.AsyncConfig;
@@ -81,7 +82,7 @@ public class EmailService {
                         + "Please present the QR codes at the cinema entrance. Arrive 10-15 minutes before the session.<br><br>"
                         + "<strong>Important:</strong><ul style=\"margin:8px 0;padding-left:20px\">"
                         + "<li>Have your ID ready if required</li>"
-                        + "<li>No refunds 30 minutes before session</li>"
+                        + "<li>No refunds less than 2 hours before the session</li>"
                         + "<li>QR codes available in your account</li></ul>",
                 "This is an automated email. Please do not reply.");
 
@@ -160,7 +161,7 @@ public class EmailService {
     public void sendEmailChangeNotification(String oldEmail, String newEmail) {
         String html = buildPlainEmail("Email Address Changed",
                 "Your " + companyName + " account email address has been successfully changed:<br><br>"
-                        + "Old email: " + oldEmail + "<br>New email: " + newEmail + "<br><br>"
+                        + "Old email: " + escape(oldEmail) + "<br>New email: " + escape(newEmail) + "<br><br>"
                         + "If you didn't make this change, please contact our support team immediately.");
 
         sendNonCriticalEmail(oldEmail, "Email Address Changed", html);
@@ -247,7 +248,7 @@ public class EmailService {
                     <p style="margin:24px 0 0;color:#9ca3af;font-size:13px">%s</p>
                   </div>
                 </div>
-                """.formatted(companyName, title, intro, buttonUrl, buttonText, footnote);
+                """.formatted(companyName, escape(title), intro, buttonUrl, buttonText, footnote);
     }
 
     private String buildDetailsEmail(String title, Map<String, String> details, String bodyHtml, String footerNote) {
@@ -257,7 +258,7 @@ public class EmailService {
                   <td style="padding:6px 0;color:#6b7280;font-size:14px">%s</td>
                   <td style="padding:6px 0;color:#1a1a1a;font-size:14px;font-weight:600;text-align:right">%s</td>
                 </tr>
-                """.formatted(key, value)));
+                """.formatted(escape(key), escape(value))));
         String footer = footerNote != null
                 ? "<p style=\"margin:24px 0 0;color:#9ca3af;font-size:13px\">" + footerNote + "</p>"
                 : "";
@@ -274,7 +275,7 @@ public class EmailService {
                     %s
                   </div>
                 </div>
-                """.formatted(companyName, title, rows, bodyHtml, footer);
+                """.formatted(companyName, escape(title), rows, bodyHtml, footer);
     }
 
     private String buildPlainEmail(String title, String bodyHtml) {
@@ -288,6 +289,10 @@ public class EmailService {
                     <div style="color:#6b7280;font-size:15px;line-height:1.6">%s</div>
                   </div>
                 </div>
-                """.formatted(companyName, title, bodyHtml);
+                """.formatted(companyName, escape(title), bodyHtml);
+    }
+
+    private String escape(String value) {
+        return value == null ? "" : HtmlUtils.htmlEscape(value);
     }
 }

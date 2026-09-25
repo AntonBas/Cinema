@@ -25,21 +25,55 @@ const getSeatTypeName = (seatType: SeatType): string => {
 
 interface SeatTileProps {
   seat: DraftSeat;
+  rowNumber: number;
   number: number;
   onCycleType: () => void;
   onToggleActive: () => void;
   onRemove: () => void;
   onDragStart: () => void;
+  onMove: (colDelta: number, rowDelta: number) => void;
+  onAddNext: () => void;
 }
+
+const ARROW_DELTAS: Record<string, [number, number]> = {
+  ArrowLeft: [-1, 0],
+  ArrowRight: [1, 0],
+  ArrowUp: [0, -1],
+  ArrowDown: [0, 1],
+};
 
 const SeatTile: React.FC<SeatTileProps> = ({
   seat,
+  rowNumber,
   number,
   onCycleType,
   onToggleActive,
   onRemove,
   onDragStart,
+  onMove,
+  onAddNext,
 }) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.target !== e.currentTarget) return;
+    const delta = ARROW_DELTAS[e.key];
+    if (delta) {
+      e.preventDefault();
+      onMove(delta[0], delta[1]);
+    } else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onCycleType();
+    } else if (e.key === "t" || e.key === "T") {
+      e.preventDefault();
+      onToggleActive();
+    } else if (e.key === "Delete" || e.key === "Backspace") {
+      e.preventDefault();
+      onRemove();
+    } else if (e.key === "Insert" || e.key === "+") {
+      e.preventDefault();
+      onAddNext();
+    }
+  };
+
   const width =
     seat.seatType === SeatType.COUPLE ? CELL_WIDTH * 2 - 8 : CELL_WIDTH - 8;
 
@@ -58,14 +92,18 @@ const SeatTile: React.FC<SeatTileProps> = ({
         onDragStart();
       }}
       onClick={onCycleType}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+      aria-label={`Row ${rowNumber}, seat ${number}, ${getSeatTypeName(seat.seatType)}, ${seat.active ? "active" : "inactive"}`}
       onContextMenu={(e) => {
         e.preventDefault();
         onToggleActive();
       }}
-      title={`Row ${seat.gridRow + 1}, Seat ${number}\nType: ${getSeatTypeName(seat.seatType)}\nStatus: ${seat.active ? "Active" : "Inactive"}\n\nClick: change type\nRight click: toggle status\nDrag: move\n×: delete`}
+      title={`Row ${rowNumber}, Seat ${number}\nType: ${getSeatTypeName(seat.seatType)}\nStatus: ${seat.active ? "Active" : "Inactive"}\n\nClick: change type\nRight click: toggle status\nDrag: move\n×: delete`}
     >
       <span className={styles.seatNumber}>
-        {seat.gridRow + 1}-{number}
+        {rowNumber}-{number}
       </span>
       <button
         type="button"
@@ -138,6 +176,13 @@ export const HallLayoutModal: React.FC = () => {
     return result;
   }, [seats]);
 
+  const rowNumberByGridRow = useMemo(() => {
+    const gridRows = [...new Set(seats.map((seat) => seat.gridRow))].sort(
+      (a, b) => a - b,
+    );
+    return new Map(gridRows.map((gridRow, index) => [gridRow, index + 1]));
+  }, [seats]);
+
   if (!currentHall) return null;
 
   const handleClose = () => {
@@ -155,6 +200,40 @@ export const HallLayoutModal: React.FC = () => {
 
   const handleSave = async () => {
     await saveLayout();
+  };
+
+  const moveSeatWithinGrid = (
+    seat: DraftSeat,
+    colDelta: number,
+    rowDelta: number,
+  ) => {
+    const col = seat.col + colDelta;
+    const gridRow = seat.gridRow + rowDelta;
+    if (col < 0 || col >= GRID_COLS || gridRow < 0 || gridRow >= GRID_ROWS) {
+      return;
+    }
+    moveSeat(seat.key, col, gridRow);
+  };
+
+  const addSeatAfter = (seat: DraftSeat) => {
+    const firstCol = seat.col + (seat.seatType === SeatType.COUPLE ? 2 : 1);
+    for (let col = firstCol; col < GRID_COLS; col++) {
+      if (!occupiedCells.has(`${col}:${seat.gridRow}`)) {
+        addSeat(col, seat.gridRow);
+        return;
+      }
+    }
+  };
+
+  const addSeatInFirstFreeCell = () => {
+    for (let gridRow = 0; gridRow < GRID_ROWS; gridRow++) {
+      for (let col = 0; col < GRID_COLS; col++) {
+        if (!occupiedCells.has(`${col}:${gridRow}`)) {
+          addSeat(col, gridRow);
+          return;
+        }
+      }
+    }
   };
 
   const emptyCells: { col: number; gridRow: number }[] = [];
@@ -239,6 +318,7 @@ export const HallLayoutModal: React.FC = () => {
                   <SeatTile
                     key={seat.key}
                     seat={seat}
+                    rowNumber={rowNumberByGridRow.get(seat.gridRow) ?? 0}
                     number={numberByKey.get(seat.key) ?? 0}
                     onCycleType={() => cycleSeatType(seat.key)}
                     onToggleActive={() => toggleSeatActive(seat.key)}
@@ -246,6 +326,10 @@ export const HallLayoutModal: React.FC = () => {
                     onDragStart={() => {
                       draggedKeyRef.current = seat.key;
                     }}
+                    onMove={(colDelta, rowDelta) =>
+                      moveSeatWithinGrid(seat, colDelta, rowDelta)
+                    }
+                    onAddNext={() => addSeatAfter(seat)}
                   />
                 ))}
               </div>
@@ -287,6 +371,11 @@ export const HallLayoutModal: React.FC = () => {
                   <p>
                     <strong>Drag seat:</strong> reposition
                   </p>
+                  <p>
+                    <strong>Keyboard:</strong> Tab to a seat, Enter changes
+                    type, T toggles active, arrows move, Delete removes, Insert
+                    adds a seat to the right
+                  </p>
                   <p className={styles.note}>
                     Row/seat numbers are assigned automatically left-to-right
                     per row
@@ -295,6 +384,13 @@ export const HallLayoutModal: React.FC = () => {
               </div>
 
               <div className={styles.actions}>
+                <Button
+                  variant="secondary"
+                  onClick={addSeatInFirstFreeCell}
+                  disabled={saving}
+                >
+                  Add Seat
+                </Button>
                 <Button
                   variant="cancel"
                   onClick={handleClose}

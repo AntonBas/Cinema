@@ -10,8 +10,8 @@ import ua.lviv.bas.cinema.common.CinemaTime;
 @SpringBootApplication
 public class CinemaApplication {
 
-	public static void main(String[] args) {
-		TimeZone.setDefault(TimeZone.getTimeZone(CinemaTime.ZONE));
-		SpringApplication.run(CinemaApplication.class, args);
-	}
+    public static void main(String[] args) {
+        TimeZone.setDefault(TimeZone.getTimeZone(CinemaTime.ZONE));
+        SpringApplication.run(CinemaApplication.class, args);
+    }
 }

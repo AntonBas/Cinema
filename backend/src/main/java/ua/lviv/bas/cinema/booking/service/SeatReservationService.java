@@ -24,6 +24,9 @@ import ua.lviv.bas.cinema.cinema.repository.SeatRepository;
 import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.ticket.repository.TicketTypeRepository;
 import ua.lviv.bas.cinema.common.PriceCalculatorService;
+import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
+import ua.lviv.bas.cinema.exception.domain.booking.BookingValidationException;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -71,7 +74,9 @@ public class SeatReservationService {
         Map<Long, ReservationStatus> seatStatusMap = new HashMap<>();
         bookedSeatData.forEach(data -> seatStatusMap.put(data.seatId(), data.status()));
 
-        var seatInfos = allSeats.stream().map(seat -> buildSeatInfo(seat, seatStatusMap, session, activeTicketTypes))
+        boolean sessionOpen = isOpenForBooking(session);
+        var seatInfos = allSeats.stream()
+                .map(seat -> buildSeatInfo(seat, seatStatusMap, session, activeTicketTypes, sessionOpen))
                 .toList();
 
         int availableSeatsCount = (int) seatInfos.stream().filter(SeatReservationResponse.SeatInfo::available).count();
@@ -89,9 +94,24 @@ public class SeatReservationService {
     public SeatReservation hold(Long sessionId, Long seatId, User user) {
         var session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new EntityNotFoundException("Session", sessionId));
+        validateSessionOpenForHolds(session);
         var seat = lockSeat(seatId);
 
         return holdLockedSeat(session, seat, user);
+    }
+
+    private boolean isOpenForBooking(Session session) {
+        return session.getStatus() == CinemaSessionStatus.SCHEDULED
+                && session.getStartTime().isAfter(CinemaTime.now());
+    }
+
+    private void validateSessionOpenForHolds(Session session) {
+        if (session.getStatus() != CinemaSessionStatus.SCHEDULED) {
+            throw BookingValidationException.sessionNotAvailable();
+        }
+        if (session.getStartTime().isBefore(CinemaTime.now())) {
+            throw BookingValidationException.sessionAlreadyStarted();
+        }
     }
 
     @Transactional
@@ -142,30 +162,6 @@ public class SeatReservationService {
         }
     }
 
-    public void validateAvailability(Long sessionId, Long seatId) {
-        validateSeat(sessionId, seatId);
-    }
-
-    public SeatAvailabilityStatus getStatus(Long sessionId, Long seatId) {
-        var statuses = seatReservationRepository.findStatusesBySessionIdAndSeatId(sessionId, seatId);
-
-        boolean isReserved = !statuses.isEmpty();
-        ReservationStatus status = null;
-
-        if (isReserved) {
-            if (statuses.contains(ReservationStatus.CONFIRMED)) {
-                status = ReservationStatus.CONFIRMED;
-            } else {
-                status = ReservationStatus.PENDING;
-            }
-            if (statuses.size() > 1) {
-                log.warn("Multiple reservations for seat {} in session {}: {}", seatId, sessionId, statuses);
-            }
-        }
-
-        return new SeatAvailabilityStatus(!isReserved, status);
-    }
-
     public Map<Long, Integer> getAvailableSeatsBatch(List<Long> sessionIds) {
         if (sessionIds.isEmpty()) {
             return Map.of();
@@ -190,13 +186,6 @@ public class SeatReservationService {
                         id -> totalSeatsMap.getOrDefault(id, 0) - bookedMap.getOrDefault(id, 0)));
     }
 
-    private void validateSeat(Long sessionId, Long seatId) {
-        var session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new EntityNotFoundException("Session", sessionId));
-        var seat = seatRepository.findById(seatId).orElseThrow(() -> new EntityNotFoundException("Seat", seatId));
-        validateSeat(seat, session);
-    }
-
     private void validateSeat(Seat seat, Session session) {
         if (!seat.isActive()) {
             throw SeatNotAvailableException.seatInactive(seat.getId());
@@ -217,12 +206,13 @@ public class SeatReservationService {
     }
 
     private SeatReservationResponse.SeatInfo buildSeatInfo(Seat seat, Map<Long, ReservationStatus> seatStatusMap,
-                                                           Session session, List<TicketType> activeTicketTypes) {
+                                                           Session session, List<TicketType> activeTicketTypes,
+                                                           boolean sessionOpen) {
 
         var status = seatStatusMap.get(seat.getId());
         boolean isBooked = status != null;
         boolean temporarilyReserved = status == ReservationStatus.PENDING;
-        boolean available = !isBooked && seat.isActive();
+        boolean available = sessionOpen && !isBooked && seat.isActive();
 
         var ticketPrices = activeTicketTypes.stream().map(ticketType -> {
             var price = priceCalculator.calculateSeatPrice(session, seat, ticketType);
@@ -232,9 +222,4 @@ public class SeatReservationService {
         return seatReservationMapper.toSeatInfo(seat, available, temporarilyReserved, ticketPrices);
     }
 
-    public record SeatAvailabilityStatus(boolean available, ReservationStatus status) {
-        public boolean isConfirmed() {
-            return status == ReservationStatus.CONFIRMED;
-        }
-    }
 }

@@ -34,43 +34,43 @@ import ua.lviv.bas.cinema.ticket.domain.Ticket;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "refund_items", indexes = { @Index(name = "idx_refund_item_refund", columnList = "refund_id"),
-		@Index(name = "idx_refund_item_ticket", columnList = "ticket_id"),
-		@Index(name = "idx_refund_item_status", columnList = "status") })
+        @Index(name = "idx_refund_item_ticket", columnList = "ticket_id"),
+        @Index(name = "idx_refund_item_status", columnList = "status") })
 public class RefundItem extends AuditableEntity {
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@NotNull
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "refund_id", nullable = false)
-	private Refund refund;
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "refund_id", nullable = false)
+    private Refund refund;
 
-	@NotNull
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "ticket_id", nullable = false)
-	private Ticket ticket;
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ticket_id", nullable = false)
+    private Ticket ticket;
 
-	@NotNull
-	@Positive
-	@Column(name = "ticket_price", nullable = false, precision = 10, scale = 2)
-	private BigDecimal ticketPrice;
+    @NotNull
+    @Positive
+    @Column(name = "ticket_price", nullable = false, precision = 10, scale = 2)
+    private BigDecimal ticketPrice;
 
-	@DecimalMin("0.00")
-	@DecimalMax("100.00")
-	@Column(name = "refund_percentage", precision = 10, scale = 2, nullable = false)
-	@Builder.Default
-	private BigDecimal refundPercentage = BigDecimal.ZERO;
+    @DecimalMin("0.00")
+    @DecimalMax("100.00")
+    @Column(name = "refund_percentage", precision = 10, scale = 2, nullable = false)
+    @Builder.Default
+    private BigDecimal refundPercentage = BigDecimal.ZERO;
 
-	@Column(name = "refund_amount", precision = 10, scale = 2)
-	private BigDecimal refundAmount;
+    @Column(name = "refund_amount", precision = 10, scale = 2)
+    private BigDecimal refundAmount;
 
-	@Column(name = "bonus_points_to_deduct", nullable = false)
-	@Builder.Default
-	private Integer bonusPointsToDeduct = 0;
+    @Column(name = "bonus_points_to_deduct", nullable = false)
+    @Builder.Default
+    private Integer bonusPointsToDeduct = 0;
 
-	@Enumerated(EnumType.STRING)
-	@Column(name = "status", nullable = false, length = 20)
-	@Builder.Default
-	private RefundItemStatus status = RefundItemStatus.PENDING;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    @Builder.Default
+    private RefundItemStatus status = RefundItemStatus.PENDING;
 }

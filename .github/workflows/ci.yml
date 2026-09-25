@@ -27,13 +27,9 @@ jobs:
           distribution: "temurin"
           cache: maven
 
-      - name: Build with Maven
+      - name: Build and test with Maven
         working-directory: backend
-        run: chmod +x mvnw && ./mvnw clean package -DskipTests
-
-      - name: Run tests
-        working-directory: backend
-        run: ./mvnw test
+        run: chmod +x mvnw && ./mvnw -B clean verify
 
   frontend:
     runs-on: ubuntu-latest

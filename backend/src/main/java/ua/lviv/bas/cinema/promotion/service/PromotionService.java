@@ -36,6 +36,7 @@ import ua.lviv.bas.cinema.common.CinemaTime;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 @Slf4j
@@ -104,12 +105,13 @@ public class PromotionService {
         var promotion = findByIdOrThrow(id);
         String oldTitle = promotion.getTitle();
         validateDatesForUpdate(request, promotion);
+        var oldDetails = captureDetails(promotion);
 
         promotionMapper.updateEntity(request, promotion);
         var updated = promotionRepository.save(promotion);
 
         log.info("Promotion updated with ID: {}", updated.getId());
-        auditUpdate(id, oldTitle, updated);
+        auditService.logChange("Promotion", id, oldTitle, AuditAction.UPDATED, oldDetails, captureDetails(updated));
 
         return promotionMapper.toPromotionResponse(updated);
     }
@@ -210,13 +212,10 @@ public class PromotionService {
                 details);
     }
 
-    private void auditUpdate(Long id, String oldTitle, Promotion updated) {
-        var oldDetails = AuditDetails.of().put("title", oldTitle).put("bonusPoints", updated.getBonusPoints())
-                .build();
-        var newDetails = AuditDetails.of().put("title", updated.getTitle())
-                .put("bonusPoints", updated.getBonusPoints()).build();
-
-        auditService.logChange("Promotion", id, oldTitle, AuditAction.UPDATED, oldDetails, newDetails);
+    private Map<String, Object> captureDetails(Promotion promotion) {
+        return AuditDetails.of().put("title", promotion.getTitle()).put("bonusPoints", promotion.getBonusPoints())
+                .put("startDate", promotion.getStartDate()).put("endDate", promotion.getEndDate())
+                .put("active", promotion.isActive()).build();
     }
 
     private void auditDelete(Long id, String title) {

@@ -35,7 +35,8 @@ public class SessionSpecification {
             if (date != null) {
                 LocalDateTime startOfDay = date.atStartOfDay();
                 LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
-                predicates.add(cb.between(root.get("startTime"), startOfDay, endOfDay));
+                predicates.add(cb.greaterThanOrEqualTo(root.get("startTime"), startOfDay));
+                predicates.add(cb.lessThan(root.get("startTime"), endOfDay));
             }
 
             if (query != null) {
@@ -65,8 +66,8 @@ public class SessionSpecification {
             }
 
             if (dateFrom != null && dateTo != null) {
-                predicates.add(
-                        cb.between(root.get("startTime"), dateFrom.atStartOfDay(), dateTo.plusDays(1).atStartOfDay()));
+                predicates.add(cb.greaterThanOrEqualTo(root.get("startTime"), dateFrom.atStartOfDay()));
+                predicates.add(cb.lessThan(root.get("startTime"), dateTo.plusDays(1).atStartOfDay()));
             } else if (dateFrom != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("startTime"), dateFrom.atStartOfDay()));
             } else if (dateTo != null) {

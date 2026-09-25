@@ -38,3 +38,18 @@ export const addDaysToIsoDate = (isoDate: string, days: number): string => {
   date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString().split("T")[0];
 };
+
+const cinemaDateTimeFormatter = new Intl.DateTimeFormat("sv-SE", {
+  timeZone: CINEMA_TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+export const getCinemaDateTimeLocal = (offsetMinutes = 0): string =>
+  cinemaDateTimeFormatter
+    .format(new Date(Date.now() + offsetMinutes * 60_000))
+    .replace(" ", "T");

@@ -29,20 +29,20 @@ import ua.lviv.bas.cinema.movie.domain.enums.PersonRole;
 @ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "persons", indexes = { @Index(name = "idx_person_name", columnList = "name"),
-		@Index(name = "idx_person_role", columnList = "role") })
+        @Index(name = "idx_person_role", columnList = "role") })
 public class Person {
 
-	@Id
-	@EqualsAndHashCode.Include
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @EqualsAndHashCode.Include
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@NotBlank
-	@Column(nullable = false, length = 50)
-	private String name;
+    @NotBlank
+    @Column(nullable = false, length = 50)
+    private String name;
 
-	@NotNull
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
-	private PersonRole role;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PersonRole role;
 }

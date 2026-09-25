@@ -8,6 +8,7 @@ import type {
 import type { UserResponse } from "@/types/user";
 
 const API_URL = "/api/auth";
+const TOKENS_URL = "/api/tokens";
 
 export const authApi = {
   login: (credentials: LoginRequest) =>
@@ -46,6 +47,14 @@ export const authApi = {
       `${API_URL}/resend-verification/status`,
       { params: { email } },
     ),
+
+  verifyEmail: (token: string) =>
+    api.post<void>(`${TOKENS_URL}/email/verify`, null, { params: { token } }),
+
+  confirmEmailChange: (token: string) =>
+    api.post<void>(`${TOKENS_URL}/email/change/confirm`, null, {
+      params: { token },
+    }),
 
   getGoogleAuthUrl: (): string => {
     return `${API_BASE_URL}/oauth2/authorize/google`;

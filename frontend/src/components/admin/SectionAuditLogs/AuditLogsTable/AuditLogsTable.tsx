@@ -56,13 +56,13 @@ const formatDetails = (log: AuditLogResponse): React.ReactNode => {
           <span className={styles.changeKey}>
             {formatFieldName(detail.fieldName)}:
           </span>
-          <Tooltip content={detail.oldValue || "null"}>
+          <Tooltip focusableTrigger content={detail.oldValue || "null"}>
             <span className={styles.oldValue}>
               {truncateText(detail.oldValue || "null", 20)}
             </span>
           </Tooltip>
           {" → "}
-          <Tooltip content={detail.newValue || "null"}>
+          <Tooltip focusableTrigger content={detail.newValue || "null"}>
             <span className={styles.newValue}>
               {truncateText(detail.newValue || "null", 20)}
             </span>
@@ -147,14 +147,14 @@ export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({
                           onViewHistory(log.entityType, log.entityId)
                         }
                       >
-                        <Tooltip content={log.targetInfo}>
+                        <Tooltip focusableTrigger content={log.targetInfo}>
                           <span className={styles.targetInfo}>
                             {truncateText(log.targetInfo, 30)}
                           </span>
                         </Tooltip>
                       </button>
                     ) : (
-                      <Tooltip content={log.targetInfo}>
+                      <Tooltip focusableTrigger content={log.targetInfo}>
                         <span className={styles.targetInfo}>
                           {truncateText(log.targetInfo, 30)}
                         </span>

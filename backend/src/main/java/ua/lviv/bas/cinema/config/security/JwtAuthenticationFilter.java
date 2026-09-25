@@ -49,6 +49,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                         if (!userDetails.isEnabled()) {
                             log.warn("Rejected request to {} for disabled user: {}", request.getRequestURI(), email);
+                        } else if (userDetails instanceof CustomUserDetails customUserDetails
+                                && !customUserDetails.getUserId().equals(jwtTokenProvider.getUserIdFromToken(jwt))) {
+                            log.warn("Rejected request to {} for token issued to another account with email: {}",
+                                    request.getRequestURI(), email);
                         } else if (userDetails instanceof CustomUserDetails customUserDetails && tokenVersion != null
                                 && tokenVersion != customUserDetails.getTokenVersion()) {
                             log.warn("Rejected request to {} for stale token (password changed since issue) for user: {}",

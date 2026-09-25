@@ -23,94 +23,94 @@ import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 @Slf4j
 @Component
 public class BookingScheduler {
-	private static final List<PaymentStatus> EVER_PAID_STATUSES = List.of(PaymentStatus.SUCCESS,
-			PaymentStatus.REFUNDED, PaymentStatus.PARTIALLY_REFUNDED, PaymentStatus.REFUND_REQUIRED);
-	private static final List<PaymentStatus> ACTIVE_PAYMENT_STATUSES = List.of(PaymentStatus.PENDING,
-			PaymentStatus.PROCESSING);
+    private static final List<PaymentStatus> EVER_PAID_STATUSES = List.of(PaymentStatus.SUCCESS,
+            PaymentStatus.REFUNDED, PaymentStatus.PARTIALLY_REFUNDED, PaymentStatus.REFUND_REQUIRED);
+    private static final List<PaymentStatus> ACTIVE_PAYMENT_STATUSES = List.of(PaymentStatus.PENDING,
+            PaymentStatus.PROCESSING);
 
-	private final BookingRepository bookingRepository;
-	private final SeatReservationService seatReservationService;
-	private final BonusLedgerService bonusLedgerService;
-	private final TransactionTemplate transactionTemplate;
+    private final BookingRepository bookingRepository;
+    private final SeatReservationService seatReservationService;
+    private final BonusLedgerService bonusLedgerService;
+    private final TransactionTemplate transactionTemplate;
 
-	public BookingScheduler(BookingRepository bookingRepository, SeatReservationService seatReservationService,
-			BonusLedgerService bonusLedgerService, PlatformTransactionManager transactionManager) {
-		this.bookingRepository = bookingRepository;
-		this.seatReservationService = seatReservationService;
-		this.bonusLedgerService = bonusLedgerService;
-		this.transactionTemplate = new TransactionTemplate(transactionManager);
-	}
+    public BookingScheduler(BookingRepository bookingRepository, SeatReservationService seatReservationService,
+            BonusLedgerService bonusLedgerService, PlatformTransactionManager transactionManager) {
+        this.bookingRepository = bookingRepository;
+        this.seatReservationService = seatReservationService;
+        this.bonusLedgerService = bonusLedgerService;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+    }
 
-	@Scheduled(fixedRateString = "${scheduler.booking.expiration-interval:60000}")
-	public void processExpiredBookings() {
-		log.debug("Starting expired bookings processing");
-		Instant now = Instant.now();
-		List<Booking> expiredBookings = bookingRepository.findExpiredWithoutActivePayment(BookingStatus.PENDING, now,
-				ACTIVE_PAYMENT_STATUSES);
+    @Scheduled(fixedRateString = "${scheduler.booking.expiration-interval:60000}")
+    public void processExpiredBookings() {
+        log.debug("Starting expired bookings processing");
+        Instant now = Instant.now();
+        List<Booking> expiredBookings = bookingRepository.findExpiredWithoutActivePayment(BookingStatus.PENDING, now,
+                ACTIVE_PAYMENT_STATUSES);
 
-		if (expiredBookings.isEmpty()) {
-			log.debug("No expired bookings found");
-			return;
-		}
+        if (expiredBookings.isEmpty()) {
+            log.debug("No expired bookings found");
+            return;
+        }
 
-		log.info("Found {} expired bookings to process", expiredBookings.size());
+        log.info("Found {} expired bookings to process", expiredBookings.size());
 
-		int expiredCount = 0;
-		for (Booking booking : expiredBookings) {
-			Long bookingId = booking.getId();
-			try {
-				transactionTemplate.executeWithoutResult(status -> closeBooking(booking, BookingStatus.EXPIRED));
-				expiredCount++;
-			} catch (ObjectOptimisticLockingFailureException e) {
-				log.warn("Skipped expiring booking {} due to concurrent update, will retry on next run", bookingId);
-			} catch (RuntimeException e) {
-				log.error("Failed to expire booking {}, will retry on next run", bookingId, e);
-			}
-		}
+        int expiredCount = 0;
+        for (Booking booking : expiredBookings) {
+            Long bookingId = booking.getId();
+            try {
+                transactionTemplate.executeWithoutResult(status -> closeBooking(booking, BookingStatus.EXPIRED));
+                expiredCount++;
+            } catch (ObjectOptimisticLockingFailureException e) {
+                log.warn("Skipped expiring booking {} due to concurrent update, will retry on next run", bookingId);
+            } catch (RuntimeException e) {
+                log.error("Failed to expire booking {}, will retry on next run", bookingId, e);
+            }
+        }
 
-		log.info("Successfully expired {} of {} bookings", expiredCount, expiredBookings.size());
-	}
+        log.info("Successfully expired {} of {} bookings", expiredCount, expiredBookings.size());
+    }
 
-	@Scheduled(fixedRateString = "${scheduler.booking.cancelled-session-interval:60000}")
-	public void cancelPendingBookingsOfCancelledSessions() {
-		List<Booking> bookings = bookingRepository.findByStatusAndSessionStatus(BookingStatus.PENDING,
-				CinemaSessionStatus.CANCELLED);
+    @Scheduled(fixedRateString = "${scheduler.booking.cancelled-session-interval:60000}")
+    public void cancelPendingBookingsOfCancelledSessions() {
+        List<Booking> bookings = bookingRepository.findByStatusAndSessionStatus(BookingStatus.PENDING,
+                CinemaSessionStatus.CANCELLED);
 
-		for (Booking booking : bookings) {
-			try {
-				transactionTemplate.executeWithoutResult(status -> closeBooking(booking, BookingStatus.CANCELLED));
-				log.info("Cancelled pending booking {} because its session was cancelled", booking.getId());
-			} catch (RuntimeException e) {
-				log.error("Failed to cancel pending booking {} of a cancelled session, will retry on next run",
-						booking.getId(), e);
-			}
-		}
-	}
+        for (Booking booking : bookings) {
+            try {
+                transactionTemplate.executeWithoutResult(status -> closeBooking(booking, BookingStatus.CANCELLED));
+                log.info("Cancelled pending booking {} because its session was cancelled", booking.getId());
+            } catch (RuntimeException e) {
+                log.error("Failed to cancel pending booking {} of a cancelled session, will retry on next run",
+                        booking.getId(), e);
+            }
+        }
+    }
 
-	private void closeBooking(Booking booking, BookingStatus finalStatus) {
-		booking.setStatus(finalStatus);
+    private void closeBooking(Booking booking, BookingStatus finalStatus) {
+        booking.setStatus(finalStatus);
 
-		seatReservationService.releaseReservations(booking.getSeatReservations(), booking.getSession().getId());
+        seatReservationService.releaseReservations(booking.getSeatReservations(), booking.getSession().getId());
 
-		if (booking.getBonusPointsUsed() != null && booking.getBonusPointsUsed() > 0) {
-			bonusLedgerService.refundPoints(booking);
-		}
+        if (booking.getBonusPointsUsed() != null && booking.getBonusPointsUsed() > 0) {
+            bonusLedgerService.refundPoints(booking);
+        }
 
-		bookingRepository.save(booking);
-	}
+        bookingRepository.save(booking);
+    }
 
-	@Scheduled(cron = "${scheduler.booking.cleanup-cron:0 0 4 * * *}")
-	@Transactional
-	public void cleanupOldBookings() {
-		log.debug("Starting old bookings cleanup");
-		Instant thirtyDaysAgo = Instant.now().minus(Duration.ofDays(30));
-		int deletedCount = bookingRepository.deleteByStatusInAndCreatedDateBefore(
-				List.of(BookingStatus.EXPIRED, BookingStatus.CANCELLED), thirtyDaysAgo, EVER_PAID_STATUSES);
+    @Scheduled(cron = "${scheduler.booking.cleanup-cron:0 0 4 * * *}")
+    @Transactional
+    public void cleanupOldBookings() {
+        log.debug("Starting old bookings cleanup");
+        Instant thirtyDaysAgo = Instant.now().minus(Duration.ofDays(30));
+        int deletedCount = bookingRepository.deleteByStatusInAndCreatedDateBefore(
+                List.of(BookingStatus.EXPIRED, BookingStatus.CANCELLED), thirtyDaysAgo, EVER_PAID_STATUSES);
 
-		if (deletedCount > 0) {
-			log.info("Cleaned up {} old bookings", deletedCount);
-		} else {
-			log.debug("No old bookings to clean up");
-		}
-	}
+        if (deletedCount > 0) {
+            log.info("Cleaned up {} old bookings", deletedCount);
+        } else {
+            log.debug("No old bookings to clean up");
+        }
+    }
 }

@@ -1,10 +1,4 @@
-export type RefundStatus =
-  | "PENDING"
-  | "PROCESSING"
-  | "APPROVED"
-  | "REJECTED"
-  | "PROCESSED"
-  | "CANCELLED";
+export type RefundStatus = "PROCESSING" | "REJECTED" | "PROCESSED";
 export type RefundItemStatus =
   "PENDING" | "APPROVED" | "REJECTED" | "PROCESSED" | "CANCELLED";
 
@@ -83,13 +77,10 @@ export interface RefundItemResponse {
   status: string;
 }
 
-export const RefundStatusDisplay: Record<string, string> = {
-  PENDING: "Pending",
+export const RefundStatusDisplay: Record<RefundStatus, string> = {
   PROCESSING: "Processing",
-  APPROVED: "Approved",
   REJECTED: "Rejected",
   PROCESSED: "Processed",
-  CANCELLED: "Cancelled",
 };
 
 export const RefundItemStatusDisplay: Record<string, string> = {

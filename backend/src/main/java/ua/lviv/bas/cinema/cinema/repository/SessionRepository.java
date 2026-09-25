@@ -60,7 +60,8 @@ public interface SessionRepository extends JpaRepository<Session, Long>, JpaSpec
             """)
     List<LocalDate> findScheduleDates(@Param("now") LocalDateTime now, @Param("movieId") Long movieId);
 
-    boolean existsByHallIdAndStartTimeAfter(Long hallId, LocalDateTime time);
+    boolean existsByHallIdAndStartTimeAfterAndStatusNot(Long hallId, LocalDateTime time,
+                                                        CinemaSessionStatus status);
 
     @Query("SELECT MIN(s.startTime) FROM Session s WHERE s.movie.id = :movieId AND s.status IN ('SCHEDULED', 'ONGOING')")
     LocalDateTime findFirstActiveSessionStart(@Param("movieId") Long movieId);

@@ -142,10 +142,11 @@ export const PersonForm: React.FC<PersonFormProps> = React.memo(
       >
         <form onSubmit={handleSubmit} className={styles.form} noValidate>
           <div className={styles.formGroup}>
-            <label className={styles.label}>
+            <label htmlFor="person-form-full-name" className={styles.label}>
               Full Name <span className={styles.required}>*</span>
             </label>
             <Input
+              id="person-form-full-name"
               type="text"
               value={formData.name}
               onChange={(value) => handleInputChange("name", value)}
@@ -164,10 +165,11 @@ export const PersonForm: React.FC<PersonFormProps> = React.memo(
           </div>
 
           <div className={styles.formGroup}>
-            <label className={styles.label}>
+            <label htmlFor="person-form-role" className={styles.label}>
               Role <span className={styles.required}>*</span>
             </label>
             <Select
+              id="person-form-role"
               value={formData.role}
               onChange={(value) => handleInputChange("role", value as string)}
               options={roleOptions}

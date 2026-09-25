@@ -50,10 +50,6 @@ interface BookingData {
   }>;
 }
 
-interface ExtendedPaymentResponse extends PaymentResponse {
-  id: number;
-}
-
 type PaymentStep =
   "init" | "processing" | "ready" | "paying" | "success" | "failed";
 
@@ -63,7 +59,6 @@ export const PaymentPage: React.FC = () => {
   const location = useLocation();
 
   const bookingData = location.state?.booking as BookingData;
-  const existingPaymentId = location.state?.existingPaymentId as number | null;
 
   const { create, getById, getLiqPayData, retry } = usePayment();
 
@@ -72,9 +67,10 @@ export const PaymentPage: React.FC = () => {
     "liqpay",
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [currentPayment, setCurrentPayment] =
-    useState<ExtendedPaymentResponse | null>(null);
-  const [paymentTimeLeft, setPaymentTimeLeft] = useState<string>("30 minutes");
+  const [currentPayment, setCurrentPayment] = useState<PaymentResponse | null>(
+    null,
+  );
+  const [paymentTimeLeft, setPaymentTimeLeft] = useState<string>("");
 
   const isCreatingRef = useRef(false);
   const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
@@ -93,9 +89,9 @@ export const PaymentPage: React.FC = () => {
       stopPolling();
       const interval = setInterval(async () => {
         try {
-          const payment = (await getById(
-            paymentId,
-          )) as ExtendedPaymentResponse | null;
+          const payment = await getById(paymentId, {
+            showErrorNotification: false,
+          });
           if (payment) {
             setCurrentPayment(payment);
             if (FINAL_PAYMENT_STATUSES.includes(payment.status)) {
@@ -114,8 +110,8 @@ export const PaymentPage: React.FC = () => {
               );
             }
           }
-        } catch (error) {
-          console.error("Polling error:", error);
+        } catch {
+          return;
         }
       }, 3000);
       pollingIntervalRef.current = interval;
@@ -131,26 +127,8 @@ export const PaymentPage: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      if (existingPaymentId) {
-        const payment = (await getById(
-          existingPaymentId,
-        )) as ExtendedPaymentResponse | null;
-        if (payment && payment.status === "PENDING") {
-          setCurrentPayment(payment);
-          startPolling(payment.id);
-          const liqPayData = await getLiqPayData(payment.id);
-          setStep(liqPayData?.paymentUrl ? "ready" : "failed");
-          if (!liqPayData?.paymentUrl)
-            setErrorMessage("Failed to initialize payment gateway");
-          isCreatingRef.current = false;
-          return;
-        }
-      }
-
-      const payment = (await create({
-        bookingId,
-      })) as ExtendedPaymentResponse | null;
-      if (payment && payment.id) {
+      const payment = await create({ bookingId });
+      if (payment?.id) {
         setCurrentPayment(payment);
         startPolling(payment.id);
         const liqPayData = await getLiqPayData(payment.id);
@@ -162,31 +140,14 @@ export const PaymentPage: React.FC = () => {
         setErrorMessage("Failed to create payment");
       }
     } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message.includes("already in progress")
-      ) {
-        setStep("failed");
-        setErrorMessage(
-          "Payment already in progress. Please go back and try again.",
-        );
-      } else {
-        setStep("failed");
-        setErrorMessage(
-          error instanceof Error ? error.message : "Failed to create payment",
-        );
-      }
+      setStep("failed");
+      setErrorMessage(
+        error instanceof Error ? error.message : "Failed to create payment",
+      );
     } finally {
       isCreatingRef.current = false;
     }
-  }, [
-    bookingId,
-    create,
-    getLiqPayData,
-    startPolling,
-    existingPaymentId,
-    getById,
-  ]);
+  }, [bookingId, create, getLiqPayData, startPolling]);
 
   useEffect(() => {
     if (bookingId && bookingData && step === "init") initPayment();
@@ -246,9 +207,7 @@ export const PaymentPage: React.FC = () => {
 
     try {
       setStep("processing");
-      const retriedPayment = (await retry(
-        currentPayment.id,
-      )) as ExtendedPaymentResponse | null;
+      const retriedPayment = await retry(currentPayment.id);
       if (!retriedPayment?.id) {
         setStep("failed");
         setErrorMessage("Failed to retry payment");
@@ -270,7 +229,7 @@ export const PaymentPage: React.FC = () => {
 
   const handleBack = () =>
     navigate(`/booking/summary/${bookingId}`, {
-      state: { booking: bookingData, existingPaymentId: currentPayment?.id },
+      state: { booking: bookingData },
     });
 
   if (!bookingData)
@@ -364,9 +323,11 @@ export const PaymentPage: React.FC = () => {
                   <p className={styles.statusMessage}>
                     You will be redirected to the payment page
                   </p>
-                  <p className={styles.statusMessage}>
-                    Time left: {paymentTimeLeft}
-                  </p>
+                  {paymentTimeLeft && (
+                    <p className={styles.statusMessage}>
+                      Time left: {paymentTimeLeft}
+                    </p>
+                  )}
                   <div className={styles.alertContainer}>
                     <AlertCircle size={16} />
                     <p>Please complete the payment on the next page</p>

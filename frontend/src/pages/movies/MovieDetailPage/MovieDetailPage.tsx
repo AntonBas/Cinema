@@ -67,12 +67,11 @@ export const MovieDetailPage: React.FC = () => {
   const settled = useSettledLoad(loadMovie);
 
   useEffect(() => {
-    if (movieDetail?.sessions?.length) {
-      const { dates, grouped } = groupSessionsByDate(movieDetail.sessions);
-      setDateList(dates);
-      setSessionsByDate(grouped);
-      setSelectedDate(dates[0]);
-    }
+    const { dates, grouped } = groupSessionsByDate(movieDetail?.sessions ?? []);
+    setDateList(dates);
+    setSessionsByDate(grouped);
+    setSelectedDate(dates[0] ?? null);
+    setDateScrollIndex(0);
   }, [movieDetail]);
 
   const handleScrollDates = useCallback(
@@ -153,7 +152,13 @@ export const MovieDetailPage: React.FC = () => {
               <div className={styles.actionButtons}>
                 <Button
                   variant="secondary"
-                  onClick={() => window.open(movieDetail.trailerUrl, "_blank")}
+                  onClick={() =>
+                    window.open(
+                      movieDetail.trailerUrl,
+                      "_blank",
+                      "noopener,noreferrer",
+                    )
+                  }
                   className={styles.trailerButton}
                 >
                   Watch Trailer

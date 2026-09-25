@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.cinema.domain.Seat;
+import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.cinema.dto.hall.response.SeatResponse;
 import ua.lviv.bas.cinema.common.CinemaTime;
@@ -51,7 +52,8 @@ public class SeatService {
         if (!seat.getHall().getId().equals(hallId)) {
             throw new EntityNotFoundException("Seat", seatId);
         }
-        if (sessionRepository.existsByHallIdAndStartTimeAfter(hallId, CinemaTime.now())) {
+        if (sessionRepository.existsByHallIdAndStartTimeAfterAndStatusNot(hallId, CinemaTime.now(),
+                CinemaSessionStatus.CANCELLED)) {
             throw new CinemaHallHasSessionsException(seat.getHall().getName(), hallId);
         }
         return seat;

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useId } from "react";
 import styles from "./Select.module.css";
 
 export interface SelectOption {
@@ -18,6 +18,7 @@ export interface SelectProps {
   label?: string;
   ariaLabel?: string;
   error?: string;
+  id?: string;
 }
 
 export const Select: React.FC<SelectProps> = ({
@@ -31,8 +32,10 @@ export const Select: React.FC<SelectProps> = ({
   label,
   ariaLabel,
   error,
+  id: externalId,
 }) => {
-  const id = `select-${Math.random().toString(36).substr(2, 9)}`;
+  const generatedId = useId();
+  const id = externalId ?? generatedId;
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newValue = e.target.value;

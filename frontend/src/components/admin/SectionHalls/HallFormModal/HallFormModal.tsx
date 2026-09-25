@@ -56,8 +56,11 @@ export const HallFormModal: React.FC<HallFormModalProps> = ({
     >
       <form onSubmit={handleSubmit}>
         <div className={styles.formGroup}>
-          <label className={styles.label}>Hall Name *</label>
+          <label htmlFor="hall-form-modal-hall-name" className={styles.label}>
+            Hall Name *
+          </label>
           <Input
+            id="hall-form-modal-hall-name"
             type="text"
             value={name}
             onChange={handleNameChange}

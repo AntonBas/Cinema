@@ -18,6 +18,9 @@ import ua.lviv.bas.cinema.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.cinema.domain.Seat;
 import ua.lviv.bas.cinema.cinema.domain.Session;
+import ua.lviv.bas.cinema.common.CinemaTime;
+import ua.lviv.bas.cinema.exception.domain.booking.BookingValidationException;
+import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.ticket.domain.TicketType;
 import ua.lviv.bas.cinema.user.domain.User;
@@ -42,6 +45,9 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -91,7 +97,8 @@ public class SeatReservationServiceTest {
         Movie movie = Movie.builder().id(1L).title("Test Movie").build();
         CinemaHall hall = CinemaHall.builder().id(HALL_ID).name("Hall A").build();
         CinemaHall otherHall = CinemaHall.builder().id(OTHER_HALL_ID).name("Hall B").build();
-        testSession = Session.builder().id(SESSION_ID).movie(movie).hall(hall).basePrice(BASE_PRICE).build();
+        testSession = Session.builder().id(SESSION_ID).movie(movie).hall(hall).basePrice(BASE_PRICE)
+                .startTime(CinemaTime.now().plusDays(1)).status(CinemaSessionStatus.SCHEDULED).build();
         testSeat = Seat.builder().id(SEAT_ID).row(1).number(1).seatType(SeatType.STANDARD).active(true).hall(hall).build();
         inactiveSeat = Seat.builder().id(SEAT_ID).row(1).number(1).seatType(SeatType.STANDARD).active(false).hall(hall).build();
         seatInOtherHall = Seat.builder().id(SEAT_ID).row(1).number(1).seatType(SeatType.STANDARD).active(true)
@@ -116,6 +123,25 @@ public class SeatReservationServiceTest {
         assertThat(saved.getStatus()).isEqualTo(ReservationStatus.PENDING);
         assertThat(saved.getReservedByUser()).isEqualTo(testUser);
         assertThat(saved.getReservedUntil()).isAfter(Instant.now());
+    }
+
+    @Test
+    void holdWhenSessionCancelledShouldThrowWithoutLockingSeat() {
+        testSession.setStatus(CinemaSessionStatus.CANCELLED);
+        when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
+
+        assertThatThrownBy(() -> seatReservationService.hold(SESSION_ID, SEAT_ID, testUser))
+                .isInstanceOf(BookingValidationException.class);
+        verify(seatRepository, never()).findByIdWithLock(any());
+    }
+
+    @Test
+    void holdWhenSessionAlreadyStartedShouldThrow() {
+        testSession.setStartTime(CinemaTime.now().minusMinutes(5));
+        when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
+
+        assertThatThrownBy(() -> seatReservationService.hold(SESSION_ID, SEAT_ID, testUser))
+                .isInstanceOf(BookingValidationException.class);
     }
 
     @Test
@@ -231,89 +257,20 @@ public class SeatReservationServiceTest {
     }
 
     @Test
-    void validateAvailabilityShouldSucceed() {
+    void getAvailabilityForCompletedSessionShouldMarkSeatsUnavailable() {
+        testSession.setStatus(CinemaSessionStatus.COMPLETED);
         when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
-        when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.of(testSeat));
-        when(seatReservationRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, SEAT_ID,
-                ReservationStatus.ACTIVE_STATUSES)).thenReturn(false);
+        when(seatRepository.findByHallId(HALL_ID)).thenReturn(List.of(testSeat));
+        when(seatReservationRepository.findBookedSeatStatuses(HALL_ID, SESSION_ID, ReservationStatus.ACTIVE_STATUSES))
+                .thenReturn(List.of());
+        when(ticketTypeRepository.findByActiveTrue()).thenReturn(List.of());
+        when(seatReservationMapper.toSeatInfo(testSeat, false, false, List.of())).thenReturn(
+                new SeatReservationResponse.SeatInfo(SEAT_ID, 1, 1, SeatType.STANDARD, 0, 0, false, false, true,
+                        List.of()));
 
-        assertThatCode(() -> seatReservationService.validateAvailability(SESSION_ID, SEAT_ID))
-                .doesNotThrowAnyException();
+        seatReservationService.getAvailability(SESSION_ID);
 
-        verify(seatRepository).findById(SEAT_ID);
-        verify(seatReservationRepository).existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, SEAT_ID,
-                ReservationStatus.ACTIVE_STATUSES);
-    }
-
-    @Test
-    void validateAvailabilityWhenSessionNotFoundShouldThrowException() {
-        when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> seatReservationService.validateAvailability(SESSION_ID, SEAT_ID))
-                .isInstanceOf(EntityNotFoundException.class);
-    }
-
-    @Test
-    void validateAvailabilityWhenSeatNotFoundShouldThrowException() {
-        when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
-        when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> seatReservationService.validateAvailability(SESSION_ID, SEAT_ID))
-                .isInstanceOf(EntityNotFoundException.class);
-    }
-
-    @Test
-    void validateAvailabilityWhenSeatInactiveShouldThrowException() {
-        when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
-        when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.of(inactiveSeat));
-        assertThatThrownBy(() -> seatReservationService.validateAvailability(SESSION_ID, SEAT_ID))
-                .isInstanceOf(SeatNotAvailableException.class);
-    }
-
-    @Test
-    void validateAvailabilityWhenSeatBelongsToDifferentHallShouldThrowException() {
-        when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
-        when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.of(seatInOtherHall));
-        assertThatThrownBy(() -> seatReservationService.validateAvailability(SESSION_ID, SEAT_ID))
-                .isInstanceOf(SeatNotAvailableException.class);
-    }
-
-    @Test
-    void validateAvailabilityWhenSeatReservedShouldThrowException() {
-        when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
-        when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.of(testSeat));
-        when(seatReservationRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, SEAT_ID,
-                ReservationStatus.ACTIVE_STATUSES)).thenReturn(true);
-        assertThatThrownBy(() -> seatReservationService.validateAvailability(SESSION_ID, SEAT_ID))
-                .isInstanceOf(SeatNotAvailableException.class);
-    }
-
-    @Test
-    void getStatusWhenSeatAvailableShouldReturnAvailable() {
-        when(seatReservationRepository.findStatusesBySessionIdAndSeatId(SESSION_ID, SEAT_ID))
-                .thenReturn(Collections.emptyList());
-        SeatReservationService.SeatAvailabilityStatus result = seatReservationService.getStatus(SESSION_ID, SEAT_ID);
-        assertThat(result.available()).isTrue();
-        assertThat(result.status()).isNull();
-        assertThat(result.isConfirmed()).isFalse();
-    }
-
-    @Test
-    void getStatusWhenSeatConfirmedShouldReturnNotAvailable() {
-        when(seatReservationRepository.findStatusesBySessionIdAndSeatId(SESSION_ID, SEAT_ID))
-                .thenReturn(List.of(ReservationStatus.CONFIRMED));
-        SeatReservationService.SeatAvailabilityStatus result = seatReservationService.getStatus(SESSION_ID, SEAT_ID);
-        assertThat(result.available()).isFalse();
-        assertThat(result.status()).isEqualTo(ReservationStatus.CONFIRMED);
-        assertThat(result.isConfirmed()).isTrue();
-    }
-
-    @Test
-    void getStatusWhenSeatPendingShouldReturnNotAvailable() {
-        when(seatReservationRepository.findStatusesBySessionIdAndSeatId(SESSION_ID, SEAT_ID))
-                .thenReturn(List.of(ReservationStatus.PENDING));
-        SeatReservationService.SeatAvailabilityStatus result = seatReservationService.getStatus(SESSION_ID, SEAT_ID);
-        assertThat(result.available()).isFalse();
-        assertThat(result.status()).isEqualTo(ReservationStatus.PENDING);
-        assertThat(result.isConfirmed()).isFalse();
+        verify(seatReservationMapper).toResponse(eq(testSession), any(), eq(0));
     }
 
     @Test

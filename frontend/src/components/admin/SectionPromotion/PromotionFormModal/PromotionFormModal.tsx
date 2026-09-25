@@ -15,6 +15,7 @@ interface PromotionFormModalProps {
 }
 
 const DESCRIPTION_LIMIT = 150;
+const TITLE_LIMIT = 60;
 
 export const PromotionFormModal: React.FC<PromotionFormModalProps> = ({
   promotion,
@@ -85,12 +86,16 @@ export const PromotionFormModal: React.FC<PromotionFormModalProps> = ({
     >
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.formGroup}>
-          <label className={styles.label}>Title *</label>
+          <label htmlFor="promotion-form-modal-title" className={styles.label}>
+            Title *
+          </label>
           <Input
+            id="promotion-form-modal-title"
             value={formData.title}
             onChange={(value) =>
               setFormData((prev) => ({ ...prev, title: value }))
             }
+            maxLength={TITLE_LIMIT}
             placeholder="Enter title"
             required
             error={errors.title}
@@ -99,7 +104,12 @@ export const PromotionFormModal: React.FC<PromotionFormModalProps> = ({
 
         <div className={styles.formGroup}>
           <div className={styles.labelContainer}>
-            <label className={styles.label}>Description</label>
+            <label
+              htmlFor="promotion-form-modal-description"
+              className={styles.label}
+            >
+              Description
+            </label>
             <span
               className={`${styles.counter} ${!isDescriptionValid ? styles.counterError : ""}`}
             >
@@ -107,6 +117,7 @@ export const PromotionFormModal: React.FC<PromotionFormModalProps> = ({
             </span>
           </div>
           <textarea
+            id="promotion-form-modal-description"
             value={formData.description}
             onChange={(e) =>
               setFormData((prev) => ({ ...prev, description: e.target.value }))
@@ -122,8 +133,14 @@ export const PromotionFormModal: React.FC<PromotionFormModalProps> = ({
         </div>
 
         <div className={styles.formGroup}>
-          <label className={styles.label}>Bonus Points *</label>
+          <label
+            htmlFor="promotion-form-modal-bonus-points"
+            className={styles.label}
+          >
+            Bonus Points *
+          </label>
           <Input
+            id="promotion-form-modal-bonus-points"
             type="number"
             value={formData.bonusPoints}
             onChange={(value) =>
@@ -138,8 +155,14 @@ export const PromotionFormModal: React.FC<PromotionFormModalProps> = ({
 
         <div className={styles.dateRow}>
           <div className={styles.formGroup}>
-            <label className={styles.label}>Start Date</label>
+            <label
+              htmlFor="promotion-form-modal-start-date"
+              className={styles.label}
+            >
+              Start Date
+            </label>
             <Input
+              id="promotion-form-modal-start-date"
               type="date"
               value={formData.startDate}
               onChange={(value) =>
@@ -150,8 +173,14 @@ export const PromotionFormModal: React.FC<PromotionFormModalProps> = ({
           </div>
 
           <div className={styles.formGroup}>
-            <label className={styles.label}>End Date</label>
+            <label
+              htmlFor="promotion-form-modal-end-date"
+              className={styles.label}
+            >
+              End Date
+            </label>
             <Input
+              id="promotion-form-modal-end-date"
               type="date"
               value={formData.endDate}
               onChange={(value) =>

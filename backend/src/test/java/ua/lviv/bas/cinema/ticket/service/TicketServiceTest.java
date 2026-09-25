@@ -1,5 +1,6 @@
 package ua.lviv.bas.cinema.ticket.service;
 
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -44,7 +45,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyList;
 
 @ExtendWith(MockitoExtension.class)
 public class TicketServiceTest {
@@ -63,6 +68,8 @@ public class TicketServiceTest {
     private NumberGeneratorService numberGenerator;
     @Mock
     private CacheManager cacheManager;
+    @Mock
+    private EntityManager entityManager;
 
     @InjectMocks
     private TicketService ticketService;
@@ -126,14 +133,13 @@ public class TicketServiceTest {
             when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
             when(ticketRepository.updateStatusIfCurrent(eq(1L), eq(TicketStatus.ACTIVE), eq(TicketStatus.USED)))
                     .thenReturn(1);
-            when(ticketRepository.save(any())).thenReturn(testTicket);
             when(ticketMapper.toTicketCashierResponse(any())).thenReturn(cashierResponse);
 
             TicketCashierResponse result = ticketService.validate(TICKET_CODE);
 
             assertThat(result).isEqualTo(cashierResponse);
-            assertThat(testTicket.getStatus()).isEqualTo(TicketStatus.USED);
-            verify(ticketRepository).save(testTicket);
+            verify(entityManager).refresh(testTicket);
+            verify(ticketRepository, never()).save(any());
         }
 
         @Test
@@ -141,7 +147,7 @@ public class TicketServiceTest {
             when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> ticketService.validate(TICKET_CODE))
-                    .isInstanceOf(TicketValidationException.class);
+                    .isInstanceOf(TicketNotFoundException.class);
         }
 
         @Test
@@ -203,13 +209,12 @@ public class TicketServiceTest {
             when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
             when(ticketRepository.updateStatusIfCurrent(eq(1L), eq(TicketStatus.ACTIVE), eq(TicketStatus.USED)))
                     .thenReturn(1);
-            when(ticketRepository.save(any())).thenReturn(testTicket);
             when(ticketMapper.toTicketCashierResponse(any())).thenReturn(cashierResponse);
 
             TicketCashierResponse result = ticketService.validate(TICKET_CODE);
 
             assertThat(result).isEqualTo(cashierResponse);
-            verify(ticketRepository).save(testTicket);
+            verify(entityManager).refresh(testTicket);
         }
 
         @Test
@@ -252,7 +257,8 @@ public class TicketServiceTest {
                     CinemaTime.now(), "Hall A", 5, 10, null);
 
             when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
-            when(ticketMapper.toTicketResponse(testTicket)).thenReturn(mockResponse);
+            when(ticketMapper.toTicketResponse(testTicket, "/api/tickets/code/" + TICKET_CODE + "/qr", true))
+                    .thenReturn(mockResponse);
             when(refundCalculator.validate(testTicket)).thenReturn(null);
 
             var result = ticketService.getTicket(TICKET_CODE, testUser);
@@ -277,7 +283,7 @@ public class TicketServiceTest {
             when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
 
             assertThatThrownBy(() -> ticketService.getTicket(TICKET_CODE, otherUser))
-                    .isInstanceOf(TicketValidationException.class);
+                    .isInstanceOf(TicketNotFoundException.class);
         }
     }
 
@@ -301,7 +307,7 @@ public class TicketServiceTest {
             when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> ticketService.generateQR(TICKET_CODE, testUser))
-                    .isInstanceOf(TicketValidationException.class);
+                    .isInstanceOf(TicketNotFoundException.class);
         }
 
         @Test
@@ -312,7 +318,7 @@ public class TicketServiceTest {
             when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
 
             assertThatThrownBy(() -> ticketService.generateQR(TICKET_CODE, otherUser))
-                    .isInstanceOf(TicketValidationException.class);
+                    .isInstanceOf(TicketNotFoundException.class);
 
             verify(qrCodeService, never()).generateQRCode(anyString(), anyInt());
         }

@@ -37,7 +37,7 @@ export const useAuthActions = () => {
     async (credentials: LoginRequest) => {
       const response = await authApiRef.current.execute(
         () => authApi.login(credentials),
-        { dedupeKey: "login" },
+        { showErrorNotification: false, dedupeKey: "login" },
       );
       if (response) {
         await handleAuthSuccess(getRedirectFromSearch(searchParams));
@@ -49,7 +49,7 @@ export const useAuthActions = () => {
 
   const register = useCallback(async (userData: RegisterRequest) => {
     return authApiRef.current.execute(() => authApi.register(userData), {
-      suppressValidationToast: true,
+      showErrorNotification: false,
       dedupeKey: "register",
     });
   }, []);
@@ -60,6 +60,7 @@ export const useAuthActions = () => {
 
   const forgotPassword = useCallback(async (email: string) => {
     return authApiRef.current.execute(() => authApi.forgotPassword(email), {
+      showErrorNotification: false,
       dedupeKey: "forgotPassword",
     });
   }, []);
@@ -68,7 +69,7 @@ export const useAuthActions = () => {
     async (token: string, newPassword: string) => {
       return authApiRef.current.execute(
         () => authApi.resetPassword(token, newPassword),
-        { suppressValidationToast: true, dedupeKey: "resetPassword" },
+        { showErrorNotification: false, dedupeKey: "resetPassword" },
       );
     },
     [],
@@ -78,7 +79,7 @@ export const useAuthActions = () => {
     async (code: string) => {
       const response = await authApiRef.current.execute(
         () => authApi.oauth2Exchange(code),
-        { dedupeKey: "oauth2Exchange" },
+        { showErrorNotification: false, dedupeKey: "oauth2Exchange" },
       );
       if (response) {
         await handleAuthSuccess(consumeOAuth2Redirect());

@@ -1,6 +1,6 @@
 import React from "react";
 import { Select } from "@/components/ui/Select/Select";
-import { Input } from "@/components/ui/Input/Input";
+import { SearchInput } from "@/components/ui/SearchInput/SearchInput";
 import { Button } from "@/components/ui/Button/Button";
 import type { SelectOption } from "@/components/ui/Select/Select";
 import { getActionDisplay, getEntityTypeDisplay } from "@/types/audit";
@@ -48,8 +48,11 @@ export const AuditLogsFilters: React.FC<AuditLogsFiltersProps> = ({
   return (
     <div className={styles.filtersContainer}>
       <div className={styles.filterItem}>
-        <label className={styles.label}>Type</label>
+        <label htmlFor="audit-logs-filters-type" className={styles.label}>
+          Type
+        </label>
         <Select
+          id="audit-logs-filters-type"
           options={entityTypeOptions}
           value={entityType}
           onChange={(value) => onEntityTypeChange(value.toString())}
@@ -58,8 +61,11 @@ export const AuditLogsFilters: React.FC<AuditLogsFiltersProps> = ({
       </div>
 
       <div className={styles.filterItem}>
-        <label className={styles.label}>Action</label>
+        <label htmlFor="audit-logs-filters-action" className={styles.label}>
+          Action
+        </label>
         <Select
+          id="audit-logs-filters-action"
           options={actionOptions}
           value={action}
           onChange={(value) => onActionChange(value.toString())}
@@ -68,10 +74,13 @@ export const AuditLogsFilters: React.FC<AuditLogsFiltersProps> = ({
       </div>
 
       <div className={styles.filterItem}>
-        <label className={styles.label}>Changed By</label>
-        <Input
+        <label htmlFor="audit-logs-filters-changed-by" className={styles.label}>
+          Changed By
+        </label>
+        <SearchInput
+          id="audit-logs-filters-changed-by"
           value={changedBy}
-          onChange={onChangedByChange}
+          onSearch={onChangedByChange}
           placeholder="User email"
         />
       </div>

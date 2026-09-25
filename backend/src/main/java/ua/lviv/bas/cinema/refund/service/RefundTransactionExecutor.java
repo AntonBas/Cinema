@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.refund.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -88,6 +89,7 @@ public class RefundTransactionExecutor {
         return refund;
     }
 
+    @CacheEvict(value = "seatAvailability", allEntries = true)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Refund applySuccess(Long refundId, Long ticketId) {
         var refund = refundRepository.findById(refundId)

@@ -8,6 +8,7 @@ export interface SearchInputProps {
   delay?: number;
   className?: string;
   disabled?: boolean;
+  id?: string;
 }
 
 export const SearchInput: React.FC<SearchInputProps> = ({
@@ -17,6 +18,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   delay = 300,
   className = "",
   disabled = false,
+  id,
 }) => {
   const [query, setQuery] = useState(value);
   const [syncedValue, setSyncedValue] = useState(value);
@@ -59,6 +61,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
     <div className={`${styles.searchContainer} ${className}`}>
       <div className={styles.searchInputWrapper}>
         <input
+          id={id}
           type="text"
           value={query}
           onChange={handleChange}

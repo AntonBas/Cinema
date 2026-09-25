@@ -6,6 +6,7 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
@@ -57,34 +58,41 @@ public class BookingService {
     }
 
     @CacheEvict(value = "sessions", allEntries = true)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public BookingResponse createBooking(BookingCreateRequest request, User user) {
         var created = bookingCreationService.createAndPersist(request, user);
-        var saved = bookingRepository.findById(created.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Booking", created.getId()));
+        var bookingId = created.getId();
 
-        if (saved.getBonusPointsUsed() != null && saved.getBonusPointsUsed() > 0) {
+        if (created.getBonusPointsUsed() != null && created.getBonusPointsUsed() > 0) {
             try {
-                bonusLedgerService.spendPoints(user.getId(), saved.getBonusPointsUsed(), saved);
+                transactionTemplate.executeWithoutResult(status -> bonusLedgerService.spendPoints(user.getId(),
+                        created.getBonusPointsUsed(), findBooking(bookingId)));
             } catch (RuntimeException e) {
                 log.warn("Bonus spend failed for booking {}, cancelling the booking instead of leaving it "
-                        + "with an unpaid discount", saved.getId(), e);
-                cancelAfterBonusSpendFailure(saved.getId());
+                        + "with an unpaid discount", bookingId, e);
+                cancelAfterBonusSpendFailure(bookingId);
                 throw e;
             }
         }
 
-        log.info("Created booking {} for user {} with {} bonus points used", saved.getId(), user.getId(),
-                saved.getBonusPointsUsed());
-        auditCreate(saved, user);
-        seatReservationService.evictAvailabilityCache(saved.getSession().getId());
+        return transactionTemplate.execute(status -> {
+            var saved = findBooking(bookingId);
+            log.info("Created booking {} for user {} with {} bonus points used", saved.getId(), user.getId(),
+                    saved.getBonusPointsUsed());
+            auditCreate(saved, user);
+            seatReservationService.evictAvailabilityCache(saved.getSession().getId());
+            return bookingMapper.toResponse(saved);
+        });
+    }
 
-        return bookingMapper.toResponse(saved);
+    private Booking findBooking(Long bookingId) {
+        return bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new EntityNotFoundException("Booking", bookingId));
     }
 
     private void cancelAfterBonusSpendFailure(Long bookingId) {
         transactionTemplate.executeWithoutResult(status -> {
-            var booking = bookingRepository.findById(bookingId)
-                    .orElseThrow(() -> new EntityNotFoundException("Booking", bookingId));
+            var booking = findBooking(bookingId);
             booking.setStatus(BookingStatus.CANCELLED);
             booking.setBonusPointsUsed(0);
             booking.setBonusDiscountAmount(BigDecimal.ZERO);

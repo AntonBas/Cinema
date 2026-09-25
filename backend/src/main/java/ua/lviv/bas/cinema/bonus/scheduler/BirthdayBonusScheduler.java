@@ -19,41 +19,41 @@ import ua.lviv.bas.cinema.common.CinemaTime;
 @RequiredArgsConstructor
 public class BirthdayBonusScheduler {
 
-	private final UserRepository userRepository;
-	private final BonusLedgerService bonusLedgerService;
+    private final UserRepository userRepository;
+    private final BonusLedgerService bonusLedgerService;
 
-	@Scheduled(cron = "${scheduler.birthday-bonus.cron:0 0 9 * * *}")
-	public void awardBirthdayBonuses() {
-		log.info("Starting birthday bonus distribution");
+    @Scheduled(cron = "${scheduler.birthday-bonus.cron:0 0 9 * * *}")
+    public void awardBirthdayBonuses() {
+        log.info("Starting birthday bonus distribution");
 
-		LocalDate today = CinemaTime.today();
-		int dayOfMonth = today.getDayOfMonth();
-		int month = today.getMonthValue();
+        LocalDate today = CinemaTime.today();
+        int dayOfMonth = today.getDayOfMonth();
+        int month = today.getMonthValue();
 
-		List<User> birthdayUsers = userRepository.findVerifiedUsersWithBirthday(VerificationStatus.VERIFIED, dayOfMonth,
-				month);
+        List<User> birthdayUsers = userRepository.findVerifiedUsersWithBirthday(VerificationStatus.VERIFIED, dayOfMonth,
+                month);
 
-		if (birthdayUsers.isEmpty()) {
-			log.info("No verified users with birthday today");
-			return;
-		}
+        if (birthdayUsers.isEmpty()) {
+            log.info("No verified users with birthday today");
+            return;
+        }
 
-		log.info("Found {} users with birthday today", birthdayUsers.size());
+        log.info("Found {} users with birthday today", birthdayUsers.size());
 
-		int awardedCount = 0;
-		int failedCount = 0;
+        int awardedCount = 0;
+        int failedCount = 0;
 
-		for (User user : birthdayUsers) {
-			try {
-				bonusLedgerService.awardBirthdayBonus(user);
-				awardedCount++;
-				log.info("Awarded birthday bonus to user {} ({})", user.getId(), user.getEmail());
-			} catch (Exception e) {
-				failedCount++;
-				log.error("Failed to award birthday bonus to user {}", user.getId(), e);
-			}
-		}
+        for (User user : birthdayUsers) {
+            try {
+                bonusLedgerService.awardBirthdayBonus(user);
+                awardedCount++;
+                log.info("Awarded birthday bonus to user {} ({})", user.getId(), user.getEmail());
+            } catch (Exception e) {
+                failedCount++;
+                log.error("Failed to award birthday bonus to user {}", user.getId(), e);
+            }
+        }
 
-		log.info("Birthday bonus distribution completed. Awarded: {}, Failed: {}", awardedCount, failedCount);
-	}
+        log.info("Birthday bonus distribution completed. Awarded: {}, Failed: {}", awardedCount, failedCount);
+    }
 }

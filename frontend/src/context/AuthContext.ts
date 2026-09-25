@@ -1,6 +1,5 @@
 import { createContext, useContext } from "react";
 import type { UserResponse } from "@/types/user";
-import type { LoginRequest, RegisterRequest } from "@/types/auth";
 
 export interface AuthContextType {
   user: UserResponse | null;
@@ -9,8 +8,6 @@ export interface AuthContextType {
   isAdmin: boolean;
   isCashier: boolean;
   isContentManager: boolean;
-  login: (credentials: LoginRequest) => Promise<void>;
-  register: (userData: RegisterRequest) => Promise<UserResponse>;
   logout: (redirectTo?: string) => void;
   refreshUser: () => Promise<void>;
 }

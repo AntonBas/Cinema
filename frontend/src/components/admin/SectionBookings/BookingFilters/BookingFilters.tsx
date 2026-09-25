@@ -72,8 +72,11 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
 
       <div className={styles.grid}>
         <div className={styles.filterItem}>
-          <label className={styles.label}>Status</label>
+          <label htmlFor="booking-filters-status" className={styles.label}>
+            Status
+          </label>
           <Select
+            id="booking-filters-status"
             value={filters.status || ""}
             onChange={(value) =>
               onChange({ status: (value as BookingStatus) || undefined })
@@ -83,8 +86,11 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
         </div>
 
         <div className={styles.filterItem}>
-          <label className={styles.label}>Payment</label>
+          <label htmlFor="booking-filters-payment" className={styles.label}>
+            Payment
+          </label>
           <Select
+            id="booking-filters-payment"
             value={filters.paymentStatus || ""}
             onChange={(value) =>
               onChange({
@@ -121,8 +127,11 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
         </div>
 
         <div className={styles.filterItem}>
-          <label className={styles.label}>Sort by</label>
+          <label htmlFor="booking-filters-sort-by" className={styles.label}>
+            Sort by
+          </label>
           <Select
+            id="booking-filters-sort-by"
             value={sort || ""}
             onChange={(value) => onSortChange(String(value))}
             options={SORT_OPTIONS}

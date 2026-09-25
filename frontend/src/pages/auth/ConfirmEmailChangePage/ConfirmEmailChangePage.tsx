@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 import { XCircle, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { api } from "@/services/api";
+import { authApi } from "@/api/authApi";
 import { isApiErrorException } from "@/utils/apiErrorHandler";
 import { Button } from "@/components/ui/Button/Button";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
@@ -42,9 +42,7 @@ export const ConfirmEmailChangePage: React.FC = () => {
 
     const confirmEmailChange = async () => {
       try {
-        await api.post(
-          `/api/tokens/email/change/confirm?token=${confirmationToken}`,
-        );
+        await authApi.confirmEmailChange(confirmationToken);
         await refreshUser();
         setStatus("success");
       } catch (error) {

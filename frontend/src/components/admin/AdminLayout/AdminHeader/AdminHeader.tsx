@@ -1,5 +1,6 @@
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
+import { UserRoleDisplay } from "@/types/user";
 import styles from "./AdminHeader.module.css";
 
 interface AdminHeaderProps {
@@ -46,7 +47,11 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         <div className={styles.userInfo}>
           <div className={styles.userDetails}>
             <span className={styles.userName}>{fullName}</span>
-            <span className={styles.userRole}>Administrator</span>
+            {user && (
+              <span className={styles.userRole}>
+                {UserRoleDisplay[user.userRole]}
+              </span>
+            )}
           </div>
           <div className={styles.statusIndicator}></div>
         </div>

@@ -38,6 +38,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
   const [pendingRole, setPendingRole] = useState<UserRole | null>(null);
 
   const { isAdmin } = useAuth();
+  const fullName = `${user.firstName} ${user.lastName}`;
   const { updateRole, updateStatus, updateBirthDateVerification, loading } =
     useAdminUsers();
 
@@ -49,7 +50,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
   const handleRoleChange = async () => {
     if (!pendingRole) return;
     try {
-      await updateRole(user.id, pendingRole);
+      await updateRole(user.id, pendingRole, fullName);
       onUpdate();
     } catch {
       return;
@@ -60,7 +61,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
 
   const handleStatusChange = async () => {
     try {
-      await updateStatus(user.id, !user.enabled);
+      await updateStatus(user.id, !user.enabled, fullName);
       onUpdate();
     } catch {
       return;
@@ -73,7 +74,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
     const newStatus: VerificationStatus =
       user.verificationStatus === "VERIFIED" ? "NOT_VERIFIED" : "VERIFIED";
     try {
-      await updateBirthDateVerification(user.id, newStatus);
+      await updateBirthDateVerification(user.id, newStatus, fullName);
       onUpdate();
     } catch {
       return;

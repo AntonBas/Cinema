@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Input } from "@/components/ui/Input/Input";
 import { Button } from "@/components/ui/Button/Button";
 import { Modal } from "@/components/ui/Modal/Modal";
@@ -30,18 +30,18 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [showDateChangeWarning, setShowDateChangeWarning] = useState(false);
   const [originalDateOfBirth] = useState(user.dateOfBirth);
-
-  useEffect(() => {
-    if (
-      formData.dateOfBirth !== originalDateOfBirth &&
-      user.verificationStatus === "VERIFIED"
-    ) {
-      setShowDateChangeWarning(true);
-    }
-  }, [formData.dateOfBirth, originalDateOfBirth, user.verificationStatus]);
+  const [dateChangeAcknowledged, setDateChangeAcknowledged] = useState(false);
 
   const handleChange = (field: keyof UserUpdateRequest, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    if (
+      field === "dateOfBirth" &&
+      value !== originalDateOfBirth &&
+      user.verificationStatus === "VERIFIED" &&
+      !dateChangeAcknowledged
+    ) {
+      setShowDateChangeWarning(true);
+    }
     if (formErrors[field]) {
       setFormErrors((prev) => ({ ...prev, [field]: "" }));
     }
@@ -75,6 +75,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
   };
 
   const handleDateChangeContinue = () => {
+    setDateChangeAcknowledged(true);
     setShowDateChangeWarning(false);
   };
 

@@ -38,7 +38,7 @@ class TicketMapperTest {
                 .finalPrice(new BigDecimal("250.00")).status(TicketStatus.ACTIVE)
                 .purchaseTime(Instant.parse("2024-01-15T14:35:00Z")).build();
 
-        TicketResponse response = mapper.toTicketResponse(ticket);
+        TicketResponse response = mapper.toTicketResponse(ticket, "/api/tickets/code/TKT-ABC123/qr", true);
 
         assertThat(response.id()).isEqualTo(456L);
         assertThat(response.ticketCode()).isEqualTo("TKT-ABC123");
@@ -47,6 +47,8 @@ class TicketMapperTest {
         assertThat(response.ticketType()).isEqualTo("Adult Ticket");
         assertThat(response.movieTitle()).isEqualTo("Inception");
         assertThat(response.hallName()).isEqualTo("Hall A");
+        assertThat(response.qrCodeUrl()).isEqualTo("/api/tickets/code/TKT-ABC123/qr");
+        assertThat(response.refundable()).isTrue();
     }
 
     @Test
@@ -131,7 +133,7 @@ class TicketMapperTest {
         Ticket ticket = Ticket.builder().id(456L).booking(null).uniqueCode("TKT-ABC123").ticketType(ticketType)
                 .finalPrice(new BigDecimal("250.00")).status(TicketStatus.ACTIVE).build();
 
-        TicketResponse response = mapper.toTicketResponse(ticket);
+        TicketResponse response = mapper.toTicketResponse(ticket, "/api/tickets/code/TKT-ABC123/qr", true);
 
         assertThat(response.id()).isEqualTo(456L);
         assertThat(response.ticketCode()).isEqualTo("TKT-ABC123");
@@ -149,7 +151,7 @@ class TicketMapperTest {
         Ticket ticket = Ticket.builder().id(456L).booking(booking).uniqueCode("TKT-ABC123").ticketType(null)
                 .finalPrice(new BigDecimal("250.00")).status(TicketStatus.ACTIVE).build();
 
-        TicketResponse response = mapper.toTicketResponse(ticket);
+        TicketResponse response = mapper.toTicketResponse(ticket, "/api/tickets/code/TKT-ABC123/qr", true);
 
         assertThat(response.id()).isEqualTo(456L);
         assertThat(response.ticketCode()).isEqualTo("TKT-ABC123");

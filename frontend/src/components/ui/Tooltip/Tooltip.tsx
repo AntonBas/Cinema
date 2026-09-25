@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
 import styles from "./Tooltip.module.css";
 
 export interface TooltipProps {
@@ -9,6 +9,7 @@ export interface TooltipProps {
   className?: string;
   style?: React.CSSProperties;
   id?: string;
+  focusableTrigger?: boolean;
 }
 
 const SHOW_DELAY_MS = 200;
@@ -21,10 +22,12 @@ export const Tooltip: React.FC<TooltipProps> = ({
   className = "",
   style,
   id,
+  focusableTrigger = false,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const showTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const tooltipId = id || `tooltip-${Math.random().toString(36).substr(2, 9)}`;
+  const generatedId = useId();
+  const tooltipId = id || generatedId;
 
   useEffect(() => {
     return () => {
@@ -61,7 +64,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
         onBlur={hide}
         className={styles.tooltipTrigger}
         aria-describedby={isVisible ? tooltipId : undefined}
-        tabIndex={0}
+        tabIndex={focusableTrigger ? 0 : undefined}
       >
         {children}
       </div>

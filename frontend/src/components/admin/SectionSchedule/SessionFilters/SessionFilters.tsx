@@ -265,6 +265,7 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
                   size="small"
                   onClick={handleClearMovie}
                   className={styles.clearMovieButton}
+                  aria-label="Clear movie filter"
                 >
                   ×
                 </Button>

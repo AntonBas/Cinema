@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
 import ua.lviv.bas.cinema.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.cinema.domain.Seat;
+import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.cinema.dto.hall.request.CinemaHallRequest;
 import ua.lviv.bas.cinema.cinema.dto.hall.request.HallLayoutRequest;
 import ua.lviv.bas.cinema.cinema.dto.hall.request.SeatLayoutItemRequest;
@@ -21,6 +22,7 @@ import ua.lviv.bas.cinema.exception.domain.hall.CinemaHallHasSessionsException;
 import ua.lviv.bas.cinema.exception.domain.hall.DuplicateSeatPositionException;
 import ua.lviv.bas.cinema.exception.domain.hall.SeatHasTicketsException;
 import ua.lviv.bas.cinema.cinema.mapper.CinemaHallMapper;
+import ua.lviv.bas.cinema.cinema.mapper.SeatMapper;
 import ua.lviv.bas.cinema.cinema.repository.CinemaHallRepository;
 import ua.lviv.bas.cinema.cinema.repository.SeatRepository;
 import ua.lviv.bas.cinema.common.CacheableList;
@@ -45,6 +47,7 @@ public class CinemaHallService {
     private final CinemaHallRepository hallRepository;
     private final SeatRepository seatRepository;
     private final CinemaHallMapper hallMapper;
+    private final SeatMapper seatMapper;
     private final AuditService auditService;
 
     @CacheEvict(value = "cinemaHalls", allEntries = true)
@@ -53,7 +56,7 @@ public class CinemaHallService {
         log.info("Creating cinema hall: {}", request.name());
         validateHallNameUniqueness(request.name(), null);
 
-        var hall = CinemaHall.builder().name(request.name()).build();
+        var hall = hallMapper.toEntity(request);
         var saved = hallRepository.save(hall);
         log.debug("Cinema hall created with ID: {}", saved.getId());
         auditCreate(saved);
@@ -141,9 +144,9 @@ public class CinemaHallService {
 
         for (var item : request.seats()) {
             if (item.id() == null) {
-                hall.getSeats().add(toNewSeat(hall, item));
+                hall.getSeats().add(seatMapper.toEntity(item, hall));
             } else {
-                applyChanges(existingById.get(item.id()), item);
+                seatMapper.updateEntity(item, existingById.get(item.id()));
             }
         }
 
@@ -180,6 +183,7 @@ public class CinemaHallService {
 
     private void validateHallHasNoFutureSessions(CinemaHall hall) {
         boolean hasFutureSessions = hall.getSessions().stream()
+                .filter(session -> session.getStatus() != CinemaSessionStatus.CANCELLED)
                 .anyMatch(session -> session.getStartTime().isAfter(CinemaTime.now()));
         if (hasFutureSessions) {
             throw new CinemaHallHasSessionsException(hall.getName(), hall.getId());
@@ -213,20 +217,6 @@ public class CinemaHallService {
 
     private boolean hasPositionChanged(Seat existing, SeatLayoutItemRequest item) {
         return !existing.getRow().equals(item.row()) || !existing.getNumber().equals(item.number());
-    }
-
-    private Seat toNewSeat(CinemaHall hall, SeatLayoutItemRequest item) {
-        return Seat.builder().row(item.row()).number(item.number()).seatType(item.seatType()).x(item.x())
-                .y(item.y()).active(item.active()).hall(hall).build();
-    }
-
-    private void applyChanges(Seat seat, SeatLayoutItemRequest item) {
-        seat.setRow(item.row());
-        seat.setNumber(item.number());
-        seat.setSeatType(item.seatType());
-        seat.setX(item.x());
-        seat.setY(item.y());
-        seat.setActive(item.active());
     }
 
     private void auditCreate(CinemaHall hall) {

@@ -13,8 +13,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.movie.domain.status.MovieStatus;
 import ua.lviv.bas.cinema.common.PageResponse;
@@ -123,7 +128,10 @@ public class MovieController {
     })
     public ResponseEntity<byte[]> getPoster(@PathVariable Long id) {
         log.info("GET /api/movies/{}/poster - Getting movie poster", id);
-        return movieService.getPoster(id);
+        return movieService.getPoster(id)
+                .map(poster -> ResponseEntity.ok().contentType(poster.mediaType())
+                        .header(HttpHeaders.CACHE_CONTROL, "max-age=3600").body(poster.data()))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @RateLimit(value = 20, duration = 1)

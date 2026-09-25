@@ -64,6 +64,7 @@ export const MovieTab: React.FC = () => {
     ARCHIVED: { data: [], total: 0, pagination: null },
   });
   const [loadingMovie, setLoadingMovie] = useState(false);
+  const [tabLoading, setTabLoading] = useState(true);
 
   const { page, query, getParam, setParams, setPage, setSearch } =
     useUrlParams();
@@ -74,7 +75,7 @@ export const MovieTab: React.FC = () => {
   );
   const { loading: moviesLoading, remove } = useMovie();
   const { showNotification } = useNotification();
-  const showLoading = useDelayedLoading(moviesLoading || loadingMovie, {
+  const showLoading = useDelayedLoading(tabLoading || loadingMovie, {
     delay: 150,
     minDisplayTime: 300,
   });
@@ -89,6 +90,7 @@ export const MovieTab: React.FC = () => {
     async (tab: MovieTabType, page: number, search?: string) => {
       const requestId = ++latestRequestRef.current[tab];
       const isLatest = () => requestId === latestRequestRef.current[tab];
+      setTabLoading(true);
 
       try {
         const status = tab as MovieStatus;
@@ -116,6 +118,8 @@ export const MovieTab: React.FC = () => {
           ? error.message
           : `Failed to load ${tab.toLowerCase()} movies`;
         showNotification(message, "error");
+      } finally {
+        if (isLatest()) setTabLoading(false);
       }
     },
     [showNotification],
@@ -324,7 +328,7 @@ export const MovieTab: React.FC = () => {
           movies={currentTabData.data}
           onEdit={handleEdit}
           onDelete={handleDeleteClick}
-          loading={moviesLoading && !currentTabData.data.length}
+          loading={tabLoading && !currentTabData.data.length}
           onCreateNew={handleAddNew}
         />
       </div>

@@ -10,7 +10,7 @@ import ua.lviv.bas.cinema.refund.dto.response.RefundItemResponse;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface RefundItemMapper {
 
-	@Mapping(target = "ticketCode", source = "ticket.uniqueCode")
-	@Mapping(target = "ticketId", source = "ticket.id")
-	RefundItemResponse toResponse(RefundItem refundItem);
+    @Mapping(target = "ticketCode", source = "ticket.uniqueCode")
+    @Mapping(target = "ticketId", source = "ticket.id")
+    RefundItemResponse toResponse(RefundItem refundItem);
 }

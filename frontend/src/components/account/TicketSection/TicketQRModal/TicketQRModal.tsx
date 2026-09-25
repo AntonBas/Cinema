@@ -18,6 +18,7 @@ export const TicketQRModal: React.FC<TicketQRModalProps> = ({
   const [qrImage, setQrImage] = useState<string>("");
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   useEffect(() => {
     let objectUrl = "";
@@ -42,7 +43,7 @@ export const TicketQRModal: React.FC<TicketQRModalProps> = ({
     return () => {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [ticketCode, getQRCode]);
+  }, [ticketCode, getQRCode, loadAttempt]);
 
   const handleDownload = () => {
     if (!qrImage) return;
@@ -54,7 +55,11 @@ export const TicketQRModal: React.FC<TicketQRModalProps> = ({
   };
 
   const handleCopyCode = async () => {
-    await navigator.clipboard.writeText(ticketCode);
+    try {
+      await navigator.clipboard.writeText(ticketCode);
+    } catch {
+      return;
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -88,7 +93,7 @@ export const TicketQRModal: React.FC<TicketQRModalProps> = ({
               <p>{error || "Failed to load QR code"}</p>
               <Button
                 variant="secondary"
-                onClick={() => window.location.reload()}
+                onClick={() => setLoadAttempt((attempt) => attempt + 1)}
               >
                 Retry
               </Button>

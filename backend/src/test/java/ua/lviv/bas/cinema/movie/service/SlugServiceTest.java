@@ -78,7 +78,7 @@ public class SlugServiceTest {
     @Test
     void generateUniqueSlugShouldReturnBaseSlugWhenNoConflict() {
         when(movieRepository.findBySlug("unique-movie-title")).thenReturn(Optional.empty());
-        String result = slugService.generateUniqueSlug("Unique Movie Title");
+        String result = slugService.generateUniqueSlug("Unique Movie Title", null);
         assertThat(result).isEqualTo("unique-movie-title");
     }
 
@@ -88,7 +88,7 @@ public class SlugServiceTest {
         existingMovie.setId(1L);
         when(movieRepository.findBySlug("existing-movie")).thenReturn(Optional.of(existingMovie));
         when(movieRepository.findBySlug("existing-movie-1")).thenReturn(Optional.empty());
-        String result = slugService.generateUniqueSlug("Existing Movie");
+        String result = slugService.generateUniqueSlug("Existing Movie", null);
         assertThat(result).isEqualTo("existing-movie-1");
     }
 
@@ -101,8 +101,27 @@ public class SlugServiceTest {
         when(movieRepository.findBySlug("popular-movie")).thenReturn(Optional.of(movie1));
         when(movieRepository.findBySlug("popular-movie-1")).thenReturn(Optional.of(movie2));
         when(movieRepository.findBySlug("popular-movie-2")).thenReturn(Optional.empty());
-        String result = slugService.generateUniqueSlug("Popular Movie");
+        String result = slugService.generateUniqueSlug("Popular Movie", null);
         assertThat(result).isEqualTo("popular-movie-2");
+    }
+
+    @Test
+    void generateUniqueSlugShouldKeepOwnSlugOfUpdatedMovie() {
+        Movie existingMovie = new Movie();
+        existingMovie.setId(7L);
+        when(movieRepository.findBySlug("dune")).thenReturn(Optional.of(existingMovie));
+        String result = slugService.generateUniqueSlug("DUNE", 7L);
+        assertThat(result).isEqualTo("dune");
+    }
+
+    @Test
+    void generateSlugShouldTransliterateCyrillic() {
+        assertThat(slugService.generateSlug("Тіні забутих предків")).isEqualTo("tini-zabutykh-predkiv");
+    }
+
+    @Test
+    void generateSlugShouldFallBackWhenNothingTransliterable() {
+        assertThat(slugService.generateSlug("!!!")).isEqualTo("movie");
     }
 
     @Test

@@ -30,32 +30,32 @@ import ua.lviv.bas.cinema.audit.domain.AuditableEntity;
 @ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @Table(name = "bonus_rules", indexes = { @Index(name = "idx_bonus_rules_active", columnList = "active"),
-		@Index(name = "idx_bonus_rules_type", columnList = "bonus_type") })
+        @Index(name = "idx_bonus_rules_type", columnList = "bonus_type") })
 public class BonusRules extends AuditableEntity {
 
-	@Id
-	@EqualsAndHashCode.Include
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @EqualsAndHashCode.Include
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@NotNull
-	@Enumerated(EnumType.STRING)
-	@Column(name = "bonus_type", unique = true, nullable = false, length = 50)
-	private BonusTransactionType bonusType;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name = "bonus_type", unique = true, nullable = false, length = 50)
+    private BonusTransactionType bonusType;
 
-	@Column(name = "points")
-	private Integer points;
+    @Column(name = "points")
+    private Integer points;
 
-	@Column(name = "money_ratio", precision = 10, scale = 4)
-	private BigDecimal moneyRatio;
+    @Column(name = "money_ratio", precision = 10, scale = 4)
+    private BigDecimal moneyRatio;
 
-	@Column(name = "min_points_per_transaction")
-	private Integer minPointsPerTransaction;
+    @Column(name = "min_points_per_transaction")
+    private Integer minPointsPerTransaction;
 
-	@Column(name = "max_points_per_transaction")
-	private Integer maxPointsPerTransaction;
+    @Column(name = "max_points_per_transaction")
+    private Integer maxPointsPerTransaction;
 
-	@Column(name = "active", nullable = false)
-	@Builder.Default
-	private Boolean active = true;
+    @Column(name = "active", nullable = false)
+    @Builder.Default
+    private Boolean active = true;
 }

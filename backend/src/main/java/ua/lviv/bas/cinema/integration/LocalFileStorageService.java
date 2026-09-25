@@ -50,7 +50,7 @@ public class LocalFileStorageService implements FileStorageService {
 
             String fileName = UUID.randomUUID() + extension;
 
-            Path basePath = Paths.get(uploadDir).toRealPath().normalize().toAbsolutePath();
+            Path basePath = Files.createDirectories(Paths.get(uploadDir)).toRealPath().normalize().toAbsolutePath();
             Path uploadPath = basePath.resolve(sanitize(subDirectory)).normalize().toAbsolutePath();
 
             if (!uploadPath.startsWith(basePath)) {

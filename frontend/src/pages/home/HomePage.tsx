@@ -22,7 +22,7 @@ export const HomePage: React.FC = () => {
   const {
     availablePromotions,
     claimedPromotions,
-    loading: promotionsLoading,
+    listLoading: promotionsLoading,
     getAvailable,
     getClaimed,
     claim,
@@ -54,9 +54,13 @@ export const HomePage: React.FC = () => {
   }, [claimedPromotions]);
 
   const handleClaimPromotion = async (promotionId: number) => {
-    const result = await claim({ promotionId });
-    if (result) {
-      setClaimedIds((prev) => [...prev, promotionId]);
+    try {
+      const result = await claim({ promotionId });
+      if (result) {
+        setClaimedIds((prev) => [...prev, promotionId]);
+      }
+    } catch {
+      return;
     }
   };
 

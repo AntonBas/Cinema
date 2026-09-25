@@ -143,6 +143,7 @@ export const MovieRail: React.FC<MovieRailProps> = ({
               size="small"
               className={styles.navButton}
               onClick={prevSlide}
+              aria-label="Previous"
             >
               <ChevronLeft size={20} />
             </Button>
@@ -170,6 +171,7 @@ export const MovieRail: React.FC<MovieRailProps> = ({
               size="small"
               className={styles.navButton}
               onClick={nextSlide}
+              aria-label="Next"
             >
               <ChevronRight size={20} />
             </Button>

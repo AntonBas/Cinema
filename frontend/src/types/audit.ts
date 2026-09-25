@@ -67,14 +67,3 @@ export const getEntityTypeDisplay = (entityType: string): string => {
 export const getActionDisplay = (action: string): string => {
   return ActionDisplay[action] || action;
 };
-
-export const getActionColor = (action: string): string => {
-  if (action.includes("CREATED") || action.includes("REGISTER")) return "green";
-  if (action.includes("DELETED") || action.includes("REJECTED")) return "red";
-  if (action.includes("SUCCESS") || action.includes("CONFIRMED"))
-    return "green";
-  if (action.includes("FAILED") || action.includes("CANCELLED")) return "red";
-  if (action.includes("UPDATED") || action.includes("TOGGLE")) return "blue";
-  if (action.includes("REFUND") || action.includes("POINTS")) return "orange";
-  return "default";
-};

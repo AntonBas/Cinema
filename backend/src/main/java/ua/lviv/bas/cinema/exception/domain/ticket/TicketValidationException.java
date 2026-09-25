@@ -17,10 +17,6 @@ public class TicketValidationException extends ValidationException {
         super(message, errorCode);
     }
 
-    public static TicketValidationException notFound() {
-        return new TicketValidationException("Ticket not found", "TICKET_NOT_FOUND");
-    }
-
     public static TicketValidationException alreadyUsed() {
         return new TicketValidationException("Ticket has already been used", "TICKET_ALREADY_USED");
     }

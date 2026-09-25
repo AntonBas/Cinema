@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.CacheManager;
 import org.springframework.data.jpa.domain.Specification;
 import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
@@ -15,7 +16,9 @@ import ua.lviv.bas.cinema.ticket.repository.specification.TicketSpecification;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TicketSchedulerTest {
@@ -24,6 +27,8 @@ class TicketSchedulerTest {
     private TicketRepository ticketRepository;
     @Mock
     private TicketSpecification ticketSpecification;
+    @Mock
+    private CacheManager cacheManager;
 
     @InjectMocks
     private TicketScheduler ticketScheduler;

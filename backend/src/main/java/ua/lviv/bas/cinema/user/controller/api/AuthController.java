@@ -1,10 +1,7 @@
 package ua.lviv.bas.cinema.user.controller.api;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,13 +26,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
-import ua.lviv.bas.cinema.config.security.JwtBlacklistService;
-import ua.lviv.bas.cinema.config.security.JwtCookieService;
-import ua.lviv.bas.cinema.config.security.JwtTokenProvider;
-import ua.lviv.bas.cinema.config.security.OAuth2ExchangeCodeService;
-import ua.lviv.bas.cinema.exception.domain.auth.EmailNotVerifiedException;
-import ua.lviv.bas.cinema.exception.domain.auth.InvalidTokenException;
-import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.user.dto.request.OAuth2ExchangeRequest;
 import ua.lviv.bas.cinema.user.dto.request.PasswordResetRequest;
 import ua.lviv.bas.cinema.user.dto.request.ResendVerificationRequest;
@@ -44,12 +34,10 @@ import ua.lviv.bas.cinema.user.dto.request.UserRegistrationRequest;
 import ua.lviv.bas.cinema.user.dto.response.AuthResponse;
 import ua.lviv.bas.cinema.user.dto.response.ResendVerificationResponse;
 import ua.lviv.bas.cinema.user.dto.response.UserResponse;
-import ua.lviv.bas.cinema.user.mapper.UserMapper;
+import ua.lviv.bas.cinema.user.service.AuthService;
 import ua.lviv.bas.cinema.user.service.UserPasswordResetService;
 import ua.lviv.bas.cinema.user.service.UserService;
 
-import java.time.Duration;
-import java.time.Instant;
 
 @Slf4j
 @RestController
@@ -61,12 +49,7 @@ public class AuthController {
 
     private final UserService userService;
     private final UserPasswordResetService passwordResetService;
-    private final AuthenticationManager authenticationManager;
-    private final JwtTokenProvider jwtTokenProvider;
-    private final UserMapper userMapper;
-    private final JwtCookieService jwtCookieService;
-    private final JwtBlacklistService jwtBlacklistService;
-    private final OAuth2ExchangeCodeService oAuth2ExchangeCodeService;
+    private final AuthService authService;
 
     @RateLimit(value = 3, duration = 60)
     @PostMapping("/register")
@@ -94,21 +77,7 @@ public class AuthController {
     @SecurityRequirements()
     public AuthResponse login(@Valid @RequestBody UserLoginRequest request, HttpServletResponse response) {
         log.info("POST /api/auth/login - email: {}", request.email());
-
-        var authentication = authenticationManager
-                .authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
-
-        var userDetails = (CustomUserDetails) authentication.getPrincipal();
-        if (!userDetails.isEmailVerified()) {
-            throw new EmailNotVerifiedException();
-        }
-
-        var token = jwtTokenProvider.generateToken(authentication);
-        jwtCookieService.addTokenCookie(response, token);
-
-        var userResponse = userService.getUserResponse(userDetails.getUserId());
-
-        return new AuthResponse(userResponse);
+        return authService.login(request, response);
     }
 
     @RateLimit(value = 10, duration = 60)
@@ -120,19 +89,8 @@ public class AuthController {
     })
     @SecurityRequirements()
     public AuthResponse oauth2Exchange(@Valid @RequestBody OAuth2ExchangeRequest request, HttpServletResponse response) {
-        String email = oAuth2ExchangeCodeService.consume(request.code())
-                .orElseThrow(() -> new InvalidTokenException("oauth2-exchange"));
-        log.info("POST /api/auth/oauth2/exchange - email: {}", email);
-
-        User user = userService.getUser(email);
-        var userDetails = new CustomUserDetails(user);
-        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null,
-                userDetails.getAuthorities());
-
-        var token = jwtTokenProvider.generateToken(authentication);
-        jwtCookieService.addTokenCookie(response, token);
-
-        return new AuthResponse(userMapper.toUserResponse(user));
+        log.info("POST /api/auth/oauth2/exchange");
+        return authService.exchangeOAuth2Code(request.code(), response);
     }
 
     @RateLimit(value = 10, duration = 60)
@@ -144,14 +102,7 @@ public class AuthController {
     })
     @SecurityRequirements()
     public void logout(HttpServletRequest request, HttpServletResponse response) {
-        String token = jwtCookieService.extractToken(request);
-        if (token != null && jwtTokenProvider.validateToken(token)) {
-            String jti = jwtTokenProvider.getJtiFromToken(token);
-            Duration remaining = Duration.between(Instant.now(), jwtTokenProvider.getExpirationFromToken(token));
-            jwtBlacklistService.blacklist(jti, remaining);
-            log.info("User logged out, token blacklisted");
-        }
-        jwtCookieService.clearTokenCookie(response);
+        authService.logout(request, response);
     }
 
     @GetMapping("/me")

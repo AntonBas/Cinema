@@ -230,6 +230,7 @@ export const PersonSelect: React.FC<PersonSelectProps> = ({
                 type="button"
                 onClick={() => handleRemovePerson(person.id)}
                 className={styles.removeTag}
+                aria-label={`Remove ${person.name}`}
               >
                 ×
               </button>

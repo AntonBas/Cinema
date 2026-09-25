@@ -4,7 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.core.task.TaskDecorator;
+import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import ua.lviv.bas.cinema.config.http.RequestCorrelationFilter;
 
@@ -13,7 +15,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 @Slf4j
 @Configuration
-public class AsyncConfig {
+public class AsyncConfig implements AsyncConfigurer {
 
     public static final String EMAIL_EXECUTOR = "emailTaskExecutor";
     public static final String AUDIT_LOG_EXECUTOR = "auditLogTaskExecutor";
@@ -42,6 +44,12 @@ public class AsyncConfig {
         executor.setRejectedExecutionHandler(runInCallerWhenSaturated(AUDIT_LOG_EXECUTOR));
         executor.initialize();
         return executor;
+    }
+
+    @Override
+    public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
+        return (exception, method, params) -> log.error("Async task {}.{} failed",
+                method.getDeclaringClass().getSimpleName(), method.getName(), exception);
     }
 
     private RejectedExecutionHandler runInCallerWhenSaturated(String executorName) {

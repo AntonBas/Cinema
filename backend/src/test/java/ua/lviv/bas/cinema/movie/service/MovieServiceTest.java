@@ -11,7 +11,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.movie.domain.Genre;
@@ -38,6 +37,8 @@ import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.movie.repository.specification.MovieSpecification;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 import ua.lviv.bas.cinema.integration.PosterService;
+import org.springframework.http.MediaType;
+import ua.lviv.bas.cinema.integration.PosterImage;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -49,8 +50,15 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class MovieServiceTest {
@@ -139,8 +147,7 @@ public class MovieServiceTest {
 
     @Test
     void createMovieShouldSucceed() {
-        when(slugService.generateUniqueSlug(MOVIE_TITLE)).thenReturn(SLUG);
-        when(movieRepository.findBySlug(SLUG)).thenReturn(Optional.empty());
+        when(slugService.generateUniqueSlug(MOVIE_TITLE, null)).thenReturn(SLUG);
         when(movieMapper.toEntity(createRequest)).thenReturn(movie);
         when(movieStatusCalculator.calculate(any(Movie.class), any(LocalDate.class)))
                 .thenReturn(MovieStatus.UPCOMING);
@@ -164,14 +171,6 @@ public class MovieServiceTest {
 
         assertThat(result).isEqualTo(adminResponse);
         verify(movieRepository).save(movie);
-    }
-
-    @Test
-    void createMovieWithDuplicateSlugShouldThrowException() {
-        when(slugService.generateUniqueSlug(MOVIE_TITLE)).thenReturn(SLUG);
-        when(movieRepository.findBySlug(SLUG)).thenReturn(Optional.of(new Movie()));
-
-        assertThatThrownBy(() -> movieService.createMovie(createRequest)).isInstanceOf(DuplicateEntityException.class);
     }
 
     @Test
@@ -350,7 +349,7 @@ public class MovieServiceTest {
 
         movieService.updateMovie(MOVIE_ID, sameTitleRequest);
 
-        verify(slugService, never()).generateUniqueSlug(anyString());
+        verify(slugService, never()).generateUniqueSlug(anyString(), any());
     }
 
     @Test
@@ -511,20 +510,17 @@ public class MovieServiceTest {
     @Test
     void getPosterShouldReturnResponse() {
         when(movieRepository.findPosterFileNameById(MOVIE_ID)).thenReturn(Optional.of("poster.jpg"));
-        when(posterService.getPosterResponse("poster.jpg")).thenReturn(ResponseEntity.ok().body(new byte[0]));
+        var poster = new PosterImage(new byte[0], MediaType.IMAGE_JPEG);
+        when(posterService.loadPoster("poster.jpg")).thenReturn(Optional.of(poster));
 
-        ResponseEntity<byte[]> result = movieService.getPoster(MOVIE_ID);
-
-        assertThat(result.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(movieService.getPoster(MOVIE_ID)).contains(poster);
     }
 
     @Test
     void getPosterWhenNotFoundShouldReturnNotFound() {
         when(movieRepository.findPosterFileNameById(MOVIE_ID)).thenReturn(Optional.empty());
 
-        ResponseEntity<byte[]> result = movieService.getPoster(MOVIE_ID);
-
-        assertThat(result.getStatusCode().is4xxClientError()).isTrue();
+        assertThat(movieService.getPoster(MOVIE_ID)).isEmpty();
     }
 
     private List<Genre> genres(Long... ids) {

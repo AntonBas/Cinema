@@ -9,7 +9,7 @@ import type { PersonResponse } from "@/types/person";
 import { useMovie } from "@/hooks/features/movie/useMovie";
 import { useGenre } from "@/hooks/features/genre/useGenre";
 import { isApiErrorException } from "@/utils/apiErrorHandler";
-import { toBackendFormat } from "@/utils/dateUtils";
+import { getCinemaToday, toBackendFormat } from "@/utils/dateUtils";
 import { resolvePosterUrl } from "@/utils/posterUrl";
 import { PersonSelect } from "./PersonSelect/PersonSelect";
 import { GenreSearchList } from "./GenreSearchList/GenreSearchList";
@@ -73,6 +73,15 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(
       PersonResponse[]
     >([]);
     const [posterPreview, setPosterPreview] = useState<string>("");
+
+    useEffect(
+      () => () => {
+        if (posterPreview.startsWith("blob:")) {
+          URL.revokeObjectURL(posterPreview);
+        }
+      },
+      [posterPreview],
+    );
     const [errors, setErrors] = useState<Record<string, string>>({});
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -259,12 +268,13 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(
       >
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.formGroup}>
-            <label className={styles.label}>
+            <label htmlFor="movie-form-poster" className={styles.label}>
               Movie Poster{" "}
               {!movie && <span className={styles.required}>*</span>}
             </label>
             <div className={styles.fileUpload}>
               <input
+                id="movie-form-poster"
                 type="file"
                 ref={fileInputRef}
                 onChange={handlePosterSelect}
@@ -405,7 +415,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(
                     releaseDate: value ? new Date(value) : null,
                   }))
                 }
-                min={movie ? undefined : new Date().toISOString().split("T")[0]}
+                min={movie ? undefined : getCinemaToday()}
                 error={errors.releaseDate}
               />
             </div>
@@ -428,9 +438,9 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(
           </div>
 
           <div className={styles.formGroup}>
-            <label className={styles.label}>
+            <span className={styles.label}>
               Genres <span className={styles.required}>*</span>
-            </label>
+            </span>
             <GenreSearchList
               genres={allGenres}
               selectedIds={formData.selectedGenres}
@@ -442,9 +452,9 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(
           </div>
 
           <div className={styles.formGroup}>
-            <label className={styles.label}>
+            <span className={styles.label}>
               Actors <span className={styles.required}>*</span>
-            </label>
+            </span>
             <PersonSelect
               selectedIds={formData.selectedActors}
               selectedPersons={selectedActors}
@@ -458,9 +468,9 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(
           </div>
 
           <div className={styles.formGroup}>
-            <label className={styles.label}>
+            <span className={styles.label}>
               Directors <span className={styles.required}>*</span>
-            </label>
+            </span>
             <PersonSelect
               selectedIds={formData.selectedDirectors}
               selectedPersons={selectedDirectors}
@@ -474,9 +484,9 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(
           </div>
 
           <div className={styles.formGroup}>
-            <label className={styles.label}>
+            <span className={styles.label}>
               Screenwriters <span className={styles.required}>*</span>
-            </label>
+            </span>
             <PersonSelect
               selectedIds={formData.selectedScreenwriters}
               selectedPersons={selectedScreenwriters}

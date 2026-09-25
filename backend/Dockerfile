@@ -13,7 +13,7 @@ WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
 
 RUN mkdir -p logs uploads/posters && \
-    apt-get update && apt-get install -y curl && \
+    apt-get update && apt-get install -y --no-install-recommends curl && \
     rm -rf /var/lib/apt/lists/* && \
     groupadd -r spring && useradd -r -g spring spring && \
     chown -R spring:spring /app

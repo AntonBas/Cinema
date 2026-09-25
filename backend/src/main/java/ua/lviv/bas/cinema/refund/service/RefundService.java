@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.config.properties.RefundRules;
 import ua.lviv.bas.cinema.refund.domain.Refund;
+import ua.lviv.bas.cinema.refund.domain.status.RefundStatus;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.refund.dto.request.RefundPreviewRequest;
 import ua.lviv.bas.cinema.refund.dto.request.RefundRequest;
@@ -15,7 +16,6 @@ import ua.lviv.bas.cinema.refund.dto.response.RefundResponse;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusCardConcurrentModificationException;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 import ua.lviv.bas.cinema.exception.domain.financial.refund.RefundProcessingException;
-import ua.lviv.bas.cinema.refund.mapper.RefundItemMapper;
 import ua.lviv.bas.cinema.refund.mapper.RefundMapper;
 import ua.lviv.bas.cinema.payment.service.PaymentRefundService;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
@@ -42,7 +42,6 @@ public class RefundService {
     private final RefundTransactionExecutor refundTransactionExecutor;
     private final RefundRules refundRules;
     private final RefundMapper refundMapper;
-    private final RefundItemMapper refundItemMapper;
     private final NumberGeneratorService numberGenerator;
     private final SeatInfoFormatter seatInfoFormatter;
 
@@ -144,12 +143,16 @@ public class RefundService {
     }
 
     private RefundResponse buildResponse(Refund refund) {
-        var response = refundMapper.toResponse(refund);
-        return new RefundResponse(response.id(), numberGenerator.generateRefundNumber(refund), response.status(),
-                response.totalAmount(), response.totalBonusPointsToDeduct(), response.reason(), response.processedBy(),
-                response.processedAt(), response.createdAt(), response.paymentId(), "CARD",
-                refund.getItems() != null ? refund.getItems().stream().map(refundItemMapper::toResponse).toList()
-                        : null,
-                "Refund processed successfully", "3-5 business days");
+        return refundMapper.toResponse(refund, numberGenerator.generateRefundNumber(refund),
+                statusMessage(refund.getStatus()),
+                refund.getStatus() == RefundStatus.REJECTED ? null : "3-5 business days");
+    }
+
+    private String statusMessage(RefundStatus status) {
+        return switch (status) {
+            case PROCESSED -> "Refund processed successfully";
+            case REJECTED -> "Refund was rejected by the payment provider";
+            default -> "Refund is being processed";
+        };
     }
 }

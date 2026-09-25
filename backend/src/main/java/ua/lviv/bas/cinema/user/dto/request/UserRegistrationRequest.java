@@ -1,7 +1,12 @@
 package ua.lviv.bas.cinema.user.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 
@@ -37,7 +42,7 @@ public record UserRegistrationRequest(
         @NotBlank(message = "Phone Number is required")
         String phoneNumber,
 
-        @Schema(description = "User's password", example = "SecurePassword123!", requiredMode = Schema.RequiredMode.REQUIRED, minLength = 8, maxLength = 72)
+        @Schema(description = "User's password", example = "SecurePassword123!", requiredMode = Schema.RequiredMode.REQUIRED, minLength = 8, maxLength = 32)
         @Size(min = 8, max = 32, message = "Password must be between 8 and 32 characters")
         @NotBlank(message = "Password is required")
         String password,

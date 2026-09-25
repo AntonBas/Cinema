@@ -54,10 +54,14 @@ export const BookingPage: React.FC = () => {
       const seat = seatData?.seats.find((s: SeatInfo) => s.id === seatId);
       if (!seat) return;
 
-      if (isSeatSelected(seatId)) {
-        await deselectSeat(seatId);
-      } else {
-        await selectSeat(seat);
+      try {
+        if (isSeatSelected(seatId)) {
+          await deselectSeat(seatId);
+        } else {
+          await selectSeat(seat);
+        }
+      } catch {
+        return;
       }
     },
     [seatData, isSeatSelected, deselectSeat, selectSeat],

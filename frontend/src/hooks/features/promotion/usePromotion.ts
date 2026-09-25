@@ -38,6 +38,11 @@ export const usePromotion = () => {
     { delay: 150, minDisplayTime: 300 },
   );
 
+  const listLoading = useDelayedLoading(
+    availableApi.loading || claimedApi.loading,
+    { delay: 150, minDisplayTime: 300 },
+  );
+
   const getPromotionTitle = useCallback(
     (id: number): string => {
       const promotion =
@@ -121,6 +126,7 @@ export const usePromotion = () => {
     promotion: promotionApiHook.data,
     pagination: adminApi.data,
     loading,
+    listLoading,
     availableError: availableApi.error,
     claimedError: claimedApi.error,
     adminError: adminApi.error,

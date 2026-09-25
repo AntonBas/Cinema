@@ -18,6 +18,7 @@ export interface BadgeProps {
   className?: string;
   onClick?: () => void;
   title?: string;
+  ariaLabel?: string;
 }
 
 export const Badge: React.FC<BadgeProps> = ({
@@ -27,6 +28,7 @@ export const Badge: React.FC<BadgeProps> = ({
   className = "",
   onClick,
   title,
+  ariaLabel,
 }) => {
   const badgeClass = clsx(
     styles.badge,
@@ -43,7 +45,7 @@ export const Badge: React.FC<BadgeProps> = ({
         onClick={onClick}
         type="button"
         title={title}
-        aria-label={typeof children === "string" ? children : "Badge"}
+        aria-label={ariaLabel}
       >
         {children}
       </button>

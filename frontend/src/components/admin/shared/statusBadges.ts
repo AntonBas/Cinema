@@ -9,8 +9,6 @@ export const BOOKING_STATUS_VARIANT: Record<BookingStatus, BadgeVariant> = {
   CONFIRMED: "success",
   CANCELLED: "error",
   EXPIRED: "secondary",
-  FAILED: "error",
-  REFUNDED: "info",
 };
 
 export const PAYMENT_STATUS_VARIANT: Record<PaymentStatus, BadgeVariant> = {
@@ -33,10 +31,7 @@ export const TICKET_STATUS_VARIANT: Record<TicketStatus, BadgeVariant> = {
 };
 
 export const REFUND_STATUS_VARIANT: Record<RefundStatus, BadgeVariant> = {
-  PENDING: "warning",
   PROCESSING: "warning",
-  APPROVED: "info",
   REJECTED: "error",
   PROCESSED: "success",
-  CANCELLED: "secondary",
 };

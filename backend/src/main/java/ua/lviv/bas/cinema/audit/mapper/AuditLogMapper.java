@@ -9,5 +9,5 @@ import ua.lviv.bas.cinema.audit.dto.response.AuditLogResponse;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface AuditLogMapper {
 
-	AuditLogResponse toResponse(AuditLog auditLog);
+    AuditLogResponse toResponse(AuditLog auditLog);
 }

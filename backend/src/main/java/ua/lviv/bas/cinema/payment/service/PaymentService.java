@@ -10,6 +10,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.payment.domain.Payment;
+import ua.lviv.bas.cinema.payment.mapper.PaymentMapper;
 import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
 import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
@@ -59,6 +60,7 @@ public class PaymentService {
     private final AuditService auditService;
     private final EmailService emailService;
     private final DateTimeFormatterService dateTimeFormatter;
+    private final PaymentMapper paymentMapper;
     private final TransactionTemplate requiresNewTransactionTemplate;
 
     @Value("${booking.session-too-close-minutes:30}")
@@ -67,7 +69,8 @@ public class PaymentService {
     public PaymentService(PaymentRepository paymentRepository, BookingRepository bookingRepository,
             NumberGeneratorService numberGenerator, PaymentSuccessOrchestrator paymentSuccessOrchestrator,
             LatePaymentRefundService latePaymentRefundService, AuditService auditService, EmailService emailService,
-            DateTimeFormatterService dateTimeFormatter, PlatformTransactionManager transactionManager) {
+            DateTimeFormatterService dateTimeFormatter, PaymentMapper paymentMapper,
+            PlatformTransactionManager transactionManager) {
         this.paymentRepository = paymentRepository;
         this.bookingRepository = bookingRepository;
         this.numberGenerator = numberGenerator;
@@ -76,6 +79,7 @@ public class PaymentService {
         this.auditService = auditService;
         this.emailService = emailService;
         this.dateTimeFormatter = dateTimeFormatter;
+        this.paymentMapper = paymentMapper;
         this.requiresNewTransactionTemplate = new TransactionTemplate(transactionManager);
         this.requiresNewTransactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
@@ -93,11 +97,12 @@ public class PaymentService {
             var existing = existingPayment.get();
             if (existing.getStatus().isActive()) {
                 log.info("Returning existing active payment {} for booking {}", existing.getId(), booking.getId());
-                return buildPaymentResponse(existing);
+                return paymentMapper.toResponse(existing);
             }
             if (existing.getStatus().isFailed()) {
                 return restartPayment(existing);
             }
+            throw InvalidPaymentStatusException.alreadyCompleted(existing.getStatus());
         }
 
         var payment = Payment.builder().booking(booking).amount(booking.getFinalPrice()).status(PaymentStatus.PENDING)
@@ -107,7 +112,7 @@ public class PaymentService {
         log.info("Created payment {} for booking {}", saved.getId(), booking.getId());
         auditCreate(saved, booking);
 
-        return buildPaymentResponse(saved);
+        return paymentMapper.toResponse(saved);
     }
 
     @Transactional(readOnly = true)
@@ -119,7 +124,7 @@ public class PaymentService {
             throw new PaymentAccessDeniedException(paymentId, user.getId());
         }
 
-        return buildPaymentResponse(payment);
+        return paymentMapper.toResponse(payment);
     }
 
     public PaymentResponse retryPayment(Long paymentId, User user) {
@@ -146,7 +151,7 @@ public class PaymentService {
         log.info("Restarted payment {} for booking {}", payment.getId(), payment.getBooking().getId());
         auditRetry(payment.getId());
 
-        return buildPaymentResponse(saved);
+        return paymentMapper.toResponse(saved);
     }
 
     public void processSuccess(Payment payment, Map<String, String> callbackData) {
@@ -289,15 +294,6 @@ public class PaymentService {
 
             log.debug("Sent payment failed email to {}", booking.getUser().getEmail());
         });
-    }
-
-    private PaymentResponse buildPaymentResponse(Payment payment) {
-        var booking = payment.getBooking();
-        return new PaymentResponse(payment.getId(), numberGenerator.generateBookingNumber(booking),
-                booking.getSession().getMovie().getTitle(), booking.getSession().getStartTime(),
-                booking.getSession().getHall().getName(), payment.getAmount(), payment.getStatus(),
-                payment.getPaymentTime(), booking.getExpiresAt(), payment.getLiqpaySenderCardMask(),
-                payment.getLiqpayErrorDescription());
     }
 
     private void auditCreate(Payment payment, Booking booking) {

@@ -25,7 +25,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             + "LEFT JOIN FETCH b.seatReservations sr LEFT JOIN FETCH sr.seat WHERE p.id = :paymentId")
     Optional<Payment> findByIdWithDetails(@Param("paymentId") Long paymentId);
 
-    List<Payment> findByStatusAndCreatedDateBefore(PaymentStatus status, Instant createdDate);
 
     List<Payment> findByStatusAndLastModifiedDateBefore(PaymentStatus status, Instant lastModifiedDate);
 

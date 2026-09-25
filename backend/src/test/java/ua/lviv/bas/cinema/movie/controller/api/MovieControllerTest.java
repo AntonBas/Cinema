@@ -19,12 +19,17 @@ import ua.lviv.bas.cinema.movie.dto.response.MovieCardResponse;
 import ua.lviv.bas.cinema.movie.dto.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.movie.service.MovieService;
+import org.springframework.http.MediaType;
+import ua.lviv.bas.cinema.integration.PosterImage;
+import java.util.Optional;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -157,9 +162,8 @@ public class MovieControllerTest {
     @Test
     void getPosterShouldReturnPoster() {
         byte[] posterData = new byte[]{1, 2, 3, 4, 5};
-        ResponseEntity<byte[]> expectedResponse = ResponseEntity.ok(posterData);
-
-        when(movieService.getPoster(MOVIE_ID)).thenReturn(expectedResponse);
+        when(movieService.getPoster(MOVIE_ID))
+                .thenReturn(Optional.of(new PosterImage(posterData, MediaType.IMAGE_PNG)));
 
         ResponseEntity<byte[]> response = movieController.getPoster(MOVIE_ID);
 
@@ -169,9 +173,9 @@ public class MovieControllerTest {
     }
 
     @Test
-    void getPosterWhenNotFoundShouldThrowException() {
-        when(movieService.getPoster(MOVIE_ID)).thenThrow(new EntityNotFoundException("Movie", MOVIE_ID));
+    void getPosterWhenMissingShouldReturnNotFound() {
+        when(movieService.getPoster(MOVIE_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> movieController.getPoster(MOVIE_ID)).isInstanceOf(EntityNotFoundException.class);
+        assertThat(movieController.getPoster(MOVIE_ID).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 }

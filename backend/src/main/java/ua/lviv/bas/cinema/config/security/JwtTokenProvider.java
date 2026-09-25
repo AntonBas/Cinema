@@ -6,8 +6,6 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -33,33 +31,28 @@ public class JwtTokenProvider {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(Authentication authentication) {
-        Object principal = authentication.getPrincipal();
+    public String generateToken(CustomUserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
-        String subject;
-
-        if (principal instanceof CustomUserDetails userDetails) {
-            claims.put("userId", userDetails.getUserId());
-            claims.put("role", userDetails.getRole());
-            claims.put("enabled", userDetails.isEnabled());
-            claims.put("tokenVersion", userDetails.getTokenVersion());
-            subject = userDetails.getUsername();
-        } else if (principal instanceof OAuth2User oAuth2User) {
-            subject = (String) oAuth2User.getAttributes().get("email");
-        } else {
-            subject = principal.toString();
-        }
+        claims.put("userId", userDetails.getUserId());
+        claims.put("role", userDetails.getRole());
+        claims.put("enabled", userDetails.isEnabled());
+        claims.put("tokenVersion", userDetails.getTokenVersion());
 
         Instant now = Instant.now();
         Instant expiry = now.plus(jwtExpiration, ChronoUnit.MILLIS);
 
-        return Jwts.builder().id(UUID.randomUUID().toString()).claims(claims).subject(subject)
+        return Jwts.builder().id(UUID.randomUUID().toString()).claims(claims).subject(userDetails.getUsername())
                 .issuedAt(Date.from(now)).expiration(Date.from(expiry)).signWith(getSigningKey()).compact();
     }
 
     public String getEmailFromToken(String token) {
         Claims claims = Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
         return claims.getSubject();
+    }
+
+    public Long getUserIdFromToken(String token) {
+        Claims claims = Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
+        return claims.get("userId", Long.class);
     }
 
     public Integer getTokenVersionFromToken(String token) {

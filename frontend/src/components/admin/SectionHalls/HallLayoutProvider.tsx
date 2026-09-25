@@ -179,21 +179,23 @@ export const HallLayoutProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       const payload: SeatLayoutItem[] = [];
-      byRow.forEach((rowSeats, gridRow) => {
-        [...rowSeats]
-          .sort((a, b) => a.col - b.col)
-          .forEach((seat, index) => {
-            payload.push({
-              id: seat.id,
-              row: gridRow + 1,
-              number: index + 1,
-              seatType: seat.seatType,
-              x: seat.col * CELL_WIDTH,
-              y: gridRow * CELL_HEIGHT,
-              active: seat.active,
+      [...byRow.entries()]
+        .sort(([rowA], [rowB]) => rowA - rowB)
+        .forEach(([gridRow, rowSeats], rowIndex) => {
+          [...rowSeats]
+            .sort((a, b) => a.col - b.col)
+            .forEach((seat, index) => {
+              payload.push({
+                id: seat.id,
+                row: rowIndex + 1,
+                number: index + 1,
+                seatType: seat.seatType,
+                x: seat.col * CELL_WIDTH,
+                y: gridRow * CELL_HEIGHT,
+                active: seat.active,
+              });
             });
-          });
-      });
+        });
 
       const updated = await updateLayout(currentHall.id, { seats: payload });
       if (updated) {

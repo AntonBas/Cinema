@@ -1,5 +1,6 @@
 package ua.lviv.bas.cinema.ticket.service;
 
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,6 +54,7 @@ public class TicketService {
     private final NumberGeneratorService numberGenerator;
     private final AuditService auditService;
     private final CacheManager cacheManager;
+    private final EntityManager entityManager;
 
     @Value("${app.ticket.qr.size:200}")
     private int qrCodeSize;
@@ -107,7 +109,7 @@ public class TicketService {
                 .orElseThrow(() -> new TicketNotFoundException("Ticket not found with code: " + ticketCode));
 
         if (!ticket.getUser().getId().equals(user.getId())) {
-            throw TicketValidationException.notFound();
+            throw new TicketNotFoundException("Ticket " + ticketCode + " does not belong to user " + user.getId());
         }
 
         return toTicketResponse(ticket);
@@ -123,7 +125,8 @@ public class TicketService {
     @CacheEvict(value = "ticketList", allEntries = true)
     @Transactional
     public TicketCashierResponse validate(String ticketCode) {
-        var ticket = ticketRepository.findByUniqueCode(ticketCode).orElseThrow(TicketValidationException::notFound);
+        var ticket = ticketRepository.findByUniqueCode(ticketCode)
+                .orElseThrow(() -> new TicketNotFoundException("Ticket not found with code: " + ticketCode));
 
         var oldStatus = ticket.getStatus();
         validateForEntry(ticket);
@@ -133,8 +136,7 @@ public class TicketService {
             throw TicketValidationException.alreadyUsed();
         }
 
-        ticket.setStatus(TicketStatus.USED);
-        ticketRepository.save(ticket);
+        entityManager.refresh(ticket);
         evictTicketCache(ticket);
         log.info("Ticket {} validated and marked as used", ticketCode);
         auditValidate(ticket, oldStatus);
@@ -144,10 +146,10 @@ public class TicketService {
 
     public byte[] generateQR(String ticketCode, User user) {
         var ticket = ticketRepository.findByUniqueCode(ticketCode)
-                .orElseThrow(TicketValidationException::notFound);
+                .orElseThrow(() -> new TicketNotFoundException("Ticket not found with code: " + ticketCode));
 
         if (!ticket.getUser().getId().equals(user.getId())) {
-            throw TicketValidationException.notFound();
+            throw new TicketNotFoundException("Ticket " + ticketCode + " does not belong to user " + user.getId());
         }
 
         var qrContent = ticketBaseUrl + "/cashier/scan/" + ticketCode;
@@ -155,12 +157,8 @@ public class TicketService {
     }
 
     private TicketResponse toTicketResponse(Ticket ticket) {
-        var response = ticketMapper.toTicketResponse(ticket);
-        var qrCodeUrl = "/api/tickets/" + ticket.getUniqueCode() + "/qr";
-        var refundable = refundCalculator.validate(ticket) == null;
-        return new TicketResponse(response.id(), response.ticketCode(), qrCodeUrl, response.status(),
-                response.purchaseTime(), response.price(), response.ticketType(), response.movieTitle(),
-                response.sessionTime(), response.hallName(), response.row(), response.seatNumber(), refundable);
+        var qrCodeUrl = "/api/tickets/code/" + ticket.getUniqueCode() + "/qr";
+        return ticketMapper.toTicketResponse(ticket, qrCodeUrl, refundCalculator.validate(ticket) == null);
     }
 
     private void validateForEntry(Ticket ticket) {

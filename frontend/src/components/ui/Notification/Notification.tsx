@@ -72,7 +72,12 @@ export const Notification: React.FC<NotificationProps> = ({
       <div className={styles.content}>
         <span className={styles.icon}>{getIcon()}</span>
         <span className={styles.message}>{message}</span>
-        <button className={styles.close} onClick={() => onClose(id)}>
+        <button
+          type="button"
+          className={styles.close}
+          onClick={() => onClose(id)}
+          aria-label="Dismiss notification"
+        >
           ×
         </button>
       </div>

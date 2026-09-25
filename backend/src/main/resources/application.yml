@@ -38,7 +38,6 @@ spring:
           "[batch_size]": 20
   flyway:
     enabled: true
-    baseline-on-migrate: true
     locations: classpath:/db/migration,classpath:/ua/lviv/bas/cinema/migration
     validate-on-migrate: true
     validate-migration-naming: true

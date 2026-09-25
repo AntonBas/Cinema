@@ -20,19 +20,19 @@ import lombok.Setter;
 @EntityListeners(AuditingEntityListener.class)
 public abstract class AuditableEntity {
 
-	@CreatedBy
-	@Column(name = "created_by", updatable = false)
-	private String createdBy;
+    @CreatedBy
+    @Column(name = "created_by", updatable = false)
+    private String createdBy;
 
-	@CreatedDate
-	@Column(name = "created_date", updatable = false)
-	private Instant createdDate;
+    @CreatedDate
+    @Column(name = "created_date", updatable = false)
+    private Instant createdDate;
 
-	@LastModifiedBy
-	@Column(name = "last_modified_by")
-	private String lastModifiedBy;
+    @LastModifiedBy
+    @Column(name = "last_modified_by")
+    private String lastModifiedBy;
 
-	@LastModifiedDate
-	@Column(name = "last_modified_date")
-	private Instant lastModifiedDate;
+    @LastModifiedDate
+    @Column(name = "last_modified_date")
+    private Instant lastModifiedDate;
 }

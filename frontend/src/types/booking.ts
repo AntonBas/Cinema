@@ -1,8 +1,7 @@
 import type { PaymentStatus } from "@/types/payment";
 import type { TicketStatus } from "@/types/ticket";
 
-export type BookingStatus =
-  "PENDING" | "CONFIRMED" | "CANCELLED" | "EXPIRED" | "FAILED" | "REFUNDED";
+export type BookingStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "EXPIRED";
 
 export interface BookingCreateRequest {
   sessionId: string;
@@ -54,8 +53,6 @@ export const BookingStatusDisplay: Record<BookingStatus, string> = {
   CONFIRMED: "Confirmed",
   CANCELLED: "Cancelled",
   EXPIRED: "Expired",
-  FAILED: "Failed",
-  REFUNDED: "Refunded",
 };
 
 export interface AdminBookingListResponse {

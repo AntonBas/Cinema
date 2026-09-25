@@ -4,7 +4,6 @@ import java.time.Instant;
 import java.util.Map;
 
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -106,7 +105,6 @@ public class AdminUserService {
         return userMapper.toAdminUserListResponse(updated);
     }
 
-    @Cacheable(value = "users", key = "'list-' + #query + '-' + #role + '-' + #verificationStatus + '-' + #enabled + '-' + #pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
     public Page<AdminUserListResponse> getUsers(String query, UserRole role, VerificationStatus verificationStatus,
             Boolean enabled, Pageable pageable) {
         log.info("Getting users: query={}, role={}, verificationStatus={}, enabled={}, page={}, size={}", query, role,

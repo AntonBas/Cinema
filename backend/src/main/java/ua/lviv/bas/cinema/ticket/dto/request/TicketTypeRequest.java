@@ -1,7 +1,13 @@
 package ua.lviv.bas.cinema.ticket.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import ua.lviv.bas.cinema.ticket.domain.TicketTypeCategory;
 
 import java.math.BigDecimal;
@@ -14,7 +20,7 @@ public record TicketTypeRequest(
         String displayName,
 
         @NotNull(message = "Price multiplier must not be null")
-        @DecimalMin(value = "0.01", inclusive = false, message = "Price multiplier must be greater than 0")
+        @DecimalMin(value = "0.01", message = "Price multiplier must be at least 0.01")
         @DecimalMax(value = "9.99", message = "Price multiplier must be less than or equal to 9.99")
         @Schema(description = "Price multiplier", example = "1.0")
         BigDecimal priceMultiplier,

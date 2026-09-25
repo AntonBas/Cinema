@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { XCircle, CheckCircle2 } from "lucide-react";
-import { api } from "@/services/api";
+import { authApi } from "@/api/authApi";
 import { isApiErrorException } from "@/utils/apiErrorHandler";
 import { Button } from "@/components/ui/Button/Button";
 import { Input } from "@/components/ui/Input/Input";
@@ -39,7 +39,7 @@ export const EmailVerificationPage: React.FC = () => {
 
     const verifyEmail = async () => {
       try {
-        await api.post(`/api/tokens/email/verify?token=${verificationToken}`);
+        await authApi.verifyEmail(verificationToken);
         setStatus("success");
       } catch (error) {
         if (isApiErrorException(error) && error.isConflict()) {

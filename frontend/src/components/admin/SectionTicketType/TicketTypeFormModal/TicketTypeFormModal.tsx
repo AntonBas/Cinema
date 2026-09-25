@@ -122,10 +122,14 @@ export const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={`${styles.formRow} ${styles.formRowFull}`}>
           <div className={styles.formGroup}>
-            <label className={`${styles.label} ${styles.required}`}>
+            <label
+              htmlFor="ticket-type-form-modal-display-name"
+              className={`${styles.label} ${styles.required}`}
+            >
               Display Name
             </label>
             <Input
+              id="ticket-type-form-modal-display-name"
               type="text"
               value={formData.displayName}
               onChange={(value) =>
@@ -140,10 +144,14 @@ export const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
 
         <div className={styles.formRow}>
           <div className={styles.formGroup}>
-            <label className={`${styles.label} ${styles.required}`}>
+            <label
+              htmlFor="ticket-type-form-modal-category"
+              className={`${styles.label} ${styles.required}`}
+            >
               Category
             </label>
             <Select
+              id="ticket-type-form-modal-category"
               options={categoryOptions}
               value={formData.category}
               onChange={(value) =>
@@ -158,10 +166,14 @@ export const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
           </div>
 
           <div className={styles.formGroup}>
-            <label className={`${styles.label} ${styles.required}`}>
+            <label
+              htmlFor="ticket-type-form-modal-price-multiplier"
+              className={`${styles.label} ${styles.required}`}
+            >
               Price Multiplier
             </label>
             <Input
+              id="ticket-type-form-modal-price-multiplier"
               type="number"
               value={formData.priceMultiplier}
               onChange={(value) =>
@@ -179,8 +191,14 @@ export const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
 
         <div className={styles.formRow}>
           <div className={styles.formGroup}>
-            <label className={styles.label}>Min Age</label>
+            <label
+              htmlFor="ticket-type-form-modal-min-age"
+              className={styles.label}
+            >
+              Min Age
+            </label>
             <Input
+              id="ticket-type-form-modal-min-age"
               type="number"
               value={formData.minAge?.toString() || ""}
               onChange={(value) => {
@@ -197,8 +215,14 @@ export const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
           </div>
 
           <div className={styles.formGroup}>
-            <label className={styles.label}>Max Age</label>
+            <label
+              htmlFor="ticket-type-form-modal-max-age"
+              className={styles.label}
+            >
+              Max Age
+            </label>
             <Input
+              id="ticket-type-form-modal-max-age"
               type="number"
               value={formData.maxAge?.toString() || ""}
               onChange={(value) => {
@@ -234,8 +258,14 @@ export const TicketTypeFormModal: React.FC<TicketTypeFormModalProps> = ({
 
         {formData.requiresDocument && (
           <div className={styles.formGroup}>
-            <label className={styles.label}>Document Type</label>
+            <label
+              htmlFor="ticket-type-form-modal-document-type"
+              className={styles.label}
+            >
+              Document Type
+            </label>
             <Input
+              id="ticket-type-form-modal-document-type"
               type="text"
               value={formData.documentType || ""}
               onChange={(value) =>

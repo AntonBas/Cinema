@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/Button/Button";
 import { useAuth } from "@/context/AuthContext";
 import type { PromotionResponse } from "@/types/promotion";
 import { formatShortDate } from "@/utils/formatters";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { buildLoginPath } from "@/utils/authRedirect";
 import styles from "./Promotions.module.css";
 
 interface PromotionsProps {
@@ -29,6 +30,7 @@ export const Promotions: React.FC<PromotionsProps> = ({
 }) => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [claimingId, setClaimingId] = useState<number | null>(null);
@@ -113,6 +115,7 @@ export const Promotions: React.FC<PromotionsProps> = ({
               size="small"
               className={styles.navButton}
               onClick={prevSlide}
+              aria-label="Previous"
             >
               <ChevronLeft size={20} />
             </Button>
@@ -175,7 +178,13 @@ export const Promotions: React.FC<PromotionsProps> = ({
                         <Button
                           variant="outline"
                           size="medium"
-                          onClick={() => navigate("/login")}
+                          onClick={() =>
+                            navigate(
+                              buildLoginPath(
+                                location.pathname + location.search,
+                              ),
+                            )
+                          }
                         >
                           Login to Claim
                         </Button>
@@ -193,6 +202,7 @@ export const Promotions: React.FC<PromotionsProps> = ({
               size="small"
               className={styles.navButton}
               onClick={nextSlide}
+              aria-label="Next"
             >
               <ChevronRight size={20} />
             </Button>

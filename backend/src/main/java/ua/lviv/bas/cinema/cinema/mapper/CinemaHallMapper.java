@@ -7,6 +7,7 @@ import org.mapstruct.ReportingPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import ua.lviv.bas.cinema.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.cinema.domain.Seat;
+import ua.lviv.bas.cinema.cinema.dto.hall.request.CinemaHallRequest;
 import ua.lviv.bas.cinema.cinema.dto.hall.response.CinemaHallListResponse;
 import ua.lviv.bas.cinema.cinema.dto.hall.response.CinemaHallResponse;
 import ua.lviv.bas.cinema.cinema.dto.hall.response.HallLayoutResponse;
@@ -46,6 +47,11 @@ public abstract class CinemaHallMapper {
 
     @Mapping(target = "capacity", source = "hall", qualifiedByName = "calculateCapacity")
     public abstract CinemaHallListResponse toCinemaHallListResponse(CinemaHall hall);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "sessions", ignore = true)
+    @Mapping(target = "seats", ignore = true)
+    public abstract CinemaHall toEntity(CinemaHallRequest request);
 
     @Mapping(target = "capacity", source = "seatsCount")
     public abstract CinemaHallListResponse toCinemaHallListResponse(CinemaHallListProjection projection);

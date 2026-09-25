@@ -20,29 +20,29 @@ import java.time.LocalDate;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
 public interface PromotionMapper {
 
-	default PromotionStatus resolveStatus(boolean active, LocalDate startDate, LocalDate endDate) {
-		return PromotionStatus.of(active, startDate, endDate);
-	}
+    default PromotionStatus resolveStatus(boolean active, LocalDate startDate, LocalDate endDate) {
+        return PromotionStatus.of(active, startDate, endDate);
+    }
 
-	@Mapping(target = "id", ignore = true)
-	@Mapping(target = "userRedemptions", ignore = true)
-	Promotion toEntity(PromotionRequest request);
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "userRedemptions", ignore = true)
+    Promotion toEntity(PromotionRequest request);
 
-	@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-	@Mapping(target = "id", ignore = true)
-	@Mapping(target = "userRedemptions", ignore = true)
-	@Mapping(target = "createdBy", ignore = true)
-	@Mapping(target = "createdDate", ignore = true)
-	@Mapping(target = "lastModifiedBy", ignore = true)
-	@Mapping(target = "lastModifiedDate", ignore = true)
-	void updateEntity(PromotionRequest request, @MappingTarget Promotion promotion);
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "userRedemptions", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "createdDate", ignore = true)
+    @Mapping(target = "lastModifiedBy", ignore = true)
+    @Mapping(target = "lastModifiedDate", ignore = true)
+    void updateEntity(PromotionRequest request, @MappingTarget Promotion promotion);
 
-	@Mapping(target = "status", expression = "java(resolveStatus(promotion.isActive(), promotion.getStartDate(), promotion.getEndDate()))")
-	PromotionResponse toPromotionResponse(Promotion promotion);
+    @Mapping(target = "status", expression = "java(resolveStatus(promotion.isActive(), promotion.getStartDate(), promotion.getEndDate()))")
+    PromotionResponse toPromotionResponse(Promotion promotion);
 
-	@Mapping(target = "status", expression = "java(resolveStatus(projection.getActive(), projection.getStartDate(), projection.getEndDate()))")
-	PromotionResponse toPromotionResponse(PromotionResponseProjection projection);
+    @Mapping(target = "status", expression = "java(resolveStatus(projection.getActive(), projection.getStartDate(), projection.getEndDate()))")
+    PromotionResponse toPromotionResponse(PromotionResponseProjection projection);
 
-	@Mapping(target = "status", expression = "java(resolveStatus(projection.getActive(), projection.getStartDate(), projection.getEndDate()))")
-	PromotionListResponse toPromotionListResponse(PromotionListProjection projection);
+    @Mapping(target = "status", expression = "java(resolveStatus(projection.getActive(), projection.getStartDate(), projection.getEndDate()))")
+    PromotionListResponse toPromotionListResponse(PromotionListProjection projection);
 }

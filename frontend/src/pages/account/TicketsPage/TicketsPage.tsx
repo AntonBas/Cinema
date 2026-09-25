@@ -49,7 +49,7 @@ export const TicketsPage: React.FC = () => {
       size: DEFAULT_PAGE_SIZE_COMPACT,
       status: statusFilter,
       movieTitle: query,
-    });
+    }).catch(() => {});
   }, [page, statusFilter, query, getMine]);
 
   useEffect(() => {

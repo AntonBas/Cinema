@@ -70,8 +70,11 @@ export const RefundFilters: React.FC<RefundFiltersProps> = ({
 
       <div className={styles.grid}>
         <div className={styles.filterItem}>
-          <label className={styles.label}>Status</label>
+          <label htmlFor="refund-filters-status" className={styles.label}>
+            Status
+          </label>
           <Select
+            id="refund-filters-status"
             value={toStatusValue(filters)}
             onChange={(value) => handleStatusChange(String(value))}
             options={STATUS_OPTIONS}
@@ -104,8 +107,11 @@ export const RefundFilters: React.FC<RefundFiltersProps> = ({
         </div>
 
         <div className={styles.filterItem}>
-          <label className={styles.label}>Sort by</label>
+          <label htmlFor="refund-filters-sort-by" className={styles.label}>
+            Sort by
+          </label>
           <Select
+            id="refund-filters-sort-by"
             value={sort || ""}
             onChange={(value) => onSortChange(String(value))}
             options={SORT_OPTIONS}

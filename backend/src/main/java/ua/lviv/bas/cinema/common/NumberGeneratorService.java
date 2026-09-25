@@ -3,8 +3,8 @@ package ua.lviv.bas.cinema.common;
 import org.springframework.stereotype.Service;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.refund.domain.Refund;
-import ua.lviv.bas.cinema.common.CinemaTime;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Service
@@ -39,6 +39,7 @@ public class NumberGeneratorService {
         if (refund.getId() == null) {
             throw new IllegalStateException("Refund ID is required");
         }
-        return String.format("RF-%04d-%06d", CinemaTime.now().getYear(), refund.getId());
+        var createdAt = refund.getCreatedDate() != null ? refund.getCreatedDate() : Instant.now();
+        return String.format("RF-%04d-%06d", createdAt.atZone(CinemaTime.ZONE).getYear(), refund.getId());
     }
 }

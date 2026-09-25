@@ -29,7 +29,7 @@ public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecif
 
     @Override
     @EntityGraph(attributePaths = {"ticketType", "booking.session.movie", "booking.session.hall",
-            "seatReservation.seat", "user"})
+            "booking.payment", "seatReservation.seat", "user", "payment"})
     Page<Ticket> findAll(Specification<Ticket> spec, Pageable pageable);
 
     @Modifying

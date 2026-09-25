@@ -175,7 +175,7 @@ public class AuthControllerTest {
 
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(authentication);
-        when(jwtTokenProvider.generateToken(authentication)).thenReturn("jwtToken");
+        when(jwtTokenProvider.generateToken(userDetails)).thenReturn("jwtToken");
         when(userService.getUserResponse(user.getId())).thenReturn(userResponse);
 
         mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
@@ -339,7 +339,7 @@ public class AuthControllerTest {
         when(oAuth2ExchangeCodeService.consume("valid-code")).thenReturn(Optional.of("anton@example.com"));
         when(userService.getUser("anton@example.com")).thenReturn(user);
         when(userMapper.toUserResponse(user)).thenReturn(userResponse);
-        when(jwtTokenProvider.generateToken(any(Authentication.class))).thenReturn("jwtToken");
+        when(jwtTokenProvider.generateToken(any(CustomUserDetails.class))).thenReturn("jwtToken");
 
         mockMvc.perform(post("/api/auth/oauth2/exchange").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"code\":\"valid-code\"}"))

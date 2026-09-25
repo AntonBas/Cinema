@@ -8,11 +8,11 @@ import java.io.Serial;
 
 public class PromotionNotActiveException extends BusinessException {
 
-	@Serial
-	private static final long serialVersionUID = 1L;
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-	public PromotionNotActiveException(String promotionTitle) {
-		super(String.format("Promotion '%s' is not active or has expired", promotionTitle), "PROMOTION_NOT_ACTIVE",
-				HttpStatus.BAD_REQUEST, String.format("Promotion '%s' is outside of active period", promotionTitle));
-	}
+    public PromotionNotActiveException(String promotionTitle) {
+        super(String.format("Promotion '%s' is not active or has expired", promotionTitle), "PROMOTION_NOT_ACTIVE",
+                HttpStatus.BAD_REQUEST, String.format("Promotion '%s' is outside of active period", promotionTitle));
+    }
 }

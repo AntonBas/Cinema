@@ -20,30 +20,30 @@ import ua.lviv.bas.cinema.common.CinemaTime;
 @RequiredArgsConstructor
 public class SessionStatusScheduler {
 
-	private final SessionRepository sessionRepository;
+    private final SessionRepository sessionRepository;
 
-	@Scheduled(cron = "${scheduler.session-status.cron:0 */5 * * * *}")
-	@CacheEvict(value = "sessions", allEntries = true)
-	@Transactional
-	public void updateSessionStatuses() {
-		log.debug("Starting scheduled session status update");
-		LocalDateTime now = CinemaTime.now();
+    @Scheduled(cron = "${scheduler.session-status.cron:0 */5 * * * *}")
+    @CacheEvict(value = "sessions", allEntries = true)
+    @Transactional
+    public void updateSessionStatuses() {
+        log.debug("Starting scheduled session status update");
+        LocalDateTime now = CinemaTime.now();
 
-		int startedCount = updateStatuses(sessionRepository.findSessionsToStart(now), CinemaSessionStatus.SCHEDULED,
-				CinemaSessionStatus.ONGOING);
-		int completedCount = updateStatuses(sessionRepository.findSessionsToComplete(now),
-				CinemaSessionStatus.ONGOING, CinemaSessionStatus.COMPLETED);
+        int startedCount = updateStatuses(sessionRepository.findSessionsToStart(now), CinemaSessionStatus.SCHEDULED,
+                CinemaSessionStatus.ONGOING);
+        int completedCount = updateStatuses(sessionRepository.findSessionsToComplete(now),
+                CinemaSessionStatus.ONGOING, CinemaSessionStatus.COMPLETED);
 
-		log.info("Session status update completed: {} started, {} completed", startedCount, completedCount);
-	}
+        log.info("Session status update completed: {} started, {} completed", startedCount, completedCount);
+    }
 
-	private int updateStatuses(List<Session> sessions, CinemaSessionStatus fromStatus, CinemaSessionStatus newStatus) {
-		if (sessions.isEmpty()) {
-			return 0;
-		}
-		List<Long> ids = sessions.stream().map(Session::getId).toList();
-		int updatedCount = sessionRepository.updateStatusForIds(ids, fromStatus, newStatus);
-		log.info("Transitioned {} session(s) to {}", updatedCount, newStatus);
-		return updatedCount;
-	}
+    private int updateStatuses(List<Session> sessions, CinemaSessionStatus fromStatus, CinemaSessionStatus newStatus) {
+        if (sessions.isEmpty()) {
+            return 0;
+        }
+        List<Long> ids = sessions.stream().map(Session::getId).toList();
+        int updatedCount = sessionRepository.updateStatusForIds(ids, fromStatus, newStatus);
+        log.info("Transitioned {} session(s) to {}", updatedCount, newStatus);
+        return updatedCount;
+    }
 }

@@ -20,7 +20,11 @@ import ua.lviv.bas.cinema.promotion.dto.request.PromotionRequest;
 import ua.lviv.bas.cinema.promotion.dto.response.PromotionListResponse;
 import ua.lviv.bas.cinema.promotion.dto.response.PromotionResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.exception.domain.financial.promotion.*;
+import ua.lviv.bas.cinema.exception.domain.financial.promotion.AlreadyClaimedException;
+import ua.lviv.bas.cinema.exception.domain.financial.promotion.InvalidPromotionDateRangeException;
+import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionAlreadyExistsException;
+import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionHasRedemptionsException;
+import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionNotActiveException;
 import ua.lviv.bas.cinema.promotion.mapper.PromotionMapper;
 import ua.lviv.bas.cinema.promotion.repository.PromotionRepository;
 import ua.lviv.bas.cinema.promotion.repository.UserPromotionRepository;
@@ -36,8 +40,14 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class PromotionServiceTest {

@@ -10,7 +10,7 @@ export const RefundPolicyPage: React.FC = () => {
   const { policy, loading, getPolicy } = useRefund();
 
   useEffect(() => {
-    getPolicy();
+    getPolicy().catch(() => {});
   }, [getPolicy]);
 
   return (

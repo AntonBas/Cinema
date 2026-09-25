@@ -118,11 +118,21 @@ export const Calendar: React.FC<CalendarProps> = ({
   return (
     <div className={styles.calendar}>
       <div className={styles.header}>
-        <button className={styles.navButton} onClick={handlePrevMonth}>
+        <button
+          type="button"
+          className={styles.navButton}
+          onClick={handlePrevMonth}
+          aria-label="Previous month"
+        >
           <ChevronLeft size={16} />
         </button>
         <h3 className={styles.monthTitle}>{monthYear}</h3>
-        <button className={styles.navButton} onClick={handleNextMonth}>
+        <button
+          type="button"
+          className={styles.navButton}
+          onClick={handleNextMonth}
+          aria-label="Next month"
+        >
           <ChevronRight size={16} />
         </button>
       </div>
