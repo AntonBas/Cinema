@@ -111,7 +111,7 @@ app:
         condition: "Less than 2 hours before session start"
 
 booking:
-  expiration-minutes: 30
+  expiration-minutes: 20
   temp-hold-minutes: 5
   session-too-close-minutes: 30
   max-seats-per-booking: 10

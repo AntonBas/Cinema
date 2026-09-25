@@ -23,10 +23,8 @@ Complete feature descriptions, technical details, and project structure.
 
 ### Prerequisites
 
-- Java 21 or higher
-- Node.js 20+ and npm
-- Docker and Docker Compose (recommended)
-- Maven (for backend builds)
+- Docker and Docker Compose (recommended — enough to run the whole stack)
+- For local development without Docker: Java 21 and Node.js 20.19+ / 22 (CI uses 22); Maven is not required — the repo ships the `./mvnw` wrapper
 
 ---
 
@@ -171,9 +169,10 @@ Steps once both services exist:
    (`PAYMENT_LIQPAY_CALLBACK_URL`) and the browser redirect at
    `<Vercel URL>/booking/success` (`PAYMENT_LIQPAY_RESULT_URL`). Switch
    `LIQPAY_SANDBOX_MODE=false` for real payments.
-3. Set `CORS_ALLOWED_ORIGINS` on Render to the Vercel URL — a wildcard
-   pattern like `https://cinema-bas*.vercel.app` also covers Vercel's
-   per-branch preview deployments.
+3. Set `CORS_ALLOWED_ORIGINS` on Render to the exact Vercel URL
+   (comma-separated for several). Wildcards are rejected at startup — a
+   pattern on the shared `vercel.app` domain would also match other
+   people's Vercel projects.
 4. Set `FRONTEND_URL` on Render to the same Vercel URL (used for the
    post-OAuth-login redirect and all email links — verification,
    password reset, booking confirmation).
@@ -193,8 +192,8 @@ The system supports four roles with different access levels:
 | Role                | Access                                               |
 | :------------------ | :--------------------------------------------------- |
 | **ADMIN**           | Full access to all admin features                    |
-| **CONTENT_MANAGER** | Movies, Schedule, Halls, Promotions, Genres, Persons |
-| **CASHIER**         | User verification, ticket scanning                   |
+| **CONTENT_MANAGER** | Movies, Genres, Persons, Halls, Schedule, Promotions |
+| **CASHIER**         | Ticket scanning/validation, user list and birth-date verification, bookings/refunds lookup, user bonus balances |
 | **USER**            | Movie browsing, booking, profile management          |
 
 ---
@@ -206,7 +205,7 @@ The system supports four roles with different access levels:
 **Registration**
 
 - Email validation (unique, no duplicate accounts)
-- Password validation (length, complexity)
+- Password validation (8–32 characters, confirmation must match)
 - Email confirmation via verification link
 - Account locked until email is verified
 - Welcome bonus automatically awarded after email verification
@@ -319,7 +318,7 @@ Step-by-step ticket booking with seat reservation and secure payment.
 
 - Select payment method (card via LiqPay)
 - Redirect to LiqPay secure payment page
-- Payment status automatically updates via scheduler
+- Payment status updates via LiqPay's server callback; a scheduler reconciles payments whose callback never arrived
 
 **7. Booking Completion**
 
@@ -357,7 +356,7 @@ Step-by-step ticket booking with seat reservation and secure payment.
 
 - Ticket status changes to `REFUNDED`
 - Refunded tickets moved to **Refunded** tab
-- Bonus points used in booking are deducted from the user's balance
+- The ticket's share of bonus points spent on the booking is returned to the user's balance, scaled by the same refund percentage
 
 **5. Refund Policy**
 
@@ -436,7 +435,7 @@ Three tabs for complete movie content management:
 - Full CRUD operations
 - **Smart Movie Filtering:** When creating a session, only movies available on the selected date are shown
 - **Hall Conflict Validation:** Cannot schedule overlapping sessions in the same hall
-- Session status auto-updates: `SCHEDULED` → `UPCOMING` → `COMPLETED` / `CANCELED`
+- Session status auto-updates: `SCHEDULED` → `ONGOING` → `COMPLETED` (or `CANCELLED`)
 - Filter by date range, cinema hall, status
 - Search by movie title, pagination
 
@@ -446,21 +445,35 @@ Three tabs for complete movie content management:
 
 - Full CRUD operations
 - Unique hall name validation
-- **Auto-generation:** Admin specifies rows and seats per row, system generates layout
-- Automatic VIP rows (last 2 rows) with option for full-VIP hall
-- Couple seat rows option (requires even number of seats per row)
-- **Interactive Layout Editor (Modal):** Left-click to change seat type, Right-click to deactivate/activate
-- Protected from edit/delete if hall has future scheduled sessions
+- **Grid Layout Editor (Modal):** click an empty cell to add a seat, click a seat to cycle its type (Standard / VIP / Couple — a couple seat spans two cells), right-click to deactivate/activate, drag to reposition, × to delete
+- Row and seat numbers are assigned automatically left-to-right per row; duplicate positions are rejected
+- Protected from edit/delete if hall has future scheduled sessions; seats that already have tickets can't be removed
 
 ---
 
 #### Users
 
 - View all registered users
-- **Actions:** Change user role, verify birth date, block/unblock account
-- **Security validations:** Admin cannot block themselves, cannot remove `ADMIN` role from last admin
-- Filter by role, verification status, block status
+- **Actions:** Change user role, verify birth date, block/unblock account (role and block status are Admin-only)
+- **Activity modal:** a user's bookings, refunds and bonus transactions in tabs, plus their audit history
+- **Security validations:** Admin cannot change their own role or block themselves, cannot remove `ADMIN` role from last admin
+- Filter by role, verification status, block status; sorting
 - Search by email or name, pagination
+- Filters are kept in URL query params, so a filtered view can be bookmarked or shared
+
+---
+
+#### Bookings (Admin, Cashier)
+
+- Search by booking number, email, movie or LiqPay order ID; pagination
+- Booking details: session, price breakdown (bonus discount), issued tickets and payment (status, LiqPay order ID, card mask, error code)
+
+---
+
+#### Refunds (Admin, Cashier)
+
+- Search by booking number, email, ticket code or LiqPay order ID; filter by status
+- Shows the LiqPay order ID per refund, making refunds stuck in `PROCESSING` or rejected by the gateway easy to spot
 
 ---
 
@@ -472,7 +485,7 @@ Three tabs for complete movie content management:
   - **Booking Spend** — min/max points a user can redeem per booking
   - **Payment Accrual** — percentage of ticket purchase returned as bonus points
 - Admin can update any rule value
-- **Reset button** — restores all rules to default values
+- **Reset** — restores a single rule to its default values
 
 ---
 
@@ -490,7 +503,7 @@ Three tabs for complete movie content management:
 
 - Full CRUD operations
 - Unique name validation
-- **Fields:** Name, Category, Price multiplier, Document required flag, Active status
+- **Fields:** Name, Category, Price multiplier, Min/max age, Document required flag (+ document type), Active status
 - Deactivated ticket types are hidden during booking
 - Sorting by category, pagination
 
@@ -503,15 +516,15 @@ Three tabs for complete movie content management:
 - Filter by entity type and action type
 - Search by admin email
 - Pagination
-- **Full entity history:** view every audit entry for one specific entity via the **Entity History** modal in the Audit Logs table (`GET /admin/audit-logs/entity/{entityType}/{entityId}`)
+- **Full entity history:** view every audit entry for one specific entity via the **Entity History** modal in the Audit Logs table (`GET /api/admin/audit-logs/entity/{entityType}/{entityId}`)
 
 ---
 
 #### Cashier
 
-- **Ticket lookup:** enter a ticket's unique code to view its details (`GET /api/admin/ticket/{uniqueCode}`)
-- **Ticket validation:** mark a ticket as used at the door (`POST /api/admin/ticket/{uniqueCode}/validate`)
-- Available at `/cashier/scan`
+- **Ticket lookup:** scanning a ticket's QR code opens `/cashier/scan/{ticketCode}` with the ticket's details (`GET /api/admin/tickets/{ticketCode}`)
+- **Ticket validation:** mark a ticket as used at the door (`POST /api/admin/tickets/{ticketCode}/validate`)
+- Available to Cashier and Admin roles
 
 ---
 
@@ -528,14 +541,15 @@ Three tabs for complete movie content management:
 
 ### Testing
 
-875 tests across 124 test classes, run with Testcontainers against a real PostgreSQL instance
+1119 tests across 149 test classes, run with Testcontainers against a real PostgreSQL instance
 (no mocked DB in integration/concurrency tests). Every domain has a dedicated concurrency suite,
 e.g. `SeatReservationConcurrencyTest`, `BookingConcurrencyTest`,
 `BookingDoubleConfirmConcurrencyTest`, `PaymentCallbackConcurrencyTest`,
 `RefundCreationConcurrencyTest`, `BonusCardConcurrencyTest`,
 `BonusRefundPointsRetryConcurrencyTest`, `TicketValidationConcurrencyTest`. CI
-(`.github/workflows/ci.yml`) runs the full suite against a real Postgres service container on
-every push/PR to `main`/`develop`.
+(`.github/workflows/ci.yml`) builds the backend and runs the full suite (Testcontainers starts
+PostgreSQL on the runner's Docker), then lints, format-checks and builds the frontend on every
+push/PR to `master`/`develop`.
 
 ### Concurrency Control
 
@@ -552,8 +566,9 @@ External payment handled via LiqPay:
 
 - User redirected to LiqPay payment page
 - LiqPay sends async callback via Ngrok tunnel (local dev) or directly (production)
-- System uses **idempotent state transitions** (`UPDATE ... WHERE status = 'PENDING'`) to prevent duplicate updates
-- Duplicate callbacks are safely ignored — order moves to PAID exactly once
+- Callback signature is verified (constant-time comparison) before any state change
+- System uses **idempotent state transitions** (`UPDATE ... WHERE status IN ('PENDING', 'PROCESSING')`) to prevent duplicate updates
+- Duplicate callbacks are safely ignored — the payment moves to `SUCCESS` and tickets are issued exactly once
 - Scheduler acts as fallback when callbacks are lost
 
 ### Self-Healing Recovery
@@ -562,7 +577,8 @@ A background scheduler ensures system consistency when things go wrong:
 
 - Releases expired seat locks (users who closed the browser)
 - Cancels unpaid bookings past their expiration window
-- Updates session statuses (SCHEDULED → COMPLETED)
+- Updates session statuses (SCHEDULED → ONGOING → COMPLETED) and movie statuses
+- Reconciles payments and refunds stuck in `PROCESSING`
 - All state lives in PostgreSQL — if the app crashes mid-flow, scheduler recovers on restart with no data loss
 
 ### Known Trade-offs
@@ -612,9 +628,9 @@ Four configurable rules control the loyalty program:
 | Spring Security      | 7.1.1   |
 | Spring Data JPA      | 4.1.1   |
 | Spring OAuth2 Client | 4.1.1   |
-| Spring Mail          | 4.1.1   |
 | Spring Cache         | 4.1.1   |
 | Spring Actuator      | 4.1.1   |
+| Hibernate ORM        | 7.4.5   |
 | PostgreSQL           | 15      |
 | Flyway               | 12.4.0  |
 | JWT (jjwt)           | 0.13.0  |
@@ -623,24 +639,26 @@ Four configurable rules control the loyalty program:
 | Bucket4j             | 8.10.1  |
 | Redis                | 7       |
 | ZXing (QR Code)      | 3.5.4   |
-| Gson                 | 2.13.2  |
 | SpringDoc OpenAPI    | 3.1.1   |
 | Dotenv               | 4.0.0   |
 | Testcontainers       | 2.0.5   |
+| Cloudinary (prod poster storage) | 2.3.0 |
+| Brevo (transactional email, HTTP API) | — |
 
 ### Frontend
 
 | Technology        | Version |
 | :---------------- | :------ |
-| React             | 19.1.1  |
+| React             | 19.2.4  |
 | TypeScript        | 5.8.3   |
-| Vite              | 7.3.2   |
-| React Router DOM  | 7.8.1   |
-| Axios             | 1.15.0  |
+| Vite              | 7.3.6   |
+| React Router DOM  | 7.18.3  |
+| Axios             | 1.20.0  |
 | Lucide React      | 0.563.0 |
-| Styled Components | 6.1.19  |
-| date-fns          | 4.1.0   |
 | clsx              | 2.1.1   |
+| CSS Modules       | —       |
+| ESLint            | 10.11.0 |
+| Prettier          | 3.9.9   |
 
 ### DevOps & Tools
 
@@ -649,7 +667,7 @@ Four configurable rules control the loyalty program:
 | Docker         | Containerization              |
 | Docker Compose | Multi-container orchestration |
 | Flyway         | Database migrations           |
-| Maven          | Build automation              |
+| Maven Wrapper  | Build automation              |
 | GitHub Actions | CI/CD pipeline                |
 
 ---
@@ -659,9 +677,9 @@ Four configurable rules control the loyalty program:
 ### Backend (Spring Boot)
 
 **Package by Feature + Layer.** Each business domain is a self-contained package with its own
-`controller/`, `service/`, `repository/`, `domain/`, `dto/`, `mapper/` — only the layers that
-domain actually needs. `config/` and `exception/` stay global (shared by every domain); `common/`
-holds small cross-cutting utilities.
+`controller/`, `service/`, `repository/`, `domain/`, `dto/`, `mapper/`, `scheduler/` — only the
+layers that domain actually needs. `config/` and `exception/` stay global (shared by every
+domain); `notification/`, `integration/` and `common/` are shared infrastructure.
 
     backend/src/main/java/ua/lviv/bas/cinema/
     ├── <domain>/                  # one package per business domain, see table below
@@ -672,9 +690,13 @@ holds small cross-cutting utilities.
     │   ├── repository/
     │   ├── domain/                # JPA entities, enums, statuses
     │   ├── dto/                   # request/response payloads
-    │   └── mapper/                # MapStruct entity <-> DTO mapping
-    ├── config/                    # global — security, cache, jackson, ratelimit, scheduling, api, http, properties
+    │   ├── mapper/                # MapStruct entity <-> DTO mapping
+    │   └── scheduler/             # self-healing / status-update jobs
+    ├── config/                    # global — security, cache, jackson, ratelimit, scheduling, async, audit, api, http, properties
     ├── exception/                 # global — api/, core/, domain/<domain>/, infrastructure/
+    ├── notification/              # outbound email (Brevo HTTP API + templates)
+    ├── integration/               # file storage (local disk / Cloudinary), posters, QR codes
+    ├── migration/                 # Java-based Flyway migrations (V22, V24)
     └── common/                    # cross-cutting utilities (PageResponse, price/number/date formatting, uniqueness checks)
 
 **Domain packages:**
@@ -691,7 +713,7 @@ holds small cross-cutting utilities.
 | `ticket/`        | Tickets, ticket types                                                    |
 | `promotion/`     | Promotions, promo claims                                                 |
 | `audit/`         | Admin change audit log (write path + query/history)                     |
-| `notification/`  | Outbound email sending, email verification token generation             |
+| `notification/`  | Outbound email sending (templates + Brevo HTTP API)                     |
 | `integration/`   | File storage, poster images, QR code generation                         |
 | `common/`        | Stateless cross-cutting utilities shared across every domain             |
 
@@ -717,12 +739,15 @@ updating session/movie statuses, awarding birthday bonuses, cleaning up expired 
     │   │   ├── AdminLayout/
     │   │   ├── SectionAuditLogs/
     │   │   ├── SectionBonus/
+    │   │   ├── SectionBookings/
     │   │   ├── SectionHalls/
     │   │   ├── SectionMovies/
     │   │   ├── SectionPromotion/
+    │   │   ├── SectionRefunds/
     │   │   ├── SectionSchedule/
     │   │   ├── SectionTicketType/
-    │   │   └── SectionUsers/
+    │   │   ├── SectionUsers/
+    │   │   └── shared/
     │   ├── auth/
     │   ├── booking/
     │   ├── cashier/
@@ -743,6 +768,7 @@ updating session/movie statuses, awarding birthday bonuses, cleaning up expired 
     │   ├── home/
     │   ├── movies/
     │   ├── sessions/
+    │   ├── NotFoundPage/
     │   └── RefundPolicyPage/
     ├── routes/
     ├── services/
