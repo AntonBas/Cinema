@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ProgressStepper } from "@/components/booking/ProgressStepper/ProgressStepper";
 import { BOOKING_STEPS } from "@/components/booking/ProgressStepper/bookingSteps";
@@ -12,6 +12,7 @@ import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import { formatFullDate, formatPrice, formatTime } from "@/utils/formatters";
 import { Button } from "@/components/ui/Button/Button";
 import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
+import { useSettledLoad } from "@/hooks/common/useSettledLoad";
 import styles from "./BookingSummaryPage.module.css";
 
 export const BookingSummaryPage: React.FC = () => {
@@ -21,11 +22,11 @@ export const BookingSummaryPage: React.FC = () => {
 
   const { booking, loading, getById, cancel } = useBooking();
 
-  useEffect(() => {
-    if (bookingId) {
-      getById(bookingId);
-    }
-  }, [bookingId, getById]);
+  const loadBooking = useCallback(
+    () => (bookingId ? getById(bookingId) : Promise.resolve(null)),
+    [bookingId, getById],
+  );
+  const settled = useSettledLoad(loadBooking);
 
   const handleCancelBooking = async () => {
     if (!bookingId || !booking) return;
@@ -65,12 +66,14 @@ export const BookingSummaryPage: React.FC = () => {
     });
   };
 
-  if (loading) {
+  if (loading || !settled) {
     return (
       <Layout>
-        <div className={styles.loading}>
-          <LoadingSpinner text="Loading booking summary..." />
-        </div>
+        {loading && (
+          <div className={styles.loading}>
+            <LoadingSpinner text="Loading booking summary..." />
+          </div>
+        )}
       </Layout>
     );
   }

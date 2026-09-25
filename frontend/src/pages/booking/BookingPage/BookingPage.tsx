@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from "react";
+import React, { useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSeatReservation } from "@/hooks/features/seatReservation/useSeatReservation";
 import { useBonus } from "@/hooks/features/bonus/useBonus";
@@ -16,6 +16,7 @@ import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import { formatFullDate, formatPrice, formatTime } from "@/utils/formatters";
 import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
+import { useSettledLoad } from "@/hooks/common/useSettledLoad";
 import styles from "./BookingPage.module.css";
 
 export const BookingPage: React.FC = () => {
@@ -41,12 +42,12 @@ export const BookingPage: React.FC = () => {
   const { getBalance } = useBonus();
   const { create, loading: bookingLoading } = useBooking();
 
-  useEffect(() => {
-    if (sessionId) {
-      getAvailability();
-      getBalance({ showErrorNotification: false }).catch(() => {});
-    }
+  const loadSeats = useCallback(async () => {
+    if (!sessionId) return;
+    getBalance({ showErrorNotification: false }).catch(() => {});
+    await getAvailability();
   }, [sessionId, getAvailability, getBalance]);
+  const settled = useSettledLoad(loadSeats);
 
   const handleSeatClick = useCallback(
     async (seatId: number) => {
@@ -105,11 +106,9 @@ export const BookingPage: React.FC = () => {
     ],
   );
 
-  if (loading) {
+  if (loading || !settled) {
     return (
-      <Layout>
-        <LoadingSpinner text="Loading seats..." />
-      </Layout>
+      <Layout>{loading && <LoadingSpinner text="Loading seats..." />}</Layout>
     );
   }
 

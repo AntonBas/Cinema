@@ -16,6 +16,7 @@ import { DEFAULT_POSTER_URL, resolvePosterUrl } from "@/utils/posterUrl";
 import { formatDate } from "@/utils/formatters";
 import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
+import { useSettledLoad } from "@/hooks/common/useSettledLoad";
 import styles from "./MovieDetailPage.module.css";
 
 const AGE_RATING_COLORS: Record<string, string> = {
@@ -59,11 +60,11 @@ export const MovieDetailPage: React.FC = () => {
   >({});
   const [dateScrollIndex, setDateScrollIndex] = useState(0);
 
-  useEffect(() => {
-    if (slug) {
-      getBySlug(slug);
-    }
-  }, [slug, getBySlug]);
+  const loadMovie = useCallback(
+    () => (slug ? getBySlug(slug) : Promise.resolve(null)),
+    [slug, getBySlug],
+  );
+  const settled = useSettledLoad(loadMovie);
 
   useEffect(() => {
     if (movieDetail?.sessions?.length) {
@@ -90,10 +91,10 @@ export const MovieDetailPage: React.FC = () => {
     [movieDetail?.posterUrl],
   );
 
-  if (loading) {
+  if (loading || !settled) {
     return (
       <Layout>
-        <LoadingSpinner text="Loading movie details..." />
+        {loading && <LoadingSpinner text="Loading movie details..." />}
       </Layout>
     );
   }

@@ -21,11 +21,13 @@ import styles from "./SuccessPage.module.css";
 export const SuccessPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { getById, loading } = usePayment();
+  const { getById } = usePayment();
 
   const [payment, setPayment] = useState<PaymentResponse | null>(null);
   const [pollingCount, setPollingCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const pollingRef = useRef<number | null>(null);
 
   const paymentId = searchParams.get("paymentId");
@@ -38,23 +40,35 @@ export const SuccessPage = () => {
       return;
     }
 
+    const stopPolling = () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
+
     const fetchPayment = async () => {
       try {
         const result = await getById(Number(paymentId));
         setPayment(result);
         setPollingCount((prev) => prev + 1);
       } catch {
-        return;
+        stopPolling();
+        setLoadFailed(true);
       }
     };
 
     fetchPayment();
     pollingRef.current = window.setInterval(fetchPayment, 5000);
 
-    return () => {
-      if (pollingRef.current) clearInterval(pollingRef.current);
-    };
-  }, [paymentId, getById, navigate]);
+    return stopPolling;
+  }, [paymentId, getById, navigate, loadAttempt]);
+
+  const handleReload = () => {
+    setLoadFailed(false);
+    setPollingCount(0);
+    setLoadAttempt((prev) => prev + 1);
+  };
 
   useEffect(() => {
     if (payment && FINAL_PAYMENT_STATUSES.includes(payment.status)) {
@@ -71,7 +85,41 @@ export const SuccessPage = () => {
     }
   }, [payment, pollingCount]);
 
-  if (loading && !payment) {
+  if (!payment && loadFailed) {
+    return (
+      <Layout>
+        <div className={`${styles.container} ${styles.visible}`}>
+          <div className={styles.card}>
+            <div className={styles.errorContainer}>
+              <div
+                className={`${styles.iconWrapper} ${styles.errorIconWrapper}`}
+              >
+                <AlertCircle className={styles.errorIcon} size={64} />
+              </div>
+              <h1 className={styles.title}>Couldn't Load Payment</h1>
+              <p className={styles.message}>
+                We couldn't check your payment status right now. Please try
+                again or check your tickets later.
+              </p>
+              <div className={styles.actions}>
+                <Button variant="primary" onClick={handleReload}>
+                  <RefreshCw size={18} /> Try Again
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => navigate("/account/tickets")}
+                >
+                  <Ticket size={18} /> My Tickets
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!payment) {
     return (
       <Layout>
         <div className={styles.loadingContainer}>
@@ -79,10 +127,6 @@ export const SuccessPage = () => {
         </div>
       </Layout>
     );
-  }
-
-  if (!payment) {
-    return null;
   }
 
   const isSuccess = payment.status === "SUCCESS";

@@ -11,9 +11,8 @@ import { Button } from "@/components/ui/Button/Button";
 import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
+import { getCinemaToday } from "@/utils/dateUtils";
 import styles from "./SessionsPage.module.css";
-
-const getTodayString = (): string => new Date().toISOString().split("T")[0];
 
 export const SessionsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -23,7 +22,7 @@ export const SessionsPage: React.FC = () => {
   const [sessionDates, setSessionDates] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const today = useMemo(() => getTodayString(), []);
+  const today = useMemo(() => getCinemaToday(), []);
   const dateParam = searchParams.get("date");
   const movieIdParam = searchParams.get("movieId");
   const selectedDate = dateParam || today;

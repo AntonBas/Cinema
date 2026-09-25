@@ -48,19 +48,23 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
     getBalance({ showErrorNotification: false }).catch(() => {});
   }, [getBalance]);
 
-  const bonusBalance = balance?.pointsBalance || 0;
-  const minUsablePoints = balance?.minUsablePoints || 0;
-  const maxUsablePoints = balance?.maxUsablePoints ?? Number.POSITIVE_INFINITY;
-  const pointValue = balance ? Number(balance.pointValue) : 1;
+  const bonusBalance = balance?.pointsBalance ?? 0;
+  const minUsablePoints = balance?.minUsablePoints ?? 0;
+  const pointValue = balance ? Number(balance.pointValue) : 0;
   const maxDiscountPercentage = balance
     ? Number(balance.maxDiscountPercentage)
-    : 0.5;
+    : 0;
 
-  const maxAvailablePoints = Math.min(
-    bonusBalance,
-    maxUsablePoints,
-    Math.floor((totalPrice * maxDiscountPercentage) / pointValue),
-  );
+  const maxAvailablePoints =
+    balance && pointValue > 0
+      ? Math.min(
+          bonusBalance,
+          balance.maxUsablePoints,
+          Math.floor((totalPrice * maxDiscountPercentage) / pointValue),
+        )
+      : 0;
+  const canUseBonus =
+    maxAvailablePoints > 0 && maxAvailablePoints >= minUsablePoints;
 
   const bonusPointsToUse =
     bonusPointsInput === ""
@@ -91,10 +95,13 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
   };
 
   const handleBooking = () => {
+    if (isBelowMinimum) return;
     onBooking(bonusPointsToUse);
   };
 
-  const discount = bonusPointsToUse * pointValue;
+  const isBelowMinimum =
+    bonusPointsToUse > 0 && bonusPointsToUse < minUsablePoints;
+  const discount = isBelowMinimum ? 0 : bonusPointsToUse * pointValue;
   const finalPrice = totalPrice - discount;
 
   if (!selectedSeats.length) {
@@ -154,58 +161,66 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
         ))}
       </div>
 
-      <div className={styles.bonusSection}>
-        <div className={styles.bonusHeader}>
-          <h4>Use Bonus Points</h4>
-          <Tooltip content={bonusRules} position="left">
-            <button
-              className={styles.infoButton}
-              aria-label="Bonus points information"
-            >
-              <Info size={18} />
-            </button>
-          </Tooltip>
-        </div>
-        <div className={styles.bonusInfo}>
-          <span>
-            Available: {bonusBalance} points ({formatPrice(bonusBalance)})
-          </span>
-          {loading && <span>Loading...</span>}
-        </div>
-
-        {bonusBalance > 0 && maxAvailablePoints > 0 && (
-          <div className={styles.bonusControls}>
-            <div className={styles.pointsInput}>
-              <input
-                type="number"
-                min={0}
-                max={maxAvailablePoints}
-                value={bonusPointsInput}
-                placeholder="0"
-                onChange={(e) => handleBonusPointsInputChange(e.target.value)}
-                disabled={isBooking || loading}
-                aria-label="Bonus points to use"
-              />
-              <Button
-                variant="secondary"
-                size="small"
-                onClick={handleUseAllPoints}
-                disabled={isBooking || loading}
+      {balance && (
+        <div className={styles.bonusSection}>
+          <div className={styles.bonusHeader}>
+            <h4>Use Bonus Points</h4>
+            <Tooltip content={bonusRules} position="left">
+              <button
+                className={styles.infoButton}
+                aria-label="Bonus points information"
               >
-                Use Max
-              </Button>
-            </div>
-            <div className={styles.pointsLimits}>
-              <span>Min: {minUsablePoints}</span>
-              <span>Max: {maxAvailablePoints}</span>
-            </div>
+                <Info size={18} />
+              </button>
+            </Tooltip>
           </div>
-        )}
-      </div>
+          <div className={styles.bonusInfo}>
+            <span>
+              Available: {bonusBalance} points (
+              {formatPrice(bonusBalance * pointValue)})
+            </span>
+            {loading && <span>Loading...</span>}
+          </div>
+
+          {canUseBonus && (
+            <div className={styles.bonusControls}>
+              <div className={styles.pointsInput}>
+                <input
+                  type="number"
+                  min={0}
+                  max={maxAvailablePoints}
+                  value={bonusPointsInput}
+                  placeholder="0"
+                  onChange={(e) => handleBonusPointsInputChange(e.target.value)}
+                  disabled={isBooking || loading}
+                  aria-label="Bonus points to use"
+                />
+                <Button
+                  variant="secondary"
+                  size="small"
+                  onClick={handleUseAllPoints}
+                  disabled={isBooking || loading}
+                >
+                  Use Max
+                </Button>
+              </div>
+              <div className={styles.pointsLimits}>
+                <span>Min: {minUsablePoints}</span>
+                <span>Max: {maxAvailablePoints}</span>
+              </div>
+              {isBelowMinimum && (
+                <p className={styles.pointsError} role="alert">
+                  Use at least {minUsablePoints} points or leave the field empty
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className={styles.summary}>
         <div className={styles.priceBreakdown}>
-          {bonusPointsToUse > 0 && (
+          {discount > 0 && (
             <>
               <div className={styles.priceRow}>
                 <span>Total price:</span>
@@ -235,7 +250,7 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
             fullWidth
             onClick={handleBooking}
             loading={isBooking}
-            disabled={isBooking || loading}
+            disabled={isBooking || loading || isBelowMinimum}
           >
             {isBooking
               ? "Processing..."

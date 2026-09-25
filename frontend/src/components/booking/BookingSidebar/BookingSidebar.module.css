@@ -182,6 +182,12 @@
   color: var(--color-text-secondary);
 }
 
+.pointsError {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-error);
+}
+
 .summary {
   border-top: 2px solid var(--color-border);
   padding-top: var(--space-4);

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useAuthActions } from "@/hooks/features/auth/useAuthActions";
 import { Input } from "@/components/ui/Input/Input";
 import { Button } from "@/components/ui/Button/Button";
@@ -8,7 +8,20 @@ import { AuthCard } from "@/components/auth/AuthCard/AuthCard";
 import { isApiErrorException } from "@/utils/apiErrorHandler";
 import styles from "./LoginForm.module.css";
 
+const REDIRECT_ERROR_MESSAGES: Record<string, string> = {
+  oauth2_failed: "Google sign-in failed. Please try again.",
+};
+
+const REDIRECT_INFO_MESSAGES: Record<string, string> = {
+  "email-changed": "Your email was changed. Please log in with your new email.",
+};
+
 export const LoginForm: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const redirectError =
+    REDIRECT_ERROR_MESSAGES[searchParams.get("error") ?? ""];
+  const redirectInfo = REDIRECT_INFO_MESSAGES[searchParams.get("reason") ?? ""];
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -39,6 +52,16 @@ export const LoginForm: React.FC = () => {
       </div>
 
       <form className={styles.loginForm} onSubmit={handleSubmit}>
+        {!error && redirectError && (
+          <div className={styles.notification} data-type="error">
+            {redirectError}
+          </div>
+        )}
+        {!error && !redirectError && redirectInfo && (
+          <div className={styles.notification} data-type="info">
+            {redirectInfo}
+          </div>
+        )}
         {error && (
           <div className={styles.notification} data-type="error">
             {error.message}

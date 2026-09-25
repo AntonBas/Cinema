@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback } from "react";
 import { AccountPageLayout } from "@/components/account/AccountPageLayout/AccountPageLayout";
 import { BonusBalanceCard } from "@/components/account/BonusSection/BonusBalanceCard/BonusBalanceCard";
 import { BonusTransactions } from "@/components/account/BonusSection/BonusTransactions/BonusTransactions";
 import { useBonus } from "@/hooks/features/bonus/useBonus";
+import { useSettledLoad } from "@/hooks/common/useSettledLoad";
 import {
   parseEnumParam,
   toUrlEnumValue,
@@ -40,15 +41,17 @@ export const BonusPage: React.FC = () => {
     getTransactions,
   } = useBonus();
 
-  useEffect(() => {
-    getBalance().catch(() => {});
-  }, [getBalance]);
+  const loadBalance = useCallback(() => getBalance(), [getBalance]);
+  const balanceSettled = useSettledLoad(loadBalance);
 
-  useEffect(() => {
-    if (activeTab === "transactions") {
-      getTransactions({ page, size: DEFAULT_PAGE_SIZE_ADMIN }).catch(() => {});
-    }
-  }, [activeTab, page, getTransactions]);
+  const loadTransactions = useCallback(
+    () =>
+      activeTab === "transactions"
+        ? getTransactions({ page, size: DEFAULT_PAGE_SIZE_ADMIN })
+        : Promise.resolve(null),
+    [activeTab, page, getTransactions],
+  );
+  const transactionsSettled = useSettledLoad(loadTransactions);
 
   return (
     <AccountPageLayout
@@ -65,13 +68,13 @@ export const BonusPage: React.FC = () => {
       <div className={styles.tabContent}>
         {activeTab === "balance" ? (
           <div className={styles.balanceContent}>
-            <BonusBalanceCard balance={balance} loading={!balance} />
+            <BonusBalanceCard balance={balance} loading={!balanceSettled} />
           </div>
         ) : (
           <div className={styles.transactionsContent}>
             <BonusTransactions
               transactions={transactions}
-              loading={!transactions.length}
+              loading={!transactionsSettled}
               onPageChange={setPage}
               currentPage={transactionsPagination?.number || 0}
               totalPages={transactionsPagination?.totalPages || 1}

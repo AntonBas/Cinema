@@ -20,3 +20,21 @@ export const parseServerInstant = (dateTimeString: string): Date =>
       ? dateTimeString
       : `${dateTimeString}Z`,
   );
+
+const CINEMA_TIME_ZONE = "Europe/Kyiv";
+
+const cinemaDateFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: CINEMA_TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+export const getCinemaToday = (): string =>
+  cinemaDateFormatter.format(new Date());
+
+export const addDaysToIsoDate = (isoDate: string, days: number): string => {
+  const date = new Date(`${isoDate}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().split("T")[0];
+};

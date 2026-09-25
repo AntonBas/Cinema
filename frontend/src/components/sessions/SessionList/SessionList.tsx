@@ -71,10 +71,26 @@ const groupSessionsByMovie = (
 const SessionCard: React.FC<SessionCardProps> = ({ session, onBook }) => {
   const isAvailable = session.availableSeats > 0;
 
+  const handleBook = () => {
+    if (isAvailable) onBook(session.publicId);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleBook();
+    }
+  };
+
   return (
     <div
       className={`${styles.sessionCard} ${isAvailable ? styles.available : styles.unavailable}`}
-      onClick={() => isAvailable && onBook(session.publicId)}
+      role="button"
+      tabIndex={isAvailable ? 0 : -1}
+      aria-disabled={!isAvailable}
+      aria-label={`${formatTime(session.startTime)}, ${session.hallName}, ${isAvailable ? "book now" : "sold out"}`}
+      onClick={handleBook}
+      onKeyDown={handleKeyDown}
     >
       <div className={styles.sessionTime}>
         <div className={styles.timeRange}>

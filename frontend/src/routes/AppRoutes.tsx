@@ -238,7 +238,7 @@ export const AppRoutes: React.FC = () => {
       <Route
         path="/cashier/scan/:uniqueCode"
         element={
-          <AdminRoute>
+          <AdminRoute allowedRoles={["ROLE_ADMIN", "ROLE_CASHIER"]}>
             <Suspense fallback={<LoadingSpinner />}>
               <CashierScanPage />
             </Suspense>

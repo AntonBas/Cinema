@@ -63,6 +63,10 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
     );
   }
 
+  if (loading && !transactions.length) {
+    return null;
+  }
+
   if (!transactions.length) {
     return <EmptyState title="No Transactions Found" />;
   }

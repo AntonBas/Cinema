@@ -79,6 +79,12 @@
   border-color: rgba(var(--color-error-rgb), var(--opacity-medium));
 }
 
+.notification[data-type="info"] {
+  background: rgba(var(--color-info-rgb), var(--opacity-low));
+  color: var(--color-info);
+  border-color: rgba(var(--color-info-rgb), var(--opacity-medium));
+}
+
 .notificationLink {
   display: block;
   margin-top: var(--space-2);

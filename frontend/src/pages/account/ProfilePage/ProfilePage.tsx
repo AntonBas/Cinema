@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { AccountPageLayout } from "@/components/account/AccountPageLayout/AccountPageLayout";
 import { UserProfileCard } from "@/components/account/OverviewSection/UserProfileCard/UserProfileCard";
 import { ProfileEditForm } from "@/components/account/OverviewSection/ProfileEditForm/ProfileEditForm";
 import { useUser } from "@/hooks/features/user/useUser";
+import { useSettledLoad } from "@/hooks/common/useSettledLoad";
+import { useAuth } from "@/context/AuthContext";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import type { UserUpdateRequest } from "@/types/user";
 import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
@@ -13,23 +15,25 @@ const PROFILE_SUBTITLE = "View and manage your personal information";
 export const ProfilePage: React.FC = () => {
   const { profile, loading, profileError, getProfile, updateProfile } =
     useUser();
+  const { refreshUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
 
-  useEffect(() => {
-    getProfile();
-  }, [getProfile]);
+  const settled = useSettledLoad(getProfile);
 
   const handleProfileUpdated = async (formData: UserUpdateRequest) => {
     await updateProfile(formData);
     setIsEditing(false);
+    await refreshUser();
   };
 
-  if (loading && !profile) {
+  if (!profile && (loading || !settled)) {
     return (
       <AccountPageLayout title="My Profile" subtitle={PROFILE_SUBTITLE}>
-        <div className={styles.loading}>
-          <LoadingSpinner text="Loading your account..." />
-        </div>
+        {loading && (
+          <div className={styles.loading}>
+            <LoadingSpinner text="Loading your account..." />
+          </div>
+        )}
       </AccountPageLayout>
     );
   }

@@ -190,8 +190,9 @@ export const PaymentPage: React.FC = () => {
 
   useEffect(() => {
     if (bookingId && bookingData && step === "init") initPayment();
-    return () => stopPolling();
-  }, [bookingId, bookingData, step, initPayment, stopPolling]);
+  }, [bookingId, bookingData, step, initPayment]);
+
+  useEffect(() => stopPolling, [stopPolling]);
 
   useEffect(() => {
     if (!currentPayment) return;
@@ -221,29 +222,44 @@ export const PaymentPage: React.FC = () => {
   const handlePay = async () => {
     if (!currentPayment?.id) return;
     setStep("paying");
-    const liqPayData = await getLiqPayData(currentPayment.id);
-    if (liqPayData?.paymentUrl) window.location.href = liqPayData.paymentUrl;
-    else {
-      setStep("failed");
+    try {
+      const liqPayData = await getLiqPayData(currentPayment.id);
+      if (liqPayData?.paymentUrl) {
+        window.location.href = liqPayData.paymentUrl;
+        return;
+      }
       setErrorMessage("Payment data not available");
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Payment data not available",
+      );
     }
+    setStep("failed");
   };
 
   const handleRetry = async () => {
     stopPolling();
-    if (!currentPayment?.id) return;
+    if (!currentPayment?.id) {
+      await initPayment();
+      return;
+    }
 
     try {
       setStep("processing");
       const retriedPayment = (await retry(
         currentPayment.id,
       )) as ExtendedPaymentResponse | null;
-      if (retriedPayment && retriedPayment.id) {
-        setCurrentPayment(retriedPayment);
-        startPolling(retriedPayment.id);
-        const liqPayData = await getLiqPayData(retriedPayment.id);
-        setStep(liqPayData?.paymentUrl ? "ready" : "failed");
+      if (!retriedPayment?.id) {
+        setStep("failed");
+        setErrorMessage("Failed to retry payment");
+        return;
       }
+      setCurrentPayment(retriedPayment);
+      startPolling(retriedPayment.id);
+      const liqPayData = await getLiqPayData(retriedPayment.id);
+      setStep(liqPayData?.paymentUrl ? "ready" : "failed");
+      if (!liqPayData?.paymentUrl)
+        setErrorMessage("Failed to initialize payment gateway");
     } catch (error) {
       setStep("failed");
       setErrorMessage(
