@@ -1,7 +1,9 @@
 FROM node:22-alpine
 WORKDIR /app
-COPY package*.json ./
+RUN chown node:node /app
+USER node
+COPY --chown=node:node package*.json ./
 RUN npm ci
-COPY . .
+COPY --chown=node:node . .
 EXPOSE 5173
 CMD ["npm", "run", "dev", "--", "--host"]
