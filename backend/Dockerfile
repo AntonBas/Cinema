@@ -21,4 +21,4 @@ RUN mkdir -p logs uploads/posters && \
 USER spring:spring
 
 EXPOSE 8080 8081
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-Djava.security.egd=file:/dev/urandom", "-jar", "app.jar"]
