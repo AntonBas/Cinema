@@ -10,6 +10,8 @@ Full-stack cinema booking platform: seat reservation, LiqPay payments, refunds, 
 ![CI](https://github.com/AntonBas/Cinema/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
+**[Live demo](https://bas-cinema.vercel.app)** — hosted on free tiers, so the first request may take up to a minute while the backend wakes up.
+
 **[Full Documentation](docs/DOCS.md)** — complete feature descriptions, technical details, and project structure.
 
 ---
@@ -53,8 +55,6 @@ Full feature breakdown for every role: [docs/DOCS.md#features](docs/DOCS.md#feat
 
 **DevOps** — Docker / Docker Compose, GitHub Actions CI, Render + Vercel + Neon + Upstash + Cloudinary deployment
 
-Full version table: [docs/DOCS.md#tech-stack](docs/DOCS.md#tech-stack)
-
 ---
 
 ## Architecture
@@ -85,7 +85,7 @@ flowchart TD
     S["Schedulers (per domain)"] --> DB
 ```
 
-`payment/` and `refund/` used to live inside the booking package as a single "Payment Service" — they're now their own domains, connected one-way only (`refund → payment → booking`, never back), which is what keeps the split safe to reason about.
+`payment/` and `refund/` depend on each other one way only (`refund → payment → booking`, never back), which keeps each domain safe to reason about on its own.
 
 ### Key engineering decisions
 
@@ -109,7 +109,7 @@ Full write-up of trade-offs and what was learned building this: [docs/DOCS.md](d
 
 ## Testing
 
-- **1119 tests** across **149 test classes**, run against real PostgreSQL via **Testcontainers** (no mocked DB in integration tests)
+- **1128 tests** across **150 test classes**, run against real PostgreSQL via **Testcontainers** (no mocked DB in integration tests)
 - Dedicated **concurrency test suites** per domain: `SeatReservationConcurrencyTest`, `BookingConcurrencyTest`, `BookingDoubleConfirmConcurrencyTest`, `PaymentCallbackConcurrencyTest`, `RefundCreationConcurrencyTest`, `BonusCardConcurrencyTest`, `BonusRefundPointsRetryConcurrencyTest`, `TicketValidationConcurrencyTest`
 - Failure scenarios verified directly: concurrent holds on the same seat (exactly one wins), duplicate concurrent LiqPay success callbacks (payment reaches `SUCCESS` and tickets are issued exactly once), expired reservations auto-released by the scheduler, refunds stuck in `PROCESSING` reconciled
 - Runs on every push/PR to `master`/`develop` via GitHub Actions (`.github/workflows/ci.yml`)

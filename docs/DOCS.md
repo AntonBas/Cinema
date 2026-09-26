@@ -12,9 +12,7 @@ Complete feature descriptions, technical details, and project structure.
   - [Roles & Permissions](#roles--permissions)
   - [User Features](#user-features)
   - [Admin Features](#admin-features)
-  - [Technical Highlights](#technical-highlights)
 - [Engineering Details](#engineering-details)
-- [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 
 ---
@@ -126,7 +124,7 @@ npm run dev
 
 Frontend will be available at: http://localhost:5173
 
-Note: API requests to /api are automatically proxied to the backend via Vite. No CORS configuration or manual VITE_API_URL setup needed.
+API requests to `/api` are proxied to the backend by Vite, so no CORS setup is needed locally. Copy `frontend/.env.example` to `frontend/.env.local` — `VITE_API_URL` is used to start Google sign-in.
 
 ---
 
@@ -166,8 +164,7 @@ from [`.env.docker.example`](../.env.docker.example), alongside the ones
 required everywhere (`JWT_SECRET`, `BREVO_API_KEY`, `EMAIL_FROM`,
 `GOOGLE_CLIENT_ID`/`SECRET`, `LIQPAY_*`, `FRONTEND_URL`). On Vercel, set
 `VITE_API_URL` to the Render backend's URL as a project environment
-variable (there's no `frontend/.env.example` for this — it only matters
-for the Vercel build, not local dev).
+variable.
 
 Steps once both services exist:
 
@@ -232,11 +229,6 @@ The system supports four roles with different access levels:
 - Reset link sent to email
 - New password validation (cannot reuse old password)
 - Blocked for unverified accounts
-
-**Email Tokens**
-
-- Email verification and email-change confirmation are both handled via `POST /api/tokens/email/verify` and `POST /api/tokens/email/change/confirm`
-- Expired tokens are cleaned up automatically by a scheduler (`user/scheduler/EmailTokenCleanupScheduler`)
 
 ---
 
@@ -536,20 +528,11 @@ Three tabs for complete movie content management:
 
 ---
 
-### Technical Highlights
-
-- **Role-Based Access Control (RBAC):** Secure API endpoints and UI elements for all four roles
-- **Rate Limiting:** API protection against brute-force and DDoS attacks
-- **RESTful API:** Well-structured backend API built with Spring Boot
-- **Modern Frontend:** Responsive and interactive UI built with React and TypeScript
-
----
-
 ## Engineering Details
 
 ### Testing
 
-1119 tests across 149 test classes, run with Testcontainers against a real PostgreSQL instance
+1128 tests across 150 test classes, run with Testcontainers against a real PostgreSQL instance
 (no mocked DB in integration/concurrency tests). Every domain has a dedicated concurrency suite,
 e.g. `SeatReservationConcurrencyTest`, `BookingConcurrencyTest`,
 `BookingDoubleConfirmConcurrencyTest`, `PaymentCallbackConcurrencyTest`,
@@ -625,59 +608,6 @@ Four configurable rules control the loyalty program:
 | Booking Spend   | Min/max points redeemable per booking, capped at a % of total price  | 100-1000 points, max 50% of total  |
 | Payment Accrual | % of purchase returned as points                                     | 5%                                  |
 
-## Tech Stack
-
-### Backend
-
-| Technology           | Version |
-| :------------------- | :------ |
-| Java                 | 21      |
-| Spring Boot          | 4.1.1   |
-| Spring Security      | 7.1.1   |
-| Spring Data JPA      | 4.1.1   |
-| Spring OAuth2 Client | 4.1.1   |
-| Spring Cache         | 4.1.1   |
-| Spring Actuator      | 4.1.1   |
-| Hibernate ORM        | 7.4.5   |
-| PostgreSQL           | 15      |
-| Flyway               | 12.4.0  |
-| JWT (jjwt)           | 0.13.0  |
-| MapStruct            | 1.6.3   |
-| Lombok               | 1.18.48 |
-| Bucket4j             | 8.10.1  |
-| Redis                | 7       |
-| ZXing (QR Code)      | 3.5.4   |
-| SpringDoc OpenAPI    | 3.1.1   |
-| Dotenv               | 4.0.0   |
-| Testcontainers       | 2.0.5   |
-| Cloudinary (prod poster storage) | 2.3.0 |
-| Brevo (transactional email, HTTP API) | — |
-
-### Frontend
-
-| Technology        | Version |
-| :---------------- | :------ |
-| React             | 19.2.4  |
-| TypeScript        | 5.8.3   |
-| Vite              | 7.3.6   |
-| React Router DOM  | 7.18.3  |
-| Axios             | 1.20.0  |
-| Lucide React      | 0.563.0 |
-| clsx              | 2.1.1   |
-| CSS Modules       | —       |
-| ESLint            | 10.11.0 |
-| Prettier          | 3.9.9   |
-
-### DevOps & Tools
-
-| Technology     | Description                   |
-| :------------- | :---------------------------- |
-| Docker         | Containerization              |
-| Docker Compose | Multi-container orchestration |
-| Flyway         | Database migrations           |
-| Maven Wrapper  | Build automation              |
-| GitHub Actions | CI/CD pipeline                |
-
 ---
 
 ## Project Structure
@@ -739,46 +669,4 @@ updating session/movie statuses, awarding birthday bonuses, cleaning up expired 
 
 ### Frontend (React)
 
-    frontend/src/
-    ├── api/
-    ├── components/
-    │   ├── account/
-    │   ├── admin/
-    │   │   ├── AdminLayout/
-    │   │   ├── SectionAuditLogs/
-    │   │   ├── SectionBonus/
-    │   │   ├── SectionBookings/
-    │   │   ├── SectionHalls/
-    │   │   ├── SectionMovies/
-    │   │   ├── SectionPromotion/
-    │   │   ├── SectionRefunds/
-    │   │   ├── SectionSchedule/
-    │   │   ├── SectionTicketType/
-    │   │   ├── SectionUsers/
-    │   │   └── shared/
-    │   ├── auth/
-    │   ├── booking/
-    │   ├── cashier/
-    │   ├── home/
-    │   ├── layout/
-    │   ├── movies/
-    │   ├── sessions/
-    │   └── ui/
-    ├── context/
-    ├── hooks/
-    │   ├── common/
-    │   └── features/
-    ├── pages/
-    │   ├── account/
-    │   ├── auth/
-    │   ├── booking/
-    │   ├── cashier/
-    │   ├── home/
-    │   ├── movies/
-    │   ├── sessions/
-    │   ├── NotFoundPage/
-    │   └── RefundPolicyPage/
-    ├── routes/
-    ├── services/
-    ├── types/
-    └── utils/
+`frontend/src/` mirrors the backend domains: one API client per domain in `api/`, one hook folder per feature in `hooks/features/`, and matching `pages/` and `components/` folders (admin sections live under `components/admin/`).
