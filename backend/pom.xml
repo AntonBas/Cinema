@@ -24,7 +24,7 @@
         <zxing.version>3.5.4</zxing.version>
         <bucket4j.version>8.10.1</bucket4j.version>
         <testcontainers.version>2.0.5</testcontainers.version>
-        <cloudinary.version>2.3.0</cloudinary.version>
+        <cloudinary.version>2.4.0</cloudinary.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
