@@ -20,5 +20,7 @@ RUN mkdir -p logs uploads/posters && \
 
 USER spring:spring
 
+ENV MALLOC_ARENA_MAX=2
+
 EXPOSE 8080 8081
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-Djava.security.egd=file:/dev/urandom", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=40.0", "-XX:+UseSerialGC", "-XX:TieredStopAtLevel=1", "-Xss512k", "-Djava.security.egd=file:/dev/urandom", "-jar", "app.jar"]
