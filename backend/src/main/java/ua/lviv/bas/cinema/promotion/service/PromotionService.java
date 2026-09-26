@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
 import ua.lviv.bas.cinema.common.UniquenessValidator;
 import ua.lviv.bas.cinema.promotion.domain.Promotion;
+import ua.lviv.bas.cinema.promotion.domain.PromotionStatus;
 import ua.lviv.bas.cinema.promotion.domain.UserPromotion;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.promotion.dto.request.ClaimPromotionRequest;
@@ -29,10 +30,14 @@ import ua.lviv.bas.cinema.promotion.repository.UserPromotionRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.common.FixedOrderPageable;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -52,9 +57,11 @@ public class PromotionService {
         log.info("Creating new promotion: {}", request.title());
 
         validateTitleUniqueness(request.title(), null);
-        validateDateRange(request);
+        validateNotInPast("startDate", request.startDate());
+        validateNotInPast("endDate", request.endDate());
+        validateDateRange(request.startDate(), request.endDate());
 
-        var promotion = promotionMapper.toPromotion(request);
+        var promotion = promotionMapper.toEntity(request);
         var saved = promotionRepository.save(promotion);
 
         log.info("Promotion created with ID: {}", saved.getId());
@@ -67,7 +74,7 @@ public class PromotionService {
     public Page<PromotionListResponse> getPromotions(String query, Pageable pageable) {
         log.info("Getting promotions: query='{}', page={}, size={}", query, pageable.getPageNumber(),
                 pageable.getPageSize());
-        return promotionRepository.findAllAdminProjections(query, pageable)
+        return promotionRepository.findAllAdminProjections(query, FixedOrderPageable.of(pageable))
                 .map(promotionMapper::toPromotionListResponse);
     }
 
@@ -78,7 +85,7 @@ public class PromotionService {
 
     public List<PromotionResponse> getAvailablePromotions(User user) {
         log.debug("Getting available promotions for user: {}", user != null ? user.getEmail() : "anonymous");
-        return promotionRepository.findAllActivePromotions().stream().map(promotionMapper::toPromotionResponse)
+        return promotionRepository.findAllActivePromotions(CinemaTime.today()).stream().map(promotionMapper::toPromotionResponse)
                 .toList();
     }
 
@@ -94,16 +101,17 @@ public class PromotionService {
         log.info("Updating promotion with ID: {}", id);
 
         validateTitleUniqueness(request.title(), id);
-        validateDateRange(request);
 
         var promotion = findByIdOrThrow(id);
         String oldTitle = promotion.getTitle();
+        validateDatesForUpdate(request, promotion);
+        var oldDetails = captureDetails(promotion);
 
-        promotionMapper.updatePromotionFromRequest(request, promotion);
+        promotionMapper.updateEntity(request, promotion);
         var updated = promotionRepository.save(promotion);
 
         log.info("Promotion updated with ID: {}", updated.getId());
-        auditUpdate(id, oldTitle, updated);
+        auditService.logChange("Promotion", id, oldTitle, AuditAction.UPDATED, oldDetails, captureDetails(updated));
 
         return promotionMapper.toPromotionResponse(updated);
     }
@@ -117,7 +125,7 @@ public class PromotionService {
 
         if (!promotion.getUserRedemptions().isEmpty()) {
             int redemptionCount = promotion.getUserRedemptions().size();
-            throw new PromotionHasRedemptionsException(id, redemptionCount);
+            throw new PromotionHasRedemptionsException(id, promotion.getTitle(), redemptionCount);
         }
 
         String promotionTitle = promotion.getTitle();
@@ -141,11 +149,12 @@ public class PromotionService {
             throw new AlreadyClaimedException(promotion.getTitle());
         }
 
-        var userPromotion = UserPromotion.builder().user(user).promotion(promotion).redeemedAt(LocalDateTime.now())
+        var userPromotion = UserPromotion.builder().user(user).promotion(promotion).redeemedAt(Instant.now())
                 .pointsAwarded(promotion.getBonusPoints()).build();
 
         userPromotionRepository.save(userPromotion);
-        bonusLedgerService.addPromotionPoints(user, promotion.getBonusPoints(), promotion.getTitle());
+        bonusLedgerService.addPromotionPoints(user, promotion.getId(), promotion.getBonusPoints(),
+                promotion.getTitle());
 
         log.info("Promotion claimed successfully. User received {} points", promotion.getBonusPoints());
         auditClaim(promotion, user);
@@ -167,23 +176,33 @@ public class PromotionService {
                 () -> PromotionAlreadyExistsException.forTitle(title));
     }
 
-    private void validateDateRange(PromotionRequest request) {
-        var startDate = request.startDate();
-        var endDate = request.endDate();
+    private void validateDatesForUpdate(PromotionRequest request, Promotion promotion) {
+        if (!Objects.equals(request.startDate(), promotion.getStartDate())) {
+            validateNotInPast("startDate", request.startDate());
+        }
+        if (!Objects.equals(request.endDate(), promotion.getEndDate())) {
+            validateNotInPast("endDate", request.endDate());
+        }
+        var startDate = request.startDate() != null ? request.startDate() : promotion.getStartDate();
+        var endDate = request.endDate() != null ? request.endDate() : promotion.getEndDate();
+        validateDateRange(startDate, endDate);
+    }
+
+    private void validateNotInPast(String field, LocalDate date) {
+        if (date != null && date.isBefore(CinemaTime.today())) {
+            throw InvalidPromotionDateRangeException.inPast(field, date);
+        }
+    }
+
+    private void validateDateRange(LocalDate startDate, LocalDate endDate) {
         if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
             throw new InvalidPromotionDateRangeException(startDate, endDate);
         }
     }
 
     private boolean isPromotionActive(Promotion promotion) {
-        LocalDate now = LocalDate.now();
-        LocalDate start = promotion.getStartDate();
-        LocalDate end = promotion.getEndDate();
-
-        boolean afterStart = (start == null) || !now.isBefore(start);
-        boolean beforeEnd = (end == null) || !now.isAfter(end);
-
-        return afterStart && beforeEnd;
+        return PromotionStatus.of(promotion.isActive(), promotion.getStartDate(), promotion.getEndDate())
+                == PromotionStatus.ACTIVE;
     }
 
     private void auditCreate(Promotion promotion) {
@@ -193,13 +212,10 @@ public class PromotionService {
                 details);
     }
 
-    private void auditUpdate(Long id, String oldTitle, Promotion updated) {
-        var oldDetails = AuditDetails.of().put("title", oldTitle).put("bonusPoints", updated.getBonusPoints())
-                .build();
-        var newDetails = AuditDetails.of().put("title", updated.getTitle())
-                .put("bonusPoints", updated.getBonusPoints()).build();
-
-        auditService.logChange("Promotion", id, oldTitle, AuditAction.UPDATED, oldDetails, newDetails);
+    private Map<String, Object> captureDetails(Promotion promotion) {
+        return AuditDetails.of().put("title", promotion.getTitle()).put("bonusPoints", promotion.getBonusPoints())
+                .put("startDate", promotion.getStartDate()).put("endDate", promotion.getEndDate())
+                .put("active", promotion.isActive()).build();
     }
 
     private void auditDelete(Long id, String title) {

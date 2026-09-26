@@ -53,10 +53,10 @@
 
 @media (max-width: 768px) {
   .emailForm {
-      max-width: 100%;
+    max-width: 100%;
   }
 
   .title {
-      font-size: var(--font-size-xl);
+    font-size: var(--font-size-xl);
   }
 }

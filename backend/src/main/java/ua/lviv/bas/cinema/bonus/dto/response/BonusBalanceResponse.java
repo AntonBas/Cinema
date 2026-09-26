@@ -25,6 +25,9 @@ public record BonusBalanceResponse(
         BigDecimal minRedemptionValue,
 
         @Schema(description = "Maximum monetary value for redemption", example = "1000.00")
-        BigDecimal maxRedemptionValue
+        BigDecimal maxRedemptionValue,
+
+        @Schema(description = "Maximum share of the order total that bonus points can cover", example = "0.5")
+        BigDecimal maxDiscountPercentage
 ) {
 }

@@ -1,5 +1,6 @@
 package ua.lviv.bas.cinema.exception.api;
 
+import ua.lviv.bas.cinema.common.CinemaTime;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AccessLevel;
@@ -23,7 +24,7 @@ public class ApiError {
     private int statusCode;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm:ss")
-    private final LocalDateTime timestamp = LocalDateTime.now();
+    private final LocalDateTime timestamp = CinemaTime.now();
 
     @Setter
     private String message;

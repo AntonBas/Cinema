@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.user.scheduler;
 
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -22,7 +23,7 @@ public class EmailTokenCleanupScheduler {
     public void cleanupExpiredTokens() {
         log.debug("Starting expired email tokens cleanup");
 
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         int deletedCount = tokenRepository.deleteByExpiresAtBefore(now);
 
         if (deletedCount > 0) {
@@ -37,7 +38,7 @@ public class EmailTokenCleanupScheduler {
     public void cleanupOldConfirmedTokens() {
         log.debug("Starting old confirmed email tokens cleanup");
 
-        LocalDateTime weekAgo = LocalDateTime.now().minusDays(7);
+        Instant weekAgo = Instant.now().minus(Duration.ofDays(7));
         int deletedCount = tokenRepository.deleteByConfirmedTrueAndConfirmedAtBefore(weekAgo);
 
         if (deletedCount > 0) {

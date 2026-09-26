@@ -1,68 +1,77 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useSession } from "@/hooks/features/sessions/useSession";
+import { useSession } from "@/hooks/features/session/useSession";
 import type { SessionScheduleResponse } from "@/types/session";
 import { Layout } from "@/components/layout/Layout/Layout";
 import { DateFilter } from "@/components/sessions/DateFilter/DateFilter";
 import { MovieFilter } from "@/components/sessions/MovieFilter/MovieFilter";
 import { SessionList } from "@/components/sessions/SessionList/SessionList";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { Button } from "@/components/ui/Button/Button";
+import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
+import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
+import { getCinemaToday } from "@/utils/dateUtils";
 import styles from "./SessionsPage.module.css";
 
-const getTodayString = (): string => new Date().toISOString().split("T")[0];
-
-const extractUniqueDates = (sessions: SessionScheduleResponse[]): string[] => {
-  const dates = sessions.map((s) => s.startTime.split("T")[0]);
-  return [...new Set(dates)].sort();
-};
-
-const filterByDate = (
-  sessions: SessionScheduleResponse[],
-  date: string,
-): SessionScheduleResponse[] => {
-  return sessions.filter((s) => s.startTime.startsWith(date));
-};
-
-const SessionsPage: React.FC = () => {
+export const SessionsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { loading, getSchedule } = useSession();
+  const { loading, getSchedule, getScheduleDates } = useSession();
 
-  const [allSessions, setAllSessions] = useState<SessionScheduleResponse[]>([]);
-  const [allSessionDates, setAllSessionDates] = useState<string[]>([]);
+  const [sessions, setSessions] = useState<SessionScheduleResponse[]>([]);
+  const [sessionDates, setSessionDates] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const today = useMemo(() => getTodayString(), []);
+  const today = useMemo(() => getCinemaToday(), []);
   const dateParam = searchParams.get("date");
   const movieIdParam = searchParams.get("movieId");
   const selectedDate = dateParam || today;
   const selectedMovieId = movieIdParam ? parseInt(movieIdParam) : undefined;
 
   useEffect(() => {
+    let isCurrent = true;
+
+    const fetchSessionDates = async () => {
+      try {
+        const dates = await getScheduleDates(selectedMovieId);
+        if (isCurrent) setSessionDates(dates || []);
+      } catch {
+        if (isCurrent) setSessionDates([]);
+      }
+    };
+
+    fetchSessionDates();
+    return () => {
+      isCurrent = false;
+    };
+  }, [selectedMovieId, getScheduleDates]);
+
+  useEffect(() => {
+    let isCurrent = true;
+
     const fetchSessions = async () => {
       setError(null);
 
       try {
-        const data = await getSchedule({ movieId: selectedMovieId });
-        const sessionList = data || [];
-        setAllSessions(sessionList);
-        setAllSessionDates(extractUniqueDates(sessionList));
+        const data = await getSchedule({
+          date: selectedDate,
+          movieId: selectedMovieId,
+        });
+        if (isCurrent) setSessions(data || []);
       } catch (err) {
+        if (!isCurrent) return;
         setError(
-          err instanceof Error ? err.message : "Failed to load sessions",
+          err instanceof Error ? err.message : "Failed to Load Sessions",
         );
-        setAllSessions([]);
-        setAllSessionDates([]);
+        setSessions([]);
       }
     };
 
     fetchSessions();
-  }, [selectedMovieId, getSchedule]);
-
-  const sessions = useMemo(
-    () => filterByDate(allSessions, selectedDate),
-    [allSessions, selectedDate],
-  );
+    return () => {
+      isCurrent = false;
+    };
+  }, [selectedDate, selectedMovieId, getSchedule]);
 
   const handleDateChange = useCallback(
     (date: string) => {
@@ -95,26 +104,24 @@ const SessionsPage: React.FC = () => {
 
   return (
     <Layout>
-      <div className={styles.container}>
-        <div className={styles.header}>
-          <div>
-            <h1 className={styles.title}>Movie Sessions</h1>
-            <p className={styles.subtitle}>
-              Browse available movie sessions and book your tickets
-            </p>
-          </div>
-          {hasFilters && (
-            <Button variant="secondary" onClick={handleClearFilters}>
-              Clear Filters
-            </Button>
-          )}
-        </div>
+      <PageContainer>
+        <PageHeader
+          title="Schedule"
+          subtitle="Browse available movie sessions and book your tickets"
+          actions={
+            hasFilters && (
+              <Button variant="secondary" onClick={handleClearFilters}>
+                Clear Filters
+              </Button>
+            )
+          }
+        />
 
         <div className={styles.filtersSection}>
           <DateFilter
             selectedDate={selectedDate}
             onDateChange={handleDateChange}
-            sessionDates={allSessionDates}
+            sessionDates={sessionDates}
           />
           <MovieFilter
             selectedMovieId={selectedMovieId}
@@ -123,12 +130,19 @@ const SessionsPage: React.FC = () => {
         </div>
 
         {error ? (
-          <div className={styles.errorContainer}>
-            <p className={styles.errorText}>{error}</p>
-            <Button variant="primary" onClick={() => window.location.reload()}>
-              Try Again
-            </Button>
-          </div>
+          <EmptyState
+            variant="error"
+            title="Failed to Load Sessions"
+            message={error}
+            action={
+              <Button
+                variant="primary"
+                onClick={() => window.location.reload()}
+              >
+                Try Again
+              </Button>
+            }
+          />
         ) : loading ? (
           <LoadingSpinner text="Loading sessions..." />
         ) : sessions.length > 0 ? (
@@ -142,14 +156,12 @@ const SessionsPage: React.FC = () => {
             <SessionList sessions={sessions} />
           </>
         ) : (
-          <div className={styles.emptyState}>
-            <h3>No sessions found</h3>
-            <p>Try selecting a different date or movie.</p>
-          </div>
+          <EmptyState
+            title="No Sessions Found"
+            message="Try selecting a different date or movie."
+          />
         )}
-      </div>
+      </PageContainer>
     </Layout>
   );
 };
-
-export default SessionsPage;

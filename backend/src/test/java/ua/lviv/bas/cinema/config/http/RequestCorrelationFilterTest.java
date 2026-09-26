@@ -54,4 +54,17 @@ class RequestCorrelationFilterTest {
 
         assertThat(MDC.get(RequestCorrelationFilter.CORRELATION_ID_MDC_KEY)).isNull();
     }
+
+    @Test
+    void replacesMalformedIncomingCorrelationId() throws Exception {
+        var request = new MockHttpServletRequest();
+        request.addHeader(RequestCorrelationFilter.CORRELATION_ID_HEADER, "bad id\r\ninjected");
+        var response = new MockHttpServletResponse();
+        FilterChain chain = mock(FilterChain.class);
+
+        filter.doFilter(request, response, chain);
+
+        var correlationId = response.getHeader(RequestCorrelationFilter.CORRELATION_ID_HEADER);
+        assertThat(UUID.fromString(correlationId)).isNotNull();
+    }
 }

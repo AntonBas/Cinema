@@ -35,10 +35,12 @@ import ua.lviv.bas.cinema.ticket.repository.TicketTypeRepository;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.user.domain.UserRole;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.concurrent.Callable;
@@ -94,19 +96,19 @@ class PaymentCallbackConcurrencyTest {
         var movie = movieRepository.save(buildMovie());
         var hall = cinemaHallRepository.save(CinemaHall.builder().name("Callback Concurrency Hall").build());
         var session = sessionRepository.save(Session.builder().movie(movie).hall(hall)
-                .startTime(LocalDateTime.now().plusDays(1)).basePrice(new BigDecimal("100.00")).build());
+                .startTime(CinemaTime.now().plusDays(1)).basePrice(new BigDecimal("100.00")).build());
         var ticketType = ticketTypeRepository.save(TicketType.builder().displayName("Standard").build());
 
         var booking = bookingRepository.save(Booking.builder().user(user).session(session)
                 .status(BookingStatus.PENDING).totalPrice(new BigDecimal("200.00"))
-                .finalPrice(new BigDecimal("200.00")).expiresAt(LocalDateTime.now().plusMinutes(20)).build());
+                .finalPrice(new BigDecimal("200.00")).expiresAt(Instant.now().plus(Duration.ofMinutes(20))).build());
         bookingId = booking.getId();
 
         for (int seatNumber = 1; seatNumber <= 2; seatNumber++) {
-            var seat = seatRepository.save(Seat.builder().row(1).number(seatNumber).hall(hall).build());
+            var seat = seatRepository.save(Seat.builder().row(1).number(seatNumber).x(0).y(0).hall(hall).build());
             seatReservationRepository.save(SeatReservation.builder().booking(booking).seat(seat).session(session)
                     .ticketType(ticketType).seatPrice(new BigDecimal("100.00")).status(ReservationStatus.PENDING)
-                    .reservedUntil(LocalDateTime.now().plusMinutes(5)).build());
+                    .reservedUntil(Instant.now().plus(Duration.ofMinutes(5))).build());
         }
 
         paymentRepository.save(Payment.builder().booking(booking).amount(new BigDecimal("200.00"))
@@ -164,14 +166,14 @@ class PaymentCallbackConcurrencyTest {
     private User buildUser(String email) {
         return User.builder().email(email).firstName("Test").lastName("User")
                 .dateOfBirth(LocalDate.of(1995, 1, 1)).city("Lviv").phoneNumber("+380000000012")
-                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).build();
+                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).build();
     }
 
     private Movie buildMovie() {
         return Movie.builder().title("Callback Concurrency Test Movie").slug("callback-concurrency-test-movie")
                 .trailerUrl("https://example.com/trailer").description("Test movie for callback concurrency testing")
-                .durationMinutes(120).releaseDate(LocalDate.now().minusDays(1))
-                .endShowingDate(LocalDate.now().plusMonths(1)).status(MovieStatus.CURRENT)
+                .durationMinutes(120).releaseDate(CinemaTime.today().minusDays(1))
+                .endShowingDate(CinemaTime.today().plusMonths(1)).status(MovieStatus.CURRENT)
                 .posterFileName("poster.jpg").ageRating(AgeRating.PEGI_12).build();
     }
 }

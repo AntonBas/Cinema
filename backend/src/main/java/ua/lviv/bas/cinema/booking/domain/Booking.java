@@ -35,9 +35,10 @@ import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.user.domain.User;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -58,6 +59,10 @@ public class Booking extends AuditableEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
     private Long id;
+
+    @Column(name = "public_id", nullable = false, unique = true, updatable = false)
+    @Builder.Default
+    private UUID publicId = UUID.randomUUID();
 
     @Version
     @Column(name = "version", nullable = false)
@@ -113,7 +118,7 @@ public class Booking extends AuditableEntity {
 
     @NotNull
     @Column(name = "expires_at", nullable = false)
-    private LocalDateTime expiresAt;
+    private Instant expiresAt;
 
     @OneToOne(mappedBy = "booking", fetch = FetchType.LAZY)
     private Payment payment;

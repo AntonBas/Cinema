@@ -6,6 +6,7 @@ import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.promotion.domain.Promotion;
+import ua.lviv.bas.cinema.promotion.domain.PromotionStatus;
 import ua.lviv.bas.cinema.promotion.dto.request.PromotionRequest;
 import ua.lviv.bas.cinema.promotion.repository.projection.PromotionListProjection;
 import ua.lviv.bas.cinema.promotion.repository.projection.PromotionResponseProjection;
@@ -39,6 +40,7 @@ public class PromotionMapperTest {
         assertThat(response.bonusPoints()).isEqualTo(500);
         assertThat(response.startDate()).isEqualTo(LocalDate.of(2024, 6, 1));
         assertThat(response.endDate()).isEqualTo(LocalDate.of(2024, 6, 30));
+        assertThat(response.status()).isEqualTo(PromotionStatus.EXPIRED);
     }
 
     @Test
@@ -49,6 +51,7 @@ public class PromotionMapperTest {
         when(responseProjection.getBonusPoints()).thenReturn(300);
         when(responseProjection.getStartDate()).thenReturn(LocalDate.of(2024, 7, 1));
         when(responseProjection.getEndDate()).thenReturn(LocalDate.of(2024, 7, 31));
+        when(responseProjection.getActive()).thenReturn(true);
 
         var response = mapper.toPromotionResponse(responseProjection);
 
@@ -58,14 +61,15 @@ public class PromotionMapperTest {
         assertThat(response.bonusPoints()).isEqualTo(300);
         assertThat(response.startDate()).isEqualTo(LocalDate.of(2024, 7, 1));
         assertThat(response.endDate()).isEqualTo(LocalDate.of(2024, 7, 31));
+        assertThat(response.status()).isEqualTo(PromotionStatus.EXPIRED);
     }
 
     @Test
-    void toPromotionFromRequest() {
+    void toEntityFromRequest() {
         var request = new PromotionRequest("New Promotion", "New promotion description", 200, LocalDate.of(2024, 7, 1),
-                LocalDate.of(2024, 7, 31));
+                LocalDate.of(2024, 7, 31), null);
 
-        var promotion = mapper.toPromotion(request);
+        var promotion = mapper.toEntity(request);
 
         assertThat(promotion.getTitle()).isEqualTo("New Promotion");
         assertThat(promotion.getDescription()).isEqualTo("New promotion description");
@@ -77,14 +81,14 @@ public class PromotionMapperTest {
     }
 
     @Test
-    void updatePromotionFromRequest() {
+    void updateEntity() {
         var promotion = Promotion.builder().id(1L).title("Old Title").description("Old description").bonusPoints(100)
                 .build();
 
         var request = new PromotionRequest("New Title", "New description", 200, LocalDate.of(2024, 8, 1),
-                LocalDate.of(2024, 8, 31));
+                LocalDate.of(2024, 8, 31), null);
 
-        mapper.updatePromotionFromRequest(request, promotion);
+        mapper.updateEntity(request, promotion);
 
         assertThat(promotion.getTitle()).isEqualTo("New Title");
         assertThat(promotion.getDescription()).isEqualTo("New description");
@@ -94,13 +98,13 @@ public class PromotionMapperTest {
     }
 
     @Test
-    void updatePromotionFromRequestWithNullValues() {
+    void updateEntityWithNullValues() {
         var promotion = Promotion.builder().id(1L).title("Old Title").description("Old description").bonusPoints(100)
                 .startDate(LocalDate.of(2024, 1, 1)).endDate(LocalDate.of(2024, 1, 31)).build();
 
-        var request = new PromotionRequest(null, null, null, null, null);
+        var request = new PromotionRequest(null, null, null, null, null, null);
 
-        mapper.updatePromotionFromRequest(request, promotion);
+        mapper.updateEntity(request, promotion);
 
         assertThat(promotion.getTitle()).isEqualTo("Old Title");
         assertThat(promotion.getDescription()).isEqualTo("Old description");
@@ -116,6 +120,7 @@ public class PromotionMapperTest {
         when(listProjection.getBonusPoints()).thenReturn(250);
         when(listProjection.getStartDate()).thenReturn(LocalDate.of(2024, 10, 1));
         when(listProjection.getEndDate()).thenReturn(LocalDate.of(2024, 10, 31));
+        when(listProjection.getActive()).thenReturn(true);
 
         var response = mapper.toPromotionListResponse(listProjection);
 
@@ -124,6 +129,7 @@ public class PromotionMapperTest {
         assertThat(response.bonusPoints()).isEqualTo(250);
         assertThat(response.startDate()).isEqualTo(LocalDate.of(2024, 10, 1));
         assertThat(response.endDate()).isEqualTo(LocalDate.of(2024, 10, 31));
+        assertThat(response.status()).isEqualTo(PromotionStatus.EXPIRED);
     }
 
     @Test
@@ -139,8 +145,8 @@ public class PromotionMapperTest {
     }
 
     @Test
-    void toPromotionWithNullRequest() {
-        var promotion = mapper.toPromotion(null);
+    void toEntityWithNullRequest() {
+        var promotion = mapper.toEntity(null);
         assertThat(promotion).isNull();
     }
 

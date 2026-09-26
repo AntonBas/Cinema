@@ -20,6 +20,7 @@ import ua.lviv.bas.cinema.bonus.mapper.BonusMapper;
 import ua.lviv.bas.cinema.bonus.repository.BonusCardRepository;
 import ua.lviv.bas.cinema.bonus.repository.BonusRulesRepository;
 import ua.lviv.bas.cinema.bonus.repository.BonusTransactionRepository;
+import ua.lviv.bas.cinema.common.FixedOrderPageable;
 
 import java.math.BigDecimal;
 
@@ -34,6 +35,12 @@ public class BonusQueryService {
     private final BonusMapper bonusMapper;
     private final BonusProperties bonusProperties;
 
+    @Transactional(readOnly = true)
+    public int getAccruedPointsForPayment(Long paymentId) {
+        return bonusTransactionRepository.sumPointsByReferenceIdAndType("PAYMENT_" + paymentId,
+                BonusTransactionType.PAYMENT_ACCRUAL);
+    }
+
     @Cacheable(value = "bonus", key = "'balance:' + #userId")
     @Transactional(readOnly = true)
     public BonusBalanceResponse getBalance(Long userId) {
@@ -45,7 +52,7 @@ public class BonusQueryService {
             key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
     @Transactional(readOnly = true)
     public Page<BonusTransactionResponse> getTransactions(Long userId, Pageable pageable) {
-        var page = bonusTransactionRepository.findProjectionsByUserId(userId, pageable);
+        var page = bonusTransactionRepository.findProjectionsByUserId(userId, FixedOrderPageable.of(pageable));
         return page.map(bonusMapper::toResponse);
     }
 
@@ -110,7 +117,7 @@ public class BonusQueryService {
         BigDecimal maxValue = calculateValue(pointValue, maxPoints);
 
         return new BonusBalanceResponse(card.getPointsBalance(), pointValue, balanceValue, minPoints, maxPoints,
-                minValue, maxValue);
+                minValue, maxValue, bonusProperties.getMaxDiscountPercentage());
     }
 
     private BigDecimal calculateValue(BigDecimal pointValue, Integer points) {

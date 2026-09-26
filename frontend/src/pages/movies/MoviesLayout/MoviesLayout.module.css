@@ -8,7 +8,7 @@
 }
 
 .header {
-  max-width: 1200px;
+  max-width: var(--container-md);
   margin: 0 auto;
   padding: 0 var(--space-6);
 }
@@ -16,7 +16,7 @@
 .nav {
   display: flex;
   justify-content: center;
-  padding: var(--space-8) 0 var(--space-6);
+  padding: var(--space-6) 0;
 }
 
 .navInner {
@@ -63,7 +63,7 @@
 }
 
 .content {
-  max-width: 1400px;
+  max-width: var(--container-lg);
   margin: 0 auto;
   padding: 0 var(--space-6) var(--space-12);
 }
@@ -90,7 +90,7 @@
   }
 
   .content {
-    padding: 0 var(--space-4) var(--space-10);
+    padding: 0 var(--space-4) var(--space-8);
   }
 }
 

@@ -8,12 +8,14 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.util.List;
+import java.util.UUID;
 
 @Schema(description = "Request to create a new booking")
 public record BookingCreateRequest(
         @NotNull(message = "Session ID is required")
-        @Schema(description = "Session ID", example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
-        Long sessionId,
+        @Schema(description = "Public session identifier", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                requiredMode = Schema.RequiredMode.REQUIRED)
+        UUID sessionId,
 
         @Valid
         @Size(min = 1, max = 10, message = "Minimum 1, maximum 10 seats")

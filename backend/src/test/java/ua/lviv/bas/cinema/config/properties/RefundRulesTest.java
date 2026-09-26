@@ -1,8 +1,7 @@
 package ua.lviv.bas.cinema.config.properties;
 
+import ua.lviv.bas.cinema.common.CinemaTime;
 import org.junit.jupiter.api.Test;
-
-import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -12,7 +11,7 @@ class RefundRulesTest {
 
     @Test
     void getRefundDeadlineShouldBeTwoHoursBeforeTheSession() {
-        var sessionTime = LocalDateTime.now().plusDays(3);
+        var sessionTime = CinemaTime.now().plusDays(3);
 
         var deadline = refundRules.getRefundDeadline(sessionTime);
 
@@ -21,8 +20,8 @@ class RefundRulesTest {
 
     @Test
     void getRefundDeadlineShouldMatchTheCutoffEnforcedByGetRefundPercentage() {
-        var justBeforeDeadline = LocalDateTime.now().plusHours(2).plusMinutes(5);
-        var justAfterDeadline = LocalDateTime.now().plusHours(1).plusMinutes(55);
+        var justBeforeDeadline = CinemaTime.now().plusHours(2).plusMinutes(5);
+        var justAfterDeadline = CinemaTime.now().plusHours(1).plusMinutes(55);
 
         assertThat(refundRules.isRefundable(justBeforeDeadline)).isTrue();
         assertThat(refundRules.isRefundable(justAfterDeadline)).isFalse();

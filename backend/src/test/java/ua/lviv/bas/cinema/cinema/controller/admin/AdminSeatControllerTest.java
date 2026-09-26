@@ -27,7 +27,7 @@ public class AdminSeatControllerTest {
     private final Long HALL_ID = 1L;
 
     private SeatResponse createSeatResponse(Long id, SeatType seatType, boolean active) {
-        return new SeatResponse(id, 1, 1, seatType, active);
+        return new SeatResponse(id, 1, 1, seatType, 0, 0, active);
     }
 
     @Test

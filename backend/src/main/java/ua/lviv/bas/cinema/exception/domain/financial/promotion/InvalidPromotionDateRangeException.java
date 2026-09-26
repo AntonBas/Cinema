@@ -13,8 +13,16 @@ public class InvalidPromotionDateRangeException extends BusinessException {
     private static final long serialVersionUID = 1L;
 
     public InvalidPromotionDateRangeException(LocalDate startDate, LocalDate endDate) {
-        super(String.format("End date %s must not be before start date %s", endDate, startDate),
-                "INVALID_PROMOTION_DATE_RANGE", HttpStatus.BAD_REQUEST,
+        this(String.format("End date %s must not be before start date %s", endDate, startDate),
                 String.format("startDate=%s, endDate=%s", startDate, endDate));
+    }
+
+    private InvalidPromotionDateRangeException(String message, String debugMessage) {
+        super(message, "INVALID_PROMOTION_DATE_RANGE", HttpStatus.BAD_REQUEST, debugMessage);
+    }
+
+    public static InvalidPromotionDateRangeException inPast(String field, LocalDate date) {
+        return new InvalidPromotionDateRangeException(String.format("%s %s must not be in the past", field, date),
+                String.format("%s=%s", field, date));
     }
 }

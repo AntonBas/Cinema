@@ -10,7 +10,8 @@ public enum BonusTransactionType {
     BOOKING_SPEND("Booking Spend"),
     PAYMENT_ACCRUAL("Payment Accrual"),
     REFUND_RETURN("Refund Return"),
-    BOOKING_CANCEL("Booking Cancel");
+    BOOKING_CANCEL("Booking Cancel"),
+    ACCRUAL_REVERSAL("Accrual Reversal");
 
     private final String displayName;
 

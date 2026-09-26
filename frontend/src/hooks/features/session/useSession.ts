@@ -1,0 +1,130 @@
+import { useCallback, useRef } from "react";
+import { sessionApi } from "@/api/sessionApi";
+import type {
+  SessionResponse,
+  SessionAdminResponse,
+  SessionScheduleResponse,
+  SessionRequest,
+  CinemaSessionStatus,
+} from "@/types/session";
+import type { PageResponse, SearchParams } from "@/types/pagination";
+import { useApi } from "@/hooks/common/useApi";
+import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
+
+interface AdminSessionParams extends SearchParams {
+  hallId?: number;
+  movieTitle?: string;
+  status?: CinemaSessionStatus;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+interface PublicSessionParams {
+  searchTerm?: string;
+  date?: string;
+  movieId?: number;
+}
+
+export const useSession = () => {
+  const adminSessionsApi = useApi<PageResponse<SessionAdminResponse>>();
+  const publicSessionsApi = useApi<SessionScheduleResponse[]>();
+  const scheduleDatesApi = useApi<string[]>();
+  const sessionApiHook = useApi<SessionResponse>();
+  const mutationApi = useApi<SessionResponse | void>();
+
+  const adminSessionsApiRef = useRef(adminSessionsApi);
+  const publicSessionsApiRef = useRef(publicSessionsApi);
+  const scheduleDatesApiRef = useRef(scheduleDatesApi);
+  const sessionApiRef = useRef(sessionApiHook);
+  const mutationApiRef = useRef(mutationApi);
+
+  adminSessionsApiRef.current = adminSessionsApi;
+  publicSessionsApiRef.current = publicSessionsApi;
+  scheduleDatesApiRef.current = scheduleDatesApi;
+  sessionApiRef.current = sessionApiHook;
+  mutationApiRef.current = mutationApi;
+
+  const loading = useDelayedLoading(
+    adminSessionsApi.loading ||
+      publicSessionsApi.loading ||
+      sessionApiHook.loading ||
+      mutationApi.loading,
+    { delay: 150, minDisplayTime: 300 },
+  );
+
+  const getAdminSessions = useCallback(async (params?: AdminSessionParams) => {
+    return adminSessionsApiRef.current.execute(() =>
+      sessionApi.admin.getAll(params),
+    );
+  }, []);
+
+  const getSchedule = useCallback(async (params?: PublicSessionParams) => {
+    return publicSessionsApiRef.current.execute(() =>
+      sessionApi.public.getSchedule(params),
+    );
+  }, []);
+
+  const getScheduleDates = useCallback(async (movieId?: number) => {
+    return scheduleDatesApiRef.current.execute(() =>
+      sessionApi.public.getScheduleDates({ movieId }),
+    );
+  }, []);
+
+  const getAdminById = useCallback(async (id: number) => {
+    return sessionApiRef.current.execute(() => sessionApi.admin.getById(id));
+  }, []);
+
+  const create = useCallback(async (request: SessionRequest) => {
+    return mutationApiRef.current.execute(
+      () => sessionApi.admin.create(request),
+      { suppressValidationToast: true, dedupeKey: "create" },
+    );
+  }, []);
+
+  const update = useCallback(async (id: number, request: SessionRequest) => {
+    return mutationApiRef.current.execute(
+      () => sessionApi.admin.update(id, request),
+      { suppressValidationToast: true, dedupeKey: `update:${id}` },
+    );
+  }, []);
+
+  const cancel = useCallback(async (id: number) => {
+    return mutationApiRef.current.execute(() => sessionApi.admin.cancel(id), {
+      dedupeKey: `cancel:${id}`,
+    });
+  }, []);
+
+  const reactivate = useCallback(async (id: number) => {
+    return mutationApiRef.current.execute(
+      () => sessionApi.admin.reactivate(id),
+      { dedupeKey: `reactivate:${id}` },
+    );
+  }, []);
+
+  const remove = useCallback(async (id: number) => {
+    return mutationApiRef.current.execute(() => sessionApi.admin.delete(id), {
+      dedupeKey: `remove:${id}`,
+    });
+  }, []);
+
+  return {
+    adminSessions: adminSessionsApi.data?.content || [],
+    schedule: publicSessionsApi.data || [],
+    session: sessionApiHook.data,
+    pagination: adminSessionsApi.data,
+    loading,
+    adminError: adminSessionsApi.error,
+    scheduleError: publicSessionsApi.error,
+    sessionError: sessionApiHook.error,
+    mutationError: mutationApi.error,
+    getAdminSessions,
+    getSchedule,
+    getScheduleDates,
+    getAdminById,
+    create,
+    update,
+    cancel,
+    reactivate,
+    remove,
+  };
+};

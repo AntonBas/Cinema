@@ -3,17 +3,19 @@ import { Pencil, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/Button/Button";
 import { Badge } from "@/components/ui/Badge/Badge";
 import { useBonus } from "@/hooks/features/bonus/useBonus";
-import EditRuleModal from "./BonusModal/EditRuleModal";
-import ResetRuleModal from "./BonusModal/ResetRuleModal";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { EditRuleModal } from "./BonusModal/EditRuleModal";
+import { ResetRuleModal } from "./BonusModal/ResetRuleModal";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import type { BonusRulesResponse, BonusTransactionType } from "@/types/bonus";
 import { BonusTransactionTypeDisplay } from "@/types/bonus";
 import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
+import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
+import { formatRuleSettings } from "./bonusRuleFields";
 import styles from "./SectionBonus.module.css";
 
-const SectionBonus = () => {
-  const { getAllRules, rules, loading, rulesError } = useBonus();
+export const SectionBonus = () => {
+  const { getRules, rules, loading, rulesError } = useBonus();
   const [editingRule, setEditingRule] = useState<BonusRulesResponse | null>(
     null,
   );
@@ -21,17 +23,17 @@ const SectionBonus = () => {
     useState<BonusTransactionType | null>(null);
 
   useEffect(() => {
-    getAllRules().catch(() => {});
-  }, [getAllRules]);
+    getRules().catch(() => {});
+  }, [getRules]);
 
-  const handleEditSuccess = async () => {
+  const handleEditSuccess = () => {
     setEditingRule(null);
-    await getAllRules();
+    getRules().catch(() => {});
   };
 
-  const handleResetSuccess = async () => {
+  const handleResetSuccess = () => {
     setResettingRuleType(null);
-    await getAllRules();
+    getRules().catch(() => {});
   };
 
   const getRuleStatus = (rule: BonusRulesResponse) => {
@@ -56,9 +58,9 @@ const SectionBonus = () => {
     return (
       <div className={styles.section}>
         <div className={styles.error}>
-          <h3>Error loading bonus system</h3>
+          <h3>Error Loading Bonus System</h3>
           <p>{rulesError.message}</p>
-          <Button onClick={() => getAllRules()}>Try Again</Button>
+          <Button onClick={() => getRules()}>Try Again</Button>
         </div>
       </div>
     );
@@ -66,32 +68,24 @@ const SectionBonus = () => {
 
   return (
     <div className={styles.section}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>Bonus Rules Configuration</h1>
-        <p className={styles.description}>
-          Configure how bonus points are awarded and used
-        </p>
-      </div>
+      <PageHeader
+        title="Bonus Rules"
+        subtitle="Configure how bonus points are awarded and used"
+      />
 
       <div className={tableStyles.wrapper}>
         <div className={tableStyles.container}>
           <table className={tableStyles.table}>
             <colgroup>
-              <col style={{ width: "19%" }} />
-              <col style={{ width: "12%" }} />
-              <col style={{ width: "13%" }} />
-              <col style={{ width: "12%" }} />
-              <col style={{ width: "12%" }} />
-              <col style={{ width: "12%" }} />
+              <col style={{ width: "22%" }} />
+              <col style={{ width: "44%" }} />
+              <col style={{ width: "14%" }} />
               <col style={{ width: "20%" }} />
             </colgroup>
             <thead>
               <tr>
                 <th>Type</th>
-                <th>Points</th>
-                <th>Money Ratio</th>
-                <th>Min Points</th>
-                <th>Max Points</th>
+                <th>Settings</th>
                 <th>Status</th>
                 <th className={tableStyles.actionsCol}>Actions</th>
               </tr>
@@ -101,21 +95,10 @@ const SectionBonus = () => {
                 <tr key={rule.id}>
                   <td data-label="Type">
                     <span className={styles.type}>
-                      {
-                        BonusTransactionTypeDisplay[
-                          rule.bonusType as BonusTransactionType
-                        ]
-                      }
+                      {BonusTransactionTypeDisplay[rule.bonusType]}
                     </span>
                   </td>
-                  <td data-label="Points">{rule.points ?? "N/A"}</td>
-                  <td data-label="Money Ratio">{rule.moneyRatio ?? "N/A"}</td>
-                  <td data-label="Min Points">
-                    {rule.minPointsPerTransaction ?? "N/A"}
-                  </td>
-                  <td data-label="Max Points">
-                    {rule.maxPointsPerTransaction ?? "N/A"}
-                  </td>
+                  <td data-label="Settings">{formatRuleSettings(rule)}</td>
                   <td data-label="Status">
                     <Badge variant={getRuleStatusVariant(rule)}>
                       {getRuleStatus(rule)}
@@ -133,11 +116,7 @@ const SectionBonus = () => {
                         icon={<RotateCcw />}
                         label="Reset rule to default"
                         variant="error"
-                        onClick={() =>
-                          setResettingRuleType(
-                            rule.bonusType as BonusTransactionType,
-                          )
-                        }
+                        onClick={() => setResettingRuleType(rule.bonusType)}
                       />
                     </div>
                   </td>
@@ -168,5 +147,3 @@ const SectionBonus = () => {
     </div>
   );
 };
-
-export default SectionBonus;

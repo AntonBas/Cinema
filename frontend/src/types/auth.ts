@@ -5,9 +5,7 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface LoginResponse {
-  token: string;
-  tokenType: string;
+export interface AuthResponse {
   user: UserResponse;
 }
 
@@ -20,4 +18,8 @@ export interface RegisterRequest {
   phoneNumber: string;
   password: string;
   passwordConfirm: string;
+}
+
+export interface ResendVerificationResponse {
+  cooldownSeconds: number;
 }

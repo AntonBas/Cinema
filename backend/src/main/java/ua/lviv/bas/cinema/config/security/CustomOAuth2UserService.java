@@ -8,7 +8,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import ua.lviv.bas.cinema.common.EmailNormalizer;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
@@ -17,8 +17,8 @@ import ua.lviv.bas.cinema.user.domain.UserRole;
 import ua.lviv.bas.cinema.user.domain.VerificationStatus;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
-import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -34,7 +34,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final CustomUserDetailsService customUserDetailsService;
 
     @Override
-    @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(userRequest);
         return processOAuth2User(oAuth2User);
@@ -43,12 +42,16 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private OAuth2User processOAuth2User(OAuth2User oAuth2User) {
         Map<String, Object> attributes = oAuth2User.getAttributes();
 
-        String email = (String) attributes.get("email");
+        String email = EmailNormalizer.normalize((String) attributes.get("email"));
         String name = (String) attributes.get("name");
 
         if (email == null || email.isBlank()) {
             throw new OAuth2AuthenticationException(
                     new OAuth2Error("email_not_provided", "OAuth2 provider did not return an email address", null));
+        }
+        if (!isEmailVerified(attributes.get("email_verified"))) {
+            throw new OAuth2AuthenticationException(
+                    new OAuth2Error("email_not_verified", "OAuth2 provider has not verified this email address", null));
         }
 
         String[] nameParts = name != null ? name.split(" ", 2) : new String[0];
@@ -61,17 +64,24 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         if (userOptional.isPresent()) {
             user = userOptional.get();
             if (!user.isEnabled()) {
-                user.setEnabled(true);
+                log.warn("Blocked user {} tried to sign in with OAuth2", email);
+                throw new OAuth2AuthenticationException(
+                        new OAuth2Error("account_blocked", "Account is blocked", null));
+            }
+            if (!user.isEmailVerified()) {
+                user.setEmailVerified(true);
                 user.setPassword(UUID.randomUUID().toString());
                 userRepository.save(user);
                 customUserDetailsService.evict(email);
-                log.info("Enabled existing OAuth2 user {} and invalidated local password", email);
+                bonusLedgerService.getOrCreateCard(user);
+                bonusLedgerService.awardWelcomeBonus(user);
+                log.info("Verified existing OAuth2 user {} and invalidated local password", email);
             }
         } else {
             user = User.builder().email(email).firstName(firstName).lastName(lastName)
-                    .password(UUID.randomUUID().toString()).userRole(UserRole.ROLE_USER).enabled(true)
+                    .password(UUID.randomUUID().toString()).userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true)
                     .verificationStatus(VerificationStatus.NOT_VERIFIED).verifiedAt(null).city("").phoneNumber("")
-                    .dateOfBirth(LocalDate.now().minusYears(18)).build();
+                    .dateOfBirth(CinemaTime.today().minusYears(18)).build();
 
             user = userRepository.save(user);
             log.info("Created new OAuth2 user: {}", email);
@@ -83,6 +93,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         }
 
         return oAuth2User;
+    }
+
+    private boolean isEmailVerified(Object emailVerified) {
+        return Boolean.TRUE.equals(emailVerified) || "true".equalsIgnoreCase(String.valueOf(emailVerified));
     }
 
     private void auditRegister(User user) {

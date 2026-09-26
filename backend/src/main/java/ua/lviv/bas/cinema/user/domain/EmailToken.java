@@ -1,10 +1,25 @@
 package ua.lviv.bas.cinema.user.domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Getter
@@ -30,11 +45,11 @@ public class EmailToken {
 
     @NotNull
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @NotNull
     @Column(name = "expires_at", nullable = false)
-    private LocalDateTime expiresAt;
+    private Instant expiresAt;
 
     @NotNull
     @Enumerated(EnumType.STRING)
@@ -46,7 +61,7 @@ public class EmailToken {
     private boolean confirmed = false;
 
     @Column(name = "confirmed_at")
-    private LocalDateTime confirmedAt;
+    private Instant confirmedAt;
 
     @Column(name = "new_email")
     private String newEmail;

@@ -5,7 +5,7 @@ import type {
   PaymentCreateRequest,
   PaymentLiqPayDataResponse,
 } from "@/types/payment";
-import { useApi } from "@/hooks/common/useApi";
+import { useApi, type UseApiOptions } from "@/hooks/common/useApi";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 
 export const usePayment = () => {
@@ -28,13 +28,19 @@ export const usePayment = () => {
 
   const create = useCallback(async (request: PaymentCreateRequest) => {
     return mutationApiRef.current.execute(() => paymentApi.create(request), {
-      successMessage: "Payment initialized successfully",
+      dedupeKey: `create:${request.bookingId}`,
     });
   }, []);
 
-  const getById = useCallback(async (paymentId: number) => {
-    return paymentApiRef.current.execute(() => paymentApi.getById(paymentId));
-  }, []);
+  const getById = useCallback(
+    async (paymentId: number, options?: UseApiOptions<PaymentResponse>) => {
+      return paymentApiRef.current.execute(
+        () => paymentApi.getById(paymentId),
+        options,
+      );
+    },
+    [],
+  );
 
   const getLiqPayData = useCallback(async (paymentId: number) => {
     return liqPayDataApiRef.current.execute(() =>
@@ -44,7 +50,7 @@ export const usePayment = () => {
 
   const retry = useCallback(async (paymentId: number) => {
     return mutationApiRef.current.execute(() => paymentApi.retry(paymentId), {
-      successMessage: "Payment retry initiated",
+      dedupeKey: `retry:${paymentId}`,
     });
   }, []);
 

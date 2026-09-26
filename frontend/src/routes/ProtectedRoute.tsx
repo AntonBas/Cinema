@@ -1,8 +1,9 @@
 import React from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
+import { buildLoginPath } from "@/utils/authRedirect";
 import { useAuth } from "@/context/AuthContext";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -17,6 +18,7 @@ const centerStyle = {
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
   const showLoading = useDelayedLoading(loading, {
     delay: 300,
     minDisplayTime: 500,
@@ -30,8 +32,17 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
+  if (loading) {
+    return null;
+  }
+
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return (
+      <Navigate
+        to={buildLoginPath(location.pathname + location.search)}
+        replace
+      />
+    );
   }
 
   return <>{children}</>;

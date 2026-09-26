@@ -15,9 +15,12 @@ import ua.lviv.bas.cinema.payment.dto.response.PaymentResponse;
 import ua.lviv.bas.cinema.payment.service.PaymentService;
 import ua.lviv.bas.cinema.payment.service.PaymentStatusService;
 import ua.lviv.bas.cinema.user.service.UserService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -54,13 +57,14 @@ public class PaymentControllerTest {
     }
 
     private PaymentResponse createPaymentResponse() {
-        return new PaymentResponse(1L, "BK-123456", "Test Movie", LocalDateTime.now(), "Hall A",
-                new BigDecimal("150.00"), PaymentStatus.PENDING, null, null, null);
+        return new PaymentResponse(1L, "BK-123456", "Test Movie", CinemaTime.now(), "Hall A",
+                new BigDecimal("150.00"), PaymentStatus.PENDING, null, Instant.now().plus(Duration.ofMinutes(30)), null,
+                null);
     }
 
     private PaymentResponse createPaymentResponseWithSuccess() {
-        return new PaymentResponse(1L, "BK-123456", "Test Movie", LocalDateTime.now(), "Hall A",
-                new BigDecimal("150.00"), PaymentStatus.SUCCESS, LocalDateTime.now(), "****1234", null);
+        return new PaymentResponse(1L, "BK-123456", "Test Movie", CinemaTime.now(), "Hall A",
+                new BigDecimal("150.00"), PaymentStatus.SUCCESS, Instant.now(), null, "****1234", null);
     }
 
     private PaymentLiqPayDataResponse createLiqPayDataResponse() {
@@ -70,7 +74,7 @@ public class PaymentControllerTest {
 
     @Test
     void createPaymentShouldCreateSuccessfully() {
-        PaymentCreateRequest request = new PaymentCreateRequest(100L);
+        PaymentCreateRequest request = new PaymentCreateRequest(UUID.randomUUID());
 
         PaymentResponse paymentResponse = createPaymentResponse();
 

@@ -10,6 +10,7 @@ import type {
 } from "@/types/ticketType";
 import { TicketTypeCategoryDisplay } from "@/types/ticketType";
 import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
 import styles from "./TicketTypeTable.module.css";
 
@@ -21,7 +22,7 @@ interface TicketTypeTableProps {
   loading?: boolean;
 }
 
-const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
+export const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
   ticketTypes,
   onEdit,
   onDelete,
@@ -40,24 +41,34 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
 
   const handleConfirmDelete = async () => {
     if (!selectedTicketType) return;
-    await onDelete(selectedTicketType.id);
-    setDeleteModalOpen(false);
-    setSelectedTicketType(null);
+    try {
+      await onDelete(selectedTicketType.id);
+    } catch {
+      return;
+    } finally {
+      setDeleteModalOpen(false);
+      setSelectedTicketType(null);
+    }
   };
 
   const handleToggleActive = async (id: number) => {
     setTogglingId(id);
-    await onToggleActive(id);
-    setTogglingId(null);
+    try {
+      await onToggleActive(id);
+    } catch {
+      return;
+    } finally {
+      setTogglingId(null);
+    }
   };
 
   const formatAgeRange = (ticketType: TicketTypeResponse) => {
-    const { minAge, maxAge } = ticketType;
-    if (minAge === undefined && maxAge === undefined) return "Any age";
-    if (minAge !== undefined && maxAge !== undefined)
-      return `${minAge}-${maxAge} years`;
-    if (minAge !== undefined) return `≥ ${minAge} years`;
-    if (maxAge !== undefined) return `≤ ${maxAge} years`;
+    const hasMinAge = ticketType.minAge != null;
+    const hasMaxAge = ticketType.maxAge != null;
+    if (hasMinAge && hasMaxAge)
+      return `${ticketType.minAge}-${ticketType.maxAge} years`;
+    if (hasMinAge) return `≥ ${ticketType.minAge} years`;
+    if (hasMaxAge) return `≤ ${ticketType.maxAge} years`;
     return "Any age";
   };
 
@@ -84,10 +95,10 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
 
   if (ticketTypes.length === 0) {
     return (
-      <div className={tableStyles.empty}>
-        <h3>No ticket types found</h3>
-        <p>Create your first ticket type to get started!</p>
-      </div>
+      <EmptyState
+        title="No Ticket Types Found"
+        message="Create your first ticket type to get started!"
+      />
     );
   }
 
@@ -159,7 +170,9 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
                       )}
                     </td>
                     <td data-label="Status">
-                      <Badge variant={ticketType.active ? "success" : "secondary"}>
+                      <Badge
+                        variant={ticketType.active ? "success" : "secondary"}
+                      >
                         {ticketType.active ? "Active" : "Inactive"}
                       </Badge>
                     </td>
@@ -216,5 +229,3 @@ const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
     </>
   );
 };
-
-export default TicketTypeTable;

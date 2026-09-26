@@ -8,6 +8,7 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import ua.lviv.bas.cinema.config.security.CustomOAuth2UserService;
 import ua.lviv.bas.cinema.user.domain.User;
@@ -23,8 +24,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class CustomOAuth2UserServiceTest {
@@ -57,7 +61,7 @@ public class CustomOAuth2UserServiceTest {
     @BeforeEach
     void setUp() {
         String FULL_NAME = "John Doe";
-        Map<String, Object> attributes = Map.of("email", EMAIL, "name", FULL_NAME);
+        Map<String, Object> attributes = Map.of("email", EMAIL, "email_verified", true, "name", FULL_NAME);
         when(oAuth2User.getAttributes()).thenReturn(attributes);
     }
 
@@ -92,10 +96,10 @@ public class CustomOAuth2UserServiceTest {
     }
 
     @Test
-    void loadUser_EnablesExistingUser_WhenUserIsDisabled() throws Exception {
+    void loadUser_VerifiesExistingUser_WhenEmailNotVerified() throws Exception {
         String originalPassword = "attacker-set-password-hash";
-        User existingUser = User.builder().email(EMAIL).firstName(FIRST_NAME).lastName(LAST_NAME).enabled(false)
-                .password(originalPassword).build();
+        User existingUser = User.builder().email(EMAIL).firstName(FIRST_NAME).lastName(LAST_NAME).enabled(true)
+                .emailVerified(false).password(originalPassword).build();
 
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(existingUser));
 
@@ -103,20 +107,51 @@ public class CustomOAuth2UserServiceTest {
         processMethod.setAccessible(true);
         OAuth2User result = (OAuth2User) processMethod.invoke(customOAuth2UserService, oAuth2User);
 
-        assertThat(existingUser.isEnabled()).isTrue();
+        assertThat(existingUser.isEmailVerified()).isTrue();
         assertThat(existingUser.getPassword()).isNotEqualTo(originalPassword);
         assertThat(UUID.fromString(existingUser.getPassword())).isNotNull();
         verify(userRepository).save(existingUser);
         verify(customUserDetailsService).evict(EMAIL);
         assertThat(result).isEqualTo(oAuth2User);
 
-        verify(bonusLedgerService, never()).getOrCreateCard(any());
-        verify(bonusLedgerService, never()).awardWelcomeBonus(any());
+        verify(bonusLedgerService).getOrCreateCard(existingUser);
+        verify(bonusLedgerService).awardWelcomeBonus(existingUser);
     }
 
     @Test
-    void loadUser_DoesNotModifyExistingUser_WhenUserIsEnabled() throws Exception {
-        User existingUser = User.builder().email(EMAIL).firstName(FIRST_NAME).lastName(LAST_NAME).enabled(true).build();
+    void loadUser_RejectsBlockedUser() throws Exception {
+        User existingUser = User.builder().email(EMAIL).firstName(FIRST_NAME).lastName(LAST_NAME).enabled(false)
+                .emailVerified(true).build();
+
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(existingUser));
+
+        Method processMethod = CustomOAuth2UserService.class.getDeclaredMethod("processOAuth2User", OAuth2User.class);
+        processMethod.setAccessible(true);
+
+        assertThatThrownBy(() -> processMethod.invoke(customOAuth2UserService, oAuth2User))
+                .hasCauseInstanceOf(OAuth2AuthenticationException.class);
+        assertThat(existingUser.isEnabled()).isFalse();
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void loadUser_RejectsEmailNotVerifiedByProvider() throws Exception {
+        when(oAuth2User.getAttributes())
+                .thenReturn(Map.of("email", EMAIL, "email_verified", false, "name", "John Doe"));
+
+        Method processMethod = CustomOAuth2UserService.class.getDeclaredMethod("processOAuth2User", OAuth2User.class);
+        processMethod.setAccessible(true);
+
+        assertThatThrownBy(() -> processMethod.invoke(customOAuth2UserService, oAuth2User))
+                .hasCauseInstanceOf(OAuth2AuthenticationException.class);
+        verify(userRepository, never()).findByEmail(any());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void loadUser_DoesNotModifyExistingUser_WhenUserIsVerified() throws Exception {
+        User existingUser = User.builder().email(EMAIL).firstName(FIRST_NAME).lastName(LAST_NAME).enabled(true)
+                .emailVerified(true).build();
 
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(existingUser));
 
@@ -133,7 +168,7 @@ public class CustomOAuth2UserServiceTest {
 
     @Test
     void loadUser_HandlesNameWithMultipleParts() throws Exception {
-        Map<String, Object> attributes = Map.of("email", EMAIL, "name", "John Michael Doe");
+        Map<String, Object> attributes = Map.of("email", EMAIL, "email_verified", true, "name", "John Michael Doe");
         when(oAuth2User.getAttributes()).thenReturn(attributes);
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -154,7 +189,7 @@ public class CustomOAuth2UserServiceTest {
 
     @Test
     void loadUser_HandlesNameWithSinglePart() throws Exception {
-        Map<String, Object> attributes = Map.of("email", EMAIL, "name", "John");
+        Map<String, Object> attributes = Map.of("email", EMAIL, "email_verified", true, "name", "John");
         when(oAuth2User.getAttributes()).thenReturn(attributes);
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -177,6 +212,7 @@ public class CustomOAuth2UserServiceTest {
     void loadUser_HandlesMissingName() throws Exception {
         Map<String, Object> attributes = new java.util.HashMap<>();
         attributes.put("email", EMAIL);
+        attributes.put("email_verified", true);
         attributes.put("name", null);
         when(oAuth2User.getAttributes()).thenReturn(attributes);
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());

@@ -11,6 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.movie.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.movie.domain.status.MovieStatus;
 import ua.lviv.bas.cinema.common.PageResponse;
@@ -18,13 +19,17 @@ import ua.lviv.bas.cinema.movie.dto.response.MovieCardResponse;
 import ua.lviv.bas.cinema.movie.dto.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.movie.service.MovieService;
+import org.springframework.http.MediaType;
+import ua.lviv.bas.cinema.integration.PosterImage;
+import java.util.Optional;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -42,7 +47,7 @@ public class MovieControllerTest {
     private MovieDetailResponse createMovieDetailResponse(MovieStatus status) {
         String TITLE = "Test Movie";
         return new MovieDetailResponse(MOVIE_ID, TITLE, SLUG, "https://trailer.url", "Description", 120,
-                LocalDate.now().plusDays(1), LocalDate.now().plusDays(30), AgeRating.PEGI_12, status,
+                CinemaTime.today().plusDays(1), CinemaTime.today().plusDays(30), AgeRating.PEGI_12, status,
                 "/api/movies/" + MOVIE_ID + "/poster", List.of(), List.of(), List.of(), List.of(), List.of());
     }
 
@@ -157,9 +162,8 @@ public class MovieControllerTest {
     @Test
     void getPosterShouldReturnPoster() {
         byte[] posterData = new byte[]{1, 2, 3, 4, 5};
-        ResponseEntity<byte[]> expectedResponse = ResponseEntity.ok(posterData);
-
-        when(movieService.getPoster(MOVIE_ID)).thenReturn(expectedResponse);
+        when(movieService.getPoster(MOVIE_ID))
+                .thenReturn(Optional.of(new PosterImage(posterData, MediaType.IMAGE_PNG)));
 
         ResponseEntity<byte[]> response = movieController.getPoster(MOVIE_ID);
 
@@ -169,9 +173,9 @@ public class MovieControllerTest {
     }
 
     @Test
-    void getPosterWhenNotFoundShouldThrowException() {
-        when(movieService.getPoster(MOVIE_ID)).thenThrow(new EntityNotFoundException("Movie", MOVIE_ID));
+    void getPosterWhenMissingShouldReturnNotFound() {
+        when(movieService.getPoster(MOVIE_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> movieController.getPoster(MOVIE_ID)).isInstanceOf(EntityNotFoundException.class);
+        assertThat(movieController.getPoster(MOVIE_ID).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 }

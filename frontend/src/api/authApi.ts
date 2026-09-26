@@ -1,17 +1,18 @@
-import { api } from "@/services/api";
+import { api, API_BASE_URL } from "@/services/api";
 import type {
   LoginRequest,
   RegisterRequest,
-  LoginResponse,
+  AuthResponse,
+  ResendVerificationResponse,
 } from "@/types/auth";
 import type { UserResponse } from "@/types/user";
 
 const API_URL = "/api/auth";
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+const TOKENS_URL = "/api/tokens";
 
 export const authApi = {
   login: (credentials: LoginRequest) =>
-    api.post<LoginResponse>(`${API_URL}/login`, credentials),
+    api.post<AuthResponse>(`${API_URL}/login`, credentials),
 
   register: (userData: RegisterRequest) =>
     api.post<UserResponse>(`${API_URL}/register`, userData),
@@ -29,16 +30,33 @@ export const authApi = {
     }),
 
   resetPassword: (token: string, newPassword: string) =>
-    api.post<void>(`${API_URL}/password/reset`, null, {
-      params: { token, newPassword },
+    api.post<void>(`${API_URL}/password/reset`, { token, newPassword }),
+
+  oauth2Exchange: (code: string) =>
+    api.post<AuthResponse>(`${API_URL}/oauth2/exchange`, { code }),
+
+  logout: () => api.post<void>(`${API_URL}/logout`),
+
+  resendVerification: (email: string) =>
+    api.post<ResendVerificationResponse>(`${API_URL}/resend-verification`, {
+      email,
     }),
 
-  oauth2Success: (token: string, userId: number, email: string) =>
-    api.get<LoginResponse>(`${API_URL}/oauth2/success`, {
-      params: { token, userId, email },
+  getResendVerificationStatus: (email: string) =>
+    api.get<ResendVerificationResponse>(
+      `${API_URL}/resend-verification/status`,
+      { params: { email } },
+    ),
+
+  verifyEmail: (token: string) =>
+    api.post<void>(`${TOKENS_URL}/email/verify`, null, { params: { token } }),
+
+  confirmEmailChange: (token: string) =>
+    api.post<void>(`${TOKENS_URL}/email/change/confirm`, null, {
+      params: { token },
     }),
 
   getGoogleAuthUrl: (): string => {
-    return `${BASE_URL}/oauth2/authorize/google`;
+    return `${API_BASE_URL}/oauth2/authorize/google`;
   },
 };

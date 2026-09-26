@@ -3,20 +3,32 @@ import styles from "./SearchInput.module.css";
 
 export interface SearchInputProps {
   onSearch: (query: string) => void;
+  value?: string;
   placeholder?: string;
   delay?: number;
   className?: string;
   disabled?: boolean;
+  id?: string;
 }
 
 export const SearchInput: React.FC<SearchInputProps> = ({
   onSearch,
+  value = "",
   placeholder = "Search...",
   delay = 300,
   className = "",
   disabled = false,
+  id,
 }) => {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(value);
+  const [syncedValue, setSyncedValue] = useState(value);
+
+  if (value !== syncedValue) {
+    setSyncedValue(value);
+    if (value !== query.trim()) {
+      setQuery(value);
+    }
+  }
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleChange = useCallback(
@@ -49,6 +61,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
     <div className={`${styles.searchContainer} ${className}`}>
       <div className={styles.searchInputWrapper}>
         <input
+          id={id}
           type="text"
           value={query}
           onChange={handleChange}

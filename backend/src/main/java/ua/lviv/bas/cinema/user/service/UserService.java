@@ -1,5 +1,7 @@
 package ua.lviv.bas.cinema.user.service;
 
+import java.time.Instant;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.Map;
 
@@ -11,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.common.EmailNormalizer;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
 import ua.lviv.bas.cinema.config.security.CustomUserDetailsService;
 import ua.lviv.bas.cinema.user.domain.User;
@@ -22,14 +25,17 @@ import ua.lviv.bas.cinema.user.dto.response.UserProfileResponse;
 import ua.lviv.bas.cinema.user.dto.response.UserResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyExistsException;
+import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyVerifiedException;
 import ua.lviv.bas.cinema.exception.domain.auth.InvalidCurrentPasswordException;
 import ua.lviv.bas.cinema.exception.domain.auth.PasswordMismatchException;
+import ua.lviv.bas.cinema.exception.domain.auth.ResendCooldownException;
 import ua.lviv.bas.cinema.exception.domain.auth.SameEmailException;
 import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
 import ua.lviv.bas.cinema.user.mapper.UserMapper;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.notification.EmailService;
 
 @Slf4j
 @Service
@@ -43,6 +49,7 @@ public class UserService {
     private final EmailTokenGeneratorService emailTokenGeneratorService;
     private final AuditService auditService;
     private final CustomUserDetailsService customUserDetailsService;
+    private final EmailService emailService;
 
     @CacheEvict(value = "users", allEntries = true)
     @Transactional
@@ -50,12 +57,14 @@ public class UserService {
         validatePasswordMatch(request.password(), request.passwordConfirm());
         validateEmailNotExists(request.email());
 
-        var user = userMapper.toUser(request);
+        var user = userMapper.toEntity(request);
+        user.setEmail(EmailNormalizer.normalize(request.email()));
         user.setPassword(passwordEncoder.encode(request.password()));
 
         var saved = userRepository.save(user);
         log.info("User registered: {}", request.email());
         emailTokenGeneratorService.generateVerificationToken(saved);
+        saved.setLastVerificationEmailSentAt(Instant.now());
         auditRegister(saved);
 
         return userMapper.toUserResponse(saved);
@@ -66,10 +75,11 @@ public class UserService {
     public UserProfileResponse update(Long userId, UserUpdateRequest request) {
         var user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
         var oldDetails = captureDetails(user);
+        var oldDateOfBirth = user.getDateOfBirth();
 
-        userMapper.updateUserFromRequest(request, user);
+        userMapper.updateEntity(request, user);
 
-        if (isDateOfBirthChanged(request.dateOfBirth(), user.getDateOfBirth())) {
+        if (isDateOfBirthChanged(request.dateOfBirth(), oldDateOfBirth)) {
             revokeVerificationIfNeeded(user);
         }
 
@@ -90,7 +100,7 @@ public class UserService {
         validateNewEmail(user.getEmail(), newEmail);
         validateEmailNotExists(newEmail);
 
-        emailTokenGeneratorService.generateEmailChangeToken(user, newEmail);
+        emailTokenGeneratorService.generateEmailChangeToken(user, EmailNormalizer.normalize(newEmail));
         log.info("Email change requested for user {} to {}", userId, newEmail);
         auditEmailChangeRequested(userId, oldEmail, newEmail);
     }
@@ -105,10 +115,58 @@ public class UserService {
         validateNewPasswordDifferent(user, request.newPassword());
 
         user.setPassword(passwordEncoder.encode(request.newPassword()));
+        user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);
         customUserDetailsService.evict(user.getEmail());
+        emailService.sendPasswordChangedNotification(user.getEmail());
         log.info("Password updated for user {}", userId);
         auditPasswordChanged(userId, user.getEmail());
+    }
+
+    private static final long RESEND_COOLDOWN_SECONDS = 60;
+
+    @Transactional
+    public int resendVerificationEmail(String email) {
+        var userOpt = userRepository.findByEmailForUpdate(email);
+        if (userOpt.isEmpty()) {
+            log.info("Resend verification requested for unknown email: {}", email);
+            return (int) RESEND_COOLDOWN_SECONDS;
+        }
+
+        var user = userOpt.get();
+        if (user.isEmailVerified()) {
+            throw new EmailAlreadyVerifiedException();
+        }
+
+        var lastSentAt = user.getLastVerificationEmailSentAt();
+        if (lastSentAt != null) {
+            long remaining = remainingCooldownSeconds(lastSentAt);
+            if (remaining > 0) {
+                throw new ResendCooldownException(remaining);
+            }
+        }
+
+        emailTokenGeneratorService.generateVerificationToken(user);
+        user.setLastVerificationEmailSentAt(Instant.now());
+        userRepository.save(user);
+        log.info("Verification email resent to: {}", email);
+
+        return (int) RESEND_COOLDOWN_SECONDS;
+    }
+
+    public int getResendCooldownStatus(String email) {
+        return userRepository.findByEmail(email)
+                .filter(user -> !user.isEmailVerified())
+                .map(User::getLastVerificationEmailSentAt)
+                .map(this::remainingCooldownSeconds)
+                .filter(remaining -> remaining > 0)
+                .map(Long::intValue)
+                .orElse(0);
+    }
+
+    private long remainingCooldownSeconds(Instant lastSentAt) {
+        var remaining = Duration.between(Instant.now(), lastSentAt.plusSeconds(RESEND_COOLDOWN_SECONDS));
+        return remaining.isNegative() ? 0 : remaining.toSeconds();
     }
 
     public User getUser(Long id) {

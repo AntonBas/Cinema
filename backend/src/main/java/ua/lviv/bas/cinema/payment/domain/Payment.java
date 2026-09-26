@@ -1,7 +1,7 @@
 package ua.lviv.bas.cinema.payment.domain;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -72,7 +72,7 @@ public class Payment extends AuditableEntity {
     private String liqpayTransactionId;
 
     @Column(name = "payment_time")
-    private LocalDateTime paymentTime;
+    private Instant paymentTime;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "booking_id", nullable = false)

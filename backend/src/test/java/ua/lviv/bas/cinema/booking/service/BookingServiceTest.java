@@ -25,18 +25,30 @@ import ua.lviv.bas.cinema.booking.mapper.BookingMapper;
 import ua.lviv.bas.cinema.booking.repository.BookingRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class BookingServiceTest {
@@ -67,9 +79,11 @@ public class BookingServiceTest {
 
     private static final Long USER_ID = 1L;
     private static final Long SESSION_ID = 2L;
+    private static final UUID SESSION_PUBLIC_ID = UUID.randomUUID();
     private static final Long SEAT_ID_1 = 3L;
     private static final Long TICKET_TYPE_ADULT_ID = 5L;
     private static final Long BOOKING_ID = 10L;
+    private static final UUID BOOKING_PUBLIC_ID = UUID.randomUUID();
     private static final String BOOKING_NUMBER = "BK-20240115-00123";
     private static final BigDecimal TOTAL_PRICE = new BigDecimal("480.00");
     private static final BigDecimal DISCOUNT_AMOUNT = new BigDecimal("100.00");
@@ -83,20 +97,20 @@ public class BookingServiceTest {
 
         testUser = User.builder().id(USER_ID).email("test@example.com").build();
 
-        LocalDateTime sessionTime = LocalDateTime.now().plusHours(2);
+        LocalDateTime sessionTime = CinemaTime.now().plusHours(2);
         testSession = Session.builder().id(SESSION_ID).startTime(sessionTime).build();
 
         var seatSelection1 = new BookingCreateRequest.SeatSelectionRequest(SEAT_ID_1, TICKET_TYPE_ADULT_ID);
-        createRequest = new BookingCreateRequest(SESSION_ID, List.of(seatSelection1), BONUS_POINTS_USED);
+        createRequest = new BookingCreateRequest(SESSION_PUBLIC_ID, List.of(seatSelection1), BONUS_POINTS_USED);
 
         savedBooking = Booking.builder().id(BOOKING_ID).user(testUser).session(testSession)
                 .status(BookingStatus.PENDING).totalPrice(TOTAL_PRICE).bonusPointsUsed(BONUS_POINTS_USED)
                 .bonusDiscountAmount(DISCOUNT_AMOUNT).finalPrice(FINAL_PRICE)
-                .expiresAt(LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES)).build();
+                .expiresAt(Instant.now().plus(Duration.ofMinutes(EXPIRATION_MINUTES))).build();
 
-        bookingResponse = new BookingResponse(BOOKING_ID, BOOKING_NUMBER, BookingStatus.PENDING, SESSION_ID,
-                sessionTime, "Test Movie", "Hall A", TOTAL_PRICE, BONUS_POINTS_USED, DISCOUNT_AMOUNT, FINAL_PRICE, null,
-                sessionTime.plusMinutes(EXPIRATION_MINUTES), Collections.emptyList());
+        bookingResponse = new BookingResponse(BOOKING_ID, BOOKING_PUBLIC_ID, BOOKING_NUMBER, BookingStatus.PENDING,
+                SESSION_ID, null, sessionTime, "Test Movie", "Hall A", TOTAL_PRICE, BONUS_POINTS_USED, DISCOUNT_AMOUNT,
+                FINAL_PRICE, null, Instant.now().plus(Duration.ofMinutes(EXPIRATION_MINUTES)), Collections.emptyList());
     }
 
     @Test
@@ -121,7 +135,7 @@ public class BookingServiceTest {
         var bookingWithoutBonus = Booking.builder().id(BOOKING_ID).user(testUser).session(testSession)
                 .status(BookingStatus.PENDING).totalPrice(TOTAL_PRICE).bonusPointsUsed(0).finalPrice(TOTAL_PRICE)
                 .build();
-        var requestWithoutBonus = new BookingCreateRequest(SESSION_ID,
+        var requestWithoutBonus = new BookingCreateRequest(SESSION_PUBLIC_ID,
                 List.of(new BookingCreateRequest.SeatSelectionRequest(SEAT_ID_1, TICKET_TYPE_ADULT_ID)), 0);
 
         when(bookingCreationService.createAndPersist(requestWithoutBonus, testUser)).thenReturn(bookingWithoutBonus);
@@ -169,10 +183,10 @@ public class BookingServiceTest {
 
     @Test
     void getBookingShouldSucceed() {
-        when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(savedBooking));
+        when(bookingRepository.findByPublicIdAndUserId(BOOKING_PUBLIC_ID, USER_ID)).thenReturn(Optional.of(savedBooking));
         when(bookingMapper.toResponse(savedBooking)).thenReturn(bookingResponse);
 
-        BookingResponse result = bookingService.getBooking(BOOKING_ID, testUser);
+        BookingResponse result = bookingService.getBooking(BOOKING_PUBLIC_ID, testUser);
 
         assertThat(result).isNotNull();
         assertThat(result.id()).isEqualTo(BOOKING_ID);
@@ -180,9 +194,9 @@ public class BookingServiceTest {
 
     @Test
     void getBookingWhenNotFoundShouldThrowException() {
-        when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.empty());
+        when(bookingRepository.findByPublicIdAndUserId(BOOKING_PUBLIC_ID, USER_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> bookingService.getBooking(BOOKING_ID, testUser))
+        assertThatThrownBy(() -> bookingService.getBooking(BOOKING_PUBLIC_ID, testUser))
                 .isInstanceOf(EntityNotFoundException.class);
     }
 
@@ -193,10 +207,10 @@ public class BookingServiceTest {
                 .seatReservations(Arrays.asList(SeatReservation.builder().build(), SeatReservation.builder().build()))
                 .build();
 
-        when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(booking));
+        when(bookingRepository.findByPublicIdAndUserId(BOOKING_PUBLIC_ID, USER_ID)).thenReturn(Optional.of(booking));
         when(bookingRepository.saveAndFlush(booking)).thenReturn(booking);
 
-        bookingService.cancelBooking(BOOKING_ID, testUser);
+        bookingService.cancelBooking(BOOKING_PUBLIC_ID, testUser);
 
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
         verify(bonusLedgerService).refundPoints(booking);
@@ -210,11 +224,11 @@ public class BookingServiceTest {
                 .seatReservations(Arrays.asList(SeatReservation.builder().build(), SeatReservation.builder().build()))
                 .build();
 
-        when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(booking));
+        when(bookingRepository.findByPublicIdAndUserId(BOOKING_PUBLIC_ID, USER_ID)).thenReturn(Optional.of(booking));
         when(bookingRepository.saveAndFlush(booking))
                 .thenThrow(new ObjectOptimisticLockingFailureException(Booking.class, BOOKING_ID));
 
-        assertThatThrownBy(() -> bookingService.cancelBooking(BOOKING_ID, testUser))
+        assertThatThrownBy(() -> bookingService.cancelBooking(BOOKING_PUBLIC_ID, testUser))
                 .isInstanceOf(BookingConcurrentModificationException.class);
 
         verifyNoInteractions(bonusLedgerService);
@@ -222,9 +236,9 @@ public class BookingServiceTest {
 
     @Test
     void cancelBookingWhenBookingNotFoundShouldThrowException() {
-        when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.empty());
+        when(bookingRepository.findByPublicIdAndUserId(BOOKING_PUBLIC_ID, USER_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> bookingService.cancelBooking(BOOKING_ID, testUser))
+        assertThatThrownBy(() -> bookingService.cancelBooking(BOOKING_PUBLIC_ID, testUser))
                 .isInstanceOf(EntityNotFoundException.class);
     }
 
@@ -232,10 +246,27 @@ public class BookingServiceTest {
     void cancelBookingWhenCannotBeCancelledShouldThrowException() {
         Booking booking = Booking.builder().id(BOOKING_ID).user(testUser).status(BookingStatus.EXPIRED).build();
 
-        when(bookingRepository.findByIdAndUserId(BOOKING_ID, USER_ID)).thenReturn(Optional.of(booking));
+        when(bookingRepository.findByPublicIdAndUserId(BOOKING_PUBLIC_ID, USER_ID)).thenReturn(Optional.of(booking));
 
-        assertThatThrownBy(() -> bookingService.cancelBooking(BOOKING_ID, testUser))
+        assertThatThrownBy(() -> bookingService.cancelBooking(BOOKING_PUBLIC_ID, testUser))
                 .isInstanceOf(BookingValidationException.class);
+    }
+
+    @Test
+    void cancelBookingWhenConfirmedShouldThrowAndKeepSeatsAndBonusPoints() {
+        Booking booking = Booking.builder().id(BOOKING_ID).user(testUser).session(testSession)
+                .status(BookingStatus.CONFIRMED).bonusPointsUsed(50)
+                .seatReservations(List.of(SeatReservation.builder().status(ReservationStatus.CONFIRMED).build()))
+                .build();
+
+        when(bookingRepository.findByPublicIdAndUserId(BOOKING_PUBLIC_ID, USER_ID)).thenReturn(Optional.of(booking));
+
+        assertThatThrownBy(() -> bookingService.cancelBooking(BOOKING_PUBLIC_ID, testUser))
+                .isInstanceOf(BookingValidationException.class);
+
+        assertThat(booking.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
+        verifyNoInteractions(seatReservationService, bonusLedgerService);
+        verify(bookingRepository, never()).saveAndFlush(any());
     }
 
     @Test

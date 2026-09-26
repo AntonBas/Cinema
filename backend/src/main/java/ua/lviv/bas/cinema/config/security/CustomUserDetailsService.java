@@ -21,7 +21,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 
     @Override
-    @Cacheable(value = "userDetails", key = "#email")
+    @Cacheable(value = "userDetails", key = "T(ua.lviv.bas.cinema.common.EmailNormalizer).normalize(#email)")
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         log.debug("Attempting to load user by email: {}", email);
@@ -32,7 +32,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         });
 
         if (!user.isEnabled()) {
-            log.warn("User {} is disabled but trying to login", email);
+            log.warn("User {} is blocked but trying to login", email);
         }
 
         log.debug("User loaded successfully: {}, role: {}, enabled: {}", email, user.getUserRole(), user.isEnabled());
@@ -40,7 +40,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         return new CustomUserDetails(user);
     }
 
-    @CacheEvict(value = "userDetails", key = "#email")
+    @CacheEvict(value = "userDetails", key = "T(ua.lviv.bas.cinema.common.EmailNormalizer).normalize(#email)")
     public void evict(String email) {
         log.debug("Evicted cached user details for email: {}", email);
     }

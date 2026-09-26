@@ -1,6 +1,6 @@
 package ua.lviv.bas.cinema.audit.domain;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,31 +31,31 @@ import lombok.ToString;
 @Table(name = "audit_log")
 public class AuditLog {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@Column(nullable = false)
-	private String entityType;
+    @Column(nullable = false)
+    private String entityType;
 
-	@Column(nullable = false)
-	private Long entityId;
+    @Column(nullable = false)
+    private Long entityId;
 
-	@Column(name = "target_info")
-	private String targetInfo;
+    @Column(name = "target_info")
+    private String targetInfo;
 
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
-	private AuditAction action;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AuditAction action;
 
-	@Column(nullable = false)
-	private String changedBy;
+    @Column(nullable = false)
+    private String changedBy;
 
-	@Column(nullable = false)
-	private LocalDateTime changedAt;
+    @Column(nullable = false)
+    private Instant changedAt;
 
-	@OneToMany(mappedBy = "auditLog", cascade = CascadeType.ALL, orphanRemoval = true)
-	@BatchSize(size = 20)
-	@Builder.Default
-	private List<AuditLogDetail> details = new ArrayList<>();
+    @OneToMany(mappedBy = "auditLog", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 20)
+    @Builder.Default
+    private List<AuditLogDetail> details = new ArrayList<>();
 }

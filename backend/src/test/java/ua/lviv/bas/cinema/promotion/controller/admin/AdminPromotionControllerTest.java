@@ -5,21 +5,30 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.common.PageResponse;
+import ua.lviv.bas.cinema.promotion.domain.PromotionStatus;
 import ua.lviv.bas.cinema.promotion.dto.request.PromotionRequest;
 import ua.lviv.bas.cinema.promotion.dto.response.PromotionListResponse;
 import ua.lviv.bas.cinema.promotion.dto.response.PromotionResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.promotion.service.PromotionService;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class AdminPromotionControllerTest {
@@ -35,19 +44,19 @@ public class AdminPromotionControllerTest {
     private final Integer BONUS_POINTS = 100;
 
     private PromotionResponse createPromotionResponse() {
-        return new PromotionResponse(PROMOTION_ID, TITLE, "Description", BONUS_POINTS, LocalDate.now().plusDays(1),
-                LocalDate.now().plusDays(10));
+        return new PromotionResponse(PROMOTION_ID, TITLE, "Description", BONUS_POINTS, CinemaTime.today().plusDays(1),
+                CinemaTime.today().plusDays(10), true, PromotionStatus.UPCOMING);
     }
 
     private PromotionListResponse createPromotionListResponse() {
-        return new PromotionListResponse(PROMOTION_ID, TITLE, BONUS_POINTS, LocalDate.now().plusDays(1),
-                LocalDate.now().plusDays(10));
+        return new PromotionListResponse(PROMOTION_ID, TITLE, BONUS_POINTS, CinemaTime.today().plusDays(1),
+                CinemaTime.today().plusDays(10), true, PromotionStatus.UPCOMING);
     }
 
     @Test
     void createPromotionShouldReturnCreated() {
-        PromotionRequest request = new PromotionRequest(TITLE, "Description", BONUS_POINTS, LocalDate.now().plusDays(1),
-                LocalDate.now().plusDays(10));
+        PromotionRequest request = new PromotionRequest(TITLE, "Description", BONUS_POINTS, CinemaTime.today().plusDays(1),
+                CinemaTime.today().plusDays(10), null);
         PromotionResponse response = createPromotionResponse();
 
         when(promotionService.createPromotion(any(PromotionRequest.class))).thenReturn(response);
@@ -134,9 +143,9 @@ public class AdminPromotionControllerTest {
     @Test
     void updatePromotionShouldReturnUpdated() {
         PromotionRequest request = new PromotionRequest("Updated Title", "Updated Description", 200,
-                LocalDate.now().plusDays(1), LocalDate.now().plusDays(10));
+                CinemaTime.today().plusDays(1), CinemaTime.today().plusDays(10), null);
         PromotionResponse response = new PromotionResponse(PROMOTION_ID, "Updated Title", "Updated Description", 200,
-                LocalDate.now().plusDays(1), LocalDate.now().plusDays(10));
+                CinemaTime.today().plusDays(1), CinemaTime.today().plusDays(10), true, PromotionStatus.UPCOMING);
 
         when(promotionService.updatePromotion(eq(PROMOTION_ID), any(PromotionRequest.class))).thenReturn(response);
 
@@ -152,7 +161,7 @@ public class AdminPromotionControllerTest {
     @Test
     void updatePromotionShouldThrowWhenNotFound() {
         PromotionRequest request = new PromotionRequest("Updated Title", "Updated Description", 200,
-                LocalDate.now().plusDays(1), LocalDate.now().plusDays(10));
+                CinemaTime.today().plusDays(1), CinemaTime.today().plusDays(10), null);
 
         when(promotionService.updatePromotion(eq(999L), any(PromotionRequest.class)))
                 .thenThrow(new EntityNotFoundException("Promotion", 999L));

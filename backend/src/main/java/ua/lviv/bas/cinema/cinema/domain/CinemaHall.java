@@ -12,10 +12,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -35,37 +33,37 @@ import ua.lviv.bas.cinema.audit.domain.AuditableEntity;
 @AllArgsConstructor
 @ToString(exclude = { "sessions", "seats" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
-@Table(name = "cinema_halls", indexes = @Index(name = "idx_hall_name", columnList = "name"), uniqueConstraints = @UniqueConstraint(columnNames = "name"))
+@Table(name = "cinema_halls")
 public class CinemaHall extends AuditableEntity {
 
-	@Id
-	@EqualsAndHashCode.Include
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @EqualsAndHashCode.Include
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@NotBlank
-	@Size(min = 2, max = 25)
-	@Column(nullable = false)
-	private String name;
+    @NotBlank
+    @Size(min = 2, max = 25)
+    @Column(nullable = false)
+    private String name;
 
-	@OneToMany(mappedBy = "hall", fetch = FetchType.LAZY)
-	@BatchSize(size = 10)
-	@Builder.Default
-	private List<Session> sessions = new ArrayList<>();
+    @OneToMany(mappedBy = "hall", fetch = FetchType.LAZY)
+    @BatchSize(size = 10)
+    @Builder.Default
+    private List<Session> sessions = new ArrayList<>();
 
-	@OneToMany(mappedBy = "hall", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-	@BatchSize(size = 20)
-	@Builder.Default
-	private List<Seat> seats = new ArrayList<>();
+    @OneToMany(mappedBy = "hall", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @BatchSize(size = 20)
+    @Builder.Default
+    private List<Seat> seats = new ArrayList<>();
 
-	public void setSeats(List<Seat> seats) {
-		if (this.seats == null) {
-			this.seats = new ArrayList<>();
-		} else {
-			this.seats.clear();
-		}
-		if (seats != null) {
-			this.seats.addAll(seats);
-		}
-	}
+    public void setSeats(List<Seat> seats) {
+        if (this.seats == null) {
+            this.seats = new ArrayList<>();
+        } else {
+            this.seats.clear();
+        }
+        if (seats != null) {
+            this.seats.addAll(seats);
+        }
+    }
 }

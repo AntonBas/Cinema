@@ -12,8 +12,17 @@ public class CinemaHallHasSessionsException extends BusinessException {
     private static final long serialVersionUID = 1L;
 
     public CinemaHallHasSessionsException(String hallName, Long hallId) {
-        super(String.format("'%s' has scheduled sessions and cannot be modified", hallName),
-                "CINEMA_HALL_HAS_SESSIONS", HttpStatus.CONFLICT,
+        this(String.format("'%s' has scheduled sessions and cannot be modified", hallName),
                 String.format("Hall '%s' (id: %d) has future sessions", hallName, hallId));
+    }
+
+    private CinemaHallHasSessionsException(String message, String debugMessage) {
+        super(message, "CINEMA_HALL_HAS_SESSIONS", HttpStatus.CONFLICT, debugMessage);
+    }
+
+    public static CinemaHallHasSessionsException cannotDelete(String hallName, Long hallId) {
+        return new CinemaHallHasSessionsException(
+                String.format("'%s' has session history and cannot be deleted", hallName),
+                String.format("Hall '%s' (id: %d) is referenced by sessions", hallName, hallId));
     }
 }

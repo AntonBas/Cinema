@@ -1,13 +1,15 @@
 import React from "react";
 import { Badge } from "@/components/ui/Badge/Badge";
 import { Pagination } from "@/components/ui/Pagination/Pagination";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 import type {
   BonusTransactionResponse,
   BonusTransactionType,
 } from "@/types/bonus";
 import { BonusTransactionTypeDisplay } from "@/types/bonus";
+import { formatDateTime } from "@/utils/formatters";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import styles from "./BonusTransactions.module.css";
 
 interface BonusTransactionsProps {
@@ -33,20 +35,11 @@ const getBadgeVariant = (
     case "REFUND_RETURN":
       return "warning";
     case "BOOKING_CANCEL":
+    case "ACCRUAL_REVERSAL":
       return "error";
     default:
       return "secondary";
   }
-};
-
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 };
 
 export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
@@ -70,14 +63,12 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
     );
   }
 
+  if (loading && !transactions.length) {
+    return null;
+  }
+
   if (!transactions.length) {
-    return (
-      <div className={styles.transactions}>
-        <div className={styles.noData}>
-          <p>No transactions found</p>
-        </div>
-      </div>
-    );
+    return <EmptyState title="No Transactions Found" />;
   }
 
   return (
@@ -109,7 +100,7 @@ export const BonusTransactions: React.FC<BonusTransactionsProps> = ({
             return (
               <div key={transaction.id} className={styles.tableRow}>
                 <div className={styles.tableCell}>
-                  {formatDate(transaction.createdAt)}
+                  {formatDateTime(transaction.createdAt)}
                 </div>
                 <div className={styles.tableCell}>
                   <Badge

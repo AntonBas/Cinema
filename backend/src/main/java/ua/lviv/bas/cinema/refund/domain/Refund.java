@@ -91,5 +91,5 @@ public class Refund extends AuditableEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
-    private RefundStatus status = RefundStatus.PENDING;
+    private RefundStatus status = RefundStatus.PROCESSING;
 }

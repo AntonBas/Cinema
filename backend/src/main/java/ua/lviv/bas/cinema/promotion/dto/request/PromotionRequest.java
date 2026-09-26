@@ -1,7 +1,11 @@
 package ua.lviv.bas.cinema.promotion.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 
@@ -18,15 +22,17 @@ public record PromotionRequest(
 
         @NotNull(message = "Bonus points are required")
         @Positive(message = "Bonus points must be positive")
+        @Max(value = 10_000, message = "Bonus points must be at most 10,000")
         @Schema(description = "Number of bonus points awarded", example = "100")
         Integer bonusPoints,
 
-        @Future(message = "Start date must be in the future")
         @Schema(description = "Start date of the promotion", example = "2024-07-01")
         LocalDate startDate,
 
-        @Future(message = "End date must be in the future")
         @Schema(description = "End date of the promotion", example = "2024-07-10")
-        LocalDate endDate
+        LocalDate endDate,
+
+        @Schema(description = "Whether the promotion is enabled, defaults to true", example = "true", nullable = true)
+        Boolean active
 ) {
 }

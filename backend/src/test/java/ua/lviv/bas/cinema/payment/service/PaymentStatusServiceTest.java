@@ -2,10 +2,16 @@ package ua.lviv.bas.cinema.payment.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import java.time.Instant;
+import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
+import ua.lviv.bas.cinema.exception.domain.financial.payment.InvalidPaymentStatusException;
+import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
@@ -26,7 +32,10 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class PaymentStatusServiceTest {
@@ -59,7 +68,8 @@ public class PaymentStatusServiceTest {
 
         Session session = Session.builder().id(1L).movie(movie).hall(hall).build();
 
-        Booking testBooking = Booking.builder().id(1L).user(testUser).session(session).build();
+        Booking testBooking = Booking.builder().id(1L).user(testUser).session(session).status(BookingStatus.PENDING)
+                .expiresAt(Instant.now().plusSeconds(600)).build();
 
         testPayment = Payment.builder().id(PAYMENT_ID).booking(testBooking).liqpayOrderId(ORDER_ID)
                 .status(PaymentStatus.PENDING).build();
@@ -80,6 +90,26 @@ public class PaymentStatusServiceTest {
         assertThat(response.signature()).isEqualTo("test_signature");
         assertThat(response.paymentUrl()).isEqualTo("https://payment.url");
         assertThat(response.liqpayOrderId()).isEqualTo(ORDER_ID);
+    }
+
+    @Test
+    void preparePaymentDataWhenPaymentExpiredShouldThrowWithoutCheckout() {
+        testPayment.setStatus(PaymentStatus.EXPIRED);
+        when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
+
+        assertThatThrownBy(() -> paymentStatusService.preparePaymentData(PAYMENT_ID, testUser))
+                .isInstanceOf(InvalidPaymentStatusException.class);
+        verifyNoInteractions(paymentGatewayService);
+    }
+
+    @Test
+    void preparePaymentDataWhenBookingExpiredShouldThrowWithoutCheckout() {
+        testPayment.getBooking().setExpiresAt(Instant.now().minusSeconds(1));
+        when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
+
+        assertThatThrownBy(() -> paymentStatusService.preparePaymentData(PAYMENT_ID, testUser))
+                .isInstanceOf(PaymentProcessingException.class);
+        verifyNoInteractions(paymentGatewayService);
     }
 
     @Test
@@ -182,25 +212,27 @@ public class PaymentStatusServiceTest {
         verify(paymentService, never()).processFailure(any(), any());
     }
 
-    @Test
-    void handleCallbackWithUnknownStatusShouldDelegateToProcessFailure() {
+    @ParameterizedTest
+    @ValueSource(strings = {"processing", "3ds_verify", "wait_accept", "otp_verify", "cvv_verify", "some_new_status"})
+    void handleCallbackWithIntermediateOrUnknownStatusShouldMarkProcessingNotFailed(String status) {
         String data = "encoded_data";
         String signature = "test_signature";
         Map<String, String> decodedData = new HashMap<>();
         decodedData.put("order_id", ORDER_ID);
-        decodedData.put("status", "unknown");
+        decodedData.put("status", status);
 
         when(paymentGatewayService.processCallback(data, signature)).thenReturn(decodedData);
         when(paymentRepository.findByLiqpayOrderId(ORDER_ID)).thenReturn(Optional.of(testPayment));
 
         paymentStatusService.handleCallback(data, signature);
 
-        verify(paymentService).processFailure(testPayment, decodedData);
+        verify(paymentService).markProcessing(testPayment);
+        verify(paymentService, never()).processFailure(any(), any());
         verify(paymentService, never()).processSuccess(any(), any());
     }
 
     @Test
-    void handleCallbackWithMissingStatusShouldDelegateToProcessFailure() {
+    void handleCallbackWithMissingStatusShouldIgnoreIt() {
         String data = "encoded_data";
         String signature = "test_signature";
         Map<String, String> decodedData = new HashMap<>();
@@ -211,9 +243,7 @@ public class PaymentStatusServiceTest {
 
         paymentStatusService.handleCallback(data, signature);
 
-        verify(paymentService).processFailure(testPayment, decodedData);
-        verify(paymentService, never()).processSuccess(any(), any());
-        verify(paymentService, never()).markProcessing(any());
+        verifyNoInteractions(paymentService);
     }
 
     @Test

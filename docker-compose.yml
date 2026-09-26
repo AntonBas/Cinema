@@ -2,15 +2,13 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: cinema_postgres
-    env_file:
-      - .env
     environment:
       TZ: ${TZ:-UTC}
       POSTGRES_USER: ${DB_USER:-cinema}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME:-cinema_db}
     ports:
-      - "${DB_HOST_PORT:-5433}:5432"
+      - "127.0.0.1:${DB_HOST_PORT:-5433}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
@@ -30,7 +28,7 @@ services:
     image: redis:7-alpine
     container_name: cinema_redis
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -57,8 +55,6 @@ services:
     env_file:
       - .env
     environment:
-      TZ: ${TZ:-UTC}
-      JAVA_TOOL_OPTIONS: "-Duser.timezone=${TZ:-UTC}"
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:-cinema_db}
@@ -69,8 +65,8 @@ services:
       SERVER_PORT: 8080
       SPRING_PROFILES_ACTIVE: docker
       JWT_SECRET: ${JWT_SECRET}
-      EMAIL_USERNAME: ${EMAIL_USERNAME}
-      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+      BREVO_API_KEY: ${BREVO_API_KEY}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@bascinema.com}
       LIQPAY_PUBLIC_KEY: ${LIQPAY_PUBLIC_KEY}
       LIQPAY_PRIVATE_KEY: ${LIQPAY_PRIVATE_KEY}
       LIQPAY_SANDBOX_MODE: ${LIQPAY_SANDBOX_MODE:-true}
@@ -102,8 +98,6 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-    env_file:
-      - .env
     ports:
       - "${FRONTEND_HOST_PORT:-5173}:5173"
     networks:
@@ -122,8 +116,10 @@ services:
     tty: true
 
   ngrok:
-    image: ngrok/ngrok:latest
+    image: ngrok/ngrok:3
     container_name: cinema_ngrok
+    profiles:
+      - tunnel
     depends_on:
       backend:
         condition: service_healthy
@@ -131,7 +127,7 @@ services:
       - NGROK_AUTHTOKEN=${NGROK_AUTH_TOKEN}
     command: http backend:8080 --log=stdout --log-level=info
     ports:
-      - "4040:4040"
+      - "127.0.0.1:4040:4040"
     networks:
       - cinema-net
     restart: unless-stopped

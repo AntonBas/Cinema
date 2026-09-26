@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import ua.lviv.bas.cinema.cinema.domain.enums.SeatType;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Schema(description = "Seat availability and reservation information for a session")
@@ -19,6 +20,9 @@ public record SeatReservationResponse(
 
         @Schema(description = "Hall name", example = "Hall A")
         String hallName,
+
+        @Schema(description = "Session start time", example = "2024-01-15T18:30:00")
+        LocalDateTime sessionTime,
 
         @Schema(description = "Available seats count", example = "105")
         Integer availableSeats,
@@ -39,6 +43,12 @@ public record SeatReservationResponse(
 
             @Schema(description = "Seat type", example = "VIP")
             SeatType seatType,
+
+            @Schema(description = "Horizontal position in the layout canvas", example = "120")
+            Integer x,
+
+            @Schema(description = "Vertical position in the layout canvas", example = "60")
+            Integer y,
 
             @Schema(description = "Is available", example = "true")
             boolean available,

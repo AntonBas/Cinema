@@ -1,19 +1,23 @@
 .title {
   font-weight: 600;
-  color: #f1f5f9;
+  color: var(--color-panel-text);
   font-size: var(--font-size-md);
   word-break: break-word;
 }
 
 .points {
   display: inline-block;
-  padding: 0.25rem 0.75rem;
-  background: linear-gradient(135deg, #3498db, #2980b9);
+  padding: var(--space-1) var(--space-3);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary),
+    var(--color-primary-hover)
+  );
   color: var(--color-text-primary);
   border-radius: 9999px;
   font-size: var(--font-size-sm);
   font-weight: 600;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 2px rgba(var(--color-black-rgb), 0.3);
   white-space: nowrap;
 }
 
@@ -24,7 +28,7 @@
 }
 
 .dateSeparator {
-  color: #a0a4b8;
+  color: var(--color-text-muted);
   font-size: var(--font-size-xs);
   margin: var(--space-1) 0;
 }
@@ -35,11 +39,11 @@
   }
 
   .points {
-    font-size: 11px;
-    padding: 0.15rem 0.5rem;
+    font-size: var(--font-size-2xs);
+    padding: 0.15rem var(--space-2);
   }
 
   .dates {
-    font-size: 11px;
+    font-size: var(--font-size-2xs);
   }
 }

@@ -68,7 +68,7 @@ class BonusQueryServiceIntegrationTest {
     private User buildUser() {
         return User.builder().email("zztest.bonus@test.com").firstName("Test").lastName("User")
                 .dateOfBirth(LocalDate.of(1995, 1, 1)).city("Lviv").phoneNumber("+380000000016")
-                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).build();
+                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).build();
     }
 
     private BonusTransaction buildTransaction(BonusCard bonusCard, BonusTransactionType type, int pointsChange,

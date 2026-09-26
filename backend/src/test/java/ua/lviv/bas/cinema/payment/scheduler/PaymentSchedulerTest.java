@@ -8,7 +8,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 import ua.lviv.bas.cinema.booking.domain.Booking;
@@ -22,21 +21,29 @@ import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
+import ua.lviv.bas.cinema.payment.service.LatePaymentRefundService;
 import ua.lviv.bas.cinema.payment.service.PaymentGatewayCheckResult;
 import ua.lviv.bas.cinema.payment.service.PaymentGatewayService;
 import ua.lviv.bas.cinema.payment.service.PaymentGatewayStatus;
 import ua.lviv.bas.cinema.payment.service.PaymentService;
 import ua.lviv.bas.cinema.payment.service.PaymentSuccessOrchestrator;
 
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentSchedulerTest {
@@ -56,6 +63,8 @@ class PaymentSchedulerTest {
     @Mock
     private PaymentSuccessOrchestrator paymentSuccessOrchestrator;
     @Mock
+    private LatePaymentRefundService latePaymentRefundService;
+    @Mock
     private CacheManager cacheManager;
     @Mock
     private Cache cache;
@@ -66,6 +75,10 @@ class PaymentSchedulerTest {
     private PaymentScheduler paymentScheduler;
 
     private static final Long SESSION_ID = 10L;
+    private static final List<PaymentStatus> ACTIVE_STATUSES = List.of(PaymentStatus.PENDING,
+            PaymentStatus.PROCESSING);
+    private static final List<BookingStatus> EXPIRABLE_BOOKING_STATUSES = List.of(BookingStatus.PENDING,
+            BookingStatus.EXPIRED, BookingStatus.CANCELLED);
 
     private Session testSession;
 
@@ -78,26 +91,24 @@ class PaymentSchedulerTest {
 
     @Test
     void processExpiredPaymentsWhenNoneFoundShouldDoNothing() {
-        when(paymentRepository.findByStatusAndCreatedDateBeforeWithBookingDetails(eq(PaymentStatus.PENDING),
-                any(LocalDateTime.class)))
-                .thenReturn(List.of());
+        when(paymentRepository.findByStatusInAndBookingStatusInAndBookingExpiredBefore(eq(ACTIVE_STATUSES),
+                eq(EXPIRABLE_BOOKING_STATUSES), any(Instant.class))).thenReturn(List.of());
 
         paymentScheduler.processExpiredPayments();
 
-        verifyNoInteractions(seatReservationRepository, cacheManager);
-        verify(paymentRepository, never()).save(any());
+        verifyNoInteractions(seatReservationRepository, cacheManager, paymentGatewayService);
+        verify(paymentRepository, never()).updateStatusIfCurrentIn(any(), anyList(), any());
     }
 
     @Test
-    void processExpiredPaymentsShouldExpireBookingAndEvictCacheWhenBookingPending() {
+    void processExpiredPaymentsShouldExpireBookingAndEvictCacheWhenGatewayHasNoPayment() {
         var seat = SeatReservation.builder().status(ReservationStatus.CONFIRMED).build();
-        var booking = Booking.builder().id(1L).session(testSession).status(BookingStatus.PENDING)
-                .seatReservations(List.of(seat)).build();
-        var payment = Payment.builder().id(2L).booking(booking).status(PaymentStatus.PENDING).build();
+        var booking = pendingBooking(Instant.now().minusSeconds(60), List.of(seat));
+        var payment = activePayment(2L, booking);
 
-        when(paymentRepository.findByStatusAndCreatedDateBeforeWithBookingDetails(eq(PaymentStatus.PENDING),
-                any(LocalDateTime.class)))
-                .thenReturn(List.of(payment));
+        stubExpiredPayments(payment);
+        stubGateway(PaymentGatewayStatus.UNKNOWN);
+        when(paymentRepository.updateStatusIfCurrentIn(2L, ACTIVE_STATUSES, PaymentStatus.EXPIRED)).thenReturn(1);
         when(cacheManager.getCache(anyString())).thenReturn(cache);
 
         paymentScheduler.processExpiredPayments();
@@ -109,42 +120,54 @@ class PaymentSchedulerTest {
 
         verify(seatReservationRepository).saveAll(List.of(seat));
         verify(cache, times(1)).evict(SESSION_ID);
-        verify(paymentRepository).save(payment);
         verify(bookingRepository).save(booking);
+        verify(paymentService, never()).processSuccess(any(), any());
     }
 
     @Test
-    void processExpiredPaymentsWhenBookingNotPendingShouldNotTouchBookingOrCache() {
-        var seat = SeatReservation.builder().status(ReservationStatus.CONFIRMED).build();
-        var booking = Booking.builder().id(1L).session(testSession).status(BookingStatus.CONFIRMED)
-                .seatReservations(List.of(seat)).build();
-        var payment = Payment.builder().id(2L).booking(booking).status(PaymentStatus.PENDING).build();
+    void processExpiredPaymentsWhenBookingAlreadyCancelledShouldExpireOnlyThePayment() {
+        var booking = pendingBooking(Instant.now().minusSeconds(60), List.of());
+        booking.setStatus(BookingStatus.CANCELLED);
+        booking.setBonusPointsUsed(75);
+        var payment = activePayment(2L, booking);
 
-        when(paymentRepository.findByStatusAndCreatedDateBeforeWithBookingDetails(eq(PaymentStatus.PENDING),
-                any(LocalDateTime.class)))
-                .thenReturn(List.of(payment));
+        stubExpiredPayments(payment);
+        stubGateway(PaymentGatewayStatus.UNKNOWN);
+        when(paymentRepository.updateStatusIfCurrentIn(2L, ACTIVE_STATUSES, PaymentStatus.EXPIRED)).thenReturn(1);
 
         paymentScheduler.processExpiredPayments();
 
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.EXPIRED);
-        assertThat(booking.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
-        assertThat(seat.getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
-
-        verifyNoInteractions(seatReservationRepository, cacheManager);
-        verify(paymentRepository).save(payment);
+        assertThat(booking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
+        verifyNoInteractions(seatReservationRepository, cacheManager, bonusLedgerService);
         verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
+    void processExpiredPaymentsWhenCancelledBookingWasPaidShouldHandOverToProcessSuccess() {
+        var booking = pendingBooking(Instant.now().minusSeconds(60), List.of());
+        booking.setStatus(BookingStatus.CANCELLED);
+        var payment = activePayment(2L, booking);
+
+        stubExpiredPayments(payment);
+        stubGateway(PaymentGatewayStatus.SUCCESS);
+
+        paymentScheduler.processExpiredPayments();
+
+        verify(paymentService).processSuccess(eq(payment), any());
+        verify(paymentRepository, never()).updateStatusIfCurrentIn(any(), anyList(), any());
     }
 
     @Test
     void processExpiredPaymentsWhenBonusPointsUsedShouldRefundThem() {
         var seat = SeatReservation.builder().status(ReservationStatus.CONFIRMED).build();
-        var booking = Booking.builder().id(1L).session(testSession).status(BookingStatus.PENDING)
-                .seatReservations(List.of(seat)).bonusPointsUsed(75).build();
-        var payment = Payment.builder().id(2L).booking(booking).status(PaymentStatus.PENDING).build();
+        var booking = pendingBooking(Instant.now().minusSeconds(60), List.of(seat));
+        booking.setBonusPointsUsed(75);
+        var payment = activePayment(2L, booking);
 
-        when(paymentRepository.findByStatusAndCreatedDateBeforeWithBookingDetails(eq(PaymentStatus.PENDING),
-                any(LocalDateTime.class)))
-                .thenReturn(List.of(payment));
+        stubExpiredPayments(payment);
+        stubGateway(PaymentGatewayStatus.FAILED);
+        when(paymentRepository.updateStatusIfCurrentIn(2L, ACTIVE_STATUSES, PaymentStatus.EXPIRED)).thenReturn(1);
         when(cacheManager.getCache(anyString())).thenReturn(cache);
 
         paymentScheduler.processExpiredPayments();
@@ -153,27 +176,144 @@ class PaymentSchedulerTest {
     }
 
     @Test
-    void processExpiredPaymentsWhenPaymentConcurrentlyModifiedShouldSkipIt() {
-        var booking = Booking.builder().id(1L).session(testSession).status(BookingStatus.PENDING).build();
-        var payment = Payment.builder().id(2L).booking(booking).status(PaymentStatus.PENDING).build();
+    void processExpiredPaymentsWhenStatusChangedConcurrentlyShouldNotTouchBooking() {
+        var booking = pendingBooking(Instant.now().minusSeconds(60), List.of());
+        var payment = activePayment(2L, booking);
 
-        when(paymentRepository.findByStatusAndCreatedDateBeforeWithBookingDetails(eq(PaymentStatus.PENDING),
-                any(LocalDateTime.class)))
-                .thenReturn(List.of(payment));
-        when(paymentRepository.save(payment))
-                .thenThrow(new ObjectOptimisticLockingFailureException(Payment.class, 2L));
+        stubExpiredPayments(payment);
+        stubGateway(PaymentGatewayStatus.UNKNOWN);
+        when(paymentRepository.updateStatusIfCurrentIn(2L, ACTIVE_STATUSES, PaymentStatus.EXPIRED)).thenReturn(0);
 
         paymentScheduler.processExpiredPayments();
 
         assertThat(booking.getStatus()).isEqualTo(BookingStatus.PENDING);
-        verifyNoInteractions(seatReservationRepository, cacheManager);
+        verifyNoInteractions(seatReservationRepository, cacheManager, bonusLedgerService);
         verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
+    void processExpiredPaymentsWhenGatewayReportsSuccessShouldCompletePaymentInsteadOfExpiring() {
+        var booking = pendingBooking(Instant.now().minusSeconds(60), List.of());
+        var payment = activePayment(2L, booking);
+
+        stubExpiredPayments(payment);
+        when(paymentGatewayService.checkPaymentStatus("ORD_2"))
+                .thenReturn(new PaymentGatewayCheckResult(PaymentGatewayStatus.SUCCESS, Map.of("payment_id", "P1")));
+
+        paymentScheduler.processExpiredPayments();
+
+        verify(paymentService).processSuccess(payment, Map.of("payment_id", "P1"));
+        verify(paymentRepository, never()).updateStatusIfCurrentIn(any(), anyList(), eq(PaymentStatus.EXPIRED));
+        assertThat(booking.getStatus()).isEqualTo(BookingStatus.PENDING);
+    }
+
+    @Test
+    void processExpiredPaymentsWhenGatewayStillProcessingWithinGraceShouldPostponeExpiry() {
+        var booking = pendingBooking(Instant.now().minusSeconds(60), List.of());
+        var payment = activePayment(2L, booking);
+
+        stubExpiredPayments(payment);
+        stubGateway(PaymentGatewayStatus.STILL_PROCESSING);
+
+        paymentScheduler.processExpiredPayments();
+
+        verify(paymentRepository, never()).updateStatusIfCurrentIn(any(), anyList(), any());
+        verify(paymentService, never()).processSuccess(any(), any());
+        assertThat(booking.getStatus()).isEqualTo(BookingStatus.PENDING);
+    }
+
+    @Test
+    void processExpiredPaymentsWhenGatewayStillProcessingPastGraceShouldExpire() {
+        var booking = pendingBooking(Instant.now().minus(Duration.ofMinutes(20)), List.of());
+        var payment = activePayment(2L, booking);
+
+        stubExpiredPayments(payment);
+        stubGateway(PaymentGatewayStatus.STILL_PROCESSING);
+        when(paymentRepository.updateStatusIfCurrentIn(2L, ACTIVE_STATUSES, PaymentStatus.EXPIRED)).thenReturn(1);
+        when(cacheManager.getCache(anyString())).thenReturn(cache);
+
+        paymentScheduler.processExpiredPayments();
+
+        assertThat(booking.getStatus()).isEqualTo(BookingStatus.EXPIRED);
+    }
+
+    @Test
+    void processExpiredPaymentsWhenOneFailsShouldStillProcessTheRest() {
+        var bookingA = pendingBooking(Instant.now().minusSeconds(60), List.of());
+        var bookingB = pendingBooking(Instant.now().minusSeconds(60), List.of());
+        var paymentA = activePayment(2L, bookingA);
+        var paymentB = activePayment(3L, bookingB);
+
+        when(paymentRepository.findByStatusInAndBookingStatusInAndBookingExpiredBefore(eq(ACTIVE_STATUSES),
+                eq(EXPIRABLE_BOOKING_STATUSES), any(Instant.class))).thenReturn(List.of(paymentA, paymentB));
+        when(paymentGatewayService.checkPaymentStatus(anyString()))
+                .thenReturn(new PaymentGatewayCheckResult(PaymentGatewayStatus.UNKNOWN, Map.of()));
+        when(paymentRepository.updateStatusIfCurrentIn(2L, ACTIVE_STATUSES, PaymentStatus.EXPIRED))
+                .thenThrow(new IllegalStateException("db hiccup"));
+        when(paymentRepository.updateStatusIfCurrentIn(3L, ACTIVE_STATUSES, PaymentStatus.EXPIRED)).thenReturn(1);
+        when(cacheManager.getCache(anyString())).thenReturn(cache);
+
+        paymentScheduler.processExpiredPayments();
+
+        assertThat(bookingA.getStatus()).isEqualTo(BookingStatus.PENDING);
+        assertThat(bookingB.getStatus()).isEqualTo(BookingStatus.EXPIRED);
+    }
+
+    @Test
+    void refundUnfulfillableSuccessfulPaymentsShouldRefundEachOneAndContinueOnFailure() {
+        var paymentA = Payment.builder().id(10L).status(PaymentStatus.SUCCESS).build();
+        var paymentB = Payment.builder().id(11L).status(PaymentStatus.SUCCESS).build();
+
+        when(paymentRepository.findWithoutTicketsByStatusAndBookingStatusIn(eq(PaymentStatus.SUCCESS),
+                eq(List.of(BookingStatus.EXPIRED, BookingStatus.CANCELLED)), any(Instant.class)))
+                .thenReturn(List.of(paymentA, paymentB));
+        doThrow(new RuntimeException("boom")).when(paymentService).refundUnfulfillableSuccess(10L);
+
+        paymentScheduler.refundUnfulfillableSuccessfulPayments();
+
+        verify(paymentService).refundUnfulfillableSuccess(10L);
+        verify(paymentService).refundUnfulfillableSuccess(11L);
+    }
+
+    @Test
+    void retryRequiredRefundsShouldRetryEachPendingRefund() {
+        var paymentA = Payment.builder().id(10L).status(PaymentStatus.REFUND_REQUIRED).build();
+        var paymentB = Payment.builder().id(11L).status(PaymentStatus.REFUND_REQUIRED).build();
+
+        when(paymentRepository.findByStatusAndLastModifiedDateBefore(eq(PaymentStatus.REFUND_REQUIRED),
+                any(Instant.class))).thenReturn(List.of(paymentA, paymentB));
+        doThrow(new RuntimeException("gateway down")).when(latePaymentRefundService).refund(10L);
+
+        paymentScheduler.retryRequiredRefunds();
+
+        verify(latePaymentRefundService).refund(10L);
+        verify(latePaymentRefundService).refund(11L);
+    }
+
+    private Booking pendingBooking(Instant expiresAt, List<SeatReservation> seats) {
+        return Booking.builder().id(1L).session(testSession).status(BookingStatus.PENDING).expiresAt(expiresAt)
+                .seatReservations(seats).build();
+    }
+
+    private Payment activePayment(Long id, Booking booking) {
+        return Payment.builder().id(id).booking(booking).status(PaymentStatus.PENDING).liqpayOrderId("ORD_" + id)
+                .build();
+    }
+
+    private void stubExpiredPayments(Payment payment) {
+        when(paymentRepository.findByStatusInAndBookingStatusInAndBookingExpiredBefore(eq(ACTIVE_STATUSES),
+                eq(EXPIRABLE_BOOKING_STATUSES), any(Instant.class))).thenReturn(List.of(payment));
+    }
+
+    private void stubGateway(PaymentGatewayStatus status) {
+        when(paymentGatewayService.checkPaymentStatus(anyString()))
+                .thenReturn(new PaymentGatewayCheckResult(status, Map.of()));
     }
 
     @Test
     void reconcileStuckProcessingPaymentsWhenNoneFoundShouldDoNothing() {
         when(paymentRepository.findByStatusAndLastModifiedDateBefore(eq(PaymentStatus.PROCESSING),
-                any(LocalDateTime.class))).thenReturn(List.of());
+                any(Instant.class))).thenReturn(List.of());
 
         paymentScheduler.reconcileStuckProcessingPayments();
 
@@ -187,7 +327,7 @@ class PaymentSchedulerTest {
                 .liqpayOrderId("ORD_2").build();
 
         when(paymentRepository.findByStatusAndLastModifiedDateBefore(eq(PaymentStatus.PROCESSING),
-                any(LocalDateTime.class))).thenReturn(List.of(payment));
+                any(Instant.class))).thenReturn(List.of(payment));
         when(paymentGatewayService.checkPaymentStatus("ORD_2"))
                 .thenReturn(new PaymentGatewayCheckResult(PaymentGatewayStatus.SUCCESS, Map.of("payment_id", "P1")));
 
@@ -204,7 +344,7 @@ class PaymentSchedulerTest {
                 .liqpayOrderId("ORD_2").build();
 
         when(paymentRepository.findByStatusAndLastModifiedDateBefore(eq(PaymentStatus.PROCESSING),
-                any(LocalDateTime.class))).thenReturn(List.of(payment));
+                any(Instant.class))).thenReturn(List.of(payment));
         when(paymentGatewayService.checkPaymentStatus("ORD_2")).thenReturn(
                 new PaymentGatewayCheckResult(PaymentGatewayStatus.FAILED, Map.of("err_description", "declined")));
 
@@ -221,7 +361,7 @@ class PaymentSchedulerTest {
                 .liqpayOrderId("ORD_2").build();
 
         when(paymentRepository.findByStatusAndLastModifiedDateBefore(eq(PaymentStatus.PROCESSING),
-                any(LocalDateTime.class))).thenReturn(List.of(payment));
+                any(Instant.class))).thenReturn(List.of(payment));
         when(paymentGatewayService.checkPaymentStatus("ORD_2"))
                 .thenReturn(new PaymentGatewayCheckResult(PaymentGatewayStatus.STILL_PROCESSING, Map.of()));
 
@@ -233,7 +373,7 @@ class PaymentSchedulerTest {
     @Test
     void reconcileStuckSuccessfulPaymentsWhenNoneFoundShouldDoNothing() {
         when(paymentRepository.findByStatusAndBookingStatusAndLastModifiedDateBefore(eq(PaymentStatus.SUCCESS),
-                eq(BookingStatus.PENDING), any(LocalDateTime.class))).thenReturn(List.of());
+                eq(BookingStatus.PENDING), any(Instant.class))).thenReturn(List.of());
 
         paymentScheduler.reconcileStuckSuccessfulPayments();
 
@@ -246,7 +386,7 @@ class PaymentSchedulerTest {
         var payment = Payment.builder().id(2L).booking(booking).status(PaymentStatus.SUCCESS).build();
 
         when(paymentRepository.findByStatusAndBookingStatusAndLastModifiedDateBefore(eq(PaymentStatus.SUCCESS),
-                eq(BookingStatus.PENDING), any(LocalDateTime.class))).thenReturn(List.of(payment));
+                eq(BookingStatus.PENDING), any(Instant.class))).thenReturn(List.of(payment));
 
         paymentScheduler.reconcileStuckSuccessfulPayments();
 
@@ -261,7 +401,7 @@ class PaymentSchedulerTest {
         var paymentB = Payment.builder().id(11L).booking(bookingB).status(PaymentStatus.SUCCESS).build();
 
         when(paymentRepository.findByStatusAndBookingStatusAndLastModifiedDateBefore(eq(PaymentStatus.SUCCESS),
-                eq(BookingStatus.PENDING), any(LocalDateTime.class))).thenReturn(List.of(paymentA, paymentB));
+                eq(BookingStatus.PENDING), any(Instant.class))).thenReturn(List.of(paymentA, paymentB));
         doThrow(new RuntimeException("still broken")).when(paymentSuccessOrchestrator).handle(10L);
 
         paymentScheduler.reconcileStuckSuccessfulPayments();
@@ -274,7 +414,7 @@ class PaymentSchedulerTest {
     void cleanupOldPaymentsShouldDeleteFailedAndExpiredPaymentsOlderThanNinetyDays() {
         var oldPayment = Payment.builder().id(3L).status(PaymentStatus.FAILED).build();
         when(paymentRepository.findByStatusInAndCreatedDateBefore(
-                eq(List.of(PaymentStatus.FAILED, PaymentStatus.EXPIRED)), any(LocalDateTime.class)))
+                eq(List.of(PaymentStatus.FAILED, PaymentStatus.EXPIRED)), any(Instant.class)))
                 .thenReturn(List.of(oldPayment));
 
         paymentScheduler.cleanupOldPayments();

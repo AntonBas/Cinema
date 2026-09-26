@@ -5,7 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import ua.lviv.bas.cinema.bonus.service.BonusQueryService;
 import ua.lviv.bas.cinema.booking.domain.Booking;
+import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.booking.domain.SeatReservation;
 import ua.lviv.bas.cinema.cinema.domain.Seat;
 import ua.lviv.bas.cinema.cinema.domain.Session;
@@ -17,13 +19,18 @@ import ua.lviv.bas.cinema.support.CinemaTestFixtures;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
 import ua.lviv.bas.cinema.ticket.domain.TicketType;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -31,6 +38,8 @@ class RefundCalculatorTest {
 
     @Mock
     private RefundRules refundRules;
+    @Mock
+    private BonusQueryService bonusQueryService;
 
     private RefundCalculator refundCalculator;
 
@@ -39,7 +48,7 @@ class RefundCalculatorTest {
 
     @BeforeEach
     void setUp() {
-        refundCalculator = new RefundCalculator(refundRules);
+        refundCalculator = new RefundCalculator(refundRules, bonusQueryService);
 
         var movie = CinemaTestFixtures.movie();
         var hall = CinemaTestFixtures.hall();
@@ -53,7 +62,7 @@ class RefundCalculatorTest {
         TicketType ticketType = TicketType.builder().displayName("Standard").build();
         testTicket = Ticket.builder().booking(booking).payment(payment).ticketType(ticketType)
                 .finalPrice(new BigDecimal("100.00")).status(TicketStatus.ACTIVE)
-                .purchaseTime(LocalDateTime.now().minusHours(1)).seatReservation(seatReservation).build();
+                .purchaseTime(Instant.now().minus(Duration.ofHours(1))).seatReservation(seatReservation).build();
     }
 
     @Test
@@ -86,7 +95,7 @@ class RefundCalculatorTest {
 
     @Test
     void validateWhenSessionAlreadyStartedShouldReturnReason() {
-        testSession.setStartTime(LocalDateTime.now().minusHours(1));
+        testSession.setStartTime(CinemaTime.now().minusHours(1));
         when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(true);
 
         String reason = refundCalculator.validate(testTicket);
@@ -96,7 +105,7 @@ class RefundCalculatorTest {
 
     @Test
     void validateWhenPaymentNotSuccessOrPartiallyRefundedShouldReturnReason() {
-        testSession.setStartTime(LocalDateTime.now().plusHours(3));
+        testSession.setStartTime(CinemaTime.now().plusHours(3));
         when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(true);
         testTicket.getPayment().setStatus(PaymentStatus.PENDING);
 
@@ -107,7 +116,7 @@ class RefundCalculatorTest {
 
     @Test
     void validateWhenPaymentPartiallyRefundedShouldReturnNull() {
-        testSession.setStartTime(LocalDateTime.now().plusHours(3));
+        testSession.setStartTime(CinemaTime.now().plusHours(3));
         when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(true);
         testTicket.getPayment().setStatus(PaymentStatus.PARTIALLY_REFUNDED);
 
@@ -118,7 +127,7 @@ class RefundCalculatorTest {
 
     @Test
     void validateWhenEligibleShouldReturnNull() {
-        testSession.setStartTime(LocalDateTime.now().plusHours(3));
+        testSession.setStartTime(CinemaTime.now().plusHours(3));
         when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(true);
 
         String reason = refundCalculator.validate(testTicket);
@@ -279,5 +288,51 @@ class RefundCalculatorTest {
         assertThat(result.bonusPointsToRefund()).isEqualTo(35);
         assertThat(result.feeAmount()).isEqualByComparingTo("30.00");
         assertThat(result.feePercentage()).isEqualByComparingTo("30");
+    }
+
+    @Test
+    void validateWhenSessionCancelledShouldIgnoreRefundWindowAndStartTime() {
+        testSession.setStatus(CinemaSessionStatus.CANCELLED);
+        testSession.setStartTime(CinemaTime.now().minusMinutes(10));
+
+        String reason = refundCalculator.validate(testTicket);
+
+        assertThat(reason).isNull();
+        verify(refundRules, never()).isRefundable(any());
+    }
+
+    @Test
+    void calculateWhenSessionCancelledShouldRefundCashAndBonusPointsInFull() {
+        testSession.setStatus(CinemaSessionStatus.CANCELLED);
+        testTicket.getBooking().setBonusPointsUsed(40);
+
+        RefundCalculator.RefundCalculation result = refundCalculator.calculate(testTicket);
+
+        assertThat(result.percentage()).isEqualByComparingTo("100");
+        assertThat(result.refundAmount()).isEqualByComparingTo("100.00");
+        assertThat(result.bonusPointsToRefund()).isEqualTo(40);
+        verify(refundRules, never()).getRefundPercentage(any());
+    }
+
+    @Test
+    void calculateEarnedPointsToRevokeShouldTakeTicketShareTimesRefundPercentage() {
+        testTicket.getPayment().setId(9L);
+        testTicket.getPayment().setAmount(new BigDecimal("200.00"));
+        testTicket.getBooking().setTotalPrice(new BigDecimal("200.00"));
+        testTicket.getBooking().setTickets(List.of(testTicket, Ticket.builder().id(2L)
+                .finalPrice(new BigDecimal("100.00")).build()));
+        testTicket.setId(1L);
+        when(bonusQueryService.getAccruedPointsForPayment(9L)).thenReturn(20);
+
+        assertThat(refundCalculator.calculateEarnedPointsToRevoke(testTicket, new BigDecimal("50"))).isEqualTo(5);
+        assertThat(refundCalculator.calculateEarnedPointsToRevoke(testTicket, new BigDecimal("100"))).isEqualTo(10);
+    }
+
+    @Test
+    void calculateEarnedPointsToRevokeWhenNothingEarnedShouldReturnZero() {
+        testTicket.getPayment().setId(9L);
+        when(bonusQueryService.getAccruedPointsForPayment(9L)).thenReturn(0);
+
+        assertThat(refundCalculator.calculateEarnedPointsToRevoke(testTicket, new BigDecimal("100"))).isZero();
     }
 }

@@ -12,8 +12,8 @@ import ua.lviv.bas.cinema.user.dto.response.UserProfileResponse;
 import ua.lviv.bas.cinema.user.dto.response.UserResponse;
 import ua.lviv.bas.cinema.user.repository.projection.AdminUserProjection;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,11 +23,11 @@ public class UserMapperTest {
     private final UserMapper userMapper = Mappers.getMapper(UserMapper.class);
 
     @Test
-    void toUser_ShouldMapRegistrationRequest() {
+    void toEntity_ShouldMapRegistrationRequest() {
         UserRegistrationRequest request = new UserRegistrationRequest("test@example.com", "John", "Doe",
                 LocalDate.of(1990, 1, 1), "Kyiv", "+380501234567", "password", "password");
 
-        User user = userMapper.toUser(request);
+        User user = userMapper.toEntity(request);
 
         assertThat(user.getEmail()).isEqualTo("test@example.com");
         assertThat(user.getFirstName()).isEqualTo("John");
@@ -37,7 +37,8 @@ public class UserMapperTest {
         assertThat(user.getPhoneNumber()).isEqualTo("+380501234567");
         assertThat(user.getUserRole()).isEqualTo(UserRole.ROLE_USER);
         assertThat(user.getVerificationStatus()).isEqualTo(VerificationStatus.NOT_VERIFIED);
-        assertThat(user.isEnabled()).isFalse();
+        assertThat(user.isEnabled()).isTrue();
+        assertThat(user.isEmailVerified()).isFalse();
         assertThat(user.getId()).isNull();
         assertThat(user.getTickets()).isEmpty();
         assertThat(user.getBonusCard()).isNull();
@@ -47,7 +48,7 @@ public class UserMapperTest {
     void toUserResponse_ShouldMapUser() {
         User user = User.builder().id(1L).email("test@example.com").firstName("John").lastName("Doe")
                 .dateOfBirth(LocalDate.of(1990, 1, 1)).city("Kyiv").phoneNumber("+380501234567")
-                .userRole(UserRole.ROLE_USER).enabled(true).verificationStatus(VerificationStatus.VERIFIED).build();
+                .userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).verificationStatus(VerificationStatus.VERIFIED).build();
 
         UserResponse response = userMapper.toUserResponse(user);
 
@@ -82,14 +83,14 @@ public class UserMapperTest {
     }
 
     @Test
-    void updateUserFromRequest_ShouldUpdateFields() {
+    void updateEntity_ShouldUpdateFields() {
         User user = User.builder().firstName("Old").lastName("User").dateOfBirth(LocalDate.of(1990, 1, 1))
                 .city("Old City").phoneNumber("+380501234567").build();
 
         UserUpdateRequest request = new UserUpdateRequest("New", "Name", LocalDate.of(1995, 5, 5), "Lviv",
                 "+380502345678");
 
-        userMapper.updateUserFromRequest(request, user);
+        userMapper.updateEntity(request, user);
 
         assertThat(user.getFirstName()).isEqualTo("New");
         assertThat(user.getLastName()).isEqualTo("Name");
@@ -99,13 +100,13 @@ public class UserMapperTest {
     }
 
     @Test
-    void updateUserFromRequest_WithNullValues_ShouldIgnoreNull() {
+    void updateEntity_WithNullValues_ShouldIgnoreNull() {
         User user = User.builder().firstName("Old").lastName("User").dateOfBirth(LocalDate.of(1990, 1, 1))
                 .city("Old City").phoneNumber("+380501234567").build();
 
         UserUpdateRequest request = new UserUpdateRequest(null, null, null, null, null);
 
-        userMapper.updateUserFromRequest(request, user);
+        userMapper.updateEntity(request, user);
 
         assertThat(user.getFirstName()).isEqualTo("Old");
         assertThat(user.getLastName()).isEqualTo("User");
@@ -153,8 +154,8 @@ public class UserMapperTest {
             }
 
             @Override
-            public LocalDateTime getVerifiedAt() {
-                return LocalDateTime.of(2024, 1, 15, 10, 30);
+            public Instant getVerifiedAt() {
+                return Instant.parse("2024-01-15T10:30:00Z");
             }
 
             @Override
@@ -163,8 +164,8 @@ public class UserMapperTest {
             }
 
             @Override
-            public LocalDateTime getLastActivity() {
-                return LocalDateTime.of(2024, 1, 20, 14, 0);
+            public Instant getLastActivity() {
+                return Instant.parse("2024-01-20T14:00:00Z");
             }
         };
 
@@ -177,16 +178,16 @@ public class UserMapperTest {
         assertThat(response.userRole()).isEqualTo(UserRole.ROLE_USER);
         assertThat(response.enabled()).isTrue();
         assertThat(response.verificationStatus()).isEqualTo(VerificationStatus.VERIFIED);
-        assertThat(response.verifiedAt()).isEqualTo(LocalDateTime.of(2024, 1, 15, 10, 30));
+        assertThat(response.verifiedAt()).isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
         assertThat(response.ticketsCount()).isEqualTo(5L);
-        assertThat(response.lastActivity()).isEqualTo(LocalDateTime.of(2024, 1, 20, 14, 0));
+        assertThat(response.lastActivity()).isEqualTo(Instant.parse("2024-01-20T14:00:00Z"));
     }
 
     @Test
     void toAdminUserListResponse_FromUser_ShouldMapAllFields() {
         User user = User.builder().id(1L).email("test@example.com").firstName("John").lastName("Doe")
-                .userRole(UserRole.ROLE_USER).enabled(true).verificationStatus(VerificationStatus.VERIFIED)
-                .verifiedAt(LocalDateTime.of(2024, 1, 15, 10, 30)).tickets(new ArrayList<>()).build();
+                .userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).verificationStatus(VerificationStatus.VERIFIED)
+                .verifiedAt(Instant.parse("2024-01-15T10:30:00Z")).tickets(new ArrayList<>()).build();
 
         user.getTickets().add(null);
         user.getTickets().add(null);
@@ -200,7 +201,7 @@ public class UserMapperTest {
         assertThat(response.userRole()).isEqualTo(UserRole.ROLE_USER);
         assertThat(response.enabled()).isTrue();
         assertThat(response.verificationStatus()).isEqualTo(VerificationStatus.VERIFIED);
-        assertThat(response.verifiedAt()).isEqualTo(LocalDateTime.of(2024, 1, 15, 10, 30));
+        assertThat(response.verifiedAt()).isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
         assertThat(response.ticketsCount()).isEqualTo(2L);
         assertThat(response.lastActivity()).isNull();
     }
@@ -208,7 +209,7 @@ public class UserMapperTest {
     @Test
     void toAdminUserListResponse_FromUser_WithNullTickets_ShouldReturnZeroCount() {
         User user = User.builder().id(1L).email("test@example.com").firstName("John").lastName("Doe")
-                .userRole(UserRole.ROLE_USER).enabled(true).verificationStatus(VerificationStatus.VERIFIED)
+                .userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).verificationStatus(VerificationStatus.VERIFIED)
                 .tickets(null).build();
 
         AdminUserListResponse response = userMapper.toAdminUserListResponse(user);
@@ -217,8 +218,8 @@ public class UserMapperTest {
     }
 
     @Test
-    void toUser_WithNullRequest_ShouldReturnNull() {
-        User user = userMapper.toUser(null);
+    void toEntity_WithNullRequest_ShouldReturnNull() {
+        User user = userMapper.toEntity(null);
         assertThat(user).isNull();
     }
 

@@ -1,11 +1,11 @@
 .name {
   font-weight: 600;
-  color: #f1f5f9;
-  font-size: 1.1rem;
+  color: var(--color-panel-text);
+  font-size: var(--font-size-lg);
 }
 
 @media (max-width: 1024px) {
   .name {
-    font-size: 1rem;
+    font-size: var(--font-size-md);
   }
 }

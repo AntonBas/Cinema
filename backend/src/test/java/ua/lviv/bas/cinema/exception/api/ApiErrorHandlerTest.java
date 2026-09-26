@@ -3,14 +3,22 @@ package ua.lviv.bas.cinema.exception.api;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.data.core.PropertyReferenceException;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import ua.lviv.bas.cinema.exception.domain.auth.ResendCooldownException;
+
+import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -29,6 +37,21 @@ class ApiErrorHandlerTest {
                     new org.hibernate.exception.ConstraintViolationException("duplicate key",
                             new java.sql.SQLException("duplicate key"), "uk_user_promotion"));
         }
+
+        @GetMapping("/test/resend-cooldown")
+        void triggerResendCooldown() {
+            throw new ResendCooldownException(42);
+        }
+
+        @GetMapping("/test/optimistic-lock")
+        void triggerOptimisticLock() {
+            throw new ObjectOptimisticLockingFailureException("Payment", 1L);
+        }
+
+        @GetMapping("/test/invalid-sort")
+        void triggerInvalidSort() {
+            throw new PropertyReferenceException("unknownProperty", TypeInformation.of(Object.class), List.of());
+        }
     }
 
     private ApiErrorHandler apiErrorHandler;
@@ -44,7 +67,7 @@ class ApiErrorHandlerTest {
     @Test
     void handleMaxUploadSizeExceededShouldReturnPayloadTooLarge() throws Exception {
         mockMvc.perform(get("/test/max-upload-size"))
-                .andExpect(status().isPayloadTooLarge())
+                .andExpect(status().isContentTooLarge())
                 .andExpect(jsonPath("$.message").value("Uploaded file is too large"));
     }
 
@@ -53,6 +76,24 @@ class ApiErrorHandlerTest {
         mockMvc.perform(get("/test/constraint-violation"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("Database constraint violation"));
+    }
+
+    @Test
+    void handleOptimisticLockShouldReturnConflict() throws Exception {
+        mockMvc.perform(get("/test/optimistic-lock"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.statusCode").value(409))
+                .andExpect(jsonPath("$.message").value("The resource was modified concurrently, please retry"));
+    }
+
+    @Test
+    void unsupportedMethodShouldReturnApiErrorWithAllowHeader() throws Exception {
+        mockMvc.perform(post("/test/max-upload-size"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(header().exists("Allow"))
+                .andExpect(jsonPath("$.statusCode").value(405))
+                .andExpect(jsonPath("$.path").value("/test/max-upload-size"))
+                .andExpect(jsonPath("$.message").exists());
     }
 
     @Test
@@ -67,5 +108,20 @@ class ApiErrorHandlerTest {
 
         mockMvc.perform(get("/test/max-upload-size"))
                 .andExpect(jsonPath("$.debugMessage").exists());
+    }
+
+    @Test
+    void handleResendCooldownShouldReturnTooManyRequestsWithRetryAfterHeader() throws Exception {
+        mockMvc.perform(get("/test/resend-cooldown"))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(header().string("Retry-After", "42"))
+                .andExpect(jsonPath("$.message").value("Please wait before requesting another verification email"));
+    }
+
+    @Test
+    void handlePropertyReferenceShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get("/test/invalid-sort"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid sort property: unknownProperty"));
     }
 }

@@ -9,17 +9,24 @@ import ua.lviv.bas.cinema.config.security.CustomUserDetailsService;
 import ua.lviv.bas.cinema.user.domain.EmailToken;
 import ua.lviv.bas.cinema.user.domain.TokenType;
 import ua.lviv.bas.cinema.user.domain.User;
-import ua.lviv.bas.cinema.exception.domain.auth.*;
+import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyExistsException;
+import ua.lviv.bas.cinema.exception.domain.auth.EmailValidationException;
+import ua.lviv.bas.cinema.exception.domain.auth.InvalidTokenException;
+import ua.lviv.bas.cinema.exception.domain.auth.TokenAlreadyConfirmedException;
+import ua.lviv.bas.cinema.exception.domain.auth.TokenExpiredException;
 import ua.lviv.bas.cinema.user.repository.EmailTokenRepository;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.notification.EmailService;
 
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -51,10 +58,10 @@ public class EmailTokenServiceTest {
     @Test
     void confirmEmail_Success() {
         User user = createUser();
-        user.setEnabled(false);
+        user.setEmailVerified(false);
 
         EmailToken emailToken = EmailToken.builder().token(TOKEN).type(TokenType.VERIFICATION).confirmed(false)
-                .expiresAt(LocalDateTime.now().plusHours(1)).user(user).build();
+                .expiresAt(Instant.now().plus(Duration.ofHours(1))).user(user).build();
 
         when(tokenRepository.findByToken(TOKEN)).thenReturn(Optional.of(emailToken));
         when(userRepository.save(user)).thenReturn(user);
@@ -62,11 +69,11 @@ public class EmailTokenServiceTest {
         String result = emailTokenService.confirmEmail(TOKEN);
 
         assertThat(result).contains("successfully");
-        assertThat(user.isEnabled()).isTrue();
+        assertThat(user.isEmailVerified()).isTrue();
         assertThat(emailToken.isConfirmed()).isTrue();
         verify(userRepository).save(user);
-        verify(bonusUserService).getOrCreateCard(user);
         verify(bonusUserService).awardWelcomeBonus(user);
+        verify(bonusUserService, never()).getOrCreateCard(any());
     }
 
     @Test
@@ -80,7 +87,7 @@ public class EmailTokenServiceTest {
     void confirmEmail_TokenAlreadyConfirmed_ThrowsException() {
         User user = createUser();
         EmailToken emailToken = EmailToken.builder().token(TOKEN).type(TokenType.VERIFICATION).confirmed(true)
-                .expiresAt(LocalDateTime.now().plusHours(1)).user(user).build();
+                .expiresAt(Instant.now().plus(Duration.ofHours(1))).user(user).build();
 
         when(tokenRepository.findByToken(TOKEN)).thenReturn(Optional.of(emailToken));
 
@@ -92,7 +99,7 @@ public class EmailTokenServiceTest {
     void confirmEmail_TokenExpired_ThrowsException() {
         User user = createUser();
         EmailToken emailToken = EmailToken.builder().token(TOKEN).type(TokenType.VERIFICATION).confirmed(false)
-                .expiresAt(LocalDateTime.now().minusHours(1)).user(user).build();
+                .expiresAt(Instant.now().minus(Duration.ofHours(1))).user(user).build();
 
         when(tokenRepository.findByToken(TOKEN)).thenReturn(Optional.of(emailToken));
 
@@ -103,7 +110,7 @@ public class EmailTokenServiceTest {
     void confirmEmail_WrongTokenType_ThrowsException() {
         User user = createUser();
         EmailToken emailToken = EmailToken.builder().token(TOKEN).type(TokenType.EMAIL_CHANGE).confirmed(false)
-                .expiresAt(LocalDateTime.now().plusHours(1)).user(user).build();
+                .expiresAt(Instant.now().plus(Duration.ofHours(1))).user(user).build();
 
         when(tokenRepository.findByToken(TOKEN)).thenReturn(Optional.of(emailToken));
 
@@ -114,7 +121,7 @@ public class EmailTokenServiceTest {
     void confirmEmailChange_Success() {
         User user = createUser();
         EmailToken emailToken = EmailToken.builder().token(TOKEN).type(TokenType.EMAIL_CHANGE).confirmed(false)
-                .expiresAt(LocalDateTime.now().plusHours(1)).user(user).newEmail(NEW_EMAIL).build();
+                .expiresAt(Instant.now().plus(Duration.ofHours(1))).user(user).newEmail(NEW_EMAIL).build();
 
         when(tokenRepository.findByToken(TOKEN)).thenReturn(Optional.of(emailToken));
         when(userRepository.findByEmail(NEW_EMAIL)).thenReturn(Optional.empty());
@@ -132,7 +139,7 @@ public class EmailTokenServiceTest {
     void confirmEmailChange_NewEmailAlreadyExists_ThrowsException() {
         User user = createUser();
         EmailToken emailToken = EmailToken.builder().token(TOKEN).type(TokenType.EMAIL_CHANGE).confirmed(false)
-                .expiresAt(LocalDateTime.now().plusHours(1)).user(user).newEmail(NEW_EMAIL).build();
+                .expiresAt(Instant.now().plus(Duration.ofHours(1))).user(user).newEmail(NEW_EMAIL).build();
 
         when(tokenRepository.findByToken(TOKEN)).thenReturn(Optional.of(emailToken));
         when(userRepository.findByEmail(NEW_EMAIL)).thenReturn(Optional.of(new User()));
@@ -145,7 +152,7 @@ public class EmailTokenServiceTest {
     void confirmEmailChange_SameEmail_ThrowsException() {
         User user = createUser();
         EmailToken emailToken = EmailToken.builder().token(TOKEN).type(TokenType.EMAIL_CHANGE).confirmed(false)
-                .expiresAt(LocalDateTime.now().plusHours(1)).user(user).newEmail(USER_EMAIL).build();
+                .expiresAt(Instant.now().plus(Duration.ofHours(1))).user(user).newEmail(USER_EMAIL).build();
 
         when(tokenRepository.findByToken(TOKEN)).thenReturn(Optional.of(emailToken));
 
@@ -157,7 +164,7 @@ public class EmailTokenServiceTest {
         User user = new User();
         user.setId(1L);
         user.setEmail(USER_EMAIL);
-        user.setEnabled(true);
+        user.setEmailVerified(true);
         return user;
     }
 }

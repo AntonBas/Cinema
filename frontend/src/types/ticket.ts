@@ -18,6 +18,7 @@ export interface TicketResponse {
   hallName: string;
   row?: number;
   seatNumber?: number;
+  refundable: boolean;
 }
 
 export interface TicketCashierResponse {
@@ -41,11 +42,4 @@ export const TicketStatusDisplay: Record<TicketStatus, string> = {
   USED: "Used",
   REFUNDED: "Refunded",
   EXPIRED: "Expired",
-};
-
-export const TicketStatusColor: Record<TicketStatus, string> = {
-  ACTIVE: "green",
-  USED: "blue",
-  REFUNDED: "gray",
-  EXPIRED: "orange",
 };

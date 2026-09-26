@@ -1,5 +1,6 @@
 package ua.lviv.bas.cinema.ticket.service;
 
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +18,7 @@ import ua.lviv.bas.cinema.audit.domain.AuditAction;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.refund.domain.Refund;
+import ua.lviv.bas.cinema.refund.service.RefundCalculator;
 import ua.lviv.bas.cinema.booking.domain.SeatReservation;
 import ua.lviv.bas.cinema.booking.domain.status.ReservationStatus;
 import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
@@ -34,8 +36,9 @@ import ua.lviv.bas.cinema.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 import ua.lviv.bas.cinema.integration.QRCodeService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Slf4j
 @Service
@@ -46,10 +49,12 @@ public class TicketService {
     private final TicketRepository ticketRepository;
     private final TicketSpecification ticketSpecification;
     private final TicketMapper ticketMapper;
+    private final RefundCalculator refundCalculator;
     private final QRCodeService qrCodeService;
     private final NumberGeneratorService numberGenerator;
     private final AuditService auditService;
     private final CacheManager cacheManager;
+    private final EntityManager entityManager;
 
     @Value("${app.ticket.qr.size:200}")
     private int qrCodeSize;
@@ -80,15 +85,15 @@ public class TicketService {
         return Ticket.builder().booking(booking).user(booking.getUser()).ticketType(seatReservation.getTicketType())
                 .payment(payment).seatReservation(seatReservation).originalPrice(seatReservation.getSeatPrice())
                 .finalPrice(seatReservation.getSeatPrice()).uniqueCode(numberGenerator.generateTicketCode())
-                .status(TicketStatus.ACTIVE).purchaseTime(LocalDateTime.now()).build();
+                .status(TicketStatus.ACTIVE).purchaseTime(Instant.now()).build();
     }
 
-    public Ticket findActiveTicketForUser(Long ticketId, Long userId) {
+    public Ticket getActiveTicketForUser(Long ticketId, Long userId) {
         return ticketRepository.findByIdAndUserIdAndStatus(ticketId, userId, TicketStatus.ACTIVE).orElseThrow(
                 () -> new TicketNotFoundException("Ticket not found or not active. Ticket ID: " + ticketId));
     }
 
-    public Ticket findById(Long ticketId) {
+    public Ticket getTicket(Long ticketId) {
         return ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new TicketNotFoundException("Ticket not found. Ticket ID: " + ticketId));
     }
@@ -104,7 +109,7 @@ public class TicketService {
                 .orElseThrow(() -> new TicketNotFoundException("Ticket not found with code: " + ticketCode));
 
         if (!ticket.getUser().getId().equals(user.getId())) {
-            throw TicketValidationException.notFound();
+            throw new TicketNotFoundException("Ticket " + ticketCode + " does not belong to user " + user.getId());
         }
 
         return toTicketResponse(ticket);
@@ -120,7 +125,8 @@ public class TicketService {
     @CacheEvict(value = "ticketList", allEntries = true)
     @Transactional
     public TicketCashierResponse validate(String ticketCode) {
-        var ticket = ticketRepository.findByUniqueCode(ticketCode).orElseThrow(TicketValidationException::notFound);
+        var ticket = ticketRepository.findByUniqueCode(ticketCode)
+                .orElseThrow(() -> new TicketNotFoundException("Ticket not found with code: " + ticketCode));
 
         var oldStatus = ticket.getStatus();
         validateForEntry(ticket);
@@ -130,8 +136,7 @@ public class TicketService {
             throw TicketValidationException.alreadyUsed();
         }
 
-        ticket.setStatus(TicketStatus.USED);
-        ticketRepository.save(ticket);
+        entityManager.refresh(ticket);
         evictTicketCache(ticket);
         log.info("Ticket {} validated and marked as used", ticketCode);
         auditValidate(ticket, oldStatus);
@@ -141,10 +146,10 @@ public class TicketService {
 
     public byte[] generateQR(String ticketCode, User user) {
         var ticket = ticketRepository.findByUniqueCode(ticketCode)
-                .orElseThrow(TicketValidationException::notFound);
+                .orElseThrow(() -> new TicketNotFoundException("Ticket not found with code: " + ticketCode));
 
         if (!ticket.getUser().getId().equals(user.getId())) {
-            throw TicketValidationException.notFound();
+            throw new TicketNotFoundException("Ticket " + ticketCode + " does not belong to user " + user.getId());
         }
 
         var qrContent = ticketBaseUrl + "/cashier/scan/" + ticketCode;
@@ -152,11 +157,8 @@ public class TicketService {
     }
 
     private TicketResponse toTicketResponse(Ticket ticket) {
-        var response = ticketMapper.toTicketResponse(ticket);
-        var qrCodeUrl = "/api/tickets/" + ticket.getUniqueCode() + "/qr";
-        return new TicketResponse(response.id(), response.ticketCode(), qrCodeUrl, response.status(),
-                response.purchaseTime(), response.price(), response.ticketType(), response.movieTitle(),
-                response.sessionTime(), response.hallName(), response.row(), response.seatNumber());
+        var qrCodeUrl = "/api/tickets/code/" + ticket.getUniqueCode() + "/qr";
+        return ticketMapper.toTicketResponse(ticket, qrCodeUrl, refundCalculator.validate(ticket) == null);
     }
 
     private void validateForEntry(Ticket ticket) {
@@ -171,7 +173,7 @@ public class TicketService {
         }
 
         var session = ticket.getBooking().getSession();
-        var now = LocalDateTime.now();
+        var now = CinemaTime.now();
 
         if (session.getStartTime().isAfter(now.plusHours(1))) {
             throw new TicketValidationException("Too early. Entry allowed 1 hour before session start");
@@ -223,7 +225,7 @@ public class TicketService {
 
     private void auditValidate(Ticket ticket, TicketStatus oldStatus) {
         var oldDetails = AuditDetails.of().put("status", oldStatus).build();
-        var newDetails = AuditDetails.of().put("status", TicketStatus.USED).put("validatedAt", LocalDateTime.now())
+        var newDetails = AuditDetails.of().put("status", TicketStatus.USED).put("validatedAt", Instant.now())
                 .build();
         auditService.logChange("Ticket", ticket.getId(), "Ticket #" + ticket.getUniqueCode(), AuditAction.VALIDATED,
                 oldDetails, newDetails);

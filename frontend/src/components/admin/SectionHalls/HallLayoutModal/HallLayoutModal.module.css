@@ -8,19 +8,19 @@
 }
 
 .headerControls {
-  margin-bottom: 20px;
+  margin-bottom: var(--space-4);
 }
 
 .stats {
   display: flex;
-  gap: 20px;
+  gap: var(--space-4);
   justify-content: center;
   flex-wrap: wrap;
 }
 
 .statItem {
   text-align: center;
-  padding: 10px 20px;
+  padding: var(--space-2) var(--space-4);
   background: var(--color-bg-quaternary);
   border-radius: var(--radius-md);
   min-width: 80px;
@@ -29,34 +29,34 @@
 
 .statNumber {
   display: block;
-  font-size: 24px;
+  font-size: var(--font-size-2xl);
   font-weight: 700;
   color: var(--color-primary);
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
   text-shadow: 0 0 10px rgba(var(--color-primary-rgb), 0.3);
 }
 
 .statLabel {
   color: var(--color-text-secondary);
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .screenArea {
-  margin-bottom: 2rem;
+  margin-bottom: var(--space-8);
   position: relative;
 }
 
 .screen {
-  background: #0a0e17;
+  background: var(--color-bg-screen);
   color: var(--color-primary);
-  padding: 2rem 4rem;
-  margin: 0 auto 1rem auto;
+  padding: var(--space-8) var(--space-16);
+  margin: 0 auto var(--space-4) auto;
   border-radius: var(--radius-md);
   font-weight: 800;
-  font-size: 1.5rem;
+  font-size: var(--font-size-2xl);
   text-transform: uppercase;
   letter-spacing: 4px;
   box-shadow:
@@ -81,117 +81,117 @@
   max-width: 500px;
 }
 
-.seatsLayout {
-  background: rgba(42, 48, 65, 0.6);
+.gridWrapper {
+  background: rgba(var(--color-bg-quaternary-rgb), 0.6);
   border-radius: var(--radius-lg);
-  padding: 2rem 1rem;
   border: 1px solid var(--color-border-light);
   box-shadow:
-    inset 0 0 50px rgba(0, 0, 0, 0.3),
-    0 10px 30px rgba(0, 0, 0, 0.3);
-  position: relative;
-  overflow: hidden;
-  margin-bottom: 2rem;
-}
-
-.rowsContainer {
+    inset 0 0 50px rgba(var(--color-black-rgb), 0.3),
+    0 10px 30px rgba(var(--color-black-rgb), 0.3);
   display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  align-items: center;
-  max-width: 900px;
-  margin: 0 auto;
-  overflow-x: visible;
-  padding: var(--space-2);
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  width: 100%;
   justify-content: center;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--space-2);
+  margin-bottom: var(--space-4);
 }
 
-.rowLabel {
-  min-width: 60px;
-  color: #a0a4b8;
-  font-size: 12px;
-  font-weight: 600;
-  text-align: right;
-  padding-right: 10px;
+.canvas {
+  position: relative;
   flex-shrink: 0;
 }
 
-.seatsRow {
-  display: flex;
-  gap: 4px;
-  justify-content: center;
-  flex-wrap: nowrap;
-  width: fit-content;
-  min-width: 0;
+.gridCell {
+  position: absolute;
+  border: 1px dashed transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
 }
 
-.seatButton {
-  position: relative;
-  height: 32px;
+.gridCell:hover {
+  border-color: var(--color-border-light);
+  background: rgba(var(--color-white-rgb), 0.04);
+}
+
+.seatTile {
+  position: absolute;
   border-radius: var(--radius-sm);
   border: 2px solid transparent;
-  background-color: #4caf50;
   color: var(--color-text-primary);
   font-weight: 600;
-  font-size: 12px;
+  font-size: var(--font-size-2xs);
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+  box-shadow:
+    0 4px 8px rgba(var(--color-black-rgb), 0.3),
+    inset 0 1px 0 rgba(var(--color-white-rgb), 0.2);
+  user-select: none;
+}
+
+.seatTile:active {
+  cursor: grabbing;
+}
+
+.seatTile:hover {
+  transform: scale(1.05);
+  z-index: 2;
+  box-shadow:
+    0 8px 20px rgba(var(--color-black-rgb), 0.5),
+    inset 0 1px 0 rgba(var(--color-white-rgb), 0.3);
+}
+
+.seatTile.standard {
+  background-color: var(--color-seat-standard);
+  border-color: var(--color-seat-standard-border);
+}
+
+.seatTile.vip {
+  background-color: var(--color-seat-vip);
+  border-color: var(--color-seat-vip-border);
+}
+
+.seatTile.couple {
+  background-color: var(--color-seat-couple);
+  border-color: var(--color-seat-couple-border);
+}
+
+.seatTile.inactive {
+  opacity: 0.5;
+  filter: grayscale(0.8);
+  border-color: var(--color-seat-layout-inactive) !important;
+}
+
+.deleteButton {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-error);
+  color: var(--color-text-primary);
+  border: none;
+  font-size: var(--font-size-2xs);
+  line-height: 1;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--transition-fast);
   padding: 0;
-  margin: 0 2px;
-  box-shadow:
-    0 4px 8px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  flex-shrink: 0;
+  z-index: 3;
 }
 
-.seatButton.standard,
-.seatButton.vip {
-  width: 32px;
-}
-
-.seatButton.couple {
-  width: 72px;
-  background-color: #e84393;
-  border-color: rgba(232, 67, 147, 0.5);
-}
-
-.seatButton.standard {
-  background-color: #3498db;
-  border-color: rgba(52, 152, 219, 0.5);
-}
-
-.seatButton.vip {
-  background-color: #f39c12;
-  border-color: rgba(243, 156, 18, 0.5);
-}
-
-.seatButton.inactive {
-  opacity: 0.4;
-  filter: grayscale(0.8);
-  border-color: #666 !important;
-}
-
-.seatButton:hover:not(:disabled) {
-  transform: scale(1.1);
-  z-index: 2;
-  box-shadow:
-    0 8px 20px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
-}
-
-.seatButton:disabled {
-  cursor: wait;
-  opacity: 0.7;
+.actions {
+  display: flex;
+  gap: var(--space-4);
+  justify-content: flex-end;
+  align-self: stretch;
 }
 
 .inactiveOverlay {
@@ -204,24 +204,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: rgba(var(--color-black-rgb), 0.3);
   border-radius: var(--radius-sm);
-}
-
-.inactiveIcon {
-  font-size: 14px;
-  color: #888;
-  font-weight: bold;
-  text-shadow: 0 0 2px black;
-}
-
-.loadingSpinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid var(--color-text-primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
 }
 
 .footer {
@@ -232,7 +216,7 @@
 }
 
 .legend {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--color-overlay-light);
   border-radius: var(--radius-md);
   padding: var(--space-6) var(--space-8);
   border: 1px solid var(--color-border-light);
@@ -242,7 +226,7 @@
 
 .legendTitle {
   color: var(--color-text-primary);
-  font-size: 1.1rem;
+  font-size: var(--font-size-lg);
   font-weight: 600;
   margin-bottom: var(--space-4);
   text-align: center;
@@ -251,8 +235,8 @@
 .legendGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-top: 10px;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
 }
 
 .legendItem {
@@ -260,16 +244,16 @@
   align-items: center;
   gap: var(--space-3);
   color: var(--color-text-secondary);
-  font-size: 0.9rem;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--color-overlay-light);
   transition: all var(--transition-normal);
 }
 
 .legendItem:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--color-overlay-light-hover);
   transform: translateY(-2px);
 }
 
@@ -277,25 +261,25 @@
   width: 20px;
   height: 20px;
   border-radius: var(--radius-sm);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 4px rgba(var(--color-black-rgb), 0.3);
+  border: 2px solid rgba(var(--color-white-rgb), 0.2);
   flex-shrink: 0;
 }
 
 .legendColor.standard {
-  background-color: #3498db;
+  background-color: var(--color-seat-standard);
 }
 
 .legendColor.vip {
-  background-color: #f39c12;
+  background-color: var(--color-seat-vip);
 }
 
 .legendColor.couple {
-  background-color: #e84393;
+  background-color: var(--color-seat-couple);
 }
 
 .legendColor.inactive {
-  background-color: #666;
+  background-color: var(--color-seat-layout-inactive);
 }
 
 .instructions {
@@ -310,22 +294,22 @@
 }
 
 .instructionIcon {
-  font-size: 1.5rem;
+  font-size: var(--font-size-2xl);
   flex-shrink: 0;
 }
 
 .instructionText {
   color: var(--color-primary);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: var(--font-size-sm);
   margin: 0;
   text-shadow: 0 0 10px rgba(var(--color-primary-rgb), 0.3);
 }
 
 .instructionText p {
-  margin: 4px 0;
-  font-size: 0.9rem;
-  color: #a0a4b8;
+  margin: var(--space-1) 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
 }
 
 .instructionText p strong {
@@ -333,65 +317,28 @@
 }
 
 .note {
-  font-size: 12px;
-  color: #888;
-  margin-top: 5px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
   font-style: italic;
 }
 
 .loading {
   text-align: center;
-  padding: 4rem;
+  padding: var(--space-16);
   color: var(--color-text-secondary);
-  font-size: 1.1rem;
+  font-size: var(--font-size-lg);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-6);
 }
 
-.noLayout {
-  text-align: center;
-  padding: 4rem 2rem;
-  color: var(--color-text-secondary);
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: var(--radius-md);
-  border: 2px dashed var(--color-border-light);
-}
-
-.emptyIcon {
-  font-size: 4rem;
-  margin-bottom: var(--space-4);
-  opacity: 0.5;
-  filter: drop-shadow(0 0 10px rgba(var(--color-primary-rgb), 0.3));
-}
-
-.noLayout h3 {
-  color: var(--color-text-primary);
-  margin: 0 0 var(--space-4) 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
-.noLayout p {
-  margin: 0 0 var(--space-6) 0;
-  font-size: 1.1rem;
-}
-
 .seatNumber {
-  font-size: 11px;
+  font-size: var(--font-size-2xs);
   font-weight: 600;
   color: var(--color-text-primary);
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+  text-shadow: 0 1px 1px rgba(var(--color-black-rgb), 0.5);
 }
 
 @media (max-width: 768px) {
@@ -400,25 +347,25 @@
   }
 
   .stats {
-    gap: 12px;
+    gap: var(--space-3);
   }
 
   .statItem {
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     min-width: 75px;
   }
 
   .statNumber {
-    font-size: 20px;
+    font-size: var(--font-size-xl);
   }
 
   .statLabel {
-    font-size: 10px;
+    font-size: var(--font-size-2xs);
   }
 
   .screen {
-    padding: var(--space-4) var(--space-5);
-    font-size: 1.1rem;
+    padding: var(--space-4) var(--space-4);
+    font-size: var(--font-size-lg);
     letter-spacing: 2px;
     max-width: 85%;
   }
@@ -434,18 +381,18 @@
   }
 
   .legendTitle {
-    font-size: 1rem;
+    font-size: var(--font-size-md);
     margin-bottom: var(--space-3);
   }
 
   .legendGrid {
     grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    gap: var(--space-2);
   }
 
   .legendItem {
     padding: var(--space-2) var(--space-3);
-    font-size: 0.8rem;
+    font-size: var(--font-size-xs);
     gap: var(--space-2);
   }
 
@@ -454,52 +401,12 @@
     height: 16px;
   }
 
-  .seatsLayout {
-    padding: var(--space-4) var(--space-2);
-  }
-
-  .rowsContainer {
-    padding: 0;
-    gap: var(--space-3);
-    max-width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-  }
-
-  .row {
-    gap: var(--space-2);
-    justify-content: flex-start;
-  }
-
-  .rowLabel {
-    min-width: 45px;
-    font-size: 10px;
-    padding-right: 4px;
-  }
-
-  .seatsRow {
-    gap: 3px;
-  }
-
-  .seatButton {
-    height: 26px;
-    font-size: 9px;
-    margin: 0 1px;
-  }
-
-  .seatButton.standard,
-  .seatButton.vip {
-    width: 26px;
-  }
-
-  .seatButton.couple {
-    width: 52px;
-    height: 26px;
+  .gridWrapper {
+    padding: var(--space-1);
   }
 
   .seatNumber {
-    font-size: 8px;
+    font-size: var(--font-size-2xs);
   }
 
   .footer {
@@ -512,40 +419,24 @@
   }
 
   .instructionIcon {
-    font-size: 1.3rem;
+    font-size: var(--font-size-xl);
   }
 
   .instructionText {
-    font-size: 0.8rem;
+    font-size: var(--font-size-xs);
   }
 
   .instructionText p {
-    font-size: 0.75rem;
+    font-size: var(--font-size-xs);
     margin: 3px 0;
   }
 
   .note {
-    font-size: 10px;
+    font-size: var(--font-size-2xs);
   }
 
   .loading {
-    padding: 2.5rem;
-  }
-
-  .noLayout {
-    padding: 2.5rem 1.5rem;
-  }
-
-  .emptyIcon {
-    font-size: 3.5rem;
-  }
-
-  .noLayout h3 {
-    font-size: 1.3rem;
-  }
-
-  .noLayout p {
-    font-size: 1rem;
+    padding: var(--space-8);
   }
 }
 
@@ -555,63 +446,30 @@
   }
 
   .stats {
-    gap: 6px;
+    gap: var(--space-1);
   }
 
   .statItem {
-    padding: 4px 8px;
+    padding: var(--space-1) var(--space-2);
     min-width: 55px;
   }
 
   .statNumber {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
   }
 
   .statLabel {
-    font-size: 8px;
+    font-size: var(--font-size-2xs);
   }
 
   .screen {
     padding: var(--space-2) var(--space-3);
-    font-size: 0.8rem;
+    font-size: var(--font-size-xs);
     letter-spacing: 1px;
   }
 
-  .rowLabel {
-    display: none;
-  }
-
-  .seatsLayout {
-    padding: var(--space-2) var(--space-1);
-  }
-
-  .rowsContainer {
-    gap: var(--space-1);
-  }
-
-  .row {
-    gap: 0;
-    justify-content: flex-start;
-  }
-
-  .seatsRow {
-    gap: 1px;
-  }
-
-  .seatButton {
-    height: 20px;
-    font-size: 7px;
-    margin: 0;
-  }
-
-  .seatButton.standard,
-  .seatButton.vip {
-    width: 20px;
-  }
-
-  .seatButton.couple {
-    width: 41px;
-    height: 20px;
+  .gridWrapper {
+    padding: 0;
   }
 
   .seatNumber {
@@ -623,18 +481,18 @@
   }
 
   .legendTitle {
-    font-size: 0.8rem;
+    font-size: var(--font-size-xs);
     margin-bottom: var(--space-1);
   }
 
   .legendGrid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 4px;
+    gap: var(--space-1);
   }
 
   .legendItem {
     padding: var(--space-1);
-    font-size: 0.65rem;
+    font-size: var(--font-size-2xs);
     gap: var(--space-1);
   }
 
@@ -649,39 +507,23 @@
   }
 
   .instructionIcon {
-    font-size: 1rem;
+    font-size: var(--font-size-md);
   }
 
   .instructionText {
-    font-size: 0.7rem;
+    font-size: var(--font-size-xs);
   }
 
   .instructionText p {
-    font-size: 0.6rem;
+    font-size: var(--font-size-2xs);
     margin: 2px 0;
   }
 
   .note {
-    font-size: 8px;
+    font-size: var(--font-size-2xs);
   }
 
   .loading {
-    padding: 1.5rem;
-  }
-
-  .noLayout {
-    padding: 1.5rem 1rem;
-  }
-
-  .emptyIcon {
-    font-size: 2.5rem;
-  }
-
-  .noLayout h3 {
-    font-size: 1rem;
-  }
-
-  .noLayout p {
-    font-size: 0.8rem;
+    padding: var(--space-6);
   }
 }

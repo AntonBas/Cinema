@@ -18,6 +18,7 @@ import ua.lviv.bas.cinema.bonus.domain.BonusTransaction;
 import ua.lviv.bas.cinema.bonus.domain.BonusTransactionType;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.payment.domain.Payment;
+import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.user.domain.VerificationStatus;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusValidationException;
@@ -26,14 +27,21 @@ import ua.lviv.bas.cinema.bonus.repository.BonusRulesRepository;
 import ua.lviv.bas.cinema.bonus.repository.BonusTransactionRepository;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 
-import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class BonusLedgerServiceTest {
@@ -115,6 +123,36 @@ public class BonusLedgerServiceTest {
     }
 
     @Test
+    void awardWelcomeBonusWhenRuleDisabledShouldSkipPointsWithoutFailing() {
+        User user = User.builder().id(USER_ID).build();
+        BonusCard card = BonusCard.builder().pointsBalance(0).welcomeBonusReceived(false).build();
+
+        when(bonusCardRepository.findByUserId(USER_ID)).thenReturn(Optional.of(card));
+        when(bonusRulesRepository.findByBonusTypeAndActiveTrue(WELCOME)).thenReturn(Optional.empty());
+
+        assertThatCode(() -> bonusLedgerService.awardWelcomeBonus(user)).doesNotThrowAnyException();
+
+        assertThat(card.getPointsBalance()).isZero();
+        assertThat(card.isWelcomeBonusReceived()).isFalse();
+        verifyNoInteractions(bonusTransactionRepository);
+    }
+
+    @Test
+    void awardBirthdayBonusWhenRuleDisabledShouldSkipWithoutFailing() {
+        User user = User.builder().id(USER_ID).verificationStatus(VerificationStatus.VERIFIED)
+                .dateOfBirth(CinemaTime.today()).build();
+        BonusCard card = BonusCard.builder().pointsBalance(0).build();
+
+        when(bonusCardRepository.findByUserId(USER_ID)).thenReturn(Optional.of(card));
+        when(bonusRulesRepository.findByBonusTypeAndActiveTrue(BIRTHDAY)).thenReturn(Optional.empty());
+
+        assertThatCode(() -> bonusLedgerService.awardBirthdayBonus(user)).doesNotThrowAnyException();
+
+        assertThat(card.getLastBirthdayBonusDate()).isNull();
+        verifyNoInteractions(bonusTransactionRepository);
+    }
+
+    @Test
     void awardWelcomeBonusWhenAlreadyReceivedShouldDoNothing() {
         User user = User.builder().id(USER_ID).build();
         BonusCard card = BonusCard.builder().welcomeBonusReceived(true).build();
@@ -130,7 +168,7 @@ public class BonusLedgerServiceTest {
     @Test
     void awardBirthdayBonusWhenBirthdayShouldAddPoints() {
         User user = User.builder().id(USER_ID).verificationStatus(VerificationStatus.VERIFIED)
-                .dateOfBirth(LocalDate.now()).build();
+                .dateOfBirth(CinemaTime.today()).build();
         BonusCard card = BonusCard.builder().pointsBalance(0).lastBirthdayBonusDate(null).build();
         BonusRules rule = BonusRules.builder().points(100).build();
 
@@ -142,9 +180,10 @@ public class BonusLedgerServiceTest {
         bonusLedgerService.awardBirthdayBonus(user);
 
         assertThat(card.getPointsBalance()).isEqualTo(100);
-        assertThat(card.getLastBirthdayBonusDate()).isEqualTo(LocalDate.now());
+        assertThat(card.getLastBirthdayBonusDate()).isEqualTo(CinemaTime.today());
         verify(bonusCardRepository).save(any(BonusCard.class));
-        verify(bonusTransactionRepository).save(any(BonusTransaction.class));
+        verify(bonusTransactionRepository).save(argThat(transaction -> transaction.getReferenceId()
+                .equals("BIRTHDAY_" + USER_ID + "_" + CinemaTime.today().getYear())));
     }
 
     @Test
@@ -168,8 +207,8 @@ public class BonusLedgerServiceTest {
     @Test
     void awardBirthdayBonusWhenAlreadyReceivedThisYearShouldDoNothing() {
         User user = User.builder().id(USER_ID).verificationStatus(VerificationStatus.VERIFIED)
-                .dateOfBirth(LocalDate.now()).build();
-        BonusCard card = BonusCard.builder().pointsBalance(0).lastBirthdayBonusDate(LocalDate.now()).build();
+                .dateOfBirth(CinemaTime.today()).build();
+        BonusCard card = BonusCard.builder().pointsBalance(0).lastBirthdayBonusDate(CinemaTime.today()).build();
 
         when(bonusCardRepository.findByUserId(USER_ID)).thenReturn(Optional.of(card));
 
@@ -187,20 +226,21 @@ public class BonusLedgerServiceTest {
         when(bonusCardRepository.findByUserId(USER_ID)).thenReturn(Optional.of(card));
         when(bonusTransactionRepository.save(any(BonusTransaction.class))).thenAnswer(i -> i.getArgument(0));
 
-        bonusLedgerService.addPromotionPoints(user, 50, "PROMO");
+        bonusLedgerService.addPromotionPoints(user, 7L, 50, "A promotion title that is much longer than fifty chars");
 
         assertThat(card.getPointsBalance()).isEqualTo(150);
         verify(bonusCardRepository).findByUserId(USER_ID);
-        verify(bonusTransactionRepository).save(any(BonusTransaction.class));
+        verify(bonusTransactionRepository)
+                .save(argThat(transaction -> "PROMOTION_7".equals(transaction.getReferenceId())));
     }
 
     @Test
     void addPromotionPointsWhenPointsInvalidShouldThrowException() {
         User user = User.builder().id(USER_ID).build();
 
-        assertThatThrownBy(() -> bonusLedgerService.addPromotionPoints(user, 0, "PROMO"))
+        assertThatThrownBy(() -> bonusLedgerService.addPromotionPoints(user, 7L, 0, "PROMO"))
                 .isInstanceOf(BonusValidationException.class);
-        assertThatThrownBy(() -> bonusLedgerService.addPromotionPoints(user, null, "PROMO"))
+        assertThatThrownBy(() -> bonusLedgerService.addPromotionPoints(user, 7L, null, "PROMO"))
                 .isInstanceOf(BonusValidationException.class);
     }
 
@@ -369,5 +409,42 @@ public class BonusLedgerServiceTest {
         assertThat(result.getPointsBalance()).isZero();
         assertThat(result.isWelcomeBonusReceived()).isFalse();
         verify(bonusCardRepository).save(any(BonusCard.class));
+    }
+
+    @Test
+    void revokeAccruedPointsShouldDeductPointsAndRecordReversal() {
+        BonusCard card = BonusCard.builder().id(1L).pointsBalance(40).build();
+        when(bonusTransactionRepository.existsByReferenceId("REFUND_ACCRUAL_TICKET_5")).thenReturn(false);
+        when(bonusCardRepository.findByUserId(USER_ID)).thenReturn(Optional.of(card));
+        when(bonusCardRepository.save(any(BonusCard.class))).thenAnswer(i -> i.getArgument(0));
+
+        bonusLedgerService.revokeAccruedPoints(USER_ID, 15, "REFUND_ACCRUAL_TICKET_5");
+
+        assertThat(card.getPointsBalance()).isEqualTo(25);
+        verify(bonusTransactionRepository).save(argThat(transaction -> transaction.getPointsChange() == -15
+                && transaction.getType() == BonusTransactionType.ACCRUAL_REVERSAL));
+    }
+
+    @Test
+    void revokeAccruedPointsWhenBalanceTooLowShouldNotGoNegative() {
+        BonusCard card = BonusCard.builder().id(1L).pointsBalance(4).build();
+        when(bonusTransactionRepository.existsByReferenceId("REFUND_ACCRUAL_TICKET_5")).thenReturn(false);
+        when(bonusCardRepository.findByUserId(USER_ID)).thenReturn(Optional.of(card));
+        when(bonusCardRepository.save(any(BonusCard.class))).thenAnswer(i -> i.getArgument(0));
+
+        bonusLedgerService.revokeAccruedPoints(USER_ID, 15, "REFUND_ACCRUAL_TICKET_5");
+
+        assertThat(card.getPointsBalance()).isZero();
+        verify(bonusTransactionRepository).save(argThat(transaction -> transaction.getPointsChange() == -4));
+    }
+
+    @Test
+    void revokeAccruedPointsWhenAlreadyAppliedShouldDoNothing() {
+        when(bonusTransactionRepository.existsByReferenceId("REFUND_ACCRUAL_TICKET_5")).thenReturn(true);
+
+        bonusLedgerService.revokeAccruedPoints(USER_ID, 15, "REFUND_ACCRUAL_TICKET_5");
+
+        verify(bonusCardRepository, never()).save(any());
+        verify(bonusTransactionRepository, never()).save(any());
     }
 }

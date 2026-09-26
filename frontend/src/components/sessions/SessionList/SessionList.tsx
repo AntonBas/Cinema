@@ -4,6 +4,8 @@ import type { SessionScheduleResponse } from "@/types/session";
 import { AgeRatingDisplay, AgeRatingDescription } from "@/types/movie";
 import { Button } from "@/components/ui/Button/Button";
 import { Tooltip } from "@/components/ui/Tooltip/Tooltip";
+import { DEFAULT_POSTER_URL, resolvePosterUrl } from "@/utils/posterUrl";
+import { formatPrice, formatTime } from "@/utils/formatters";
 import styles from "./SessionList.module.css";
 
 interface SessionListProps {
@@ -13,6 +15,7 @@ interface SessionListProps {
 interface MovieGroup {
   movieId: number;
   movieTitle: string;
+  movieSlug: string;
   movieAgeRating: string;
   movieDuration: number;
   sessions: SessionScheduleResponse[];
@@ -20,7 +23,7 @@ interface MovieGroup {
 
 interface SessionCardProps {
   session: SessionScheduleResponse;
-  onBook: (sessionId: number) => void;
+  onBook: (sessionPublicId: string) => void;
 }
 
 const AGE_RATING_COLORS: Record<string, string> = {
@@ -31,29 +34,10 @@ const AGE_RATING_COLORS: Record<string, string> = {
   PEGI_18: styles.ageRatingRed,
 };
 
-const DEFAULT_POSTER = "/images/default-movie-poster.svg";
-
-const formatTime = (dateString: string): string => {
-  return new Date(dateString).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-};
-
 const formatDuration = (minutes: number): string => {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   return `${hours}h ${mins}m`;
-};
-
-const getMovieSlug = (title: string): string => {
-  return title
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/--+/g, "-")
-    .trim();
 };
 
 const groupSessionsByMovie = (
@@ -66,6 +50,7 @@ const groupSessionsByMovie = (
       groupedMap[session.movieId] = {
         movieId: session.movieId,
         movieTitle: session.movieTitle,
+        movieSlug: session.movieSlug,
         movieAgeRating: session.movieAgeRating,
         movieDuration: session.movieDuration,
         sessions: [],
@@ -86,10 +71,26 @@ const groupSessionsByMovie = (
 const SessionCard: React.FC<SessionCardProps> = ({ session, onBook }) => {
   const isAvailable = session.availableSeats > 0;
 
+  const handleBook = () => {
+    if (isAvailable) onBook(session.publicId);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleBook();
+    }
+  };
+
   return (
     <div
       className={`${styles.sessionCard} ${isAvailable ? styles.available : styles.unavailable}`}
-      onClick={() => isAvailable && onBook(session.id)}
+      role="button"
+      tabIndex={isAvailable ? 0 : -1}
+      aria-disabled={!isAvailable}
+      aria-label={`${formatTime(session.startTime)}, ${session.hallName}, ${isAvailable ? "book now" : "sold out"}`}
+      onClick={handleBook}
+      onKeyDown={handleKeyDown}
     >
       <div className={styles.sessionTime}>
         <div className={styles.timeRange}>
@@ -103,7 +104,7 @@ const SessionCard: React.FC<SessionCardProps> = ({ session, onBook }) => {
       </div>
 
       <div className={styles.sessionInfo}>
-        <div className={styles.price}>{session.basePrice.toFixed(0)}₴</div>
+        <div className={styles.price}>{formatPrice(session.basePrice)}</div>
         <div className={styles.seats}>Available: {session.availableSeats}</div>
         <div className={styles.sessionStatus}>
           <span className={styles.statusBadge}>
@@ -124,12 +125,12 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
   );
 
   const handleBook = useCallback(
-    (sessionId: number) => navigate(`/booking/${sessionId}`),
+    (sessionPublicId: string) => navigate(`/booking/${sessionPublicId}`),
     [navigate],
   );
 
   const handleViewDetails = useCallback(
-    (movieTitle: string) => navigate(`/movies/${getMovieSlug(movieTitle)}`),
+    (movieSlug: string) => navigate(`/movies/${movieSlug}`),
     [navigate],
   );
 
@@ -148,14 +149,16 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
             <div className={styles.movieHeader}>
               <div className={styles.posterContainer}>
                 <img
-                  src={`/api/movies/${movieGroup.movieId}/poster`}
+                  src={resolvePosterUrl(
+                    `/api/movies/${movieGroup.movieId}/poster`,
+                  )}
                   alt={movieGroup.movieTitle}
                   className={styles.poster}
                   loading="lazy"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
-                    if (target.src !== DEFAULT_POSTER) {
-                      target.src = DEFAULT_POSTER;
+                    if (target.src !== DEFAULT_POSTER_URL) {
+                      target.src = DEFAULT_POSTER_URL;
                     }
                   }}
                 />
@@ -167,7 +170,7 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
                   <Button
                     variant="secondary"
                     size="small"
-                    onClick={() => handleViewDetails(movieGroup.movieTitle)}
+                    onClick={() => handleViewDetails(movieGroup.movieSlug)}
                   >
                     Details
                   </Button>

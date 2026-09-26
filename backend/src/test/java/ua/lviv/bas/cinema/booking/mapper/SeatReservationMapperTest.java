@@ -11,6 +11,7 @@ import ua.lviv.bas.cinema.ticket.domain.TicketType;
 import ua.lviv.bas.cinema.booking.dto.response.SeatReservationResponse;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SeatReservationMapperTest {
 
     private final SeatReservationMapper seatReservationMapper = new SeatReservationMapperImpl();
+    private static final LocalDateTime SESSION_START_TIME = LocalDateTime.of(2024, 1, 15, 18, 30);
+
     private Session session;
     private Seat seat1;
     private TicketType adultTicketType;
@@ -28,10 +31,12 @@ public class SeatReservationMapperTest {
     void setUp() {
         var movie = Movie.builder().id(1L).title("Inception").build();
         var hall = CinemaHall.builder().id(1L).name("Hall A").build();
-        session = Session.builder().id(1L).movie(movie).hall(hall).basePrice(new BigDecimal("250.00")).build();
+        session = Session.builder().id(1L).movie(movie).hall(hall).basePrice(new BigDecimal("250.00"))
+                .startTime(SESSION_START_TIME).build();
 
-        seat1 = Seat.builder().id(1L).row(5).number(12).seatType(SeatType.STANDARD).active(true).build();
-        Seat.builder().id(2L).row(5).number(13).seatType(SeatType.VIP).active(true).build();
+        seat1 = Seat.builder().id(1L).row(5).number(12).seatType(SeatType.STANDARD).x(660).y(280).active(true)
+                .build();
+        Seat.builder().id(2L).row(5).number(13).seatType(SeatType.VIP).x(720).y(280).active(true).build();
 
         adultTicketType = TicketType.builder().id(1L).displayName("Adult").build();
         TicketType.builder().id(2L).displayName("Child").build();
@@ -48,9 +53,10 @@ public class SeatReservationMapperTest {
                 new SeatReservationResponse.TicketPriceInfo(2L, "Child", new BigDecimal("280.00"), null, null, false,
                         null));
 
-        var seatInfo1 = new SeatReservationResponse.SeatInfo(1L, 5, 12, SeatType.STANDARD, true, false, true,
+        var seatInfo1 = new SeatReservationResponse.SeatInfo(1L, 5, 12, SeatType.STANDARD, 660, 280, true, false, true,
                 ticketPrices1);
-        var seatInfo2 = new SeatReservationResponse.SeatInfo(2L, 5, 13, SeatType.VIP, true, false, true, ticketPrices2);
+        var seatInfo2 = new SeatReservationResponse.SeatInfo(2L, 5, 13, SeatType.VIP, 720, 280, true, false, true,
+                ticketPrices2);
 
         seatInfos = List.of(seatInfo1, seatInfo2);
     }
@@ -64,6 +70,7 @@ public class SeatReservationMapperTest {
         assertThat(response.movieTitle()).isEqualTo("Inception");
         assertThat(response.basePrice()).isEqualTo(new BigDecimal("250.00"));
         assertThat(response.hallName()).isEqualTo("Hall A");
+        assertThat(response.sessionTime()).isEqualTo(SESSION_START_TIME);
         assertThat(response.availableSeats()).isEqualTo(2);
         assertThat(response.seats()).hasSize(2);
     }
@@ -87,6 +94,7 @@ public class SeatReservationMapperTest {
         assertThat(response.movieTitle()).isNull();
         assertThat(response.basePrice()).isNull();
         assertThat(response.hallName()).isNull();
+        assertThat(response.sessionTime()).isNull();
         assertThat(response.availableSeats()).isEqualTo(2);
         assertThat(response.seats()).hasSize(2);
     }
@@ -100,6 +108,8 @@ public class SeatReservationMapperTest {
         assertThat(seatInfo.row()).isEqualTo(5);
         assertThat(seatInfo.seatNumber()).isEqualTo(12);
         assertThat(seatInfo.seatType()).isEqualTo(SeatType.STANDARD);
+        assertThat(seatInfo.x()).isEqualTo(660);
+        assertThat(seatInfo.y()).isEqualTo(280);
         assertThat(seatInfo.available()).isTrue();
         assertThat(seatInfo.temporarilyReserved()).isFalse();
         assertThat(seatInfo.active()).isTrue();

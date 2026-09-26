@@ -37,36 +37,40 @@ import ua.lviv.bas.cinema.audit.domain.AuditableEntity;
 @ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @Table(name = "promotions", indexes = { @Index(name = "idx_promotion_active", columnList = "active"),
-		@Index(name = "idx_promotion_dates", columnList = "start_date, end_date") })
+        @Index(name = "idx_promotion_dates", columnList = "start_date, end_date") })
 public class Promotion extends AuditableEntity {
 
-	@Id
-	@EqualsAndHashCode.Include
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @EqualsAndHashCode.Include
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@NotBlank
-	@Size(max = 60)
-	@Column(nullable = false, length = 100)
-	private String title;
+    @NotBlank
+    @Size(max = 60)
+    @Column(nullable = false, length = 100)
+    private String title;
 
-	@Size(max = 150)
-	@Column(length = 150)
-	private String description;
+    @Size(max = 150)
+    @Column(length = 150)
+    private String description;
 
-	@NotNull
-	@Positive
-	@Column(name = "bonus_points", nullable = false)
-	private Integer bonusPoints;
+    @NotNull
+    @Positive
+    @Column(name = "bonus_points", nullable = false)
+    private Integer bonusPoints;
 
-	@Column(name = "start_date")
-	private LocalDate startDate;
+    @Column(name = "start_date")
+    private LocalDate startDate;
 
-	@Column(name = "end_date")
-	private LocalDate endDate;
+    @Column(name = "end_date")
+    private LocalDate endDate;
 
-	@OneToMany(mappedBy = "promotion", fetch = FetchType.LAZY)
-	@BatchSize(size = 20)
-	@Builder.Default
-	private List<UserPromotion> userRedemptions = new ArrayList<>();
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean active = true;
+
+    @OneToMany(mappedBy = "promotion", fetch = FetchType.LAZY)
+    @BatchSize(size = 20)
+    @Builder.Default
+    private List<UserPromotion> userRedemptions = new ArrayList<>();
 }

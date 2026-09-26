@@ -1,6 +1,6 @@
 package ua.lviv.bas.cinema.promotion.domain;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -31,28 +31,28 @@ import ua.lviv.bas.cinema.user.domain.User;
 @ToString(exclude = { "user", "promotion" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "user_promotions", indexes = { @Index(name = "idx_user_promotion_user", columnList = "user_id"),
-		@Index(name = "idx_user_promotion_promotion", columnList = "promotion_id"),
-		@Index(name = "idx_user_promotion_redeemed", columnList = "redeemed_at") }, uniqueConstraints = @UniqueConstraint(columnNames = {
-				"user_id", "promotion_id" }, name = "uk_user_promotion"))
+        @Index(name = "idx_user_promotion_promotion", columnList = "promotion_id"),
+        @Index(name = "idx_user_promotion_redeemed", columnList = "redeemed_at") }, uniqueConstraints = @UniqueConstraint(columnNames = {
+                "user_id", "promotion_id" }, name = "uk_user_promotion"))
 
 public class UserPromotion {
 
-	@Id
-	@EqualsAndHashCode.Include
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @EqualsAndHashCode.Include
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "user_id", nullable = false)
-	private User user;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "promotion_id", nullable = false)
-	private Promotion promotion;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "promotion_id", nullable = false)
+    private Promotion promotion;
 
-	@Column(name = "redeemed_at", nullable = false)
-	private LocalDateTime redeemedAt;
+    @Column(name = "redeemed_at", nullable = false)
+    private Instant redeemedAt;
 
-	@Column(name = "points_awarded", nullable = false)
-	private Integer pointsAwarded;
+    @Column(name = "points_awarded", nullable = false)
+    private Integer pointsAwarded;
 }

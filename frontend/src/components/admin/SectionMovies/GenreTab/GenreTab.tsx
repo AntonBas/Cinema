@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import type { GenreListResponse } from "@/types/genre";
-import { useGenres } from "@/hooks/features/genres/useGenres";
+import { useGenre } from "@/hooks/features/genre/useGenre";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
-import { usePagination } from "@/hooks/common/usePagination";
+import { useUrlParams } from "@/hooks/common/useUrlParams";
 import { SearchInput } from "@/components/ui/SearchInput/SearchInput";
 import { Button } from "@/components/ui/Button/Button";
+import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import { Pagination } from "@/components/ui/Pagination/Pagination";
 import { DeleteConfirmModal } from "@/components/ui/DeleteConfirmModal/DeleteConfirmModal";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { DEFAULT_PAGE_SIZE_COMPACT } from "@/utils/paginationUtils";
 import { GenreTable } from "./GenreTable/GenreTable";
 import { GenreFormModal } from "./GenreFormModal/GenreFormModal";
 import styles from "./GenreTab.module.css";
@@ -31,8 +33,8 @@ export const GenreTab: React.FC = () => {
     totalPages: 0,
   });
 
-  const { params, setPage, setSearch } = usePagination({ size: 10 });
-  const { loading, getAll, create, update, remove } = useGenres();
+  const { page, query, setPage, setSearch } = useUrlParams();
+  const { loading, getAll, create, update, remove } = useGenre();
   const showDelayedLoading = useDelayedLoading(loading, {
     delay: 150,
     minDisplayTime: 300,
@@ -40,9 +42,9 @@ export const GenreTab: React.FC = () => {
 
   const loadGenres = useCallback(async () => {
     const response = await getAll({
-      query: params.query,
-      page: params.page || 0,
-      size: params.size || 10,
+      query,
+      page,
+      size: DEFAULT_PAGE_SIZE_COMPACT,
     });
     if (response) {
       setTabData({
@@ -51,48 +53,51 @@ export const GenreTab: React.FC = () => {
         totalPages: response.totalPages,
       });
     }
-  }, [getAll, params.query, params.page, params.size]);
+  }, [getAll, query, page]);
 
   useEffect(() => {
-    loadGenres();
+    loadGenres().catch(() => {});
   }, [loadGenres]);
-
-  const handleSearch = useCallback(
-    (query: string) => {
-      setSearch(query);
-      setPage(0);
-    },
-    [setSearch, setPage],
-  );
 
   const handleSubmit = useCallback(
     async (name: string) => {
-      if (editingGenre) {
-        await update(editingGenre.id, { name });
-      } else {
-        await create({ name });
+      try {
+        if (editingGenre) {
+          await update(editingGenre.id, { name });
+        } else {
+          await create({ name });
+        }
+      } catch {
+        return;
       }
       setIsFormModalOpen(false);
       setEditingGenre(null);
-      loadGenres();
+      loadGenres().catch(() => {});
     },
     [editingGenre, create, update, loadGenres],
   );
 
   const handleDeleteConfirm = useCallback(async () => {
     if (!deletingGenre) return;
-    await remove(deletingGenre.id);
-    setIsDeleteModalOpen(false);
-    setDeletingGenre(null);
-    loadGenres();
-  }, [deletingGenre, remove, loadGenres]);
+    try {
+      await remove(deletingGenre.id);
+    } catch {
+      return;
+    } finally {
+      setIsDeleteModalOpen(false);
+      setDeletingGenre(null);
+    }
+    if (tabData.data.length === 1 && page > 0) {
+      setPage(page - 1);
+    } else {
+      loadGenres().catch(() => {});
+    }
+  }, [deletingGenre, remove, loadGenres, tabData.data.length, page, setPage]);
 
   const paginationInfo = useMemo(() => {
     const total = tabData.total;
-    const page = params.page || 0;
-    const pageSize = params.size || 10;
-    const start = total > 0 ? page * pageSize + 1 : 0;
-    const end = Math.min(start + pageSize - 1, total);
+    const start = total > 0 ? page * DEFAULT_PAGE_SIZE_COMPACT + 1 : 0;
+    const end = Math.min(start + DEFAULT_PAGE_SIZE_COMPACT - 1, total);
     return {
       total,
       start,
@@ -100,39 +105,39 @@ export const GenreTab: React.FC = () => {
       totalPages: tabData.totalPages,
       showPagination: tabData.totalPages > 1,
     };
-  }, [tabData.total, tabData.totalPages, params.page, params.size]);
+  }, [tabData.total, tabData.totalPages, page]);
 
   if (showDelayedLoading && !tabData.data.length) {
     return (
       <div className={styles.loading}>
-        <LoadingSpinner text="Loading genres" />
+        <LoadingSpinner text="Loading genres..." />
       </div>
     );
   }
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <div className={styles.headerContent}>
-          <h2>Genre Management</h2>
-          <p className={styles.subtitle}>
-            Manage movie genres and their statistics
-          </p>
-        </div>
-        <Button
-          variant="primary"
-          onClick={() => {
-            setEditingGenre(null);
-            setIsFormModalOpen(true);
-          }}
-        >
-          Add Genre
-        </Button>
-      </div>
+      <PageHeader
+        title="Genres"
+        subtitle="Manage movie genres and their statistics"
+        divider
+        actions={
+          <Button
+            variant="primary"
+            onClick={() => {
+              setEditingGenre(null);
+              setIsFormModalOpen(true);
+            }}
+          >
+            Add Genre
+          </Button>
+        }
+      />
 
       <div className={styles.searchSection}>
         <SearchInput
-          onSearch={handleSearch}
+          onSearch={setSearch}
+          value={query}
           placeholder="Search genres..."
           delay={300}
         />
@@ -142,7 +147,7 @@ export const GenreTab: React.FC = () => {
         <div className={styles.resultsInfo}>
           Showing {paginationInfo.start}-{paginationInfo.end} of{" "}
           {paginationInfo.total} genres
-          {params.query && ` for "${params.query}"`}
+          {query && ` for "${query}"`}
         </div>
       )}
 
@@ -161,10 +166,10 @@ export const GenreTab: React.FC = () => {
       {paginationInfo.showPagination && (
         <div className={styles.paginationWrapper}>
           <Pagination
-            currentPage={params.page || 0}
+            currentPage={page}
             totalPages={paginationInfo.totalPages}
             totalElements={paginationInfo.total}
-            pageSize={params.size || 10}
+            pageSize={DEFAULT_PAGE_SIZE_COMPACT}
             onPageChange={setPage}
             variant="pages"
             showInfo={false}
@@ -179,9 +184,8 @@ export const GenreTab: React.FC = () => {
           setEditingGenre(null);
         }}
         onSubmit={handleSubmit}
-        initialName={editingGenre?.name || ""}
+        genre={editingGenre}
         loading={loading}
-        isEditing={!!editingGenre}
       />
 
       <DeleteConfirmModal

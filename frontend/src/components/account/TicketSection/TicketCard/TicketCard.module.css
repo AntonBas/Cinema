@@ -30,16 +30,6 @@
   align-items: center;
 }
 
-.statusBadge {
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  color: white;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
 .ticketTypeBadge {
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
@@ -48,7 +38,7 @@
   color: white;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   background-color: var(--color-primary);
 }
 
@@ -190,16 +180,6 @@
   gap: var(--space-1);
 }
 
-.listStatus {
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-full);
-  color: white;
-}
-
 .listDetails {
   display: flex;
   align-items: center;
@@ -257,10 +237,6 @@
   .listHeader {
     flex-direction: column;
     gap: var(--space-3);
-  }
-
-  .listStatus {
-    align-self: flex-start;
   }
 
   .listMeta {

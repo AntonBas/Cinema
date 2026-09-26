@@ -27,6 +27,8 @@ import ua.lviv.bas.cinema.booking.dto.response.BookingResponse;
 import ua.lviv.bas.cinema.booking.service.BookingService;
 import ua.lviv.bas.cinema.user.service.UserService;
 
+import java.util.UUID;
+
 @Slf4j
 @RestController
 @RequestMapping("/api/bookings")
@@ -66,7 +68,7 @@ public class BookingController {
             @ApiResponse(responseCode = "404", description = "Booking not found")
     })
     @PreAuthorize("isAuthenticated()")
-    public BookingResponse getBooking(@PathVariable Long bookingId,
+    public BookingResponse getBooking(@PathVariable UUID bookingId,
                                       @AuthenticationPrincipal CustomUserDetails userDetails) {
         var user = userService.getUser(userDetails.getUserId());
         log.info("GET /api/bookings/{} - user: {}", bookingId, user.getId());
@@ -84,7 +86,7 @@ public class BookingController {
             @ApiResponse(responseCode = "404", description = "Booking not found")
     })
     @PreAuthorize("isAuthenticated()")
-    public void cancelBooking(@PathVariable Long bookingId, @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public void cancelBooking(@PathVariable UUID bookingId, @AuthenticationPrincipal CustomUserDetails userDetails) {
         var user = userService.getUser(userDetails.getUserId());
         log.info("DELETE /api/bookings/{} - user: {}", bookingId, user.getId());
         bookingService.cancelBooking(bookingId, user);

@@ -5,6 +5,9 @@ spring:
     name: cinema
   cache:
     type: redis
+  session:
+    store-type: redis
+    timeout: 10m
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -35,24 +38,9 @@ spring:
           "[batch_size]": 20
   flyway:
     enabled: true
-    baseline-on-migrate: true
-    locations: classpath:/db/migration
+    locations: classpath:/db/migration,classpath:/ua/lviv/bas/cinema/migration
     validate-on-migrate: true
     validate-migration-naming: true
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${EMAIL_USERNAME:}
-    password: ${EMAIL_PASSWORD:}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-          connectiontimeout: 5000
-          timeout: 5000
-          writetimeout: 5000
   servlet:
     multipart:
       max-file-size: 10MB
@@ -84,6 +72,8 @@ app:
   jwt:
     secret: ${JWT_SECRET}
     expiration: 86400000
+    cookie-secure: ${JWT_COOKIE_SECURE:false}
+    cookie-same-site: ${JWT_COOKIE_SAME_SITE:Lax}
   qr:
     margin: 1
     format: PNG
@@ -91,8 +81,12 @@ app:
     name: "Bas Cinema"
   frontend:
     url: ${FRONTEND_URL:http://localhost:5173}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:${FRONTEND_URL:http://localhost:5173}}
   email:
     from: ${EMAIL_FROM:noreply@bascinema.com}
+  mail:
+    api-key: ${BREVO_API_KEY:}
   upload:
     dir: ${UPLOAD_DIR:uploads}
   refund-policy:
@@ -117,13 +111,12 @@ app:
         condition: "Less than 2 hours before session start"
 
 booking:
-  expiration-minutes: 30
+  expiration-minutes: 20
   temp-hold-minutes: 5
   session-too-close-minutes: 30
   max-seats-per-booking: 10
 
 payment:
-  expiration-minutes: 15
   liqpay:
     public_key: ${LIQPAY_PUBLIC_KEY}
     private_key: ${LIQPAY_PRIVATE_KEY}

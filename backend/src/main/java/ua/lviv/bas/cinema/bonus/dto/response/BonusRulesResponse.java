@@ -1,9 +1,11 @@
 package ua.lviv.bas.cinema.bonus.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import ua.lviv.bas.cinema.bonus.domain.BonusRuleField;
 import ua.lviv.bas.cinema.bonus.domain.BonusTransactionType;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Schema(description = "Bonus rule configuration")
 public record BonusRulesResponse(
@@ -26,6 +28,13 @@ public record BonusRulesResponse(
         Integer maxPointsPerTransaction,
 
         @Schema(description = "Whether this bonus rule is active", example = "true")
-        Boolean active
+        Boolean active,
+
+        @Schema(description = "Fields this rule type requires", example = "[\"moneyRatio\"]")
+        List<BonusRuleField> requiredFields,
+
+        @Schema(description = "Fields this rule type accepts but does not require",
+                example = "[\"minPointsPerTransaction\", \"maxPointsPerTransaction\"]")
+        List<BonusRuleField> optionalFields
 ) {
 }

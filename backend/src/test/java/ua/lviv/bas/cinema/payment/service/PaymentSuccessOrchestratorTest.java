@@ -26,6 +26,8 @@ import ua.lviv.bas.cinema.ticket.service.TicketService;
 import ua.lviv.bas.cinema.support.CinemaTestFixtures;
 
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Optional;
@@ -83,7 +85,7 @@ public class PaymentSuccessOrchestratorTest {
                 .status(ReservationStatus.CONFIRMED).build();
 
         testBooking = Booking.builder().id(BOOKING_ID).user(testUser).session(session).status(BookingStatus.PENDING)
-                .finalPrice(AMOUNT).expiresAt(LocalDateTime.now().plusHours(1))
+                .finalPrice(AMOUNT).expiresAt(Instant.now().plus(Duration.ofHours(1)))
                 .seatReservations(Collections.singletonList(seatReservation)).build();
 
         testPayment = Payment.builder().id(PAYMENT_ID).booking(testBooking).amount(AMOUNT).status(PaymentStatus.SUCCESS)

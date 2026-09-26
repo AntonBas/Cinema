@@ -21,15 +21,16 @@ import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.user.domain.VerificationStatus;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusCardConcurrentModificationException;
-import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusRuleNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusValidationException;
 import ua.lviv.bas.cinema.bonus.repository.BonusCardRepository;
 import ua.lviv.bas.cinema.bonus.repository.BonusRulesRepository;
 import ua.lviv.bas.cinema.bonus.repository.BonusTransactionRepository;
 import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.time.LocalDate;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 @Slf4j
@@ -66,9 +67,15 @@ public class BonusLedgerService {
             if (card.isWelcomeBonusReceived()) {
                 return;
             }
-            var rule = getActiveRule(BonusTransactionType.WELCOME_BONUS);
-            addPointsToCard(card, rule.getPoints());
-            createTransaction(card, rule.getPoints(), BonusTransactionType.WELCOME_BONUS, "USER_" + user.getId());
+            var rule = findActiveRule(BonusTransactionType.WELCOME_BONUS);
+            if (rule.isEmpty()) {
+                log.info("Welcome bonus rule is disabled, user {} gets a bonus card without welcome points",
+                        user.getId());
+                return;
+            }
+            addPointsToCard(card, rule.get().getPoints());
+            createTransaction(card, rule.get().getPoints(), BonusTransactionType.WELCOME_BONUS,
+                    "USER_" + user.getId());
             card.setWelcomeBonusReceived(true);
             bonusCardRepository.save(card);
         });
@@ -80,15 +87,20 @@ public class BonusLedgerService {
         if (!canReceiveBirthdayBonus(user)) {
             return;
         }
-        var today = LocalDate.now();
+        var today = CinemaTime.today();
         executeWithOptimisticLockRetry(() -> {
             var card = getOrCreateCard(user);
             if (alreadyReceivedBirthdayBonus(card, today)) {
                 return;
             }
-            var rule = getActiveRule(BonusTransactionType.BIRTHDAY_BONUS);
-            addPointsToCard(card, rule.getPoints());
-            createTransaction(card, rule.getPoints(), BonusTransactionType.BIRTHDAY_BONUS, "USER_" + user.getId());
+            var rule = findActiveRule(BonusTransactionType.BIRTHDAY_BONUS);
+            if (rule.isEmpty()) {
+                log.debug("Birthday bonus rule is disabled, skipping user {}", user.getId());
+                return;
+            }
+            addPointsToCard(card, rule.get().getPoints());
+            createTransaction(card, rule.get().getPoints(), BonusTransactionType.BIRTHDAY_BONUS,
+                    "BIRTHDAY_" + user.getId() + "_" + today.getYear());
             card.setLastBirthdayBonusDate(today);
             bonusCardRepository.save(card);
         });
@@ -96,12 +108,12 @@ public class BonusLedgerService {
     }
 
     @CacheEvict(value = "bonus", key = "'balance:' + #user.id")
-    public void addPromotionPoints(User user, Integer points, String promotionTitle) {
+    public void addPromotionPoints(User user, Long promotionId, Integer points, String promotionTitle) {
         validatePositivePoints(points);
         var card = executeWithOptimisticLockRetry(() -> {
             var c = getOrCreateCard(user);
             addPointsToCard(c, points);
-            createTransaction(c, points, BonusTransactionType.PROMOTION_BONUS, "PROMOTION_" + promotionTitle);
+            createTransaction(c, points, BonusTransactionType.PROMOTION_BONUS, "PROMOTION_" + promotionId);
             return c;
         });
         evictTransactionsCache(user.getId());
@@ -203,6 +215,46 @@ public class BonusLedgerService {
     }
 
     @CacheEvict(value = "bonus", key = "'balance:' + #userId")
+    public void revokeAccruedPoints(Long userId, Integer points, String referenceId) {
+        if (points == null || points <= 0) {
+            return;
+        }
+        CardBalanceChange result;
+        try {
+            result = executeWithOptimisticLockRetry(() -> {
+                if (bonusTransactionRepository.existsByReferenceId(referenceId)) {
+                    log.debug("Accrual reversal for reference {} already applied, skipping", referenceId);
+                    return null;
+                }
+                var card = getCardByUserId(userId);
+                int oldBalance = card.getPointsBalance();
+                int revoked = Math.min(points, oldBalance);
+                if (revoked < points) {
+                    log.warn("User {} already spent part of the earned points, revoking {} of {} for {}", userId,
+                            revoked, points, referenceId);
+                }
+                if (revoked == 0) {
+                    return null;
+                }
+                subtractPointsFromCard(card, revoked);
+                bonusCardRepository.save(card);
+                createTransaction(card, -revoked, BonusTransactionType.ACCRUAL_REVERSAL, referenceId);
+                return new CardBalanceChange(card, oldBalance);
+            });
+        } catch (DataIntegrityViolationException e) {
+            log.debug("Accrual reversal for reference {} already applied concurrently, skipping", referenceId);
+            return;
+        }
+
+        if (result == null) {
+            return;
+        }
+        evictTransactionsCache(userId);
+        auditBonusChange(result.card().getId(), "Accrual reversal " + referenceId, AuditAction.POINTS_SPENT,
+                Map.of("points", result.oldBalance()), Map.of("points", result.card().getPointsBalance()));
+    }
+
+    @CacheEvict(value = "bonus", key = "'balance:' + #userId")
     public void refundPointsForTicket(Long userId, Integer points, String referenceId) {
         if (points == null || points <= 0) {
             return;
@@ -279,9 +331,8 @@ public class BonusLedgerService {
                 .orElseThrow(() -> new EntityNotFoundException("Bonus card", userId));
     }
 
-    private BonusRules getActiveRule(BonusTransactionType type) {
-        return bonusRulesRepository.findByBonusTypeAndActiveTrue(type)
-                .orElseThrow(() -> new BonusRuleNotFoundException(type));
+    private Optional<BonusRules> findActiveRule(BonusTransactionType type) {
+        return bonusRulesRepository.findByBonusTypeAndActiveTrue(type);
     }
 
     private void addPointsToCard(BonusCard card, Integer points) {
@@ -309,7 +360,7 @@ public class BonusLedgerService {
 
     private boolean canReceiveBirthdayBonus(User user) {
         return user.getVerificationStatus() == VerificationStatus.VERIFIED && user.getDateOfBirth() != null
-                && isBirthdayToday(user.getDateOfBirth(), LocalDate.now());
+                && isBirthdayToday(user.getDateOfBirth(), CinemaTime.today());
     }
 
     private boolean isBirthdayToday(LocalDate birthDate, LocalDate today) {

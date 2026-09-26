@@ -22,6 +22,8 @@ scheduler:
   email-token:
     cleanup-expired-cron: "0 */5 * * * *"
     cleanup-confirmed-cron: "0 */5 * * * *"
+  unverified-account:
+    cleanup-cron: "0 */5 * * * *"
   movie-status:
     cron: "0 */5 * * * *"
   session-status:
@@ -34,7 +36,6 @@ scheduler:
     cleanup-cron: "0 */5 * * * *"
   ticket:
     mark-as-used: 300000
-    cleanup-cron: "0 */5 * * * *"
   seat-reservation:
     expiration-interval: 60000
     cleanup-expired-interval: 300000

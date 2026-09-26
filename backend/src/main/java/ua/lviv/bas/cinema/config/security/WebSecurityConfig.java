@@ -1,7 +1,7 @@
 package ua.lviv.bas.cinema.config.security;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -17,11 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.NullSecurityContextRepository;
-import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -29,14 +25,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class WebSecurityConfig {
 
-    private final JwtTokenProvider jwtTokenProvider;
-    private final CustomUserDetailsService userDetailsService;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+    private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
     private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
-
-    @Value("${app.frontend.url}")
-    private String frontendUrl;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CsrfHeaderFilter csrfHeaderFilter;
+    private final CorsConfigurationSource corsConfigurationSource;
 
     @Bean
     PasswordEncoder passwordEncoder() {
@@ -49,33 +44,28 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService);
+    FilterRegistrationBean<JwtAuthenticationFilter> jwtAuthenticationFilterRegistration() {
+        var registration = new FilterRegistrationBean<>(jwtAuthenticationFilter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean
-    CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(frontendUrl));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With", "Cache-Control"));
-        configuration.setExposedHeaders(List.of("Authorization"));
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
+    FilterRegistrationBean<CsrfHeaderFilter> csrfHeaderFilterRegistration() {
+        var registration = new FilterRegistrationBean<>(csrfHeaderFilter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(AbstractHttpConfigurer::disable)
                 .securityContext(context -> context.securityContextRepository(new NullSecurityContextRepository()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        .requestMatchers("/actuator/**").hasRole("ADMIN")
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**",
                                 "/swagger-resources/**", "/swagger-resources", "/configuration/ui",
                                 "/configuration/security", "/webjars/**", "/error")
@@ -85,6 +75,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/oauth2/**", "/login/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/movies/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/sessions").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/sessions/dates").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/sessions/*/seats").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/promotions").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/refunds/policy").permitAll()
@@ -99,9 +90,12 @@ public class WebSecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/sessions/*/seats/*/hold").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/promotions/claim").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/promotions/claimed").authenticated()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/admin/ticket/**").hasAnyRole("CASHIER", "ADMIN")
+                        .requestMatchers("/api/admin/audit-logs/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/tickets/**").hasAnyRole("CASHIER", "ADMIN")
                         .requestMatchers("/api/admin/users/**").hasAnyRole("ADMIN", "CASHIER")
+                        .requestMatchers("/api/admin/bookings/**", "/api/admin/refunds/**")
+                        .hasAnyRole("ADMIN", "CASHIER")
+                        .requestMatchers("/api/admin/bonus/users/**").hasAnyRole("ADMIN", "CASHIER")
                         .requestMatchers("/api/admin/bonus/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "CONTENT_MANAGER")
                         .anyRequest().authenticated()
@@ -111,9 +105,11 @@ public class WebSecurityConfig {
                         .redirectionEndpoint(endpoint -> endpoint.baseUri("/login/oauth2/code/*"))
                         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                         .successHandler(oAuth2AuthenticationSuccessHandler)
+                        .failureHandler(oAuth2AuthenticationFailureHandler)
                 )
                 .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(restAuthenticationEntryPoint))
-                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(csrfHeaderFilter, JwtAuthenticationFilter.class)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable);

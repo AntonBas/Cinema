@@ -1,0 +1,24 @@
+.container {
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--space-8);
+  box-sizing: border-box;
+}
+
+.narrow {
+  max-width: var(--container-sm);
+}
+
+.default {
+  max-width: var(--container-md);
+}
+
+.wide {
+  max-width: var(--container-lg);
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: var(--space-6) var(--space-4);
+  }
+}

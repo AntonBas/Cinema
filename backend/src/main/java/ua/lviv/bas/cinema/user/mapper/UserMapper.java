@@ -23,12 +23,16 @@ public interface UserMapper {
     @Mapping(target = "bonusCard", ignore = true)
     @Mapping(target = "bookings", ignore = true)
     @Mapping(target = "redeemedPromotions", ignore = true)
-    @Mapping(target = "enabled", constant = "false")
+    @Mapping(target = "enabled", constant = "true")
+    @Mapping(target = "emailVerified", constant = "false")
     @Mapping(target = "userRole", constant = "ROLE_USER")
     @Mapping(target = "verificationStatus", constant = "NOT_VERIFIED")
     @Mapping(target = "verifiedAt", ignore = true)
     @Mapping(target = "password", ignore = true)
-    User toUser(UserRegistrationRequest request);
+    @Mapping(target = "lastVerificationEmailSentAt", ignore = true)
+    @Mapping(target = "lastPasswordResetSentAt", ignore = true)
+    @Mapping(target = "tokenVersion", ignore = true)
+    User toEntity(UserRegistrationRequest request);
 
     UserResponse toUserResponse(User user);
 
@@ -46,11 +50,15 @@ public interface UserMapper {
     @Mapping(target = "userRole", ignore = true)
     @Mapping(target = "verificationStatus", ignore = true)
     @Mapping(target = "verifiedAt", ignore = true)
+    @Mapping(target = "emailVerified", ignore = true)
+    @Mapping(target = "lastVerificationEmailSentAt", ignore = true)
+    @Mapping(target = "lastPasswordResetSentAt", ignore = true)
+    @Mapping(target = "tokenVersion", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "createdDate", ignore = true)
     @Mapping(target = "lastModifiedBy", ignore = true)
     @Mapping(target = "lastModifiedDate", ignore = true)
-    void updateUserFromRequest(UserUpdateRequest request, @MappingTarget User user);
+    void updateEntity(UserUpdateRequest request, @MappingTarget User user);
 
     AdminUserListResponse toAdminUserListResponse(AdminUserProjection projection);
 

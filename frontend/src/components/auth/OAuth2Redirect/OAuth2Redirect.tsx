@@ -1,27 +1,30 @@
-import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useRef } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthActions } from "@/hooks/features/auth/useAuthActions";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import styles from "./OAuth2Redirect.module.css";
 
 export const OAuth2Redirect: React.FC = () => {
   const navigate = useNavigate();
-  const { oauth2Success } = useAuthActions();
+  const [searchParams] = useSearchParams();
+  const { oauth2Exchange } = useAuthActions();
+  const exchangeAttempted = useRef(false);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-    const token = params.get("token");
-    const userId = params.get("userId");
-    const email = params.get("email");
+    if (exchangeAttempted.current) {
+      return;
+    }
+    const code = searchParams.get("code");
 
-    if (token && userId && email) {
-      oauth2Success(token, Number(userId), email).catch(() => {
+    if (code) {
+      exchangeAttempted.current = true;
+      oauth2Exchange(code).catch(() => {
         navigate("/login?error=oauth2_failed");
       });
     } else {
       navigate("/login?error=invalid_oauth2_response");
     }
-  }, [navigate, oauth2Success]);
+  }, [navigate, oauth2Exchange, searchParams]);
 
   return (
     <div className={styles.container}>

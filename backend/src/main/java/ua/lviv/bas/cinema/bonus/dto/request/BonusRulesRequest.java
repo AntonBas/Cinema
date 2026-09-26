@@ -5,10 +5,11 @@ import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 
-@Schema(description = "Request to update bonus rules configuration")
+@Schema(description = "Full configuration of a bonus rule; fields not used by the rule type must be null")
 public record BonusRulesRequest(
         @Min(value = 0, message = "Points must be at least 0")
         @Max(value = 1_000_000, message = "Points must be at most 1,000,000")
@@ -22,14 +23,15 @@ public record BonusRulesRequest(
 
         @Min(value = 0, message = "Minimum points per transaction must be at least 0")
         @Max(value = 1_000_000, message = "Minimum points per transaction must be at most 1,000,000")
-        @Schema(description = "Minimum points that can be used in one transaction", example = "100")
+        @Schema(description = "BOOKING_SPEND: minimum points redeemable per booking; PAYMENT_ACCRUAL: minimum points accrued per payment", example = "100")
         Integer minPointsPerTransaction,
 
         @Min(value = 0, message = "Maximum points per transaction must be at least 0")
         @Max(value = 1_000_000, message = "Maximum points per transaction must be at most 1,000,000")
-        @Schema(description = "Maximum points that can be used in one transaction", example = "1000")
+        @Schema(description = "BOOKING_SPEND: maximum points redeemable per booking; PAYMENT_ACCRUAL: maximum points accrued per payment", example = "1000")
         Integer maxPointsPerTransaction,
 
+        @NotNull(message = "Active flag is required")
         @Schema(description = "Whether this bonus rule is active", example = "true")
         Boolean active
 ) {

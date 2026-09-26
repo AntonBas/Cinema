@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.user.controller.admin;
 
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,7 +49,7 @@ public class AdminUserController {
                                                         @RequestParam(required = false) UserRole role,
                                                         @RequestParam(required = false) VerificationStatus verificationStatus,
                                                         @RequestParam(required = false) Boolean enabled,
-                                                        @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
+                                                        @PageableDefault Pageable pageable) {
 
         log.info("GET /api/admin/users - search: {}, role: {}, verificationStatus: {}, enabled: {}", query, role,
                 verificationStatus, enabled);

@@ -3,7 +3,7 @@ package ua.lviv.bas.cinema.bonus.dto.response;
 import io.swagger.v3.oas.annotations.media.Schema;
 import ua.lviv.bas.cinema.bonus.domain.BonusTransactionType;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Schema(description = "Bonus points transaction history entry")
 public record BonusTransactionResponse(
@@ -17,7 +17,7 @@ public record BonusTransactionResponse(
         String pointsChange,
 
         @Schema(description = "Transaction creation timestamp", example = "2025-01-17T14:30:00")
-        LocalDateTime createdAt,
+        Instant createdAt,
 
         @Schema(description = "Balance after this transaction", example = "350")
         Integer newBalance

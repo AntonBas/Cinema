@@ -1,7 +1,9 @@
 package ua.lviv.bas.cinema.refund.scheduler;
 
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -19,51 +21,65 @@ import ua.lviv.bas.cinema.refund.service.RefundTransactionExecutor;
 @RequiredArgsConstructor
 public class RefundScheduler {
 
-	private final RefundRepository refundRepository;
-	private final RefundTransactionExecutor refundTransactionExecutor;
-	private final PaymentGatewayService paymentGatewayService;
+    private final RefundRepository refundRepository;
+    private final RefundTransactionExecutor refundTransactionExecutor;
+    private final PaymentGatewayService paymentGatewayService;
 
-	@Scheduled(fixedRateString = "${scheduler.refund.reconciliation-interval:300000}")
-	public void completeStuckRefunds() {
-		LocalDateTime cutoff = LocalDateTime.now().minusMinutes(5);
-		var stuckRefunds = refundRepository.findStuckRefunds(RefundStatus.PROCESSING, cutoff);
+    @Value("${scheduler.refund.manual-review-after-hours:24}")
+    private int manualReviewAfterHours;
 
-		if (stuckRefunds.isEmpty()) {
-			log.debug("No refunds stuck in PROCESSING");
-			return;
-		}
+    @Scheduled(fixedRateString = "${scheduler.refund.reconciliation-interval:300000}")
+    public void completeStuckRefunds() {
+        Instant cutoff = Instant.now().minus(Duration.ofMinutes(5));
+        var stuckRefunds = refundRepository.findStuckRefunds(RefundStatus.PROCESSING, cutoff);
 
-		log.info("Found {} refund(s) stuck in PROCESSING, attempting to reconcile with LiqPay", stuckRefunds.size());
+        if (stuckRefunds.isEmpty()) {
+            log.debug("No refunds stuck in PROCESSING");
+            return;
+        }
 
-		for (var stuck : stuckRefunds) {
-			try {
-				reconcile(stuck);
-			} catch (Exception e) {
-				log.error("Failed to reconcile refund {} (ticket {}), will retry on next run", stuck.getRefundId(),
-						stuck.getTicketId(), e);
-			}
-		}
-	}
+        log.info("Found {} refund(s) stuck in PROCESSING, attempting to reconcile with LiqPay", stuckRefunds.size());
 
-	private void reconcile(StuckRefundProjection stuck) {
-		var gatewayStatus = paymentGatewayService.checkRefundStatus(stuck.getLiqpayOrderId());
+        for (var stuck : stuckRefunds) {
+            try {
+                reconcile(stuck);
+            } catch (Exception e) {
+                log.error("Failed to reconcile refund {} (ticket {}), will retry on next run", stuck.getRefundId(),
+                        stuck.getTicketId(), e);
+            }
+        }
+    }
 
-		switch (gatewayStatus) {
-			case CONFIRMED -> {
-				refundTransactionExecutor.applySuccess(stuck.getRefundId(), stuck.getTicketId());
-				log.info("Reconciled refund {} (ticket {}) from PROCESSING to PROCESSED - confirmed by LiqPay",
-						stuck.getRefundId(), stuck.getTicketId());
-			}
-			case NOT_CONFIRMED -> {
-				refundTransactionExecutor.markFailed(stuck.getRefundId(),
-						new PaymentProcessingException("LiqPay confirmed the refund did not succeed"));
-				log.warn("Refund {} (ticket {}) marked REJECTED - LiqPay confirmed the refund did not succeed",
-						stuck.getRefundId(), stuck.getTicketId());
-			}
-			case UNKNOWN -> log.warn(
-					"Could not yet confirm refund {} (ticket {}) status with LiqPay, will retry on next run",
-					stuck.getRefundId(), stuck.getTicketId());
-			default -> throw new IllegalStateException("Unexpected LiqPay reconciliation status: " + gatewayStatus);
-		}
-	}
+    private void reconcile(StuckRefundProjection stuck) {
+        var alreadyRefunded = refundRepository.sumAmountByPaymentIdAndStatus(stuck.getPaymentId(),
+                RefundStatus.PROCESSED);
+        var gatewayStatus = paymentGatewayService.checkRefundStatus(stuck.getLiqpayOrderId(),
+                alreadyRefunded.add(stuck.getRefundAmount()), stuck.getPaymentAmount());
+
+        switch (gatewayStatus) {
+            case CONFIRMED -> {
+                refundTransactionExecutor.applySuccess(stuck.getRefundId(), stuck.getTicketId());
+                log.info("Reconciled refund {} (ticket {}) from PROCESSING to PROCESSED - confirmed by LiqPay",
+                        stuck.getRefundId(), stuck.getTicketId());
+            }
+            case NOT_CONFIRMED -> {
+                refundTransactionExecutor.markFailed(stuck.getRefundId(),
+                        new PaymentProcessingException("LiqPay confirmed the refund did not succeed"));
+                log.warn("Refund {} (ticket {}) marked REJECTED - LiqPay confirmed the refund did not succeed",
+                        stuck.getRefundId(), stuck.getTicketId());
+            }
+            case UNKNOWN -> logUnconfirmed(stuck);
+        }
+    }
+
+    private void logUnconfirmed(StuckRefundProjection stuck) {
+        if (stuck.getCreatedDate().isBefore(Instant.now().minus(Duration.ofHours(manualReviewAfterHours)))) {
+            log.error("Refund {} (ticket {}, order {}) has been PROCESSING since {} and LiqPay still does not confirm "
+                    + "it - manual review in the LiqPay dashboard is required", stuck.getRefundId(), stuck.getTicketId(),
+                    stuck.getLiqpayOrderId(), stuck.getCreatedDate());
+            return;
+        }
+        log.warn("Could not yet confirm refund {} (ticket {}) status with LiqPay, will retry on next run",
+                stuck.getRefundId(), stuck.getTicketId());
+    }
 }

@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
@@ -29,8 +30,8 @@ public class SessionControllerTest {
     private SessionController sessionController;
 
     private SessionScheduleResponse createSessionScheduleResponse() {
-        return new SessionScheduleResponse(1L, LocalDateTime.of(2024, 1, 15, 18, 0),
-                LocalDateTime.of(2024, 1, 15, 20, 0), new BigDecimal("250.00"), 80, 1L, "Test Movie", "poster.jpg",
+        return new SessionScheduleResponse(1L, UUID.randomUUID(), LocalDateTime.of(2024, 1, 15, 18, 0),
+                LocalDateTime.of(2024, 1, 15, 20, 0), new BigDecimal("250.00"), 80, 1L, "Test Movie", "test-movie", "poster.jpg",
                 "PG-13", 120, 1L, "Hall 1", 100);
     }
 
@@ -64,6 +65,17 @@ public class SessionControllerTest {
         assertThat(body.getFirst().movieTitle()).isEqualTo("Test Movie");
 
         verify(sessionService).getSchedule("Test", null, null);
+    }
+
+    @Test
+    void getScheduleDatesShouldReturnDatesFromService() {
+        List<LocalDate> dates = List.of(LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 3));
+        when(sessionService.getScheduleDates(7L)).thenReturn(dates);
+
+        ResponseEntity<List<LocalDate>> response = sessionController.getScheduleDates(7L);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).containsExactlyElementsOf(dates);
     }
 
     @Test

@@ -87,7 +87,7 @@ export const movieApi = {
 
     delete: (id: number) => api.delete<void>(`${ADMIN_BASE_URL}/${id}`),
 
-    getMovies: (
+    getAll: (
       params?: SearchParams & {
         query?: string;
         status?: MovieStatus;

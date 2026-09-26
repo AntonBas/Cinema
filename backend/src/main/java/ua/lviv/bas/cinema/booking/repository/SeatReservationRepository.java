@@ -9,7 +9,7 @@ import ua.lviv.bas.cinema.booking.domain.SeatReservation;
 import ua.lviv.bas.cinema.booking.domain.status.ReservationStatus;
 import ua.lviv.bas.cinema.booking.dto.response.SeatStatusResponse;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,18 +20,16 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
     boolean existsBySessionIdAndSeatIdAndStatusIn(@Param("sessionId") Long sessionId, @Param("seatId") Long seatId,
                                                   @Param("statuses") List<ReservationStatus> statuses);
 
-    @Query("SELECT sr.status FROM SeatReservation sr WHERE sr.session.id = :sessionId AND sr.seat.id = :seatId")
-    List<ReservationStatus> findStatusesBySessionIdAndSeatId(@Param("sessionId") Long sessionId,
-                                                             @Param("seatId") Long seatId);
+    @Query("SELECT sr FROM SeatReservation sr WHERE sr.status = :status "
+            + "AND NOT EXISTS (SELECT 1 FROM Ticket t WHERE t.seatReservation = sr)")
+    List<SeatReservation> findByStatusWithoutTickets(@Param("status") ReservationStatus status);
 
-    List<SeatReservation> findByStatus(ReservationStatus status);
-
-    List<SeatReservation> findByStatusAndReservedUntilBefore(ReservationStatus status, LocalDateTime reservedUntil);
+    List<SeatReservation> findByStatusAndReservedUntilBefore(ReservationStatus status, Instant reservedUntil);
 
     @Modifying
     @Query("DELETE FROM SeatReservation sr WHERE sr.id = :id AND sr.status = :status AND sr.reservedUntil < :cutoff")
     int deleteByIdIfStillExpired(@Param("id") Long id, @Param("status") ReservationStatus status,
-                                 @Param("cutoff") LocalDateTime cutoff);
+                                 @Param("cutoff") Instant cutoff);
 
     Optional<SeatReservation> findBySessionIdAndSeatIdAndStatusAndReservedByUserId(Long sessionId, Long seatId,
                                                                                    ReservationStatus status, Long userId);
@@ -57,4 +55,6 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
             "GROUP BY sr.session.id")
     List<Object[]> findBookedCountBySessionIds(@Param("sessionIds") List<Long> sessionIds,
                                                @Param("statuses") List<ReservationStatus> statuses);
+
+    boolean existsByTicketTypeId(Long ticketTypeId);
 }

@@ -1,7 +1,9 @@
 import React from "react";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import type { BonusBalanceResponse } from "@/types/bonus";
+import { formatPrice } from "@/utils/formatters";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import styles from "./BonusBalanceCard.module.css";
 
 interface BonusBalanceCardProps {
@@ -23,14 +25,12 @@ export const BonusBalanceCard: React.FC<BonusBalanceCardProps> = ({
     );
   }
 
+  if (loading && !balance) {
+    return null;
+  }
+
   if (!balance) {
-    return (
-      <div className={styles.balanceCard}>
-        <div className={styles.noData}>
-          <p>No balance data available</p>
-        </div>
-      </div>
-    );
+    return <EmptyState title="No Balance Data Available" />;
   }
 
   return (
@@ -47,11 +47,15 @@ export const BonusBalanceCard: React.FC<BonusBalanceCardProps> = ({
       <div className={styles.valueInfo}>
         <div className={styles.valueItem}>
           <div className={styles.valueLabel}>Point Value</div>
-          <div className={styles.valueAmount}>{balance.pointValue} UAH</div>
+          <div className={styles.valueAmount}>
+            {formatPrice(balance.pointValue)}
+          </div>
         </div>
         <div className={styles.valueItem}>
           <div className={styles.valueLabel}>Total Value</div>
-          <div className={styles.valueAmount}>{balance.balanceValue} UAH</div>
+          <div className={styles.valueAmount}>
+            {formatPrice(balance.balanceValue)}
+          </div>
         </div>
       </div>
 
@@ -73,13 +77,13 @@ export const BonusBalanceCard: React.FC<BonusBalanceCardProps> = ({
           <div className={styles.limitItem}>
             <div className={styles.limitLabel}>Min value</div>
             <div className={styles.limitValue}>
-              {balance.minRedemptionValue} UAH
+              {formatPrice(balance.minRedemptionValue)}
             </div>
           </div>
           <div className={styles.limitItem}>
             <div className={styles.limitLabel}>Max value</div>
             <div className={styles.limitValue}>
-              {balance.maxRedemptionValue} UAH
+              {formatPrice(balance.maxRedemptionValue)}
             </div>
           </div>
         </div>

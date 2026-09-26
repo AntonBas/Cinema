@@ -7,11 +7,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.cinema.dto.hall.request.CinemaHallRequest;
+import ua.lviv.bas.cinema.cinema.dto.hall.request.HallLayoutRequest;
+import ua.lviv.bas.cinema.cinema.dto.hall.request.SeatLayoutItemRequest;
 import ua.lviv.bas.cinema.cinema.dto.hall.response.CinemaHallListResponse;
 import ua.lviv.bas.cinema.cinema.dto.hall.response.CinemaHallResponse;
 import ua.lviv.bas.cinema.cinema.dto.hall.response.HallLayoutResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.hall.SeatHasTicketsException;
 import ua.lviv.bas.cinema.cinema.service.CinemaHallService;
 
 import java.util.List;
@@ -20,7 +23,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class AdminCinemaHallControllerTest {
@@ -36,8 +41,8 @@ public class AdminCinemaHallControllerTest {
 
     @Test
     void createHallShouldReturnCreatedHall() {
-        CinemaHallRequest request = new CinemaHallRequest(HALL_NAME, 5, 10, SeatType.STANDARD, null);
-        CinemaHallResponse response = new CinemaHallResponse(HALL_ID, HALL_NAME, 5, 10, SeatType.STANDARD, null, 50);
+        CinemaHallRequest request = new CinemaHallRequest(HALL_NAME);
+        CinemaHallResponse response = new CinemaHallResponse(HALL_ID, HALL_NAME, 0);
 
         when(cinemaHallService.createHall(any(CinemaHallRequest.class))).thenReturn(response);
 
@@ -49,7 +54,7 @@ public class AdminCinemaHallControllerTest {
 
     @Test
     void createHallShouldThrowExceptionWhenDuplicateName() {
-        CinemaHallRequest request = new CinemaHallRequest("Existing Hall", null, null, null, null);
+        CinemaHallRequest request = new CinemaHallRequest("Existing Hall");
 
         when(cinemaHallService.createHall(any(CinemaHallRequest.class)))
                 .thenThrow(new DuplicateEntityException("CinemaHall", "Existing Hall"));
@@ -72,7 +77,7 @@ public class AdminCinemaHallControllerTest {
 
     @Test
     void getHallShouldReturnHall() {
-        CinemaHallResponse response = new CinemaHallResponse(HALL_ID, HALL_NAME, 5, 10, SeatType.STANDARD, null, 50);
+        CinemaHallResponse response = new CinemaHallResponse(HALL_ID, HALL_NAME, 50);
 
         when(cinemaHallService.getHall(HALL_ID)).thenReturn(response);
 
@@ -90,10 +95,9 @@ public class AdminCinemaHallControllerTest {
     }
 
     @Test
-    void updateHallShouldReturnUpdatedHall() {
-        CinemaHallRequest request = new CinemaHallRequest("Updated Hall", 6, 12, SeatType.VIP, List.of(3, 4));
-        CinemaHallResponse response = new CinemaHallResponse(HALL_ID, "Updated Hall", 6, 12, SeatType.VIP,
-                List.of(3, 4), 72);
+    void updateHallShouldReturnRenamedHall() {
+        CinemaHallRequest request = new CinemaHallRequest("Updated Hall");
+        CinemaHallResponse response = new CinemaHallResponse(HALL_ID, "Updated Hall", 72);
 
         when(cinemaHallService.updateHall(eq(HALL_ID), any(CinemaHallRequest.class))).thenReturn(response);
 
@@ -105,7 +109,7 @@ public class AdminCinemaHallControllerTest {
 
     @Test
     void updateHallShouldThrowExceptionWhenNotFound() {
-        CinemaHallRequest request = new CinemaHallRequest(null, null, null, null, null);
+        CinemaHallRequest request = new CinemaHallRequest("Updated Hall");
 
         when(cinemaHallService.updateHall(eq(999L), any(CinemaHallRequest.class)))
                 .thenThrow(new EntityNotFoundException("Cinema hall", 999L));
@@ -144,5 +148,30 @@ public class AdminCinemaHallControllerTest {
         when(cinemaHallService.getHallLayout(999L)).thenThrow(new EntityNotFoundException("Cinema hall", 999L));
 
         assertThatThrownBy(() -> controller.getHallLayout(999L)).isInstanceOf(EntityNotFoundException.class);
+    }
+
+    @Test
+    void updateLayoutShouldReturnUpdatedLayout() {
+        HallLayoutRequest request = new HallLayoutRequest(
+                List.of(new SeatLayoutItemRequest(null, 1, 1, SeatType.STANDARD, 0, 0, true)));
+        HallLayoutResponse response = new HallLayoutResponse(HALL_ID, HALL_NAME, 1, 1, 1, List.of());
+
+        when(cinemaHallService.updateLayout(eq(HALL_ID), any(HallLayoutRequest.class))).thenReturn(response);
+
+        HallLayoutResponse result = controller.updateLayout(HALL_ID, request);
+
+        assertThat(result).isEqualTo(response);
+        verify(cinemaHallService).updateLayout(HALL_ID, request);
+    }
+
+    @Test
+    void updateLayoutShouldThrowExceptionWhenSeatHasTickets() {
+        HallLayoutRequest request = new HallLayoutRequest(List.of());
+
+        when(cinemaHallService.updateLayout(eq(HALL_ID), any(HallLayoutRequest.class)))
+                .thenThrow(new SeatHasTicketsException(List.of(42L)));
+
+        assertThatThrownBy(() -> controller.updateLayout(HALL_ID, request))
+                .isInstanceOf(SeatHasTicketsException.class);
     }
 }

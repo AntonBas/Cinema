@@ -313,7 +313,7 @@
   }
 
   .modalFooter {
-    flex-direction: column;
+    flex-direction: column-reverse;
     padding: var(--space-4);
   }
 

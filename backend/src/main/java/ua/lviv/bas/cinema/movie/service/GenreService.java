@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.movie.service;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.movie.domain.Genre;
 import ua.lviv.bas.cinema.movie.dto.request.GenreRequest;
+import ua.lviv.bas.cinema.common.CacheableList;
 import ua.lviv.bas.cinema.movie.dto.response.GenreListResponse;
 import ua.lviv.bas.cinema.movie.dto.response.GenreResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
@@ -20,6 +22,9 @@ import ua.lviv.bas.cinema.movie.mapper.GenreMapper;
 import ua.lviv.bas.cinema.movie.repository.GenreRepository;
 import ua.lviv.bas.cinema.movie.repository.MovieRepository;
 import ua.lviv.bas.cinema.common.UniquenessValidator;
+import ua.lviv.bas.cinema.common.FixedOrderPageable;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -37,7 +42,7 @@ public class GenreService {
         log.info("Creating genre: {}", request.name());
         validateGenreUniqueness(request.name(), null);
 
-        var genre = genreMapper.toGenre(request);
+        var genre = genreMapper.toEntity(request);
         var saved = genreRepository.save(genre);
 
         log.debug("Genre created with ID: {}", saved.getId());
@@ -48,7 +53,13 @@ public class GenreService {
     public Page<GenreListResponse> getGenres(String query, Pageable pageable) {
         log.info("Getting genres: query='{}', page={}, size={}", query, pageable.getPageNumber(),
                 pageable.getPageSize());
-        return genreRepository.findGenresByFilters(query, pageable).map(genreMapper::toGenreListResponse);
+        return genreRepository.findGenresByFilters(query, FixedOrderPageable.of(pageable)).map(genreMapper::toGenreListResponse);
+    }
+
+    @Cacheable(value = "genres", key = "'all'")
+    public List<GenreResponse> getAllGenres() {
+        return new CacheableList<>(genreRepository.findAll(Sort.by("name")).stream().map(genreMapper::toGenreResponse)
+                .toList());
     }
 
     @CacheEvict(value = "genres", allEntries = true)
@@ -59,7 +70,7 @@ public class GenreService {
         var genre = genreRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Genre", id));
         validateGenreUniqueness(request.name(), id);
 
-        genreMapper.updateGenreFromRequest(request, genre);
+        genreMapper.updateEntity(request, genre);
         var updated = genreRepository.save(genre);
 
         log.debug("Genre updated with ID: {}", updated.getId());

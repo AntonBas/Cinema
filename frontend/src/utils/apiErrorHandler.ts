@@ -19,6 +19,19 @@ export class ApiErrorException extends Error {
         "Too many requests. Please wait a moment before trying again.";
     }
 
+    if (apiError.subErrors && apiError.subErrors.length > 0) {
+      const subErrorMessages = [
+        ...new Set(
+          apiError.subErrors
+            .map((subError) => subError.message)
+            .filter((message): message is string => Boolean(message)),
+        ),
+      ];
+      if (subErrorMessages.length > 0) {
+        errorMessage = subErrorMessages.join("; ");
+      }
+    }
+
     super(errorMessage);
 
     this.name = "ApiErrorException";
@@ -105,7 +118,9 @@ export class ApiErrorException extends Error {
   }
 
   private normalizeFieldName(field: string): string {
-    return field.replace(/\[(\w+)\]/g, ".$1");
+    const dotted = field.replace(/\[(\w+)\]/g, ".$1");
+    const segments = dotted.split(".");
+    return segments[segments.length - 1];
   }
 
   getFirstValidationError(): string | null {

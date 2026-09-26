@@ -4,15 +4,14 @@ import { auditApi } from "@/api/auditApi";
 import type { AuditLogResponse } from "@/types/audit";
 
 export const useEntityAuditHistory = () => {
-  const { data, loading, error, execute, reset } =
-    useApi<AuditLogResponse[]>();
+  const { data, loading, error, execute, reset } = useApi<AuditLogResponse[]>();
   const executeRef = useRef(execute);
   executeRef.current = execute;
 
   const getEntityHistory = useCallback(
     async (entityType: string, entityId: number) => {
       return executeRef.current(
-        () => auditApi.getEntityHistory(entityType, entityId),
+        () => auditApi.admin.getEntityHistory(entityType, entityId),
         { showErrorNotification: false },
       );
     },

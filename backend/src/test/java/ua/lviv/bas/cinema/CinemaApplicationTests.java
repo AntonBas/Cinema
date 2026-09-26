@@ -13,8 +13,8 @@ import ua.lviv.bas.cinema.config.TestcontainersConfig;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class CinemaApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
+    @Test
+    void contextLoads() {
+    }
 
 }

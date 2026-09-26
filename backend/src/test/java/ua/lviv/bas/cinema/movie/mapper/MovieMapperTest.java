@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.movie.mapper;
 
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
+import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.movie.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.movie.domain.status.MovieStatus;
@@ -55,11 +56,11 @@ public class MovieMapperTest {
     }
 
     @Test
-    void toMovieFromCreateRequest() {
+    void toEntityFromCreateRequest() {
         var request = MovieCreateRequest.builder().title("New").trailerUrl("url").description("desc")
-                .durationMinutes(120).releaseDate(LocalDate.now()).endShowingDate(LocalDate.now().plusDays(1))
+                .durationMinutes(120).releaseDate(CinemaTime.today()).endShowingDate(CinemaTime.today().plusDays(1))
                 .ageRating(AgeRating.PEGI_12).genreIds(List.of(1L)).actorIds(List.of(1L)).build();
-        var result = mapper.toMovie(request);
+        var result = mapper.toEntity(request);
 
         assertThat(result).isNotNull();
         assertThat(result.getId()).isNull();
@@ -69,35 +70,35 @@ public class MovieMapperTest {
     }
 
     @Test
-    void toMovieWithNullRequest() {
-        assertThat(mapper.toMovie(null)).isNull();
+    void toEntityWithNullRequest() {
+        assertThat(mapper.toEntity(null)).isNull();
     }
 
     @Test
-    void updateMovieFromRequestShouldUpdateNonNullFields() {
+    void updateEntityShouldUpdateNonNullFields() {
         var movie = Movie.builder().id(1L).title("Old").description("Old").durationMinutes(100).build();
         var request = MovieUpdateRequest.builder().title("New").description("New").durationMinutes(120).build();
-        mapper.updateMovieFromRequest(request, movie);
+        mapper.updateEntity(request, movie);
 
         assertThat(movie.getTitle()).isEqualTo("New");
         assertThat(movie.getDurationMinutes()).isEqualTo(120);
     }
 
     @Test
-    void updateMovieFromRequestShouldIgnoreNullFields() {
+    void updateEntityShouldIgnoreNullFields() {
         var movie = Movie.builder().id(1L).title("Old").description("Old").durationMinutes(100).build();
         var request = MovieUpdateRequest.builder().title(null).description("New").durationMinutes(null).build();
-        mapper.updateMovieFromRequest(request, movie);
+        mapper.updateEntity(request, movie);
 
         assertThat(movie.getTitle()).isEqualTo("Old");
         assertThat(movie.getDurationMinutes()).isEqualTo(100);
     }
 
     @Test
-    void updateMovieFromRequestShouldNotChangeIdSlugStatusPosterFileName() {
+    void updateEntityShouldNotChangeIdSlugStatusPosterFileName() {
         var movie = Movie.builder().id(1L).slug("slug").status(MovieStatus.CURRENT).posterFileName("poster.jpg")
                 .title("Old").build();
-        mapper.updateMovieFromRequest(MovieUpdateRequest.builder().title("New").build(), movie);
+        mapper.updateEntity(MovieUpdateRequest.builder().title("New").build(), movie);
 
         assertThat(movie.getId()).isEqualTo(1L);
         assertThat(movie.getSlug()).isEqualTo("slug");
@@ -106,9 +107,9 @@ public class MovieMapperTest {
     }
 
     @Test
-    void updateMovieFromRequestWithNullRequest() {
+    void updateEntityWithNullRequest() {
         var movie = Movie.builder().title("Old").build();
-        mapper.updateMovieFromRequest(null, movie);
+        mapper.updateEntity(null, movie);
 
         assertThat(movie.getTitle()).isEqualTo("Old");
     }

@@ -25,6 +25,10 @@ public class PaymentProcessingException extends ValidationException {
         return new PaymentProcessingException("Booking has expired", "BOOKING_EXPIRED");
     }
 
+    public static PaymentProcessingException sessionNotAvailable() {
+        return new PaymentProcessingException("Session is no longer available for booking", "SESSION_NOT_AVAILABLE");
+    }
+
     public static PaymentProcessingException seatsNoLongerAvailable() {
         return new PaymentProcessingException("Some seats are no longer available", "SEATS_NO_LONGER_AVAILABLE");
     }

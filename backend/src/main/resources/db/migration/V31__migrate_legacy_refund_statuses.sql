@@ -1,0 +1,5 @@
+UPDATE refunds SET status = 'PROCESSED' WHERE status IN ('PENDING', 'APPROVED');
+
+UPDATE refunds SET status = 'REJECTED' WHERE status = 'CANCELLED';
+
+ALTER TABLE refunds ALTER COLUMN status SET DEFAULT 'PROCESSING';

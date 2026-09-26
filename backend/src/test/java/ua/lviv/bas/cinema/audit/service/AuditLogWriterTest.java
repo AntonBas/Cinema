@@ -11,7 +11,7 @@ import ua.lviv.bas.cinema.audit.domain.AuditAction;
 import ua.lviv.bas.cinema.audit.domain.AuditLog;
 import ua.lviv.bas.cinema.audit.repository.AuditLogRepository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,7 +31,7 @@ public class AuditLogWriterTest {
     @Captor
     private ArgumentCaptor<AuditLog> auditLogCaptor;
 
-    private static final LocalDateTime CHANGED_AT = LocalDateTime.of(2026, 1, 1, 12, 0);
+    private static final Instant CHANGED_AT = Instant.parse("2026-01-01T12:00:00Z");
 
     @Test
     void write_ShouldSaveAuditLogWithDetails() {

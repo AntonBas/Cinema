@@ -1,16 +1,6 @@
-export type RefundStatus =
-  | "PENDING"
-  | "PROCESSING"
-  | "APPROVED"
-  | "REJECTED"
-  | "PROCESSED"
-  | "CANCELLED";
+export type RefundStatus = "PROCESSING" | "REJECTED" | "PROCESSED";
 export type RefundItemStatus =
-  | "PENDING"
-  | "APPROVED"
-  | "REJECTED"
-  | "PROCESSED"
-  | "CANCELLED";
+  "PENDING" | "APPROVED" | "REJECTED" | "PROCESSED" | "CANCELLED";
 
 export interface RefundPolicyRule {
   name: string;
@@ -57,6 +47,7 @@ export interface RefundPreviewResponse {
   remainingTime?: string;
   purchaseTime: string;
   ticketType: string;
+  earnedPointsToRevoke: number | null;
 }
 
 export interface RefundResponse {
@@ -86,13 +77,10 @@ export interface RefundItemResponse {
   status: string;
 }
 
-export const RefundStatusDisplay: Record<string, string> = {
-  PENDING: "Pending",
+export const RefundStatusDisplay: Record<RefundStatus, string> = {
   PROCESSING: "Processing",
-  APPROVED: "Approved",
   REJECTED: "Rejected",
   PROCESSED: "Processed",
-  CANCELLED: "Cancelled",
 };
 
 export const RefundItemStatusDisplay: Record<string, string> = {
@@ -102,3 +90,31 @@ export const RefundItemStatusDisplay: Record<string, string> = {
   PROCESSED: "Processed",
   CANCELLED: "Cancelled",
 };
+
+export interface AdminRefundListResponse {
+  id: number;
+  status: RefundStatus;
+  createdDate: string;
+  lastModifiedDate: string;
+  userId: number;
+  userEmail: string;
+  bookingId: number;
+  bookingNumber: string;
+  movieTitle: string;
+  sessionTime: string;
+  ticketCode?: string;
+  totalAmount: string;
+  totalBonusPointsToDeduct: number;
+  reason?: string;
+  paymentId: number;
+  liqpayOrderId?: string;
+}
+
+export interface AdminRefundFilters {
+  query?: string;
+  userId?: number;
+  status?: RefundStatus;
+  needsAttention?: boolean;
+  dateFrom?: string;
+  dateTo?: string;
+}

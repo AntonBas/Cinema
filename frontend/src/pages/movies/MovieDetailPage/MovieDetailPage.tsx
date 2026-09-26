@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useMovies } from "@/hooks/features/movies/useMovies";
+import { useMovie } from "@/hooks/features/movie/useMovie";
 import type { SessionMovieInfoResponse } from "@/types/session";
 import {
   AgeRatingDisplay,
@@ -9,9 +9,14 @@ import {
 } from "@/types/movie";
 import { Button } from "@/components/ui/Button/Button";
 import { Tooltip } from "@/components/ui/Tooltip/Tooltip";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { Layout } from "@/components/layout/Layout/Layout";
 import { SessionSection } from "@/components/movies/SessionSection/SessionSection";
+import { DEFAULT_POSTER_URL, resolvePosterUrl } from "@/utils/posterUrl";
+import { formatDate } from "@/utils/formatters";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
+import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
+import { useSettledLoad } from "@/hooks/common/useSettledLoad";
 import styles from "./MovieDetailPage.module.css";
 
 const AGE_RATING_COLORS: Record<string, string> = {
@@ -22,16 +27,7 @@ const AGE_RATING_COLORS: Record<string, string> = {
   PEGI_18: styles.ageRatingRed,
 };
 
-const DEFAULT_POSTER = "/images/default-movie-poster.svg";
 const DATES_PER_VIEW = 5;
-
-const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-};
 
 const getAgeRatingClass = (ageRating: string): string => {
   return AGE_RATING_COLORS[ageRating] || styles.ageRatingRed;
@@ -52,15 +48,10 @@ const groupSessionsByDate = (
   return { dates, grouped };
 };
 
-const getPosterUrl = (url: string | undefined | null): string => {
-  if (!url || url.trim() === "") return DEFAULT_POSTER;
-  return url;
-};
-
 export const MovieDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { movieDetail, loading, getBySlug } = useMovies();
+  const { movieDetail, loading, getBySlug } = useMovie();
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [dateList, setDateList] = useState<string[]>([]);
@@ -69,19 +60,18 @@ export const MovieDetailPage: React.FC = () => {
   >({});
   const [dateScrollIndex, setDateScrollIndex] = useState(0);
 
-  useEffect(() => {
-    if (slug) {
-      getBySlug(slug);
-    }
-  }, [slug, getBySlug]);
+  const loadMovie = useCallback(
+    () => (slug ? getBySlug(slug) : Promise.resolve(null)),
+    [slug, getBySlug],
+  );
+  const settled = useSettledLoad(loadMovie);
 
   useEffect(() => {
-    if (movieDetail?.sessions?.length) {
-      const { dates, grouped } = groupSessionsByDate(movieDetail.sessions);
-      setDateList(dates);
-      setSessionsByDate(grouped);
-      setSelectedDate(dates[0]);
-    }
+    const { dates, grouped } = groupSessionsByDate(movieDetail?.sessions ?? []);
+    setDateList(dates);
+    setSessionsByDate(grouped);
+    setSelectedDate(dates[0] ?? null);
+    setDateScrollIndex(0);
   }, [movieDetail]);
 
   const handleScrollDates = useCallback(
@@ -96,14 +86,14 @@ export const MovieDetailPage: React.FC = () => {
   );
 
   const posterUrl = useMemo(
-    () => getPosterUrl(movieDetail?.posterUrl),
+    () => resolvePosterUrl(movieDetail?.posterUrl),
     [movieDetail?.posterUrl],
   );
 
-  if (loading) {
+  if (loading || !settled) {
     return (
       <Layout>
-        <LoadingSpinner text="Loading movie details..." />
+        {loading && <LoadingSpinner text="Loading movie details..." />}
       </Layout>
     );
   }
@@ -111,16 +101,20 @@ export const MovieDetailPage: React.FC = () => {
   if (!movieDetail) {
     return (
       <Layout>
-        <div className={styles.errorContainer}>
-          <h2>Movie not found</h2>
-          <p>The movie you're looking for doesn't exist or has been removed.</p>
-          <Button
-            variant="primary"
-            onClick={() => navigate("/movies/currently-showing")}
-          >
-            Browse Current Movies
-          </Button>
-        </div>
+        <PageContainer size="narrow">
+          <EmptyState
+            title="Movie Not Found"
+            message="The movie you're looking for doesn't exist or has been removed."
+            action={
+              <Button
+                variant="primary"
+                onClick={() => navigate("/movies/current")}
+              >
+                Browse Current Movies
+              </Button>
+            }
+          />
+        </PageContainer>
       </Layout>
     );
   }
@@ -140,8 +134,8 @@ export const MovieDetailPage: React.FC = () => {
                 className={styles.poster}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  if (target.src !== DEFAULT_POSTER) {
-                    target.src = DEFAULT_POSTER;
+                  if (target.src !== DEFAULT_POSTER_URL) {
+                    target.src = DEFAULT_POSTER_URL;
                   }
                 }}
               />
@@ -158,7 +152,13 @@ export const MovieDetailPage: React.FC = () => {
               <div className={styles.actionButtons}>
                 <Button
                   variant="secondary"
-                  onClick={() => window.open(movieDetail.trailerUrl, "_blank")}
+                  onClick={() =>
+                    window.open(
+                      movieDetail.trailerUrl,
+                      "_blank",
+                      "noopener,noreferrer",
+                    )
+                  }
                   className={styles.trailerButton}
                 >
                   Watch Trailer

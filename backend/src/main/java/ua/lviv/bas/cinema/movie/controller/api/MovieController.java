@@ -13,8 +13,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.movie.domain.status.MovieStatus;
 import ua.lviv.bas.cinema.common.PageResponse;
@@ -56,7 +61,7 @@ public class MovieController {
             @ApiResponse(responseCode = "200", description = "Movies retrieved successfully")
     })
     public ResponseEntity<PageResponse<MovieCardResponse>> getCurrentlyShowingMovies(
-            @PageableDefault(size = 12, sort = "releaseDate", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 12, sort = {"releaseDate", "id"}, direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("GET /api/movies/currently-showing - Getting currently showing movies");
         var result = movieService.getMovies(null, MovieStatus.CURRENT, pageable);
         return ResponseEntity.ok().body(PageResponse.from(result));
@@ -69,7 +74,7 @@ public class MovieController {
             @ApiResponse(responseCode = "200", description = "Movies retrieved successfully")
     })
     public ResponseEntity<PageResponse<MovieCardResponse>> getUpcomingMovies(
-            @PageableDefault(size = 12, sort = "releaseDate", direction = Sort.Direction.ASC) Pageable pageable) {
+            @PageableDefault(size = 12, sort = {"releaseDate", "id"}, direction = Sort.Direction.ASC) Pageable pageable) {
         log.info("GET /api/movies/upcoming - Getting upcoming movies");
         var result = movieService.getMovies(null, MovieStatus.UPCOMING, pageable);
         return ResponseEntity.ok().body(PageResponse.from(result));
@@ -83,7 +88,7 @@ public class MovieController {
     })
     public ResponseEntity<List<MovieCardResponse>> getCurrentMoviesForHome() {
         log.info("GET /api/movies/current/home - Getting current movies for home page");
-        var pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.DESC, "releaseDate"));
+        var pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.DESC, "releaseDate", "id"));
         var movies = movieService.getCurrentMovies(pageable);
         return ResponseEntity.ok().body(movies);
     }
@@ -96,7 +101,7 @@ public class MovieController {
     })
     public ResponseEntity<List<MovieCardResponse>> getUpcomingMoviesForHome() {
         log.info("GET /api/movies/upcoming/home - Getting upcoming movies for home page");
-        var pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.ASC, "releaseDate"));
+        var pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.ASC, "releaseDate", "id"));
         var movies = movieService.getUpcomingMovies(pageable);
         return ResponseEntity.ok().body(movies);
     }
@@ -109,7 +114,7 @@ public class MovieController {
     })
     public ResponseEntity<List<MovieCardResponse>> getLeavingSoonMoviesForHome() {
         log.info("GET /api/movies/leaving-soon/home - Getting leaving soon movies for home page");
-        var pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.ASC, "endShowingDate"));
+        var pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.ASC, "endShowingDate", "id"));
         var movies = movieService.getLeavingSoonMovies(pageable);
         return ResponseEntity.ok().body(movies);
     }
@@ -123,7 +128,10 @@ public class MovieController {
     })
     public ResponseEntity<byte[]> getPoster(@PathVariable Long id) {
         log.info("GET /api/movies/{}/poster - Getting movie poster", id);
-        return movieService.getPoster(id);
+        return movieService.getPoster(id)
+                .map(poster -> ResponseEntity.ok().contentType(poster.mediaType())
+                        .header(HttpHeaders.CACHE_CONTROL, "max-age=3600").body(poster.data()))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @RateLimit(value = 20, duration = 1)

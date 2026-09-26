@@ -15,6 +15,7 @@ ehthumbs.db
 .metadata
 .project
 .classpath
+.checkstyle
 .factorypath
 .settings/
 bin/

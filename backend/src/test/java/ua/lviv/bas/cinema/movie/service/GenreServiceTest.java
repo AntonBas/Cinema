@@ -1,5 +1,7 @@
 package ua.lviv.bas.cinema.movie.service;
 
+import java.util.stream.IntStream;
+import org.springframework.data.domain.Sort;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -27,7 +29,9 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class GenreServiceTest {
@@ -53,7 +57,7 @@ public class GenreServiceTest {
         GenreResponse response = new GenreResponse(GENRE_ID, GENRE_NAME);
 
         when(genreRepository.existsByNameIgnoreCase(GENRE_NAME)).thenReturn(false);
-        when(genreMapper.toGenre(request)).thenReturn(genre);
+        when(genreMapper.toEntity(request)).thenReturn(genre);
         when(genreRepository.save(genre)).thenReturn(genre);
         when(genreMapper.toGenreResponse(genre)).thenReturn(response);
 
@@ -130,7 +134,7 @@ public class GenreServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result.name()).isEqualTo(GENRE_NAME);
-        verify(genreMapper).updateGenreFromRequest(request, existingGenre);
+        verify(genreMapper).updateEntity(request, existingGenre);
         verify(genreRepository).save(existingGenre);
     }
 
@@ -214,5 +218,20 @@ public class GenreServiceTest {
         public Integer getMovieCount() {
             return getMovieCount;
         }
+    }
+
+    @Test
+    void getAllGenresShouldReturnEveryGenreSortedByNameWithoutPaging() {
+        var genres = IntStream.rangeClosed(1, 15).mapToObj(i -> Genre.builder().id((long) i).name("Genre " + i).build())
+                .toList();
+        when(genreRepository.findAll(Sort.by("name"))).thenReturn(genres);
+        when(genreMapper.toGenreResponse(any(Genre.class)))
+                .thenAnswer(invocation -> new GenreResponse(invocation.<Genre>getArgument(0).getId(),
+                        invocation.<Genre>getArgument(0).getName()));
+
+        List<GenreResponse> result = genreService.getAllGenres();
+
+        assertThat(result).hasSize(15);
+        assertThat(result.getFirst().name()).isEqualTo("Genre 1");
     }
 }

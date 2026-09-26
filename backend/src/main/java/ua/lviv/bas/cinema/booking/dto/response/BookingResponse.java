@@ -4,13 +4,19 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Schema(description = "Booking information response")
 public record BookingResponse(
         @Schema(description = "Booking ID", example = "123")
         Long id,
+
+        @Schema(description = "Public identifier of the booking, used in customer-facing URLs",
+                example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+        UUID publicId,
 
         @Schema(description = "Booking number", example = "BK-20240115-00123")
         String bookingNumber,
@@ -20,6 +26,10 @@ public record BookingResponse(
 
         @Schema(description = "Session ID", example = "789")
         Long sessionId,
+
+        @Schema(description = "Public session identifier used in booking URLs",
+                example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+        UUID sessionPublicId,
 
         @Schema(description = "Session start time", example = "2024-01-15T18:30:00")
         LocalDateTime sessionTime,
@@ -45,8 +55,9 @@ public record BookingResponse(
         @Schema(description = "LiqPay order ID", example = "ORDER_ABC123")
         String liqpayOrderId,
 
-        @Schema(description = "Booking expires at", example = "2024-01-15T14:50:00")
-        LocalDateTime expiresAt,
+        @Schema(description = "Booking expires at, as UTC instant",
+                example = "2024-01-15T14:50:00Z")
+        Instant expiresAt,
 
         @Schema(description = "List of seat reservations")
         List<SeatReservationInfo> seatReservations

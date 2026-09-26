@@ -1,21 +1,36 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import { PersonTabs } from "./PersonTabs/PersonTabs";
+import React, { useState, useEffect, useCallback } from "react";
 import { PersonTable } from "./PersonTable/PersonTable";
 import { PersonForm } from "./PersonForm/PersonForm";
 import { DeleteConfirmModal } from "@/components/ui/DeleteConfirmModal/DeleteConfirmModal";
 import { Button } from "@/components/ui/Button/Button";
+import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import { Pagination } from "@/components/ui/Pagination/Pagination";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { SearchInput } from "@/components/ui/SearchInput/SearchInput";
-import { usePerson } from "@/hooks/features/persons/usePerson";
+import { usePerson } from "@/hooks/features/person/usePerson";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
-import { usePagination } from "@/hooks/common/usePagination";
+import {
+  parseEnumParam,
+  toUrlEnumValue,
+  useUrlParams,
+} from "@/hooks/common/useUrlParams";
+import { DEFAULT_PAGE_SIZE } from "@/utils/paginationUtils";
 import type {
   PersonRequest,
   PersonRole,
   PersonListResponse,
 } from "@/types/person";
+import { Tabs, type TabItem } from "@/components/ui/Tabs/Tabs";
 import styles from "./PersonTab.module.css";
+
+const PERSON_TABS: ReadonlyArray<TabItem<PersonRole | "ALL">> = [
+  { id: "ALL", label: "All People" },
+  { id: "ACTOR", label: "Actors" },
+  { id: "DIRECTOR", label: "Directors" },
+  { id: "SCREENWRITER", label: "Screenwriters" },
+];
+
+const PERSON_TAB_IDS = PERSON_TABS.map((tab) => tab.id);
 
 export const PersonTab: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,10 +40,9 @@ export const PersonTab: React.FC = () => {
   );
   const [personToDelete, setPersonToDelete] =
     useState<PersonListResponse | null>(null);
-  const [activeTab, setActiveTab] = useState<PersonRole | "ALL">("ALL");
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const { params, setPage } = usePagination({ size: 12 });
+  const { page, query, getParam, setParams, setPage, setSearch } =
+    useUrlParams();
+  const activeTab = parseEnumParam(getParam("role"), PERSON_TAB_IDS, "ALL");
   const { persons, pagination, loading, getAll, create, update, remove } =
     usePerson();
   const showDelayedLoading = useDelayedLoading(loading, {
@@ -36,67 +50,24 @@ export const PersonTab: React.FC = () => {
     minDisplayTime: 300,
   });
 
-  const currentPage = params.page ?? 0;
-  const pageSize = params.size ?? 12;
+  const loadPersons = useCallback(() => {
+    getAll({
+      query,
+      role: activeTab === "ALL" ? undefined : activeTab,
+      page,
+      size: DEFAULT_PAGE_SIZE,
+    }).catch(() => {});
+  }, [query, activeTab, page, getAll]);
 
-  const loadPersons = useCallback(
-    (page: number = currentPage) => {
-      getAll({
-        query: searchQuery || undefined,
-        role: activeTab === "ALL" ? undefined : activeTab,
-        page: page,
-        size: pageSize,
-      });
-    },
-    [searchQuery, activeTab, pageSize, getAll, currentPage],
-  );
-
-  const didLoadRef = useRef(false);
   useEffect(() => {
-    if (didLoadRef.current) return;
-    didLoadRef.current = true;
-    loadPersons(0);
+    loadPersons();
   }, [loadPersons]);
-
-  const handleSearch = useCallback(
-    (query: string) => {
-      setSearchQuery(query);
-      setPage(0);
-      getAll({
-        query: query || undefined,
-        role: activeTab === "ALL" ? undefined : activeTab,
-        page: 0,
-        size: pageSize,
-      });
-    },
-    [activeTab, pageSize, getAll, setPage],
-  );
 
   const handleTabChange = useCallback(
     (tab: PersonRole | "ALL") => {
-      setActiveTab(tab);
-      setPage(0);
-      getAll({
-        query: searchQuery || undefined,
-        role: tab === "ALL" ? undefined : tab,
-        page: 0,
-        size: pageSize,
-      });
+      setParams({ role: toUrlEnumValue(tab, "ALL"), page: undefined });
     },
-    [searchQuery, pageSize, getAll, setPage],
-  );
-
-  const handlePageChange = useCallback(
-    (page: number) => {
-      setPage(page);
-      getAll({
-        query: searchQuery || undefined,
-        role: activeTab === "ALL" ? undefined : activeTab,
-        page: page,
-        size: pageSize,
-      });
-    },
-    [searchQuery, activeTab, pageSize, getAll, setPage],
+    [setParams],
   );
 
   const handleSubmit = useCallback(
@@ -108,65 +79,53 @@ export const PersonTab: React.FC = () => {
       }
       setIsModalOpen(false);
       setEditingPerson(null);
-      loadPersons(currentPage);
+      loadPersons();
     },
-    [editingPerson, create, update, loadPersons, currentPage],
+    [editingPerson, create, update, loadPersons],
   );
 
   const handleDelete = useCallback(async () => {
     if (!personToDelete) return;
-    await remove(personToDelete.id);
-    setIsDeleteModalOpen(false);
-    setPersonToDelete(null);
-    if (persons.length === 1 && currentPage > 0) {
-      setPage(currentPage - 1);
-      getAll({
-        query: searchQuery || undefined,
-        role: activeTab === "ALL" ? undefined : activeTab,
-        page: currentPage - 1,
-        size: pageSize,
-      });
-    } else {
-      loadPersons(currentPage);
+    try {
+      await remove(personToDelete.id);
+    } catch {
+      return;
+    } finally {
+      setIsDeleteModalOpen(false);
+      setPersonToDelete(null);
     }
-  }, [
-    personToDelete,
-    remove,
-    persons.length,
-    currentPage,
-    searchQuery,
-    activeTab,
-    pageSize,
-    getAll,
-    setPage,
-    loadPersons,
-  ]);
+    if (persons.length === 1 && page > 0) {
+      setPage(page - 1);
+    } else {
+      loadPersons();
+    }
+  }, [personToDelete, remove, persons.length, page, setPage, loadPersons]);
 
-  if (showDelayedLoading && !persons.length && !searchQuery) {
+  if (showDelayedLoading && !persons.length && !query) {
     return (
       <div className={styles.loading}>
-        <LoadingSpinner text="Loading persons" />
+        <LoadingSpinner text="Loading people..." />
       </div>
     );
   }
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <div>
-          <h2>People Management</h2>
-          <p className={styles.description}>
-            Manage actors, directors and screenwriters
-          </p>
-        </div>
-        <Button variant="primary" onClick={() => setIsModalOpen(true)}>
-          Add Person
-        </Button>
-      </div>
+      <PageHeader
+        title="People"
+        subtitle="Manage actors, directors and screenwriters"
+        divider
+        actions={
+          <Button variant="primary" onClick={() => setIsModalOpen(true)}>
+            Add Person
+          </Button>
+        }
+      />
 
       <div className={styles.searchSection}>
         <SearchInput
-          onSearch={handleSearch}
+          onSearch={setSearch}
+          value={query}
           placeholder="Search people by name..."
           delay={300}
         />
@@ -180,11 +139,16 @@ export const PersonTab: React.FC = () => {
             pagination.totalElements,
           )}{" "}
           of {pagination.totalElements} people
-          {searchQuery && ` for "${searchQuery}"`}
+          {query && ` for "${query}"`}
         </div>
       )}
 
-      <PersonTabs activeTab={activeTab} onTabChange={handleTabChange} />
+      <Tabs
+        items={PERSON_TABS}
+        activeId={activeTab}
+        onChange={handleTabChange}
+        ariaLabel="Person categories"
+      />
 
       <PersonTable
         persons={persons}
@@ -205,7 +169,7 @@ export const PersonTab: React.FC = () => {
             totalPages={pagination.totalPages}
             totalElements={pagination.totalElements}
             pageSize={pagination.size}
-            onPageChange={handlePageChange}
+            onPageChange={setPage}
             variant="pages"
             showInfo={false}
           />

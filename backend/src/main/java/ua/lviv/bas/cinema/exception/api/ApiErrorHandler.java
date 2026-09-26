@@ -7,11 +7,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
+import jakarta.persistence.OptimisticLockException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -19,6 +24,7 @@ import org.springframework.security.authentication.InsufficientAuthenticationExc
 import org.springframework.security.authentication.LockedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
@@ -28,11 +34,19 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import ua.lviv.bas.cinema.exception.core.BusinessException;
 import ua.lviv.bas.cinema.exception.core.NotFoundException;
+import ua.lviv.bas.cinema.exception.domain.auth.ResendCooldownException;
+import ua.lviv.bas.cinema.exception.infrastructure.RateLimitExceededException;
 
 import java.util.Objects;
 import java.util.Optional;
 
-import static org.springframework.http.HttpStatus.*;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.springframework.http.HttpStatus.CONTENT_TOO_LARGE;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice
@@ -70,7 +84,7 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
     @Nonnull
     protected ResponseEntity<Object> handleNoHandlerFoundException(@Nonnull NoHandlerFoundException ex,
                                                                    @Nonnull HttpHeaders headers, @Nonnull HttpStatusCode status, @Nonnull WebRequest request) {
-        ApiError apiError = new ApiError(BAD_REQUEST);
+        ApiError apiError = new ApiError(NOT_FOUND);
         apiError.setMessage(
                 String.format("Could not find the %s method for URL %s", ex.getHttpMethod(), ex.getRequestURL()));
         apiError.setDebugMessage(ex.getMessage());
@@ -103,6 +117,36 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
         return buildResponseEntity(apiError, request);
     }
 
+    @ExceptionHandler(RateLimitExceededException.class)
+    protected ResponseEntity<Object> handleRateLimitExceeded(@Nonnull RateLimitExceededException ex,
+                                                             @Nonnull WebRequest request) {
+        ApiError apiError = new ApiError(ex.getStatus());
+        apiError.setMessage(ex.getMessage());
+        apiError.setDebugMessage(ex.getDebugMessage());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.RETRY_AFTER, String.valueOf(ex.getRetryAfterSeconds()));
+        headers.add("X-Rate-Limit-Limit", String.valueOf(ex.getLimit()));
+        headers.add("X-Rate-Limit-Remaining", "0");
+
+        return buildResponseEntity(apiError, request, headers);
+    }
+
+    @ExceptionHandler(ResendCooldownException.class)
+    protected ResponseEntity<Object> handleResendCooldown(@Nonnull ResendCooldownException ex,
+                                                          @Nonnull WebRequest request) {
+        ApiError apiError = new ApiError(ex.getStatus());
+        apiError.setMessage(ex.getMessage());
+        apiError.setDebugMessage(ex.getDebugMessage());
+
+        log.warn("Resend cooldown active: {}s remaining", ex.getRemainingSeconds());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.RETRY_AFTER, String.valueOf(ex.getRemainingSeconds()));
+
+        return buildResponseEntity(apiError, request, headers);
+    }
+
     @ExceptionHandler(NotFoundException.class)
     protected ResponseEntity<Object> handleNotFoundException(@Nonnull NotFoundException ex,
                                                              @Nonnull WebRequest request) {
@@ -126,6 +170,13 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
 
         ApiError apiError = new ApiError(INTERNAL_SERVER_ERROR, "Database error", ex);
         log.error("Database error: ", ex);
+        return buildResponseEntity(apiError, request);
+    }
+
+    @ExceptionHandler({OptimisticLockingFailureException.class, OptimisticLockException.class})
+    protected ResponseEntity<Object> handleOptimisticLock(@Nonnull Exception ex, @Nonnull WebRequest request) {
+        ApiError apiError = new ApiError(CONFLICT, "The resource was modified concurrently, please retry", ex);
+        log.warn("Optimistic lock conflict: {}", ex.getMessage());
         return buildResponseEntity(apiError, request);
     }
 
@@ -180,6 +231,16 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
         return buildResponseEntity(apiError, request);
     }
 
+    @ExceptionHandler(PropertyReferenceException.class)
+    protected ResponseEntity<Object> handlePropertyReference(@Nonnull PropertyReferenceException ex,
+                                                             @Nonnull WebRequest request) {
+        ApiError apiError = new ApiError(BAD_REQUEST, "Invalid sort property: " + ex.getPropertyName(), ex);
+
+        log.warn("Invalid sort property: {}", ex.getMessage());
+
+        return buildResponseEntity(apiError, request);
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
     protected ResponseEntity<Object> handleBadCredentials(@Nonnull BadCredentialsException ex,
                                                           @Nonnull WebRequest request) {
@@ -190,7 +251,7 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(DisabledException.class)
     protected ResponseEntity<Object> handleDisabled(@Nonnull DisabledException ex, @Nonnull WebRequest request) {
-        ApiError apiError = new ApiError(UNAUTHORIZED, "Account is disabled");
+        ApiError apiError = new ApiError(UNAUTHORIZED, "Account is blocked");
         log.warn("Disabled account attempt: {}", ex.getMessage());
         return buildResponseEntity(apiError, request);
     }
@@ -218,6 +279,20 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
         return buildResponseEntity(apiError, request);
     }
 
+    @Override
+    protected ResponseEntity<Object> handleExceptionInternal(@Nonnull Exception ex, @Nullable Object body,
+                                                             @Nonnull HttpHeaders headers, @Nonnull HttpStatusCode statusCode, @Nonnull WebRequest request) {
+        HttpStatus status = Optional.ofNullable(HttpStatus.resolve(statusCode.value())).orElse(INTERNAL_SERVER_ERROR);
+        String message = ex instanceof ErrorResponse errorResponse && errorResponse.getBody().getDetail() != null
+                ? errorResponse.getBody().getDetail()
+                : status.getReasonPhrase();
+        ApiError apiError = new ApiError(status, message, ex);
+
+        log.warn("Request rejected with {}: {}", status.value(), ex.getMessage());
+
+        return buildResponseEntity(apiError, request, headers);
+    }
+
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<Object> handleAllExceptions(@Nonnull Exception ex, @Nonnull WebRequest request) {
         ApiError apiError = new ApiError(INTERNAL_SERVER_ERROR, "Unexpected error occurred", ex);
@@ -227,6 +302,12 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
 
     @Nonnull
     private ResponseEntity<Object> buildResponseEntity(@Nonnull ApiError apiError, @Nonnull WebRequest request) {
+        return buildResponseEntity(apiError, request, new HttpHeaders());
+    }
+
+    @Nonnull
+    private ResponseEntity<Object> buildResponseEntity(@Nonnull ApiError apiError, @Nonnull WebRequest request,
+                                                        @Nonnull HttpHeaders headers) {
         if (request instanceof ServletWebRequest servletWebRequest) {
             apiError.setPath(servletWebRequest.getRequest().getRequestURI());
         } else {
@@ -235,7 +316,7 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
         if (!debugErrorsEnabled) {
             apiError.setDebugMessage(null);
         }
-        return new ResponseEntity<>(apiError,
+        return new ResponseEntity<>(apiError, headers,
                 Objects.requireNonNull(apiError.getStatus(), "ApiError status must not be null"));
     }
 }

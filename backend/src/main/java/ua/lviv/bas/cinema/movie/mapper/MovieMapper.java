@@ -1,6 +1,11 @@
 package ua.lviv.bas.cinema.movie.mapper;
 
-import org.mapstruct.*;
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.ReportingPolicy;
 import ua.lviv.bas.cinema.cinema.mapper.SessionMapper;
 import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.movie.dto.request.MovieCreateRequest;
@@ -34,7 +39,7 @@ public interface MovieMapper {
     @Mapping(target = "screenwriters", ignore = true)
     @Mapping(target = "genres", ignore = true)
     @Mapping(target = "posterFileName", ignore = true)
-    Movie toMovie(MovieCreateRequest request);
+    Movie toEntity(MovieCreateRequest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
@@ -46,7 +51,7 @@ public interface MovieMapper {
     @Mapping(target = "screenwriters", ignore = true)
     @Mapping(target = "genres", ignore = true)
     @Mapping(target = "posterFileName", ignore = true)
-    void updateMovieFromRequest(MovieUpdateRequest request, @MappingTarget Movie movie);
+    void updateEntity(MovieUpdateRequest request, @MappingTarget Movie movie);
 
     @SuppressWarnings("unused")
     default String getPosterUrl(Long id) {

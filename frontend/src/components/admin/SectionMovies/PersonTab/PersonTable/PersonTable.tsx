@@ -2,8 +2,9 @@ import React from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import type { PersonListResponse } from "@/types/person";
 import { PersonRoleDisplay } from "@/types/person";
-import { Badge } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge/Badge";
 import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
 import styles from "./PersonTable.module.css";
 
@@ -29,10 +30,10 @@ export const PersonTable: React.FC<PersonTableProps> = React.memo(
   ({ persons, onEdit, onDelete }) => {
     if (persons.length === 0) {
       return (
-        <div className={tableStyles.empty}>
-          <h3>No persons found</h3>
-          <p>Add actors, directors, or screenwriters to get started!</p>
-        </div>
+        <EmptyState
+          title="No People Found"
+          message="Add actors, directors, or screenwriters to get started!"
+        />
       );
     }
 

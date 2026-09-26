@@ -7,13 +7,12 @@ Complete feature descriptions, technical details, and project structure.
 ## Contents
 
 - [Getting Started](#getting-started)
+  - [Cloud Deployment (Free Tier)](#cloud-deployment-free-tier)
 - [Features](#features)
   - [Roles & Permissions](#roles--permissions)
   - [User Features](#user-features)
   - [Admin Features](#admin-features)
-  - [Technical Highlights](#technical-highlights)
 - [Engineering Details](#engineering-details)
-- [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 
 ---
@@ -22,14 +21,15 @@ Complete feature descriptions, technical details, and project structure.
 
 ### Prerequisites
 
-- Java 21 or higher
-- Node.js 20+ and npm
-- Docker and Docker Compose (recommended)
-- Maven (for backend builds)
+- Docker and Docker Compose (recommended — enough to run the whole stack)
+- For local development without Docker: Java 21 and Node.js 20.19+ / 22 (CI uses 22); Maven is not required — the repo ships the `./mvnw` wrapper
 
 ---
 
 ### Test Accounts
+
+Seeded by `V2__insert_test_data.sql`, available in local/Docker/CI environments
+(removed automatically in production — see `V22__CleanupProdTestAccounts`):
 
 | Email            | Password | Role            |
 | :--------------- | :------- | :-------------- |
@@ -65,6 +65,14 @@ Fill in the required values. See [.env.docker.example](https://github.com/AntonB
 docker compose up -d
 ```
 
+To receive LiqPay callbacks locally, also start the ngrok tunnel: `docker compose --profile tunnel up -d`.
+
+When updating an existing setup, rebuild the images and recreate the anonymous `node_modules` volume so the frontend container (which runs as a non-root user) can write to it:
+
+```bash
+docker compose up -d --build -V
+```
+
 **4. Access the application**
 
 | Service         | URL                                   |
@@ -74,7 +82,7 @@ docker compose up -d
 | Swagger UI      | http://localhost:8080/swagger-ui.html |
 | Ngrok Dashboard | http://localhost:4040                 |
 
-> **Ngrok Dashboard** shows incoming webhook requests from LiqPay during local development.
+> **Ngrok Dashboard** is available only with the `tunnel` profile and shows incoming webhook requests from LiqPay during local development.
 
 **5. Stop services**
 
@@ -116,7 +124,7 @@ npm run dev
 
 Frontend will be available at: http://localhost:5173
 
-Note: API requests to /api are automatically proxied to the backend via Vite. No CORS configuration or manual VITE_API_URL setup needed.
+API requests to `/api` are proxied to the backend by Vite, so no CORS setup is needed locally. Copy `frontend/.env.example` to `frontend/.env.local` — `VITE_API_URL` is used to start Google sign-in.
 
 ---
 
@@ -137,6 +145,49 @@ docker compose up -d postgres
 
 ---
 
+### Cloud Deployment (Free Tier)
+
+Backend and frontend are on different domains here, unlike Options 1/2, so the
+frontend talks to the backend over CORS via an absolute `VITE_API_URL` instead
+of a same-origin proxy.
+
+| Component      | Service                                                                                                                                |
+| :-------------- | :-------------------------------------------------------------------------------------------------------------------------------------- |
+| Frontend        | Vercel (root dir: `frontend`)                                                                                                             |
+| Backend         | Render — Free Web Service, Docker (root dir: `backend`)                                                                                   |
+| PostgreSQL      | Neon (free tier)                                                                                                                           |
+| Redis           | Upstash (free tier, TLS)                                                                                                                   |
+| Movie posters   | Cloudinary (free tier) — Render's disk is wiped on every redeploy, so `prod` uploads go to Cloudinary instead of local disk (`docker`/`local` still use local disk) |
+
+On Render, set `SPRING_PROFILES_ACTIVE=prod` plus the "prod only" variables
+from [`.env.docker.example`](../.env.docker.example), alongside the ones
+required everywhere (`JWT_SECRET`, `BREVO_API_KEY`, `EMAIL_FROM`,
+`GOOGLE_CLIENT_ID`/`SECRET`, `LIQPAY_*`, `FRONTEND_URL`). On Vercel, set
+`VITE_API_URL` to the Render backend's URL as a project environment
+variable.
+
+Steps once both services exist:
+
+1. Add `<Render URL>/login/oauth2/code/google` to Google Cloud Console's
+   Authorized redirect URIs.
+2. Point LiqPay's server callback at `<Render URL>/api/liqpay/callback`
+   (`PAYMENT_LIQPAY_CALLBACK_URL`) and the browser redirect at
+   `<Vercel URL>/booking/success` (`PAYMENT_LIQPAY_RESULT_URL`). Switch
+   `LIQPAY_SANDBOX_MODE=false` for real payments.
+3. Set `CORS_ALLOWED_ORIGINS` on Render to the exact Vercel URL
+   (comma-separated for several). Wildcards are rejected at startup — a
+   pattern on the shared `vercel.app` domain would also match other
+   people's Vercel projects.
+4. Set `FRONTEND_URL` on Render to the same Vercel URL (used for the
+   post-OAuth-login redirect and all email links — verification,
+   password reset, booking confirmation).
+
+Render's free tier sleeps after 15 minutes of inactivity; ping
+`/actuator/health` periodically (e.g. UptimeRobot or a GitHub Actions
+cron) to keep it warm.
+
+---
+
 ## Features
 
 ### Roles & Permissions
@@ -146,8 +197,8 @@ The system supports four roles with different access levels:
 | Role                | Access                                               |
 | :------------------ | :--------------------------------------------------- |
 | **ADMIN**           | Full access to all admin features                    |
-| **CONTENT_MANAGER** | Movies, Schedule, Halls, Promotions, Genres, Persons |
-| **CASHIER**         | User verification, ticket scanning                   |
+| **CONTENT_MANAGER** | Movies, Genres, Persons, Halls, Schedule, Promotions |
+| **CASHIER**         | Ticket scanning/validation, user list and birth-date verification, bookings/refunds lookup, user bonus balances |
 | **USER**            | Movie browsing, booking, profile management          |
 
 ---
@@ -159,7 +210,7 @@ The system supports four roles with different access levels:
 **Registration**
 
 - Email validation (unique, no duplicate accounts)
-- Password validation (length, complexity)
+- Password validation (8–32 characters, confirmation must match)
 - Email confirmation via verification link
 - Account locked until email is verified
 - Welcome bonus automatically awarded after email verification
@@ -178,11 +229,6 @@ The system supports four roles with different access levels:
 - Reset link sent to email
 - New password validation (cannot reuse old password)
 - Blocked for unverified accounts
-
-**Email Tokens**
-
-- Email verification and email-change confirmation are both handled via `POST /api/tokens/email/verify` and `POST /api/tokens/email/change/confirm`
-- Expired tokens are cleaned up automatically by a scheduler (`user/scheduler/EmailTokenCleanupScheduler`)
 
 ---
 
@@ -272,7 +318,7 @@ Step-by-step ticket booking with seat reservation and secure payment.
 
 - Select payment method (card via LiqPay)
 - Redirect to LiqPay secure payment page
-- Payment status automatically updates via scheduler
+- Payment status updates via LiqPay's server callback; a scheduler reconciles payments whose callback never arrived
 
 **7. Booking Completion**
 
@@ -310,7 +356,7 @@ Step-by-step ticket booking with seat reservation and secure payment.
 
 - Ticket status changes to `REFUNDED`
 - Refunded tickets moved to **Refunded** tab
-- Bonus points used in booking are deducted from the user's balance
+- The ticket's share of bonus points spent on the booking is returned to the user's balance, scaled by the same refund percentage
 
 **5. Refund Policy**
 
@@ -389,7 +435,7 @@ Three tabs for complete movie content management:
 - Full CRUD operations
 - **Smart Movie Filtering:** When creating a session, only movies available on the selected date are shown
 - **Hall Conflict Validation:** Cannot schedule overlapping sessions in the same hall
-- Session status auto-updates: `SCHEDULED` → `UPCOMING` → `COMPLETED` / `CANCELED`
+- Session status auto-updates: `SCHEDULED` → `ONGOING` → `COMPLETED` (or `CANCELLED`)
 - Filter by date range, cinema hall, status
 - Search by movie title, pagination
 
@@ -399,21 +445,35 @@ Three tabs for complete movie content management:
 
 - Full CRUD operations
 - Unique hall name validation
-- **Auto-generation:** Admin specifies rows and seats per row, system generates layout
-- Automatic VIP rows (last 2 rows) with option for full-VIP hall
-- Couple seat rows option (requires even number of seats per row)
-- **Interactive Layout Editor (Modal):** Left-click to change seat type, Right-click to deactivate/activate
-- Protected from edit/delete if hall has future scheduled sessions
+- **Grid Layout Editor (Modal):** click an empty cell to add a seat, click a seat to cycle its type (Standard / VIP / Couple — a couple seat spans two cells), right-click to deactivate/activate, drag to reposition, × to delete
+- Row and seat numbers are assigned automatically left-to-right per row; duplicate positions are rejected
+- Layout and hall edits are blocked while the hall has future scheduled sessions; a hall with any sessions, past or future, can't be deleted; seats that already have tickets can't be removed
 
 ---
 
 #### Users
 
 - View all registered users
-- **Actions:** Change user role, verify birth date, block/unblock account
-- **Security validations:** Admin cannot block themselves, cannot remove `ADMIN` role from last admin
-- Filter by role, verification status, block status
+- **Actions:** Change user role, verify birth date, block/unblock account (role and block status are Admin-only)
+- **Activity modal:** a user's bookings, refunds and bonus transactions in tabs, plus their audit history
+- **Security validations:** Admin cannot change their own role or block themselves, cannot remove `ADMIN` role from last admin
+- Filter by role, verification status, block status; sorting
 - Search by email or name, pagination
+- Filters are kept in URL query params, so a filtered view can be bookmarked or shared
+
+---
+
+#### Bookings (Admin, Cashier)
+
+- Search by booking number, email, movie or LiqPay order ID; pagination
+- Booking details: session, price breakdown (bonus discount), issued tickets and payment (status, LiqPay order ID, card mask, error code)
+
+---
+
+#### Refunds (Admin, Cashier)
+
+- Search by booking number, email, ticket code or LiqPay order ID; filter by status
+- Shows the LiqPay order ID per refund, making refunds stuck in `PROCESSING` or rejected by the gateway easy to spot
 
 ---
 
@@ -425,7 +485,7 @@ Three tabs for complete movie content management:
   - **Booking Spend** — min/max points a user can redeem per booking
   - **Payment Accrual** — percentage of ticket purchase returned as bonus points
 - Admin can update any rule value
-- **Reset button** — restores all rules to default values
+- **Reset** — restores a single rule to its default values
 
 ---
 
@@ -443,7 +503,7 @@ Three tabs for complete movie content management:
 
 - Full CRUD operations
 - Unique name validation
-- **Fields:** Name, Category, Price multiplier, Document required flag, Active status
+- **Fields:** Name, Category, Price multiplier, Min/max age, Document required flag (+ document type), Active status
 - Deactivated ticket types are hidden during booking
 - Sorting by category, pagination
 
@@ -456,24 +516,15 @@ Three tabs for complete movie content management:
 - Filter by entity type and action type
 - Search by admin email
 - Pagination
-- **Full entity history:** view every audit entry for one specific entity via the **Entity History** modal in the Audit Logs table (`GET /admin/audit-logs/entity/{entityType}/{entityId}`)
+- **Full entity history:** view every audit entry for one specific entity via the **Entity History** modal in the Audit Logs table (`GET /api/admin/audit-logs/entity/{entityType}/{entityId}`)
 
 ---
 
 #### Cashier
 
-- **Ticket lookup:** enter a ticket's unique code to view its details (`GET /api/admin/ticket/{uniqueCode}`)
-- **Ticket validation:** mark a ticket as used at the door (`POST /api/admin/ticket/{uniqueCode}/validate`)
-- Available at `/cashier/scan`
-
----
-
-### Technical Highlights
-
-- **Role-Based Access Control (RBAC):** Secure API endpoints and UI elements for all four roles
-- **Rate Limiting:** API protection against brute-force and DDoS attacks
-- **RESTful API:** Well-structured backend API built with Spring Boot
-- **Modern Frontend:** Responsive and interactive UI built with React and TypeScript
+- **Ticket lookup:** scanning a ticket's QR code opens `/cashier/scan/{ticketCode}` with the ticket's details (`GET /api/admin/tickets/{ticketCode}`)
+- **Ticket validation:** mark a ticket as used at the door (`POST /api/admin/tickets/{ticketCode}/validate`)
+- Available to Cashier and Admin roles
 
 ---
 
@@ -481,14 +532,15 @@ Three tabs for complete movie content management:
 
 ### Testing
 
-875 tests across 124 test classes, run with Testcontainers against a real PostgreSQL instance
+1128 tests across 150 test classes, run with Testcontainers against a real PostgreSQL instance
 (no mocked DB in integration/concurrency tests). Every domain has a dedicated concurrency suite,
 e.g. `SeatReservationConcurrencyTest`, `BookingConcurrencyTest`,
 `BookingDoubleConfirmConcurrencyTest`, `PaymentCallbackConcurrencyTest`,
 `RefundCreationConcurrencyTest`, `BonusCardConcurrencyTest`,
 `BonusRefundPointsRetryConcurrencyTest`, `TicketValidationConcurrencyTest`. CI
-(`.github/workflows/ci.yml`) runs the full suite against a real Postgres service container on
-every push/PR to `main`/`develop`.
+(`.github/workflows/ci.yml`) builds the backend and runs the full suite (Testcontainers starts
+PostgreSQL on the runner's Docker), then lints, format-checks and builds the frontend on every
+push/PR to `master`/`develop`.
 
 ### Concurrency Control
 
@@ -505,8 +557,9 @@ External payment handled via LiqPay:
 
 - User redirected to LiqPay payment page
 - LiqPay sends async callback via Ngrok tunnel (local dev) or directly (production)
-- System uses **idempotent state transitions** (`UPDATE ... WHERE status = 'PENDING'`) to prevent duplicate updates
-- Duplicate callbacks are safely ignored — order moves to PAID exactly once
+- Callback signature is verified (constant-time comparison) before any state change
+- System uses **idempotent state transitions** (`UPDATE ... WHERE status IN ('PENDING', 'PROCESSING')`) to prevent duplicate updates
+- Duplicate callbacks are safely ignored — the payment moves to `SUCCESS` and tickets are issued exactly once
 - Scheduler acts as fallback when callbacks are lost
 
 ### Self-Healing Recovery
@@ -515,7 +568,8 @@ A background scheduler ensures system consistency when things go wrong:
 
 - Releases expired seat locks (users who closed the browser)
 - Cancels unpaid bookings past their expiration window
-- Updates session statuses (SCHEDULED → COMPLETED)
+- Updates session statuses (SCHEDULED → ONGOING → COMPLETED) and movie statuses
+- Reconciles payments and refunds stuck in `PROCESSING`
 - All state lives in PostgreSQL — if the app crashes mid-flow, scheduler recovers on restart with no data loss
 
 ### Known Trade-offs
@@ -554,57 +608,6 @@ Four configurable rules control the loyalty program:
 | Booking Spend   | Min/max points redeemable per booking, capped at a % of total price  | 100-1000 points, max 50% of total  |
 | Payment Accrual | % of purchase returned as points                                     | 5%                                  |
 
-## Tech Stack
-
-### Backend
-
-| Technology           | Version |
-| :------------------- | :------ |
-| Java                 | 21      |
-| Spring Boot          | 4.1.1   |
-| Spring Security      | 7.1.1   |
-| Spring Data JPA      | 4.1.1   |
-| Spring OAuth2 Client | 4.1.1   |
-| Spring Mail          | 4.1.1   |
-| Spring Cache         | 4.1.1   |
-| Spring Actuator      | 4.1.1   |
-| PostgreSQL           | 15      |
-| Flyway               | 12.4.0  |
-| JWT (jjwt)           | 0.13.0  |
-| MapStruct            | 1.6.3   |
-| Lombok               | 1.18.48 |
-| Bucket4j             | 8.10.1  |
-| Redis                | 7       |
-| ZXing (QR Code)      | 3.5.4   |
-| Gson                 | 2.13.2  |
-| SpringDoc OpenAPI    | 3.1.1   |
-| Dotenv               | 4.0.0   |
-| Testcontainers       | 2.0.5   |
-
-### Frontend
-
-| Technology        | Version |
-| :---------------- | :------ |
-| React             | 19.1.1  |
-| TypeScript        | 5.8.3   |
-| Vite              | 7.3.2   |
-| React Router DOM  | 7.8.1   |
-| Axios             | 1.15.0  |
-| Lucide React      | 0.563.0 |
-| Styled Components | 6.1.19  |
-| date-fns          | 4.1.0   |
-| clsx              | 2.1.1   |
-
-### DevOps & Tools
-
-| Technology     | Description                   |
-| :------------- | :---------------------------- |
-| Docker         | Containerization              |
-| Docker Compose | Multi-container orchestration |
-| Flyway         | Database migrations           |
-| Maven          | Build automation              |
-| GitHub Actions | CI/CD pipeline                |
-
 ---
 
 ## Project Structure
@@ -612,9 +615,9 @@ Four configurable rules control the loyalty program:
 ### Backend (Spring Boot)
 
 **Package by Feature + Layer.** Each business domain is a self-contained package with its own
-`controller/`, `service/`, `repository/`, `domain/`, `dto/`, `mapper/` — only the layers that
-domain actually needs. `config/` and `exception/` stay global (shared by every domain); `common/`
-holds small cross-cutting utilities.
+`controller/`, `service/`, `repository/`, `domain/`, `dto/`, `mapper/`, `scheduler/` — only the
+layers that domain actually needs. `config/` and `exception/` stay global (shared by every
+domain); `notification/`, `integration/` and `common/` are shared infrastructure.
 
     backend/src/main/java/ua/lviv/bas/cinema/
     ├── <domain>/                  # one package per business domain, see table below
@@ -625,9 +628,13 @@ holds small cross-cutting utilities.
     │   ├── repository/
     │   ├── domain/                # JPA entities, enums, statuses
     │   ├── dto/                   # request/response payloads
-    │   └── mapper/                # MapStruct entity <-> DTO mapping
-    ├── config/                    # global — security, cache, jackson, ratelimit, scheduling, api, http, properties
+    │   ├── mapper/                # MapStruct entity <-> DTO mapping
+    │   └── scheduler/             # self-healing / status-update jobs
+    ├── config/                    # global — security, cache, jackson, ratelimit, scheduling, async, audit, api, http, properties
     ├── exception/                 # global — api/, core/, domain/<domain>/, infrastructure/
+    ├── notification/              # outbound email (Brevo HTTP API + templates)
+    ├── integration/               # file storage (local disk / Cloudinary), posters, QR codes
+    ├── migration/                 # Java-based Flyway migrations (V22, V24)
     └── common/                    # cross-cutting utilities (PageResponse, price/number/date formatting, uniqueness checks)
 
 **Domain packages:**
@@ -644,7 +651,7 @@ holds small cross-cutting utilities.
 | `ticket/`        | Tickets, ticket types                                                    |
 | `promotion/`     | Promotions, promo claims                                                 |
 | `audit/`         | Admin change audit log (write path + query/history)                     |
-| `notification/`  | Outbound email sending, email verification token generation             |
+| `notification/`  | Outbound email sending (templates + Brevo HTTP API)                     |
 | `integration/`   | File storage, poster images, QR code generation                         |
 | `common/`        | Stateless cross-cutting utilities shared across every domain             |
 
@@ -662,42 +669,4 @@ updating session/movie statuses, awarding birthday bonuses, cleaning up expired 
 
 ### Frontend (React)
 
-    frontend/src/
-    ├── api/
-    ├── components/
-    │   ├── account/
-    │   ├── admin/
-    │   │   ├── AdminLayout/
-    │   │   ├── SectionAuditLogs/
-    │   │   ├── SectionBonus/
-    │   │   ├── SectionHalls/
-    │   │   ├── SectionMovies/
-    │   │   ├── SectionPromotion/
-    │   │   ├── SectionSchedule/
-    │   │   ├── SectionTicketType/
-    │   │   └── SectionUsers/
-    │   ├── auth/
-    │   ├── booking/
-    │   ├── cashier/
-    │   ├── home/
-    │   ├── layout/
-    │   ├── movies/
-    │   ├── sessions/
-    │   └── ui/
-    ├── context/
-    ├── hooks/
-    │   ├── common/
-    │   └── features/
-    ├── pages/
-    │   ├── account/
-    │   ├── auth/
-    │   ├── booking/
-    │   ├── cashier/
-    │   ├── home/
-    │   ├── movies/
-    │   ├── sessions/
-    │   └── RefundPolicyPage/
-    ├── routes/
-    ├── services/
-    ├── types/
-    └── utils/
+`frontend/src/` mirrors the backend domains: one API client per domain in `api/`, one hook folder per feature in `hooks/features/`, and matching `pages/` and `components/` folders (admin sections live under `components/admin/`).

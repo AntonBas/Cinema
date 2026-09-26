@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Modal, Button } from "@/components/ui";
+import { Modal } from "@/components/ui/Modal/Modal";
+import { Button } from "@/components/ui/Button/Button";
 import { useRefund } from "@/hooks/features/refund/useRefund";
 import { AlertTriangle } from "lucide-react";
 import type { TicketResponse } from "@/types/ticket";
+import { formatFullDateTime, formatPrice } from "@/utils/formatters";
 import styles from "./TicketRefundModal.module.css";
 
 interface TicketRefundModalProps {
@@ -18,17 +20,6 @@ const REFUND_REASONS = [
   { value: "other", label: "Other reason" },
 ];
 
-const formatDateTime = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
 export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
   ticket,
   onClose,
@@ -37,7 +28,7 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [selectedReason, setSelectedReason] = useState<string>("");
   const {
-    processRefund,
+    create,
     loading,
     refundResult,
     getPreview,
@@ -59,18 +50,16 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
 
   if (!ticket) return null;
 
-  const sessionDate = new Date(ticket.sessionTime);
-  const hoursUntilSession =
-    (sessionDate.getTime() - Date.now()) / (1000 * 60 * 60);
-  const canRequestRefund = previewLoading || !previewResult
-    ? ticket.status === "ACTIVE" && hoursUntilSession > 2
-    : previewResult.isRefundable;
+  const canRequestRefund =
+    previewLoading || !previewResult
+      ? ticket.refundable
+      : previewResult.isRefundable;
 
   const handleSubmit = async () => {
     if (!selectedReason || !acceptedTerms) return;
 
     try {
-      const result = await processRefund({
+      const result = await create({
         ticketId: ticket.id,
         reason: selectedReason,
       });
@@ -100,7 +89,7 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
                 {previewResult?.nonRefundableReason ??
                   (ticket.status !== "ACTIVE"
                     ? "Only active tickets can be refunded"
-                    : "Refunds are only available more than 2 hours before the session")}
+                    : "This ticket can no longer be refunded")}
               </p>
             </div>
           </div>
@@ -141,7 +130,7 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
               <div className={styles.detailItem}>
                 <span className={styles.detailLabel}>Amount</span>
                 <span className={`${styles.detailValue} ${styles.amount}`}>
-                  {refundResult.totalAmount} UAH
+                  {formatPrice(refundResult.totalAmount)}
                 </span>
               </div>
             </div>
@@ -174,7 +163,7 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>Session</span>
               <span className={styles.infoValue}>
-                {formatDateTime(ticket.sessionTime)}
+                {formatFullDateTime(ticket.sessionTime)}
               </span>
             </div>
             <div className={styles.infoItem}>
@@ -189,7 +178,9 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
             </div>
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>Price</span>
-              <span className={styles.infoValue}>{ticket.price} UAH</span>
+              <span className={styles.infoValue}>
+                {formatPrice(ticket.price)}
+              </span>
             </div>
           </div>
         </div>
@@ -216,13 +207,20 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
             ) : (
               <>
                 <span className={styles.estimateValue}>
-                  {previewResult.refundAmount} UAH (
+                  {formatPrice(previewResult.refundAmount)} (
                   {previewResult.refundPercentage}%)
                 </span>
                 <span className={styles.estimateNote}>
-                  {previewResult.policyName}: fee {previewResult.feeAmount}{" "}
-                  UAH ({previewResult.feePercentage}%)
+                  {previewResult.policyName}: fee{" "}
+                  {formatPrice(previewResult.feeAmount)} (
+                  {previewResult.feePercentage}%)
                 </span>
+                {!!previewResult.earnedPointsToRevoke && (
+                  <span className={styles.estimateNote}>
+                    {previewResult.earnedPointsToRevoke} bonus points earned
+                    from this purchase will be deducted
+                  </span>
+                )}
               </>
             )}
           </div>
@@ -243,7 +241,9 @@ export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
             <polyline points="12 6 12 12 16 14" />
           </svg>
           <span>
-            {Math.floor(hoursUntilSession)} hours until session starts
+            {previewResult?.remainingTime
+              ? `${previewResult.remainingTime} until session starts`
+              : "Calculating time until session…"}
           </span>
         </div>
 

@@ -1,5 +1,5 @@
 .displayName {
-  color: #f1f5f9;
+  color: var(--color-panel-text);
   font-weight: 600;
   font-size: var(--font-size-md);
   word-break: break-word;
@@ -29,11 +29,11 @@
   }
 
   .price {
-    font-size: 11px;
-    padding: 2px 6px;
+    font-size: var(--font-size-2xs);
+    padding: 2px var(--space-1);
   }
 
   .ageRange {
-    font-size: 11px;
+    font-size: var(--font-size-2xs);
   }
 }

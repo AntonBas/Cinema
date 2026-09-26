@@ -12,4 +12,6 @@ public interface PromotionListProjection {
     LocalDate getStartDate();
 
     LocalDate getEndDate();
+
+    boolean getActive();
 }

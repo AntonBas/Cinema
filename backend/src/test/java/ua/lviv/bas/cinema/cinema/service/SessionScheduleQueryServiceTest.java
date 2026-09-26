@@ -7,6 +7,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jpa.domain.Specification;
+import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.cinema.dto.session.response.SessionScheduleResponse;
 import ua.lviv.bas.cinema.cinema.mapper.SessionMapper;
@@ -14,7 +15,6 @@ import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.cinema.repository.projection.SessionScheduleProjection;
 import ua.lviv.bas.cinema.cinema.repository.specification.SessionSpecification;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,7 +51,7 @@ public class SessionScheduleQueryServiceTest {
         when(sessionRepository.findAll(specification)).thenReturn(List.of());
 
         List<SessionScheduleResponse> result =
-                sessionScheduleQueryService.getScheduleWithoutAvailability("term", LocalDate.now(), 1L);
+                sessionScheduleQueryService.getScheduleWithoutAvailability("term", CinemaTime.today(), 1L);
 
         assertThat(result).isEmpty();
     }
@@ -60,7 +60,7 @@ public class SessionScheduleQueryServiceTest {
     void getScheduleWithoutAvailabilityShouldMapProjectionsToResponses() {
         Session session = Session.builder().id(SESSION_ID).build();
         SessionScheduleResponse response = new SessionScheduleResponse(SESSION_ID, null, null, null, null, null,
-                null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null);
 
         when(sessionRepository.findAll(specification)).thenReturn(List.of(session));
         when(projection.getId()).thenReturn(SESSION_ID);

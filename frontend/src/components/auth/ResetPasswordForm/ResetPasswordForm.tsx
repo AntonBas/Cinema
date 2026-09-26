@@ -2,8 +2,12 @@ import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { CheckCircle2 } from "lucide-react";
 import { useAuthActions } from "@/hooks/features/auth/useAuthActions";
-import { Input, Button, Modal } from "@/components/ui";
+import { Input } from "@/components/ui/Input/Input";
+import { Button } from "@/components/ui/Button/Button";
+import { Modal } from "@/components/ui/Modal/Modal";
+import { isApiErrorException } from "@/utils/apiErrorHandler";
 import { validatePassword } from "@/utils/formValidation";
+import { AuthCard } from "@/components/auth/AuthCard/AuthCard";
 import styles from "./ResetPasswordForm.module.css";
 
 interface SuccessModalProps {
@@ -27,7 +31,7 @@ const PasswordResetSuccessModal: React.FC<SuccessModalProps> = ({
         </p>
       </div>
       <div className={styles.modalActions}>
-        <Button variant="primary" onClick={onClose} style={{ width: "100%" }}>
+        <Button variant="primary" onClick={onClose} fullWidth>
           Continue to Login
         </Button>
       </div>
@@ -76,15 +80,19 @@ export const ResetPasswordForm: React.FC = () => {
     e.preventDefault();
     if (!validateForm() || !token) return;
 
-    await resetPassword(token, formData.newPassword);
-    setShowSuccessModal(true);
+    try {
+      await resetPassword(token, formData.newPassword);
+      setShowSuccessModal(true);
+    } catch (err) {
+      if (isApiErrorException(err) && err.isValidationError()) {
+        setFormErrors(err.getValidationErrors());
+      }
+    }
   };
 
   return (
-    <section className={styles.resetPassword}>
-      <div className={styles.resetPasswordContainer}>
-        <h1 className={styles.resetPasswordTitle}>Create new password</h1>
-
+    <>
+      <AuthCard title="Create New Password">
         <p className={styles.instructionText}>
           Enter and confirm your new password below.
         </p>
@@ -125,7 +133,7 @@ export const ResetPasswordForm: React.FC = () => {
             {loading ? "Resetting..." : "Reset Password"}
           </Button>
         </form>
-      </div>
+      </AuthCard>
 
       <PasswordResetSuccessModal
         isOpen={showSuccessModal}
@@ -134,6 +142,6 @@ export const ResetPasswordForm: React.FC = () => {
           navigate("/login");
         }}
       />
-    </section>
+    </>
   );
 };

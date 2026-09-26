@@ -2,11 +2,12 @@ import React, { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { XCircle } from "lucide-react";
 import { Layout } from "@/components/layout/Layout/Layout";
-import { useTickets } from "@/hooks/features/tickets/useTickets";
-import { CashierStatusBadge } from "@/components/cashier/CashierStatusBadge/CashierStatusBadge";
+import { useTicket } from "@/hooks/features/ticket/useTicket";
+import { TicketStatusBadge } from "@/components/ui/TicketStatusBadge/TicketStatusBadge";
 import { CashierTicketInfo } from "@/components/cashier/CashierTicketInfo/CashierTicketInfo";
 import { CashierValidateButton } from "@/components/cashier/CashierValidateButton/CashierValidateButton";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { Button } from "@/components/ui/Button/Button";
 import styles from "./CashierScanPage.module.css";
 
 const getErrorMessage = (error: unknown): string => {
@@ -24,15 +25,15 @@ export const CashierScanPage: React.FC = () => {
     loading,
     cashierTicketError,
     cashierValidateError,
-    getTicketForCashier,
-    validateTicket,
-  } = useTickets();
+    getAdminByCode,
+    validate,
+  } = useTicket();
 
   useEffect(() => {
     if (uniqueCode) {
-      getTicketForCashier(uniqueCode);
+      getAdminByCode(uniqueCode).catch(() => {});
     }
-  }, [uniqueCode, getTicketForCashier]);
+  }, [uniqueCode, getAdminByCode]);
 
   const ticket = validatedTicket || cashierTicket;
 
@@ -54,12 +55,9 @@ export const CashierScanPage: React.FC = () => {
             <p className={styles.errorMessage}>
               {getErrorMessage(cashierTicketError)}
             </p>
-            <button
-              className={styles.backButton}
-              onClick={() => navigate("/cashier")}
-            >
+            <Button variant="primary" onClick={() => navigate("/")}>
               Back to Home Page
-            </button>
+            </Button>
           </div>
         </div>
       </Layout>
@@ -78,7 +76,7 @@ export const CashierScanPage: React.FC = () => {
 
   const handleValidate = () => {
     if (uniqueCode) {
-      validateTicket(uniqueCode);
+      validate(uniqueCode).catch(() => {});
     }
   };
 
@@ -88,7 +86,7 @@ export const CashierScanPage: React.FC = () => {
         <div className={styles.card}>
           <div className={styles.header}>
             <h1 className={styles.title}>Ticket #{ticket.uniqueCode}</h1>
-            <CashierStatusBadge status={ticket.status} />
+            <TicketStatusBadge status={ticket.status} size="large" />
           </div>
 
           <CashierTicketInfo ticket={ticket} />

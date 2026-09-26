@@ -7,6 +7,7 @@ export interface SeatReservationResponse {
   movieTitle: string;
   basePrice: string;
   hallName: string;
+  sessionTime: string;
   availableSeats: number;
   seats: SeatInfo[];
 }
@@ -16,6 +17,8 @@ export interface SeatInfo {
   row: number;
   seatNumber: number;
   seatType: SeatType;
+  x: number;
+  y: number;
   available: boolean;
   temporarilyReserved: boolean;
   active: boolean;

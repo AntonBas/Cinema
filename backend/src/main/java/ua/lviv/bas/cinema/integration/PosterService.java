@@ -1,13 +1,13 @@
 package ua.lviv.bas.cinema.integration;
 
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -26,14 +26,14 @@ public class PosterService {
         fileStorageService.deleteFile(posterFileName, POSTER_SUB_DIRECTORY);
     }
 
-    public ResponseEntity<byte[]> getPosterResponse(String posterFileName) {
+    public Optional<PosterImage> loadPoster(String posterFileName) {
         if (posterFileName == null || posterFileName.isBlank()) {
-            return ResponseEntity.notFound().build();
+            return Optional.empty();
         }
 
         var data = fileStorageService.loadFile(posterFileName, POSTER_SUB_DIRECTORY);
         if (data == null) {
-            return ResponseEntity.notFound().build();
+            return Optional.empty();
         }
 
         var contentType = fileStorageService.determineContentType(posterFileName);
@@ -45,6 +45,6 @@ public class PosterService {
             mediaType = MediaType.APPLICATION_OCTET_STREAM;
         }
 
-        return ResponseEntity.ok().contentType(mediaType).header(HttpHeaders.CACHE_CONTROL, "max-age=3600").body(data);
+        return Optional.of(new PosterImage(data, mediaType));
     }
 }

@@ -1,7 +1,10 @@
 import React from "react";
-import { Badge, Tooltip } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge/Badge";
+import { Tooltip } from "@/components/ui/Tooltip/Tooltip";
 import type { AuditLogResponse } from "@/types/audit";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
+import { formatDate, formatTime } from "@/utils/formatters";
 import styles from "./AuditLogsTable.module.css";
 
 interface AuditLogsTableProps {
@@ -12,17 +15,6 @@ interface AuditLogsTableProps {
 const truncateText = (text: string, maxLength: number = 40): string => {
   if (!text) return "";
   return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
-};
-
-const formatDateTime = (dateStr: string) => {
-  const date = new Date(dateStr);
-  const formattedDate = date.toLocaleDateString("uk-UA");
-  const formattedTime = date.toLocaleTimeString("uk-UA", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-  return { date: formattedDate, time: formattedTime };
 };
 
 const formatFieldName = (field: string): string => {
@@ -64,13 +56,13 @@ const formatDetails = (log: AuditLogResponse): React.ReactNode => {
           <span className={styles.changeKey}>
             {formatFieldName(detail.fieldName)}:
           </span>
-          <Tooltip content={detail.oldValue || "null"}>
+          <Tooltip focusableTrigger content={detail.oldValue || "null"}>
             <span className={styles.oldValue}>
               {truncateText(detail.oldValue || "null", 20)}
             </span>
           </Tooltip>
           {" → "}
-          <Tooltip content={detail.newValue || "null"}>
+          <Tooltip focusableTrigger content={detail.newValue || "null"}>
             <span className={styles.newValue}>
               {truncateText(detail.newValue || "null", 20)}
             </span>
@@ -108,10 +100,10 @@ export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({
 }) => {
   if (logs.length === 0) {
     return (
-      <div className={tableStyles.empty}>
-        <h3>No audit logs found</h3>
-        <p>Actions will appear here once changes are made.</p>
-      </div>
+      <EmptyState
+        title="No Audit Logs Found"
+        message="Actions will appear here once changes are made."
+      />
     );
   }
 
@@ -137,7 +129,8 @@ export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({
           </thead>
           <tbody>
             {logs.map((log) => {
-              const { date, time } = formatDateTime(log.changedAt);
+              const date = formatDate(log.changedAt);
+              const time = formatTime(log.changedAt, true);
               return (
                 <tr key={log.id}>
                   <td data-label="Time">
@@ -150,16 +143,18 @@ export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({
                       <button
                         type="button"
                         className={styles.targetButton}
-                        onClick={() => onViewHistory(log.entityType, log.entityId)}
+                        onClick={() =>
+                          onViewHistory(log.entityType, log.entityId)
+                        }
                       >
-                        <Tooltip content={log.targetInfo}>
+                        <Tooltip focusableTrigger content={log.targetInfo}>
                           <span className={styles.targetInfo}>
                             {truncateText(log.targetInfo, 30)}
                           </span>
                         </Tooltip>
                       </button>
                     ) : (
-                      <Tooltip content={log.targetInfo}>
+                      <Tooltip focusableTrigger content={log.targetInfo}>
                         <span className={styles.targetInfo}>
                           {truncateText(log.targetInfo, 30)}
                         </span>

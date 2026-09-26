@@ -3,13 +3,14 @@ package ua.lviv.bas.cinema.bonus.mapper;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 import org.mockito.Mockito;
+import ua.lviv.bas.cinema.bonus.domain.BonusRuleField;
 import ua.lviv.bas.cinema.bonus.domain.BonusRules;
 import ua.lviv.bas.cinema.bonus.domain.BonusTransactionType;
 import ua.lviv.bas.cinema.bonus.dto.request.BonusRulesRequest;
 import ua.lviv.bas.cinema.bonus.repository.projection.BonusTransactionProjection;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,6 +30,29 @@ public class BonusMapperTest {
         assertThat(response.bonusType()).isEqualTo(BonusTransactionType.WELCOME_BONUS);
         assertThat(response.points()).isEqualTo(100);
         assertThat(response.active()).isTrue();
+        assertThat(response.requiredFields()).containsExactly(BonusRuleField.POINTS);
+        assertThat(response.optionalFields()).isEmpty();
+    }
+
+    @Test
+    void toResponseShouldExposeFieldsOfPaymentAccrualRule() {
+        var rules = BonusRules.builder().id(4L).bonusType(BonusTransactionType.PAYMENT_ACCRUAL)
+                .moneyRatio(new BigDecimal("0.05")).active(true).build();
+
+        var response = mapper.toResponse(rules);
+
+        assertThat(response.requiredFields()).containsExactly(BonusRuleField.MONEY_RATIO);
+        assertThat(response.optionalFields()).containsExactly(BonusRuleField.MIN_POINTS, BonusRuleField.MAX_POINTS);
+    }
+
+    @Test
+    void toResponseShouldExposeNoFieldsForNonConfigurableRule() {
+        var rules = BonusRules.builder().id(5L).bonusType(BonusTransactionType.REFUND_RETURN).active(true).build();
+
+        var response = mapper.toResponse(rules);
+
+        assertThat(response.requiredFields()).isEmpty();
+        assertThat(response.optionalFields()).isEmpty();
     }
 
     @Test
@@ -45,7 +69,7 @@ public class BonusMapperTest {
         Mockito.when(projection.getPointsChangeRaw()).thenReturn(50);
         Mockito.when(projection.getPointsChange()).thenReturn("+50");
         Mockito.when(projection.getNewBalance()).thenReturn(150);
-        Mockito.when(projection.getCreatedAt()).thenReturn(LocalDateTime.now());
+        Mockito.when(projection.getCreatedAt()).thenReturn(Instant.now());
 
         var response = mapper.toResponse(projection);
 
@@ -64,38 +88,38 @@ public class BonusMapperTest {
     }
 
     @Test
-    void updateFromRequest() {
+    void updateEntity() {
         var existing = BonusRules.builder().points(0).active(true).build();
         var request = new BonusRulesRequest(150, null, null, null, false);
 
-        mapper.updateFromRequest(request, existing);
+        mapper.updateEntity(request, existing);
 
         assertThat(existing.getPoints()).isEqualTo(150);
         assertThat(existing.getActive()).isFalse();
     }
 
     @Test
-    void updateFromRequestWithPartialUpdate() {
+    void updateEntityShouldClearFieldsMissingFromRequest() {
         var existing = BonusRules.builder().points(100).moneyRatio(new BigDecimal("0.05")).minPointsPerTransaction(10)
                 .maxPointsPerTransaction(500).active(true).build();
 
-        var request = new BonusRulesRequest(200, null, null, null, null);
+        var request = new BonusRulesRequest(null, new BigDecimal("0.10"), 20, null, true);
 
-        mapper.updateFromRequest(request, existing);
+        mapper.updateEntity(request, existing);
 
-        assertThat(existing.getPoints()).isEqualTo(200);
-        assertThat(existing.getMoneyRatio()).isEqualTo(new BigDecimal("0.05"));
-        assertThat(existing.getMinPointsPerTransaction()).isEqualTo(10);
-        assertThat(existing.getMaxPointsPerTransaction()).isEqualTo(500);
+        assertThat(existing.getPoints()).isNull();
+        assertThat(existing.getMoneyRatio()).isEqualTo(new BigDecimal("0.10"));
+        assertThat(existing.getMinPointsPerTransaction()).isEqualTo(20);
+        assertThat(existing.getMaxPointsPerTransaction()).isNull();
         assertThat(existing.getActive()).isTrue();
     }
 
     @Test
-    void updateFromRequestWithAllFields() {
+    void updateEntityWithAllFields() {
         var existing = BonusRules.builder().build();
         var request = new BonusRulesRequest(200, new BigDecimal("0.10"), 50, 1000, false);
 
-        mapper.updateFromRequest(request, existing);
+        mapper.updateEntity(request, existing);
 
         assertThat(existing.getPoints()).isEqualTo(200);
         assertThat(existing.getMoneyRatio()).isEqualTo(new BigDecimal("0.10"));
@@ -105,10 +129,10 @@ public class BonusMapperTest {
     }
 
     @Test
-    void updateFromRequestWithNullRequest() {
+    void updateEntityWithNullRequest() {
         var existing = BonusRules.builder().points(100).active(true).build();
 
-        mapper.updateFromRequest(null, existing);
+        mapper.updateEntity(null, existing);
 
         assertThat(existing.getPoints()).isEqualTo(100);
         assertThat(existing.getActive()).isTrue();

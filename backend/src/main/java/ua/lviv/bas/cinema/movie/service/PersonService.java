@@ -21,6 +21,7 @@ import ua.lviv.bas.cinema.movie.mapper.PersonMapper;
 import ua.lviv.bas.cinema.movie.repository.MovieRepository;
 import ua.lviv.bas.cinema.movie.repository.PersonRepository;
 import ua.lviv.bas.cinema.common.UniquenessValidator;
+import ua.lviv.bas.cinema.common.FixedOrderPageable;
 
 @Slf4j
 @Service
@@ -38,7 +39,7 @@ public class PersonService {
         log.info("Creating person: {}", request.name());
         validatePersonUniqueness(request.name(), request.role(), null);
 
-        var person = personMapper.toPerson(request);
+        var person = personMapper.toEntity(request);
         var saved = personRepository.save(person);
 
         log.debug("Person created with ID: {}", saved.getId());
@@ -50,7 +51,7 @@ public class PersonService {
         log.info("Getting persons: query='{}', role={}, page={}, size={}", query, role, pageable.getPageNumber(),
                 pageable.getPageSize());
         String roleStr = role != null ? role.name() : null;
-        return personRepository.findPersonsByFilters(query, roleStr, pageable)
+        return personRepository.findPersonsByFilters(query, roleStr, FixedOrderPageable.of(pageable))
                 .map(personMapper::toPersonListResponse);
     }
 
@@ -62,7 +63,7 @@ public class PersonService {
         var person = personRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Person", id));
         validatePersonUniqueness(request.name(), request.role(), id);
 
-        personMapper.updatePersonFromRequest(request, person);
+        personMapper.updateEntity(request, person);
         var updated = personRepository.save(person);
 
         log.debug("Person updated with ID: {}", updated.getId());

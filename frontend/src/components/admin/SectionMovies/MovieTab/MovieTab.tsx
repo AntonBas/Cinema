@@ -11,18 +11,26 @@ import type {
   MovieStatus,
 } from "@/types/movie";
 import type { PageResponse } from "@/types/pagination";
-import { useMovies } from "@/hooks/features/movies/useMovies";
-import { usePagination } from "@/hooks/common/usePagination";
+import { useMovie } from "@/hooks/features/movie/useMovie";
+import {
+  parseEnumParam,
+  toUrlEnumValue,
+  useUrlParams,
+} from "@/hooks/common/useUrlParams";
+import { useNotification } from "@/context/NotificationContext";
+import { isApiErrorException } from "@/utils/apiErrorHandler";
+import { DEFAULT_PAGE_SIZE } from "@/utils/paginationUtils";
 import { MovieList } from "./MovieList/MovieList";
 import { MovieForm } from "./MovieForm/MovieForm";
 import { DeleteConfirmModal } from "@/components/ui/DeleteConfirmModal/DeleteConfirmModal";
 import { Button } from "@/components/ui/Button/Button";
+import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import { SearchInput } from "@/components/ui/SearchInput/SearchInput";
-import { Badge } from "@/components/ui/Badge/Badge";
 import { Pagination } from "@/components/ui/Pagination/Pagination";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 import { movieApi } from "@/api/movieApi";
+import { Tabs, type TabItem } from "@/components/ui/Tabs/Tabs";
 import styles from "./MovieTab.module.css";
 
 type MovieTabType = "CURRENT" | "UPCOMING" | "ARCHIVED";
@@ -33,6 +41,14 @@ interface TabData {
   pagination: PageResponse<MovieCardResponse> | null;
 }
 
+const MOVIE_TABS: ReadonlyArray<TabItem<MovieTabType>> = [
+  { id: "CURRENT", label: "Currently Showing" },
+  { id: "UPCOMING", label: "Upcoming" },
+  { id: "ARCHIVED", label: "Archived" },
+];
+
+const MOVIE_TAB_IDS = MOVIE_TABS.map((tab) => tab.id);
+
 export const MovieTab: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -42,43 +58,51 @@ export const MovieTab: React.FC = () => {
   const [deletingMovie, setDeletingMovie] = useState<MovieCardResponse | null>(
     null,
   );
-  const [activeTab, setActiveTab] = useState<MovieTabType>("CURRENT");
   const [tabData, setTabData] = useState<Record<MovieTabType, TabData>>({
     CURRENT: { data: [], total: 0, pagination: null },
     UPCOMING: { data: [], total: 0, pagination: null },
     ARCHIVED: { data: [], total: 0, pagination: null },
   });
   const [loadingMovie, setLoadingMovie] = useState(false);
+  const [tabLoading, setTabLoading] = useState(true);
 
-  const { params, setPage, setSearch } = usePagination({ size: 12 });
-  const { loading: moviesLoading, remove } = useMovies();
-  const showLoading = useDelayedLoading(moviesLoading || loadingMovie, {
+  const { page, query, getParam, setParams, setPage, setSearch } =
+    useUrlParams();
+  const activeTab = parseEnumParam(
+    getParam("status"),
+    MOVIE_TAB_IDS,
+    "CURRENT",
+  );
+  const { loading: moviesLoading, remove } = useMovie();
+  const { showNotification } = useNotification();
+  const showLoading = useDelayedLoading(tabLoading || loadingMovie, {
     delay: 150,
     minDisplayTime: 300,
   });
 
-  const loadingDataRef = useRef<Record<MovieTabType, boolean>>({
-    CURRENT: false,
-    UPCOMING: false,
-    ARCHIVED: false,
+  const latestRequestRef = useRef<Record<MovieTabType, number>>({
+    CURRENT: 0,
+    UPCOMING: 0,
+    ARCHIVED: 0,
   });
 
   const loadTabData = useCallback(
     async (tab: MovieTabType, page: number, search?: string) => {
-      if (loadingDataRef.current[tab]) return;
-
-      loadingDataRef.current[tab] = true;
+      const requestId = ++latestRequestRef.current[tab];
+      const isLatest = () => requestId === latestRequestRef.current[tab];
+      setTabLoading(true);
 
       try {
         const status = tab as MovieStatus;
         const requestParams = {
           page,
-          size: 12,
+          size: DEFAULT_PAGE_SIZE,
           ...(search ? { query: search } : {}),
           status,
         };
 
-        const response = await movieApi.admin.getMovies(requestParams);
+        const response = await movieApi.admin.getAll(requestParams);
+        if (!isLatest()) return;
 
         setTabData((prev) => ({
           ...prev,
@@ -89,50 +113,61 @@ export const MovieTab: React.FC = () => {
           },
         }));
       } catch (error) {
-        console.error(`Failed to load ${tab} movies:`, error);
+        if (!isLatest()) return;
+        const message = isApiErrorException(error)
+          ? error.message
+          : `Failed to load ${tab.toLowerCase()} movies`;
+        showNotification(message, "error");
       } finally {
-        loadingDataRef.current[tab] = false;
+        if (isLatest()) setTabLoading(false);
+      }
+    },
+    [showNotification],
+  );
+
+  const loadTabCount = useCallback(
+    async (tab: MovieTabType, search?: string) => {
+      try {
+        const status = tab as MovieStatus;
+        const response = await movieApi.admin.getAll({
+          page: 0,
+          size: 1,
+          ...(search ? { query: search } : {}),
+          status,
+        });
+
+        setTabData((prev) => ({
+          ...prev,
+          [tab]: {
+            ...prev[tab],
+            total: response?.data?.totalElements || 0,
+          },
+        }));
+      } catch {
+        return;
       }
     },
     [],
   );
 
-  const loadTabCount = useCallback(async (tab: MovieTabType) => {
-    try {
-      const status = tab as MovieStatus;
-      const response = await movieApi.admin.getMovies({
-        page: 0,
-        size: 1,
-        status,
-      });
-
-      setTabData((prev) => ({
-        ...prev,
-        [tab]: {
-          ...prev[tab],
-          total: response?.data?.totalElements || 0,
-        },
-      }));
-    } catch (error) {
-      console.error(`Failed to load ${tab} count:`, error);
-    }
-  }, []);
-
-  const loadAllTabCounts = useCallback(async () => {
-    await Promise.all([
-      loadTabCount("CURRENT"),
-      loadTabCount("UPCOMING"),
-      loadTabCount("ARCHIVED"),
-    ]);
-  }, [loadTabCount]);
+  const loadAllTabCounts = useCallback(
+    async (search?: string) => {
+      await Promise.all([
+        loadTabCount("CURRENT", search),
+        loadTabCount("UPCOMING", search),
+        loadTabCount("ARCHIVED", search),
+      ]);
+    },
+    [loadTabCount],
+  );
 
   useEffect(() => {
-    loadAllTabCounts();
-  }, [loadAllTabCounts]);
+    loadAllTabCounts(query);
+  }, [loadAllTabCounts, query]);
 
   useEffect(() => {
-    loadTabData(activeTab, params.page || 0, params.query);
-  }, [activeTab, params.page, params.query, loadTabData]);
+    loadTabData(activeTab, page, query);
+  }, [activeTab, page, query, loadTabData]);
 
   const currentTabData = useMemo(
     () => tabData[activeTab],
@@ -141,12 +176,10 @@ export const MovieTab: React.FC = () => {
 
   const paginationInfo = useMemo(() => {
     const total = currentTabData.total;
-    const page = params.page || 0;
-    const pageSize = params.size || 12;
-    const start = total > 0 ? page * pageSize + 1 : 0;
-    const end = Math.min(start + pageSize - 1, total);
+    const start = total > 0 ? page * DEFAULT_PAGE_SIZE + 1 : 0;
+    const end = Math.min(start + DEFAULT_PAGE_SIZE - 1, total);
     return { start, end };
-  }, [currentTabData.total, params.page, params.size]);
+  }, [currentTabData.total, page]);
 
   const handleSearch = useCallback(
     (query: string) => {
@@ -157,10 +190,9 @@ export const MovieTab: React.FC = () => {
 
   const handleTabChange = useCallback(
     (tab: MovieTabType) => {
-      setActiveTab(tab);
-      setPage(0);
+      setParams({ status: toUrlEnumValue(tab, "CURRENT"), page: undefined });
     },
-    [setPage],
+    [setParams],
   );
 
   const handlePageChange = useCallback(
@@ -170,18 +202,26 @@ export const MovieTab: React.FC = () => {
     [setPage],
   );
 
-  const handleEdit = useCallback(async (movie: MovieCardResponse) => {
-    setLoadingMovie(true);
-    try {
-      const response = await movieApi.admin.getById(movie.id);
-      if (response?.data) {
-        setEditingMovie(response.data);
-        setIsModalOpen(true);
+  const handleEdit = useCallback(
+    async (movie: MovieCardResponse) => {
+      setLoadingMovie(true);
+      try {
+        const response = await movieApi.admin.getById(movie.id);
+        if (response?.data) {
+          setEditingMovie(response.data);
+          setIsModalOpen(true);
+        }
+      } catch (error) {
+        showNotification(
+          isApiErrorException(error) ? error.message : "Failed to load movie",
+          "error",
+        );
+      } finally {
+        setLoadingMovie(false);
       }
-    } finally {
-      setLoadingMovie(false);
-    }
-  }, []);
+    },
+    [showNotification],
+  );
 
   const handleDeleteClick = useCallback((movie: MovieCardResponse) => {
     setDeletingMovie(movie);
@@ -191,25 +231,29 @@ export const MovieTab: React.FC = () => {
   const handleDeleteConfirm = useCallback(async () => {
     if (!deletingMovie?.id) return;
 
-    await remove(deletingMovie.id);
+    try {
+      await remove(deletingMovie.id);
+    } catch {
+      setIsDeleteModalOpen(false);
+      setDeletingMovie(null);
+      return;
+    }
 
     const newPage =
-      currentTabData.data.length === 1 && params.page && params.page > 0
-        ? params.page - 1
-        : params.page || 0;
+      currentTabData.data.length === 1 && page > 0 ? page - 1 : page;
 
     setPage(newPage);
     setIsDeleteModalOpen(false);
     setDeletingMovie(null);
 
-    await loadTabData(activeTab, newPage, params.query);
-    await loadAllTabCounts();
+    await loadTabData(activeTab, newPage, query);
+    await loadAllTabCounts(query);
   }, [
     deletingMovie,
     remove,
     activeTab,
-    params.page,
-    params.query,
+    page,
+    query,
     currentTabData.data.length,
     setPage,
     loadTabData,
@@ -219,16 +263,16 @@ export const MovieTab: React.FC = () => {
   const handleFormSuccess = useCallback(async () => {
     setIsModalOpen(false);
     setEditingMovie(null);
-    await loadTabData(activeTab, params.page || 0, params.query);
-    await loadAllTabCounts();
-  }, [activeTab, params.page, params.query, loadTabData, loadAllTabCounts]);
+    await loadTabData(activeTab, page, query);
+    await loadAllTabCounts(query);
+  }, [activeTab, page, query, loadTabData, loadAllTabCounts]);
 
   const handleAddNew = useCallback(() => {
     setEditingMovie(null);
     setIsModalOpen(true);
   }, []);
 
-  if (showLoading && !currentTabData.data.length && !params.query) {
+  if (showLoading && !currentTabData.data.length && !query) {
     return (
       <div className={styles.loading}>
         <LoadingSpinner text={`Loading ${activeTab.toLowerCase()} movies...`} />
@@ -244,52 +288,38 @@ export const MovieTab: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <div>
-          <h2 className={styles.title}>Movie Management</h2>
-          <p className={styles.description}>
-            Manage movie catalog, posters, cast and crew
-          </p>
-        </div>
-        <Button onClick={handleAddNew} variant="primary">
-          Add Movie
-        </Button>
-      </div>
+      <PageHeader
+        title="Movies"
+        subtitle="Manage movie catalog, posters, cast and crew"
+        divider
+        actions={
+          <Button onClick={handleAddNew} variant="primary">
+            Add Movie
+          </Button>
+        }
+      />
 
       <div className={styles.searchContainer}>
         <SearchInput
           onSearch={handleSearch}
+          value={query}
           placeholder="Search movies by title..."
           delay={300}
         />
       </div>
 
-      <div className={styles.tabs}>
-        {(["CURRENT", "UPCOMING", "ARCHIVED"] as const).map((tab) => (
-          <button
-            key={tab}
-            className={`${styles.tab} ${activeTab === tab ? styles.active : ""}`}
-            onClick={() => handleTabChange(tab)}
-          >
-            <span className={styles.tabLabel}>
-              {tab === "CURRENT"
-                ? "Currently Showing"
-                : tab === "UPCOMING"
-                  ? "Upcoming"
-                  : "Archived"}
-            </span>
-            <Badge variant={activeTab === tab ? "primary" : "secondary"}>
-              {tabCounts[tab]}
-            </Badge>
-          </button>
-        ))}
-      </div>
+      <Tabs
+        items={MOVIE_TABS.map((tab) => ({ ...tab, badge: tabCounts[tab.id] }))}
+        activeId={activeTab}
+        onChange={handleTabChange}
+        ariaLabel="Movie status"
+      />
 
       {currentTabData.total > 0 && (
         <div className={styles.resultsInfo}>
           Showing {paginationInfo.start}-{paginationInfo.end} of{" "}
           {currentTabData.total} movies
-          {params.query && ` for "${params.query}"`}
+          {query && ` for "${query}"`}
         </div>
       )}
 
@@ -298,7 +328,7 @@ export const MovieTab: React.FC = () => {
           movies={currentTabData.data}
           onEdit={handleEdit}
           onDelete={handleDeleteClick}
-          loading={moviesLoading && !currentTabData.data.length}
+          loading={tabLoading && !currentTabData.data.length}
           onCreateNew={handleAddNew}
         />
       </div>
@@ -307,10 +337,10 @@ export const MovieTab: React.FC = () => {
         currentTabData.pagination.totalPages > 1 && (
           <div className={styles.paginationContainer}>
             <Pagination
-              currentPage={params.page || 0}
+              currentPage={page}
               totalPages={currentTabData.pagination.totalPages}
               totalElements={currentTabData.total}
-              pageSize={params.size || 12}
+              pageSize={DEFAULT_PAGE_SIZE}
               onPageChange={handlePageChange}
               variant="pages"
               showInfo={false}

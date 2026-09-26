@@ -4,7 +4,7 @@ import { Layout } from "@/components/layout/Layout/Layout";
 import styles from "./MoviesLayout.module.css";
 
 const navItems = [
-  { path: "/movies/current", label: "Now Playing" },
+  { path: "/movies/current", label: "Now Showing" },
   { path: "/movies/upcoming", label: "Coming Soon" },
 ];
 

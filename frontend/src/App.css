@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
 :root {
   --color-primary: #fd5f00;
@@ -15,7 +15,6 @@
   --color-error: #ff6b6b;
   --color-error-rgb: 255, 107, 107;
   --color-error-alt: #ff4757;
-  --color-error-bg: rgba(220, 38, 38, 0.85);
 
   --color-warning: #ed8936;
   --color-warning-rgb: 237, 137, 54;
@@ -25,7 +24,6 @@
 
   --color-green: #22c55e;
   --color-gray: #6b7280;
-  --color-gray-light: #a0a8c0;
   --color-gray-dark: #4b5563;
 
   --color-bg-primary: #12161f;
@@ -45,6 +43,50 @@
 
   --color-overlay-dark: rgba(0, 0, 0, 0.75);
   --color-overlay-darker: rgba(0, 0, 0, 0.85);
+  --color-overlay-light: rgba(255, 255, 255, 0.05);
+  --color-overlay-light-hover: rgba(255, 255, 255, 0.1);
+
+  --color-seat-standard: #3498db;
+  --color-seat-standard-border: rgba(52, 152, 219, 0.5);
+  --color-seat-vip: #f39c12;
+  --color-seat-vip-border: rgba(243, 156, 18, 0.5);
+  --color-seat-couple: #e84393;
+  --color-seat-couple-border: rgba(232, 67, 147, 0.5);
+  --color-seat-selected: #2ecc71;
+  --color-seat-booked: #e74c3c;
+  --color-seat-temporary: #7f8c8d;
+  --color-seat-temporary-border: #95a5a6;
+  --color-seat-inactive: #95a5a6;
+  --color-seat-inactive-border: #7f8c8d;
+  --color-seat-layout-inactive: #666;
+
+  --color-panel-gradient-start: #1a2639;
+  --color-panel-gradient-end: #0f172a;
+  --color-panel-header-bg: #1e293b;
+  --color-panel-border: #334155;
+  --color-panel-text: #f1f5f9;
+  --color-bg-secondary-end: #2d3447;
+  --color-bg-deep: #0d1117;
+  --color-primary-alt: #ff8a00;
+  --color-age-badge-yellow: #eab308;
+  --color-age-badge-orange: #f97316;
+  --color-warning-gradient-end: #f59e0b;
+  --color-success-gradient-end: #10b981;
+  --color-error-gradient-end: #dc2626;
+  --color-error-gradient-end-dark: #b91c1c;
+  --color-bg-screen: #0a0e17;
+  --color-bg-quaternary-rgb: 42, 48, 65;
+  --color-border-medium-rgb: 58, 64, 81;
+  --color-panel-header-bg-rgb: 30, 41, 59;
+  --color-panel-gradient-end-rgb: 15, 23, 42;
+  --color-error-alt-rgb: 255, 71, 87;
+  --color-gray-rgb: 107, 114, 128;
+  --color-text-disabled-rgb: 100, 116, 139;
+  --color-black-rgb: 0, 0, 0;
+  --color-white-rgb: 255, 255, 255;
+  --color-error-light: rgba(255, 107, 107, 0.1);
+  --color-error-highlight: #ff8e8e;
+  --color-primary-gradient-end: #ff7a33;
 
   --opacity-low: 0.15;
   --opacity-medium: 0.25;
@@ -65,7 +107,8 @@
   --transition-normal: 0.3s ease;
   --transition-slow: 0.5s ease;
 
-  --font-family: 'Inter', 'Arial', sans-serif;
+  --font-family: "Inter", "Arial", sans-serif;
+  --font-size-2xs: 0.625rem;
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-md: 1rem;
@@ -74,6 +117,7 @@
   --font-size-2xl: 1.5rem;
   --font-size-3xl: 1.875rem;
   --font-size-4xl: 2.25rem;
+  --font-size-5xl: 3.5rem;
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -82,6 +126,15 @@
   --space-6: 1.5rem;
   --space-8: 2rem;
   --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+
+  --control-height: 2.75rem;
+
+  --container-sm: 800px;
+  --container-md: 1200px;
+  --container-lg: 1400px;
+  --page-min-height: calc(100vh - 70px - 250px);
 }
 
 html,
@@ -680,6 +733,7 @@ h5,
 
 @media (max-width: 768px) {
   :root {
+    --control-height: 2.5rem;
     --font-size-4xl: 1.875rem;
     --font-size-3xl: 1.5rem;
     --font-size-2xl: 1.25rem;

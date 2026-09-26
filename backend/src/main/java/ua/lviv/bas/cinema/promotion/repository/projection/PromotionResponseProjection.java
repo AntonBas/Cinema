@@ -14,4 +14,6 @@ public interface PromotionResponseProjection {
     LocalDate getStartDate();
 
     LocalDate getEndDate();
+
+    boolean getActive();
 }

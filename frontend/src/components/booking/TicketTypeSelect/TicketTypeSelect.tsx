@@ -1,5 +1,7 @@
 import React from "react";
+import { Select } from "@/components/ui/Select/Select";
 import type { TicketPriceInfo } from "@/types/seatReservation";
+import { formatPrice } from "@/utils/formatters";
 import styles from "./TicketTypeSelect.module.css";
 
 interface TicketTypeSelectProps {
@@ -19,8 +21,9 @@ export const TicketTypeSelect: React.FC<TicketTypeSelectProps> = ({
     return <span className={styles.noTypes}>No ticket types available</span>;
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const ticketTypeId = parseInt(e.target.value);
+  const handleChange = (value: string | number) => {
+    const ticketTypeId =
+      typeof value === "number" ? value : parseInt(value, 10);
     if (!isNaN(ticketTypeId)) {
       onSelect(seatId, ticketTypeId);
     }
@@ -48,27 +51,21 @@ export const TicketTypeSelect: React.FC<TicketTypeSelectProps> = ({
       label += ` (ID required)`;
     }
 
-    label += ` - ${parseFloat(ticket.finalPrice).toFixed(2)}₴`;
+    label += ` - ${formatPrice(ticket.finalPrice)}`;
 
     return label;
   };
 
   return (
-    <select
+    <Select
       className={styles.select}
       value={defaultValue}
       onChange={handleChange}
-      aria-label={`Select ticket type for seat ${seatId}`}
-    >
-      {ticketPrices.map((ticket) => (
-        <option
-          key={ticket.ticketTypeId}
-          value={ticket.ticketTypeId}
-          className={styles.option}
-        >
-          {formatLabel(ticket)}
-        </option>
-      ))}
-    </select>
+      ariaLabel={`Select ticket type for seat ${seatId}`}
+      options={ticketPrices.map((ticket) => ({
+        value: ticket.ticketTypeId,
+        label: formatLabel(ticket),
+      }))}
+    />
   );
 };

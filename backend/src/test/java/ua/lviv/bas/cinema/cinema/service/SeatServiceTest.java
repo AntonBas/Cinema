@@ -8,16 +8,22 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.cinema.domain.Seat;
+import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.cinema.domain.enums.SeatType;
 import ua.lviv.bas.cinema.cinema.dto.hall.response.SeatResponse;
 import ua.lviv.bas.cinema.cinema.mapper.SeatMapper;
 import ua.lviv.bas.cinema.cinema.repository.SeatRepository;
+import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
+import ua.lviv.bas.cinema.exception.domain.hall.CinemaHallHasSessionsException;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,6 +36,9 @@ public class SeatServiceTest {
 
     @Mock
     private SeatMapper seatMapper;
+
+    @Mock
+    private SessionRepository sessionRepository;
 
     @InjectMocks
     private SeatService seatService;
@@ -55,20 +64,33 @@ public class SeatServiceTest {
         seat.setSeatType(SeatType.STANDARD);
         seat.setActive(true);
 
-        response = new SeatResponse(SEAT_ID, ROW, NUMBER, SeatType.STANDARD, true);
+        response = new SeatResponse(SEAT_ID, ROW, NUMBER, SeatType.STANDARD, 0, 0, true);
     }
 
     @Test
     void updateSeatType_ShouldUpdateType() {
         when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.of(seat));
         when(seatRepository.save(seat)).thenReturn(seat);
-        when(seatMapper.toSeatResponse(seat)).thenReturn(response);
+        when(seatMapper.toResponse(seat)).thenReturn(response);
 
         SeatResponse result = seatService.updateSeatType(HALL_ID, SEAT_ID, SeatType.VIP);
 
         assertThat(result).isEqualTo(response);
         assertThat(seat.getSeatType()).isEqualTo(SeatType.VIP);
         verify(seatRepository).save(seat);
+    }
+
+    @Test
+    void updateSeatType_WhenHallHasFutureSessions_ShouldThrow() {
+        when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.of(seat));
+        when(sessionRepository.existsByHallIdAndStartTimeAfterAndStatusNot(eq(HALL_ID), any(LocalDateTime.class),
+                eq(CinemaSessionStatus.CANCELLED)))
+                .thenReturn(true);
+
+        assertThatThrownBy(() -> seatService.updateSeatType(HALL_ID, SEAT_ID, SeatType.VIP))
+                .isInstanceOf(CinemaHallHasSessionsException.class);
+
+        verify(seatRepository, never()).save(seat);
     }
 
     @Test
@@ -87,7 +109,7 @@ public class SeatServiceTest {
 
         when(seatRepository.findById(SEAT_ID)).thenReturn(Optional.of(seat));
         when(seatRepository.save(seat)).thenReturn(seat);
-        when(seatMapper.toSeatResponse(seat)).thenReturn(response);
+        when(seatMapper.toResponse(seat)).thenReturn(response);
 
         SeatResponse result = seatService.setSeatActiveStatus(HALL_ID, SEAT_ID, true);
 

@@ -29,7 +29,7 @@ public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecif
 
     @Override
     @EntityGraph(attributePaths = {"ticketType", "booking.session.movie", "booking.session.hall",
-            "seatReservation.seat", "user"})
+            "booking.payment", "seatReservation.seat", "user", "payment"})
     Page<Ticket> findAll(Specification<Ticket> spec, Pageable pageable);
 
     @Modifying
@@ -41,4 +41,6 @@ public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecif
     @Query("UPDATE Ticket t SET t.status = :newStatus WHERE t.id IN :ids AND t.status = :fromStatus")
     int updateStatusIfCurrentForIds(@Param("ids") List<Long> ids, @Param("fromStatus") TicketStatus fromStatus,
                                     @Param("newStatus") TicketStatus newStatus);
+
+    long countByTicketTypeId(Long ticketTypeId);
 }

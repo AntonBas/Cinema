@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.config.properties.RefundRules;
 import ua.lviv.bas.cinema.refund.domain.Refund;
+import ua.lviv.bas.cinema.refund.domain.status.RefundStatus;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.refund.dto.request.RefundPreviewRequest;
 import ua.lviv.bas.cinema.refund.dto.request.RefundRequest;
@@ -15,12 +16,12 @@ import ua.lviv.bas.cinema.refund.dto.response.RefundResponse;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusCardConcurrentModificationException;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 import ua.lviv.bas.cinema.exception.domain.financial.refund.RefundProcessingException;
-import ua.lviv.bas.cinema.refund.mapper.RefundItemMapper;
 import ua.lviv.bas.cinema.refund.mapper.RefundMapper;
 import ua.lviv.bas.cinema.payment.service.PaymentRefundService;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.common.SeatInfoFormatter;
 import ua.lviv.bas.cinema.ticket.service.TicketService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -31,6 +32,9 @@ import java.time.temporal.ChronoUnit;
 public class RefundService {
 
     private static final int MAX_APPLY_SUCCESS_ATTEMPTS = 2;
+    private static final String CANCELLED_SESSION_POLICY_NAME = "Session Cancelled";
+    private static final String CANCELLED_SESSION_POLICY_DESCRIPTION =
+            "100% refund — the session was cancelled by the cinema";
 
     private final TicketService ticketService;
     private final PaymentRefundService paymentRefundService;
@@ -38,13 +42,12 @@ public class RefundService {
     private final RefundTransactionExecutor refundTransactionExecutor;
     private final RefundRules refundRules;
     private final RefundMapper refundMapper;
-    private final RefundItemMapper refundItemMapper;
     private final NumberGeneratorService numberGenerator;
     private final SeatInfoFormatter seatInfoFormatter;
 
     @Transactional(readOnly = true)
     public RefundPreviewResponse getPreview(RefundPreviewRequest request, Long userId) {
-        var ticket = ticketService.findActiveTicketForUser(request.ticketId(), userId);
+        var ticket = ticketService.getActiveTicketForUser(request.ticketId(), userId);
         var validationError = refundCalculator.validate(ticket);
 
         if (validationError != null) {
@@ -91,8 +94,8 @@ public class RefundService {
     }
 
     private String formatRemainingTime(LocalDateTime sessionTime) {
-        var hours = ChronoUnit.HOURS.between(LocalDateTime.now(), sessionTime);
-        var minutes = ChronoUnit.MINUTES.between(LocalDateTime.now(), sessionTime) % 60;
+        var hours = ChronoUnit.HOURS.between(CinemaTime.now(), sessionTime);
+        var minutes = ChronoUnit.MINUTES.between(CinemaTime.now(), sessionTime) % 60;
 
         if (hours > 0 && minutes > 0)
             return String.format("%d hours %d minutes", hours, minutes);
@@ -108,34 +111,48 @@ public class RefundService {
         var booking = ticket.getBooking();
         var calculation = refundCalculator.calculate(ticket);
 
-        var bookedSeat = booking.getSeatReservations().getFirst();
-        var seatInfo = seatInfoFormatter.format(bookedSeat.getSeat().getRow(), bookedSeat.getSeat().getNumber());
+        var ticketSeat = ticket.getSeatReservation().getSeat();
+        var seatInfo = seatInfoFormatter.format(ticketSeat.getRow(), ticketSeat.getNumber());
 
         return new RefundPreviewResponse(ticket.getId(), ticket.getUniqueCode(),
                 booking.getSession().getMovie().getTitle(), sessionTime,
                 booking.getSession().getHall().getName(), seatInfo, ticket.getOriginalPrice(),
                 ticket.getFinalPrice(), calculation.refundAmount(), calculation.percentage(), calculation.feeAmount(),
                 calculation.feePercentage(), calculation.bonusPointsUsed(),
-                calculation.bonusPointsToRefund(), refundRules.getPolicyName(sessionTime),
-                refundRules.getPolicyDescription(sessionTime), true, null, refundRules.getRefundDeadline(sessionTime),
+                calculation.bonusPointsToRefund(), policyName(ticket, sessionTime),
+                policyDescription(ticket, sessionTime), true, null, refundRules.getRefundDeadline(sessionTime),
                 formatRemainingTime(sessionTime), ticket.getPurchaseTime().toString(),
-                ticket.getTicketType().getDisplayName());
+                ticket.getTicketType().getDisplayName(), calculation.earnedPointsToRevoke());
+    }
+
+    private String policyName(Ticket ticket, LocalDateTime sessionTime) {
+        return refundCalculator.isSessionCancelled(ticket) ? CANCELLED_SESSION_POLICY_NAME
+                : refundRules.getPolicyName(sessionTime);
+    }
+
+    private String policyDescription(Ticket ticket, LocalDateTime sessionTime) {
+        return refundCalculator.isSessionCancelled(ticket) ? CANCELLED_SESSION_POLICY_DESCRIPTION
+                : refundRules.getPolicyDescription(sessionTime);
     }
 
     private RefundPreviewResponse createNonRefundablePreview(Ticket ticket, String reason) {
         return new RefundPreviewResponse(ticket.getId(), ticket.getUniqueCode(),
                 ticket.getBooking().getSession().getMovie().getTitle(), ticket.getBooking().getSession().getStartTime(),
                 null, null, null, null, null, null, null, null, null, null, null, null, false, reason, null, null, null,
-                null);
+                null, null);
     }
 
     private RefundResponse buildResponse(Refund refund) {
-        var response = refundMapper.toResponse(refund);
-        return new RefundResponse(response.id(), numberGenerator.generateRefundNumber(refund), response.status(),
-                response.totalAmount(), response.totalBonusPointsToDeduct(), response.reason(), response.processedBy(),
-                response.processedAt(), response.createdAt(), response.paymentId(), "CARD",
-                refund.getItems() != null ? refund.getItems().stream().map(refundItemMapper::toResponse).toList()
-                        : null,
-                "Refund processed successfully", "3-5 business days");
+        return refundMapper.toResponse(refund, numberGenerator.generateRefundNumber(refund),
+                statusMessage(refund.getStatus()),
+                refund.getStatus() == RefundStatus.REJECTED ? null : "3-5 business days");
+    }
+
+    private String statusMessage(RefundStatus status) {
+        return switch (status) {
+            case PROCESSED -> "Refund processed successfully";
+            case REJECTED -> "Refund was rejected by the payment provider";
+            default -> "Refund is being processed";
+        };
     }
 }

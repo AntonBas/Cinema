@@ -5,10 +5,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import ua.lviv.bas.cinema.bonus.domain.BonusRuleField;
 import ua.lviv.bas.cinema.bonus.domain.BonusTransactionType;
 import ua.lviv.bas.cinema.bonus.dto.request.BonusRulesRequest;
 import ua.lviv.bas.cinema.bonus.dto.response.BonusRulesResponse;
 import ua.lviv.bas.cinema.bonus.service.AdminBonusService;
+import ua.lviv.bas.cinema.bonus.service.BonusQueryService;
 
 import java.util.Collections;
 import java.util.List;
@@ -24,15 +28,18 @@ public class AdminBonusControllerTest {
     @Mock
     private AdminBonusService bonusAdminService;
 
+    @Mock
+    private BonusQueryService bonusQueryService;
+
     @InjectMocks
     private AdminBonusController adminBonusController;
 
     @Test
     void getRulesShouldReturnRulesList() {
         BonusRulesResponse rule1 = new BonusRulesResponse(1L, BonusTransactionType.WELCOME_BONUS, 100, null, null, null,
-                true);
+                true, List.of(BonusRuleField.POINTS), List.of());
         BonusRulesResponse rule2 = new BonusRulesResponse(2L, BonusTransactionType.BIRTHDAY_BONUS, 200, null, null,
-                null, true);
+                null, true, List.of(BonusRuleField.POINTS), List.of());
 
         List<BonusRulesResponse> rules = List.of(rule1, rule2);
 
@@ -62,7 +69,7 @@ public class AdminBonusControllerTest {
         BonusRulesRequest request = new BonusRulesRequest(200, null, null, null, true);
 
         BonusRulesResponse response = new BonusRulesResponse(1L, BonusTransactionType.WELCOME_BONUS, 200, null, null,
-                null, true);
+                null, true, List.of(BonusRuleField.POINTS), List.of());
 
         when(bonusAdminService.updateRule(eq(type), any(BonusRulesRequest.class))).thenReturn(response);
 
@@ -77,7 +84,7 @@ public class AdminBonusControllerTest {
     void resetRuleShouldResetAndReturnRule() {
         BonusTransactionType type = BonusTransactionType.WELCOME_BONUS;
         BonusRulesResponse response = new BonusRulesResponse(1L, BonusTransactionType.WELCOME_BONUS, 150, null, null,
-                null, true);
+                null, true, List.of(BonusRuleField.POINTS), List.of());
 
         when(bonusAdminService.resetRuleToDefaults(type)).thenReturn(response);
 
@@ -86,5 +93,16 @@ public class AdminBonusControllerTest {
         assertThat(result).isEqualTo(response);
         assertThat(result.bonusType()).isEqualTo(BonusTransactionType.WELCOME_BONUS);
         assertThat(result.points()).isEqualTo(150);
+    }
+
+    @Test
+    void getUserTransactionsShouldQueryRequestedUser() {
+        var pageable = PageRequest.of(0, 20);
+        when(bonusQueryService.getTransactions(42L, pageable)).thenReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        var result = adminBonusController.getUserTransactions(42L, pageable);
+
+        assertThat(result.content()).isEmpty();
+        assertThat(result.totalElements()).isZero();
     }
 }

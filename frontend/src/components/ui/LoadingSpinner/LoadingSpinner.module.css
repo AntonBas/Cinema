@@ -1,5 +1,4 @@
 @keyframes motion {
-
   0%,
   50%,
   100% {
@@ -30,7 +29,7 @@
   justify-content: center;
   align-items: center;
   min-height: 200px;
-  padding: 20px;
+  padding: var(--space-4);
 }
 
 .loaderWrapper {
@@ -39,17 +38,19 @@
   letter-spacing: 2px;
   display: inline-block;
   font-weight: 700;
-  font-family: 'Arial', sans-serif;
+  font-family: "Arial", sans-serif;
 }
 
 .loaderWrapper::before {
   content: attr(data-text);
-  background: linear-gradient(90deg,
-      #ffffff,
-      #fd5f00 30%,
-      #ff8c00 50%,
-      #fd5f00 70%,
-      #ffffff);
+  background: linear-gradient(
+    90deg,
+    var(--color-text-primary),
+    var(--color-primary) 30%,
+    var(--color-primary-light) 50%,
+    var(--color-primary) 70%,
+    var(--color-text-primary)
+  );
   background-size: 200% auto;
   background-clip: text;
   -webkit-background-clip: text;
@@ -67,7 +68,7 @@
   left: 0;
   width: 30px;
   height: 30px;
-  font-size: 40px;
+  font-size: var(--font-size-4xl);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -76,11 +77,11 @@
 
 @media (max-width: 768px) {
   .loaderWrapper {
-    font-size: 36px;
+    font-size: var(--font-size-4xl);
   }
 
   .loaderWrapper::after {
-    font-size: 32px;
+    font-size: var(--font-size-3xl);
     top: -60px;
   }
 }

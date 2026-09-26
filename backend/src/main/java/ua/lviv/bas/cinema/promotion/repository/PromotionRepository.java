@@ -11,6 +11,7 @@ import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.promotion.repository.projection.PromotionListProjection;
 import ua.lviv.bas.cinema.promotion.repository.projection.PromotionResponseProjection;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -26,7 +27,8 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
                    p.description as description,
                    p.bonusPoints as bonusPoints,
                    p.startDate as startDate,
-                   p.endDate as endDate
+                   p.endDate as endDate,
+                   p.active as active
             FROM UserPromotion up
             JOIN up.promotion p
             WHERE up.user = :user
@@ -39,11 +41,13 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
                 p.title as title,
                 p.bonusPoints as bonusPoints,
                 p.startDate as startDate,
-                p.endDate as endDate
+                p.endDate as endDate,
+                   p.active as active
             FROM Promotion p
             WHERE (:query IS NULL OR
                    LOWER(p.title) LIKE LOWER(CONCAT('%', CAST(:query AS text), '%')) OR
                    LOWER(p.description) LIKE LOWER(CONCAT('%', CAST(:query AS text), '%')))
+            ORDER BY p.createdDate DESC, p.id DESC
             """)
     Page<PromotionListProjection> findAllAdminProjections(@Param("query") String query, Pageable pageable);
 
@@ -54,11 +58,13 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
                 p.description as description,
                 p.bonusPoints as bonusPoints,
                 p.startDate as startDate,
-                p.endDate as endDate
+                p.endDate as endDate,
+                   p.active as active
             FROM Promotion p
-            WHERE (p.startDate IS NULL OR p.startDate <= CURRENT_DATE)
-              AND (p.endDate IS NULL OR p.endDate >= CURRENT_DATE)
-            ORDER BY p.createdDate DESC
+            WHERE p.active = true
+              AND (p.startDate IS NULL OR p.startDate <= :today)
+              AND (p.endDate IS NULL OR p.endDate >= :today)
+            ORDER BY p.createdDate DESC, p.id DESC
             """)
-    List<PromotionResponseProjection> findAllActivePromotions();
+    List<PromotionResponseProjection> findAllActivePromotions(@Param("today") LocalDate today);
 }

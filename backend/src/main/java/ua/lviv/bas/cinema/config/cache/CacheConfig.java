@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
+import org.springframework.data.redis.cache.RedisCacheWriter;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
@@ -31,11 +32,14 @@ import java.util.Map;
 @EnableCaching
 public class CacheConfig {
 
+    private static final String CACHE_KEY_VERSION = "v2";
+
     @Bean
     @ConditionalOnProperty(prefix = "spring.cache", name = "type", havingValue = "redis")
     RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(30))
+                .computePrefixWith(cacheName -> CACHE_KEY_VERSION + "::" + cacheName + "::")
                 .serializeValuesWith(RedisSerializationContext.SerializationPair
                         .fromSerializer(pageAwareJsonSerializer()));
 
@@ -56,9 +60,13 @@ public class CacheConfig {
         cacheConfigurations.put("bonus", defaultConfig.entryTtl(Duration.ofMinutes(30)));
         cacheConfigurations.put("promotions", defaultConfig.entryTtl(Duration.ofHours(1)));
 
-        return RedisCacheManager.builder(connectionFactory)
+        RedisCacheWriter cacheWriter = RedisCacheWriter.create(connectionFactory,
+                RedisCacheWriter.RedisCacheWriterConfigurer::immediateWrites);
+
+        return RedisCacheManager.builder(cacheWriter)
                 .cacheDefaults(defaultConfig)
                 .withInitialCacheConfigurations(cacheConfigurations)
+                .transactionAware()
                 .build();
     }
 

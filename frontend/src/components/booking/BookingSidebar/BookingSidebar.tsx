@@ -3,6 +3,8 @@ import { Info } from "lucide-react";
 import { Tooltip } from "@/components/ui/Tooltip/Tooltip";
 import { useBonus } from "@/hooks/features/bonus/useBonus";
 import { TicketTypeSelect } from "../TicketTypeSelect/TicketTypeSelect";
+import { formatPrice } from "@/utils/formatters";
+import { Button } from "@/components/ui/Button/Button";
 import styles from "./BookingSidebar.module.css";
 
 interface SelectedSeatItem {
@@ -39,43 +41,74 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
   onBooking,
   isBooking,
 }) => {
-  const [bonusPointsToUse, setBonusPointsToUse] = useState(0);
-  const { balance, getMyBalance, loading } = useBonus();
+  const [bonusPointsInput, setBonusPointsInput] = useState("");
+  const { balance, getBalance, loading } = useBonus();
 
   useEffect(() => {
-    getMyBalance().catch(() => {});
-  }, [getMyBalance]);
+    getBalance({ showErrorNotification: false }).catch(() => {});
+  }, [getBalance]);
 
-  const bonusBalance = balance?.pointsBalance || 0;
-  const minUsablePoints = balance?.minUsablePoints || 0;
-  const maxUsablePoints = balance?.maxUsablePoints || 0;
+  const bonusBalance = balance?.pointsBalance ?? 0;
+  const minUsablePoints = balance?.minUsablePoints ?? 0;
+  const pointValue = balance ? Number(balance.pointValue) : 0;
+  const maxDiscountPercentage = balance
+    ? Number(balance.maxDiscountPercentage)
+    : 0;
 
-  const maxAvailablePoints = Math.min(
-    bonusBalance,
-    maxUsablePoints,
-    Math.floor(totalPrice * 0.5),
-  );
+  const maxAvailablePoints =
+    balance && pointValue > 0
+      ? Math.min(
+          bonusBalance,
+          balance.maxUsablePoints,
+          Math.floor((totalPrice * maxDiscountPercentage) / pointValue),
+        )
+      : 0;
+  const canUseBonus =
+    maxAvailablePoints > 0 && maxAvailablePoints >= minUsablePoints;
 
-  const handleBonusPointsChange = (points: number) => {
-    setBonusPointsToUse(Math.max(0, Math.min(points, maxAvailablePoints)));
+  const bonusPointsToUse =
+    bonusPointsInput === ""
+      ? 0
+      : Math.max(
+          0,
+          Math.min(parseInt(bonusPointsInput, 10) || 0, maxAvailablePoints),
+        );
+
+  const handleBonusPointsInputChange = (rawValue: string) => {
+    if (rawValue === "") {
+      setBonusPointsInput("");
+      return;
+    }
+
+    const parsed = parseInt(rawValue, 10);
+    if (Number.isNaN(parsed)) {
+      return;
+    }
+
+    setBonusPointsInput(
+      String(Math.max(0, Math.min(parsed, maxAvailablePoints))),
+    );
   };
 
   const handleUseAllPoints = () => {
-    setBonusPointsToUse(maxAvailablePoints);
+    setBonusPointsInput(String(maxAvailablePoints));
   };
 
   const handleBooking = () => {
+    if (isBelowMinimum) return;
     onBooking(bonusPointsToUse);
   };
 
-  const discount = bonusPointsToUse;
+  const isBelowMinimum =
+    bonusPointsToUse > 0 && bonusPointsToUse < minUsablePoints;
+  const discount = isBelowMinimum ? 0 : bonusPointsToUse * pointValue;
   const finalPrice = totalPrice - discount;
 
   if (!selectedSeats.length) {
     return (
       <div className={styles.sidebar}>
         <div className={styles.empty}>
-          <h3>No seats selected</h3>
+          <h3>No Seats Selected</h3>
           <p>Click on available seats to select them</p>
         </div>
       </div>
@@ -83,10 +116,10 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
   }
 
   const bonusRules = [
-    `• 1 bonus point = 1₴ discount`,
+    `• 1 bonus point = ${formatPrice(pointValue)} discount`,
     `• Minimum points to use: ${minUsablePoints}`,
-    `• Cannot cover more than 50% of total price`,
-    `• Maximum usable: ${maxAvailablePoints} points (${maxAvailablePoints.toFixed(2)}₴)`,
+    `• Cannot cover more than ${maxDiscountPercentage * 100}% of total price`,
+    `• Maximum usable: ${maxAvailablePoints} points (${formatPrice(maxAvailablePoints * pointValue)})`,
   ].join("\n");
 
   return (
@@ -122,75 +155,88 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
               />
             </div>
             <div className={styles.seatPrice}>
-              {selectedSeat.price.toFixed(2)}₴
+              {formatPrice(selectedSeat.price)}
             </div>
           </div>
         ))}
       </div>
 
-      <div className={styles.bonusSection}>
-        <div className={styles.bonusHeader}>
-          <h4>Use Bonus Points</h4>
-          <Tooltip content={bonusRules} position="left">
-            <button className={styles.infoButton} aria-label="Bonus points information">
-              <Info size={18} />
-            </button>
-          </Tooltip>
-        </div>
-        <div className={styles.bonusInfo}>
-          <span>
-            Available: {bonusBalance} points ({bonusBalance.toFixed(2)}₴)
-          </span>
-          {loading && <span>Loading...</span>}
-        </div>
-
-        {bonusBalance > 0 && maxAvailablePoints > 0 && (
-          <div className={styles.bonusControls}>
-            <div className={styles.pointsInput}>
-              <input
-                type="number"
-                min={0}
-                max={maxAvailablePoints}
-                value={bonusPointsToUse}
-                onChange={(e) =>
-                  handleBonusPointsChange(parseInt(e.target.value) || 0)
-                }
-                disabled={isBooking || loading}
-                aria-label="Bonus points to use"
-              />
+      {balance && (
+        <div className={styles.bonusSection}>
+          <div className={styles.bonusHeader}>
+            <h4>Use Bonus Points</h4>
+            <Tooltip content={bonusRules} position="left">
               <button
-                className={styles.useAllButton}
-                onClick={handleUseAllPoints}
-                disabled={isBooking || loading}
+                className={styles.infoButton}
+                aria-label="Bonus points information"
               >
-                Use Max
+                <Info size={18} />
               </button>
-            </div>
-            <div className={styles.pointsLimits}>
-              <span>Min: {minUsablePoints}</span>
-              <span>Max: {maxAvailablePoints}</span>
-            </div>
+            </Tooltip>
           </div>
-        )}
-      </div>
+          <div className={styles.bonusInfo}>
+            <span>
+              Available: {bonusBalance} points (
+              {formatPrice(bonusBalance * pointValue)})
+            </span>
+            {loading && <span>Loading...</span>}
+          </div>
+
+          {canUseBonus && (
+            <div className={styles.bonusControls}>
+              <div className={styles.pointsInput}>
+                <input
+                  type="number"
+                  min={0}
+                  max={maxAvailablePoints}
+                  value={bonusPointsInput}
+                  placeholder="0"
+                  onChange={(e) => handleBonusPointsInputChange(e.target.value)}
+                  disabled={isBooking || loading}
+                  aria-label="Bonus points to use"
+                />
+                <Button
+                  variant="secondary"
+                  size="small"
+                  onClick={handleUseAllPoints}
+                  disabled={isBooking || loading}
+                >
+                  Use Max
+                </Button>
+              </div>
+              <div className={styles.pointsLimits}>
+                <span>Min: {minUsablePoints}</span>
+                <span>Max: {maxAvailablePoints}</span>
+              </div>
+              {isBelowMinimum && (
+                <p className={styles.pointsError} role="alert">
+                  Use at least {minUsablePoints} points or leave the field empty
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className={styles.summary}>
         <div className={styles.priceBreakdown}>
-          {bonusPointsToUse > 0 && (
+          {discount > 0 && (
             <>
               <div className={styles.priceRow}>
                 <span>Total price:</span>
-                <span>{totalPrice.toFixed(2)}₴</span>
+                <span>{formatPrice(totalPrice)}</span>
               </div>
               <div className={styles.priceRow}>
                 <span>Bonus discount:</span>
-                <span className={styles.discount}>-{discount.toFixed(2)}₴</span>
+                <span className={styles.discount}>
+                  -{formatPrice(discount)}
+                </span>
               </div>
             </>
           )}
           <div className={styles.finalPriceRow}>
             <span>Amount to pay:</span>
-            <span className={styles.finalPrice}>{finalPrice.toFixed(2)}₴</span>
+            <span className={styles.finalPrice}>{formatPrice(finalPrice)}</span>
           </div>
         </div>
 
@@ -198,15 +244,18 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
           content="After booking, you will have 20 minutes to complete the payment"
           position="top"
         >
-          <button
-            className={styles.bookButton}
+          <Button
+            variant="primary"
+            size="large"
+            fullWidth
             onClick={handleBooking}
-            disabled={isBooking || loading}
+            loading={isBooking}
+            disabled={isBooking || loading || isBelowMinimum}
           >
             {isBooking
               ? "Processing..."
-              : `Book Now for ${finalPrice.toFixed(2)}₴`}
-          </button>
+              : `Book Now for ${formatPrice(finalPrice)}`}
+          </Button>
         </Tooltip>
       </div>
     </div>

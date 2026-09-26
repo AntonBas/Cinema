@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useMovies } from "@/hooks/features/movies/useMovies";
+import { useMovie } from "@/hooks/features/movie/useMovie";
 import { MovieList } from "@/components/movies/MovieList/MovieList";
+import { DEFAULT_PAGE_SIZE } from "@/utils/paginationUtils";
 import type { MovieCardResponse } from "@/types/movie";
 import type { PageResponse } from "@/types/pagination";
 import styles from "./CurrentMoviesPage.module.css";
@@ -12,14 +13,17 @@ export const CurrentMoviesPage: React.FC = () => {
   >(undefined);
   const [error, setError] = useState<Error | null>(null);
 
-  const { getCurrentlyShowing, loading } = useMovies();
+  const { getCurrentlyShowing, loading } = useMovie();
 
   const loadMovies = useCallback(
     async (page: number) => {
       setError(null);
 
       try {
-        const response = await getCurrentlyShowing({ page, size: 12 });
+        const response = await getCurrentlyShowing({
+          page,
+          size: DEFAULT_PAGE_SIZE,
+        });
         if (response) {
           setMovies((prev) =>
             page === 0 ? response.content : [...prev, ...response.content],

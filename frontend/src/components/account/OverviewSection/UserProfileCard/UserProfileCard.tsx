@@ -3,20 +3,13 @@ import { Info } from "lucide-react";
 import type { UserProfileResponse } from "@/types/user";
 import { Button } from "@/components/ui/Button/Button";
 import { Tooltip } from "@/components/ui/Tooltip/Tooltip";
+import { formatDate } from "@/utils/formatters";
 import styles from "./UserProfileCard.module.css";
 
 interface UserProfileCardProps {
   user: UserProfileResponse;
   onEdit: () => void;
 }
-
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-};
 
 export const UserProfileCard: React.FC<UserProfileCardProps> = ({
   user,

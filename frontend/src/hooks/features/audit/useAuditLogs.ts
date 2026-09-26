@@ -1,66 +1,51 @@
-import { useApi } from '@/hooks/common/useApi';
-import { usePagination } from '@/hooks/common/usePagination';
-import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
-import { auditApi } from '@/api/auditApi';
-import type { AuditLogResponse } from '@/types/audit';
-import type { PageResponse } from '@/types/pagination';
-import { useCallback, useState, useRef } from 'react';
+import { useCallback, useRef } from "react";
+import { useApi } from "@/hooks/common/useApi";
+import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
+import { auditApi } from "@/api/auditApi";
+import { DEFAULT_PAGE_SIZE_ADMIN } from "@/utils/paginationUtils";
+import type { AuditLogResponse } from "@/types/audit";
+import type { PageResponse } from "@/types/pagination";
 
-export const useAuditLogs = () => {
-    const [entityType, setEntityType] = useState<string>();
-    const [action, setAction] = useState<string>();
-    const [changedBy, setChangedBy] = useState<string>();
+interface AuditLogFilters {
+  entityType?: string;
+  action?: string;
+  changedBy?: string;
+}
 
-    const { params, setPage, setSize, setSort } = usePagination({}, 20);
-    const { execute, loading: apiLoading, data, reset } = useApi<PageResponse<AuditLogResponse>>();
+interface AuditLogsQuery {
+  filters: AuditLogFilters;
+  page: number;
+}
 
-    const executeRef = useRef(execute);
-    executeRef.current = execute;
+export const useAuditLogs = ({ filters, page }: AuditLogsQuery) => {
+  const {
+    execute,
+    loading: apiLoading,
+    data,
+  } = useApi<PageResponse<AuditLogResponse>>();
 
-    const loading = useDelayedLoading(apiLoading, { delay: 200, minDisplayTime: 300 });
+  const executeRef = useRef(execute);
+  executeRef.current = execute;
 
-    const fetchAuditLogs = useCallback(async () => {
-        return executeRef.current(() => auditApi.getAll({
-            ...params,
-            entityType,
-            action,
-            changedBy
-        }));
-    }, [params, entityType, action, changedBy]);
+  const loading = useDelayedLoading(apiLoading, {
+    delay: 200,
+    minDisplayTime: 300,
+  });
 
-    const refresh = useCallback(() => {
-        return fetchAuditLogs();
-    }, [fetchAuditLogs]);
+  const refresh = useCallback(() => {
+    return executeRef.current(() =>
+      auditApi.admin.getAll({
+        page,
+        size: DEFAULT_PAGE_SIZE_ADMIN,
+        ...filters,
+      }),
+    );
+  }, [page, filters]);
 
-    const applyFilters = useCallback((filters: {
-        entityType?: string;
-        action?: string;
-        changedBy?: string;
-    }) => {
-        setEntityType(filters.entityType);
-        setAction(filters.action);
-        setChangedBy(filters.changedBy);
-        setPage(0);
-    }, [setPage]);
-
-    const clearFilters = useCallback(() => {
-        setEntityType(undefined);
-        setAction(undefined);
-        setChangedBy(undefined);
-        setPage(0);
-    }, [setPage]);
-
-    return {
-        auditLogs: data?.content || [],
-        pagination: data,
-        loading,
-        filters: { entityType, action, changedBy },
-        setPage,
-        setSize,
-        setSort,
-        applyFilters,
-        clearFilters,
-        refresh,
-        reset,
-    };
+  return {
+    auditLogs: data?.content || [],
+    pagination: data,
+    loading,
+    refresh,
+  };
 };

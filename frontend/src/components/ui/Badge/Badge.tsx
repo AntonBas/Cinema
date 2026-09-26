@@ -1,58 +1,60 @@
-import React from 'react';
-import styles from './Badge.module.css';
-import clsx from 'clsx';
+import React from "react";
+import styles from "./Badge.module.css";
+import clsx from "clsx";
 
 export type BadgeVariant =
-    | 'primary'
-    | 'secondary'
-    | 'success'
-    | 'error'
-    | 'warning'
-    | 'info'
-    | 'outline';
+  | "primary"
+  | "secondary"
+  | "success"
+  | "error"
+  | "warning"
+  | "info"
+  | "outline";
 
 export interface BadgeProps {
-    children: React.ReactNode;
-    variant?: BadgeVariant;
-    size?: 'small' | 'medium' | 'large';
-    className?: string;
-    onClick?: () => void;
-    title?: string;
+  children: React.ReactNode;
+  variant?: BadgeVariant;
+  size?: "small" | "medium" | "large";
+  className?: string;
+  onClick?: () => void;
+  title?: string;
+  ariaLabel?: string;
 }
 
 export const Badge: React.FC<BadgeProps> = ({
-    children,
-    variant = 'primary',
-    size = 'medium',
-    className = '',
-    onClick,
-    title
+  children,
+  variant = "primary",
+  size = "medium",
+  className = "",
+  onClick,
+  title,
+  ariaLabel,
 }) => {
-    const badgeClass = clsx(
-        styles.badge,
-        styles[variant],
-        styles[size],
-        onClick && styles.clickable,
-        className
-    );
+  const badgeClass = clsx(
+    styles.badge,
+    styles[variant],
+    styles[size],
+    onClick && styles.clickable,
+    className,
+  );
 
-    if (onClick) {
-        return (
-            <button
-                className={badgeClass}
-                onClick={onClick}
-                type="button"
-                title={title}
-                aria-label={typeof children === 'string' ? children : 'Badge'}
-            >
-                {children}
-            </button>
-        );
-    }
-
+  if (onClick) {
     return (
-        <span className={badgeClass} title={title}>
-            {children}
-        </span>
+      <button
+        className={badgeClass}
+        onClick={onClick}
+        type="button"
+        title={title}
+        aria-label={ariaLabel}
+      >
+        {children}
+      </button>
     );
+  }
+
+  return (
+    <span className={badgeClass} title={title}>
+      {children}
+    </span>
+  );
 };

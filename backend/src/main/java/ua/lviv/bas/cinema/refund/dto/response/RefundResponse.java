@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Schema(description = "Refund response with full details")
@@ -32,11 +32,11 @@ public record RefundResponse(
 
         @JsonFormat(pattern = "dd.MM.yyyy HH:mm")
         @Schema(description = "Processing timestamp", example = "15.12.2024 10:20:00")
-        LocalDateTime processedAt,
+        Instant processedAt,
 
         @JsonFormat(pattern = "dd.MM.yyyy HH:mm")
         @Schema(description = "Creation timestamp", example = "15.12.2024 10:15:00")
-        LocalDateTime createdAt,
+        Instant createdAt,
 
         @Schema(description = "Payment ID", example = "456")
         Long paymentId,

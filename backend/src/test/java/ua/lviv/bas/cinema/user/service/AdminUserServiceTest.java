@@ -27,7 +27,8 @@ import ua.lviv.bas.cinema.user.repository.UserRepository;
 import ua.lviv.bas.cinema.user.repository.projection.AdminUserProjection;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,7 +36,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class AdminUserServiceTest {
@@ -69,10 +73,10 @@ public class AdminUserServiceTest {
     void setUp() {
         SecurityContextHolder.setContext(securityContext);
 
-        user = User.builder().id(USER_ID).email(USER_EMAIL).userRole(UserRole.ROLE_USER).enabled(true)
+        user = User.builder().id(USER_ID).email(USER_EMAIL).userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true)
                 .verificationStatus(VerificationStatus.NOT_VERIFIED).build();
 
-        adminUser = User.builder().id(ADMIN_ID).email(ADMIN_EMAIL).userRole(UserRole.ROLE_ADMIN).enabled(true)
+        adminUser = User.builder().id(ADMIN_ID).email(ADMIN_EMAIL).userRole(UserRole.ROLE_ADMIN).enabled(true).emailVerified(true)
                 .verificationStatus(VerificationStatus.VERIFIED).build();
 
         response = new AdminUserListResponse(USER_ID, USER_EMAIL, "John", "Doe", UserRole.ROLE_USER, true,
@@ -219,7 +223,7 @@ public class AdminUserServiceTest {
 
     @Test
     void updateVerificationToNotVerifiedShouldSucceed() {
-        LocalDateTime verifiedTime = LocalDateTime.now().minusDays(1);
+        Instant verifiedTime = Instant.now().minus(Duration.ofDays(1));
         user.setVerificationStatus(VerificationStatus.VERIFIED);
         user.setVerifiedAt(verifiedTime);
 
@@ -256,7 +260,7 @@ public class AdminUserServiceTest {
         Page<AdminUserProjection> projectionPage = new PageImpl<>(List.of(projection), pageable, 1);
 
         when(userRepository.findProjectionsByFilters(eq(search), eq("ROLE_USER"), eq("NOT_VERIFIED"), eq(true),
-                eq(pageable))).thenReturn(projectionPage);
+                any(Pageable.class))).thenReturn(projectionPage);
         when(userMapper.toAdminUserListResponse(projection)).thenReturn(response);
 
         Page<AdminUserListResponse> result = adminUserService.getUsers(search, role, verificationStatus, enabled,
@@ -274,7 +278,7 @@ public class AdminUserServiceTest {
         AdminUserProjection projection = createAdminUserProjection();
         Page<AdminUserProjection> projectionPage = new PageImpl<>(List.of(projection), pageable, 1);
 
-        when(userRepository.findProjectionsByFilters(eq(null), eq(null), eq(null), eq(null), eq(pageable)))
+        when(userRepository.findProjectionsByFilters(eq(null), eq(null), eq(null), eq(null), any(Pageable.class)))
                 .thenReturn(projectionPage);
         when(userMapper.toAdminUserListResponse(projection)).thenReturn(response);
 
@@ -290,7 +294,7 @@ public class AdminUserServiceTest {
 
         Page<AdminUserProjection> emptyPage = new PageImpl<>(List.of(), pageable, 0);
 
-        when(userRepository.findProjectionsByFilters(eq(null), eq(null), eq(null), eq(null), eq(pageable)))
+        when(userRepository.findProjectionsByFilters(eq(null), eq(null), eq(null), eq(null), any(Pageable.class)))
                 .thenReturn(emptyPage);
 
         Page<AdminUserListResponse> result = adminUserService.getUsers(null, null, null, null, pageable);
@@ -356,7 +360,7 @@ public class AdminUserServiceTest {
             }
 
             @Override
-            public LocalDateTime getVerifiedAt() {
+            public Instant getVerifiedAt() {
                 return null;
             }
 
@@ -366,8 +370,8 @@ public class AdminUserServiceTest {
             }
 
             @Override
-            public LocalDateTime getLastActivity() {
-                return LocalDateTime.now().minusDays(1);
+            public Instant getLastActivity() {
+                return Instant.now().minus(Duration.ofDays(1));
             }
         };
     }

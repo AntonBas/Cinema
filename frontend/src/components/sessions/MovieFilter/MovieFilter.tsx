@@ -24,6 +24,7 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({
   const [showDropdown, setShowDropdown] = useState(false);
 
   const timeoutRef = useRef<number | null>(null);
+  const latestQueryRef = useRef("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -46,14 +47,17 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({
       return;
     }
 
+    latestQueryRef.current = query;
     setStatus("loading");
     try {
       const response = await movieApi.public.search(query);
+      if (latestQueryRef.current !== query) return;
       const data = response?.data || [];
       setMovies(data);
       setStatus(data.length > 0 ? "results" : "empty");
       setShowDropdown(true);
     } catch {
+      if (latestQueryRef.current !== query) return;
       setMovies([]);
       setStatus("empty");
     }
@@ -72,6 +76,7 @@ export const MovieFilter: React.FC<MovieFilterProps> = ({
 
   const resetSearch = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    latestQueryRef.current = "";
     setSearchTerm("");
     setMovies([]);
     setStatus("idle");

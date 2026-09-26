@@ -5,18 +5,25 @@ export type BonusTransactionType =
   | "BOOKING_SPEND"
   | "PAYMENT_ACCRUAL"
   | "REFUND_RETURN"
-  | "BOOKING_CANCEL";
+  | "BOOKING_CANCEL"
+  | "ACCRUAL_REVERSAL";
 
 export interface UseBonusPointsRequest {
   pointsToUse: number;
 }
 
+export type BonusRuleField =
+  | "points"
+  | "moneyRatio"
+  | "minPointsPerTransaction"
+  | "maxPointsPerTransaction";
+
 export interface BonusRulesRequest {
-  points?: number | null;
-  moneyRatio?: string | null;
-  minPointsPerTransaction?: number | null;
-  maxPointsPerTransaction?: number | null;
-  active?: boolean | null;
+  points: number | null;
+  moneyRatio: string | null;
+  minPointsPerTransaction: number | null;
+  maxPointsPerTransaction: number | null;
+  active: boolean;
 }
 
 export interface BonusBalanceResponse {
@@ -27,6 +34,7 @@ export interface BonusBalanceResponse {
   maxUsablePoints: number;
   minRedemptionValue: string;
   maxRedemptionValue: string;
+  maxDiscountPercentage: string;
 }
 
 export interface BonusRulesResponse {
@@ -37,6 +45,8 @@ export interface BonusRulesResponse {
   minPointsPerTransaction?: number | null;
   maxPointsPerTransaction?: number | null;
   active: boolean;
+  requiredFields: BonusRuleField[];
+  optionalFields: BonusRuleField[];
 }
 
 export interface BonusTransactionResponse {
@@ -56,4 +66,5 @@ export const BonusTransactionTypeDisplay: Record<BonusTransactionType, string> =
     PAYMENT_ACCRUAL: "Payment Accrual",
     REFUND_RETURN: "Refund Return",
     BOOKING_CANCEL: "Booking Cancel",
+    ACCRUAL_REVERSAL: "Earned Points Reversed",
   };

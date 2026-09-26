@@ -57,8 +57,8 @@ class BonusCardConcurrencyTest {
         var startLatch = new CountDownLatch(1);
         ExecutorService executor = Executors.newFixedThreadPool(2);
 
-        Callable<Exception> addPointsA = () -> attemptAddPoints(readyLatch, startLatch, POINTS_A, "Promo A");
-        Callable<Exception> addPointsB = () -> attemptAddPoints(readyLatch, startLatch, POINTS_B, "Promo B");
+        Callable<Exception> addPointsA = () -> attemptAddPoints(readyLatch, startLatch, 1L, POINTS_A, "Promo A");
+        Callable<Exception> addPointsB = () -> attemptAddPoints(readyLatch, startLatch, 2L, POINTS_B, "Promo B");
 
         Future<Exception> resultA = executor.submit(addPointsA);
         Future<Exception> resultB = executor.submit(addPointsB);
@@ -117,12 +117,12 @@ class BonusCardConcurrencyTest {
         }
     }
 
-    private Exception attemptAddPoints(CountDownLatch readyLatch, CountDownLatch startLatch, int points,
-                                       String promotionTitle) {
+    private Exception attemptAddPoints(CountDownLatch readyLatch, CountDownLatch startLatch, Long promotionId,
+                                       int points, String promotionTitle) {
         try {
             readyLatch.countDown();
             startLatch.await();
-            bonusLedgerService.addPromotionPoints(user, points, promotionTitle);
+            bonusLedgerService.addPromotionPoints(user, promotionId, points, promotionTitle);
             return null;
         } catch (Exception e) {
             return e;
@@ -132,6 +132,6 @@ class BonusCardConcurrencyTest {
     private User buildUser(String email) {
         return User.builder().email(email).firstName("Test").lastName("User")
                 .dateOfBirth(LocalDate.of(1995, 1, 1)).city("Lviv").phoneNumber("+380000000011")
-                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).build();
+                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).build();
     }
 }

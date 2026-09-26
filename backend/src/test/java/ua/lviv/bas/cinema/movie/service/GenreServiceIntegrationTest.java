@@ -1,6 +1,5 @@
 package ua.lviv.bas.cinema.movie.service;
 
-import java.time.LocalDate;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -11,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
+import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.config.NoOpCacheTestConfig;
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
 import ua.lviv.bas.cinema.movie.domain.Genre;
@@ -58,7 +58,7 @@ class GenreServiceIntegrationTest {
     private Movie buildMovie(String slug, Set<Genre> genres) {
         return Movie.builder().title("ZZTEST Movie " + slug).slug(slug).trailerUrl("https://example.com/trailer")
                 .description("Test movie for genre regression test").durationMinutes(120)
-                .releaseDate(LocalDate.now().minusDays(1)).endShowingDate(LocalDate.now().plusMonths(1))
+                .releaseDate(CinemaTime.today().minusDays(1)).endShowingDate(CinemaTime.today().plusMonths(1))
                 .status(MovieStatus.CURRENT).posterFileName("poster.jpg").ageRating(AgeRating.PEGI_12).genres(genres)
                 .build();
     }

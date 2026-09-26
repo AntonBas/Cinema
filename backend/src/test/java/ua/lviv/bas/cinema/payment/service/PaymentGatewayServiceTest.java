@@ -2,6 +2,8 @@ package ua.lviv.bas.cinema.payment.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -21,9 +23,12 @@ import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.payment.dto.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentGatewayUnavailableException;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.Base64;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -59,8 +64,9 @@ class PaymentGatewayServiceTest {
         User user = User.builder().id(1L).email("test@example.com").build();
         Movie movie = Movie.builder().id(1L).title("Test Movie").durationMinutes(120).build();
         CinemaHall hall = CinemaHall.builder().id(1L).name("Hall A").build();
-        Session session = Session.builder().id(1L).movie(movie).hall(hall).startTime(LocalDateTime.now()).build();
-        Booking booking = Booking.builder().id(1L).user(user).session(session).build();
+        Session session = Session.builder().id(1L).movie(movie).hall(hall).startTime(CinemaTime.now()).build();
+        Booking booking = Booking.builder().id(1L).user(user).session(session)
+                .expiresAt(Instant.parse("2026-09-24T18:30:00Z")).build();
         payment = Payment.builder().id(1L).booking(booking).amount(new BigDecimal("100.00")).liqpayOrderId("ORDER_123")
                 .status(PaymentStatus.PENDING).build();
     }
@@ -74,6 +80,25 @@ class PaymentGatewayServiceTest {
         assertThat(response.signature()).isNotBlank();
         assertThat(response.paymentUrl()).isNotBlank();
         assertThat(response.liqpayOrderId()).isEqualTo("ORDER_123");
+    }
+
+    @Test
+    void prepareLiqPayPaymentDataShouldReturnToSuccessPageWithPublicBookingId() {
+        PaymentLiqPayDataResponse response = paymentGatewayService.prepareLiqPayPaymentData(payment);
+
+        String decoded = new String(Base64.getDecoder().decode(response.data()), StandardCharsets.UTF_8);
+
+        assertThat(decoded).contains("/booking/success?bookingId=" + payment.getBooking().getPublicId()
+                + "&paymentId=" + payment.getId());
+    }
+
+    @Test
+    void prepareLiqPayPaymentDataShouldLimitCheckoutToBookingExpiryInUtc() {
+        PaymentLiqPayDataResponse response = paymentGatewayService.prepareLiqPayPaymentData(payment);
+
+        String decoded = new String(Base64.getDecoder().decode(response.data()), StandardCharsets.UTF_8);
+
+        assertThat(decoded).contains("\"expired_date\":\"2026-09-24 18:30:00\"");
     }
 
     @Test
@@ -166,7 +191,7 @@ class PaymentGatewayServiceTest {
 
     @Test
     void checkRefundStatusInSandboxModeShouldReturnConfirmedWithoutCallingGateway() {
-        RefundGatewayStatus result = paymentGatewayService.checkRefundStatus("ORDER_123");
+        RefundGatewayStatus result = checkFullRefund();
 
         assertThat(result).isEqualTo(RefundGatewayStatus.CONFIRMED);
         verify(restTemplate, never()).postForEntity(any(String.class), any(), eq(String.class));
@@ -179,7 +204,40 @@ class PaymentGatewayServiceTest {
         when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
                 .thenReturn(ResponseEntity.ok(responseBody));
 
-        assertThat(paymentGatewayService.checkRefundStatus("ORDER_123")).isEqualTo(RefundGatewayStatus.CONFIRMED);
+        assertThat(checkFullRefund()).isEqualTo(RefundGatewayStatus.CONFIRMED);
+    }
+
+    @Test
+    void checkRefundStatusWhenReversedButOnlyPartOfOrderRefundedShouldNotConfirm() {
+        ReflectionTestUtils.setField(paymentGatewayService, "sandboxMode", false);
+        String responseBody = LiqPayDecoder.encodeToBase64(Map.of("status", "reversed"));
+        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
+                .thenReturn(ResponseEntity.ok(responseBody));
+
+        assertThat(paymentGatewayService.checkRefundStatus("ORDER_123", new BigDecimal("50.00"),
+                new BigDecimal("100.00"))).isEqualTo(RefundGatewayStatus.UNKNOWN);
+    }
+
+    @Test
+    void checkRefundStatusWhenGatewayRefundedTotalCoversExpectedShouldConfirm() {
+        ReflectionTestUtils.setField(paymentGatewayService, "sandboxMode", false);
+        String responseBody = LiqPayDecoder.encodeToBase64(Map.of("status", "reversed", "refund_amount", 50));
+        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
+                .thenReturn(ResponseEntity.ok(responseBody));
+
+        assertThat(paymentGatewayService.checkRefundStatus("ORDER_123", new BigDecimal("50.00"),
+                new BigDecimal("100.00"))).isEqualTo(RefundGatewayStatus.CONFIRMED);
+    }
+
+    @Test
+    void checkRefundStatusWhenGatewayRefundedTotalBelowExpectedShouldNotConfirm() {
+        ReflectionTestUtils.setField(paymentGatewayService, "sandboxMode", false);
+        String responseBody = LiqPayDecoder.encodeToBase64(Map.of("status", "reversed", "refund_amount", 50));
+        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
+                .thenReturn(ResponseEntity.ok(responseBody));
+
+        assertThat(paymentGatewayService.checkRefundStatus("ORDER_123", new BigDecimal("100.00"),
+                new BigDecimal("100.00"))).isEqualTo(RefundGatewayStatus.UNKNOWN);
     }
 
     @Test
@@ -189,7 +247,7 @@ class PaymentGatewayServiceTest {
         when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
                 .thenReturn(ResponseEntity.ok(responseBody));
 
-        assertThat(paymentGatewayService.checkRefundStatus("ORDER_123")).isEqualTo(RefundGatewayStatus.NOT_CONFIRMED);
+        assertThat(checkFullRefund()).isEqualTo(RefundGatewayStatus.NOT_CONFIRMED);
     }
 
     @Test
@@ -199,7 +257,7 @@ class PaymentGatewayServiceTest {
         when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
                 .thenReturn(ResponseEntity.ok(responseBody));
 
-        assertThat(paymentGatewayService.checkRefundStatus("ORDER_123")).isEqualTo(RefundGatewayStatus.UNKNOWN);
+        assertThat(checkFullRefund()).isEqualTo(RefundGatewayStatus.UNKNOWN);
     }
 
     @Test
@@ -208,6 +266,24 @@ class PaymentGatewayServiceTest {
         when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
                 .thenThrow(new RestClientException("Connection timed out"));
 
-        assertThat(paymentGatewayService.checkRefundStatus("ORDER_123")).isEqualTo(RefundGatewayStatus.UNKNOWN);
+        assertThat(checkFullRefund()).isEqualTo(RefundGatewayStatus.UNKNOWN);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"success,SUCCESS", "sandbox,SUCCESS", "failure,FAILED", "error,FAILED",
+            "processing,STILL_PROCESSING", "wait_secure,STILL_PROCESSING", "wait_accept,STILL_PROCESSING",
+            "3ds_verify,STILL_PROCESSING", "otp_verify,STILL_PROCESSING", "reversed,UNKNOWN"})
+    void checkPaymentStatusShouldMapLiqPayStatuses(String liqpayStatus, PaymentGatewayStatus expected) {
+        ReflectionTestUtils.setField(paymentGatewayService, "sandboxMode", false);
+        String responseBody = LiqPayDecoder.encodeToBase64(Map.of("status", liqpayStatus));
+        when(restTemplate.postForEntity(any(String.class), any(), eq(String.class)))
+                .thenReturn(ResponseEntity.ok(responseBody));
+
+        assertThat(paymentGatewayService.checkPaymentStatus("ORDER_123").status()).isEqualTo(expected);
+    }
+
+    private RefundGatewayStatus checkFullRefund() {
+        return paymentGatewayService.checkRefundStatus("ORDER_123", new BigDecimal("100.00"),
+                new BigDecimal("100.00"));
     }
 }

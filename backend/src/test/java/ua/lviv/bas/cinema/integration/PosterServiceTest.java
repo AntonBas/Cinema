@@ -5,9 +5,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.http.MediaType;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
@@ -39,25 +38,25 @@ public class PosterServiceTest {
     }
 
     @Test
-    void getPosterResponseSuccess() {
+    void loadPosterSuccess() {
         String fileName = "test.jpg";
         byte[] fileData = new byte[]{1, 2, 3};
         when(fileStorageService.loadFile(fileName, "posters")).thenReturn(fileData);
         when(fileStorageService.determineContentType(fileName)).thenReturn("image/jpeg");
 
-        ResponseEntity<byte[]> result = posterService.getPosterResponse(fileName);
+        var result = posterService.loadPoster(fileName);
 
-        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(result.getBody()).isEqualTo(fileData);
+        assertThat(result).hasValueSatisfying(poster -> {
+            assertThat(poster.data()).isEqualTo(fileData);
+            assertThat(poster.mediaType()).isEqualTo(MediaType.IMAGE_JPEG);
+        });
     }
 
     @Test
-    void getPosterResponseWhenFileNotFound() {
+    void loadPosterWhenFileNotFound() {
         String fileName = "nonexistent.jpg";
         when(fileStorageService.loadFile(fileName, "posters")).thenReturn(null);
 
-        ResponseEntity<byte[]> result = posterService.getPosterResponse(fileName);
-
-        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(posterService.loadPoster(fileName)).isEmpty();
     }
 }

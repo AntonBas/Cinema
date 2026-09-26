@@ -10,7 +10,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.promotion.domain.Promotion;
+import ua.lviv.bas.cinema.promotion.domain.PromotionStatus;
 import ua.lviv.bas.cinema.promotion.domain.UserPromotion;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.promotion.dto.request.ClaimPromotionRequest;
@@ -18,7 +20,11 @@ import ua.lviv.bas.cinema.promotion.dto.request.PromotionRequest;
 import ua.lviv.bas.cinema.promotion.dto.response.PromotionListResponse;
 import ua.lviv.bas.cinema.promotion.dto.response.PromotionResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.exception.domain.financial.promotion.*;
+import ua.lviv.bas.cinema.exception.domain.financial.promotion.AlreadyClaimedException;
+import ua.lviv.bas.cinema.exception.domain.financial.promotion.InvalidPromotionDateRangeException;
+import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionAlreadyExistsException;
+import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionHasRedemptionsException;
+import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionNotActiveException;
 import ua.lviv.bas.cinema.promotion.mapper.PromotionMapper;
 import ua.lviv.bas.cinema.promotion.repository.PromotionRepository;
 import ua.lviv.bas.cinema.promotion.repository.UserPromotionRepository;
@@ -34,8 +40,14 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class PromotionServiceTest {
@@ -57,8 +69,8 @@ public class PromotionServiceTest {
     private final Long PROMOTION_ID = 1L;
     private final String PROMOTION_TITLE = "Summer Sale";
     private final Integer BONUS_POINTS = 100;
-    private final LocalDate START_DATE = LocalDate.now().minusDays(1);
-    private final LocalDate END_DATE = LocalDate.now().plusDays(30);
+    private final LocalDate START_DATE = CinemaTime.today().minusDays(1);
+    private final LocalDate END_DATE = CinemaTime.today().plusDays(30);
 
     private User user;
     private Promotion promotion;
@@ -76,12 +88,12 @@ public class PromotionServiceTest {
                 .build();
 
         promotionResponse = new PromotionResponse(PROMOTION_ID, PROMOTION_TITLE, "Summer special promotion",
-                BONUS_POINTS, START_DATE, END_DATE);
+                BONUS_POINTS, START_DATE, END_DATE, true, PromotionStatus.ACTIVE);
 
-        createRequest = new PromotionRequest(PROMOTION_TITLE, "Summer special promotion", BONUS_POINTS, START_DATE,
-                END_DATE);
+        createRequest = new PromotionRequest(PROMOTION_TITLE, "Summer special promotion", BONUS_POINTS,
+                CinemaTime.today(), END_DATE, null);
 
-        updateRequest = new PromotionRequest("Updated Title", "Updated description", 200, START_DATE, END_DATE);
+        updateRequest = new PromotionRequest("Updated Title", "Updated description", 200, START_DATE, END_DATE, null);
 
         claimRequest = new ClaimPromotionRequest(PROMOTION_ID);
 
@@ -91,7 +103,7 @@ public class PromotionServiceTest {
     @Test
     void createPromotionShouldSucceed() {
         when(promotionRepository.existsByTitle(PROMOTION_TITLE)).thenReturn(false);
-        when(promotionMapper.toPromotion(createRequest)).thenReturn(promotion);
+        when(promotionMapper.toEntity(createRequest)).thenReturn(promotion);
         when(promotionRepository.save(promotion)).thenReturn(promotion);
         when(promotionMapper.toPromotionResponse(promotion)).thenReturn(promotionResponse);
 
@@ -114,7 +126,7 @@ public class PromotionServiceTest {
     @Test
     void createPromotionWithEndDateBeforeStartDateShouldThrowException() {
         var invalidRequest = new PromotionRequest(PROMOTION_TITLE, "Summer special promotion", BONUS_POINTS,
-                END_DATE, START_DATE);
+                END_DATE, START_DATE, null);
         when(promotionRepository.existsByTitle(PROMOTION_TITLE)).thenReturn(false);
 
         assertThatThrownBy(() -> promotionService.createPromotion(invalidRequest))
@@ -124,8 +136,35 @@ public class PromotionServiceTest {
     }
 
     @Test
-    void updatePromotionWithEndDateBeforeStartDateShouldThrowException() {
-        var invalidRequest = new PromotionRequest("Updated Title", "Updated description", 200, END_DATE, START_DATE);
+    void createPromotionWithStartDateInPastShouldThrowException() {
+        var pastRequest = new PromotionRequest(PROMOTION_TITLE, "Summer special promotion", BONUS_POINTS, START_DATE,
+                END_DATE, null);
+        when(promotionRepository.existsByTitle(PROMOTION_TITLE)).thenReturn(false);
+
+        assertThatThrownBy(() -> promotionService.createPromotion(pastRequest))
+                .isInstanceOf(InvalidPromotionDateRangeException.class);
+
+        verify(promotionRepository, never()).save(any());
+    }
+
+    @Test
+    void updatePromotionWithEndDateBeforeStoredStartDateShouldThrowException() {
+        promotion.setStartDate(CinemaTime.today().plusDays(10));
+        var invalidRequest = new PromotionRequest("Updated Title", "Updated description", 200, null,
+                CinemaTime.today().plusDays(5), null);
+        when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(promotion));
+
+        assertThatThrownBy(() -> promotionService.updatePromotion(PROMOTION_ID, invalidRequest))
+                .isInstanceOf(InvalidPromotionDateRangeException.class);
+
+        verify(promotionRepository, never()).save(any());
+    }
+
+    @Test
+    void updatePromotionWithChangedEndDateInPastShouldThrowException() {
+        var invalidRequest = new PromotionRequest("Updated Title", "Updated description", 200, START_DATE,
+                CinemaTime.today().minusDays(1), null);
+        when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(promotion));
 
         assertThatThrownBy(() -> promotionService.updatePromotion(PROMOTION_ID, invalidRequest))
                 .isInstanceOf(InvalidPromotionDateRangeException.class);
@@ -140,7 +179,7 @@ public class PromotionServiceTest {
         PromotionListProjection projection = createAdminProjection();
         Page<PromotionListProjection> page = new PageImpl<>(List.of(projection), pageable, 1);
         PromotionListResponse listResponse = new PromotionListResponse(PROMOTION_ID, PROMOTION_TITLE, BONUS_POINTS,
-                START_DATE, END_DATE);
+                START_DATE, END_DATE, true, PromotionStatus.ACTIVE);
 
         when(promotionRepository.findAllAdminProjections(eq(query), eq(pageable))).thenReturn(page);
         when(promotionMapper.toPromotionListResponse(projection)).thenReturn(listResponse);
@@ -157,7 +196,7 @@ public class PromotionServiceTest {
         PromotionListProjection projection = createAdminProjection();
         Page<PromotionListProjection> page = new PageImpl<>(List.of(projection), pageable, 1);
         PromotionListResponse listResponse = new PromotionListResponse(PROMOTION_ID, PROMOTION_TITLE, BONUS_POINTS,
-                START_DATE, END_DATE);
+                START_DATE, END_DATE, true, PromotionStatus.ACTIVE);
 
         when(promotionRepository.findAllAdminProjections(eq(null), eq(pageable))).thenReturn(page);
         when(promotionMapper.toPromotionListResponse(projection)).thenReturn(listResponse);
@@ -191,7 +230,7 @@ public class PromotionServiceTest {
         PromotionResponseProjection projection = createResponseProjection();
         List<PromotionResponseProjection> projections = List.of(projection);
 
-        when(promotionRepository.findAllActivePromotions()).thenReturn(projections);
+        when(promotionRepository.findAllActivePromotions(any(LocalDate.class))).thenReturn(projections);
         when(promotionMapper.toPromotionResponse(projection)).thenReturn(promotionResponse);
 
         List<PromotionResponse> result = promotionService.getAvailablePromotions(user);
@@ -220,7 +259,7 @@ public class PromotionServiceTest {
                 .description("Updated description").bonusPoints(200).startDate(START_DATE).endDate(END_DATE).build();
 
         PromotionResponse updatedResponse = new PromotionResponse(PROMOTION_ID, "Updated Title", "Updated description",
-                200, START_DATE, END_DATE);
+                200, START_DATE, END_DATE, true, PromotionStatus.ACTIVE);
 
         when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(promotion));
         when(promotionRepository.save(promotion)).thenReturn(updatedPromotion);
@@ -230,7 +269,7 @@ public class PromotionServiceTest {
 
         assertThat(result).isEqualTo(updatedResponse);
         assertThat(result.title()).isEqualTo("Updated Title");
-        verify(promotionMapper).updatePromotionFromRequest(updateRequest, promotion);
+        verify(promotionMapper).updateEntity(updateRequest, promotion);
         verify(promotionRepository).save(promotion);
     }
 
@@ -291,21 +330,32 @@ public class PromotionServiceTest {
         PromotionResponse result = promotionService.claimPromotion(claimRequest, user);
 
         assertThat(result).isEqualTo(promotionResponse);
-        verify(bonusLedgerService).addPromotionPoints(user, BONUS_POINTS, PROMOTION_TITLE);
+        verify(bonusLedgerService).addPromotionPoints(user, PROMOTION_ID, BONUS_POINTS, PROMOTION_TITLE);
         verify(userPromotionRepository).save(any(UserPromotion.class));
     }
 
     @Test
     void claimPromotionWhenNotActiveShouldThrowException() {
         Promotion inactivePromotion = Promotion.builder().id(PROMOTION_ID).title(PROMOTION_TITLE)
-                .startDate(LocalDate.now().plusDays(1)).endDate(LocalDate.now().plusDays(30)).build();
+                .startDate(CinemaTime.today().plusDays(1)).endDate(CinemaTime.today().plusDays(30)).build();
 
         when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(inactivePromotion));
 
         assertThatThrownBy(() -> promotionService.claimPromotion(claimRequest, user))
                 .isInstanceOf(PromotionNotActiveException.class);
 
-        verify(bonusLedgerService, never()).addPromotionPoints(any(), any(), any());
+        verify(bonusLedgerService, never()).addPromotionPoints(any(), any(), any(), any());
+        verify(userPromotionRepository, never()).save(any());
+    }
+
+    @Test
+    void claimPromotionWhenDisabledShouldThrowException() {
+        promotion.setActive(false);
+        when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(promotion));
+
+        assertThatThrownBy(() -> promotionService.claimPromotion(claimRequest, user))
+                .isInstanceOf(PromotionNotActiveException.class);
+
         verify(userPromotionRepository, never()).save(any());
     }
 
@@ -317,7 +367,7 @@ public class PromotionServiceTest {
         assertThatThrownBy(() -> promotionService.claimPromotion(claimRequest, user))
                 .isInstanceOf(AlreadyClaimedException.class);
 
-        verify(bonusLedgerService, never()).addPromotionPoints(any(), any(), any());
+        verify(bonusLedgerService, never()).addPromotionPoints(any(), any(), any(), any());
         verify(userPromotionRepository, never()).save(any());
     }
 
@@ -365,6 +415,11 @@ public class PromotionServiceTest {
             public LocalDate getEndDate() {
                 return END_DATE;
             }
+
+            @Override
+            public boolean getActive() {
+                return true;
+            }
         };
     }
 
@@ -398,6 +453,11 @@ public class PromotionServiceTest {
             @Override
             public LocalDate getEndDate() {
                 return END_DATE;
+            }
+
+            @Override
+            public boolean getActive() {
+                return true;
             }
         };
     }

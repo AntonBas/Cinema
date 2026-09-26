@@ -9,23 +9,25 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
 import ua.lviv.bas.cinema.audit.domain.AuditLog;
 import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.audit.dto.response.AuditLogResponse;
-import ua.lviv.bas.cinema.exception.domain.audit.AuditHistoryNotFoundException;
 import ua.lviv.bas.cinema.audit.mapper.AuditLogMapper;
 import ua.lviv.bas.cinema.audit.service.AuditQueryService;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/admin/audit-logs")
+@RequestMapping("/api/admin/audit-logs")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 @Tag(name = "Audit Admin", description = "API for administrative audit log management")
@@ -43,9 +45,9 @@ public class AdminAuditController {
             @Parameter(description = "Filter by entity type (e.g., User, BonusRules)") @RequestParam(required = false) String entityType,
             @Parameter(description = "Filter by audit action (CREATED, UPDATED, DELETED, etc.)") @RequestParam(required = false) AuditAction action,
             @Parameter(description = "Filter by user who performed the action") @RequestParam(required = false) String changedBy,
-            @PageableDefault(size = 20, sort = "changedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 20) Pageable pageable) {
 
-        Page<AuditLog> auditLogs = auditQueryService.findByFilters(entityType, action, changedBy, pageable);
+        Page<AuditLog> auditLogs = auditQueryService.getByFilters(entityType, action, changedBy, pageable);
         Page<AuditLogResponse> responsePage = auditLogs.map(auditLogMapper::toResponse);
 
         return ResponseEntity.ok(PageResponse.from(responsePage));
@@ -53,18 +55,13 @@ public class AdminAuditController {
 
     @Operation(summary = "Get entity history", description = "Returns audit history for a specific entity")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Entity history retrieved successfully"),
-            @ApiResponse(responseCode = "404", description = "No audit logs found for this entity"),
             @ApiResponse(responseCode = "403", description = "Access denied")})
     @GetMapping("/entity/{entityType}/{entityId}")
     public ResponseEntity<List<AuditLogResponse>> getEntityHistory(
             @Parameter(description = "Entity type (e.g., User, BonusRules)", required = true) @PathVariable String entityType,
             @Parameter(description = "Entity ID", required = true) @PathVariable Long entityId) {
 
-        List<AuditLog> auditLogs = auditQueryService.findByEntityTypeAndEntityId(entityType, entityId);
-
-        if (auditLogs.isEmpty()) {
-            throw new AuditHistoryNotFoundException(entityType, entityId);
-        }
+        List<AuditLog> auditLogs = auditQueryService.getEntityHistory(entityType, entityId);
 
         List<AuditLogResponse> responses = auditLogs.stream().map(auditLogMapper::toResponse).toList();
 

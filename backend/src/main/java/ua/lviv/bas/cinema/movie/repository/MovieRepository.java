@@ -10,6 +10,7 @@ import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.cinema.domain.Session;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,8 +39,9 @@ public interface MovieRepository extends JpaRepository<Movie, Long>, JpaSpecific
 
     @Query("SELECT s FROM Session s JOIN FETCH s.hall h " +
             "WHERE s.movie.slug = :slug AND s.movie.status != 'ARCHIVED' " +
+            "AND s.status = 'SCHEDULED' AND s.startTime > :now " +
             "ORDER BY s.startTime ASC, h.name ASC")
-    List<Session> findSessionsByMovieSlug(@Param("slug") String slug);
+    List<Session> findUpcomingSessionsByMovieSlug(@Param("slug") String slug, @Param("now") LocalDateTime now);
 
     @Query("SELECT m FROM Movie m WHERE " +
             "(m.status = 'UPCOMING' AND m.releaseDate <= :today) OR " +

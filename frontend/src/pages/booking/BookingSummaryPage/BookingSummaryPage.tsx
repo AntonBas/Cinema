@@ -1,11 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ProgressStepper } from "@/components/booking/ProgressStepper/ProgressStepper";
 import { BOOKING_STEPS } from "@/components/booking/ProgressStepper/bookingSteps";
 import { Layout } from "@/components/layout/Layout/Layout";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { useBooking } from "@/hooks/features/booking/useBooking";
+import { parseServerInstant } from "@/utils/dateUtils";
+import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
+import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
+import { formatFullDate, formatPrice, formatTime } from "@/utils/formatters";
+import { Button } from "@/components/ui/Button/Button";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
+import { useSettledLoad } from "@/hooks/common/useSettledLoad";
 import styles from "./BookingSummaryPage.module.css";
 
 export const BookingSummaryPage: React.FC = () => {
@@ -15,18 +22,23 @@ export const BookingSummaryPage: React.FC = () => {
 
   const { booking, loading, getById, cancel } = useBooking();
 
-  useEffect(() => {
-    if (bookingId) {
-      getById(parseInt(bookingId));
-    }
-  }, [bookingId, getById]);
+  const loadBooking = useCallback(
+    () => (bookingId ? getById(bookingId) : Promise.resolve(null)),
+    [bookingId, getById],
+  );
+  const settled = useSettledLoad(loadBooking);
 
   const handleCancelBooking = async () => {
-    if (!bookingId) return;
+    if (!bookingId || !booking) return;
 
-    await cancel(parseInt(bookingId));
-    setShowCancelModal(false);
-    setTimeout(() => navigate("/"), 2000);
+    try {
+      await cancel(bookingId);
+    } catch {
+      return;
+    } finally {
+      setShowCancelModal(false);
+    }
+    navigate(`/booking/${booking.sessionPublicId}`, { replace: true });
   };
 
   const handleProceedToPayment = () => {
@@ -49,17 +61,19 @@ export const BookingSummaryPage: React.FC = () => {
       })),
     };
 
-    navigate(`/booking/payment/${booking.id}`, {
+    navigate(`/booking/payment/${booking.publicId}`, {
       state: { booking: bookingData },
     });
   };
 
-  if (loading) {
+  if (loading || !settled) {
     return (
       <Layout>
-        <div className={styles.loading}>
-          <LoadingSpinner text="Loading booking summary..." />
-        </div>
+        {loading && (
+          <div className={styles.loading}>
+            <LoadingSpinner text="Loading booking summary..." />
+          </div>
+        )}
       </Layout>
     );
   }
@@ -67,13 +81,14 @@ export const BookingSummaryPage: React.FC = () => {
   if (!booking) {
     return (
       <Layout>
-        <div className={styles.error}>Booking not found</div>
+        <PageContainer size="narrow">
+          <EmptyState variant="error" title="Booking Not Found" />
+        </PageContainer>
       </Layout>
     );
   }
 
-  const sessionDate = new Date(booking.sessionTime);
-  const expiresAt = new Date(booking.expiresAt);
+  const expiresAt = parseServerInstant(booking.expiresAt);
   const timeLeft = Math.max(
     0,
     Math.floor((expiresAt.getTime() - Date.now()) / (1000 * 60)),
@@ -94,19 +109,23 @@ export const BookingSummaryPage: React.FC = () => {
         variant="error"
       />
 
-      <div className={styles.summaryPage}>
+      <PageContainer size="narrow">
         <ProgressStepper
           steps={BOOKING_STEPS}
           currentStep={2}
           className={styles.stepper}
         />
 
-        <div className={styles.header}>
-          <h1>Booking Summary</h1>
-          <p className={styles.bookingNumber}>
-            Booking #: {booking.bookingNumber}
-          </p>
-        </div>
+        <PageHeader
+          align="center"
+          divider
+          title="Booking Summary"
+          subtitle={
+            <span className={styles.bookingNumber}>
+              Booking #: {booking.bookingNumber}
+            </span>
+          }
+        />
 
         <div className={styles.content}>
           <div className={styles.movieInfo}>
@@ -119,21 +138,13 @@ export const BookingSummaryPage: React.FC = () => {
               <div className={styles.detailItem}>
                 <span className={styles.detailLabel}>Date:</span>
                 <span className={styles.detailValue}>
-                  {sessionDate.toLocaleDateString("en-US", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
+                  {formatFullDate(booking.sessionTime)}
                 </span>
               </div>
               <div className={styles.detailItem}>
                 <span className={styles.detailLabel}>Time:</span>
                 <span className={styles.detailValue}>
-                  {sessionDate.toLocaleTimeString("en-US", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {formatTime(booking.sessionTime)}
                 </span>
               </div>
             </div>
@@ -153,7 +164,7 @@ export const BookingSummaryPage: React.FC = () => {
                     </span>
                   </div>
                   <span className={styles.seatPrice}>
-                    {parseFloat(seat.seatPrice).toFixed(2)}₴
+                    {formatPrice(seat.seatPrice)}
                   </span>
                 </div>
               ))}
@@ -167,12 +178,12 @@ export const BookingSummaryPage: React.FC = () => {
                 <>
                   <div className={styles.priceRow}>
                     <span>Total Price:</span>
-                    <span>{parseFloat(booking.totalPrice).toFixed(2)}₴</span>
+                    <span>{formatPrice(booking.totalPrice)}</span>
                   </div>
                   <div className={styles.priceRow}>
                     <span>Bonus discount:</span>
                     <span className={styles.discount}>
-                      -{parseFloat(booking.bonusDiscountAmount).toFixed(2)}₴
+                      -{formatPrice(booking.bonusDiscountAmount)}
                     </span>
                   </div>
                 </>
@@ -180,7 +191,7 @@ export const BookingSummaryPage: React.FC = () => {
               <div className={styles.finalPriceRow}>
                 <span>Amount to pay:</span>
                 <span className={styles.finalPrice}>
-                  {parseFloat(booking.finalPrice).toFixed(2)}₴
+                  {formatPrice(booking.finalPrice)}
                 </span>
               </div>
             </div>
@@ -207,23 +218,27 @@ export const BookingSummaryPage: React.FC = () => {
           </div>
 
           <div className={styles.actionButtons}>
-            <button
+            <Button
+              variant="secondary"
+              size="large"
               className={styles.cancelButton}
               onClick={() => setShowCancelModal(true)}
               disabled={booking.status !== "PENDING"}
             >
               Cancel Booking
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
+              size="large"
               className={styles.payButton}
               onClick={handleProceedToPayment}
               disabled={booking.status !== "PENDING"}
             >
               Proceed to Payment
-            </button>
+            </Button>
           </div>
         </div>
-      </div>
+      </PageContainer>
     </Layout>
   );
 };

@@ -4,11 +4,16 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Schema(description = "Session information for public schedule view")
 public record SessionScheduleResponse(
         @Schema(description = "Unique identifier of the session", example = "1")
         Long id,
+
+        @Schema(description = "Public identifier of the session, used in customer-facing URLs",
+                example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+        UUID publicId,
 
         @Schema(description = "Start time of the session", example = "2024-01-15T18:30:00")
         LocalDateTime startTime,
@@ -27,6 +32,9 @@ public record SessionScheduleResponse(
 
         @Schema(description = "Title of the movie", example = "Inception")
         String movieTitle,
+
+        @Schema(description = "URL slug of the movie", example = "inception")
+        String movieSlug,
 
         @Schema(description = "Movie poster file name", example = "inception.jpg")
         String moviePosterFileName,
@@ -48,7 +56,7 @@ public record SessionScheduleResponse(
 ) {
     public SessionScheduleResponse withAvailableSeats(Integer availableSeats) {
         return new SessionScheduleResponse(
-                id, startTime, endTime, basePrice, availableSeats, movieId, movieTitle,
+                id, publicId, startTime, endTime, basePrice, availableSeats, movieId, movieTitle, movieSlug,
                 moviePosterFileName, movieAgeRating, movieDuration, hallId, hallName, hallCapacity
         );
     }

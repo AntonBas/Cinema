@@ -10,6 +10,7 @@ import ua.lviv.bas.cinema.movie.domain.enums.AgeRating;
 import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.cinema.dto.session.request.SessionRequest;
 import ua.lviv.bas.cinema.cinema.dto.session.response.SessionAdminResponse;
+import ua.lviv.bas.cinema.cinema.dto.session.response.SessionMovieInfoResponse;
 import ua.lviv.bas.cinema.cinema.dto.session.response.SessionResponse;
 import ua.lviv.bas.cinema.cinema.dto.session.response.SessionScheduleResponse;
 import ua.lviv.bas.cinema.cinema.repository.projection.SessionAdminProjection;
@@ -17,6 +18,7 @@ import ua.lviv.bas.cinema.cinema.repository.projection.SessionScheduleProjection
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -65,6 +67,20 @@ public class SessionMapperTest {
         assertThat(response.movieId()).isNull();
         assertThat(response.movieTitle()).isNull();
         assertThat(response.movieDuration()).isNull();
+    }
+
+    @Test
+    void toSessionMovieInfoResponse_ShouldCalculateEndTimeFromMovieDuration() {
+        Movie movie = Movie.builder().id(1L).title("Test Movie").durationMinutes(95).build();
+        CinemaHall hall = CinemaHall.builder().id(1L).name("Hall 1").build();
+        Session session = Session.builder().id(1L).startTime(fixedTime).basePrice(new BigDecimal("250.00")).movie(movie)
+                .hall(hall).status(CinemaSessionStatus.SCHEDULED).build();
+
+        SessionMovieInfoResponse response = mapper.toSessionMovieInfoResponse(session);
+
+        assertThat(response.startTime()).isEqualTo(fixedTime);
+        assertThat(response.endTime()).isEqualTo(fixedTime.plusMinutes(95));
+        assertThat(response.hallName()).isEqualTo("Hall 1");
     }
 
     @Test
@@ -169,6 +185,11 @@ public class SessionMapperTest {
             }
 
             @Override
+            public UUID getPublicId() {
+                return UUID.randomUUID();
+            }
+
+            @Override
             public LocalDateTime getStartTime() {
                 return fixedTime;
             }
@@ -186,6 +207,11 @@ public class SessionMapperTest {
             @Override
             public String getMovieTitle() {
                 return "Schedule Movie";
+            }
+
+            @Override
+            public String getMovieSlug() {
+                return "schedule-movie";
             }
 
             @Override
@@ -232,6 +258,7 @@ public class SessionMapperTest {
         assertThat(response.basePrice()).isEqualTo(new BigDecimal("200.00"));
         assertThat(response.movieId()).isEqualTo(1L);
         assertThat(response.movieTitle()).isEqualTo("Schedule Movie");
+        assertThat(response.movieSlug()).isEqualTo("schedule-movie");
         assertThat(response.moviePosterFileName()).isEqualTo("poster.jpg");
         assertThat(response.movieAgeRating()).isEqualTo(AgeRating.PEGI_12.name());
         assertThat(response.movieDuration()).isEqualTo(90);

@@ -15,7 +15,7 @@
 }
 
 .balanceCard:hover {
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 25px 50px rgba(var(--color-black-rgb), 0.5);
 }
 
 .header {
@@ -166,21 +166,6 @@
   color: var(--color-text-primary);
 }
 
-.noData {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 300px;
-  position: relative;
-  z-index: 1;
-}
-
-.noData p {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-lg);
-}
-
 @media (max-width: 768px) {
   .balanceCard {
     padding: var(--space-6);
@@ -214,10 +199,6 @@
   .limitsGrid {
     grid-template-columns: 1fr;
   }
-
-  .noData p {
-    font-size: var(--font-size-md);
-  }
 }
 
 @media (max-width: 480px) {
@@ -230,7 +211,7 @@
   }
 
   .points {
-    font-size: 2.5rem;
+    font-size: var(--font-size-4xl);
   }
 
   .pointsLabel {
@@ -242,7 +223,7 @@
   }
 
   .valueLabel {
-    font-size: 0.7rem;
+    font-size: var(--font-size-xs);
   }
 
   .valueAmount {
@@ -254,14 +235,10 @@
   }
 
   .limitLabel {
-    font-size: 0.7rem;
+    font-size: var(--font-size-xs);
   }
 
   .limitValue {
     font-size: var(--font-size-sm);
-  }
-
-  .noData {
-    min-height: 250px;
   }
 }

@@ -1,8 +1,5 @@
 export type CinemaSessionStatus =
-  | "SCHEDULED"
-  | "ONGOING"
-  | "COMPLETED"
-  | "CANCELLED";
+  "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED";
 
 export const SessionStatusDisplay: Record<CinemaSessionStatus, string> = {
   SCHEDULED: "Scheduled",
@@ -57,12 +54,14 @@ export interface SessionAdminResponse {
 
 export interface SessionScheduleResponse {
   id: number;
+  publicId: string;
   startTime: string;
   endTime: string;
   basePrice: number;
   availableSeats: number;
   movieId: number;
   movieTitle: string;
+  movieSlug: string;
   moviePosterFileName: string;
   movieAgeRating: string;
   movieDuration: number;
@@ -73,6 +72,7 @@ export interface SessionScheduleResponse {
 
 export interface SessionMovieInfoResponse {
   id: number;
+  publicId: string;
   startTime: string;
   endTime: string;
   basePrice: number;

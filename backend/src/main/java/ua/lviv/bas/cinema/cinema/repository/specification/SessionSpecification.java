@@ -1,10 +1,12 @@
 package ua.lviv.bas.cinema.cinema.repository.specification;
 
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -19,7 +21,7 @@ public class SessionSpecification {
             List<Predicate> predicates = new ArrayList<>();
 
             predicates.add(cb.equal(root.get("status"), CinemaSessionStatus.SCHEDULED));
-            predicates.add(cb.greaterThan(root.get("startTime"), LocalDateTime.now()));
+            predicates.add(cb.greaterThan(root.get("startTime"), CinemaTime.now()));
 
             if (movieId != null) {
                 predicates.add(cb.equal(root.join("movie").get("id"), movieId));
@@ -33,7 +35,8 @@ public class SessionSpecification {
             if (date != null) {
                 LocalDateTime startOfDay = date.atStartOfDay();
                 LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
-                predicates.add(cb.between(root.get("startTime"), startOfDay, endOfDay));
+                predicates.add(cb.greaterThanOrEqualTo(root.get("startTime"), startOfDay));
+                predicates.add(cb.lessThan(root.get("startTime"), endOfDay));
             }
 
             if (query != null) {
@@ -63,8 +66,8 @@ public class SessionSpecification {
             }
 
             if (dateFrom != null && dateTo != null) {
-                predicates.add(
-                        cb.between(root.get("startTime"), dateFrom.atStartOfDay(), dateTo.plusDays(1).atStartOfDay()));
+                predicates.add(cb.greaterThanOrEqualTo(root.get("startTime"), dateFrom.atStartOfDay()));
+                predicates.add(cb.lessThan(root.get("startTime"), dateTo.plusDays(1).atStartOfDay()));
             } else if (dateFrom != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("startTime"), dateFrom.atStartOfDay()));
             } else if (dateTo != null) {
@@ -72,11 +75,18 @@ public class SessionSpecification {
             }
 
             if (query != null) {
+                Expression<LocalDateTime> startTime = root.get("startTime");
+                Expression<LocalDateTime> activeStartTime = cb.<LocalDateTime>selectCase()
+                        .when(root.get("status").in(CinemaSessionStatus.SCHEDULED, CinemaSessionStatus.ONGOING),
+                                startTime)
+                        .otherwise(cb.nullLiteral(LocalDateTime.class));
                 query.orderBy(
-                        cb.asc(cb.selectCase().when(cb.equal(root.get("status"), CinemaSessionStatus.SCHEDULED), 1)
-                                .when(cb.equal(root.get("status"), CinemaSessionStatus.ONGOING), 2)
+                        cb.asc(cb.selectCase().when(cb.equal(root.get("status"), CinemaSessionStatus.ONGOING), 1)
+                                .when(cb.equal(root.get("status"), CinemaSessionStatus.SCHEDULED), 2)
                                 .when(cb.equal(root.get("status"), CinemaSessionStatus.CANCELLED), 3).otherwise(4)),
-                        cb.desc(root.get("startTime")));
+                        cb.asc(activeStartTime),
+                        cb.desc(startTime),
+                        cb.asc(root.get("id")));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));

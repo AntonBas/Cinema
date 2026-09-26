@@ -26,10 +26,10 @@ import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.ticket.repository.TicketTypeRepository;
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -76,9 +76,9 @@ class BookingDoubleConfirmConcurrencyTest {
 
         var movie = movieRepository.save(buildMovie());
         var hall = cinemaHallRepository.save(CinemaHall.builder().name("Double Confirm Hall").build());
-        var seat = seatRepository.save(Seat.builder().row(1).number(1).hall(hall).build());
+        var seat = seatRepository.save(Seat.builder().row(1).number(1).x(0).y(0).hall(hall).build());
         var session = sessionRepository.save(Session.builder().movie(movie).hall(hall)
-                .startTime(LocalDateTime.now().plusDays(1)).basePrice(new BigDecimal("100.00")).build());
+                .startTime(CinemaTime.now().plusDays(1)).basePrice(new BigDecimal("100.00")).build());
         var ticketType = ticketTypeRepository
                 .save(TicketType.builder().displayName("Standard").priceMultiplier(BigDecimal.ONE).build());
 
@@ -86,7 +86,7 @@ class BookingDoubleConfirmConcurrencyTest {
 
         seatReservationService.hold(sessionId, seat.getId(), user);
 
-        request = new BookingCreateRequest(sessionId,
+        request = new BookingCreateRequest(session.getPublicId(),
                 List.of(new BookingCreateRequest.SeatSelectionRequest(seat.getId(), ticketType.getId())), 0);
     }
 
@@ -136,14 +136,14 @@ class BookingDoubleConfirmConcurrencyTest {
     private User buildUser(String email) {
         return User.builder().email(email).firstName("Test").lastName("User")
                 .dateOfBirth(LocalDate.of(1995, 1, 1)).city("Lviv").phoneNumber("+380000000020")
-                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).build();
+                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).build();
     }
 
     private Movie buildMovie() {
         return Movie.builder().title("Double Confirm Test Movie").slug("double-confirm-test-movie")
                 .trailerUrl("https://example.com/trailer").description("Test movie for double-confirm race testing")
-                .durationMinutes(120).releaseDate(LocalDate.now().minusDays(1))
-                .endShowingDate(LocalDate.now().plusMonths(1)).status(MovieStatus.CURRENT)
+                .durationMinutes(120).releaseDate(CinemaTime.today().minusDays(1))
+                .endShowingDate(CinemaTime.today().plusMonths(1)).status(MovieStatus.CURRENT)
                 .posterFileName("poster.jpg").ageRating(AgeRating.PEGI_12).build();
     }
 }

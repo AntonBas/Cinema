@@ -14,7 +14,7 @@ import io.swagger.v3.oas.annotations.servers.Server;
 
 @Configuration
 @OpenAPIDefinition(info = @Info(title = "Cinema API", version = "1.0.0", description = "REST API for cinema management system", contact = @Contact(name = "Developer", email = "dev@example.com"), license = @License(name = "Apache 2.0", url = "https://www.apache.org/licenses/LICENSE-2.0")), servers = {
-        @Server(description = "Local Server", url = "http://localhost:8080")}, security = @SecurityRequirement(name = "bearerAuth"))
-@SecurityScheme(name = "bearerAuth", description = "JWT authentication", scheme = "bearer", type = SecuritySchemeType.HTTP, bearerFormat = "JWT", in = SecuritySchemeIn.HEADER)
+        @Server(description = "Local Server", url = "http://localhost:8080")}, security = @SecurityRequirement(name = "jwtCookie"))
+@SecurityScheme(name = "jwtCookie", description = "JWT set as an httpOnly cookie by POST /api/auth/login — log in via Swagger UI's Try it out on that endpoint first, the cookie is then sent automatically", type = SecuritySchemeType.APIKEY, paramName = "jwt", in = SecuritySchemeIn.COOKIE)
 public class OpenApiConfig {
 }

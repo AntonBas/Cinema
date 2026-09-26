@@ -1,17 +1,19 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Menu, X } from "lucide-react";
+import { buildLoginPath } from "@/utils/authRedirect";
 import styles from "./Header.module.css";
 
 interface NavLink {
   name: string;
   path: string;
+  section?: string;
 }
 
 const LINKS: NavLink[] = [
   { name: "Home", path: "/" },
-  { name: "Movies", path: "/movies" },
+  { name: "Movies", path: "/movies/current", section: "/movies" },
   { name: "Schedule", path: "/schedule" },
 ];
 
@@ -25,13 +27,17 @@ export const Header: React.FC = () => {
     logout,
   } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
+  const loginPath = buildLoginPath(location.pathname + location.search);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLLIElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   const isActiveLink = (path: string) => location.pathname === path;
+  const isActiveNavLink = (link: NavLink) =>
+    link.section
+      ? location.pathname.startsWith(link.section)
+      : isActiveLink(link.path);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -57,7 +63,6 @@ export const Header: React.FC = () => {
     logout();
     setIsDropdownOpen(false);
     setIsMobileMenuOpen(false);
-    navigate("/");
   };
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
@@ -79,13 +84,27 @@ export const Header: React.FC = () => {
             <li key={link.name}>
               <Link
                 to={link.path}
-                className={isActiveLink(link.path) ? styles.active : ""}
+                className={isActiveNavLink(link) ? styles.active : ""}
                 onClick={() => setIsDropdownOpen(false)}
               >
                 {link.name}
               </Link>
             </li>
           ))}
+
+          {isAuthenticated && (
+            <li>
+              <Link
+                to="/account/tickets"
+                className={
+                  isActiveLink("/account/tickets") ? styles.active : ""
+                }
+                onClick={() => setIsDropdownOpen(false)}
+              >
+                My Tickets
+              </Link>
+            </li>
+          )}
 
           {isAuthenticated ? (
             <li className={styles.dropdown} ref={dropdownRef}>
@@ -143,7 +162,7 @@ export const Header: React.FC = () => {
           ) : (
             <li>
               <Link
-                to="/login"
+                to={loginPath}
                 className={isActiveLink("/login") ? styles.active : ""}
               >
                 Login
@@ -168,7 +187,7 @@ export const Header: React.FC = () => {
               <Link
                 key={link.name}
                 to={link.path}
-                className={isActiveLink(link.path) ? styles.active : ""}
+                className={isActiveNavLink(link) ? styles.active : ""}
                 onClick={closeMobileMenu}
               >
                 {link.name}
@@ -188,6 +207,9 @@ export const Header: React.FC = () => {
                 <Link to="/account" onClick={closeMobileMenu}>
                   Profile
                 </Link>
+                <Link to="/account/tickets" onClick={closeMobileMenu}>
+                  My Tickets
+                </Link>
                 {hasAdminAccess && (
                   <Link to={adminPanelPath} onClick={closeMobileMenu}>
                     Admin Panel
@@ -202,7 +224,7 @@ export const Header: React.FC = () => {
               </div>
             ) : (
               <Link
-                to="/login"
+                to={loginPath}
                 className={isActiveLink("/login") ? styles.active : ""}
                 onClick={closeMobileMenu}
               >

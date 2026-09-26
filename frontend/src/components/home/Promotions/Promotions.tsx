@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/Button/Button";
 import { useAuth } from "@/context/AuthContext";
 import type { PromotionResponse } from "@/types/promotion";
+import { formatShortDate } from "@/utils/formatters";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { buildLoginPath } from "@/utils/authRedirect";
 import styles from "./Promotions.module.css";
 
 interface PromotionsProps {
@@ -14,19 +17,6 @@ interface PromotionsProps {
 }
 
 const AUTO_PLAY_INTERVAL = 5000;
-
-const formatDate = (dateString?: string): string => {
-  if (!dateString) return "";
-  return new Date(dateString).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-};
-
-const isExpired = (endDate?: string): boolean => {
-  if (!endDate) return false;
-  return new Date(endDate) < new Date();
-};
 
 const getInitialItemsToShow = () => {
   return window.innerWidth <= 768 ? 1 : 3;
@@ -40,6 +30,7 @@ export const Promotions: React.FC<PromotionsProps> = ({
 }) => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [claimingId, setClaimingId] = useState<number | null>(null);
@@ -92,7 +83,7 @@ export const Promotions: React.FC<PromotionsProps> = ({
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>Special Offers</h2>
           </div>
-          <div className={styles.loading}>Loading offers...</div>
+          <LoadingSpinner text="Loading offers..." />
         </div>
       </section>
     );
@@ -124,6 +115,7 @@ export const Promotions: React.FC<PromotionsProps> = ({
               size="small"
               className={styles.navButton}
               onClick={prevSlide}
+              aria-label="Previous"
             >
               <ChevronLeft size={20} />
             </Button>
@@ -134,7 +126,8 @@ export const Promotions: React.FC<PromotionsProps> = ({
               className={`${styles.promotionsGrid} ${!showCarousel ? styles.promotionsGridCentered : ""}`}
             >
               {visiblePromotions.map((promo) => {
-                const expired = isExpired(promo.endDate);
+                const expired = promo.status === "EXPIRED";
+                const claimable = promo.status === "ACTIVE";
                 const claimed = isClaimed(promo.id);
                 const isClaiming = claimingId === promo.id;
 
@@ -156,8 +149,8 @@ export const Promotions: React.FC<PromotionsProps> = ({
                         </span>
                         {promo.startDate && promo.endDate && (
                           <span className={styles.promoDate}>
-                            {formatDate(promo.startDate)} -{" "}
-                            {formatDate(promo.endDate)}
+                            {formatShortDate(promo.startDate)} -{" "}
+                            {formatShortDate(promo.endDate)}
                           </span>
                         )}
                       </div>
@@ -168,18 +161,30 @@ export const Promotions: React.FC<PromotionsProps> = ({
                           variant={claimed ? "success" : "primary"}
                           size="medium"
                           onClick={() => handleClaim(promo.id, promo.title)}
-                          disabled={expired || claimed || isClaiming}
+                          disabled={!claimable || claimed || isClaiming}
                           loading={isClaiming}
                         >
                           {claimed && <Check size={16} />}
-                          {claimed ? "Claimed" : expired ? "Expired" : "Claim"}
+                          {claimed
+                            ? "Claimed"
+                            : expired
+                              ? "Expired"
+                              : claimable
+                                ? "Claim"
+                                : "Coming Soon"}
                         </Button>
                       )}
                       {!isAuthenticated && (
                         <Button
                           variant="outline"
                           size="medium"
-                          onClick={() => navigate("/login")}
+                          onClick={() =>
+                            navigate(
+                              buildLoginPath(
+                                location.pathname + location.search,
+                              ),
+                            )
+                          }
                         >
                           Login to Claim
                         </Button>
@@ -197,6 +202,7 @@ export const Promotions: React.FC<PromotionsProps> = ({
               size="small"
               className={styles.navButton}
               onClick={nextSlide}
+              aria-label="Next"
             >
               <ChevronRight size={20} />
             </Button>

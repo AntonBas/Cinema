@@ -3,7 +3,7 @@ package ua.lviv.bas.cinema.audit.dto.response;
 import io.swagger.v3.oas.annotations.media.Schema;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Schema(description = "Field change details")
@@ -27,7 +27,7 @@ public record AuditLogResponse(
         String changedBy,
 
         @Schema(description = "Date and time when the action was performed", example = "2024-01-15T10:30:00")
-        LocalDateTime changedAt,
+        Instant changedAt,
 
         @Schema(description = "List of field changes")
         List<AuditLogDetailResponse> details

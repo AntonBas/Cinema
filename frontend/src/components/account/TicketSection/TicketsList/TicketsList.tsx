@@ -1,6 +1,7 @@
 import React from "react";
 import { TicketCard } from "@/components/account/TicketSection/TicketCard/TicketCard";
 import type { TicketResponse } from "@/types/ticket";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import styles from "./TicketsList.module.css";
 
 interface TicketsListProps {
@@ -17,11 +18,7 @@ export const TicketsList: React.FC<TicketsListProps> = ({
   onRequestRefund,
 }) => {
   if (!tickets || tickets.length === 0) {
-    return (
-      <div className={styles.emptyState}>
-        <h3 className={styles.emptyTitle}>No tickets found</h3>
-      </div>
-    );
+    return <EmptyState title="No Tickets Found" />;
   }
 
   return (

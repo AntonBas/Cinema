@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.payment.scheduler;
 
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
@@ -23,7 +24,9 @@ import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
+import ua.lviv.bas.cinema.payment.service.LatePaymentRefundService;
 import ua.lviv.bas.cinema.payment.service.PaymentGatewayService;
+import ua.lviv.bas.cinema.payment.service.PaymentGatewayStatus;
 import ua.lviv.bas.cinema.payment.service.PaymentService;
 import ua.lviv.bas.cinema.payment.service.PaymentSuccessOrchestrator;
 
@@ -38,8 +41,16 @@ public class PaymentScheduler {
     private final PaymentService paymentService;
     private final PaymentGatewayService paymentGatewayService;
     private final PaymentSuccessOrchestrator paymentSuccessOrchestrator;
+    private final LatePaymentRefundService latePaymentRefundService;
     private final CacheManager cacheManager;
     private final TransactionTemplate transactionTemplate;
+
+    private static final List<PaymentStatus> ACTIVE_STATUSES = List.of(PaymentStatus.PENDING,
+            PaymentStatus.PROCESSING);
+    private static final List<BookingStatus> EXPIRABLE_BOOKING_STATUSES = List.of(BookingStatus.PENDING,
+            BookingStatus.EXPIRED, BookingStatus.CANCELLED);
+    private static final List<BookingStatus> UNFULFILLABLE_BOOKING_STATUSES = List.of(BookingStatus.EXPIRED,
+            BookingStatus.CANCELLED);
 
     @Value("${payment.processing-timeout-minutes:15}")
     private int processingTimeoutMinutes;
@@ -50,8 +61,8 @@ public class PaymentScheduler {
     public PaymentScheduler(PaymentRepository paymentRepository, BookingRepository bookingRepository,
             SeatReservationRepository seatReservationRepository, BonusLedgerService bonusLedgerService,
             PaymentService paymentService, PaymentGatewayService paymentGatewayService,
-            PaymentSuccessOrchestrator paymentSuccessOrchestrator, CacheManager cacheManager,
-            PlatformTransactionManager transactionManager) {
+            PaymentSuccessOrchestrator paymentSuccessOrchestrator, LatePaymentRefundService latePaymentRefundService,
+            CacheManager cacheManager, PlatformTransactionManager transactionManager) {
         this.paymentRepository = paymentRepository;
         this.bookingRepository = bookingRepository;
         this.seatReservationRepository = seatReservationRepository;
@@ -59,6 +70,7 @@ public class PaymentScheduler {
         this.paymentService = paymentService;
         this.paymentGatewayService = paymentGatewayService;
         this.paymentSuccessOrchestrator = paymentSuccessOrchestrator;
+        this.latePaymentRefundService = latePaymentRefundService;
         this.cacheManager = cacheManager;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
@@ -66,9 +78,9 @@ public class PaymentScheduler {
     @Scheduled(fixedRateString = "${scheduler.payment.expiration-interval:300000}")
     public void processExpiredPayments() {
         log.debug("Starting expired payments processing");
-        LocalDateTime cutoffTime = LocalDateTime.now().minusMinutes(30);
-        List<Payment> expiredPayments = paymentRepository
-                .findByStatusAndCreatedDateBeforeWithBookingDetails(PaymentStatus.PENDING, cutoffTime);
+        Instant now = Instant.now();
+        List<Payment> expiredPayments = paymentRepository.findByStatusInAndBookingStatusInAndBookingExpiredBefore(
+                ACTIVE_STATUSES, EXPIRABLE_BOOKING_STATUSES, now);
 
         if (expiredPayments.isEmpty()) {
             log.debug("No expired payments found");
@@ -77,23 +89,48 @@ public class PaymentScheduler {
 
         log.info("Found {} expired payments to process", expiredPayments.size());
 
+        Instant processingGraceCutoff = now.minus(Duration.ofMinutes(processingTimeoutMinutes));
         int expiredCount = 0;
         for (var payment : expiredPayments) {
             Long paymentId = payment.getId();
             try {
-                transactionTemplate.executeWithoutResult(status -> expirePayment(payment));
-                expiredCount++;
+                if (resolveAtGatewayBeforeExpiry(payment, processingGraceCutoff)) {
+                    continue;
+                }
+                if (Boolean.TRUE.equals(transactionTemplate.execute(status -> expirePayment(payment)))) {
+                    expiredCount++;
+                }
             } catch (ObjectOptimisticLockingFailureException e) {
                 log.warn("Skipped expiring payment {} due to concurrent update, will retry on next run", paymentId);
+            } catch (RuntimeException e) {
+                log.error("Failed to expire payment {}, will retry on next run", paymentId, e);
             }
         }
 
         log.info("Successfully expired {} of {} payments", expiredCount, expiredPayments.size());
     }
 
-    private void expirePayment(Payment payment) {
+    private boolean resolveAtGatewayBeforeExpiry(Payment payment, Instant processingGraceCutoff) {
+        var check = paymentGatewayService.checkPaymentStatus(payment.getLiqpayOrderId());
+        if (check.status() == PaymentGatewayStatus.SUCCESS) {
+            log.info("Payment {} is already paid at LiqPay, completing it instead of expiring", payment.getId());
+            paymentService.processSuccess(payment, check.rawData());
+            return true;
+        }
+        if (check.status() == PaymentGatewayStatus.STILL_PROCESSING
+                && payment.getBooking().getExpiresAt().isAfter(processingGraceCutoff)) {
+            log.info("Payment {} is still processing at LiqPay, postponing its expiry", payment.getId());
+            return true;
+        }
+        return false;
+    }
+
+    private boolean expirePayment(Payment payment) {
+        if (paymentRepository.updateStatusIfCurrentIn(payment.getId(), ACTIVE_STATUSES, PaymentStatus.EXPIRED) == 0) {
+            log.info("Payment {} changed status concurrently, not expiring it", payment.getId());
+            return false;
+        }
         payment.setStatus(PaymentStatus.EXPIRED);
-        paymentRepository.save(payment);
 
         var booking = payment.getBooking();
         if (booking.getStatus() == BookingStatus.PENDING) {
@@ -112,12 +149,13 @@ public class PaymentScheduler {
             bookingRepository.save(booking);
             evictCacheIfPresent("seatAvailability", booking.getSession().getId());
         }
+        return true;
     }
 
     @Scheduled(fixedRateString = "${scheduler.payment.processing-reconciliation-interval:600000}")
     public void reconcileStuckProcessingPayments() {
         log.debug("Starting stuck PROCESSING payments reconciliation");
-        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(processingTimeoutMinutes);
+        Instant cutoff = Instant.now().minus(Duration.ofMinutes(processingTimeoutMinutes));
         List<Payment> stuckPayments = paymentRepository
                 .findByStatusAndLastModifiedDateBefore(PaymentStatus.PROCESSING, cutoff);
 
@@ -158,7 +196,7 @@ public class PaymentScheduler {
     @Scheduled(fixedRateString = "${scheduler.payment.orchestration-reconciliation-interval:600000}")
     public void reconcileStuckSuccessfulPayments() {
         log.debug("Starting stuck post-payment orchestration reconciliation");
-        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(orchestrationStuckTimeoutMinutes);
+        Instant cutoff = Instant.now().minus(Duration.ofMinutes(orchestrationStuckTimeoutMinutes));
         List<Payment> stuckPayments = paymentRepository.findByStatusAndBookingStatusAndLastModifiedDateBefore(
                 PaymentStatus.SUCCESS, BookingStatus.PENDING, cutoff);
 
@@ -181,11 +219,41 @@ public class PaymentScheduler {
         }
     }
 
+    @Scheduled(fixedRateString = "${scheduler.payment.orchestration-reconciliation-interval:600000}")
+    public void refundUnfulfillableSuccessfulPayments() {
+        Instant cutoff = Instant.now().minus(Duration.ofMinutes(orchestrationStuckTimeoutMinutes));
+        List<Payment> unfulfillable = paymentRepository.findWithoutTicketsByStatusAndBookingStatusIn(
+                PaymentStatus.SUCCESS, UNFULFILLABLE_BOOKING_STATUSES, cutoff);
+
+        for (var payment : unfulfillable) {
+            try {
+                paymentService.refundUnfulfillableSuccess(payment.getId());
+            } catch (Exception e) {
+                log.error("Failed to refund unfulfillable payment {}, will retry on next run", payment.getId(), e);
+            }
+        }
+    }
+
+    @Scheduled(fixedRateString = "${scheduler.payment.refund-retry-interval:600000}")
+    public void retryRequiredRefunds() {
+        Instant cutoff = Instant.now().minus(Duration.ofMinutes(processingTimeoutMinutes));
+        List<Payment> pendingRefunds = paymentRepository
+                .findByStatusAndLastModifiedDateBefore(PaymentStatus.REFUND_REQUIRED, cutoff);
+
+        for (var payment : pendingRefunds) {
+            try {
+                latePaymentRefundService.refund(payment.getId());
+            } catch (Exception e) {
+                log.error("Failed to retry automatic refund of payment {}, will retry on next run", payment.getId(), e);
+            }
+        }
+    }
+
     @Scheduled(cron = "${scheduler.payment.cleanup-cron:0 0 5 * * *}")
     @Transactional
     public void cleanupOldPayments() {
         log.debug("Starting old payments cleanup");
-        LocalDateTime ninetyDaysAgo = LocalDateTime.now().minusDays(90);
+        Instant ninetyDaysAgo = Instant.now().minus(Duration.ofDays(90));
         List<Payment> oldPayments = paymentRepository
                 .findByStatusInAndCreatedDateBefore(List.of(PaymentStatus.FAILED, PaymentStatus.EXPIRED),
                         ninetyDaysAgo);

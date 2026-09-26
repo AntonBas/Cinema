@@ -1,9 +1,11 @@
 import React from "react";
 import { Pencil, Ban, RotateCcw, Trash2 } from "lucide-react";
 import type { SessionAdminResponse } from "@/types/session";
-import { Badge } from "@/components/ui";
+import { Badge } from "@/components/ui/Badge/Badge";
 import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
+import { formatPrice, formatShortDate, formatTime } from "@/utils/formatters";
 import styles from "./SessionTable.module.css";
 
 interface SessionTableProps {
@@ -46,25 +48,6 @@ const getOccupancyPercentage = (
   return capacity > 0 ? Math.round((ticketsSold / capacity) * 100) : 0;
 };
 
-const formatCurrency = (price: number | string | null | undefined): string => {
-  const num = typeof price === "string" ? parseFloat(price) : (price ?? 0);
-  return `${num.toFixed(2)} UAH`;
-};
-
-const formatTime = (dateString: string): string => {
-  return new Date(dateString).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
-const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-};
-
 export const SessionTable: React.FC<SessionTableProps> = ({
   sessions,
   onEdit,
@@ -74,10 +57,10 @@ export const SessionTable: React.FC<SessionTableProps> = ({
 }) => {
   if (!sessions.length) {
     return (
-      <div className={tableStyles.empty}>
-        <h3>No sessions found</h3>
-        <p>There are currently no movie sessions matching your criteria.</p>
-      </div>
+      <EmptyState
+        title="No Sessions Found"
+        message="There are currently no movie sessions matching your criteria."
+      />
     );
   }
 
@@ -122,7 +105,9 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                 <tr key={session.id}>
                   <td data-label="Movie">
                     <div className={styles.movieInfo}>
-                      <div className={styles.movieTitle}>{session.movieTitle}</div>
+                      <div className={styles.movieTitle}>
+                        {session.movieTitle}
+                      </div>
                       <div className={styles.movieMeta}>
                         {session.movieDuration} min
                       </div>
@@ -140,21 +125,26 @@ export const SessionTable: React.FC<SessionTableProps> = ({
 
                   <td data-label="Time">
                     <div className={styles.timeInfo}>
-                      <div className={styles.date}>{formatDate(session.startTime)}</div>
-                      <div className={styles.time}>{formatTime(session.startTime)}</div>
+                      <div className={styles.date}>
+                        {formatShortDate(session.startTime)}
+                      </div>
+                      <div className={styles.time}>
+                        {formatTime(session.startTime)}
+                      </div>
                     </div>
                   </td>
 
                   <td data-label="Price">
                     <span className={styles.price}>
-                      {formatCurrency(session.basePrice)}
+                      {formatPrice(session.basePrice)}
                     </span>
                   </td>
 
                   <td data-label="Occupancy">
                     <div className={styles.occupancyWrapper}>
                       <div className={styles.occupancyInfo}>
-                        {session.ticketsSold}/{session.hallCapacity} ({occupancy}%)
+                        {session.ticketsSold}/{session.hallCapacity} (
+                        {occupancy}%)
                       </div>
                       <div className={styles.occupancyBar}>
                         <div
@@ -167,7 +157,7 @@ export const SessionTable: React.FC<SessionTableProps> = ({
 
                   <td data-label="Revenue">
                     <span className={styles.revenueInfo}>
-                      {formatCurrency(session.totalRevenue)}
+                      {formatPrice(session.totalRevenue)}
                     </span>
                   </td>
 

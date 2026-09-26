@@ -23,10 +23,12 @@ import ua.lviv.bas.cinema.movie.repository.MovieRepository;
 import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -62,11 +64,11 @@ class BookingConcurrencyTest {
         var movie = movieRepository.save(buildMovie());
         var hall = cinemaHallRepository.save(CinemaHall.builder().name("Concurrency Lock Hall").build());
         var session = sessionRepository.save(Session.builder().movie(movie).hall(hall)
-                .startTime(LocalDateTime.now().plusDays(1)).basePrice(new BigDecimal("100.00")).build());
+                .startTime(CinemaTime.now().plusDays(1)).basePrice(new BigDecimal("100.00")).build());
 
         var booking = bookingRepository.save(Booking.builder().user(user).session(session)
                 .status(BookingStatus.PENDING).totalPrice(new BigDecimal("100.00"))
-                .finalPrice(new BigDecimal("100.00")).expiresAt(LocalDateTime.now().plusMinutes(20)).build());
+                .finalPrice(new BigDecimal("100.00")).expiresAt(Instant.now().plus(Duration.ofMinutes(20))).build());
         bookingId = booking.getId();
     }
 
@@ -74,10 +76,13 @@ class BookingConcurrencyTest {
     void concurrentUpdatesToSameBookingOnlyOneShouldSucceed() throws Exception {
         var readyLatch = new CountDownLatch(2);
         var startLatch = new CountDownLatch(1);
+        var bothLoadedLatch = new CountDownLatch(2);
         ExecutorService executor = Executors.newFixedThreadPool(2);
 
-        Callable<Exception> updateToConfirmed = () -> attemptUpdate(readyLatch, startLatch, BookingStatus.CONFIRMED);
-        Callable<Exception> updateToExpired = () -> attemptUpdate(readyLatch, startLatch, BookingStatus.EXPIRED);
+        Callable<Exception> updateToConfirmed = () -> attemptUpdate(readyLatch, startLatch, bothLoadedLatch,
+                BookingStatus.CONFIRMED);
+        Callable<Exception> updateToExpired = () -> attemptUpdate(readyLatch, startLatch, bothLoadedLatch,
+                BookingStatus.EXPIRED);
 
         Future<Exception> resultA = executor.submit(updateToConfirmed);
         Future<Exception> resultB = executor.submit(updateToExpired);
@@ -100,11 +105,14 @@ class BookingConcurrencyTest {
         assertThat(finalBooking.getVersion()).isEqualTo(1L);
     }
 
-    private Exception attemptUpdate(CountDownLatch readyLatch, CountDownLatch startLatch, BookingStatus status) {
+    private Exception attemptUpdate(CountDownLatch readyLatch, CountDownLatch startLatch,
+                                    CountDownLatch bothLoadedLatch, BookingStatus status) {
         try {
             readyLatch.countDown();
             startLatch.await();
             var booking = bookingRepository.findById(bookingId).orElseThrow();
+            bothLoadedLatch.countDown();
+            bothLoadedLatch.await(5, TimeUnit.SECONDS);
             booking.setStatus(status);
             bookingRepository.saveAndFlush(booking);
             return null;
@@ -116,14 +124,14 @@ class BookingConcurrencyTest {
     private User buildUser(String email) {
         return User.builder().email(email).firstName("Test").lastName("User")
                 .dateOfBirth(LocalDate.of(1995, 1, 1)).city("Lviv").phoneNumber("+380000000010")
-                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).build();
+                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).build();
     }
 
     private Movie buildMovie() {
         return Movie.builder().title("Concurrency Lock Test Movie").slug("concurrency-lock-test-movie")
                 .trailerUrl("https://example.com/trailer").description("Test movie for optimistic lock testing")
-                .durationMinutes(120).releaseDate(LocalDate.now().minusDays(1))
-                .endShowingDate(LocalDate.now().plusMonths(1)).status(MovieStatus.CURRENT)
+                .durationMinutes(120).releaseDate(CinemaTime.today().minusDays(1))
+                .endShowingDate(CinemaTime.today().plusMonths(1)).status(MovieStatus.CURRENT)
                 .posterFileName("poster.jpg").ageRating(AgeRating.PEGI_12).build();
     }
 }

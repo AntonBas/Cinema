@@ -10,8 +10,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import ua.lviv.bas.cinema.cinema.dto.hall.request.CinemaHallRequest;
+import ua.lviv.bas.cinema.cinema.dto.hall.request.HallLayoutRequest;
 import ua.lviv.bas.cinema.cinema.dto.hall.response.CinemaHallListResponse;
 import ua.lviv.bas.cinema.cinema.dto.hall.response.CinemaHallResponse;
 import ua.lviv.bas.cinema.cinema.dto.hall.response.HallLayoutResponse;
@@ -68,17 +77,31 @@ public class AdminCinemaHallController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update cinema hall")
+    @Operation(summary = "Rename cinema hall")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Hall updated successfully"),
+            @ApiResponse(responseCode = "200", description = "Hall renamed successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid request data"),
             @ApiResponse(responseCode = "403", description = "Access denied"),
             @ApiResponse(responseCode = "404", description = "Hall not found"),
-            @ApiResponse(responseCode = "409", description = "Cannot update hall with active sessions")
+            @ApiResponse(responseCode = "409", description = "Cannot rename hall with future sessions")
     })
     public CinemaHallResponse updateHall(@PathVariable Long id, @Valid @RequestBody CinemaHallRequest request) {
-        log.info("PUT /api/admin/cinema-halls/{} - Updating cinema hall", id);
+        log.info("PUT /api/admin/cinema-halls/{} - Renaming cinema hall", id);
         return cinemaHallService.updateHall(id, request);
+    }
+
+    @PutMapping("/{id}/layout")
+    @Operation(summary = "Replace cinema hall seat layout")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Layout updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data"),
+            @ApiResponse(responseCode = "403", description = "Access denied"),
+            @ApiResponse(responseCode = "404", description = "Hall not found"),
+            @ApiResponse(responseCode = "409", description = "Cannot update seats with booked tickets or hall with future sessions")
+    })
+    public HallLayoutResponse updateLayout(@PathVariable Long id, @Valid @RequestBody HallLayoutRequest request) {
+        log.info("PUT /api/admin/cinema-halls/{}/layout - Updating hall layout", id);
+        return cinemaHallService.updateLayout(id, request);
     }
 
     @DeleteMapping("/{id}")

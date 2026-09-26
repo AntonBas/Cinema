@@ -1,47 +1,26 @@
 .container {
-  max-width: 1200px;
+  max-width: var(--container-md);
   margin: 0 auto;
   padding: var(--space-8) var(--space-4);
 }
 
-.errorContainer {
-  text-align: center;
-  padding: var(--space-16) var(--space-4);
-  max-width: 500px;
-  margin: 0 auto;
-}
-
-.errorContainer h2 {
-  color: var(--color-text-primary);
-  font-size: var(--font-size-3xl);
-  font-weight: 700;
-  margin-bottom: var(--space-4);
-}
-
-.errorContainer p {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-lg);
-  line-height: 1.6;
-  margin-bottom: var(--space-8);
-}
-
 .content {
   display: grid;
-  grid-template-columns: 350px 1fr;
+  grid-template-columns: 350px minmax(0, 1fr);
   gap: var(--space-12);
   animation: fadeIn 0.4s ease-out;
 }
 
 @media (max-width: 1024px) {
   .content {
-    grid-template-columns: 300px 1fr;
-    gap: var(--space-10);
+    grid-template-columns: 300px minmax(0, 1fr);
+    gap: var(--space-8);
   }
 }
 
 @media (max-width: 768px) {
   .content {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--space-8);
   }
 }
@@ -208,7 +187,7 @@
   color: var(--color-text-primary);
   min-width: 140px;
   margin-right: var(--space-4);
-  padding-top: 0.25rem;
+  padding-top: var(--space-1);
 }
 
 .infoValue {
@@ -221,7 +200,7 @@
 .genreList {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
 .genreItem {
@@ -230,13 +209,13 @@
 
 .genreItem:not(:last-child)::after {
   content: ",";
-  margin-right: 0.25rem;
+  margin-right: var(--space-1);
 }
 
 .peopleList {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem;
+  gap: var(--space-1);
 }
 
 .personItem {
@@ -245,7 +224,7 @@
 
 .personItem:not(:last-child)::after {
   content: ",";
-  margin-right: 0.25rem;
+  margin-right: var(--space-1);
 }
 
 .descriptionSection {
@@ -279,12 +258,12 @@
 }
 
 .ageRatingYellow {
-  background: #eab308;
+  background: var(--color-age-badge-yellow);
   color: black;
 }
 
 .ageRatingOrange {
-  background: #f97316;
+  background: var(--color-age-badge-orange);
   color: white;
 }
 

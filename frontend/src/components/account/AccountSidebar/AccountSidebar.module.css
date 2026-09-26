@@ -24,20 +24,6 @@
   margin: 0;
 }
 
-.closeButton {
-  display: none;
-  background: none;
-  border: none;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  padding: var(--space-1);
-  transition: var(--transition-normal);
-}
-
-.closeButton:hover {
-  color: var(--color-primary);
-}
-
 .sidebarNav {
   flex: 1;
   padding: var(--space-4) 0;
@@ -77,32 +63,6 @@
 
 .sidebarLabel {
   font-size: var(--font-size-sm);
-}
-
-.sidebarFooter {
-  padding: var(--space-6);
-  border-top: 1px solid var(--color-border);
-}
-
-.userSupport {
-  text-align: center;
-}
-
-.userSupport p {
-  margin: 0 0 var(--space-2) 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-xs);
-}
-
-.supportLink {
-  color: var(--color-primary);
-  text-decoration: none;
-  font-size: var(--font-size-xs);
-  font-weight: 500;
-}
-
-.supportLink:hover {
-  text-decoration: underline;
 }
 
 .mobileMenuButton {
@@ -155,16 +115,8 @@
     font-size: var(--font-size-lg);
   }
 
-  .closeButton {
-    display: block;
-  }
-
   .sidebarLink {
     padding: var(--space-4) var(--space-4);
-  }
-
-  .sidebarFooter {
-    padding: var(--space-4);
   }
 }
 

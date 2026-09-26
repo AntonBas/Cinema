@@ -6,7 +6,9 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +32,7 @@ import ua.lviv.bas.cinema.cinema.repository.specification.SessionSpecification;
 import ua.lviv.bas.cinema.booking.service.SeatReservationService;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -59,7 +62,7 @@ public class SessionService {
 
         var movie = movieRepository.findById(request.movieId())
                 .orElseThrow(() -> new EntityNotFoundException("Movie", request.movieId()));
-        var hall = cinemaHallService.getHallEntity(request.hallId());
+        var hall = cinemaHallService.lockHall(request.hallId());
 
         validateMovieAvailability(movie, request.startTime());
         validateNoTimeConflict(hall.getId(), hall.getName(), request.startTime(),
@@ -77,7 +80,8 @@ public class SessionService {
     }
 
     public List<SessionScheduleResponse> getSchedule(String searchTerm, LocalDate date, Long movieId) {
-        var schedule = sessionScheduleQueryService.getScheduleWithoutAvailability(searchTerm, date, movieId);
+        var scheduleDate = date != null ? date : CinemaTime.today();
+        var schedule = sessionScheduleQueryService.getScheduleWithoutAvailability(searchTerm, scheduleDate, movieId);
 
         if (schedule.isEmpty()) {
             return schedule;
@@ -91,12 +95,16 @@ public class SessionService {
                 .toList();
     }
 
+    public List<LocalDate> getScheduleDates(Long movieId) {
+        return sessionRepository.findScheduleDates(CinemaTime.now(), movieId);
+    }
+
     @Cacheable(value = "sessions", key = "'admin:' + #hallId + ':' + #movieTitle + ':' + #status + ':' + #dateFrom + ':' + #dateTo + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort")
     public Page<SessionAdminResponse> getSessions(Long hallId, String movieTitle, CinemaSessionStatus status,
                                                   LocalDate dateFrom, LocalDate dateTo, Pageable pageable) {
 
         Specification<Session> spec = sessionSpecification.forAdmin(hallId, movieTitle, status, dateFrom, dateTo);
-        var page = sessionRepository.findAll(spec, pageable);
+        var page = sessionRepository.findAll(spec, withStableOrder(pageable));
 
         var sessionIds = page.getContent().stream().map(Session::getId).toList();
         var projections = sessionRepository.findAdminProjectionsByIds(sessionIds).stream()
@@ -120,15 +128,32 @@ public class SessionService {
         var session = sessionRepository.findByIdWithLock(id)
                 .orElseThrow(() -> new EntityNotFoundException("Session", id));
 
+        if (session.getStatus() == CinemaSessionStatus.ONGOING || session.getStatus() == CinemaSessionStatus.COMPLETED) {
+            throw SessionOperationException.cannotEditStarted();
+        }
+
         var oldDetails = captureSessionDetails(session);
 
-        if (request.startTime() != null && !request.startTime().equals(session.getStartTime())) {
+        boolean startTimeChanged = request.startTime() != null && !request.startTime().equals(session.getStartTime());
+        if (startTimeChanged) {
             validateStartTime(request.startTime());
         }
 
-        sessionMapper.updateEntity(request, session);
+        boolean movieChanged = request.movieId() != null && !request.movieId().equals(session.getMovie().getId());
+        var movie = movieChanged ? movieRepository.findById(request.movieId())
+                .orElseThrow(() -> new EntityNotFoundException("Movie", request.movieId())) : session.getMovie();
 
-        if (request.movieId() != null) {
+        boolean hallChanged = request.hallId() != null && !request.hallId().equals(session.getHall().getId());
+        if ((startTimeChanged || movieChanged || hallChanged) && sessionRepository.hasSeatReservations(id)) {
+            throw SessionOperationException.cannotRescheduleWithReservations();
+        }
+        var hall = cinemaHallService.lockHall(hallChanged ? request.hallId() : session.getHall().getId());
+
+        sessionMapper.updateEntity(request, session);
+        session.setMovie(movie);
+        session.setHall(hall);
+
+        if (movieChanged || startTimeChanged) {
             validateMovieAvailability(session.getMovie(), session.getStartTime());
         }
 
@@ -154,6 +179,10 @@ public class SessionService {
     public void deleteSession(Long id) {
         var session = sessionRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Session", id));
 
+        if (sessionRepository.hasBookings(id)) {
+            throw SessionOperationException.cannotDeleteWithBookings();
+        }
+
         sessionRepository.deleteById(id);
         log.info("Session deleted with ID: {}", id);
         auditDelete(session);
@@ -173,7 +202,7 @@ public class SessionService {
             throw SessionOperationException.cannotCancelInactive();
         }
 
-        if (session.getStartTime().minusHours(1).isBefore(LocalDateTime.now())) {
+        if (session.getStartTime().minusHours(1).isBefore(CinemaTime.now())) {
             throw SessionOperationException.cannotCancelTooLate();
         }
 
@@ -199,9 +228,11 @@ public class SessionService {
             throw SessionOperationException.onlyCancelledCanBeReactivated();
         }
 
-        if (session.getStartTime().isBefore(LocalDateTime.now())) {
+        if (session.getStartTime().isBefore(CinemaTime.now())) {
             throw SessionOperationException.cannotReactivatePast();
         }
+
+        cinemaHallService.lockHall(session.getHall().getId());
 
         validateNoTimeConflict(session.getHall().getId(), session.getHall().getName(), session.getStartTime(),
                 session.getStartTime().plusMinutes(session.getMovie().getDurationMinutes()), sessionId);
@@ -218,8 +249,16 @@ public class SessionService {
                 newDetails);
     }
 
+    private Pageable withStableOrder(Pageable pageable) {
+        if (pageable.getSort().isUnsorted()) {
+            return pageable;
+        }
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(),
+                pageable.getSort().and(Sort.by("startTime", "id")));
+    }
+
     private void validateStartTime(LocalDateTime startTime) {
-        if (startTime.isBefore(LocalDateTime.now().plusMinutes(30))) {
+        if (startTime.isBefore(CinemaTime.now().plusMinutes(30))) {
             throw SessionValidationException.tooCloseToStart(startTime);
         }
     }

@@ -1,17 +1,15 @@
 import React from "react";
-import { Tooltip } from "@/components/ui";
+import { Tooltip } from "@/components/ui/Tooltip/Tooltip";
 import styles from "./ActionIconButton.module.css";
 import clsx from "clsx";
 
 export type ActionIconVariant =
-  | "primary"
-  | "success"
-  | "error"
-  | "warning"
-  | "secondary";
+  "primary" | "success" | "error" | "warning" | "secondary";
 
-export interface ActionIconButtonProps
-  extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "children"> {
+export interface ActionIconButtonProps extends Omit<
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  "children"
+> {
   icon: React.ReactNode;
   label: string;
   variant?: ActionIconVariant;
@@ -43,7 +41,11 @@ export const ActionIconButton: React.FC<ActionIconButtonProps> = ({
         )}
         {...props}
       >
-        {loading ? <span className={styles.spinner} aria-hidden="true" /> : icon}
+        {loading ? (
+          <span className={styles.spinner} aria-hidden="true" />
+        ) : (
+          icon
+        )}
       </button>
     </Tooltip>
   );

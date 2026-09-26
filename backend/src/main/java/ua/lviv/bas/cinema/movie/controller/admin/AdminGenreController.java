@@ -30,6 +30,8 @@ import ua.lviv.bas.cinema.movie.dto.response.GenreListResponse;
 import ua.lviv.bas.cinema.movie.dto.response.GenreResponse;
 import ua.lviv.bas.cinema.movie.service.GenreService;
 
+import java.util.List;
+
 @Slf4j
 @RestController
 @RequestMapping("/api/admin/genres")
@@ -65,6 +67,16 @@ public class AdminGenreController {
                                                      @PageableDefault Pageable pageable) {
         log.info("GET /api/admin/genres - query: '{}'", query);
         return PageResponse.from(genreService.getGenres(query, pageable));
+    }
+
+    @GetMapping("/all")
+    @Operation(summary = "Get all genres sorted by name, for selection lists")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Genres retrieved successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied")
+    })
+    public List<GenreResponse> getAllGenres() {
+        return genreService.getAllGenres();
     }
 
     @PutMapping("/{id}")

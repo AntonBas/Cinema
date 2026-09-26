@@ -27,10 +27,6 @@
   color: var(--color-primary);
 }
 
-.copyButton {
-  flex-shrink: 0;
-}
-
 .qrContainer {
   display: flex;
   justify-content: center;
@@ -38,9 +34,16 @@
   min-height: 300px;
   margin-bottom: var(--space-6);
   padding: var(--space-6);
-  background: white;
+  background: var(--color-bg-secondary);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
+}
+
+.qrImageWrapper {
+  background: white;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  display: flex;
 }
 
 .qrImage {
@@ -100,10 +103,6 @@
     gap: var(--space-2);
   }
 
-  .copyButton {
-    align-self: flex-start;
-  }
-
   .qrContainer {
     min-height: 250px;
     padding: var(--space-4);
@@ -115,7 +114,7 @@
   }
 
   .modalFooter {
-    flex-direction: column;
+    flex-direction: column-reverse;
   }
 
   .modalFooter button {

@@ -20,13 +20,7 @@ export interface SortInfo {
 }
 
 export type SearchParamValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | number[]
-  | undefined
-  | null;
+  string | number | boolean | string[] | number[] | undefined | null;
 
 export interface SearchParams {
   page?: number;

@@ -61,7 +61,7 @@
   background: none;
   border: none;
   color: var(--color-text-secondary);
-  font-size: 1.5rem;
+  font-size: var(--font-size-2xl);
   cursor: pointer;
   width: 24px;
   height: 24px;
@@ -75,7 +75,7 @@
 
 .close:hover {
   color: var(--color-text-primary);
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--color-overlay-light-hover);
 }
 
 .progress {
@@ -84,7 +84,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--color-overlay-light-hover);
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   overflow: hidden;
 }

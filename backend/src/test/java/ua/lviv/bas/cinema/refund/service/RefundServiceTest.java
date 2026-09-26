@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import ua.lviv.bas.cinema.bonus.service.BonusQueryService;
 import ua.lviv.bas.cinema.config.properties.RefundRules;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.payment.domain.Payment;
@@ -27,7 +28,6 @@ import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingEx
 import ua.lviv.bas.cinema.exception.domain.financial.refund.RefundProcessingException;
 import ua.lviv.bas.cinema.exception.domain.financial.refund.TicketNotRefundableException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;
-import ua.lviv.bas.cinema.refund.mapper.RefundItemMapper;
 import ua.lviv.bas.cinema.refund.mapper.RefundMapper;
 import ua.lviv.bas.cinema.payment.service.PaymentRefundService;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
@@ -36,13 +36,19 @@ import ua.lviv.bas.cinema.ticket.service.TicketService;
 import ua.lviv.bas.cinema.support.CinemaTestFixtures;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class RefundServiceTest {
@@ -58,11 +64,11 @@ public class RefundServiceTest {
     @Mock
     private RefundMapper refundMapper;
     @Mock
-    private RefundItemMapper refundItemMapper;
-    @Mock
     private NumberGeneratorService numberGenerator;
     @Mock
     private SeatInfoFormatter seatInfoFormatter;
+    @Mock
+    private BonusQueryService bonusQueryService;
 
     private RefundCalculator refundCalculator;
     private RefundService refundService;
@@ -85,10 +91,9 @@ public class RefundServiceTest {
 
     @BeforeEach
     void setUp() {
-        refundCalculator = new RefundCalculator(refundRules);
+        refundCalculator = new RefundCalculator(refundRules, bonusQueryService);
         refundService = new RefundService(ticketService, paymentRefundService, refundCalculator,
-                refundTransactionExecutor, refundRules, refundMapper, refundItemMapper, numberGenerator,
-                seatInfoFormatter);
+                refundTransactionExecutor, refundRules, refundMapper, numberGenerator, seatInfoFormatter);
 
         testUser = User.builder().id(USER_ID).email("test@example.com").build();
         var movie = CinemaTestFixtures.movie();
@@ -107,8 +112,8 @@ public class RefundServiceTest {
         TicketType ticketType = TicketType.builder().displayName("Standard").build();
         testTicket = Ticket.builder().id(TICKET_ID).user(testUser).booking(booking).ticketType(ticketType)
                 .finalPrice(TICKET_PRICE).originalPrice(TICKET_PRICE).uniqueCode("TKT-123456")
-                .status(TicketStatus.ACTIVE).payment(testPayment).bonusPointsUsed(BONUS_POINTS_USED)
-                .purchaseTime(LocalDateTime.now().minusHours(1)).seatReservation(seatReservation).build();
+                .status(TicketStatus.ACTIVE).payment(testPayment)
+                .purchaseTime(Instant.now().minus(Duration.ofHours(1))).seatReservation(seatReservation).build();
         testRefund = Refund.builder().id(REFUND_ID).user(testUser).payment(testPayment).totalAmount(REFUND_AMOUNT)
                 .totalBonusPointsToDeduct(BONUS_POINTS_TO_REFUND).build();
         previewRequest = new RefundPreviewRequest(TICKET_ID);
@@ -117,7 +122,7 @@ public class RefundServiceTest {
     @Test
     void getPreviewShouldSucceed() {
         var expectedDeadline = testSession.getStartTime().minusHours(2);
-        when(ticketService.findActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
+        when(ticketService.getActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
         when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(true);
         when(refundRules.getRefundPercentage(testSession.getStartTime())).thenReturn(PERCENTAGE);
         when(refundRules.getPolicyName(testSession.getStartTime())).thenReturn("Standard Refund");
@@ -137,7 +142,7 @@ public class RefundServiceTest {
     @Test
     void getPreviewWhenPaymentNotSuccessShouldReturnNonRefundable() {
         testPayment.setStatus(PaymentStatus.PENDING);
-        when(ticketService.findActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
+        when(ticketService.getActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
         when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(true);
 
         RefundPreviewResponse response = refundService.getPreview(previewRequest, USER_ID);
@@ -150,7 +155,7 @@ public class RefundServiceTest {
     @Test
     void getPreviewWhenTicketNotActiveShouldReturnNonRefundable() {
         testTicket.setStatus(TicketStatus.REFUNDED);
-        when(ticketService.findActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
+        when(ticketService.getActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
 
         RefundPreviewResponse response = refundService.getPreview(previewRequest, USER_ID);
 
@@ -161,7 +166,7 @@ public class RefundServiceTest {
 
     @Test
     void getPreviewWhenRefundNotAvailableShouldReturnNonRefundable() {
-        when(ticketService.findActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
+        when(ticketService.getActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
         when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(false);
 
         RefundPreviewResponse response = refundService.getPreview(previewRequest, USER_ID);
@@ -173,7 +178,7 @@ public class RefundServiceTest {
 
     @Test
     void getPreviewWhenTicketNotFoundShouldThrowException() {
-        when(ticketService.findActiveTicketForUser(TICKET_ID, USER_ID))
+        when(ticketService.getActiveTicketForUser(TICKET_ID, USER_ID))
                 .thenThrow(new TicketNotFoundException("Ticket not found or not active. Ticket ID: " + TICKET_ID));
 
         assertThatThrownBy(() -> refundService.getPreview(previewRequest, USER_ID))
@@ -195,9 +200,9 @@ public class RefundServiceTest {
         when(numberGenerator.generateRefundNumber(testRefund)).thenReturn("RF-2024-00001");
 
         RefundResponse mockResponse = new RefundResponse(1L, "RF-2024-00001", "PROCESSED", REFUND_AMOUNT,
-                BONUS_POINTS_TO_REFUND, "Test reason", "System", LocalDateTime.now(), LocalDateTime.now(), 1L, "CARD",
+                BONUS_POINTS_TO_REFUND, "Test reason", "System", Instant.now(), Instant.now(), 1L, "CARD",
                 null, "Refund processed successfully", "3-5 business days");
-        when(refundMapper.toResponse(testRefund)).thenReturn(mockResponse);
+        when(refundMapper.toResponse(eq(testRefund), eq("RF-2024-00001"), any(), any())).thenReturn(mockResponse);
 
         RefundResponse response = refundService.refund(refundRequest, USER_ID);
 

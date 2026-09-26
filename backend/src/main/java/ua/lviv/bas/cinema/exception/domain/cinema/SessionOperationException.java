@@ -27,6 +27,22 @@ public class SessionOperationException extends ValidationException {
                 "ONLY_CANCELLED_CAN_REACTIVATE");
     }
 
+    public static SessionOperationException cannotDeleteWithBookings() {
+        return new SessionOperationException("Cannot delete a session that has bookings, cancel it instead",
+                "CANNOT_DELETE_WITH_BOOKINGS");
+    }
+
+    public static SessionOperationException cannotRescheduleWithReservations() {
+        return new SessionOperationException(
+                "Cannot change the movie, hall or start time of a session with booked or held seats",
+                "CANNOT_RESCHEDULE_WITH_RESERVATIONS");
+    }
+
+    public static SessionOperationException cannotEditStarted() {
+        return new SessionOperationException("Cannot edit a session that has already started or completed",
+                "CANNOT_EDIT_STARTED_SESSION");
+    }
+
     public static SessionOperationException cannotReactivatePast() {
         return new SessionOperationException("Cannot reactivate past session", "CANNOT_REACTIVATE_PAST");
     }

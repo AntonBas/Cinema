@@ -1,0 +1,7 @@
+ALTER TABLE seats
+    ADD COLUMN IF NOT EXISTS x INTEGER NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS y INTEGER NOT NULL DEFAULT 0;
+
+UPDATE seats
+SET x = (number - 1) * 60,
+    y = (seat_row - 1) * 70;

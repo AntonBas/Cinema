@@ -24,33 +24,50 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService userDetailsService;
+    private final JwtCookieService jwtCookieService;
+    private final JwtBlacklistService jwtBlacklistService;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-        String jwt = getJwtFromRequest(request);
+        String jwt = jwtCookieService.extractToken(request);
 
         if (StringUtils.hasText(jwt)) {
             if (jwtTokenProvider.validateToken(jwt)) {
                 String email = jwtTokenProvider.getEmailFromToken(jwt);
+                String jti = jwtTokenProvider.getJtiFromToken(jwt);
                 log.debug("JWT token valid for email: {}", email);
 
-                try {
-                    UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                if (jwtBlacklistService.isBlacklisted(jti)) {
+                    log.warn("Rejected request to {} for blacklisted token (logged out) for user: {}",
+                            request.getRequestURI(), email);
+                } else {
+                    try {
+                        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                        Integer tokenVersion = jwtTokenProvider.getTokenVersionFromToken(jwt);
 
-                    if (!userDetails.isEnabled()) {
-                        log.warn("Rejected request to {} for disabled user: {}", request.getRequestURI(), email);
-                    } else {
-                        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                                userDetails, null, userDetails.getAuthorities());
-                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        if (!userDetails.isEnabled()) {
+                            log.warn("Rejected request to {} for disabled user: {}", request.getRequestURI(), email);
+                        } else if (userDetails instanceof CustomUserDetails customUserDetails
+                                && !customUserDetails.getUserId().equals(jwtTokenProvider.getUserIdFromToken(jwt))) {
+                            log.warn("Rejected request to {} for token issued to another account with email: {}",
+                                    request.getRequestURI(), email);
+                        } else if (userDetails instanceof CustomUserDetails customUserDetails && tokenVersion != null
+                                && tokenVersion != customUserDetails.getTokenVersion()) {
+                            log.warn("Rejected request to {} for stale token (password changed since issue) for user: {}",
+                                    request.getRequestURI(), email);
+                        } else {
+                            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                                    userDetails, null, userDetails.getAuthorities());
+                            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
-                        log.debug("Authenticated user: {}", email);
+                            SecurityContextHolder.getContext().setAuthentication(authentication);
+                            log.debug("Authenticated user: {}", email);
+                        }
+                    } catch (Exception e) {
+                        log.error("Could not load user by email: {}", email, e);
                     }
-                } catch (Exception e) {
-                    log.error("Could not load user by email: {}", email, e);
                 }
             } else {
                 log.warn("Rejected request to {} with invalid or expired JWT", request.getRequestURI());
@@ -58,13 +75,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
-    }
-
-    private String getJwtFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
-        }
-        return null;
     }
 }

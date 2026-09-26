@@ -1,15 +1,15 @@
 .timeDate {
   display: block;
   font-weight: 500;
-  color: #f1f5f9;
-  margin-bottom: 4px;
+  color: var(--color-panel-text);
+  margin-bottom: var(--space-1);
   white-space: nowrap;
 }
 
 .timeTime {
   display: block;
-  font-size: 12px;
-  color: #94a3b8;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
   white-space: nowrap;
 }
 
@@ -33,50 +33,50 @@
 .changeObject {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-1);
 }
 
 .changeField {
   display: flex;
   align-items: flex-start;
   flex-wrap: wrap;
-  gap: 6px;
-  font-size: 13px;
+  gap: var(--space-1);
+  font-size: var(--font-size-xs);
   line-height: 1.5;
 }
 
 .changeKey {
-  color: #94a3b8;
+  color: var(--color-text-muted);
   min-width: 90px;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
 }
 
 .oldValue {
-  color: #ef4444;
+  color: var(--color-error);
   text-decoration: line-through;
   opacity: 0.8;
 }
 
 .newValue {
-  color: #22c55e;
+  color: var(--color-success);
   font-weight: 500;
 }
 
 @media (max-width: 480px) {
   .timeDate {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
   }
 
   .timeTime {
-    font-size: 11px;
+    font-size: var(--font-size-2xs);
   }
 
   .changeKey {
     min-width: 70px;
-    font-size: 10px;
+    font-size: var(--font-size-2xs);
   }
 
   .changeField {
-    font-size: 12px;
+    font-size: var(--font-size-xs);
   }
 }

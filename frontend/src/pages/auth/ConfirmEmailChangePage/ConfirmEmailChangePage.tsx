@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   useParams,
   useSearchParams,
@@ -6,11 +6,13 @@ import {
   Link,
 } from "react-router-dom";
 import { XCircle, CheckCircle2 } from "lucide-react";
-import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
-import { api } from "@/services/api";
+import { authApi } from "@/api/authApi";
+import { isApiErrorException } from "@/utils/apiErrorHandler";
 import { Button } from "@/components/ui/Button/Button";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { AuthPageLayout } from "@/components/auth/AuthPageLayout/AuthPageLayout";
+import { AuthCard } from "@/components/auth/AuthCard/AuthCard";
 import styles from "./ConfirmEmailChangePage.module.css";
 
 export const ConfirmEmailChangePage: React.FC = () => {
@@ -23,10 +25,15 @@ export const ConfirmEmailChangePage: React.FC = () => {
     "loading",
   );
   const [errorMessage, setErrorMessage] = useState("");
+  const [alreadyConfirmed, setAlreadyConfirmed] = useState(false);
+  const requestedRef = useRef(false);
 
   const confirmationToken = token || searchParams.get("token");
 
   useEffect(() => {
+    if (requestedRef.current) return;
+    requestedRef.current = true;
+
     if (!confirmationToken) {
       setStatus("error");
       setErrorMessage("Invalid or missing confirmation token.");
@@ -35,21 +42,18 @@ export const ConfirmEmailChangePage: React.FC = () => {
 
     const confirmEmailChange = async () => {
       try {
-        await api.post(
-          `/api/tokens/email/change/confirm?token=${confirmationToken}`,
-        );
+        await authApi.confirmEmailChange(confirmationToken);
+        await refreshUser();
         setStatus("success");
-        if (isAuthenticated) {
-          await refreshUser();
-        }
       } catch (error) {
+        if (isApiErrorException(error) && error.isConflict()) {
+          await refreshUser();
+          setAlreadyConfirmed(true);
+          setStatus("success");
+          return;
+        }
         setStatus("error");
-        const message = axios.isAxiosError(error)
-          ? (error.response?.data as { message?: string } | undefined)
-              ?.message
-          : error instanceof Error
-            ? error.message
-            : undefined;
+        const message = error instanceof Error ? error.message : undefined;
         setErrorMessage(
           message ||
             "Failed to confirm email change. The token may be invalid or expired.",
@@ -58,30 +62,27 @@ export const ConfirmEmailChangePage: React.FC = () => {
     };
 
     confirmEmailChange();
-  }, [confirmationToken, isAuthenticated, refreshUser]);
+  }, [confirmationToken, refreshUser]);
 
   if (status === "loading") {
     return (
-      <div className={styles.container}>
-        <div className={styles.card}>
-          <LoadingSpinner text="Confirming your email change..." />
-        </div>
-      </div>
+      <AuthPageLayout>
+        <LoadingSpinner text="Confirming your email change..." />
+      </AuthPageLayout>
     );
   }
 
   if (status === "error") {
     return (
-      <section className={styles.container}>
-        <div className={styles.card}>
-          <h1 className={styles.title}>Confirmation Failed</h1>
+      <AuthPageLayout>
+        <AuthCard title="Confirmation Failed" className={styles.card}>
           <XCircle size={64} className={styles.icon} />
           <p className={styles.message}>{errorMessage}</p>
           <div className={styles.actions}>
             <Button
               variant="primary"
               onClick={() => navigate("/login")}
-              style={{ width: "100%" }}
+              fullWidth
             >
               Go to Login
             </Button>
@@ -89,24 +90,33 @@ export const ConfirmEmailChangePage: React.FC = () => {
           <div className={styles.bottom}>
             <Link to="/">Back to Home</Link>
           </div>
-        </div>
-      </section>
+        </AuthCard>
+      </AuthPageLayout>
     );
   }
 
   return (
-    <section className={styles.container}>
-      <div className={styles.card}>
-        <h1 className={styles.title}>Email Changed!</h1>
+    <AuthPageLayout>
+      <AuthCard
+        title={alreadyConfirmed ? "Already Confirmed" : "Email Changed!"}
+        className={styles.card}
+      >
         <CheckCircle2 size={64} className={styles.icon} />
         <p className={styles.message}>
-          Your email address has been successfully updated.
+          {alreadyConfirmed
+            ? "This email change has already been confirmed."
+            : "Your email address has been successfully updated."}
+          {!isAuthenticated && " Sign in with your new email address."}
         </p>
         <div className={styles.actions}>
           <Button
             variant="primary"
-            onClick={() => navigate(isAuthenticated ? "/account" : "/login")}
-            style={{ width: "100%" }}
+            onClick={() =>
+              navigate(
+                isAuthenticated ? "/account" : "/login?reason=email-changed",
+              )
+            }
+            fullWidth
           >
             {isAuthenticated ? "Go to Account" : "Go to Login"}
           </Button>
@@ -114,7 +124,7 @@ export const ConfirmEmailChangePage: React.FC = () => {
         <div className={styles.bottom}>
           <Link to="/">Back to Home</Link>
         </div>
-      </div>
-    </section>
+      </AuthCard>
+    </AuthPageLayout>
   );
 };

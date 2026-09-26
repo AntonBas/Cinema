@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Button } from "@/components/ui";
-import LoadingSpinner from "@/components/ui/LoadingSpinner/LoadingSpinner";
-import { useTickets } from "@/hooks/features/tickets/useTickets";
+import { Modal } from "@/components/ui/Modal/Modal";
+import { Button } from "@/components/ui/Button/Button";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { useTicket } from "@/hooks/features/ticket/useTicket";
 import styles from "./TicketQRModal.module.css";
 
 interface TicketQRModalProps {
@@ -13,10 +14,11 @@ export const TicketQRModal: React.FC<TicketQRModalProps> = ({
   ticketCode,
   onClose,
 }) => {
-  const { getQRCode, loading } = useTickets();
+  const { getQRCode, loading } = useTicket();
   const [qrImage, setQrImage] = useState<string>("");
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   useEffect(() => {
     let objectUrl = "";
@@ -41,7 +43,7 @@ export const TicketQRModal: React.FC<TicketQRModalProps> = ({
     return () => {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [ticketCode, getQRCode]);
+  }, [ticketCode, getQRCode, loadAttempt]);
 
   const handleDownload = () => {
     if (!qrImage) return;
@@ -53,7 +55,11 @@ export const TicketQRModal: React.FC<TicketQRModalProps> = ({
   };
 
   const handleCopyCode = async () => {
-    await navigator.clipboard.writeText(ticketCode);
+    try {
+      await navigator.clipboard.writeText(ticketCode);
+    } catch {
+      return;
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -75,17 +81,19 @@ export const TicketQRModal: React.FC<TicketQRModalProps> = ({
           {loading ? (
             <LoadingSpinner text="Generating QR code..." />
           ) : qrImage ? (
-            <img
-              src={qrImage}
-              alt="Ticket QR Code"
-              className={styles.qrImage}
-            />
+            <div className={styles.qrImageWrapper}>
+              <img
+                src={qrImage}
+                alt="Ticket QR Code"
+                className={styles.qrImage}
+              />
+            </div>
           ) : (
             <div className={styles.errorQR}>
               <p>{error || "Failed to load QR code"}</p>
               <Button
                 variant="secondary"
-                onClick={() => window.location.reload()}
+                onClick={() => setLoadAttempt((attempt) => attempt + 1)}
               >
                 Retry
               </Button>
@@ -103,15 +111,15 @@ export const TicketQRModal: React.FC<TicketQRModalProps> = ({
         </div>
 
         <div className={styles.modalFooter}>
+          <Button variant="secondary" onClick={onClose}>
+            Close
+          </Button>
           <Button
             variant="primary"
             onClick={handleDownload}
             disabled={!qrImage || loading}
           >
             Download QR Code
-          </Button>
-          <Button variant="secondary" onClick={onClose}>
-            Close
           </Button>
         </div>
       </div>

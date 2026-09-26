@@ -1,10 +1,28 @@
 package ua.lviv.bas.cinema.user.domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Past;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.BatchSize;
 import ua.lviv.bas.cinema.audit.domain.AuditableEntity;
 import ua.lviv.bas.cinema.bonus.domain.BonusCard;
@@ -13,7 +31,7 @@ import ua.lviv.bas.cinema.promotion.domain.UserPromotion;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,7 +78,17 @@ public class User extends AuditableEntity {
     private VerificationStatus verificationStatus = VerificationStatus.NOT_VERIFIED;
 
     @Column(name = "verified_at")
-    private LocalDateTime verifiedAt;
+    private Instant verifiedAt;
+
+    @Column(name = "last_verification_email_sent_at")
+    private Instant lastVerificationEmailSentAt;
+
+    @Column(name = "last_password_reset_sent_at")
+    private Instant lastPasswordResetSentAt;
+
+    @Column(name = "token_version", nullable = false)
+    @Builder.Default
+    private int tokenVersion = 0;
 
     @Column(nullable = false, length = 50)
     private String city;
@@ -84,7 +112,11 @@ public class User extends AuditableEntity {
 
     @Column(nullable = false)
     @Builder.Default
-    private boolean enabled = false;
+    private boolean enabled = true;
+
+    @Column(name = "email_verified", nullable = false)
+    @Builder.Default
+    private boolean emailVerified = false;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private BonusCard bonusCard;

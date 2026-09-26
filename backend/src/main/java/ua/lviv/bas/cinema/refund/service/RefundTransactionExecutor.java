@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.refund.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,7 +40,7 @@ public class RefundTransactionExecutor {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public RefundProcessingContext createProcessingRefund(Long ticketId, Long userId, String reason) {
-        var ticket = ticketService.findActiveTicketForUser(ticketId, userId);
+        var ticket = ticketService.getActiveTicketForUser(ticketId, userId);
 
         validateRefundable(ticket);
 
@@ -88,6 +89,7 @@ public class RefundTransactionExecutor {
         return refund;
     }
 
+    @CacheEvict(value = "seatAvailability", allEntries = true)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Refund applySuccess(Long refundId, Long ticketId) {
         var refund = refundRepository.findById(refundId)
@@ -104,7 +106,7 @@ public class RefundTransactionExecutor {
             return refund;
         }
 
-        var ticket = ticketService.findById(ticketId);
+        var ticket = ticketService.getTicket(ticketId);
 
         var refundItem = refund.getItems().getFirst();
         var amount = refund.getTotalAmount();
@@ -122,6 +124,10 @@ public class RefundTransactionExecutor {
             bonusLedgerService.refundPointsForTicket(refund.getUser().getId(), bonusPointsToRefund,
                     "REFUND_TICKET_" + ticket.getId());
         }
+
+        bonusLedgerService.revokeAccruedPoints(refund.getUser().getId(),
+                refundCalculator.calculateEarnedPointsToRevoke(ticket, percentage),
+                "REFUND_ACCRUAL_TICKET_" + ticket.getId());
 
         ticketService.markAsRefunded(ticket, refund);
 

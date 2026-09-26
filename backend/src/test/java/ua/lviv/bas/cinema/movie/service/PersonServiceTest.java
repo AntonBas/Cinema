@@ -29,7 +29,9 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class PersonServiceTest {
@@ -67,7 +69,7 @@ public class PersonServiceTest {
     @Test
     void createPersonShouldSucceed() {
         when(personRepository.existsByNameAndRole(PERSON_NAME, PERSON_ROLE)).thenReturn(false);
-        when(personMapper.toPerson(request)).thenReturn(person);
+        when(personMapper.toEntity(request)).thenReturn(person);
         when(personRepository.save(person)).thenReturn(person);
         when(personMapper.toPersonResponse(person)).thenReturn(personResponse);
 
@@ -132,7 +134,7 @@ public class PersonServiceTest {
         PersonResponse result = personService.updatePerson(PERSON_ID, request);
 
         assertThat(result).isEqualTo(personResponse);
-        verify(personMapper).updatePersonFromRequest(request, existing);
+        verify(personMapper).updateEntity(request, existing);
     }
 
     @Test

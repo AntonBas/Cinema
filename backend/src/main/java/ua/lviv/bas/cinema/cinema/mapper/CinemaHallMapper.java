@@ -7,7 +7,7 @@ import org.mapstruct.ReportingPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import ua.lviv.bas.cinema.cinema.domain.CinemaHall;
 import ua.lviv.bas.cinema.cinema.domain.Seat;
-import ua.lviv.bas.cinema.cinema.domain.enums.SeatType;
+import ua.lviv.bas.cinema.cinema.dto.hall.request.CinemaHallRequest;
 import ua.lviv.bas.cinema.cinema.dto.hall.response.CinemaHallListResponse;
 import ua.lviv.bas.cinema.cinema.dto.hall.response.CinemaHallResponse;
 import ua.lviv.bas.cinema.cinema.dto.hall.response.HallLayoutResponse;
@@ -45,34 +45,17 @@ public abstract class CinemaHallMapper {
                 .stream().mapToInt(Long::intValue).max().orElse(0);
     }
 
-    @Named("calculateDefaultSeatType")
-    protected SeatType calculateDefaultSeatType(CinemaHall hall) {
-        if (hall.getSeats() == null || hall.getSeats().isEmpty()) {
-            return null;
-        }
-        return hall.getSeats().stream().filter(s -> s.getSeatType() != SeatType.COUPLE).findFirst()
-                .map(Seat::getSeatType).orElse(null);
-    }
-
-    @Named("calculateCoupleRows")
-    protected List<Integer> calculateCoupleRows(CinemaHall hall) {
-        if (hall.getSeats() == null || hall.getSeats().isEmpty()) {
-            return List.of();
-        }
-        return hall.getSeats().stream().filter(s -> s.getSeatType() == SeatType.COUPLE).map(Seat::getRow).distinct()
-                .sorted().toList();
-    }
-
     @Mapping(target = "capacity", source = "hall", qualifiedByName = "calculateCapacity")
     public abstract CinemaHallListResponse toCinemaHallListResponse(CinemaHall hall);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "sessions", ignore = true)
+    @Mapping(target = "seats", ignore = true)
+    public abstract CinemaHall toEntity(CinemaHallRequest request);
 
     @Mapping(target = "capacity", source = "seatsCount")
     public abstract CinemaHallListResponse toCinemaHallListResponse(CinemaHallListProjection projection);
 
-    @Mapping(target = "rows", source = "hall", qualifiedByName = "calculateTotalRows")
-    @Mapping(target = "seatsPerRow", source = "hall", qualifiedByName = "calculateMaxSeatsPerRow")
-    @Mapping(target = "defaultSeatType", source = "hall", qualifiedByName = "calculateDefaultSeatType")
-    @Mapping(target = "coupleRows", source = "hall", qualifiedByName = "calculateCoupleRows")
     @Mapping(target = "capacity", source = "hall", qualifiedByName = "calculateCapacity")
     public abstract CinemaHallResponse toCinemaHallResponse(CinemaHall hall);
 
@@ -90,7 +73,7 @@ public abstract class CinemaHallMapper {
         }
         return seats.stream().collect(Collectors.groupingBy(Seat::getRow)).entrySet().stream()
                 .map(entry -> new HallLayoutResponse.SeatRowResponse(entry.getKey(), entry.getValue().size(),
-                        seatMapper.toSeatResponseList(entry.getValue())))
+                        seatMapper.toResponseList(entry.getValue())))
                 .sorted(Comparator.comparingInt(HallLayoutResponse.SeatRowResponse::rowNumber)).toList();
     }
 

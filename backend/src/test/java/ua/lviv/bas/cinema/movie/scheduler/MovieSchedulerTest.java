@@ -6,6 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.cache.CacheManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.movie.domain.status.MovieStatus;
@@ -19,7 +20,10 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class MovieSchedulerTest {
@@ -30,6 +34,8 @@ class MovieSchedulerTest {
     private MovieStatusCalculator movieStatusCalculator;
     @Mock
     private PlatformTransactionManager transactionManager;
+    @Mock
+    private CacheManager cacheManager;
 
     @InjectMocks
     private MovieScheduler movieScheduler;

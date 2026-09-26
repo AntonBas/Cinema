@@ -10,7 +10,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
@@ -30,20 +29,20 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString(exclude = { "movies" })
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Table(name = "genres", indexes = @Index(name = "idx_genre_name", columnList = "name"))
+@Table(name = "genres")
 public class Genre {
 
-	@Id
-	@EqualsAndHashCode.Include
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @EqualsAndHashCode.Include
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	@NotBlank
-	@Column(nullable = false, unique = true, length = 30)
-	private String name;
+    @NotBlank
+    @Column(nullable = false, unique = true, length = 30)
+    private String name;
 
-	@Builder.Default
-	@ManyToMany(mappedBy = "genres")
-	@BatchSize(size = 20)
-	private Set<Movie> movies = new HashSet<>();
+    @Builder.Default
+    @ManyToMany(mappedBy = "genres")
+    @BatchSize(size = 20)
+    private Set<Movie> movies = new HashSet<>();
 }

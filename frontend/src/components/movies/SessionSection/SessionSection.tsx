@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { SessionMovieInfoResponse } from "@/types/session";
+import { formatPrice, formatTime } from "@/utils/formatters";
 import styles from "./SessionSection.module.css";
 
 interface SessionSectionProps {
@@ -14,32 +15,32 @@ interface SessionSectionProps {
   onScrollDates: (direction: "left" | "right") => void;
 }
 
-const today = new Date();
-today.setHours(0, 0, 0, 0);
+const parseLocalDate = (dateString: string): Date =>
+  new Date(`${dateString}T00:00:00`);
 
-const getDayInfo = (dateString: string) => {
-  const date = new Date(dateString);
-  const dateOnly = new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-  );
+const getDayLabel = (date: Date): string => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
 
-  if (dateOnly.getTime() === today.getTime()) {
-    return { shortLabel: "Today", dayNumber: date.getDate() };
-  }
-  return {
-    shortLabel: date.toLocaleDateString("en-US", { weekday: "short" }),
-    dayNumber: date.getDate(),
-  };
+  if (date.getTime() === today.getTime()) return "Today";
+  if (date.getTime() === tomorrow.getTime()) return "Tomorrow";
+  return date.toLocaleDateString("en-US", { weekday: "short" });
 };
 
-const formatTime = (dateTimeString: string): string => {
-  return new Date(dateTimeString).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
+const getDayInfo = (dateString: string) => {
+  const date = parseLocalDate(dateString);
+  return {
+    dayLabel: getDayLabel(date),
+    dayNumber: date.getDate(),
+    monthLabel: date.toLocaleDateString("en-US", { month: "short" }),
+    fullLabel: date.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+    }),
+  };
 };
 
 export const SessionSection: React.FC<SessionSectionProps> = ({
@@ -96,16 +97,20 @@ export const SessionSection: React.FC<SessionSectionProps> = ({
 
         <div className={styles.dateList}>
           {visibleDates.map((date) => {
-            const { shortLabel, dayNumber } = getDayInfo(date);
+            const { dayLabel, dayNumber, monthLabel, fullLabel } =
+              getDayInfo(date);
             const isSelected = selectedDate === date;
             return (
               <button
                 key={date}
                 className={`${styles.dateButton} ${isSelected ? styles.dateButtonActive : ""}`}
                 onClick={() => onDateSelect(date)}
+                aria-label={fullLabel}
+                aria-pressed={isSelected}
               >
-                <span className={styles.dateButtonDay}>{shortLabel}</span>
+                <span className={styles.dateButtonDay}>{dayLabel}</span>
                 <span className={styles.dateButtonNumber}>{dayNumber}</span>
+                <span className={styles.dateButtonMonth}>{monthLabel}</span>
               </button>
             );
           })}
@@ -127,13 +132,15 @@ export const SessionSection: React.FC<SessionSectionProps> = ({
           <button
             key={session.id}
             className={styles.sessionTimeButton}
-            onClick={() => navigate(`/booking/${session.id}`)}
+            onClick={() => navigate(`/booking/${session.publicId}`)}
           >
             <span className={styles.sessionTimeValue}>
               {formatTime(session.startTime)}
             </span>
             <span className={styles.sessionHall}>{session.hallName}</span>
-            <span className={styles.sessionPrice}>{session.basePrice}₴</span>
+            <span className={styles.sessionPrice}>
+              {formatPrice(session.basePrice)}
+            </span>
           </button>
         ))}
       </div>

@@ -13,10 +13,14 @@ import ua.lviv.bas.cinema.booking.service.SeatReservationService;
 import ua.lviv.bas.cinema.user.service.UserService;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class SeatReservationControllerTest {
@@ -37,21 +41,24 @@ public class SeatReservationControllerTest {
         SeatReservationResponse.TicketPriceInfo ticketPriceInfo = new SeatReservationResponse.TicketPriceInfo(1L,
                 "Adult", new BigDecimal("250.00"), null, null, false, null);
 
-        SeatReservationResponse.SeatInfo seat1 = new SeatReservationResponse.SeatInfo(1L, 1, 1, SeatType.STANDARD, true,
-                false, true, List.of(ticketPriceInfo));
+        SeatReservationResponse.SeatInfo seat1 = new SeatReservationResponse.SeatInfo(1L, 1, 1, SeatType.STANDARD, 0, 0,
+                true, false, true, List.of(ticketPriceInfo));
 
-        return new SeatReservationResponse(sessionId, "Inception", new BigDecimal("200.00"), "Hall A", 75,
+        return new SeatReservationResponse(sessionId, "Inception", new BigDecimal("200.00"), "Hall A",
+                LocalDateTime.of(2024, 1, 15, 18, 30), 75,
                 List.of(seat1));
     }
 
     @Test
     void getAvailabilityShouldReturnAvailabilitySuccessfully() {
         Long sessionId = 1L;
+        UUID sessionPublicId = UUID.randomUUID();
         SeatReservationResponse availabilityResponse = createSeatAvailabilityResponse(sessionId);
 
+        when(seatReservationService.resolveSessionId(sessionPublicId)).thenReturn(sessionId);
         when(seatReservationService.getAvailability(sessionId)).thenReturn(availabilityResponse);
 
-        SeatReservationResponse response = seatReservationController.getAvailability(sessionId);
+        SeatReservationResponse response = seatReservationController.getAvailability(sessionPublicId);
 
         assertThat(response).isNotNull();
         assertThat(response.sessionId()).isEqualTo(sessionId);
@@ -62,6 +69,7 @@ public class SeatReservationControllerTest {
     @Test
     void holdShouldCallServiceSuccessfully() {
         Long sessionId = 1L;
+        UUID sessionPublicId = UUID.randomUUID();
         Long seatId = 10L;
         Long userId = 100L;
         User user = new User();
@@ -69,8 +77,9 @@ public class SeatReservationControllerTest {
 
         when(customUserDetails.getUserId()).thenReturn(userId);
         when(userService.getUser(userId)).thenReturn(user);
+        when(seatReservationService.resolveSessionId(sessionPublicId)).thenReturn(sessionId);
 
-        seatReservationController.hold(sessionId, seatId, customUserDetails);
+        seatReservationController.hold(sessionPublicId, seatId, customUserDetails);
 
         verify(seatReservationService).hold(sessionId, seatId, user);
     }
@@ -78,6 +87,7 @@ public class SeatReservationControllerTest {
     @Test
     void cancelShouldCallServiceSuccessfully() {
         Long sessionId = 1L;
+        UUID sessionPublicId = UUID.randomUUID();
         Long seatId = 10L;
         Long userId = 100L;
         User user = new User();
@@ -85,9 +95,10 @@ public class SeatReservationControllerTest {
 
         when(customUserDetails.getUserId()).thenReturn(userId);
         when(userService.getUser(userId)).thenReturn(user);
+        when(seatReservationService.resolveSessionId(sessionPublicId)).thenReturn(sessionId);
         doNothing().when(seatReservationService).cancel(sessionId, seatId, user);
 
-        seatReservationController.cancel(sessionId, seatId, customUserDetails);
+        seatReservationController.cancel(sessionPublicId, seatId, customUserDetails);
 
         verify(seatReservationService).cancel(sessionId, seatId, user);
     }

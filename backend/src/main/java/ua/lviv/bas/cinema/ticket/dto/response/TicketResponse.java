@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Schema(description = "Ticket information response")
@@ -21,7 +22,7 @@ public record TicketResponse(
         TicketStatus status,
 
         @Schema(description = "Purchase time", example = "2024-01-15T14:32:00")
-        LocalDateTime purchaseTime,
+        Instant purchaseTime,
 
         @Schema(description = "Final price", example = "225.00")
         BigDecimal price,
@@ -42,6 +43,9 @@ public record TicketResponse(
         Integer row,
 
         @Schema(description = "Seat number", example = "12")
-        Integer seatNumber
+        Integer seatNumber,
+
+        @Schema(description = "Whether this ticket is currently eligible for refund", example = "true")
+        Boolean refundable
 ) {
 }

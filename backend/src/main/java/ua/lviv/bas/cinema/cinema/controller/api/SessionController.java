@@ -43,4 +43,14 @@ public class SessionController {
         var sessions = sessionService.getSchedule(searchTerm, date, movieId);
         return ResponseEntity.ok().body(sessions);
     }
+
+    @RateLimit(value = 20, duration = 1)
+    @GetMapping("/dates")
+    @Operation(summary = "Get dates that have upcoming sessions")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Session dates retrieved successfully")
+    })
+    public ResponseEntity<List<LocalDate>> getScheduleDates(@RequestParam(required = false) Long movieId) {
+        return ResponseEntity.ok().body(sessionService.getScheduleDates(movieId));
+    }
 }

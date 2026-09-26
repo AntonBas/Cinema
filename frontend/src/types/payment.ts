@@ -6,10 +6,11 @@ export type PaymentStatus =
   | "CANCELLED"
   | "EXPIRED"
   | "REFUNDED"
-  | "PARTIALLY_REFUNDED";
+  | "PARTIALLY_REFUNDED"
+  | "REFUND_REQUIRED";
 
 export interface PaymentCreateRequest {
-  bookingId: number;
+  bookingId: string;
 }
 
 export interface LiqPayCallbackRequest {
@@ -32,10 +33,30 @@ export interface PaymentResponse {
   hallName: string;
   finalAmount: string;
   status: PaymentStatus;
-  paymentTime: string;
+  paymentTime: string | null;
+  expiresAt: string | null;
   senderCardMask: string;
   errorDescription?: string;
 }
+
+export const FINAL_PAYMENT_STATUSES: PaymentStatus[] = [
+  "SUCCESS",
+  "FAILED",
+  "CANCELLED",
+  "EXPIRED",
+  "REFUND_REQUIRED",
+  "REFUNDED",
+  "PARTIALLY_REFUNDED",
+];
+
+export const LATE_PAYMENT_REFUND_STATUSES: PaymentStatus[] = [
+  "REFUND_REQUIRED",
+];
+
+export const REFUNDED_PAYMENT_STATUSES: PaymentStatus[] = [
+  "REFUNDED",
+  "PARTIALLY_REFUNDED",
+];
 
 export const PaymentStatusDisplay: Record<PaymentStatus, string> = {
   PENDING: "Pending",
@@ -46,4 +67,5 @@ export const PaymentStatusDisplay: Record<PaymentStatus, string> = {
   EXPIRED: "Expired",
   REFUNDED: "Refunded",
   PARTIALLY_REFUNDED: "Partially Refunded",
+  REFUND_REQUIRED: "Refund in Progress",
 };

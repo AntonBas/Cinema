@@ -8,6 +8,7 @@ import ua.lviv.bas.cinema.config.properties.BonusProperties;
 import ua.lviv.bas.cinema.ticket.domain.TicketType;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Service
 @RequiredArgsConstructor
@@ -19,7 +20,7 @@ public class PriceCalculatorService {
         var basePrice = session.getBasePrice();
         var seatMultiplier = seat.getSeatType().getPriceMultiplier();
         var ticketMultiplier = ticketType != null ? ticketType.getPriceMultiplier() : BigDecimal.ONE;
-        return basePrice.multiply(seatMultiplier).multiply(ticketMultiplier);
+        return basePrice.multiply(seatMultiplier).multiply(ticketMultiplier).setScale(2, RoundingMode.HALF_UP);
     }
 
     public BigDecimal calculateBonusDiscount(Integer bonusPoints) {

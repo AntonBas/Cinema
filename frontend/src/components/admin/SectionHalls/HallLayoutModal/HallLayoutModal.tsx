@@ -1,208 +1,427 @@
-import React, { useState, useMemo } from 'react';
-import type { SeatResponse, SeatRowResponse } from '@/types/seat';
-import { SeatType } from '@/types/seat';
-import { Modal } from '@/components/ui/Modal/Modal';
-import LoadingSpinner from '@/components/ui/LoadingSpinner/LoadingSpinner';
-import { useDelayedLoading } from '@/hooks/common/useDelayedLoading';
-import { useHallLayout } from '../HallLayoutContext';
-import styles from './HallLayoutModal.module.css';
-
-const getNextSeatType = (currentType: SeatType): SeatType => {
-    const types: SeatType[] = [SeatType.STANDARD, SeatType.VIP, SeatType.COUPLE];
-    const currentIndex = types.indexOf(currentType);
-    return types[(currentIndex + 1) % types.length];
-};
+import React, { useMemo, useRef, useState } from "react";
+import { SeatType } from "@/types/seat";
+import { Modal } from "@/components/ui/Modal/Modal";
+import { Button } from "@/components/ui/Button/Button";
+import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
+import { useHallLayout, type DraftSeat } from "../HallLayoutContext";
+import {
+  GRID_COLS,
+  GRID_ROWS,
+  CELL_WIDTH,
+  CELL_HEIGHT,
+} from "@/utils/hallLayoutGrid";
+import styles from "./HallLayoutModal.module.css";
 
 const getSeatTypeName = (seatType: SeatType): string => {
-    const names: Record<SeatType, string> = {
-        [SeatType.STANDARD]: 'Standard',
-        [SeatType.VIP]: 'VIP',
-        [SeatType.COUPLE]: 'Couple'
-    };
-    return names[seatType];
+  const names: Record<SeatType, string> = {
+    [SeatType.STANDARD]: "Standard",
+    [SeatType.VIP]: "VIP",
+    [SeatType.COUPLE]: "Couple",
+  };
+  return names[seatType];
 };
 
-interface SeatComponentProps {
-    seat: SeatResponse;
-    onTypeChange: (seat: SeatResponse) => void;
-    onStatusToggle: (seat: SeatResponse) => void;
-    updating: boolean;
+interface SeatTileProps {
+  seat: DraftSeat;
+  rowNumber: number;
+  number: number;
+  onCycleType: () => void;
+  onToggleActive: () => void;
+  onRemove: () => void;
+  onDragStart: () => void;
+  onMove: (colDelta: number, rowDelta: number) => void;
+  onAddNext: () => void;
 }
 
-const SeatComponent: React.FC<SeatComponentProps> = ({ seat, onTypeChange, onStatusToggle, updating }) => {
-    const handleClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (!updating) onTypeChange(seat);
-    };
+const ARROW_DELTAS: Record<string, [number, number]> = {
+  ArrowLeft: [-1, 0],
+  ArrowRight: [1, 0],
+  ArrowUp: [0, -1],
+  ArrowDown: [0, 1],
+};
 
-    const handleContextMenu = (e: React.MouseEvent) => {
+const SeatTile: React.FC<SeatTileProps> = ({
+  seat,
+  rowNumber,
+  number,
+  onCycleType,
+  onToggleActive,
+  onRemove,
+  onDragStart,
+  onMove,
+  onAddNext,
+}) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.target !== e.currentTarget) return;
+    const delta = ARROW_DELTAS[e.key];
+    if (delta) {
+      e.preventDefault();
+      onMove(delta[0], delta[1]);
+    } else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onCycleType();
+    } else if (e.key === "t" || e.key === "T") {
+      e.preventDefault();
+      onToggleActive();
+    } else if (e.key === "Delete" || e.key === "Backspace") {
+      e.preventDefault();
+      onRemove();
+    } else if (e.key === "Insert" || e.key === "+") {
+      e.preventDefault();
+      onAddNext();
+    }
+  };
+
+  const width =
+    seat.seatType === SeatType.COUPLE ? CELL_WIDTH * 2 - 8 : CELL_WIDTH - 8;
+
+  return (
+    <div
+      className={`${styles.seatTile} ${styles[seat.seatType.toLowerCase()]} ${!seat.active ? styles.inactive : ""}`}
+      style={{
+        left: seat.col * CELL_WIDTH + 4,
+        top: seat.gridRow * CELL_HEIGHT + 4,
+        width,
+        height: CELL_HEIGHT - 8,
+      }}
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData("text/plain", seat.key);
+        onDragStart();
+      }}
+      onClick={onCycleType}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+      aria-label={`Row ${rowNumber}, seat ${number}, ${getSeatTypeName(seat.seatType)}, ${seat.active ? "active" : "inactive"}`}
+      onContextMenu={(e) => {
         e.preventDefault();
-        e.stopPropagation();
-        if (!updating) onStatusToggle(seat);
-    };
-
-    return (
-        <button
-            className={`${styles.seatButton} ${styles[seat.seatType.toLowerCase()]} ${!seat.active ? styles.inactive : ''}`}
-            onClick={handleClick}
-            onContextMenu={handleContextMenu}
-            title={`Row ${seat.row}, Seat ${seat.number}\nType: ${getSeatTypeName(seat.seatType)}\nStatus: ${seat.active ? 'Active' : 'Inactive'}\n\nLeft click: Change type\nRight click: Toggle status`}
-            disabled={updating}
-        >
-            {updating ? (
-                <div className={styles.loadingSpinner} />
-            ) : (
-                <span className={styles.seatNumber}>{seat.number}</span>
-            )}
-            {!seat.active && (
-                <div className={styles.inactiveOverlay}>
-                    <span className={styles.inactiveIcon}>✕</span>
-                </div>
-            )}
-        </button>
-    );
+        onToggleActive();
+      }}
+      title={`Row ${rowNumber}, Seat ${number}\nType: ${getSeatTypeName(seat.seatType)}\nStatus: ${seat.active ? "Active" : "Inactive"}\n\nClick: change type\nRight click: toggle status\nDrag: move\n×: delete`}
+    >
+      <span className={styles.seatNumber}>
+        {rowNumber}-{number}
+      </span>
+      <button
+        type="button"
+        className={styles.deleteButton}
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+        aria-label="Remove seat"
+      >
+        ×
+      </button>
+      {!seat.active && <div className={styles.inactiveOverlay} />}
+    </div>
+  );
 };
 
 export const HallLayoutModal: React.FC = () => {
-    const {
-        currentHall,
-        layout,
-        loading,
-        closeLayout,
-        updateSeatType,
-        toggleSeatStatus
-    } = useHallLayout();
+  const {
+    currentHall,
+    layout,
+    seats,
+    isDirty,
+    saving,
+    loading,
+    closeLayout,
+    addSeat,
+    moveSeat,
+    removeSeat,
+    cycleSeatType,
+    toggleSeatActive,
+    saveLayout,
+  } = useHallLayout();
 
-    const [updatingSeatId, setUpdatingSeatId] = useState<number | null>(null);
-    const showLoading = useDelayedLoading(loading);
+  const showLoading = useDelayedLoading(loading);
+  const draggedKeyRef = useRef<string | null>(null);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
-    const handleTypeChange = async (seat: SeatResponse) => {
-        if (!currentHall) return;
+  const occupiedCells = useMemo(() => {
+    const cells = new Set<string>();
+    seats.forEach((seat) => {
+      cells.add(`${seat.col}:${seat.gridRow}`);
+      if (seat.seatType === SeatType.COUPLE) {
+        cells.add(`${seat.col + 1}:${seat.gridRow}`);
+      }
+    });
+    return cells;
+  }, [seats]);
 
-        const nextSeatType = getNextSeatType(seat.seatType);
-        setUpdatingSeatId(seat.id);
-        await updateSeatType(seat.id, nextSeatType);
-        setUpdatingSeatId(null);
-    };
+  const activeSeatsCount = useMemo(
+    () => seats.filter((s) => s.active).length,
+    [seats],
+  );
 
-    const handleStatusToggle = async (seat: SeatResponse) => {
-        if (!currentHall) return;
+  const numberByKey = useMemo(() => {
+    const byRow = new Map<number, DraftSeat[]>();
+    seats.forEach((seat) => {
+      const rowSeats = byRow.get(seat.gridRow) ?? [];
+      rowSeats.push(seat);
+      byRow.set(seat.gridRow, rowSeats);
+    });
+    const result = new Map<string, number>();
+    byRow.forEach((rowSeats) => {
+      [...rowSeats]
+        .sort((a, b) => a.col - b.col)
+        .forEach((seat, index) => {
+          result.set(seat.key, index + 1);
+        });
+    });
+    return result;
+  }, [seats]);
 
-        setUpdatingSeatId(seat.id);
-        await toggleSeatStatus(seat.id);
-        setUpdatingSeatId(null);
-    };
-
-    const activeSeatsCount = useMemo(() => {
-        if (!layout?.rows) return 0;
-        return layout.rows.reduce(
-            (acc, row) => acc + row.seats.filter((s) => s.active).length,
-            0
-        );
-    }, [layout]);
-
-    if (!currentHall) return null;
-
-    const sortedRows = layout?.rows ? [...layout.rows].sort((a, b) => a.rowNumber - b.rowNumber) : [];
-
-    return (
-        <Modal
-            isOpen={!!currentHall}
-            onClose={closeLayout}
-            title={`${currentHall.name} - Seat Management`}
-            size="fullscreen"
-        >
-            <div className={styles.modalContent}>
-                {showLoading && !layout && (
-                    <div className={styles.loading}>
-                        <LoadingSpinner text="Loading hall layout..." />
-                    </div>
-                )}
-
-                {!loading && !layout?.rows?.length && (
-                    <div className={styles.noLayout}>
-                        <div className={styles.emptyIcon}>🎭</div>
-                        <h3>No Seats Configured</h3>
-                        <p>Please configure seats layout in hall settings.</p>
-                    </div>
-                )}
-
-                {layout && (
-                    <div className={styles.cinemaHall}>
-                        <div className={styles.headerControls}>
-                            <div className={styles.stats}>
-                                <div className={styles.statItem}>
-                                    <span className={styles.statNumber}>{layout.totalSeats}</span>
-                                    <span className={styles.statLabel}>Total Seats</span>
-                                </div>
-                                <div className={styles.statItem}>
-                                    <span className={styles.statNumber}>{activeSeatsCount}</span>
-                                    <span className={styles.statLabel}>Active</span>
-                                </div>
-                                <div className={styles.statItem}>
-                                    <span className={styles.statNumber}>{layout.totalSeats - activeSeatsCount}</span>
-                                    <span className={styles.statLabel}>Inactive</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className={styles.screenArea}>
-                            <div className={styles.screen}>SCREEN</div>
-                            <div className={styles.screenReflection} />
-                        </div>
-
-                        <div className={styles.seatsLayout}>
-                            <div className={styles.rowsContainer}>
-                                {sortedRows.map((row: SeatRowResponse) => (
-                                    <div key={`row-${row.rowNumber}`} className={styles.row}>
-                                        <div className={styles.rowLabel}>Row {row.rowNumber}</div>
-                                        <div className={styles.seatsRow}>
-                                            {row.seats
-                                                .sort((a, b) => a.number - b.number)
-                                                .map((seat: SeatResponse) => (
-                                                    <SeatComponent
-                                                        key={`seat-${seat.id}`}
-                                                        seat={seat}
-                                                        onTypeChange={handleTypeChange}
-                                                        onStatusToggle={handleStatusToggle}
-                                                        updating={updatingSeatId === seat.id}
-                                                    />
-                                                ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className={styles.footer}>
-                            <div className={styles.legend}>
-                                <h4 className={styles.legendTitle}>Seat Types:</h4>
-                                <div className={styles.legendGrid}>
-                                    {Object.values(SeatType).map((type) => (
-                                        <div key={type} className={styles.legendItem}>
-                                            <div className={`${styles.legendColor} ${styles[type.toLowerCase()]}`} />
-                                            <span>{getSeatTypeName(type)}</span>
-                                        </div>
-                                    ))}
-                                    <div className={styles.legendItem}>
-                                        <div className={`${styles.legendColor} ${styles.inactive}`} />
-                                        <span>Inactive</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className={styles.instructions}>
-                                <div className={styles.instructionIcon}>🎯</div>
-                                <div className={styles.instructionText}>
-                                    <p><strong>Left click:</strong> Change seat type</p>
-                                    <p><strong>Right click:</strong> Toggle active status</p>
-                                    <p className={styles.note}>Inactive seats cannot be booked</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
-        </Modal>
+  const rowNumberByGridRow = useMemo(() => {
+    const gridRows = [...new Set(seats.map((seat) => seat.gridRow))].sort(
+      (a, b) => a - b,
     );
+    return new Map(gridRows.map((gridRow, index) => [gridRow, index + 1]));
+  }, [seats]);
+
+  if (!currentHall) return null;
+
+  const handleClose = () => {
+    if (isDirty) {
+      setShowDiscardConfirm(true);
+      return;
+    }
+    closeLayout();
+  };
+
+  const handleConfirmDiscard = () => {
+    setShowDiscardConfirm(false);
+    closeLayout();
+  };
+
+  const handleSave = async () => {
+    await saveLayout();
+  };
+
+  const moveSeatWithinGrid = (
+    seat: DraftSeat,
+    colDelta: number,
+    rowDelta: number,
+  ) => {
+    const col = seat.col + colDelta;
+    const gridRow = seat.gridRow + rowDelta;
+    if (col < 0 || col >= GRID_COLS || gridRow < 0 || gridRow >= GRID_ROWS) {
+      return;
+    }
+    moveSeat(seat.key, col, gridRow);
+  };
+
+  const addSeatAfter = (seat: DraftSeat) => {
+    const firstCol = seat.col + (seat.seatType === SeatType.COUPLE ? 2 : 1);
+    for (let col = firstCol; col < GRID_COLS; col++) {
+      if (!occupiedCells.has(`${col}:${seat.gridRow}`)) {
+        addSeat(col, seat.gridRow);
+        return;
+      }
+    }
+  };
+
+  const addSeatInFirstFreeCell = () => {
+    for (let gridRow = 0; gridRow < GRID_ROWS; gridRow++) {
+      for (let col = 0; col < GRID_COLS; col++) {
+        if (!occupiedCells.has(`${col}:${gridRow}`)) {
+          addSeat(col, gridRow);
+          return;
+        }
+      }
+    }
+  };
+
+  const emptyCells: { col: number; gridRow: number }[] = [];
+  for (let gridRow = 0; gridRow < GRID_ROWS; gridRow++) {
+    for (let col = 0; col < GRID_COLS; col++) {
+      if (!occupiedCells.has(`${col}:${gridRow}`)) {
+        emptyCells.push({ col, gridRow });
+      }
+    }
+  }
+
+  return (
+    <Modal
+      isOpen={!!currentHall}
+      onClose={handleClose}
+      title={`${currentHall.name} - Seat Layout`}
+      size="fullscreen"
+    >
+      <div className={styles.modalContent}>
+        {showLoading && !layout && (
+          <div className={styles.loading}>
+            <LoadingSpinner text="Loading hall layout..." />
+          </div>
+        )}
+
+        {layout && (
+          <div className={styles.cinemaHall}>
+            <div className={styles.headerControls}>
+              <div className={styles.stats}>
+                <div className={styles.statItem}>
+                  <span className={styles.statNumber}>{seats.length}</span>
+                  <span className={styles.statLabel}>Total Seats</span>
+                </div>
+                <div className={styles.statItem}>
+                  <span className={styles.statNumber}>{activeSeatsCount}</span>
+                  <span className={styles.statLabel}>Active</span>
+                </div>
+                <div className={styles.statItem}>
+                  <span className={styles.statNumber}>
+                    {seats.length - activeSeatsCount}
+                  </span>
+                  <span className={styles.statLabel}>Inactive</span>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.screenArea}>
+              <div className={styles.screen}>SCREEN</div>
+              <div className={styles.screenReflection} />
+            </div>
+
+            <div className={styles.gridWrapper}>
+              <div
+                className={styles.canvas}
+                style={{
+                  width: GRID_COLS * CELL_WIDTH,
+                  height: GRID_ROWS * CELL_HEIGHT,
+                }}
+              >
+                {emptyCells.map(({ col, gridRow }) => (
+                  <div
+                    key={`empty-${col}-${gridRow}`}
+                    className={styles.gridCell}
+                    style={{
+                      left: col * CELL_WIDTH,
+                      top: gridRow * CELL_HEIGHT,
+                      width: CELL_WIDTH,
+                      height: CELL_HEIGHT,
+                    }}
+                    onClick={() => addSeat(col, gridRow)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const key =
+                        e.dataTransfer.getData("text/plain") ||
+                        draggedKeyRef.current;
+                      if (key) moveSeat(key, col, gridRow);
+                    }}
+                  />
+                ))}
+                {seats.map((seat) => (
+                  <SeatTile
+                    key={seat.key}
+                    seat={seat}
+                    rowNumber={rowNumberByGridRow.get(seat.gridRow) ?? 0}
+                    number={numberByKey.get(seat.key) ?? 0}
+                    onCycleType={() => cycleSeatType(seat.key)}
+                    onToggleActive={() => toggleSeatActive(seat.key)}
+                    onRemove={() => removeSeat(seat.key)}
+                    onDragStart={() => {
+                      draggedKeyRef.current = seat.key;
+                    }}
+                    onMove={(colDelta, rowDelta) =>
+                      moveSeatWithinGrid(seat, colDelta, rowDelta)
+                    }
+                    onAddNext={() => addSeatAfter(seat)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className={styles.footer}>
+              <div className={styles.legend}>
+                <h4 className={styles.legendTitle}>Seat Types:</h4>
+                <div className={styles.legendGrid}>
+                  {Object.values(SeatType).map((type) => (
+                    <div key={type} className={styles.legendItem}>
+                      <div
+                        className={`${styles.legendColor} ${styles[type.toLowerCase()]}`}
+                      />
+                      <span>{getSeatTypeName(type)}</span>
+                    </div>
+                  ))}
+                  <div className={styles.legendItem}>
+                    <div
+                      className={`${styles.legendColor} ${styles.inactive}`}
+                    />
+                    <span>Inactive</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.instructions}>
+                <div className={styles.instructionIcon}>🎯</div>
+                <div className={styles.instructionText}>
+                  <p>
+                    <strong>Click empty cell:</strong> add a seat
+                  </p>
+                  <p>
+                    <strong>Click seat:</strong> change type
+                  </p>
+                  <p>
+                    <strong>Right click seat:</strong> toggle active
+                  </p>
+                  <p>
+                    <strong>Drag seat:</strong> reposition
+                  </p>
+                  <p>
+                    <strong>Keyboard:</strong> Tab to a seat, Enter changes
+                    type, T toggles active, arrows move, Delete removes, Insert
+                    adds a seat to the right
+                  </p>
+                  <p className={styles.note}>
+                    Row/seat numbers are assigned automatically left-to-right
+                    per row
+                  </p>
+                </div>
+              </div>
+
+              <div className={styles.actions}>
+                <Button
+                  variant="secondary"
+                  onClick={addSeatInFirstFreeCell}
+                  disabled={saving}
+                >
+                  Add Seat
+                </Button>
+                <Button
+                  variant="cancel"
+                  onClick={handleClose}
+                  disabled={saving}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handleSave}
+                  disabled={!isDirty || saving}
+                  loading={saving}
+                >
+                  Save Layout
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <ConfirmModal
+        isOpen={showDiscardConfirm}
+        onConfirm={handleConfirmDiscard}
+        onCancel={() => setShowDiscardConfirm(false)}
+        title="Discard Changes?"
+        message="You have unsaved layout changes. Are you sure you want to discard them?"
+        confirmText="Discard"
+        cancelText="Keep editing"
+        variant="error"
+      />
+    </Modal>
+  );
 };

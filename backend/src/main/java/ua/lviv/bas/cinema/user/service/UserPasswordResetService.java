@@ -7,24 +7,27 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
 import ua.lviv.bas.cinema.config.security.CustomUserDetailsService;
+import ua.lviv.bas.cinema.notification.EmailService;
 import ua.lviv.bas.cinema.user.domain.EmailToken;
 import ua.lviv.bas.cinema.user.domain.TokenType;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.exception.domain.auth.InvalidTokenException;
 import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
 import ua.lviv.bas.cinema.exception.domain.auth.TokenExpiredException;
-import ua.lviv.bas.cinema.exception.domain.user.EmailNotVerifiedException;
 import ua.lviv.bas.cinema.user.repository.EmailTokenRepository;
 import ua.lviv.bas.cinema.user.repository.UserRepository;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.Duration;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserPasswordResetService {
+
+    private static final long RESET_COOLDOWN_SECONDS = 60;
 
     private final EmailTokenGeneratorService tokenGeneratorService;
     private final UserRepository userRepository;
@@ -32,19 +35,32 @@ public class UserPasswordResetService {
     private final EmailTokenRepository tokenRepository;
     private final AuditService auditService;
     private final CustomUserDetailsService customUserDetailsService;
+    private final EmailService emailService;
 
     @Transactional
     public void requestReset(String email) {
-        log.info("Password reset requested for email: {}", email);
-
-        var user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new EmailNotVerifiedException("reset password"));
-
-        if (!user.isEnabled()) {
-            throw new EmailNotVerifiedException("reset password");
+        var userOpt = userRepository.findByEmailForUpdate(email);
+        if (userOpt.isEmpty()) {
+            log.info("Password reset requested for unknown email: {}", email);
+            return;
         }
 
-        tokenGeneratorService.generatePasswordResetToken(email);
+        var user = userOpt.get();
+        if (!user.isEmailVerified() || !user.isEnabled()) {
+            log.info("Password reset requested for unverified or blocked account: {}", email);
+            return;
+        }
+
+        var lastSentAt = user.getLastPasswordResetSentAt();
+        if (lastSentAt != null && Duration.between(Instant.now(), lastSentAt.plusSeconds(RESET_COOLDOWN_SECONDS))
+                .isPositive()) {
+            log.info("Password reset requested for {} within cooldown, skipping", email);
+            return;
+        }
+
+        tokenGeneratorService.generatePasswordResetToken(user);
+        user.setLastPasswordResetSentAt(Instant.now());
+        userRepository.save(user);
         log.info("Password reset token generated for: {}", email);
         auditRequestReset(user);
     }
@@ -63,11 +79,13 @@ public class UserPasswordResetService {
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));
+        user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);
         customUserDetailsService.evict(user.getEmail());
+        emailService.sendPasswordChangedNotification(user.getEmail());
 
         resetToken.setConfirmed(true);
-        resetToken.setConfirmedAt(LocalDateTime.now());
+        resetToken.setConfirmedAt(Instant.now());
         tokenRepository.save(resetToken);
 
         log.info("Password reset successfully for user: {}", user.getEmail());
@@ -78,7 +96,7 @@ public class UserPasswordResetService {
         if (token.getType() != TokenType.PASSWORD_RESET) {
             throw new InvalidTokenException("password-reset");
         }
-        if (LocalDateTime.now().isAfter(token.getExpiresAt())) {
+        if (Instant.now().isAfter(token.getExpiresAt())) {
             throw new TokenExpiredException("password-reset");
         }
         if (token.isConfirmed()) {

@@ -5,7 +5,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.cinema.dto.session.request.SessionRequest;
@@ -14,6 +18,7 @@ import ua.lviv.bas.cinema.cinema.dto.session.response.SessionResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
 import ua.lviv.bas.cinema.cinema.service.SessionService;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -22,7 +27,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class AdminSessionControllerTest {
@@ -34,18 +41,18 @@ public class AdminSessionControllerTest {
     private AdminSessionController adminSessionController;
 
     private SessionResponse createSessionResponse(BigDecimal basePrice) {
-        return new SessionResponse(1L, LocalDateTime.now().plusHours(2), LocalDateTime.now().plusHours(4), basePrice,
+        return new SessionResponse(1L, CinemaTime.now().plusHours(2), CinemaTime.now().plusHours(4), basePrice,
                 CinemaSessionStatus.SCHEDULED, 1L, "Test Movie", 120, 1L, "Hall 1");
     }
 
     private SessionAdminResponse createSessionAdminResponse(BigDecimal basePrice) {
-        return new SessionAdminResponse(1L, LocalDateTime.now().plusHours(2), LocalDateTime.now().plusHours(4),
+        return new SessionAdminResponse(1L, CinemaTime.now().plusHours(2), CinemaTime.now().plusHours(4),
                 basePrice, CinemaSessionStatus.SCHEDULED, 1L, "Test Movie", 120, 1L, "Hall 1", 100, 0, BigDecimal.ZERO);
     }
 
     @Test
     void createSessionShouldCreateSuccessfully() {
-        LocalDateTime startTime = LocalDateTime.now().plusHours(2);
+        LocalDateTime startTime = CinemaTime.now().plusHours(2);
         BigDecimal price = BigDecimal.valueOf(250);
         SessionRequest request = new SessionRequest(startTime, price, 1L, 1L);
 
@@ -63,7 +70,7 @@ public class AdminSessionControllerTest {
 
     @Test
     void createSessionWhenTimeConflictShouldThrowException() {
-        LocalDateTime startTime = LocalDateTime.now().plusHours(2);
+        LocalDateTime startTime = CinemaTime.now().plusHours(2);
         SessionRequest request = new SessionRequest(startTime, BigDecimal.valueOf(250), 1L, 1L);
 
         when(sessionService.createSession(request))
@@ -102,8 +109,8 @@ public class AdminSessionControllerTest {
         Long hallId = 1L;
         String movieTitle = "Test";
         CinemaSessionStatus status = CinemaSessionStatus.SCHEDULED;
-        LocalDate dateFrom = LocalDate.now();
-        LocalDate dateTo = LocalDate.now().plusDays(7);
+        LocalDate dateFrom = CinemaTime.today();
+        LocalDate dateTo = CinemaTime.today().plusDays(7);
         BigDecimal price = BigDecimal.valueOf(250);
 
         SessionAdminResponse response = createSessionAdminResponse(price);
@@ -166,7 +173,7 @@ public class AdminSessionControllerTest {
 
     @Test
     void updateSessionWhenTimeConflictShouldThrowException() {
-        LocalDateTime newStartTime = LocalDateTime.now().plusHours(3);
+        LocalDateTime newStartTime = CinemaTime.now().plusHours(3);
         SessionRequest request = new SessionRequest(newStartTime, null, null, null);
 
         when(sessionService.updateSession(1L, request))

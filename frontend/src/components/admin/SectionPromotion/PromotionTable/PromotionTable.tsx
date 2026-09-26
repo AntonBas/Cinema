@@ -1,9 +1,10 @@
 import React from "react";
 import { Pencil, Trash2 } from "lucide-react";
-import { Badge } from "@/components/ui";
-import type { PromotionListResponse } from "@/types/promotion";
-import { safeFormatDate } from "@/utils/dateUtils";
+import { Badge } from "@/components/ui/Badge/Badge";
+import type { PromotionListResponse, PromotionStatus } from "@/types/promotion";
+import { formatDate } from "@/utils/formatters";
 import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
 import styles from "./PromotionTable.module.css";
 
@@ -13,54 +14,43 @@ interface PromotionTableProps {
   onDelete: (promotionId: number, title: string) => void;
 }
 
-const getPromotionStatus = (promotion: PromotionListResponse): string => {
-  const now = new Date();
-  const startDate = promotion.startDate ? new Date(promotion.startDate) : null;
-  const endDate = promotion.endDate ? new Date(promotion.endDate) : null;
-
-  if (!startDate && !endDate) return "active";
-  if (startDate && now < startDate) return "upcoming";
-  if (endDate && now > endDate) return "expired";
-  return "active";
-};
-
-const getStatusDisplay = (status: string): string => {
+const getStatusDisplay = (status: PromotionStatus): string => {
   switch (status) {
-    case "active":
+    case "ACTIVE":
       return "Active";
-    case "upcoming":
+    case "UPCOMING":
       return "Upcoming";
-    case "expired":
+    case "EXPIRED":
       return "Expired";
-    default:
-      return status;
+    case "INACTIVE":
+      return "Inactive";
   }
 };
 
-const getStatusVariant = (status: string) => {
+const getStatusVariant = (status: PromotionStatus) => {
   switch (status) {
-    case "active":
+    case "ACTIVE":
       return "success";
-    case "upcoming":
+    case "UPCOMING":
       return "warning";
-    case "expired":
+    case "EXPIRED":
       return "error";
-    default:
-      return "info";
+    case "INACTIVE":
+      return "secondary";
   }
 };
 
-const PromotionTable: React.FC<PromotionTableProps> = ({
+export const PromotionTable: React.FC<PromotionTableProps> = ({
   promotions,
   onEdit,
   onDelete,
 }) => {
   if (promotions.length === 0) {
     return (
-      <div className={tableStyles.empty}>
-        <h3>No promotions found</h3>
-        <p>Create your first promotion to get started!</p>
-      </div>
+      <EmptyState
+        title="No Promotions Found"
+        message="Create your first promotion to get started!"
+      />
     );
   }
 
@@ -86,7 +76,7 @@ const PromotionTable: React.FC<PromotionTableProps> = ({
           </thead>
           <tbody>
             {promotions.map((promotion) => {
-              const status = getPromotionStatus(promotion);
+              const status = promotion.status;
 
               return (
                 <tr key={promotion.id}>
@@ -100,9 +90,9 @@ const PromotionTable: React.FC<PromotionTableProps> = ({
                   </td>
                   <td data-label="Date Range">
                     <div className={styles.dates}>
-                      <div>{safeFormatDate(promotion.startDate)}</div>
+                      <div>{formatDate(promotion.startDate)}</div>
                       <div className={styles.dateSeparator}>to</div>
-                      <div>{safeFormatDate(promotion.endDate)}</div>
+                      <div>{formatDate(promotion.endDate)}</div>
                     </div>
                   </td>
                   <td data-label="Status">
@@ -135,5 +125,3 @@ const PromotionTable: React.FC<PromotionTableProps> = ({
     </div>
   );
 };
-
-export default PromotionTable;

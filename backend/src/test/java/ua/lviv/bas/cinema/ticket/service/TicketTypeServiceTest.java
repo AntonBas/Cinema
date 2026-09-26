@@ -20,6 +20,7 @@ import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeDuplicateException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeInUseException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeValidationException;
 import ua.lviv.bas.cinema.ticket.mapper.TicketTypeMapper;
+import ua.lviv.bas.cinema.booking.repository.SeatReservationRepository;
 import ua.lviv.bas.cinema.ticket.repository.TicketRepository;
 import ua.lviv.bas.cinema.ticket.repository.TicketTypeRepository;
 import ua.lviv.bas.cinema.ticket.repository.projection.TicketTypeProjection;
@@ -33,7 +34,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class TicketTypeServiceTest {
@@ -43,6 +47,9 @@ public class TicketTypeServiceTest {
 
     @Mock
     private TicketRepository ticketRepository;
+
+    @Mock
+    private SeatReservationRepository seatReservationRepository;
 
     @Mock
     private TicketTypeMapper ticketTypeMapper;
@@ -75,9 +82,9 @@ public class TicketTypeServiceTest {
         TicketTypeResponse response = createTicketTypeResponse();
 
         when(ticketTypeRepository.existsByDisplayName(DISPLAY_NAME)).thenReturn(false);
-        when(ticketTypeMapper.toTicketType(request)).thenReturn(ticketType);
+        when(ticketTypeMapper.toEntity(request)).thenReturn(ticketType);
         when(ticketTypeRepository.save(ticketType)).thenReturn(ticketType);
-        when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
+        when(ticketTypeMapper.toResponse(ticketType)).thenReturn(response);
 
         TicketTypeResponse result = ticketTypeService.createTicketType(request);
 
@@ -113,7 +120,7 @@ public class TicketTypeServiceTest {
 
         when(ticketTypeRepository.findProjectionsByFilters(true, TicketTypeCategory.STANDARD, "search", pageable))
                 .thenReturn(page);
-        when(ticketTypeMapper.toTicketTypeResponse(projection)).thenReturn(response);
+        when(ticketTypeMapper.toResponse(projection)).thenReturn(response);
 
         Page<TicketTypeResponse> result = ticketTypeService.getTicketTypes(true, TicketTypeCategory.STANDARD, "search",
                 pageable);
@@ -130,12 +137,12 @@ public class TicketTypeServiceTest {
 
         when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
         when(ticketTypeRepository.save(ticketType)).thenReturn(ticketType);
-        when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
+        when(ticketTypeMapper.toResponse(ticketType)).thenReturn(response);
 
         TicketTypeResponse result = ticketTypeService.updateTicketType(TICKET_TYPE_ID, request);
 
         assertThat(result).isEqualTo(response);
-        verify(ticketTypeMapper).updateTicketTypeFromRequest(request, ticketType);
+        verify(ticketTypeMapper).updateEntity(request, ticketType);
     }
 
     @Test
@@ -162,11 +169,26 @@ public class TicketTypeServiceTest {
     }
 
     @Test
+    void updateTicketTypeDeactivatingWithFutureTicketsShouldThrowException() {
+        TicketType ticketType = createTicketType();
+        ticketType.setActive(true);
+        TicketTypeRequest request = new TicketTypeRequest(null, null, null, null, false, null, false, null);
+
+        when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
+        when(ticketRepository.count(any(Specification.class))).thenReturn(2L);
+
+        assertThatThrownBy(() -> ticketTypeService.updateTicketType(TICKET_TYPE_ID, request))
+                .isInstanceOf(TicketTypeInUseException.class);
+        verify(ticketTypeRepository, never()).save(any());
+    }
+
+    @Test
     void deleteTicketTypeShouldSucceed() {
         TicketType ticketType = createTicketType();
 
         when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
-        when(ticketRepository.count(any(Specification.class))).thenReturn(0L);
+        when(ticketRepository.countByTicketTypeId(TICKET_TYPE_ID)).thenReturn(0L);
+        when(seatReservationRepository.existsByTicketTypeId(TICKET_TYPE_ID)).thenReturn(false);
 
         ticketTypeService.deleteTicketType(TICKET_TYPE_ID);
 
@@ -174,14 +196,28 @@ public class TicketTypeServiceTest {
     }
 
     @Test
-    void deleteTicketTypeWithFutureTicketsShouldThrowException() {
+    void deleteTicketTypeWithAnyTicketsIncludingPastOnesShouldThrowException() {
         TicketType ticketType = createTicketType();
 
         when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
-        when(ticketRepository.count(any(Specification.class))).thenReturn(3L);
+        when(ticketRepository.countByTicketTypeId(TICKET_TYPE_ID)).thenReturn(3L);
 
         assertThatThrownBy(() -> ticketTypeService.deleteTicketType(TICKET_TYPE_ID))
                 .isInstanceOf(TicketTypeInUseException.class);
+        verify(ticketTypeRepository, never()).delete(any(TicketType.class));
+    }
+
+    @Test
+    void deleteTicketTypeUsedByReservationShouldThrowException() {
+        TicketType ticketType = createTicketType();
+
+        when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
+        when(ticketRepository.countByTicketTypeId(TICKET_TYPE_ID)).thenReturn(0L);
+        when(seatReservationRepository.existsByTicketTypeId(TICKET_TYPE_ID)).thenReturn(true);
+
+        assertThatThrownBy(() -> ticketTypeService.deleteTicketType(TICKET_TYPE_ID))
+                .isInstanceOf(TicketTypeInUseException.class);
+        verify(ticketTypeRepository, never()).delete(any(TicketType.class));
     }
 
     @Test
@@ -192,7 +228,7 @@ public class TicketTypeServiceTest {
 
         when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
         when(ticketTypeRepository.save(ticketType)).thenReturn(ticketType);
-        when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
+        when(ticketTypeMapper.toResponse(ticketType)).thenReturn(response);
 
         TicketTypeResponse result = ticketTypeService.toggleActiveStatus(TICKET_TYPE_ID);
 
@@ -210,7 +246,7 @@ public class TicketTypeServiceTest {
         when(ticketTypeRepository.findById(TICKET_TYPE_ID)).thenReturn(Optional.of(ticketType));
         when(ticketRepository.count(any(Specification.class))).thenReturn(0L);
         when(ticketTypeRepository.save(ticketType)).thenReturn(ticketType);
-        when(ticketTypeMapper.toTicketTypeResponse(ticketType)).thenReturn(response);
+        when(ticketTypeMapper.toResponse(ticketType)).thenReturn(response);
 
         TicketTypeResponse result = ticketTypeService.toggleActiveStatus(TICKET_TYPE_ID);
 

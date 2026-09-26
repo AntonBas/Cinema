@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import ua.lviv.bas.cinema.booking.dto.request.BookingCreateRequest.SeatSelectionRequest;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -15,14 +16,14 @@ class BookingCreateRequestTest {
 
     @Test
     void validRequestHasNoViolations() {
-        var request = new BookingCreateRequest(1L, List.of(new SeatSelectionRequest(1L, 1L)), 0);
+        var request = new BookingCreateRequest(UUID.randomUUID(), List.of(new SeatSelectionRequest(1L, 1L)), 0);
 
         assertThat(validator.validate(request)).isEmpty();
     }
 
     @Test
     void cascadesValidationIntoEachSeatSelection() {
-        var request = new BookingCreateRequest(1L, List.of(new SeatSelectionRequest(null, null)), 0);
+        var request = new BookingCreateRequest(UUID.randomUUID(), List.of(new SeatSelectionRequest(null, null)), 0);
 
         var violations = validator.validate(request);
 

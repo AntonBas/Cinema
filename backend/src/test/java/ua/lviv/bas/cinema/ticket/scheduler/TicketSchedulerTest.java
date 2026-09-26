@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.CacheManager;
 import org.springframework.data.jpa.domain.Specification;
 import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
@@ -12,11 +13,12 @@ import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
 import ua.lviv.bas.cinema.ticket.repository.TicketRepository;
 import ua.lviv.bas.cinema.ticket.repository.specification.TicketSpecification;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TicketSchedulerTest {
@@ -25,6 +27,8 @@ class TicketSchedulerTest {
     private TicketRepository ticketRepository;
     @Mock
     private TicketSpecification ticketSpecification;
+    @Mock
+    private CacheManager cacheManager;
 
     @InjectMocks
     private TicketScheduler ticketScheduler;
@@ -57,29 +61,5 @@ class TicketSchedulerTest {
 
         verify(ticketRepository).updateStatusIfCurrentForIds(List.of(1L, 2L), TicketStatus.ACTIVE,
                 TicketStatus.EXPIRED);
-    }
-
-    @Test
-    void cleanupRefundedTicketsWhenNoneFoundShouldNotDelete() {
-        when(ticketSpecification.hasStatus(TicketStatus.REFUNDED)).thenReturn(NOOP_SPEC);
-        when(ticketSpecification.purchaseTimeBefore(any(LocalDateTime.class))).thenReturn(NOOP_SPEC);
-        when(ticketRepository.findAll(any(Specification.class))).thenReturn(List.of());
-
-        ticketScheduler.cleanupRefundedTickets();
-
-        verify(ticketRepository, never()).deleteAll(any());
-    }
-
-    @Test
-    void cleanupRefundedTicketsShouldDeleteFoundTickets() {
-        var ticket = Ticket.builder().id(1L).status(TicketStatus.REFUNDED).build();
-
-        when(ticketSpecification.hasStatus(TicketStatus.REFUNDED)).thenReturn(NOOP_SPEC);
-        when(ticketSpecification.purchaseTimeBefore(any(LocalDateTime.class))).thenReturn(NOOP_SPEC);
-        when(ticketRepository.findAll(any(Specification.class))).thenReturn(List.of(ticket));
-
-        ticketScheduler.cleanupRefundedTickets();
-
-        verify(ticketRepository).deleteAll(List.of(ticket));
     }
 }

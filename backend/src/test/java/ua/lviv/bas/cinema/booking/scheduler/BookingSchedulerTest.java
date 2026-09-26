@@ -13,18 +13,23 @@ import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.booking.domain.status.ReservationStatus;
 import ua.lviv.bas.cinema.cinema.domain.Session;
+import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.booking.repository.BookingRepository;
 import ua.lviv.bas.cinema.booking.service.SeatReservationService;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusCardConcurrentModificationException;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class BookingSchedulerTest {
@@ -52,7 +57,8 @@ public class BookingSchedulerTest {
 
     @Test
     void processExpiredBookingsWhenNoneFoundShouldDoNothing() {
-        when(bookingRepository.findByStatusAndExpiresAtBefore(eq(BookingStatus.PENDING), any(LocalDateTime.class)))
+        when(bookingRepository.findExpiredWithoutActivePayment(eq(BookingStatus.PENDING), any(Instant.class),
+                eq(List.of(PaymentStatus.PENDING, PaymentStatus.PROCESSING))))
                 .thenReturn(List.of());
 
         bookingScheduler.processExpiredBookings();
@@ -67,7 +73,8 @@ public class BookingSchedulerTest {
         var booking = Booking.builder().id(1L).session(testSession).status(BookingStatus.PENDING)
                 .seatReservations(List.of(seat)).bonusPointsUsed(50).build();
 
-        when(bookingRepository.findByStatusAndExpiresAtBefore(eq(BookingStatus.PENDING), any(LocalDateTime.class)))
+        when(bookingRepository.findExpiredWithoutActivePayment(eq(BookingStatus.PENDING), any(Instant.class),
+                eq(List.of(PaymentStatus.PENDING, PaymentStatus.PROCESSING))))
                 .thenReturn(List.of(booking));
 
         bookingScheduler.processExpiredBookings();
@@ -85,7 +92,8 @@ public class BookingSchedulerTest {
         var booking = Booking.builder().id(1L).session(testSession).status(BookingStatus.PENDING)
                 .seatReservations(List.of(seat)).bonusPointsUsed(0).build();
 
-        when(bookingRepository.findByStatusAndExpiresAtBefore(eq(BookingStatus.PENDING), any(LocalDateTime.class)))
+        when(bookingRepository.findExpiredWithoutActivePayment(eq(BookingStatus.PENDING), any(Instant.class),
+                eq(List.of(PaymentStatus.PENDING, PaymentStatus.PROCESSING))))
                 .thenReturn(List.of(booking));
 
         bookingScheduler.processExpiredBookings();
@@ -103,7 +111,8 @@ public class BookingSchedulerTest {
         var okBooking = Booking.builder().id(2L).session(testSession).status(BookingStatus.PENDING)
                 .seatReservations(List.of(okSeat)).bonusPointsUsed(0).build();
 
-        when(bookingRepository.findByStatusAndExpiresAtBefore(eq(BookingStatus.PENDING), any(LocalDateTime.class)))
+        when(bookingRepository.findExpiredWithoutActivePayment(eq(BookingStatus.PENDING), any(Instant.class),
+                eq(List.of(PaymentStatus.PENDING, PaymentStatus.PROCESSING))))
                 .thenReturn(List.of(failingBooking, okBooking));
         doThrow(new BonusCardConcurrentModificationException(null)).when(bonusLedgerService)
                 .refundPoints(failingBooking);
@@ -116,15 +125,33 @@ public class BookingSchedulerTest {
     }
 
     @Test
+    void cancelPendingBookingsOfCancelledSessionsShouldCancelReleaseSeatsAndRefundBonusPoints() {
+        var seat = SeatReservation.builder().status(ReservationStatus.PENDING).build();
+        var booking = Booking.builder().id(5L).session(testSession).status(BookingStatus.PENDING)
+                .seatReservations(List.of(seat)).bonusPointsUsed(30).build();
+
+        when(bookingRepository.findByStatusAndSessionStatus(BookingStatus.PENDING, CinemaSessionStatus.CANCELLED))
+                .thenReturn(List.of(booking));
+
+        bookingScheduler.cancelPendingBookingsOfCancelledSessions();
+
+        assertThat(booking.getStatus()).isEqualTo(BookingStatus.CANCELLED);
+        verify(seatReservationService).releaseReservations(List.of(seat), SESSION_ID);
+        verify(bonusLedgerService).refundPoints(booking);
+        verify(bookingRepository).save(booking);
+    }
+
+    @Test
     void cleanupOldBookingsShouldExcludeBookingsWithEverPaidPayments() {
         when(bookingRepository.deleteByStatusInAndCreatedDateBefore(
-                eq(List.of(BookingStatus.EXPIRED, BookingStatus.CANCELLED)), any(LocalDateTime.class), any()))
+                eq(List.of(BookingStatus.EXPIRED, BookingStatus.CANCELLED)), any(Instant.class), any()))
                 .thenReturn(3);
 
         bookingScheduler.cleanupOldBookings();
 
         verify(bookingRepository).deleteByStatusInAndCreatedDateBefore(
-                eq(List.of(BookingStatus.EXPIRED, BookingStatus.CANCELLED)), any(LocalDateTime.class),
-                eq(List.of(PaymentStatus.SUCCESS, PaymentStatus.REFUNDED, PaymentStatus.PARTIALLY_REFUNDED)));
+                eq(List.of(BookingStatus.EXPIRED, BookingStatus.CANCELLED)), any(Instant.class),
+                eq(List.of(PaymentStatus.SUCCESS, PaymentStatus.REFUNDED, PaymentStatus.PARTIALLY_REFUNDED,
+                        PaymentStatus.REFUND_REQUIRED)));
     }
 }

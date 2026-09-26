@@ -20,6 +20,7 @@ import java.math.RoundingMode;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -49,6 +50,8 @@ public class PaymentGatewayService {
     private String liqpayApiUrl;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+    private static final DateTimeFormatter EXPIRED_DATE_FORMATTER = DateTimeFormatter
+            .ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneOffset.UTC);
 
     private final RestTemplate restTemplate;
 
@@ -122,25 +125,43 @@ public class PaymentGatewayService {
         checkRefundResult(responseMap);
     }
 
-    public RefundGatewayStatus checkRefundStatus(String orderId) {
+    public RefundGatewayStatus checkRefundStatus(String orderId, BigDecimal expectedRefundedTotal,
+                                                 BigDecimal paymentAmount) {
         if (sandboxMode) {
             log.debug("Sandbox mode - treating refund for order {} as confirmed by gateway", orderId);
             return RefundGatewayStatus.CONFIRMED;
         }
         try {
-            var status = (String) fetchOrderStatus(orderId).get("status");
+            var response = fetchOrderStatus(orderId);
+            var status = (String) response.get("status");
 
-            if ("reversed".equals(status)) {
-                return RefundGatewayStatus.CONFIRMED;
-            }
             if ("failure".equals(status) || "error".equals(status)) {
                 return RefundGatewayStatus.NOT_CONFIRMED;
             }
-            log.warn("Ambiguous LiqPay status '{}' for order {} while reconciling a stuck refund", status, orderId);
+            var gatewayRefundedTotal = parseAmount(response.get("refund_amount"));
+            boolean confirmed = gatewayRefundedTotal != null
+                    ? gatewayRefundedTotal.compareTo(expectedRefundedTotal) >= 0
+                    : "reversed".equals(status) && expectedRefundedTotal.compareTo(paymentAmount) >= 0;
+            if (confirmed) {
+                return RefundGatewayStatus.CONFIRMED;
+            }
+            log.warn("LiqPay status '{}' (refunded {}) for order {} does not prove a refund total of {}", status,
+                    gatewayRefundedTotal, orderId, expectedRefundedTotal);
             return RefundGatewayStatus.UNKNOWN;
         } catch (Exception e) {
             log.warn("Failed to check LiqPay refund status for order {}", orderId, e);
             return RefundGatewayStatus.UNKNOWN;
+        }
+    }
+
+    private BigDecimal parseAmount(Object value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return new BigDecimal(value.toString());
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 
@@ -166,8 +187,10 @@ public class PaymentGatewayService {
         return switch (status) {
             case "success", "sandbox" -> PaymentGatewayStatus.SUCCESS;
             case "failure", "error" -> PaymentGatewayStatus.FAILED;
-            case "wait_secure", "wait_accept", "processing", "wait_reserve" -> PaymentGatewayStatus.STILL_PROCESSING;
-            default -> PaymentGatewayStatus.UNKNOWN;
+            case "processing", "prepared", "cash_wait", "hold_wait", "invoice_wait" ->
+                    PaymentGatewayStatus.STILL_PROCESSING;
+            default -> status.startsWith("wait_") || status.endsWith("_verify") ? PaymentGatewayStatus.STILL_PROCESSING
+                    : PaymentGatewayStatus.UNKNOWN;
         };
     }
 
@@ -266,6 +289,7 @@ public class PaymentGatewayService {
         params.put("server_url", liqpayCallbackUrl);
         params.put("language", "uk");
         params.put("email", payment.getBooking().getUser().getEmail());
+        params.put("expired_date", EXPIRED_DATE_FORMATTER.format(payment.getBooking().getExpiresAt()));
 
         if (sandboxMode) {
             params.put("sandbox", "1");
@@ -281,7 +305,7 @@ public class PaymentGatewayService {
     }
 
     private String buildResultUrl(Payment payment) {
-        return frontendUrl + "/booking/success?bookingId=" + payment.getBooking().getId() + "&paymentId="
+        return frontendUrl + "/booking/success?bookingId=" + payment.getBooking().getPublicId() + "&paymentId="
                 + payment.getId();
     }
 }

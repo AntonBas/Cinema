@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import {
+  useParams,
+  useNavigate,
+  useLocation,
+  Navigate,
+} from "react-router-dom";
 import { usePayment } from "@/hooks/features/payment/usePayment";
 import { ProgressStepper } from "@/components/booking/ProgressStepper/ProgressStepper";
 import { BOOKING_STEPS } from "@/components/booking/ProgressStepper/bookingSteps";
@@ -17,7 +22,16 @@ import {
   RefreshCw,
 } from "lucide-react";
 import type { PaymentResponse } from "@/types/payment";
-import { PaymentStatusDisplay } from "@/types/payment";
+import {
+  FINAL_PAYMENT_STATUSES,
+  LATE_PAYMENT_REFUND_STATUSES,
+  REFUNDED_PAYMENT_STATUSES,
+  PaymentStatusDisplay,
+} from "@/types/payment";
+import { parseServerInstant } from "@/utils/dateUtils";
+import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
+import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
+import { formatFullDateTime, formatPrice } from "@/utils/formatters";
 import styles from "./PaymentPage.module.css";
 
 interface BookingData {
@@ -37,17 +51,8 @@ interface BookingData {
   }>;
 }
 
-interface ExtendedPaymentResponse extends PaymentResponse {
-  id: number;
-}
-
 type PaymentStep =
-  | "init"
-  | "processing"
-  | "ready"
-  | "paying"
-  | "success"
-  | "failed";
+  "init" | "processing" | "ready" | "paying" | "success" | "failed";
 
 export const PaymentPage: React.FC = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
@@ -55,7 +60,6 @@ export const PaymentPage: React.FC = () => {
   const location = useLocation();
 
   const bookingData = location.state?.booking as BookingData;
-  const existingPaymentId = location.state?.existingPaymentId as number | null;
 
   const { create, getById, getLiqPayData, retry } = usePayment();
 
@@ -64,9 +68,10 @@ export const PaymentPage: React.FC = () => {
     "liqpay",
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [currentPayment, setCurrentPayment] =
-    useState<ExtendedPaymentResponse | null>(null);
-  const [paymentTimeLeft, setPaymentTimeLeft] = useState<string>("30 minutes");
+  const [currentPayment, setCurrentPayment] = useState<PaymentResponse | null>(
+    null,
+  );
+  const [paymentTimeLeft, setPaymentTimeLeft] = useState<string>("");
 
   const isCreatingRef = useRef(false);
   const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
@@ -85,21 +90,16 @@ export const PaymentPage: React.FC = () => {
       stopPolling();
       const interval = setInterval(async () => {
         try {
-          const payment = (await getById(
-            paymentId,
-          )) as ExtendedPaymentResponse | null;
+          const payment = await getById(paymentId, {
+            showErrorNotification: false,
+          });
           if (payment) {
             setCurrentPayment(payment);
-            if (
-              ["SUCCESS", "FAILED", "CANCELLED", "EXPIRED"].includes(
-                payment.status,
-              )
-            ) {
+            if (FINAL_PAYMENT_STATUSES.includes(payment.status)) {
               stopPolling();
             }
-            if (payment.paymentTime) {
-              const createdAt = new Date(payment.paymentTime);
-              const expiresAt = new Date(createdAt.getTime() + 30 * 60000);
+            if (payment.expiresAt) {
+              const expiresAt = parseServerInstant(payment.expiresAt);
               const diffMs = expiresAt.getTime() - Date.now();
               const diffMinutes = Math.floor(diffMs / (1000 * 60));
               setPaymentTimeLeft(
@@ -111,8 +111,8 @@ export const PaymentPage: React.FC = () => {
               );
             }
           }
-        } catch (error) {
-          console.error("Polling error:", error);
+        } catch {
+          return;
         }
       }, 3000);
       pollingIntervalRef.current = interval;
@@ -128,28 +128,11 @@ export const PaymentPage: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      if (existingPaymentId) {
-        const payment = (await getById(
-          existingPaymentId,
-        )) as ExtendedPaymentResponse | null;
-        if (payment && payment.status === "PENDING") {
-          setCurrentPayment(payment);
-          startPolling(payment.id);
-          const liqPayData = await getLiqPayData(payment.id);
-          setStep(liqPayData?.paymentUrl ? "ready" : "failed");
-          if (!liqPayData?.paymentUrl)
-            setErrorMessage("Failed to initialize payment gateway");
-          isCreatingRef.current = false;
-          return;
-        }
-      }
-
-      const payment = (await create({
-        bookingId: parseInt(bookingId),
-      })) as ExtendedPaymentResponse | null;
-      if (payment && payment.id) {
+      const payment = await create({ bookingId });
+      if (payment?.id) {
         setCurrentPayment(payment);
         startPolling(payment.id);
+        if (payment.status === "PROCESSING") return;
         const liqPayData = await getLiqPayData(payment.id);
         setStep(liqPayData?.paymentUrl ? "ready" : "failed");
         if (!liqPayData?.paymentUrl)
@@ -159,41 +142,35 @@ export const PaymentPage: React.FC = () => {
         setErrorMessage("Failed to create payment");
       }
     } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message.includes("already in progress")
-      ) {
-        setStep("failed");
-        setErrorMessage(
-          "Payment already in progress. Please go back and try again.",
-        );
-      } else {
-        setStep("failed");
-        setErrorMessage(
-          error instanceof Error ? error.message : "Failed to create payment",
-        );
-      }
+      setStep("failed");
+      setErrorMessage(
+        error instanceof Error ? error.message : "Failed to create payment",
+      );
     } finally {
       isCreatingRef.current = false;
     }
-  }, [
-    bookingId,
-    create,
-    getLiqPayData,
-    startPolling,
-    existingPaymentId,
-    getById,
-  ]);
+  }, [bookingId, create, getLiqPayData, startPolling]);
 
   useEffect(() => {
-    if (bookingId && step === "init") initPayment();
-    return () => stopPolling();
-  }, [bookingId, step, initPayment, stopPolling]);
+    if (bookingId && bookingData && step === "init") initPayment();
+  }, [bookingId, bookingData, step, initPayment]);
+
+  useEffect(() => stopPolling, [stopPolling]);
 
   useEffect(() => {
     if (!currentPayment) return;
     if (currentPayment.status === "SUCCESS") {
       setStep("success");
+      stopPolling();
+    } else if (LATE_PAYMENT_REFUND_STATUSES.includes(currentPayment.status)) {
+      setStep("failed");
+      setErrorMessage(
+        "Your payment arrived after the booking had expired. The full amount is being refunded to your card.",
+      );
+      stopPolling();
+    } else if (REFUNDED_PAYMENT_STATUSES.includes(currentPayment.status)) {
+      setStep("failed");
+      setErrorMessage("This payment has been refunded to your card.");
       stopPolling();
     } else if (
       ["FAILED", "CANCELLED", "EXPIRED"].includes(currentPayment.status)
@@ -205,32 +182,53 @@ export const PaymentPage: React.FC = () => {
       setStep("paying");
   }, [currentPayment, step, stopPolling]);
 
+  const isAwaitingConfirmation = currentPayment?.status === "PROCESSING";
+
+  const isRefundedPayment =
+    !!currentPayment &&
+    [...LATE_PAYMENT_REFUND_STATUSES, ...REFUNDED_PAYMENT_STATUSES].includes(
+      currentPayment.status,
+    );
+
   const handlePay = async () => {
     if (!currentPayment?.id) return;
     setStep("paying");
-    const liqPayData = await getLiqPayData(currentPayment.id);
-    if (liqPayData?.paymentUrl) window.location.href = liqPayData.paymentUrl;
-    else {
-      setStep("failed");
+    try {
+      const liqPayData = await getLiqPayData(currentPayment.id);
+      if (liqPayData?.paymentUrl) {
+        window.location.href = liqPayData.paymentUrl;
+        return;
+      }
       setErrorMessage("Payment data not available");
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Payment data not available",
+      );
     }
+    setStep("failed");
   };
 
   const handleRetry = async () => {
     stopPolling();
-    if (!currentPayment?.id) return;
+    if (currentPayment?.status !== "FAILED") {
+      await initPayment();
+      return;
+    }
 
     try {
       setStep("processing");
-      const retriedPayment = (await retry(
-        currentPayment.id,
-      )) as ExtendedPaymentResponse | null;
-      if (retriedPayment && retriedPayment.id) {
-        setCurrentPayment(retriedPayment);
-        startPolling(retriedPayment.id);
-        const liqPayData = await getLiqPayData(retriedPayment.id);
-        setStep(liqPayData?.paymentUrl ? "ready" : "failed");
+      const retriedPayment = await retry(currentPayment.id);
+      if (!retriedPayment?.id) {
+        setStep("failed");
+        setErrorMessage("Failed to retry payment");
+        return;
       }
+      setCurrentPayment(retriedPayment);
+      startPolling(retriedPayment.id);
+      const liqPayData = await getLiqPayData(retriedPayment.id);
+      setStep(liqPayData?.paymentUrl ? "ready" : "failed");
+      if (!liqPayData?.paymentUrl)
+        setErrorMessage("Failed to initialize payment gateway");
     } catch (error) {
       setStep("failed");
       setErrorMessage(
@@ -241,47 +239,41 @@ export const PaymentPage: React.FC = () => {
 
   const handleBack = () =>
     navigate(`/booking/summary/${bookingId}`, {
-      state: { booking: bookingData, existingPaymentId: currentPayment?.id },
-    });
-
-  const formatTime = (dateString: string) =>
-    new Date(dateString).toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+      state: { booking: bookingData },
     });
 
   if (!bookingData)
     return (
-      <Layout>
-        <div className={styles.error}>Booking data not found</div>
-      </Layout>
+      <Navigate
+        to={bookingId ? `/booking/summary/${bookingId}` : "/"}
+        replace
+      />
     );
 
   return (
     <Layout>
-      <div className={styles.container}>
+      <PageContainer>
         <ProgressStepper
           steps={BOOKING_STEPS}
           currentStep={3}
           className={styles.stepper}
         />
-        <div className={styles.header}>
-          <h1 className={styles.title}>Payment</h1>
-          <p className={styles.subtitle}>
-            Complete your booking by making a secure payment
-          </p>
-        </div>
+        <PageHeader
+          align="center"
+          divider
+          title="Payment"
+          subtitle="Complete your booking by making a secure payment"
+        />
         <div className={styles.content}>
           <div className={styles.paymentCard}>
             <div className={styles.paymentHeader}>
               <h3 className={styles.paymentTitle}>Payment Details</h3>
               <p className={styles.paymentDescription}>
                 {step === "ready" && "Select payment method and proceed"}
-                {step === "paying" && "Redirecting to payment page"}
+                {step === "paying" &&
+                  (isAwaitingConfirmation
+                    ? "Waiting for payment confirmation"
+                    : "Redirecting to payment page")}
                 {step === "success" && "Payment completed successfully"}
                 {step === "failed" && "Payment processing failed"}
                 {step === "processing" && "Setting up your payment"}
@@ -340,16 +332,28 @@ export const PaymentPage: React.FC = () => {
               {step === "paying" && (
                 <div className={styles.statusContainer}>
                   <Loader2 className={styles.loadingSpinner} size={64} />
-                  <h3 className={styles.statusTitle}>Redirecting to Payment</h3>
+                  <h3 className={styles.statusTitle}>
+                    {isAwaitingConfirmation
+                      ? "Payment Processing"
+                      : "Redirecting to Payment"}
+                  </h3>
                   <p className={styles.statusMessage}>
-                    You will be redirected to the payment page
+                    {isAwaitingConfirmation
+                      ? "Your bank is confirming the payment, this page will update automatically"
+                      : "You will be redirected to the payment page"}
                   </p>
-                  <p className={styles.statusMessage}>
-                    Time left: {paymentTimeLeft}
-                  </p>
+                  {paymentTimeLeft && (
+                    <p className={styles.statusMessage}>
+                      Time left: {paymentTimeLeft}
+                    </p>
+                  )}
                   <div className={styles.alertContainer}>
                     <AlertCircle size={16} />
-                    <p>Please complete the payment on the next page</p>
+                    <p>
+                      {isAwaitingConfirmation
+                        ? "Please do not pay again while the payment is processing"
+                        : "Please complete the payment on the next page"}
+                    </p>
                   </div>
                 </div>
               )}
@@ -394,7 +398,9 @@ export const PaymentPage: React.FC = () => {
               {step === "failed" && (
                 <div className={styles.statusContainer}>
                   <AlertCircle className={styles.errorIcon} size={64} />
-                  <h3 className={styles.statusTitle}>Payment Failed</h3>
+                  <h3 className={styles.statusTitle}>
+                    {isRefundedPayment ? "Payment Refunded" : "Payment Failed"}
+                  </h3>
                   <p className={styles.statusMessage}>
                     {errorMessage ||
                       "There was an issue processing your payment"}
@@ -407,14 +413,6 @@ export const PaymentPage: React.FC = () => {
                   )}
                   <div className={styles.actions}>
                     <Button
-                      onClick={handleRetry}
-                      variant="primary"
-                      className={styles.primaryButton}
-                    >
-                      <RefreshCw size={20} />
-                      Try Again
-                    </Button>
-                    <Button
                       onClick={handleBack}
                       variant="secondary"
                       className={styles.secondaryButton}
@@ -422,6 +420,16 @@ export const PaymentPage: React.FC = () => {
                       <ArrowLeft size={20} />
                       Back to Summary
                     </Button>
+                    {!isRefundedPayment && (
+                      <Button
+                        onClick={handleRetry}
+                        variant="primary"
+                        className={styles.primaryButton}
+                      >
+                        <RefreshCw size={20} />
+                        Try Again
+                      </Button>
+                    )}
                   </div>
                 </div>
               )}
@@ -435,7 +443,8 @@ export const PaymentPage: React.FC = () => {
               <div className={styles.movieInfo}>
                 <h3 className={styles.movieTitle}>{bookingData.movieTitle}</h3>
                 <p className={styles.movieDetails}>
-                  {bookingData.hallName} • {formatTime(bookingData.sessionTime)}
+                  {bookingData.hallName} •{" "}
+                  {formatFullDateTime(bookingData.sessionTime)}
                 </p>
                 <Badge variant="primary" className={styles.badge}>
                   {bookingData.bookingNumber}
@@ -453,7 +462,7 @@ export const PaymentPage: React.FC = () => {
                       <span className={styles.seatType}>{seat.ticketType}</span>
                       <span className={styles.seatLabel}>
                         {" "}
-                        • {seat.seatPrice}₴
+                        • {formatPrice(seat.seatPrice)}
                       </span>
                     </div>
                   </div>
@@ -465,7 +474,7 @@ export const PaymentPage: React.FC = () => {
                   <div className={styles.detailRow}>
                     <span className={styles.detailLabel}>Total price:</span>
                     <span className={styles.detailValue}>
-                      {bookingData.totalPrice}₴
+                      {formatPrice(bookingData.totalPrice)}
                     </span>
                   </div>
                   <div className={styles.detailRow}>
@@ -480,12 +489,12 @@ export const PaymentPage: React.FC = () => {
               )}
               <div className={styles.totalRow}>
                 <span>Final amount:</span>
-                <span>{bookingData.finalPrice}₴</span>
+                <span>{formatPrice(bookingData.finalPrice)}</span>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </PageContainer>
     </Layout>
   );
 };
