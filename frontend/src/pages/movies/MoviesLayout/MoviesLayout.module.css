@@ -13,11 +13,6 @@
   padding: 0 var(--space-6);
 }
 
-.pageHeader {
-  padding-top: var(--space-8);
-  margin-bottom: 0;
-}
-
 .nav {
   display: flex;
   justify-content: center;
@@ -76,10 +71,6 @@
 @media (max-width: 768px) {
   .header {
     padding: 0 var(--space-4);
-  }
-
-  .pageHeader {
-    padding-top: var(--space-6);
   }
 
   .nav {
