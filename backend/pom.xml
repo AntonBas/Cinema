@@ -25,6 +25,7 @@
         <bucket4j.version>8.10.1</bucket4j.version>
         <testcontainers.version>2.0.5</testcontainers.version>
         <cloudinary.version>2.4.0</cloudinary.version>
+        <jacoco.version>0.8.13</jacoco.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -238,6 +239,26 @@
                 <configuration>
                     <rerunFailingTestsCount>2</rerunFailingTestsCount>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
