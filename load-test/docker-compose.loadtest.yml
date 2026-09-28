@@ -1,0 +1,4 @@
+services:
+  backend:
+    environment:
+      APP_RATE_LIMIT_CLIENT_IP_HEADER: X-Load-Test-Client
