@@ -3,8 +3,8 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useAuthActions } from "@/hooks/features/auth/useAuthActions";
 import { Input } from "@/components/ui/Input/Input";
 import { Button } from "@/components/ui/Button/Button";
-import { Chrome } from "lucide-react";
 import { AuthCard } from "@/components/auth/AuthCard/AuthCard";
+import { GoogleIcon } from "@/components/auth/GoogleIcon/GoogleIcon";
 import { isApiErrorException } from "@/utils/apiErrorHandler";
 import styles from "./LoginForm.module.css";
 
@@ -120,7 +120,7 @@ export const LoginForm: React.FC = () => {
         disabled={loading}
         fullWidth
       >
-        <Chrome size={20} />
+        <GoogleIcon size={20} />
         Continue with Google
       </Button>
 

@@ -2,12 +2,14 @@ version: 2
 updates:
   - package-ecosystem: "maven"
     directory: "/backend"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
 
   - package-ecosystem: "npm"
     directory: "/frontend"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
@@ -23,9 +25,12 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "vite"
         update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
