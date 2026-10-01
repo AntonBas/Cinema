@@ -18,7 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 public class RateLimitAspect {
 
     @Autowired
-    private RateLimitConfig.RateLimitService rateLimitService;
+    private RateLimitService rateLimitService;
 
     @Value("${app.rate-limit.client-ip-header:}")
     private String clientIpHeader;

@@ -31,7 +31,7 @@ class RateLimitAspectTest {
     private static final String KEY_PREFIX = SIGNATURE + ":";
 
     @Mock
-    private RateLimitConfig.RateLimitService rateLimitService;
+    private RateLimitService rateLimitService;
 
     @Mock
     private ProceedingJoinPoint joinPoint;
