@@ -1,16 +1,16 @@
 # Cinema Management System
 
-Full-stack cinema booking platform: seat reservation, LiqPay payments, refunds, and a bonus loyalty program, built to survive real backend failure modes — race conditions, unreliable payment callbacks, crashes mid-transaction. **Java 21 / Spring Boot 4 / PostgreSQL / Redis / React 19 + TypeScript.** Two-stage seat locking, idempotent payment callbacks, self-healing schedulers, full refund state machine, RBAC across 4 roles, 1000+ backend tests including dedicated concurrency suites.
+Full-stack cinema booking platform: seat reservation, LiqPay payments, refunds, and a bonus loyalty program, built to survive real backend failure modes — race conditions, unreliable payment callbacks, crashes mid-transaction. **Java 21 / Spring Boot 4 / PostgreSQL / Redis / React 19 + TypeScript.** Two-stage seat locking, idempotent payment callbacks, self-healing schedulers, full refund state machine, RBAC across 4 roles, 1,100+ backend tests (~91% line coverage) including dedicated concurrency suites and a k6 load test.
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.1.1-green)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)
-![React](https://img.shields.io/badge/React-19.2-61DAFB)
+![React](https://img.shields.io/badge/React-19-61DAFB)
 ![Docker](https://img.shields.io/badge/Docker-✓-blue)
 ![CI](https://github.com/AntonBas/Cinema/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-**[Live demo](https://bas-cinema.vercel.app)** — hosted on free tiers, so the first request may take up to a minute while the backend wakes up.
+**[Live demo](https://bas-cinema.vercel.app)** — hosted on free tiers, so the first request may take up to a minute while the backend wakes up. Sign in with Google to try a booking.
 
 **[Full Documentation](docs/DOCS.md)** — complete feature descriptions, technical details, and project structure.
 
@@ -49,7 +49,9 @@ Full feature breakdown for every role: [docs/DOCS.md#features](docs/DOCS.md#feat
 
 ## Tech Stack
 
-**Backend** — Java 21, Spring Boot 4.1.1, Spring Security, Spring Data JPA, Hibernate 7, PostgreSQL 15, Flyway, Redis 7, JWT + Google OAuth2, MapStruct, Bucket4j (rate limiting), ZXing (QR codes), Brevo (transactional email), Testcontainers
+**Backend** — Java 21, Spring Boot 4.1.1, Spring Security, Spring Data JPA, Hibernate 7, PostgreSQL 15, Flyway, Redis 7 (Spring Cache), JWT + Google OAuth2, MapStruct, OpenAPI (Swagger UI), Bucket4j (rate limiting), ZXing (QR codes), Brevo (transactional email)
+
+**Testing** — JUnit 5, Mockito, AssertJ, Testcontainers, JaCoCo, k6
 
 **Frontend** — React 19 + TypeScript, Vite, React Router, Axios, CSS Modules, ESLint + Prettier
 
@@ -92,7 +94,10 @@ flowchart TD
 - **Two-stage seat locking:** 5-min pessimistic hold (`SELECT ... FOR UPDATE`) on selection, then a 20-min reservation window before payment. `@Version` optimistic locking everywhere else conflicts are rare. No global locks — only individual seats, only temporarily.
 - **Idempotent payment callbacks:** conditional updates (`UPDATE ... WHERE status IN ('PENDING', 'PROCESSING')`) make duplicate LiqPay callbacks safe to ignore; `PaymentScheduler` reconciles payments stuck mid-flow.
 - **Refund state machine:** `PROCESSING → PROCESSED/REJECTED`, with the `PROCESSING` row committed *before* the gateway call so a crash never loses a refund record; `RefundScheduler` reconciles anything still stuck.
+- **Database-level guarantee:** a partial unique index on `seat_reservations (session_id, seat_id) WHERE status IN ('PENDING', 'CONFIRMED')` is the last line of defense — even a bug in the application cannot create a double booking.
+- **Deadlock avoidance:** when a booking contains several seats, they are locked in a fixed order (sorted by seat id), so two users booking overlapping seats can never wait on each other in a cycle.
 - **Scheduler-based self-healing:** one scheduler per domain releases expired locks, cancels unpaid bookings, reconciles stuck refunds/payments, and recovers all of it from PostgreSQL state on restart — no in-memory state to lose.
+- **Runs in 512 MB:** the backend is deployed on Render's free tier; the JVM is tuned to fit (`MaxRAMPercentage=40`, Serial GC, `TieredStopAtLevel=1`, smaller thread stacks, `MALLOC_ARENA_MAX=2`).
 
 Full write-up of trade-offs and what was learned building this: [docs/DOCS.md](docs/DOCS.md#known-trade-offs)
 

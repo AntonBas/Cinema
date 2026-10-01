@@ -7,7 +7,7 @@ Pass criteria (k6 thresholds):
 
 - `hold_won == ROUNDS` — exactly one winner per seat
 - `hold_error == 0` — every loser gets a clean `409`, no `5xx`
-- `hold_duration p(95) < 500ms`
+- `hold_duration p(95) < 1000ms` — the latency reflects worst-case lock contention (200 users waiting for the same row lock) on a local machine, not normal request speed
 
 Then `verify.sql` checks the database directly: no seat has more than one active reservation.
 
