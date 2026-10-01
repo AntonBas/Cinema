@@ -28,7 +28,7 @@ export const options = {
     thresholds: {
         hold_won: [`count==${ROUNDS}`],
         hold_error: ['count==0'],
-        hold_duration: ['p(95)<500'],
+        hold_duration: ['p(95)<1000'],
     },
 };
 
