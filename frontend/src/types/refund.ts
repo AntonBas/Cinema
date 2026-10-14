@@ -83,6 +83,13 @@ export const RefundStatusDisplay: Record<RefundStatus, string> = {
   PROCESSED: "Processed",
 };
 
+export const RefundReasonDisplay: Record<string, string> = {
+  change_plans: "Changed my plans",
+  double_booking: "Accidental double booking",
+  schedule_conflict: "Schedule conflict",
+  other: "Other reason",
+};
+
 export const RefundItemStatusDisplay: Record<string, string> = {
   PENDING: "Pending",
   APPROVED: "Approved",

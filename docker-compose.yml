@@ -120,16 +120,13 @@ services:
     container_name: cinema_ngrok
     profiles:
       - tunnel
-    depends_on:
-      backend:
-        condition: service_healthy
     environment:
       - NGROK_AUTHTOKEN=${NGROK_AUTH_TOKEN}
-    command: http backend:8080 --log=stdout --log-level=info
+    command: http host.docker.internal:8080 --log=stdout --log-level=info
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "127.0.0.1:4040:4040"
-    networks:
-      - cinema-net
     restart: unless-stopped
 
 networks:

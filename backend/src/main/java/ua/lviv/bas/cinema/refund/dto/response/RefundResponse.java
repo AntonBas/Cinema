@@ -2,6 +2,7 @@ package ua.lviv.bas.cinema.refund.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -30,11 +31,11 @@ public record RefundResponse(
         @Schema(description = "Processed by", example = "AUTO_SYSTEM")
         String processedBy,
 
-        @JsonFormat(pattern = "dd.MM.yyyy HH:mm")
+        @JsonFormat(pattern = "dd.MM.yyyy HH:mm", timezone = CinemaTime.ZONE_ID)
         @Schema(description = "Processing timestamp", example = "15.12.2024 10:20:00")
         Instant processedAt,
 
-        @JsonFormat(pattern = "dd.MM.yyyy HH:mm")
+        @JsonFormat(pattern = "dd.MM.yyyy HH:mm", timezone = CinemaTime.ZONE_ID)
         @Schema(description = "Creation timestamp", example = "15.12.2024 10:15:00")
         Instant createdAt,
 

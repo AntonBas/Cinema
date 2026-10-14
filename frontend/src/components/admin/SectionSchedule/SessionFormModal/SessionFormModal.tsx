@@ -199,13 +199,11 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
   );
 
   const hallOptions = useMemo(
-    () => [
-      { value: "", label: "Select a hall" },
-      ...halls.map((hall) => ({
+    () =>
+      halls.map((hall) => ({
         value: hall.id.toString(),
         label: `${hall.name} (${hall.capacity} seats)`,
       })),
-    ],
     [halls],
   );
 
@@ -331,6 +329,7 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
               setFormData((prev) => ({ ...prev, hallId: value.toString() }))
             }
             options={hallOptions}
+            placeholder="Select a hall"
           />
           {errors.hallId && (
             <span className={styles.errorText}>{errors.hallId}</span>
