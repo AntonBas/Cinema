@@ -5,6 +5,7 @@ import { useRefund } from "@/hooks/features/refund/useRefund";
 import { AlertTriangle } from "lucide-react";
 import type { TicketResponse } from "@/types/ticket";
 import { formatFullDateTime, formatPrice } from "@/utils/formatters";
+import { RefundReasonDisplay } from "@/types/refund";
 import styles from "./TicketRefundModal.module.css";
 
 interface TicketRefundModalProps {
@@ -13,12 +14,9 @@ interface TicketRefundModalProps {
   onRefundSuccess?: () => void;
 }
 
-const REFUND_REASONS = [
-  { value: "change_plans", label: "Changed my plans" },
-  { value: "double_booking", label: "Accidental double booking" },
-  { value: "schedule_conflict", label: "Schedule conflict" },
-  { value: "other", label: "Other reason" },
-];
+const REFUND_REASONS = Object.entries(RefundReasonDisplay).map(
+  ([value, label]) => ({ value, label }),
+);
 
 export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
   ticket,

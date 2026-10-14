@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/Button/Button";
 import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
 import styles from "@/components/admin/SectionBookings/BookingTable/BookingTable.module.css";
+import refundStyles from "./RefundTable.module.css";
 import { REFUND_STATUS_VARIANT } from "@/components/admin/shared/statusBadges";
 import { formatDateTime, formatPrice } from "@/utils/formatters";
 import type { AdminRefundListResponse } from "@/types/refund";
-import { RefundStatusDisplay } from "@/types/refund";
+import { RefundReasonDisplay, RefundStatusDisplay } from "@/types/refund";
 import { useAuth } from "@/context/AuthContext";
 
 interface RefundTableProps {
@@ -36,83 +37,124 @@ export const RefundTable: React.FC<RefundTableProps> = ({
     <div className={tableStyles.wrapper}>
       <div className={tableStyles.container}>
         <table className={tableStyles.table}>
+          <colgroup>
+            <col className={refundStyles.colCreated} />
+            <col className={refundStyles.colCustomer} />
+            <col className={refundStyles.colBooking} />
+            <col className={refundStyles.colAmount} />
+            <col className={refundStyles.colStatus} />
+            {isAdmin && <col className={refundStyles.colHistory} />}
+          </colgroup>
           <thead>
             <tr>
               <th>Created</th>
               <th>Customer</th>
               <th>Booking</th>
-              <th>Ticket</th>
               <th>Amount</th>
               <th>Status</th>
               {isAdmin && <th>History</th>}
             </tr>
           </thead>
           <tbody>
-            {refunds.map((refund) => (
-              <tr key={refund.id}>
-                <td data-label="Created">
-                  <span className={styles.primary}>
-                    {formatDateTime(refund.createdDate)}
-                  </span>
-                  <span className={styles.secondary}>
-                    Updated {formatDateTime(refund.lastModifiedDate)}
-                  </span>
-                </td>
-                <td data-label="Customer" className={styles.customer}>
-                  {refund.userEmail}
-                </td>
-                <td data-label="Booking">
-                  <button
-                    type="button"
-                    className={styles.linkButton}
-                    onClick={() => onOpenBooking(refund.bookingId)}
-                  >
-                    {refund.bookingNumber}
-                  </button>
-                  <span className={styles.secondary}>
-                    {refund.movieTitle} · {formatDateTime(refund.sessionTime)}
-                  </span>
-                </td>
-                <td data-label="Ticket">{refund.ticketCode || "—"}</td>
-                <td data-label="Amount">
-                  <span className={styles.primary}>
-                    {formatPrice(refund.totalAmount)}
-                  </span>
-                  {refund.totalBonusPointsToDeduct > 0 && (
-                    <span className={styles.secondary}>
-                      −{refund.totalBonusPointsToDeduct} pts
-                    </span>
-                  )}
-                  {refund.liqpayOrderId && (
-                    <span
-                      className={`${styles.secondary} ${styles.mono}`}
-                      title="LiqPay order ID"
-                    >
-                      {refund.liqpayOrderId}
-                    </span>
-                  )}
-                </td>
-                <td data-label="Status">
-                  <Badge variant={REFUND_STATUS_VARIANT[refund.status]}>
-                    {RefundStatusDisplay[refund.status]}
-                  </Badge>
-                  {refund.reason && (
-                    <span className={styles.secondary}>{refund.reason}</span>
-                  )}
-                </td>
-                {isAdmin && (
-                  <td data-label="History">
-                    <Button
-                      variant="secondary"
-                      size="small"
-                      onClick={() => onOpenHistory(refund.id)}
-                    >
-                      View
-                    </Button>
+            {refunds.map((refund) => {
+              const createdAt = formatDateTime(refund.createdDate);
+              const updatedAt = formatDateTime(refund.lastModifiedDate);
+
+              return (
+                <tr key={refund.id}>
+                  <td data-label="Created">
+                    <div className={refundStyles.stack}>
+                      <span
+                        className={`${styles.primary} ${refundStyles.nowrap}`}
+                      >
+                        {createdAt}
+                      </span>
+                      {updatedAt !== createdAt && (
+                        <span
+                          className={`${styles.secondary} ${refundStyles.nowrap}`}
+                        >
+                          Updated {updatedAt}
+                        </span>
+                      )}
+                    </div>
                   </td>
-                )}
-              </tr>
-            ))}
+                  <td data-label="Customer">
+                    <span
+                      className={refundStyles.truncate}
+                      title={refund.userEmail}
+                    >
+                      {refund.userEmail}
+                    </span>
+                  </td>
+                  <td data-label="Booking">
+                    <div className={refundStyles.stack}>
+                      <button
+                        type="button"
+                        className={styles.linkButton}
+                        onClick={() => onOpenBooking(refund.bookingId)}
+                      >
+                        {refund.bookingNumber}
+                      </button>
+                      {refund.ticketCode && (
+                        <span
+                          className={`${styles.secondary} ${refundStyles.mono} ${refundStyles.truncate}`}
+                          title={refund.ticketCode}
+                        >
+                          {refund.ticketCode}
+                        </span>
+                      )}
+                      <span className={styles.secondary}>
+                        {refund.movieTitle} ·{" "}
+                        {formatDateTime(refund.sessionTime)}
+                      </span>
+                    </div>
+                  </td>
+                  <td data-label="Amount">
+                    <div className={refundStyles.stack}>
+                      <span className={styles.primary}>
+                        {formatPrice(refund.totalAmount)}
+                      </span>
+                      {refund.totalBonusPointsToDeduct > 0 && (
+                        <span className={styles.secondary}>
+                          −{refund.totalBonusPointsToDeduct} pts
+                        </span>
+                      )}
+                      {refund.liqpayOrderId && (
+                        <span
+                          className={`${styles.secondary} ${refundStyles.mono} ${refundStyles.truncate}`}
+                          title={`LiqPay order ID: ${refund.liqpayOrderId}`}
+                        >
+                          {refund.liqpayOrderId}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td data-label="Status">
+                    <div className={refundStyles.stack}>
+                      <Badge variant={REFUND_STATUS_VARIANT[refund.status]}>
+                        {RefundStatusDisplay[refund.status]}
+                      </Badge>
+                      {refund.reason && (
+                        <span className={styles.secondary}>
+                          {RefundReasonDisplay[refund.reason] ?? refund.reason}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  {isAdmin && (
+                    <td data-label="History">
+                      <Button
+                        variant="secondary"
+                        size="small"
+                        onClick={() => onOpenHistory(refund.id)}
+                      >
+                        View
+                      </Button>
+                    </td>
+                  )}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
