@@ -114,6 +114,8 @@ cd backend
 
 Backend will be available at: http://localhost:8080
 
+To receive LiqPay callbacks, start the ngrok tunnel: `docker compose --profile tunnel up -d ngrok`. It forwards to port 8080 on the host, so the same tunnel works whether the backend runs locally or in Docker.
+
 #### Frontend Setup
 
 ```bash
