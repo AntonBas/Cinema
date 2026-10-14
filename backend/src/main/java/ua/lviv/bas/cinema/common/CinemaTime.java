@@ -6,7 +6,8 @@ import java.time.ZoneId;
 
 public final class CinemaTime {
 
-    public static final ZoneId ZONE = ZoneId.of("Europe/Kyiv");
+    public static final String ZONE_ID = "Europe/Kyiv";
+    public static final ZoneId ZONE = ZoneId.of(ZONE_ID);
 
     private CinemaTime() {
     }
