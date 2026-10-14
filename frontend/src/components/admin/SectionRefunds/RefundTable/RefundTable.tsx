@@ -63,15 +63,13 @@ export const RefundTable: React.FC<RefundTableProps> = ({
               return (
                 <tr key={refund.id}>
                   <td data-label="Created">
-                    <div className={refundStyles.stack}>
-                      <span
-                        className={`${styles.primary} ${refundStyles.nowrap}`}
-                      >
+                    <div className={styles.stack}>
+                      <span className={`${styles.primary} ${styles.nowrap}`}>
                         {createdAt}
                       </span>
                       {updatedAt !== createdAt && (
                         <span
-                          className={`${styles.secondary} ${refundStyles.nowrap}`}
+                          className={`${styles.secondary} ${styles.nowrap}`}
                         >
                           Updated {updatedAt}
                         </span>
@@ -79,15 +77,12 @@ export const RefundTable: React.FC<RefundTableProps> = ({
                     </div>
                   </td>
                   <td data-label="Customer">
-                    <span
-                      className={refundStyles.truncate}
-                      title={refund.userEmail}
-                    >
+                    <span className={styles.truncate} title={refund.userEmail}>
                       {refund.userEmail}
                     </span>
                   </td>
                   <td data-label="Booking">
-                    <div className={refundStyles.stack}>
+                    <div className={styles.stack}>
                       <button
                         type="button"
                         className={styles.linkButton}
@@ -97,7 +92,7 @@ export const RefundTable: React.FC<RefundTableProps> = ({
                       </button>
                       {refund.ticketCode && (
                         <span
-                          className={`${styles.secondary} ${refundStyles.mono} ${refundStyles.truncate}`}
+                          className={`${styles.secondary} ${styles.mono} ${styles.truncate}`}
                           title={refund.ticketCode}
                         >
                           {refund.ticketCode}
@@ -110,7 +105,7 @@ export const RefundTable: React.FC<RefundTableProps> = ({
                     </div>
                   </td>
                   <td data-label="Amount">
-                    <div className={refundStyles.stack}>
+                    <div className={styles.stack}>
                       <span className={styles.primary}>
                         {formatPrice(refund.totalAmount)}
                       </span>
@@ -121,7 +116,7 @@ export const RefundTable: React.FC<RefundTableProps> = ({
                       )}
                       {refund.liqpayOrderId && (
                         <span
-                          className={`${styles.secondary} ${refundStyles.mono} ${refundStyles.truncate}`}
+                          className={`${styles.secondary} ${styles.mono} ${styles.truncate}`}
                           title={`LiqPay order ID: ${refund.liqpayOrderId}`}
                         >
                           {refund.liqpayOrderId}
@@ -130,7 +125,7 @@ export const RefundTable: React.FC<RefundTableProps> = ({
                     </div>
                   </td>
                   <td data-label="Status">
-                    <div className={refundStyles.stack}>
+                    <div className={styles.stack}>
                       <Badge variant={REFUND_STATUS_VARIANT[refund.status]}>
                         {RefundStatusDisplay[refund.status]}
                       </Badge>

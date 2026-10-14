@@ -21,37 +21,3 @@
 .colHistory {
   width: 9%;
 }
-
-.nowrap {
-  white-space: nowrap;
-}
-
-.truncate {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mono {
-  font-family: monospace;
-}
-
-.stack {
-  min-width: 0;
-}
-
-@media (max-width: 1024px) {
-  .stack {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: var(--space-1);
-    text-align: right;
-  }
-
-  .truncate {
-    white-space: normal;
-    overflow-wrap: anywhere;
-  }
-}

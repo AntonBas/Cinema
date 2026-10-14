@@ -36,6 +36,8 @@ export const Select: React.FC<SelectProps> = ({
 }) => {
   const generatedId = useId();
   const id = externalId ?? generatedId;
+  const hasEmptyOption = options.some((option) => option.value === "");
+  const showsPlaceholder = !value && !hasEmptyOption;
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newValue = e.target.value;
@@ -58,7 +60,7 @@ export const Select: React.FC<SelectProps> = ({
                         ${styles.select}
                         ${error ? styles.error : ""}
                         ${disabled ? styles.disabled : ""}
-                        ${!value ? styles.placeholder : ""}
+                        ${showsPlaceholder ? styles.placeholder : ""}
                     `}
           value={value ?? ""}
           onChange={handleChange}
@@ -68,9 +70,11 @@ export const Select: React.FC<SelectProps> = ({
           aria-invalid={!!error}
           aria-describedby={error ? `${id}-error` : undefined}
         >
-          <option value="" disabled hidden>
-            {placeholder}
-          </option>
+          {!hasEmptyOption && (
+            <option value="" disabled hidden>
+              {placeholder}
+            </option>
+          )}
 
           {options.map((option) => (
             <option

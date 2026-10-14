@@ -34,10 +34,17 @@ export const BookingTable: React.FC<BookingTableProps> = ({
     <div className={tableStyles.wrapper}>
       <div className={tableStyles.container}>
         <table className={tableStyles.table}>
+          <colgroup>
+            <col className={styles.colBooking} />
+            <col className={styles.colCustomer} />
+            <col className={styles.colSession} />
+            <col className={styles.colAmount} />
+            <col className={styles.colStatus} />
+            <col className={styles.colPayment} />
+          </colgroup>
           <thead>
             <tr>
               <th>Booking</th>
-              <th>Created</th>
               <th>Customer</th>
               <th>Session</th>
               <th>Amount</th>
@@ -49,27 +56,38 @@ export const BookingTable: React.FC<BookingTableProps> = ({
             {bookings.map((booking) => (
               <tr key={booking.id}>
                 <td data-label="Booking">
-                  <button
-                    type="button"
-                    className={styles.linkButton}
-                    onClick={() => onSelect(booking.id)}
-                  >
-                    {booking.bookingNumber}
-                  </button>
+                  <div className={styles.stack}>
+                    <button
+                      type="button"
+                      className={styles.linkButton}
+                      onClick={() => onSelect(booking.id)}
+                    >
+                      {booking.bookingNumber}
+                    </button>
+                    <span className={`${styles.secondary} ${styles.nowrap}`}>
+                      {formatDateTime(booking.createdDate)}
+                    </span>
+                  </div>
                 </td>
-                <td data-label="Created">
-                  {formatDateTime(booking.createdDate)}
-                </td>
-                <td data-label="Customer" className={styles.customer}>
-                  {booking.userEmail}
-                </td>
-                <td data-label="Session">
-                  <span className={styles.primary}>{booking.movieTitle}</span>
-                  <span className={styles.secondary}>
-                    {formatDateTime(booking.sessionTime)} · {booking.hallName}
+                <td data-label="Customer">
+                  <span className={styles.truncate} title={booking.userEmail}>
+                    {booking.userEmail}
                   </span>
                 </td>
-                <td data-label="Amount">{formatPrice(booking.finalPrice)}</td>
+                <td data-label="Session">
+                  <div className={styles.stack}>
+                    <span className={styles.primary}>{booking.movieTitle}</span>
+                    <span className={styles.secondary}>
+                      {formatDateTime(booking.sessionTime)} ·{" "}
+                      <span className={styles.nowrap}>{booking.hallName}</span>
+                    </span>
+                  </div>
+                </td>
+                <td data-label="Amount">
+                  <span className={styles.nowrap}>
+                    {formatPrice(booking.finalPrice)}
+                  </span>
+                </td>
                 <td data-label="Status">
                   <Badge variant={BOOKING_STATUS_VARIANT[booking.status]}>
                     {BookingStatusDisplay[booking.status]}

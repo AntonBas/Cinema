@@ -15,10 +15,6 @@
   text-decoration: underline;
 }
 
-.customer {
-  word-break: break-all;
-}
-
 .primary {
   display: block;
 }
@@ -29,7 +25,60 @@
   font-size: var(--font-size-sm);
 }
 
+.colBooking {
+  width: 18%;
+}
+
+.colCustomer {
+  width: 25%;
+}
+
+.colSession {
+  width: 19%;
+}
+
+.colAmount {
+  width: 9%;
+}
+
+.colStatus {
+  width: 12%;
+}
+
+.colPayment {
+  width: 17%;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.truncate {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .mono {
   font-family: monospace;
-  word-break: break-all;
+}
+
+.stack {
+  min-width: 0;
+}
+
+@media (max-width: 1024px) {
+  .stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-1);
+    text-align: right;
+  }
+
+  .truncate {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
 }
