@@ -36,7 +36,6 @@ export const RefundPolicyPage: React.FC = () => {
                       {rule.percentage}%
                     </span>
                   </div>
-                  <p className={styles.ruleDescription}>{rule.description}</p>
                   <p className={styles.ruleCondition}>{rule.condition}</p>
                 </div>
               ))}
@@ -64,9 +63,6 @@ export const RefundPolicyPage: React.FC = () => {
                   Bonus points used during purchase will be partially refunded
                 </li>
                 <li>Refund will be returned to the original payment method</li>
-                <li>
-                  Processing fees may apply based on the refund policy tier
-                </li>
                 <li>You can request a refund from your tickets page</li>
               </ul>
             </div>

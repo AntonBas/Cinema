@@ -44,13 +44,6 @@
   color: var(--color-primary);
 }
 
-.ruleDescription {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  margin: 0 0 var(--space-2) 0;
-  line-height: 1.5;
-}
-
 .ruleCondition {
   color: var(--color-text-muted);
   font-size: var(--font-size-xs);

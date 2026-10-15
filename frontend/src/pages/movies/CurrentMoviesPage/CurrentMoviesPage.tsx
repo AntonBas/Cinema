@@ -56,7 +56,7 @@ export const CurrentMoviesPage: React.FC = () => {
       <MovieList
         movies={movies}
         pagination={pagination}
-        loading={loading}
+        loading={loading || (!pagination && !error)}
         error={error}
         emptyMessage="No movies currently playing"
         onRetry={handleRetry}

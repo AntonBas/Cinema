@@ -95,8 +95,9 @@ export const useMovie = () => {
   }, []);
 
   const getBySlug = useCallback(async (slug: string) => {
-    return movieDetailApiRef.current.execute(() =>
-      movieApi.public.getBySlug(slug),
+    return movieDetailApiRef.current.execute(
+      () => movieApi.public.getBySlug(slug),
+      { showErrorNotification: false },
     );
   }, []);
 

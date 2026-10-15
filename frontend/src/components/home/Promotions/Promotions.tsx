@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/Button/Button";
 import { useAuth } from "@/context/AuthContext";
 import type { PromotionResponse } from "@/types/promotion";
-import { formatShortDate } from "@/utils/formatters";
+import { formatDateRange } from "@/utils/formatters";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { buildLoginPath } from "@/utils/authRedirect";
 import styles from "./Promotions.module.css";
@@ -149,8 +149,7 @@ export const Promotions: React.FC<PromotionsProps> = ({
                         </span>
                         {promo.startDate && promo.endDate && (
                           <span className={styles.promoDate}>
-                            {formatShortDate(promo.startDate)} -{" "}
-                            {formatShortDate(promo.endDate)}
+                            {formatDateRange(promo.startDate, promo.endDate)}
                           </span>
                         )}
                       </div>

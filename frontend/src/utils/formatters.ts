@@ -48,6 +48,17 @@ export const formatDate = (value: DateInput): string =>
 export const formatShortDate = (value: DateInput): string =>
   format(value, { month: "short", day: "numeric" });
 
+export const formatDateRange = (start: DateInput, end: DateInput): string => {
+  const startYear = format(start, { year: "numeric" });
+  const endYear = format(end, { year: "numeric" });
+  const currentYear = String(new Date().getFullYear());
+  const formatBound =
+    startYear === endYear && startYear === currentYear
+      ? formatShortDate
+      : formatDate;
+  return `${formatBound(start)} – ${formatBound(end)}`;
+};
+
 export const formatWeekdayDate = (value: DateInput): string =>
   format(value, { weekday: "short", month: "short", day: "numeric" });
 

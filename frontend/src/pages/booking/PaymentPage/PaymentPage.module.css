@@ -160,16 +160,17 @@
   }
 }
 
-.primaryButton {
+.primaryButton,
+.secondaryButton {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
+  white-space: nowrap;
 }
 
 .secondaryButton {
-  flex: 1;
   background: var(--color-bg-tertiary);
   color: var(--color-text-primary);
   border: 1px solid var(--color-border);

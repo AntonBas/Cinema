@@ -126,16 +126,24 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
     <div className={styles.sidebar}>
       <div className={styles.header}>
         <h3>Selected Seats</h3>
-        <span className={styles.seatCount}>{selectedSeats.length} seats</span>
+        <span className={styles.seatCount}>
+          {selectedSeats.length} {selectedSeats.length === 1 ? "seat" : "seats"}
+        </span>
       </div>
 
       <div className={styles.seatsList}>
         {selectedSeats.map((selectedSeat) => (
           <div key={selectedSeat.seat.id} className={styles.seatItem}>
             <div className={styles.seatInfo}>
-              <span className={styles.seatNumber}>
-                Row {selectedSeat.seat.row}, Seat {selectedSeat.seat.seatNumber}
-              </span>
+              <div className={styles.seatHeader}>
+                <span className={styles.seatNumber}>
+                  Row {selectedSeat.seat.row}, Seat{" "}
+                  {selectedSeat.seat.seatNumber}
+                </span>
+                <span className={styles.seatPrice}>
+                  {formatPrice(selectedSeat.price)}
+                </span>
+              </div>
               <TicketTypeSelect
                 seatId={selectedSeat.seat.id}
                 ticketPrices={(selectedSeat.seat.ticketPrices || []).map(
@@ -153,9 +161,6 @@ export const BookingSidebar: React.FC<BookingSidebarProps> = ({
                 selectedTicketTypeId={selectedSeat.ticketTypeId}
                 onSelect={onTicketTypeChange}
               />
-            </div>
-            <div className={styles.seatPrice}>
-              {formatPrice(selectedSeat.price)}
             </div>
           </div>
         ))}

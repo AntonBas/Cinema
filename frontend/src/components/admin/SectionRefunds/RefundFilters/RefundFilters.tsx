@@ -64,6 +64,7 @@ export const RefundFilters: React.FC<RefundFiltersProps> = ({
           value={filters.query}
           onSearch={(query) => onChange({ query: query || undefined })}
           placeholder="Booking number, email, ticket code or LiqPay order..."
+          className={styles.searchInput}
           delay={500}
         />
       </div>
