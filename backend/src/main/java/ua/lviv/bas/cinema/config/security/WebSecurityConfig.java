@@ -29,6 +29,7 @@ public class WebSecurityConfig {
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
     private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
+    private final RestAccessDeniedHandler restAccessDeniedHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CsrfHeaderFilter csrfHeaderFilter;
     private final CorsConfigurationSource corsConfigurationSource;
@@ -108,7 +109,9 @@ public class WebSecurityConfig {
                         .successHandler(oAuth2AuthenticationSuccessHandler)
                         .failureHandler(oAuth2AuthenticationFailureHandler)
                 )
-                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(restAuthenticationEntryPoint))
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(restAuthenticationEntryPoint)
+                        .accessDeniedHandler(restAccessDeniedHandler))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(csrfHeaderFilter, JwtAuthenticationFilter.class)
                 .formLogin(AbstractHttpConfigurer::disable)

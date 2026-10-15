@@ -85,7 +85,7 @@ public class PersonService {
     private void validatePersonUniqueness(String name, PersonRole role, Long excludeId) {
         UniquenessValidator.validate(excludeId, () -> personRepository.existsByNameAndRole(name, role),
                 id -> personRepository.existsByNameAndRoleAndIdNot(name, role, id),
-                () -> new DuplicateEntityException("Person", name + " (" + role + ")"));
+                () -> new DuplicateEntityException(String.format("Person \"%s\" with role %s already exists", name, role.name().toLowerCase())));
     }
 
     private void checkPersonUsageInMovies(Person person) {

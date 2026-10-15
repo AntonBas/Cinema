@@ -21,7 +21,6 @@ import ua.lviv.bas.cinema.payment.dto.response.PaymentResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.booking.SessionTooCloseException;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.InvalidPaymentStatusException;
-import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentAccessDeniedException;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 import ua.lviv.bas.cinema.booking.repository.BookingRepository;
 import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
@@ -121,7 +120,7 @@ public class PaymentService {
                 .orElseThrow(() -> new EntityNotFoundException("Payment", paymentId));
 
         if (!payment.getBooking().getUser().getId().equals(user.getId())) {
-            throw new PaymentAccessDeniedException(paymentId, user.getId());
+            throw new EntityNotFoundException("Payment", paymentId);
         }
 
         return paymentMapper.toResponse(payment);
@@ -131,7 +130,7 @@ public class PaymentService {
         var payment = findPayment(paymentId);
 
         if (!payment.getBooking().getUser().getId().equals(user.getId())) {
-            throw new PaymentAccessDeniedException(paymentId, user.getId());
+            throw new EntityNotFoundException("Payment", paymentId);
         }
 
         if (!payment.getStatus().canBeRetried()) {

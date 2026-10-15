@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.config.security;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import ua.lviv.bas.cinema.config.TestcontainersConfig;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -54,5 +56,14 @@ class AdminEndpointAccessIntegrationTest {
     void adminEndpointsShouldEnforceRoles(String role, String path, int expectedStatus) throws Exception {
         mockMvc.perform(get(path).with(user("access-test@test.com").roles(role)))
                 .andExpect(status().is(expectedStatus));
+    }
+
+    @Test
+    void forbiddenAdminRequestShouldReturnApiError() throws Exception {
+        mockMvc.perform(get("/api/admin/bookings").with(user("access-test@test.com").roles("USER")))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.statusCode").value(403))
+                .andExpect(jsonPath("$.message").value("Access denied"))
+                .andExpect(jsonPath("$.path").value("/api/admin/bookings"));
     }
 }

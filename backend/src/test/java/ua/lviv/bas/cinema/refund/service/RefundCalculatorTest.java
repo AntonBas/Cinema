@@ -67,7 +67,7 @@ class RefundCalculatorTest {
 
     @Test
     void validateWhenTicketNotActiveShouldReturnReason() {
-        testTicket.setStatus(TicketStatus.REFUNDED);
+        testTicket.setStatus(TicketStatus.USED);
 
         String reason = refundCalculator.validate(testTicket);
 
@@ -85,8 +85,16 @@ class RefundCalculatorTest {
 
     @Test
     void validateWhenAlreadyRefundedShouldReturnReason() {
-        when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(true);
         testTicket.setRefund(Refund.builder().build());
+
+        String reason = refundCalculator.validate(testTicket);
+
+        assertThat(reason).isEqualTo("Ticket has already been refunded");
+    }
+
+    @Test
+    void validateWhenTicketStatusRefundedShouldReturnAlreadyRefundedReason() {
+        testTicket.setStatus(TicketStatus.REFUNDED);
 
         String reason = refundCalculator.validate(testTicket);
 

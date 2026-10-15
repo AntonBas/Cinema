@@ -21,7 +21,6 @@ import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.payment.dto.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentAccessDeniedException;
 import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
 import ua.lviv.bas.cinema.payment.service.PaymentGatewayService;
 
@@ -127,7 +126,7 @@ public class PaymentStatusServiceTest {
         when(paymentRepository.findById(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
 
         assertThatThrownBy(() -> paymentStatusService.preparePaymentData(PAYMENT_ID, otherUser))
-                .isInstanceOf(PaymentAccessDeniedException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test

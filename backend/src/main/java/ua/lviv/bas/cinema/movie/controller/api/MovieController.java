@@ -127,7 +127,7 @@ public class MovieController {
             @ApiResponse(responseCode = "404", description = "Movie or poster not found")
     })
     public ResponseEntity<byte[]> getPoster(@PathVariable Long id) {
-        log.info("GET /api/movies/{}/poster - Getting movie poster", id);
+        log.debug("GET /api/movies/{}/poster - Getting movie poster", id);
         return movieService.getPoster(id)
                 .map(poster -> ResponseEntity.ok().contentType(poster.mediaType())
                         .header(HttpHeaders.CACHE_CONTROL, "max-age=3600").body(poster.data()))

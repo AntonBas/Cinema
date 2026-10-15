@@ -19,6 +19,7 @@ import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
 import ua.lviv.bas.cinema.ticket.domain.TicketType;
 import ua.lviv.bas.cinema.user.domain.User;
+import ua.lviv.bas.cinema.exception.domain.financial.refund.TicketAlreadyRefundedException;
 import ua.lviv.bas.cinema.exception.domain.financial.refund.TicketNotRefundableException;
 import ua.lviv.bas.cinema.payment.service.PaymentRefundService;
 import ua.lviv.bas.cinema.refund.repository.RefundRepository;
@@ -107,7 +108,7 @@ public class RefundTransactionExecutorTest {
 
     @Test
     void createProcessingRefundShouldSucceed() {
-        when(ticketService.getActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
+        when(ticketService.getTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
         when(refundCalculator.validate(testTicket)).thenReturn(null);
         when(refundRepository.existsByItemsTicketIdAndStatus(TICKET_ID, RefundStatus.PROCESSING)).thenReturn(false);
         when(refundCalculator.calculate(testTicket))
@@ -135,8 +136,8 @@ public class RefundTransactionExecutorTest {
 
     @Test
     void createProcessingRefundWhenTicketNotRefundableShouldThrow() {
-        when(ticketService.getActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
-        when(refundCalculator.validate(testTicket)).thenReturn("Ticket is not active. Current status: REFUNDED");
+        when(ticketService.getTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
+        when(refundCalculator.validate(testTicket)).thenReturn("Ticket is not active. Current status: USED");
 
         assertThatThrownBy(() -> refundTransactionExecutor.createProcessingRefund(TICKET_ID, USER_ID, "Test reason"))
                 .isInstanceOf(TicketNotRefundableException.class);
@@ -145,8 +146,19 @@ public class RefundTransactionExecutorTest {
     }
 
     @Test
+    void createProcessingRefundWhenTicketAlreadyRefundedShouldThrowConflict() {
+        when(ticketService.getTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
+        when(refundCalculator.isAlreadyRefunded(testTicket)).thenReturn(true);
+
+        assertThatThrownBy(() -> refundTransactionExecutor.createProcessingRefund(TICKET_ID, USER_ID, "Test reason"))
+                .isInstanceOf(TicketAlreadyRefundedException.class);
+
+        verify(refundRepository, never()).save(any());
+    }
+
+    @Test
     void createProcessingRefundWhenAlreadyProcessingShouldThrowGuard() {
-        when(ticketService.getActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
+        when(ticketService.getTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
         when(refundCalculator.validate(testTicket)).thenReturn(null);
         when(refundRepository.existsByItemsTicketIdAndStatus(TICKET_ID, RefundStatus.PROCESSING)).thenReturn(true);
 
@@ -160,7 +172,7 @@ public class RefundTransactionExecutorTest {
 
     @Test
     void createProcessingRefundWhenConcurrentInsertViolatesConstraintShouldThrowGuard() {
-        when(ticketService.getActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
+        when(ticketService.getTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
         when(refundCalculator.validate(testTicket)).thenReturn(null);
         when(refundRepository.existsByItemsTicketIdAndStatus(TICKET_ID, RefundStatus.PROCESSING)).thenReturn(false);
         when(refundCalculator.calculate(testTicket))

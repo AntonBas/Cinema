@@ -25,7 +25,7 @@ public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecif
 
     boolean existsByBookingId(Long bookingId);
 
-    Optional<Ticket> findByIdAndUserIdAndStatus(Long ticketId, Long userId, TicketStatus status);
+    Optional<Ticket> findByIdAndUserId(Long ticketId, Long userId);
 
     @Override
     @EntityGraph(attributePaths = {"ticketType", "booking.session.movie", "booking.session.hall",

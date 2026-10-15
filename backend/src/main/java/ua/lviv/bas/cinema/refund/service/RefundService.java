@@ -47,7 +47,7 @@ public class RefundService {
 
     @Transactional(readOnly = true)
     public RefundPreviewResponse getPreview(RefundPreviewRequest request, Long userId) {
-        var ticket = ticketService.getActiveTicketForUser(request.ticketId(), userId);
+        var ticket = ticketService.getTicketForUser(request.ticketId(), userId);
         var validationError = refundCalculator.validate(ticket);
 
         if (validationError != null) {

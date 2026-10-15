@@ -88,9 +88,9 @@ public class TicketService {
                 .status(TicketStatus.ACTIVE).purchaseTime(Instant.now()).build();
     }
 
-    public Ticket getActiveTicketForUser(Long ticketId, Long userId) {
-        return ticketRepository.findByIdAndUserIdAndStatus(ticketId, userId, TicketStatus.ACTIVE).orElseThrow(
-                () -> new TicketNotFoundException("Ticket not found or not active. Ticket ID: " + ticketId));
+    public Ticket getTicketForUser(Long ticketId, Long userId) {
+        return ticketRepository.findByIdAndUserId(ticketId, userId)
+                .orElseThrow(() -> new TicketNotFoundException("Ticket not found. Ticket ID: " + ticketId));
     }
 
     public Ticket getTicket(Long ticketId) {

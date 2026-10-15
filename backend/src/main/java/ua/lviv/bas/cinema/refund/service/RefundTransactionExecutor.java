@@ -14,6 +14,7 @@ import ua.lviv.bas.cinema.refund.domain.status.RefundItemStatus;
 import ua.lviv.bas.cinema.refund.domain.status.RefundStatus;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.financial.refund.TicketAlreadyRefundedException;
 import ua.lviv.bas.cinema.exception.domain.financial.refund.TicketNotRefundableException;
 import ua.lviv.bas.cinema.payment.service.PaymentRefundService;
 import ua.lviv.bas.cinema.refund.repository.RefundRepository;
@@ -40,7 +41,7 @@ public class RefundTransactionExecutor {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public RefundProcessingContext createProcessingRefund(Long ticketId, Long userId, String reason) {
-        var ticket = ticketService.getActiveTicketForUser(ticketId, userId);
+        var ticket = ticketService.getTicketForUser(ticketId, userId);
 
         validateRefundable(ticket);
 
@@ -58,6 +59,9 @@ public class RefundTransactionExecutor {
     }
 
     private void validateRefundable(Ticket ticket) {
+        if (refundCalculator.isAlreadyRefunded(ticket)) {
+            throw new TicketAlreadyRefundedException(ticket.getUniqueCode());
+        }
         var validationError = refundCalculator.validate(ticket);
         if (validationError != null) {
             throw new TicketNotRefundableException(validationError);

@@ -52,7 +52,7 @@ public class MovieScheduler {
             Stream.of("singleMovies", "movieLists").map(cacheManager::getCache).filter(Objects::nonNull)
                     .forEach(Cache::clear);
         }
-        log.info("Movie status summary - CURRENT: {}, UPCOMING: {}, ARCHIVED: {}", summary.currentCount(),
+        log.info("Movie status transitions - to CURRENT: {}, to UPCOMING: {}, to ARCHIVED: {}", summary.currentCount(),
                 summary.upcomingCount(), summary.archivedCount());
         log.info("Movie status update completed");
     }

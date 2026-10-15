@@ -25,6 +25,9 @@ public class RefundCalculator {
     private final BonusQueryService bonusQueryService;
 
     public String validate(Ticket ticket) {
+        if (isAlreadyRefunded(ticket)) {
+            return "Ticket has already been refunded";
+        }
         if (ticket.getStatus() != TicketStatus.ACTIVE) {
             return "Ticket is not active. Current status: " + ticket.getStatus();
         }
@@ -32,9 +35,6 @@ public class RefundCalculator {
         boolean sessionCancelled = isSessionCancelled(ticket);
         if (!sessionCancelled && !refundRules.isRefundable(sessionTime)) {
             return "Refund is not available for this session";
-        }
-        if (ticket.getRefund() != null) {
-            return "Ticket has already been refunded";
         }
         if (!sessionCancelled && sessionTime.isBefore(CinemaTime.now())) {
             return "Session has already started or finished";
@@ -75,6 +75,10 @@ public class RefundCalculator {
                 .multiply(percentage)
                 .divide(paymentAmount.multiply(BigDecimal.valueOf(100)), 0, RoundingMode.DOWN)
                 .intValue();
+    }
+
+    public boolean isAlreadyRefunded(Ticket ticket) {
+        return ticket.getStatus() == TicketStatus.REFUNDED || ticket.getRefund() != null;
     }
 
     public boolean isSessionCancelled(Ticket ticket) {

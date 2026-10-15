@@ -1,4 +1,5 @@
 const PHONE_PATTERN = /^\+?[0-9]{10,15}$/;
+const PERSON_NAME_PATTERN = /^\p{L}+(?:[ '’-]\p{L}+)*$/u;
 
 export const validateName = (
   value: string,
@@ -8,6 +9,8 @@ export const validateName = (
   if (!trimmed) return `${fieldLabel} is required`;
   if (trimmed.length < 2 || trimmed.length > 50)
     return `${fieldLabel} must be between 2 and 50 characters`;
+  if (!PERSON_NAME_PATTERN.test(trimmed))
+    return `${fieldLabel} may contain only letters, spaces, hyphens and apostrophes`;
   return undefined;
 };
 

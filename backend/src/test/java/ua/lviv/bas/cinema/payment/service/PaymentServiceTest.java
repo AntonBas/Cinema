@@ -26,7 +26,6 @@ import ua.lviv.bas.cinema.payment.dto.request.PaymentCreateRequest;
 import ua.lviv.bas.cinema.payment.dto.response.PaymentResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.InvalidPaymentStatusException;
-import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentAccessDeniedException;
 import ua.lviv.bas.cinema.booking.repository.BookingRepository;
 import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
 import ua.lviv.bas.cinema.common.DateTimeFormatterService;
@@ -238,7 +237,7 @@ public class PaymentServiceTest {
         when(paymentRepository.findByIdWithDetails(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
 
         assertThatThrownBy(() -> paymentService.getPayment(PAYMENT_ID, otherUser))
-                .isInstanceOf(PaymentAccessDeniedException.class);
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test

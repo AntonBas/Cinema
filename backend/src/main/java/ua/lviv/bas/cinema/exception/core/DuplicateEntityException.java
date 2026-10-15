@@ -10,12 +10,12 @@ public class DuplicateEntityException extends ConflictException {
     private static final long serialVersionUID = 1L;
 
     public DuplicateEntityException(String entityType, String identifier) {
-        super(String.format("%s with identifier '%s' already exists", entityType, identifier), "DUPLICATE_ENTITY",
+        super(String.format("%s \"%s\" already exists", entityType, identifier), "DUPLICATE_ENTITY",
                 String.format("Duplicate entity detected: %s [%s]", entityType, identifier));
     }
 
     public DuplicateEntityException(String entityType, String identifier, @Nullable String debugMessage) {
-        super(String.format("%s with identifier '%s' already exists", entityType, identifier), "DUPLICATE_ENTITY",
+        super(String.format("%s \"%s\" already exists", entityType, identifier), "DUPLICATE_ENTITY",
                 debugMessage);
     }
 
