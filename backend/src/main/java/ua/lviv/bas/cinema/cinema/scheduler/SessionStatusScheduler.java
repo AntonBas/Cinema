@@ -23,7 +23,7 @@ public class SessionStatusScheduler {
     private final SessionRepository sessionRepository;
 
     @Scheduled(cron = "${scheduler.session-status.cron:0 */5 * * * *}")
-    @CacheEvict(value = "sessions", allEntries = true)
+    @CacheEvict(value = {"sessions", "adminSessions"}, allEntries = true)
     @Transactional
     public void updateSessionStatuses() {
         log.debug("Starting scheduled session status update");

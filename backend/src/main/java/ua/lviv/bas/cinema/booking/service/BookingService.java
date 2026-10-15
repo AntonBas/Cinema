@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.booking.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -57,7 +56,6 @@ public class BookingService {
         this.transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
-    @CacheEvict(value = "sessions", allEntries = true)
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public BookingResponse createBooking(BookingCreateRequest request, User user) {
         var created = bookingCreationService.createAndPersist(request, user);

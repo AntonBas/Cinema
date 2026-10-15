@@ -46,6 +46,7 @@ public class CacheConfig {
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
         cacheConfigurations.put("cinemaHalls", defaultConfig.entryTtl(Duration.ofHours(1)));
         cacheConfigurations.put("sessions", defaultConfig.entryTtl(Duration.ofMinutes(10)));
+        cacheConfigurations.put("adminSessions", defaultConfig.entryTtl(Duration.ofMinutes(10)));
         cacheConfigurations.put("genres", defaultConfig.entryTtl(Duration.ofHours(24)));
         cacheConfigurations.put("persons", defaultConfig.entryTtl(Duration.ofHours(24)));
         cacheConfigurations.put("singleMovies", defaultConfig.entryTtl(Duration.ofHours(24)));

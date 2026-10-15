@@ -63,7 +63,7 @@ public class TicketService {
     @Value("${app.frontend.url}")
     private String ticketBaseUrl;
 
-    @CacheEvict(value = "ticketList", allEntries = true)
+    @CacheEvict(value = {"ticketList", "adminSessions"}, allEntries = true)
     @Transactional
     public List<Ticket> createTicketsForBooking(Booking booking, Payment payment) {
         if (ticketRepository.existsByBookingId(booking.getId())) {
@@ -198,6 +198,7 @@ public class TicketService {
     @Caching(evict = {
             @CacheEvict(value = "ticket", key = "#ticket.uniqueCode + '-' + #ticket.user.id"),
             @CacheEvict(value = "ticketList", allEntries = true),
+            @CacheEvict(value = "adminSessions", allEntries = true),
             @CacheEvict(value = "seatAvailability", key = "#ticket.seatReservation.session.id")
     })
     @Transactional
