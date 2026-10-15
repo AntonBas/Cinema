@@ -2,11 +2,14 @@ package ua.lviv.bas.cinema.notification;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.HtmlUtils;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 import ua.lviv.bas.cinema.config.async.AsyncConfig;
 import ua.lviv.bas.cinema.exception.infrastructure.ExternalServiceException;
 import ua.lviv.bas.cinema.common.CinemaTime;
@@ -24,7 +27,8 @@ import java.util.Map;
 public class EmailService {
 
     private static final int MAX_ATTEMPTS = 3;
-    private static final long RETRY_DELAY_MS = 200;
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
+    private static final Duration READ_TIMEOUT = Duration.ofSeconds(10);
 
     private final RestClient restClient;
     private final String fromEmail;
@@ -41,10 +45,17 @@ public class EmailService {
     @Value("${app.refund-policy.processing-time:5-7 business days}")
     private String refundProcessingTime;
 
+    @Value("${app.mail.retry-base-delay-ms:500}")
+    private long retryBaseDelayMillis;
+
     public EmailService(@Value("${app.mail.api-key:}") String apiKey,
                          @Value("${app.email.from:noreply@bascinema.com}") String fromEmail) {
         this.fromEmail = fromEmail;
+        var requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(CONNECT_TIMEOUT);
+        requestFactory.setReadTimeout(READ_TIMEOUT);
         this.restClient = RestClient.builder()
+                .requestFactory(requestFactory)
                 .baseUrl("https://api.brevo.com/v3/smtp/email")
                 .defaultHeader("api-key", apiKey)
                 .build();
@@ -249,18 +260,27 @@ public class EmailService {
                 return;
             } catch (RestClientException e) {
                 lastException = e;
-                if (attempt < MAX_ATTEMPTS) {
-                    log.warn("Attempt {}/{} failed to send email to {}, retrying", attempt, MAX_ATTEMPTS, toEmail);
-                    sleepBeforeRetry();
+                if (!isRetryable(e) || attempt == MAX_ATTEMPTS) {
+                    break;
                 }
+                log.warn("Attempt {}/{} failed to send email to {}, retrying", attempt, MAX_ATTEMPTS, toEmail);
+                sleepBeforeRetry(attempt);
             }
         }
         throw lastException;
     }
 
-    private void sleepBeforeRetry() {
+    private static boolean isRetryable(RestClientException exception) {
+        if (exception instanceof RestClientResponseException responseException) {
+            var status = responseException.getStatusCode();
+            return status.is5xxServerError() || status.value() == HttpStatus.TOO_MANY_REQUESTS.value();
+        }
+        return true;
+    }
+
+    private void sleepBeforeRetry(int attempt) {
         try {
-            Thread.sleep(RETRY_DELAY_MS);
+            Thread.sleep(retryBaseDelayMillis << (attempt - 1));
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }

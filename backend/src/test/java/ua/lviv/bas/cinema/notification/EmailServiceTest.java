@@ -11,6 +11,7 @@ import ua.lviv.bas.cinema.exception.infrastructure.ExternalServiceException;
 import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
+import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -23,8 +24,11 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withBadRequest;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withException;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withTooManyRequests;
 
 class EmailServiceTest {
 
@@ -71,6 +75,38 @@ class EmailServiceTest {
 
         assertThatThrownBy(() -> emailService.sendVerificationEmail("test@example.com", "token-123", Duration.ofHours(24)))
                 .isInstanceOf(ExternalServiceException.class).hasMessageContaining("Email Service");
+
+        mockServer.verify();
+    }
+
+    @Test
+    void sendVerificationEmail_WhenBrevoRejectsRequest_ShouldNotRetry() {
+        mockServer.expect(ExpectedCount.once(), requestTo(BREVO_URL)).andRespond(withBadRequest());
+
+        assertThatThrownBy(() -> emailService.sendVerificationEmail("test@example.com", "token-123", Duration.ofHours(24)))
+                .isInstanceOf(ExternalServiceException.class);
+
+        mockServer.verify();
+    }
+
+    @Test
+    void sendVerificationEmail_WhenRateLimitedThenSuccess_ShouldRetry() {
+        mockServer.expect(requestTo(BREVO_URL)).andRespond(withTooManyRequests());
+        mockServer.expect(requestTo(BREVO_URL)).andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
+
+        assertThatCode(() -> emailService.sendVerificationEmail("test@example.com", "token-123", Duration.ofHours(24)))
+                .doesNotThrowAnyException();
+
+        mockServer.verify();
+    }
+
+    @Test
+    void sendVerificationEmail_WhenTimeoutThenSuccess_ShouldRetry() {
+        mockServer.expect(requestTo(BREVO_URL)).andRespond(withException(new SocketTimeoutException("Read timed out")));
+        mockServer.expect(requestTo(BREVO_URL)).andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
+
+        assertThatCode(() -> emailService.sendVerificationEmail("test@example.com", "token-123", Duration.ofHours(24)))
+                .doesNotThrowAnyException();
 
         mockServer.verify();
     }
