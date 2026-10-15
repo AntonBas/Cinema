@@ -37,7 +37,7 @@ import {
   REFUNDED_PAYMENT_STATUSES,
   PaymentStatusDisplay,
 } from "@/types/payment";
-import { parseServerInstant } from "@/utils/dateUtils";
+import { formatTimeLeft } from "@/utils/dateUtils";
 import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import { formatFullDateTime, formatPrice } from "@/utils/formatters";
@@ -140,16 +140,7 @@ export const PaymentPage: React.FC = () => {
               stopPolling();
             }
             if (payment.expiresAt) {
-              const expiresAt = parseServerInstant(payment.expiresAt);
-              const diffMs = expiresAt.getTime() - Date.now();
-              const diffMinutes = Math.floor(diffMs / (1000 * 60));
-              setPaymentTimeLeft(
-                diffMs <= 0
-                  ? "Expired"
-                  : diffMinutes > 60
-                    ? `${Math.floor(diffMinutes / 60)}h ${diffMinutes % 60}m`
-                    : `${diffMinutes}m`,
-              );
+              setPaymentTimeLeft(formatTimeLeft(payment.expiresAt));
             }
           }
         } catch {
