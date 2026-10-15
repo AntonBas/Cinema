@@ -64,7 +64,8 @@ public class WebSecurityConfig {
                 .securityContext(context -> context.securityContextRepository(new NullSecurityContextRepository()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/health/liveness", "/actuator/info")
+                        .permitAll()
                         .requestMatchers("/actuator/**").hasRole("ADMIN")
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**",
                                 "/swagger-resources/**", "/swagger-resources", "/configuration/ui",
