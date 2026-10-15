@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.refund.service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -28,6 +29,7 @@ import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingEx
 import ua.lviv.bas.cinema.exception.domain.financial.refund.RefundProcessingException;
 import ua.lviv.bas.cinema.exception.domain.financial.refund.TicketNotRefundableException;
 import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;
+import ua.lviv.bas.cinema.config.properties.RefundPolicyConfig;
 import ua.lviv.bas.cinema.refund.mapper.RefundMapper;
 import ua.lviv.bas.cinema.payment.service.PaymentRefundService;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
@@ -49,6 +51,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 
 @ExtendWith(MockitoExtension.class)
 public class RefundServiceTest {
@@ -62,7 +66,7 @@ public class RefundServiceTest {
     @Mock
     private RefundRules refundRules;
     @Mock
-    private RefundMapper refundMapper;
+    private RefundPolicyConfig refundPolicyConfig;
     @Mock
     private NumberGeneratorService numberGenerator;
     @Mock
@@ -71,6 +75,7 @@ public class RefundServiceTest {
     private BonusQueryService bonusQueryService;
 
     private RefundCalculator refundCalculator;
+    private RefundMapper refundMapper;
     private RefundService refundService;
 
     private User testUser;
@@ -92,8 +97,10 @@ public class RefundServiceTest {
     @BeforeEach
     void setUp() {
         refundCalculator = new RefundCalculator(refundRules, bonusQueryService);
+        refundMapper = spy(Mappers.getMapper(RefundMapper.class));
         refundService = new RefundService(ticketService, paymentRefundService, refundCalculator,
-                refundTransactionExecutor, refundRules, refundMapper, numberGenerator, seatInfoFormatter);
+                refundTransactionExecutor, refundRules, refundMapper, numberGenerator, seatInfoFormatter,
+                refundPolicyConfig);
 
         testUser = User.builder().id(USER_ID).email("test@example.com").build();
         var movie = CinemaTestFixtures.movie();
@@ -202,7 +209,7 @@ public class RefundServiceTest {
         RefundResponse mockResponse = new RefundResponse(1L, "RF-2024-00001", "PROCESSED", REFUND_AMOUNT,
                 BONUS_POINTS_TO_REFUND, "Test reason", "System", Instant.now(), Instant.now(), 1L, "CARD",
                 null, "Refund processed successfully", "3-5 business days");
-        when(refundMapper.toResponse(eq(testRefund), eq("RF-2024-00001"), any(), any())).thenReturn(mockResponse);
+        doReturn(mockResponse).when(refundMapper).toResponse(eq(testRefund), eq("RF-2024-00001"), any(), any());
 
         RefundResponse response = refundService.refund(refundRequest, USER_ID);
 
@@ -289,5 +296,22 @@ public class RefundServiceTest {
 
         verify(refundTransactionExecutor, times(1)).applySuccess(REFUND_ID, TICKET_ID);
         verify(refundTransactionExecutor, never()).markFailed(any(), any());
+    }
+
+    @Test
+    void getPolicyShouldExposeRefundTiersAndConfig() {
+        when(refundRules.getTiers()).thenReturn(List.of(new RefundRules.Tier("Full Refund", "100% refund",
+                "More than 48 hours before session start", new BigDecimal("100.00"), 2880)));
+        when(refundPolicyConfig.getProcessingTime()).thenReturn("5-7 business days");
+        when(refundPolicyConfig.getContactEmail()).thenReturn("support@example.com");
+
+        var policy = refundService.getPolicy();
+
+        assertThat(policy.rules()).singleElement().satisfies(rule -> {
+            assertThat(rule.name()).isEqualTo("Full Refund");
+            assertThat(rule.percentage()).isEqualTo(100);
+        });
+        assertThat(policy.processingTime()).isEqualTo("5-7 business days");
+        assertThat(policy.contactEmail()).isEqualTo("support@example.com");
     }
 }

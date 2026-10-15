@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,16 +16,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ua.lviv.bas.cinema.config.properties.RefundPolicyConfig;
 import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
 import ua.lviv.bas.cinema.refund.dto.request.RefundPreviewRequest;
 import ua.lviv.bas.cinema.refund.dto.request.RefundRequest;
+import ua.lviv.bas.cinema.refund.dto.response.RefundPolicyResponse;
 import ua.lviv.bas.cinema.refund.dto.response.RefundPreviewResponse;
 import ua.lviv.bas.cinema.refund.dto.response.RefundResponse;
 import ua.lviv.bas.cinema.refund.service.RefundService;
 
-import java.util.Map;
 
 @Slf4j
 @RestController
@@ -37,7 +35,6 @@ import java.util.Map;
 public class RefundController {
 
     private final RefundService refundService;
-    private final RefundPolicyConfig refundPolicyConfig;
 
     @RateLimit(value = 3, duration = 10, key = "user")
     @PostMapping
@@ -78,11 +75,7 @@ public class RefundController {
             @ApiResponse(responseCode = "200", description = "Refund policy retrieved successfully")
     })
     @SecurityRequirements()
-    public ResponseEntity<Map<String, Object>> getPolicy() {
-        return ResponseEntity.ok(Map.of(
-                "rules", refundPolicyConfig.getRules(),
-                "processingTime", refundPolicyConfig.getProcessingTime(),
-                "contactEmail", refundPolicyConfig.getContactEmail()
-        ));
+    public RefundPolicyResponse getPolicy() {
+        return refundService.getPolicy();
     }
 }

@@ -5,12 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ua.lviv.bas.cinema.config.properties.RefundPolicyConfig;
 import ua.lviv.bas.cinema.config.properties.RefundRules;
 import ua.lviv.bas.cinema.refund.domain.Refund;
 import ua.lviv.bas.cinema.refund.domain.status.RefundStatus;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.refund.dto.request.RefundPreviewRequest;
 import ua.lviv.bas.cinema.refund.dto.request.RefundRequest;
+import ua.lviv.bas.cinema.refund.dto.response.RefundPolicyResponse;
 import ua.lviv.bas.cinema.refund.dto.response.RefundPreviewResponse;
 import ua.lviv.bas.cinema.refund.dto.response.RefundResponse;
 import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusCardConcurrentModificationException;
@@ -44,6 +46,7 @@ public class RefundService {
     private final RefundMapper refundMapper;
     private final NumberGeneratorService numberGenerator;
     private final SeatInfoFormatter seatInfoFormatter;
+    private final RefundPolicyConfig refundPolicyConfig;
 
     @Transactional(readOnly = true)
     public RefundPreviewResponse getPreview(RefundPreviewRequest request, Long userId) {
@@ -108,21 +111,14 @@ public class RefundService {
 
     private RefundPreviewResponse createPreview(Ticket ticket) {
         var sessionTime = ticket.getBooking().getSession().getStartTime();
-        var booking = ticket.getBooking();
         var calculation = refundCalculator.calculate(ticket);
 
         var ticketSeat = ticket.getSeatReservation().getSeat();
         var seatInfo = seatInfoFormatter.format(ticketSeat.getRow(), ticketSeat.getNumber());
 
-        return new RefundPreviewResponse(ticket.getId(), ticket.getUniqueCode(),
-                booking.getSession().getMovie().getTitle(), sessionTime,
-                booking.getSession().getHall().getName(), seatInfo, ticket.getOriginalPrice(),
-                ticket.getFinalPrice(), calculation.refundAmount(), calculation.percentage(), calculation.feeAmount(),
-                calculation.feePercentage(), calculation.bonusPointsUsed(),
-                calculation.bonusPointsToRefund(), policyName(ticket, sessionTime),
-                policyDescription(ticket, sessionTime), true, null, refundRules.getRefundDeadline(sessionTime),
-                formatRemainingTime(sessionTime), ticket.getPurchaseTime().toString(),
-                ticket.getTicketType().getDisplayName(), calculation.earnedPointsToRevoke());
+        return refundMapper.toPreview(ticket, calculation, seatInfo, policyName(ticket, sessionTime),
+                policyDescription(ticket, sessionTime), refundRules.getRefundDeadline(sessionTime),
+                formatRemainingTime(sessionTime));
     }
 
     private String policyName(Ticket ticket, LocalDateTime sessionTime) {
@@ -136,16 +132,18 @@ public class RefundService {
     }
 
     private RefundPreviewResponse createNonRefundablePreview(Ticket ticket, String reason) {
-        return new RefundPreviewResponse(ticket.getId(), ticket.getUniqueCode(),
-                ticket.getBooking().getSession().getMovie().getTitle(), ticket.getBooking().getSession().getStartTime(),
-                null, null, null, null, null, null, null, null, null, null, null, null, false, reason, null, null, null,
-                null, null);
+        return refundMapper.toNonRefundablePreview(ticket, reason);
+    }
+
+    public RefundPolicyResponse getPolicy() {
+        return new RefundPolicyResponse(refundMapper.toPolicyRules(refundRules.getTiers()),
+                refundPolicyConfig.getProcessingTime(), refundPolicyConfig.getContactEmail());
     }
 
     private RefundResponse buildResponse(Refund refund) {
         return refundMapper.toResponse(refund, numberGenerator.generateRefundNumber(refund),
                 statusMessage(refund.getStatus()),
-                refund.getStatus() == RefundStatus.REJECTED ? null : "3-5 business days");
+                refund.getStatus() == RefundStatus.REJECTED ? null : refundPolicyConfig.getProcessingTime());
     }
 
     private String statusMessage(RefundStatus status) {

@@ -55,7 +55,7 @@ export interface RefundResponse {
   refundNumber: string;
   status: string;
   totalAmount: string;
-  totalBonusPointsToRefund: number;
+  totalBonusPointsToDeduct: number;
   reason?: string;
   processedBy?: string;
   processedAt?: string;

@@ -6,31 +6,29 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Component
 public class RefundRules {
 
-    private static final BigDecimal FULL_REFUND = new BigDecimal("100.00");
-    private static final BigDecimal STANDARD_REFUND = new BigDecimal("85.00");
-    private static final BigDecimal LAST_MINUTE_REFUND = new BigDecimal("50.00");
-    private static final BigDecimal NO_REFUND = BigDecimal.ZERO;
-
-    private static final long FULL_REFUND_MINUTES = 48 * 60L;
-    private static final long STANDARD_REFUND_MINUTES = 24 * 60L;
     private static final long MINIMUM_REFUND_MINUTES = 2 * 60L;
 
-    public BigDecimal getRefundPercentage(LocalDateTime sessionTime) {
-        long minutesBefore = minutesUntilSession(sessionTime);
+    private static final List<Tier> TIERS = List.of(
+            new Tier("Full Refund", "100% refund — 48+ hours before the session",
+                    "More than 48 hours before session start", new BigDecimal("100.00"), 48 * 60L),
+            new Tier("Standard Refund", "85% refund — 24-48 hours before the session",
+                    "24 to 48 hours before session start", new BigDecimal("85.00"), 24 * 60L),
+            new Tier("Last Minute Refund", "50% refund — 2-24 hours before the session",
+                    "2 to 24 hours before session start", new BigDecimal("50.00"), MINIMUM_REFUND_MINUTES),
+            new Tier("No Refund", "Refund not available — less than 2 hours before the session",
+                    "Less than 2 hours before session start", BigDecimal.ZERO, Long.MIN_VALUE));
 
-        if (minutesBefore >= FULL_REFUND_MINUTES) {
-            return FULL_REFUND;
-        } else if (minutesBefore >= STANDARD_REFUND_MINUTES) {
-            return STANDARD_REFUND;
-        } else if (minutesBefore >= MINIMUM_REFUND_MINUTES) {
-            return LAST_MINUTE_REFUND;
-        } else {
-            return NO_REFUND;
-        }
+    public List<Tier> getTiers() {
+        return TIERS;
+    }
+
+    public BigDecimal getRefundPercentage(LocalDateTime sessionTime) {
+        return tierFor(sessionTime).percentage();
     }
 
     public boolean isRefundable(LocalDateTime sessionTime) {
@@ -42,34 +40,20 @@ public class RefundRules {
     }
 
     public String getPolicyName(LocalDateTime sessionTime) {
-        long minutesBefore = minutesUntilSession(sessionTime);
-
-        if (minutesBefore >= FULL_REFUND_MINUTES) {
-            return "Full Refund";
-        } else if (minutesBefore >= STANDARD_REFUND_MINUTES) {
-            return "Standard Refund";
-        } else if (minutesBefore >= MINIMUM_REFUND_MINUTES) {
-            return "Last Minute Refund";
-        } else {
-            return "No Refund";
-        }
+        return tierFor(sessionTime).name();
     }
 
     public String getPolicyDescription(LocalDateTime sessionTime) {
-        long minutesBefore = minutesUntilSession(sessionTime);
-
-        if (minutesBefore >= FULL_REFUND_MINUTES) {
-            return "100% refund — 48+ hours before the session";
-        } else if (minutesBefore >= STANDARD_REFUND_MINUTES) {
-            return "85% refund — 24-48 hours before the session";
-        } else if (minutesBefore >= MINIMUM_REFUND_MINUTES) {
-            return "50% refund — 2-24 hours before the session";
-        } else {
-            return "Refund not available — less than 2 hours before the session";
-        }
+        return tierFor(sessionTime).description();
     }
 
-    private long minutesUntilSession(LocalDateTime sessionTime) {
-        return Duration.between(CinemaTime.now(), sessionTime).toMinutes();
+    private Tier tierFor(LocalDateTime sessionTime) {
+        long minutesBefore = Duration.between(CinemaTime.now(), sessionTime).toMinutes();
+        return TIERS.stream().filter(tier -> minutesBefore >= tier.minMinutesBefore()).findFirst()
+                .orElseThrow();
+    }
+
+    public record Tier(String name, String description, String condition, BigDecimal percentage,
+                       long minMinutesBefore) {
     }
 }

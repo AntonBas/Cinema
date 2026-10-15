@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import ua.lviv.bas.cinema.common.DateTimeFormatterService;
 import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.payment.dto.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentGatewayUnavailableException;
@@ -49,7 +50,6 @@ public class PaymentGatewayService {
     @Value("${payment.liqpay.api_url:https://www.liqpay.ua/api/}")
     private String liqpayApiUrl;
 
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
     private static final DateTimeFormatter EXPIRED_DATE_FORMATTER = DateTimeFormatter
             .ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneOffset.UTC);
 
@@ -301,7 +301,7 @@ public class PaymentGatewayService {
     private String buildPaymentDescription(Payment payment) {
         return String.format("Tickets for %s, hall %s, %s", payment.getBooking().getSession().getMovie().getTitle(),
                 payment.getBooking().getSession().getHall().getName(),
-                payment.getBooking().getSession().getStartTime().format(DATE_FORMATTER));
+                payment.getBooking().getSession().getStartTime().format(DateTimeFormatterService.STANDARD_FORMATTER));
     }
 
     private String buildResultUrl(Payment payment) {

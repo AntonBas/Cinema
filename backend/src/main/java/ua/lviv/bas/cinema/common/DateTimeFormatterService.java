@@ -8,7 +8,7 @@ import java.time.format.DateTimeFormatter;
 @Component
 public class DateTimeFormatterService {
 
-    private static final DateTimeFormatter STANDARD_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+    public static final DateTimeFormatter STANDARD_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
     public String formatStandard(LocalDateTime dateTime) {
         if (dateTime == null)

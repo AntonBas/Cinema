@@ -15,6 +15,8 @@ const REDIRECT_ERROR_MESSAGES: Record<string, string> = {
 
 const REDIRECT_INFO_MESSAGES: Record<string, string> = {
   "email-changed": "Your email was changed. Please log in with your new email.",
+  "password-changed":
+    "Your password was changed and you were signed out everywhere. Please log in with your new password.",
 };
 
 export const LoginForm: React.FC = () => {

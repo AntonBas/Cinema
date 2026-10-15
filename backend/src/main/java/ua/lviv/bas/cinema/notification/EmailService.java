@@ -10,10 +10,10 @@ import org.springframework.web.client.RestClientException;
 import ua.lviv.bas.cinema.config.async.AsyncConfig;
 import ua.lviv.bas.cinema.exception.infrastructure.ExternalServiceException;
 import ua.lviv.bas.cinema.common.CinemaTime;
+import ua.lviv.bas.cinema.common.DateTimeFormatterService;
 
 import java.math.BigDecimal;
 import java.time.Duration;
-import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,7 +25,6 @@ public class EmailService {
 
     private static final int MAX_ATTEMPTS = 3;
     private static final long RETRY_DELAY_MS = 200;
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
     private final RestClient restClient;
     private final String fromEmail;
@@ -151,7 +150,7 @@ public class EmailService {
             details.put("Reason", refundReason);
         }
 
-        String processedAt = CinemaTime.now().format(DATE_TIME_FORMATTER);
+        String processedAt = CinemaTime.now().format(DateTimeFormatterService.STANDARD_FORMATTER);
         String html = buildDetailsEmail("Refund Confirmation - " + movieTitle, details,
                 "Your refund request has been successfully processed. The refunded amount will be returned to your "
                         + "original payment method within " + refundProcessingTime + ".<br><br>"
@@ -190,7 +189,7 @@ public class EmailService {
 
     @Async(AsyncConfig.EMAIL_EXECUTOR)
     public void sendPasswordChangedNotification(String toEmail) {
-        String changedAt = CinemaTime.now().format(DATE_TIME_FORMATTER);
+        String changedAt = CinemaTime.now().format(DateTimeFormatterService.STANDARD_FORMATTER);
         String html = buildPlainEmail("Password Changed",
                 "Your " + companyName + " account password was changed on " + changedAt + " (Kyiv time).<br><br>"
                         + "If you didn't make this change, reset your password at "
