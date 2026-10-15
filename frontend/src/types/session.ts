@@ -62,7 +62,7 @@ export interface SessionScheduleResponse {
   movieId: number;
   movieTitle: string;
   movieSlug: string;
-  moviePosterFileName: string;
+  moviePosterUrl: string;
   movieAgeRating: string;
   movieDuration: number;
   hallId: number;

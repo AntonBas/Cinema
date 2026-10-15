@@ -2,6 +2,8 @@ package ua.lviv.bas.cinema.movie.mapper;
 
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
+import org.springframework.test.util.ReflectionTestUtils;
+import ua.lviv.bas.cinema.integration.PosterService;
 import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.movie.domain.Movie;
 import ua.lviv.bas.cinema.movie.domain.enums.AgeRating;
@@ -12,12 +14,24 @@ import ua.lviv.bas.cinema.movie.dto.request.MovieUpdateRequest;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class MovieMapperTest {
 
-    private final MovieMapper mapper = Mappers.getMapper(MovieMapper.class);
+    private final MovieMapper mapper = createMapper();
+
+    private static MovieMapper createMapper() {
+        MovieMapper movieMapper = Mappers.getMapper(MovieMapper.class);
+        PosterService posterService = mock(PosterService.class);
+        when(posterService.publicPosterUrl(any())).thenReturn(Optional.empty());
+        ReflectionTestUtils.setField(movieMapper, "posterUrlMapper", new PosterUrlMapper(posterService));
+        return movieMapper;
+    }
 
     @Test
     void toMovieCardResponse() {
@@ -112,16 +126,6 @@ public class MovieMapperTest {
         mapper.updateEntity(null, movie);
 
         assertThat(movie.getTitle()).isEqualTo("Old");
-    }
-
-    @Test
-    void getPosterUrlShouldReturnCorrectUrl() {
-        assertThat(mapper.getPosterUrl(1L)).isEqualTo("/api/movies/1/poster");
-    }
-
-    @Test
-    void getPosterUrlWithNullShouldReturnNull() {
-        assertThat(mapper.getPosterUrl(null)).isNull();
     }
 
     private Movie createMovie() {

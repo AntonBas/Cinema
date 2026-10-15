@@ -16,6 +16,7 @@ interface MovieGroup {
   movieId: number;
   movieTitle: string;
   movieSlug: string;
+  moviePosterUrl: string;
   movieAgeRating: string;
   movieDuration: number;
   sessions: SessionScheduleResponse[];
@@ -51,6 +52,7 @@ const groupSessionsByMovie = (
         movieId: session.movieId,
         movieTitle: session.movieTitle,
         movieSlug: session.movieSlug,
+        moviePosterUrl: session.moviePosterUrl,
         movieAgeRating: session.movieAgeRating,
         movieDuration: session.movieDuration,
         sessions: [],
@@ -149,9 +151,7 @@ export const SessionList: React.FC<SessionListProps> = ({ sessions }) => {
             <div className={styles.movieHeader}>
               <div className={styles.posterContainer}>
                 <img
-                  src={resolvePosterUrl(
-                    `/api/movies/${movieGroup.movieId}/poster`,
-                  )}
+                  src={resolvePosterUrl(movieGroup.moviePosterUrl)}
                   alt={movieGroup.movieTitle}
                   className={styles.poster}
                   loading="lazy"

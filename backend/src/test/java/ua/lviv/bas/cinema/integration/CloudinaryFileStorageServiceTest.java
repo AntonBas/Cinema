@@ -152,4 +152,16 @@ class CloudinaryFileStorageServiceTest {
         assertThat(CloudinaryFileStorageService.extractPublicId("https://example.com/no-upload-segment.jpg")).isNull();
         assertThat(CloudinaryFileStorageService.extractPublicId(null)).isNull();
     }
+
+    @Test
+    void publicUrl_ShouldInsertResizeAndFormatTransformation() {
+        assertThat(service.publicUrl("https://res.cloudinary.com/demo/image/upload/v1/posters/abc.jpg", 600))
+                .contains("https://res.cloudinary.com/demo/image/upload/c_limit,w_600,f_auto,q_auto/v1/posters/abc.jpg");
+    }
+
+    @Test
+    void publicUrl_WhenNotCloudinaryUrl_ShouldBeEmpty() {
+        assertThat(service.publicUrl("poster.jpg", 600)).isEmpty();
+        assertThat(service.publicUrl(null, 600)).isEmpty();
+    }
 }

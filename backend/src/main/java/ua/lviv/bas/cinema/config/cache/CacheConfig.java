@@ -32,7 +32,7 @@ import java.util.Map;
 @EnableCaching
 public class CacheConfig {
 
-    private static final String CACHE_KEY_VERSION = "v2";
+    private static final String CACHE_KEY_VERSION = "v3";
 
     @Bean
     @ConditionalOnProperty(prefix = "spring.cache", name = "type", havingValue = "redis")

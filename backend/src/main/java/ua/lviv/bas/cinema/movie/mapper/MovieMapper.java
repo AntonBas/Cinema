@@ -16,16 +16,16 @@ import ua.lviv.bas.cinema.movie.dto.response.MovieDetailResponse;
 import ua.lviv.bas.cinema.movie.dto.response.MovieSessionSearchResponse;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE, uses = {PersonMapper.class,
-        GenreMapper.class, SessionMapper.class})
+        GenreMapper.class, SessionMapper.class, PosterUrlMapper.class})
 public interface MovieMapper {
 
-    @Mapping(target = "posterUrl", expression = "java(getPosterUrl(movie.getId()))")
+    @Mapping(target = "posterUrl", source = "movie", qualifiedByName = "posterUrl")
     MovieCardResponse toMovieCardResponse(Movie movie);
 
-    @Mapping(target = "posterUrl", expression = "java(getPosterUrl(movie.getId()))")
+    @Mapping(target = "posterUrl", source = "movie", qualifiedByName = "posterUrl")
     MovieDetailResponse toMovieDetailResponse(Movie movie);
 
-    @Mapping(target = "posterUrl", expression = "java(getPosterUrl(movie.getId()))")
+    @Mapping(target = "posterUrl", source = "movie", qualifiedByName = "posterUrl")
     MovieAdminResponse toMovieAdminResponse(Movie movie);
 
     MovieSessionSearchResponse toMovieSessionSearchResponse(Movie movie);
@@ -52,9 +52,4 @@ public interface MovieMapper {
     @Mapping(target = "genres", ignore = true)
     @Mapping(target = "posterFileName", ignore = true)
     void updateEntity(MovieUpdateRequest request, @MappingTarget Movie movie);
-
-    @SuppressWarnings("unused")
-    default String getPosterUrl(Long id) {
-        return id != null ? "/api/movies/" + id + "/poster" : null;
-    }
 }

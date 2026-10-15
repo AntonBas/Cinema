@@ -15,6 +15,7 @@ import ua.lviv.bas.cinema.exception.infrastructure.UnsupportedFileTypeException;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -27,6 +28,7 @@ public class CloudinaryFileStorageService implements FileStorageService {
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of("image/jpeg", "image/png", "image/gif",
             "image/webp");
     private static final Pattern VERSION_SEGMENT = Pattern.compile("^v\\d+/");
+    private static final String UPLOAD_SEGMENT = "/upload/";
 
     private final Cloudinary cloudinary;
     private final RestTemplate restTemplate;
@@ -104,6 +106,15 @@ public class CloudinaryFileStorageService implements FileStorageService {
         } else {
             return MediaType.APPLICATION_OCTET_STREAM_VALUE;
         }
+    }
+
+    @Override
+    public Optional<String> publicUrl(String fileUrl, int maxWidth) {
+        if (fileUrl == null || !fileUrl.contains(UPLOAD_SEGMENT)) {
+            return Optional.empty();
+        }
+        return Optional.of(fileUrl.replaceFirst(Pattern.quote(UPLOAD_SEGMENT),
+                UPLOAD_SEGMENT + "c_limit,w_" + maxWidth + ",f_auto,q_auto/"));
     }
 
     static String extractPublicId(String secureUrl) {

@@ -17,6 +17,7 @@ public class PosterService {
     private final FileStorageService fileStorageService;
 
     private static final String POSTER_SUB_DIRECTORY = "posters";
+    private static final int POSTER_MAX_WIDTH = 600;
 
     public String uploadPoster(MultipartFile posterFile) {
         return fileStorageService.storeFile(posterFile, POSTER_SUB_DIRECTORY);
@@ -24,6 +25,13 @@ public class PosterService {
 
     public void deletePoster(String posterFileName) {
         fileStorageService.deleteFile(posterFileName, POSTER_SUB_DIRECTORY);
+    }
+
+    public Optional<String> publicPosterUrl(String posterFileName) {
+        if (posterFileName == null || posterFileName.isBlank()) {
+            return Optional.empty();
+        }
+        return fileStorageService.publicUrl(posterFileName, POSTER_MAX_WIDTH);
     }
 
     public Optional<PosterImage> loadPoster(String posterFileName) {
