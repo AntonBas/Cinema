@@ -3,41 +3,28 @@ package ua.lviv.bas.cinema.payment.service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.booking.service.BookingService;
 import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
-import ua.lviv.bas.cinema.booking.domain.SeatReservation;
 import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
-import ua.lviv.bas.cinema.booking.domain.status.ReservationStatus;
-import ua.lviv.bas.cinema.cinema.domain.Seat;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.bonus.service.BonusQueryService;
-import ua.lviv.bas.cinema.common.DateTimeFormatterService;
-import ua.lviv.bas.cinema.common.NumberGeneratorService;
-import ua.lviv.bas.cinema.common.SeatInfoFormatter;
-import ua.lviv.bas.cinema.notification.EmailAttachment;
-import ua.lviv.bas.cinema.notification.EmailService;
-import ua.lviv.bas.cinema.notification.TicketsEmail;
-import ua.lviv.bas.cinema.ticket.domain.Ticket;
+import ua.lviv.bas.cinema.ticket.event.TicketsIssuedEvent;
 import ua.lviv.bas.cinema.ticket.service.TicketService;
 import ua.lviv.bas.cinema.support.CinemaTestFixtures;
 
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -58,18 +45,11 @@ public class PaymentSuccessOrchestratorTest {
     @Mock
     private BonusLedgerService bonusLedgerService;
     @Mock
-    private EmailService emailService;
-    @Mock
-    private DateTimeFormatterService dateTimeFormatter;
-    @Mock
-    private NumberGeneratorService numberGenerator;
-    @Mock
-    private SeatInfoFormatter seatInfoFormatter;
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private PaymentSuccessOrchestrator paymentSuccessOrchestrator;
 
-    private User testUser;
     private Booking testBooking;
     private Payment testPayment;
 
@@ -80,62 +60,33 @@ public class PaymentSuccessOrchestratorTest {
 
     @BeforeEach
     void setUp() {
-        testUser = User.builder().id(USER_ID).email("test@example.com").build();
-
-        var movie = CinemaTestFixtures.movie();
-        var hall = CinemaTestFixtures.hall();
-        var session = CinemaTestFixtures.session(movie, hall);
-
-        Seat seat = Seat.builder().row(1).number(1).build();
-        SeatReservation seatReservation = SeatReservation.builder().seat(seat)
-                .status(ReservationStatus.CONFIRMED).build();
+        var testUser = User.builder().id(USER_ID).email("test@example.com").build();
+        var session = CinemaTestFixtures.session(CinemaTestFixtures.movie(), CinemaTestFixtures.hall());
 
         testBooking = Booking.builder().id(BOOKING_ID).user(testUser).session(session).status(BookingStatus.PENDING)
-                .totalPrice(AMOUNT).finalPrice(AMOUNT).expiresAt(Instant.now().plus(Duration.ofHours(1)))
-                .seatReservations(Collections.singletonList(seatReservation)).build();
+                .totalPrice(AMOUNT).finalPrice(AMOUNT).expiresAt(Instant.now().plus(Duration.ofHours(1))).build();
 
         testPayment = Payment.builder().id(PAYMENT_ID).booking(testBooking).amount(AMOUNT).status(PaymentStatus.SUCCESS)
                 .liqpayOrderId("ORD_TEST123456789").build();
 
-        lenient().doAnswer(invocation -> {
-            Runnable emailAction = invocation.getArgument(2);
-            emailAction.run();
-            return null;
-        }).when(emailService).sendSafely(any(String.class), any(), any());
         lenient().when(paymentRepository.findByIdWithDetails(PAYMENT_ID)).thenReturn(Optional.of(testPayment));
-        lenient().when(seatInfoFormatter.format(1, 1)).thenReturn("Row 1, Seat 1");
     }
 
     @Test
-    void handleShouldConfirmBookingCreateTicketsAndAccruePoints() {
-        var ticket = Ticket.builder().uniqueCode("TKT-AAA").build();
-        when(ticketService.createTicketsForBooking(testBooking, testPayment)).thenReturn(List.of(ticket));
-        when(ticketService.generateQR(ticket)).thenReturn(new byte[]{1});
+    void handleShouldConfirmBookingCreateTicketsAccruePointsAndPublishTicketsIssuedEvent() {
         when(bonusQueryService.calculateAccrualPoints(AMOUNT)).thenReturn(20);
-        when(dateTimeFormatter.formatStandard(any(LocalDateTime.class))).thenReturn("2024-01-01 14:00");
-        when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
 
         paymentSuccessOrchestrator.handle(PAYMENT_ID);
 
         verify(bookingService).confirmBooking(BOOKING_ID);
         verify(ticketService).createTicketsForBooking(testBooking, testPayment);
         verify(bonusLedgerService).accruePointsForPayment(USER_ID, 20, testBooking, testPayment);
-        var emailCaptor = ArgumentCaptor.forClass(TicketsEmail.class);
-        verify(emailService).sendTicketsEmail(emailCaptor.capture());
-        var email = emailCaptor.getValue();
-        assertThat(email.toEmail()).isEqualTo(testUser.getEmail());
-        assertThat(email.bookingNumber()).isEqualTo("BK-2024-00001");
-        assertThat(email.seatInfo()).isEqualTo("Row 1, Seat 1");
-        assertThat(email.amountPaid()).isEqualTo(AMOUNT);
-        assertThat(email.ticketCodes()).containsExactly("TKT-AAA");
-        assertThat(email.qrCodes()).extracting(EmailAttachment::name).containsExactly("TKT-AAA.png");
+        verify(eventPublisher).publishEvent(new TicketsIssuedEvent(BOOKING_ID));
     }
 
     @Test
     void handleWhenNoPointsToAccrueShouldSkipAccrual() {
         when(bonusQueryService.calculateAccrualPoints(AMOUNT)).thenReturn(0);
-        when(dateTimeFormatter.formatStandard(any(LocalDateTime.class))).thenReturn("2024-01-01 14:00");
-        when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
 
         paymentSuccessOrchestrator.handle(PAYMENT_ID);
 

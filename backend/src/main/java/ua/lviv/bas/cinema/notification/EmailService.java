@@ -74,7 +74,6 @@ public class EmailService {
         sendCriticalEmail(toEmail, "Password Reset Request", html);
     }
 
-    @Async(AsyncConfig.EMAIL_EXECUTOR)
     public void sendTicketsEmail(TicketsEmail email) {
         Map<String, String> details = new LinkedHashMap<>();
         details.put("Booking Number", email.bookingNumber());

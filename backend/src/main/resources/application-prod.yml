@@ -62,6 +62,8 @@ scheduler:
     cancelled-session-interval: ${scheduler.frequent-interval}
   ticket:
     mark-as-used: ${scheduler.frequent-interval}
+  tickets-email:
+    retry-interval: ${scheduler.frequent-interval}
   session-status:
     cron: ${scheduler.hourly-cron}
   movie-status:
