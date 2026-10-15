@@ -67,22 +67,16 @@ export const BonusBalanceCard: React.FC<BonusBalanceCardProps> = ({
             <div className={styles.limitValue}>
               {balance.minUsablePoints} points
             </div>
+            <div className={styles.limitHint}>
+              {formatPrice(balance.minRedemptionValue)}
+            </div>
           </div>
           <div className={styles.limitItem}>
             <div className={styles.limitLabel}>Max per use</div>
             <div className={styles.limitValue}>
               {balance.maxUsablePoints} points
             </div>
-          </div>
-          <div className={styles.limitItem}>
-            <div className={styles.limitLabel}>Min value</div>
-            <div className={styles.limitValue}>
-              {formatPrice(balance.minRedemptionValue)}
-            </div>
-          </div>
-          <div className={styles.limitItem}>
-            <div className={styles.limitLabel}>Max value</div>
-            <div className={styles.limitValue}>
+            <div className={styles.limitHint}>
               {formatPrice(balance.maxRedemptionValue)}
             </div>
           </div>

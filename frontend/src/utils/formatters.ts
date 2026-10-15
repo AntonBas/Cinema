@@ -100,3 +100,13 @@ export const formatPrice = (
   if (amount == null || isNaN(amount)) return EMPTY_VALUE;
   return `${amount.toFixed(2)} ₴`;
 };
+
+const UA_PHONE_PATTERN = /^\+?380(\d{2})(\d{3})(\d{2})(\d{2})$/;
+
+export const formatPhoneNumber = (value: string | null | undefined): string => {
+  if (!value) return EMPTY_VALUE;
+  const match = UA_PHONE_PATTERN.exec(value.trim());
+  if (!match) return value;
+  const [, operator, first, second, third] = match;
+  return `+380 (${operator}) ${first}-${second}-${third}`;
+};

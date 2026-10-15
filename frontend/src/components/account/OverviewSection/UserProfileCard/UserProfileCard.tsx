@@ -3,7 +3,7 @@ import { Info } from "lucide-react";
 import type { UserProfileResponse } from "@/types/user";
 import { Button } from "@/components/ui/Button/Button";
 import { Tooltip } from "@/components/ui/Tooltip/Tooltip";
-import { formatDate } from "@/utils/formatters";
+import { formatDate, formatPhoneNumber } from "@/utils/formatters";
 import styles from "./UserProfileCard.module.css";
 
 interface UserProfileCardProps {
@@ -65,7 +65,9 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({
               </Tooltip>
             </span>
             <span className={styles.detailValue}>
-              {user.phoneNumber || "Not provided"}
+              {user.phoneNumber
+                ? formatPhoneNumber(user.phoneNumber)
+                : "Not provided"}
             </span>
           </div>
 

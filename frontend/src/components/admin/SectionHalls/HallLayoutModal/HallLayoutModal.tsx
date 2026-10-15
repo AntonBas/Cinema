@@ -215,14 +215,15 @@ export const HallLayoutModal: React.FC = () => {
     moveSeat(seat.key, col, gridRow);
   };
 
-  const addSeatAfter = (seat: DraftSeat) => {
+  const addSeatAfter = (seat: DraftSeat): boolean => {
     const firstCol = seat.col + (seat.seatType === SeatType.COUPLE ? 2 : 1);
     for (let col = firstCol; col < GRID_COLS; col++) {
       if (!occupiedCells.has(`${col}:${seat.gridRow}`)) {
         addSeat(col, seat.gridRow);
-        return;
+        return true;
       }
     }
+    return false;
   };
 
   const addSeatInFirstFreeCell = () => {
@@ -234,6 +235,20 @@ export const HallLayoutModal: React.FC = () => {
         }
       }
     }
+  };
+
+  const addNextSeat = () => {
+    if (seats.length === 0) {
+      addSeat(Math.floor(GRID_COLS / 2), 0);
+      return;
+    }
+    const lastSeat = seats.reduce((last, seat) =>
+      seat.gridRow > last.gridRow ||
+      (seat.gridRow === last.gridRow && seat.col > last.col)
+        ? seat
+        : last,
+    );
+    if (!addSeatAfter(lastSeat)) addSeatInFirstFreeCell();
   };
 
   const emptyCells: { col: number; gridRow: number }[] = [];
@@ -386,7 +401,7 @@ export const HallLayoutModal: React.FC = () => {
               <div className={styles.actions}>
                 <Button
                   variant="secondary"
-                  onClick={addSeatInFirstFreeCell}
+                  onClick={addNextSeat}
                   disabled={saving}
                 >
                   Add Seat

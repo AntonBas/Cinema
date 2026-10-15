@@ -32,7 +32,7 @@ export const Footer: React.FC = () => {
           <h4>Contact</h4>
           <ul>
             <li>basantonoleg@gmail.com</li>
-            <li>+380 (96) 179-4151</li>
+            <li>+380 (96) 179-41-51</li>
             <li>Lviv, Ukraine</li>
           </ul>
         </div>

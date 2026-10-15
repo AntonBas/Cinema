@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { SessionMovieInfoResponse } from "@/types/session";
 import { formatPrice, formatTime } from "@/utils/formatters";
+import { addDaysToIsoDate, getCinemaToday } from "@/utils/dateUtils";
 import styles from "./SessionSection.module.css";
 
 interface SessionSectionProps {
@@ -18,21 +19,17 @@ interface SessionSectionProps {
 const parseLocalDate = (dateString: string): Date =>
   new Date(`${dateString}T00:00:00`);
 
-const getDayLabel = (date: Date): string => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
-
-  if (date.getTime() === today.getTime()) return "Today";
-  if (date.getTime() === tomorrow.getTime()) return "Tomorrow";
+const getDayLabel = (dateString: string, date: Date): string => {
+  const today = getCinemaToday();
+  if (dateString === today) return "Today";
+  if (dateString === addDaysToIsoDate(today, 1)) return "Tomorrow";
   return date.toLocaleDateString("en-US", { weekday: "short" });
 };
 
 const getDayInfo = (dateString: string) => {
   const date = parseLocalDate(dateString);
   return {
-    dayLabel: getDayLabel(date),
+    dayLabel: getDayLabel(dateString, date),
     dayNumber: date.getDate(),
     monthLabel: date.toLocaleDateString("en-US", { month: "short" }),
     fullLabel: date.toLocaleDateString("en-US", {
