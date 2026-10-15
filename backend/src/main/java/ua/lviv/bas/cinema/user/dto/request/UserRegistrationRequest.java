@@ -19,11 +19,13 @@ public record UserRegistrationRequest(
 
         @Schema(description = "User's first name", example = "John", requiredMode = Schema.RequiredMode.REQUIRED, minLength = 2, maxLength = 50)
         @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
+        @Pattern(regexp = PersonNamePattern.REGEX, message = "First name may contain only letters, spaces, hyphens and apostrophes")
         @NotBlank(message = "First name is required")
         String firstName,
 
         @Schema(description = "User's last name", example = "Doe", requiredMode = Schema.RequiredMode.REQUIRED, minLength = 2, maxLength = 50)
         @Size(min = 2, max = 50, message = "Last name must be between 2 and 50 characters")
+        @Pattern(regexp = PersonNamePattern.REGEX, message = "Last name may contain only letters, spaces, hyphens and apostrophes")
         @NotBlank(message = "Last name is required")
         String lastName,
 

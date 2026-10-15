@@ -137,7 +137,11 @@ export const AuditLogsTable: React.FC<AuditLogsTableProps> = ({
                     <span className={styles.timeDate}>{date}</span>
                     <span className={styles.timeTime}>{time}</span>
                   </td>
-                  <td data-label="Changed By">{log.changedBy}</td>
+                  <td data-label="Changed By">
+                    <span className={styles.changedBy} title={log.changedBy}>
+                      {log.changedBy}
+                    </span>
+                  </td>
                   <td data-label="Target">
                     {onViewHistory ? (
                       <button

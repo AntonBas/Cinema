@@ -9,7 +9,6 @@ import ua.lviv.bas.cinema.payment.dto.response.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.InvalidPaymentStatusException;
-import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentAccessDeniedException;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
@@ -32,7 +31,7 @@ public class PaymentStatusService {
                 .orElseThrow(() -> new EntityNotFoundException("Payment", paymentId));
 
         if (!payment.getBooking().getUser().getId().equals(user.getId())) {
-            throw new PaymentAccessDeniedException(paymentId, user.getId());
+            throw new EntityNotFoundException("Payment", paymentId);
         }
         if (payment.getStatus() != PaymentStatus.PENDING) {
             throw new InvalidPaymentStatusException(payment.getStatus(), PaymentStatus.PENDING);

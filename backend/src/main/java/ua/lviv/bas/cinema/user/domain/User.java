@@ -11,7 +11,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -25,7 +24,6 @@ import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.BatchSize;
 import ua.lviv.bas.cinema.audit.domain.AuditableEntity;
-import ua.lviv.bas.cinema.bonus.domain.BonusCard;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.promotion.domain.UserPromotion;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
@@ -41,7 +39,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = {"tickets", "password", "bonusCard", "bookings"})
+@ToString(exclude = {"tickets", "password", "bookings"})
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 @Table(name = "users", indexes = {@Index(name = "idx_user_email", columnList = "email"),
         @Index(name = "idx_user_name", columnList = "first_name,last_name"),
@@ -117,9 +115,6 @@ public class User extends AuditableEntity {
     @Column(name = "email_verified", nullable = false)
     @Builder.Default
     private boolean emailVerified = false;
-
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private BonusCard bonusCard;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @BatchSize(size = 20)

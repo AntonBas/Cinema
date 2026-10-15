@@ -1,6 +1,7 @@
 package ua.lviv.bas.cinema.config.security;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
@@ -31,11 +32,8 @@ public class CustomUserDetails implements UserDetails {
                 user.getUserRole().name(), user.getTokenVersion());
     }
 
-    @JsonCreator
-    public CustomUserDetails(@JsonProperty("userId") Long userId, @JsonProperty("email") String email,
-            @JsonProperty("password") String password, @JsonProperty("enabled") boolean enabled,
-            @JsonProperty("emailVerified") Boolean emailVerified, @JsonProperty("role") String role,
-            @JsonProperty("tokenVersion") int tokenVersion) {
+    public CustomUserDetails(Long userId, String email, String password, boolean enabled, Boolean emailVerified,
+            String role, int tokenVersion) {
         this.userId = userId;
         this.email = email;
         this.password = password;
@@ -43,6 +41,18 @@ public class CustomUserDetails implements UserDetails {
         this.emailVerified = !Boolean.FALSE.equals(emailVerified);
         this.role = role;
         this.tokenVersion = tokenVersion;
+    }
+
+    public static CustomUserDetails withoutPassword(User user) {
+        return new CustomUserDetails(user.getId(), user.getEmail(), null, user.isEnabled(), user.isEmailVerified(),
+                user.getUserRole().name(), user.getTokenVersion());
+    }
+
+    @JsonCreator
+    static CustomUserDetails fromCache(@JsonProperty("userId") Long userId, @JsonProperty("email") String email,
+            @JsonProperty("enabled") boolean enabled, @JsonProperty("emailVerified") Boolean emailVerified,
+            @JsonProperty("role") String role, @JsonProperty("tokenVersion") int tokenVersion) {
+        return new CustomUserDetails(userId, email, null, enabled, emailVerified, role, tokenVersion);
     }
 
     @Override
@@ -56,6 +66,7 @@ public class CustomUserDetails implements UserDetails {
     }
 
     @Override
+    @JsonIgnore
     public String getPassword() {
         return password;
     }

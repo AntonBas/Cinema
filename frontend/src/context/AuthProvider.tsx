@@ -18,7 +18,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     authApi
       .getCurrentUser()
-      .then((response) => setUser(response.data))
+      .then(setUser)
       .catch(() => setUser(null))
       .finally(() => setLoading(false));
   }, []);
@@ -37,8 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const refreshUser = useCallback(async () => {
     try {
-      const response = await authApi.getCurrentUser();
-      setUser(response.data);
+      setUser(await authApi.getCurrentUser());
     } catch {
       setUser(null);
     }

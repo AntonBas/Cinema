@@ -49,7 +49,7 @@ public class EmailTokenService {
         tokenRepository.save(emailToken);
 
         log.info("Email confirmed successfully for user: {}", user.getEmail());
-        return "Email successfully verified! You can now log in.";
+        return user.getEmail();
     }
 
     @CacheEvict(value = "users", allEntries = true)

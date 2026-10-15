@@ -3,17 +3,18 @@ package ua.lviv.bas.cinema.refund.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
+import ua.lviv.bas.cinema.booking.service.BookingService;
 import ua.lviv.bas.cinema.refund.domain.Refund;
 import ua.lviv.bas.cinema.refund.domain.RefundItem;
 import ua.lviv.bas.cinema.refund.domain.status.RefundItemStatus;
 import ua.lviv.bas.cinema.refund.domain.status.RefundStatus;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.financial.refund.TicketAlreadyRefundedException;
 import ua.lviv.bas.cinema.exception.domain.financial.refund.TicketNotRefundableException;
 import ua.lviv.bas.cinema.payment.service.PaymentRefundService;
 import ua.lviv.bas.cinema.refund.repository.RefundRepository;
@@ -37,10 +38,12 @@ public class RefundTransactionExecutor {
     private final TicketService ticketService;
     private final RefundCalculator refundCalculator;
     private final AuditService auditService;
+    private final RefundConfirmationEmailSender refundConfirmationEmailSender;
+    private final BookingService bookingService;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public RefundProcessingContext createProcessingRefund(Long ticketId, Long userId, String reason) {
-        var ticket = ticketService.getActiveTicketForUser(ticketId, userId);
+        var ticket = ticketService.getTicketForUser(ticketId, userId);
 
         validateRefundable(ticket);
 
@@ -58,6 +61,9 @@ public class RefundTransactionExecutor {
     }
 
     private void validateRefundable(Ticket ticket) {
+        if (refundCalculator.isAlreadyRefunded(ticket)) {
+            throw new TicketAlreadyRefundedException(ticket.getUniqueCode());
+        }
         var validationError = refundCalculator.validate(ticket);
         if (validationError != null) {
             throw new TicketNotRefundableException(validationError);
@@ -89,7 +95,6 @@ public class RefundTransactionExecutor {
         return refund;
     }
 
-    @CacheEvict(value = "seatAvailability", allEntries = true)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Refund applySuccess(Long refundId, Long ticketId) {
         var refund = refundRepository.findById(refundId)
@@ -117,24 +122,29 @@ public class RefundTransactionExecutor {
         var alreadyProcessedAmount = refundRepository.sumAmountByPaymentIdAndStatus(refund.getPayment().getId(),
                 RefundStatus.PROCESSED);
         var totalRefundedAmount = alreadyProcessedAmount.add(amount);
-        paymentRefundService.applyRefundSuccess(refund.getPayment(), amount, totalRefundedAmount, description,
-                ticket);
+        paymentRefundService.applyRefundSuccess(refund.getPayment(), amount, totalRefundedAmount, description);
 
         if (bonusPointsToRefund != null && bonusPointsToRefund > 0) {
             bonusLedgerService.refundPointsForTicket(refund.getUser().getId(), bonusPointsToRefund,
                     "REFUND_TICKET_" + ticket.getId());
         }
 
-        bonusLedgerService.revokeAccruedPoints(refund.getUser().getId(),
-                refundCalculator.calculateEarnedPointsToRevoke(ticket, percentage),
+        var earnedPointsToRevoke = refundCalculator.calculateEarnedPointsToRevoke(ticket, percentage);
+        bonusLedgerService.revokeAccruedPoints(refund.getUser().getId(), earnedPointsToRevoke,
                 "REFUND_ACCRUAL_TICKET_" + ticket.getId());
 
         ticketService.markAsRefunded(ticket, refund);
+        var bookingId = ticket.getBooking().getId();
+        if (ticketService.areAllTicketsRefunded(bookingId)) {
+            bookingService.markRefunded(bookingId);
+        }
 
         refundItem.setStatus(RefundItemStatus.PROCESSED);
         refund.setStatus(RefundStatus.PROCESSED);
         refundRepository.save(refund);
 
+        refundConfirmationEmailSender.send(refund, ticket, bonusPointsToRefund == null ? 0 : bonusPointsToRefund,
+                earnedPointsToRevoke);
         auditProcessed(refund, ticket, amount, percentage, bonusPointsToRefund);
         log.info("Refund {} processed for ticket {}: amount={}, bonusPointsRefunded={}", refundId,
                 ticket.getUniqueCode(), amount, bonusPointsToRefund);

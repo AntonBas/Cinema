@@ -9,6 +9,9 @@ spring:
     password: ${DB_PASSWORD}
     hikari:
       maximum-pool-size: 10
+      minimum-idle: 0
+      idle-timeout: 60000
+      keepalive-time: 0
 
   data:
     redis:
@@ -39,6 +42,34 @@ app:
       cloud-name: ${CLOUDINARY_CLOUD_NAME}
       api-key: ${CLOUDINARY_API_KEY}
       api-secret: ${CLOUDINARY_API_SECRET}
+
+scheduler:
+  frequent-interval: ${SCHEDULER_FREQUENT_INTERVAL_MS:900000}
+  hourly-cron: "0 0 * * * *"
+  booking:
+    expiration-interval: ${scheduler.frequent-interval}
+    cancelled-session-interval: ${scheduler.frequent-interval}
+  seat-reservation:
+    expiration-interval: ${scheduler.frequent-interval}
+    cleanup-expired-interval: ${scheduler.frequent-interval}
+  payment:
+    expiration-interval: ${scheduler.frequent-interval}
+    processing-reconciliation-interval: ${scheduler.frequent-interval}
+    orchestration-reconciliation-interval: ${scheduler.frequent-interval}
+    refund-retry-interval: ${scheduler.frequent-interval}
+  refund:
+    reconciliation-interval: ${scheduler.frequent-interval}
+    cancelled-session-interval: ${scheduler.frequent-interval}
+  ticket:
+    mark-as-used: ${scheduler.frequent-interval}
+  tickets-email:
+    retry-interval: ${scheduler.frequent-interval}
+  session-status:
+    cron: ${scheduler.hourly-cron}
+  movie-status:
+    cron: ${scheduler.hourly-cron}
+  email-token:
+    cleanup-expired-cron: ${scheduler.hourly-cron}
 
 logging:
   level:

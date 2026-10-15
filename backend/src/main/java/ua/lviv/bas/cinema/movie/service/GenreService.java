@@ -10,6 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.audit.domain.AuditAction;
+import ua.lviv.bas.cinema.audit.service.AuditDetails;
+import ua.lviv.bas.cinema.audit.service.AuditService;
 import ua.lviv.bas.cinema.movie.domain.Genre;
 import ua.lviv.bas.cinema.movie.dto.request.GenreRequest;
 import ua.lviv.bas.cinema.common.CacheableList;
@@ -35,6 +38,7 @@ public class GenreService {
     private final GenreRepository genreRepository;
     private final GenreMapper genreMapper;
     private final MovieRepository movieRepository;
+    private final AuditService auditService;
 
     @CacheEvict(value = "genres", allEntries = true)
     @Transactional
@@ -45,6 +49,8 @@ public class GenreService {
         var genre = genreMapper.toEntity(request);
         var saved = genreRepository.save(genre);
 
+        auditService.logChange("Genre", saved.getId(), saved.getName(), AuditAction.CREATED, null,
+                AuditDetails.of().put("name", saved.getName()).build());
         log.debug("Genre created with ID: {}", saved.getId());
         return genreMapper.toGenreResponse(saved);
     }
@@ -69,9 +75,13 @@ public class GenreService {
 
         var genre = genreRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Genre", id));
         validateGenreUniqueness(request.name(), id);
+        var oldName = genre.getName();
 
         genreMapper.updateEntity(request, genre);
         var updated = genreRepository.save(genre);
+        auditService.logChange("Genre", id, oldName, AuditAction.UPDATED,
+                AuditDetails.of().put("name", oldName).build(),
+                AuditDetails.of().put("name", updated.getName()).build());
 
         log.debug("Genre updated with ID: {}", updated.getId());
         return genreMapper.toGenreResponse(updated);
@@ -85,6 +95,8 @@ public class GenreService {
         var genre = genreRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Genre", id));
         checkGenreUsageInMovies(genre);
         genreRepository.deleteById(id);
+        auditService.logChange("Genre", id, genre.getName(), AuditAction.DELETED,
+                AuditDetails.of().put("deleted", genre.getName()).build(), null);
 
         log.debug("Genre deleted with ID: {}", id);
     }

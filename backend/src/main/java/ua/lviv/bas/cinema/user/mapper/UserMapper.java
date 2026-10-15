@@ -20,7 +20,6 @@ public interface UserMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "tickets", ignore = true)
-    @Mapping(target = "bonusCard", ignore = true)
     @Mapping(target = "bookings", ignore = true)
     @Mapping(target = "redeemedPromotions", ignore = true)
     @Mapping(target = "enabled", constant = "true")
@@ -43,7 +42,6 @@ public interface UserMapper {
     @Mapping(target = "email", ignore = true)
     @Mapping(target = "password", ignore = true)
     @Mapping(target = "tickets", ignore = true)
-    @Mapping(target = "bonusCard", ignore = true)
     @Mapping(target = "bookings", ignore = true)
     @Mapping(target = "redeemedPromotions", ignore = true)
     @Mapping(target = "enabled", ignore = true)

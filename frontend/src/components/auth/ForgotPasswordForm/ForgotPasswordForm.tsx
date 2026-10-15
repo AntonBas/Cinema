@@ -6,16 +6,21 @@ import { Input } from "@/components/ui/Input/Input";
 import { Button } from "@/components/ui/Button/Button";
 import { Modal } from "@/components/ui/Modal/Modal";
 import { AuthCard } from "@/components/auth/AuthCard/AuthCard";
+import { validateEmail } from "@/utils/formValidation";
 import styles from "./ForgotPasswordForm.module.css";
 
 export const ForgotPasswordForm: React.FC = () => {
   const [email, setEmail] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [emailError, setEmailError] = useState<string>();
 
   const { loading, error, forgotPassword } = useAuthActions();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const validationError = validateEmail(email);
+    setEmailError(validationError);
+    if (validationError) return;
     try {
       await forgotPassword(email);
     } catch {
@@ -32,7 +37,11 @@ export const ForgotPasswordForm: React.FC = () => {
           <Link to="/login">Login</Link>
         </div>
 
-        <form onSubmit={handleSubmit} className={styles.forgotPasswordForm}>
+        <form
+          onSubmit={handleSubmit}
+          className={styles.forgotPasswordForm}
+          noValidate
+        >
           {error && (
             <div className={styles.notification} data-type="error">
               {error.message}
@@ -48,9 +57,12 @@ export const ForgotPasswordForm: React.FC = () => {
             type="email"
             placeholder="Email address"
             value={email}
-            onChange={setEmail}
+            onChange={(value) => {
+              setEmail(value);
+              setEmailError(undefined);
+            }}
             disabled={loading}
-            required
+            error={emailError}
           />
 
           <Button

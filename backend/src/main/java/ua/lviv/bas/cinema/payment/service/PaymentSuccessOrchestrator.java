@@ -2,23 +2,17 @@ package ua.lviv.bas.cinema.payment.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.booking.service.BookingService;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
 import ua.lviv.bas.cinema.bonus.service.BonusQueryService;
-import ua.lviv.bas.cinema.common.DateTimeFormatterService;
-import ua.lviv.bas.cinema.common.NumberGeneratorService;
-import ua.lviv.bas.cinema.common.SeatInfoFormatter;
-import ua.lviv.bas.cinema.notification.EmailService;
+import ua.lviv.bas.cinema.ticket.event.TicketsIssuedEvent;
 import ua.lviv.bas.cinema.ticket.service.TicketService;
-
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -30,10 +24,7 @@ public class PaymentSuccessOrchestrator {
     private final TicketService ticketService;
     private final BonusQueryService bonusQueryService;
     private final BonusLedgerService bonusLedgerService;
-    private final EmailService emailService;
-    private final DateTimeFormatterService dateTimeFormatter;
-    private final NumberGeneratorService numberGenerator;
-    private final SeatInfoFormatter seatInfoFormatter;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(Long paymentId) {
@@ -49,29 +40,9 @@ public class PaymentSuccessOrchestrator {
             bonusLedgerService.accruePointsForPayment(booking.getUser().getId(), pointsToAccrue, booking, payment);
         }
 
-        sendSuccessEmail(payment, booking);
+        eventPublisher.publishEvent(new TicketsIssuedEvent(booking.getId()));
 
         log.info("Payment {} completed successfully: booking {} confirmed, tickets issued, {} bonus points accrued",
                 paymentId, booking.getId(), pointsToAccrue == null ? 0 : pointsToAccrue);
-    }
-
-    private void sendSuccessEmail(Payment payment, Booking booking) {
-        emailService.sendSafely("send payment success email", booking.getId(), () -> {
-            var sessionTime = dateTimeFormatter.formatStandard(booking.getSession().getStartTime());
-            var seatsInfo = extractSeatsInfo(booking);
-            var bookingNumber = numberGenerator.generateBookingNumber(booking);
-
-            emailService.sendTicketsEmail(booking.getUser().getEmail(), bookingNumber,
-                    booking.getSession().getMovie().getTitle(), sessionTime, booking.getSession().getHall().getName(),
-                    payment.getAmount(), "Credit card", seatsInfo);
-
-            log.debug("Sent payment success email to {}", booking.getUser().getEmail());
-        });
-    }
-
-    private String extractSeatsInfo(Booking booking) {
-        return booking.getSeatReservations().stream()
-                .map(seat -> seatInfoFormatter.format(seat.getSeat().getRow(), seat.getSeat().getNumber()))
-                .collect(Collectors.joining(", "));
     }
 }

@@ -26,4 +26,19 @@ class RefundRulesTest {
         assertThat(refundRules.isRefundable(justBeforeDeadline)).isTrue();
         assertThat(refundRules.isRefundable(justAfterDeadline)).isFalse();
     }
+
+    @Test
+    void percentageNameAndDescriptionShouldComeFromTheSameTier() {
+        var sessionTime = CinemaTime.now().plusHours(30);
+
+        assertThat(refundRules.getRefundPercentage(sessionTime)).isEqualByComparingTo("85.00");
+        assertThat(refundRules.getPolicyName(sessionTime)).isEqualTo("Standard Refund");
+        assertThat(refundRules.getPolicyDescription(sessionTime)).startsWith("85% refund");
+    }
+
+    @Test
+    void tiersShouldGoFromFullRefundToNoRefund() {
+        assertThat(refundRules.getTiers()).extracting(RefundRules.Tier::name)
+                .containsExactly("Full Refund", "Standard Refund", "Last Minute Refund", "No Refund");
+    }
 }

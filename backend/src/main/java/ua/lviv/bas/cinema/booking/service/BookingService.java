@@ -1,7 +1,6 @@
 package ua.lviv.bas.cinema.booking.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -57,7 +56,6 @@ public class BookingService {
         this.transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
-    @CacheEvict(value = "sessions", allEntries = true)
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public BookingResponse createBooking(BookingCreateRequest request, User user) {
         var created = bookingCreationService.createAndPersist(request, user);
@@ -76,7 +74,8 @@ public class BookingService {
         }
 
         return transactionTemplate.execute(status -> {
-            var saved = findBooking(bookingId);
+            var saved = bookingRepository.findWithDetailsById(bookingId)
+                    .orElseThrow(() -> new EntityNotFoundException("Booking", bookingId));
             log.info("Created booking {} for user {} with {} bonus points used", saved.getId(), user.getId(),
                     saved.getBonusPointsUsed());
             auditCreate(saved, user);
@@ -162,6 +161,21 @@ public class BookingService {
         auditConfirm(bookingId, oldStatus);
     }
 
+    public void markRefunded(Long bookingId) {
+        var booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new EntityNotFoundException("Booking", bookingId));
+        if (booking.getStatus() != BookingStatus.CONFIRMED) {
+            log.debug("Booking {} is {}, not marking as refunded", bookingId, booking.getStatus());
+            return;
+        }
+
+        var oldStatus = booking.getStatus();
+        booking.setStatus(BookingStatus.REFUNDED);
+        bookingRepository.save(booking);
+        log.info("Booking {} marked as refunded after all its tickets were refunded", bookingId);
+        auditRefunded(bookingId, oldStatus);
+    }
+
     private boolean canCancel(Booking booking) {
         return booking.getStatus() == BookingStatus.PENDING;
     }
@@ -183,6 +197,15 @@ public class BookingService {
         Map<String, Object> newDetails = new HashMap<>();
         newDetails.put("status", BookingStatus.CANCELLED);
         auditService.logChange("Booking", bookingId, "Booking #" + bookingId, AuditAction.CANCELLED, oldDetails,
+                newDetails);
+    }
+
+    private void auditRefunded(Long bookingId, BookingStatus oldStatus) {
+        Map<String, Object> oldDetails = new HashMap<>();
+        oldDetails.put("status", oldStatus);
+        Map<String, Object> newDetails = new HashMap<>();
+        newDetails.put("status", BookingStatus.REFUNDED);
+        auditService.logChange("Booking", bookingId, "Booking #" + bookingId, AuditAction.REFUND, oldDetails,
                 newDetails);
     }
 

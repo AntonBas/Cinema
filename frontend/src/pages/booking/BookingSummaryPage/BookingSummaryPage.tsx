@@ -6,7 +6,7 @@ import { Layout } from "@/components/layout/Layout/Layout";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { useBooking } from "@/hooks/features/booking/useBooking";
-import { parseServerInstant } from "@/utils/dateUtils";
+import { formatTimeLeft, getMinutesUntil } from "@/utils/dateUtils";
 import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import { formatFullDate, formatPrice, formatTime } from "@/utils/formatters";
@@ -44,25 +44,8 @@ export const BookingSummaryPage: React.FC = () => {
   const handleProceedToPayment = () => {
     if (!booking) return;
 
-    const bookingData = {
-      id: booking.id,
-      bookingNumber: booking.bookingNumber,
-      movieTitle: booking.movieTitle,
-      hallName: booking.hallName,
-      sessionTime: booking.sessionTime,
-      totalPrice: booking.totalPrice,
-      finalPrice: booking.finalPrice,
-      bonusPointsUsed: booking.bonusPointsUsed,
-      bookedSeats: booking.seatReservations.map((seat) => ({
-        seatNumber: String(seat.seatNumber),
-        seatRow: seat.row,
-        ticketType: seat.ticketTypeName,
-        seatPrice: seat.seatPrice,
-      })),
-    };
-
     navigate(`/booking/payment/${booking.publicId}`, {
-      state: { booking: bookingData },
+      state: { booking },
     });
   };
 
@@ -88,13 +71,7 @@ export const BookingSummaryPage: React.FC = () => {
     );
   }
 
-  const expiresAt = parseServerInstant(booking.expiresAt);
-  const timeLeft = Math.max(
-    0,
-    Math.floor((expiresAt.getTime() - Date.now()) / (1000 * 60)),
-  );
-  const hoursLeft = Math.floor(timeLeft / 60);
-  const minutesLeft = timeLeft % 60;
+  const minutesLeft = getMinutesUntil(booking.expiresAt);
 
   return (
     <Layout>
@@ -209,10 +186,9 @@ export const BookingSummaryPage: React.FC = () => {
             <div className={styles.infoItem}>
               <span className={styles.infoLabel}>Time left:</span>
               <span
-                className={`${styles.timeLeft} ${timeLeft < 10 ? styles.warning : ""}`}
+                className={`${styles.timeLeft} ${minutesLeft < 10 ? styles.warning : ""}`}
               >
-                {hoursLeft > 0 ? `${hoursLeft}h ` : ""}
-                {minutesLeft}m
+                {formatTimeLeft(booking.expiresAt)}
               </span>
             </div>
           </div>

@@ -13,7 +13,8 @@ public class PersonHasMoviesException extends BusinessException {
 
     public PersonHasMoviesException(String personName, long totalMovieCount) {
         super(
-                String.format("Person '%s' cannot be deleted", personName),
+                String.format("Person '%s' is used in %d %s and cannot be deleted", personName, totalMovieCount,
+                        totalMovieCount == 1 ? "movie" : "movies"),
                 "PERSON_HAS_MOVIES",
                 HttpStatus.CONFLICT,
                 String.format("Person '%s' is associated with %d movie(s) and cannot be deleted",

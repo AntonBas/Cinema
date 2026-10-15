@@ -36,8 +36,8 @@ public record SessionScheduleResponse(
         @Schema(description = "URL slug of the movie", example = "inception")
         String movieSlug,
 
-        @Schema(description = "Movie poster file name", example = "inception.jpg")
-        String moviePosterFileName,
+        @Schema(description = "Movie poster URL", example = "/api/movies/5/poster")
+        String moviePosterUrl,
 
         @Schema(description = "Age rating", example = "PG-13")
         String movieAgeRating,
@@ -57,7 +57,14 @@ public record SessionScheduleResponse(
     public SessionScheduleResponse withAvailableSeats(Integer availableSeats) {
         return new SessionScheduleResponse(
                 id, publicId, startTime, endTime, basePrice, availableSeats, movieId, movieTitle, movieSlug,
-                moviePosterFileName, movieAgeRating, movieDuration, hallId, hallName, hallCapacity
+                moviePosterUrl, movieAgeRating, movieDuration, hallId, hallName, hallCapacity
+        );
+    }
+
+    public SessionScheduleResponse withMoviePosterUrl(String moviePosterUrl) {
+        return new SessionScheduleResponse(
+                id, publicId, startTime, endTime, basePrice, availableSeats, movieId, movieTitle, movieSlug,
+                moviePosterUrl, movieAgeRating, movieDuration, hallId, hallName, hallCapacity
         );
     }
 }

@@ -1,5 +1,6 @@
 package ua.lviv.bas.cinema.config.ratelimit;
 
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -13,6 +14,7 @@ import ua.lviv.bas.cinema.exception.infrastructure.RateLimitExceededException;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+@Slf4j
 @Aspect
 @Component
 public class RateLimitAspect {
@@ -25,7 +27,9 @@ public class RateLimitAspect {
 
     @Around("@annotation(rateLimit)")
     public Object checkRateLimit(ProceedingJoinPoint joinPoint, RateLimit rateLimit) throws Throwable {
-        String key = joinPoint.getSignature().toLongString() + ":" + resolveKey(rateLimit.key());
+        var signature = joinPoint.getSignature();
+        String key = signature.getDeclaringType().getSimpleName() + "." + signature.getName() + ":"
+                + resolveKey(rateLimit.key());
 
         if (!rateLimitService.tryConsume(key, 1, rateLimit.value(), rateLimit.duration())) {
             throw new RateLimitExceededException(rateLimit.value(), rateLimit.duration());
@@ -50,6 +54,13 @@ public class RateLimitAspect {
     }
 
     private String resolveClientIp(HttpServletRequest request) {
+        if (log.isDebugEnabled()) {
+            log.debug("Client IP candidates: remoteAddr={}, X-Forwarded-For={}, X-Real-IP={}, True-Client-IP={}, "
+                            + "CF-Connecting-IP={}, X-Vercel-Forwarded-For={}", request.getRemoteAddr(),
+                    request.getHeader("X-Forwarded-For"), request.getHeader("X-Real-IP"),
+                    request.getHeader("True-Client-IP"), request.getHeader("CF-Connecting-IP"),
+                    request.getHeader("X-Vercel-Forwarded-For"));
+        }
         if (StringUtils.hasText(clientIpHeader)) {
             String headerValue = request.getHeader(clientIpHeader);
             if (StringUtils.hasText(headerValue)) {

@@ -121,6 +121,11 @@
   color: var(--color-primary);
 }
 
+.priceNote {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
 .actionButtons {
   display: flex;
   gap: var(--space-3);

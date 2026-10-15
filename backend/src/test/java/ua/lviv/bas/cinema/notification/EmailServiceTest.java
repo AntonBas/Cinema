@@ -11,7 +11,10 @@ import ua.lviv.bas.cinema.exception.infrastructure.ExternalServiceException;
 import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
+import java.net.SocketTimeoutException;
+import java.time.Duration;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -21,8 +24,11 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withBadRequest;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withException;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withTooManyRequests;
 
 class EmailServiceTest {
 
@@ -36,6 +42,8 @@ class EmailServiceTest {
         emailService = new EmailService("test-api-key", "noreply@bascinema.com");
         ReflectionTestUtils.setField(emailService, "frontendUrl", "http://localhost:5173");
         ReflectionTestUtils.setField(emailService, "companyName", "Cinema");
+        ReflectionTestUtils.setField(emailService, "supportEmail", "support@example.com");
+        ReflectionTestUtils.setField(emailService, "refundProcessingTime", "5-7 business days");
 
         RestClient.Builder builder = RestClient.builder()
                 .baseUrl(BREVO_URL)
@@ -53,10 +61,10 @@ class EmailServiceTest {
                 .andExpect(jsonPath("$.to[0].email").value("test@example.com"))
                 .andExpect(jsonPath("$.subject").value("Confirm Your Email Address"))
                 .andExpect(jsonPath("$.htmlContent", containsString("http://localhost:5173/verify-email/token-123")))
-                .andExpect(jsonPath("$.htmlContent", containsString("10 minutes")))
+                .andExpect(jsonPath("$.htmlContent", containsString("expire in 24 hours")))
                 .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
 
-        emailService.sendVerificationEmail("test@example.com", "token-123");
+        emailService.sendVerificationEmail("test@example.com", "token-123", Duration.ofHours(24));
 
         mockServer.verify();
     }
@@ -65,8 +73,40 @@ class EmailServiceTest {
     void sendVerificationEmail_WhenAllAttemptsFail_ShouldThrowExternalServiceException() {
         mockServer.expect(ExpectedCount.times(3), requestTo(BREVO_URL)).andRespond(withServerError());
 
-        assertThatThrownBy(() -> emailService.sendVerificationEmail("test@example.com", "token-123"))
+        assertThatThrownBy(() -> emailService.sendVerificationEmail("test@example.com", "token-123", Duration.ofHours(24)))
                 .isInstanceOf(ExternalServiceException.class).hasMessageContaining("Email Service");
+
+        mockServer.verify();
+    }
+
+    @Test
+    void sendVerificationEmail_WhenBrevoRejectsRequest_ShouldNotRetry() {
+        mockServer.expect(ExpectedCount.once(), requestTo(BREVO_URL)).andRespond(withBadRequest());
+
+        assertThatThrownBy(() -> emailService.sendVerificationEmail("test@example.com", "token-123", Duration.ofHours(24)))
+                .isInstanceOf(ExternalServiceException.class);
+
+        mockServer.verify();
+    }
+
+    @Test
+    void sendVerificationEmail_WhenRateLimitedThenSuccess_ShouldRetry() {
+        mockServer.expect(requestTo(BREVO_URL)).andRespond(withTooManyRequests());
+        mockServer.expect(requestTo(BREVO_URL)).andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
+
+        assertThatCode(() -> emailService.sendVerificationEmail("test@example.com", "token-123", Duration.ofHours(24)))
+                .doesNotThrowAnyException();
+
+        mockServer.verify();
+    }
+
+    @Test
+    void sendVerificationEmail_WhenTimeoutThenSuccess_ShouldRetry() {
+        mockServer.expect(requestTo(BREVO_URL)).andRespond(withException(new SocketTimeoutException("Read timed out")));
+        mockServer.expect(requestTo(BREVO_URL)).andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
+
+        assertThatCode(() -> emailService.sendVerificationEmail("test@example.com", "token-123", Duration.ofHours(24)))
+                .doesNotThrowAnyException();
 
         mockServer.verify();
     }
@@ -76,7 +116,7 @@ class EmailServiceTest {
         mockServer.expect(requestTo(BREVO_URL)).andRespond(withServerError());
         mockServer.expect(requestTo(BREVO_URL)).andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
 
-        assertThatCode(() -> emailService.sendVerificationEmail("test@example.com", "token-123"))
+        assertThatCode(() -> emailService.sendVerificationEmail("test@example.com", "token-123", Duration.ofHours(24)))
                 .doesNotThrowAnyException();
 
         mockServer.verify();
@@ -87,10 +127,10 @@ class EmailServiceTest {
         mockServer.expect(requestTo(BREVO_URL))
                 .andExpect(jsonPath("$.subject").value("Password Reset Request"))
                 .andExpect(jsonPath("$.htmlContent", containsString("http://localhost:5173/reset-password/token-456")))
-                .andExpect(jsonPath("$.htmlContent", containsString("10 minutes")))
+                .andExpect(jsonPath("$.htmlContent", containsString("expire in 30 minutes")))
                 .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
 
-        emailService.sendPasswordResetEmail("test@example.com", "token-456");
+        emailService.sendPasswordResetEmail("test@example.com", "token-456", Duration.ofMinutes(30));
 
         mockServer.verify();
     }
@@ -99,7 +139,7 @@ class EmailServiceTest {
     void sendPasswordResetEmail_WhenAllAttemptsFail_ShouldThrowExternalServiceException() {
         mockServer.expect(ExpectedCount.times(3), requestTo(BREVO_URL)).andRespond(withServerError());
 
-        assertThatThrownBy(() -> emailService.sendPasswordResetEmail("test@example.com", "token-456"))
+        assertThatThrownBy(() -> emailService.sendPasswordResetEmail("test@example.com", "token-456", Duration.ofMinutes(30)))
                 .isInstanceOf(ExternalServiceException.class);
 
         mockServer.verify();
@@ -115,7 +155,7 @@ class EmailServiceTest {
                 .andExpect(jsonPath("$.htmlContent", containsString("24 hours")))
                 .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
 
-        emailService.sendEmailChangeConfirmation("new@example.com", "token-789");
+        emailService.sendEmailChangeConfirmation("new@example.com", "token-789", Duration.ofHours(24));
 
         mockServer.verify();
     }
@@ -124,7 +164,7 @@ class EmailServiceTest {
     void sendEmailChangeConfirmation_WhenAllAttemptsFail_ShouldThrowExternalServiceException() {
         mockServer.expect(ExpectedCount.times(3), requestTo(BREVO_URL)).andRespond(withServerError());
 
-        assertThatThrownBy(() -> emailService.sendEmailChangeConfirmation("new@example.com", "token-789"))
+        assertThatThrownBy(() -> emailService.sendEmailChangeConfirmation("new@example.com", "token-789", Duration.ofHours(24)))
                 .isInstanceOf(ExternalServiceException.class);
 
         mockServer.verify();
@@ -138,26 +178,36 @@ class EmailServiceTest {
                 .andExpect(jsonPath("$.htmlContent", containsString("Inception")))
                 .andExpect(jsonPath("$.htmlContent", containsString("2024-01-15 18:30")))
                 .andExpect(jsonPath("$.htmlContent", containsString("Hall A")))
+                .andExpect(jsonPath("$.htmlContent", containsString("550.00")))
+                .andExpect(jsonPath("$.htmlContent", containsString("100 points")))
                 .andExpect(jsonPath("$.htmlContent", containsString("450.00")))
-                .andExpect(jsonPath("$.htmlContent", containsString("Credit Card")))
+                .andExpect(jsonPath("$.htmlContent", containsString("TKT-AAA, TKT-BBB")))
                 .andExpect(jsonPath("$.htmlContent", containsString("Row 5, Seats 12-13")))
+                .andExpect(jsonPath("$.attachment[0].name").value("TKT-AAA.png"))
+                .andExpect(jsonPath("$.attachment[0].content").value("AQI="))
                 .andExpect(jsonPath("$.htmlContent", containsString("10-15 minutes")))
                 .andExpect(jsonPath("$.htmlContent", containsString("automated email")))
                 .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
 
-        emailService.sendTicketsEmail("customer@example.com", "BK-2024-001", "Inception", "2024-01-15 18:30",
-                "Hall A", new BigDecimal("450.00"), "Credit Card", "Row 5, Seats 12-13");
+        emailService.sendTicketsEmail(ticketsEmail());
 
         mockServer.verify();
     }
 
+    private static TicketsEmail ticketsEmail() {
+        return new TicketsEmail("customer@example.com", "BK-2024-001", "Inception", "2024-01-15 18:30", "Hall A",
+                "Row 5, Seats 12-13", new BigDecimal("550.00"), 100, new BigDecimal("100.00"),
+                new BigDecimal("450.00"), List.of("TKT-AAA", "TKT-BBB"),
+                List.of(new EmailAttachment("TKT-AAA.png", new byte[]{1, 2}),
+                        new EmailAttachment("TKT-BBB.png", new byte[]{3})));
+    }
+
     @Test
-    void sendTicketsEmail_WhenAllAttemptsFail_ShouldNotThrowException() {
+    void sendTicketsEmail_WhenAllAttemptsFail_ShouldThrowExternalServiceException() {
         mockServer.expect(ExpectedCount.times(3), requestTo(BREVO_URL)).andRespond(withServerError());
 
-        assertThatCode(() -> emailService.sendTicketsEmail("customer@example.com", "BK-2024-001", "Inception",
-                "2024-01-15 18:30", "Hall A", new BigDecimal("450.00"), "Credit Card", "Row 5, Seats 12-13"))
-                .doesNotThrowAnyException();
+        assertThatThrownBy(() -> emailService.sendTicketsEmail(ticketsEmail()))
+                .isInstanceOf(ExternalServiceException.class);
 
         mockServer.verify();
     }
@@ -197,12 +247,14 @@ class EmailServiceTest {
                 .andExpect(jsonPath("$.htmlContent", containsString("300.00")))
                 .andExpect(jsonPath("$.htmlContent", containsString("Row 6, Seat 8")))
                 .andExpect(jsonPath("$.htmlContent", containsString("Customer request")))
-                .andExpect(jsonPath("$.htmlContent", containsString("3-5 business days")))
+                .andExpect(jsonPath("$.htmlContent", containsString("Bonus points returned to your card: 100")))
+                .andExpect(jsonPath("$.htmlContent", containsString("earned from this purchase deducted: 10")))
+                .andExpect(jsonPath("$.htmlContent", containsString("5-7 business days")))
                 .andExpect(jsonPath("$.htmlContent", containsString("automated email")))
                 .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
 
         emailService.sendRefundEmail("customer@example.com", "BK-2024-003", "The Dark Knight", "2024-01-17 19:00",
-                "Hall B", new BigDecimal("300.00"), "Row 6, Seat 8", "Customer request");
+                "Hall B", new BigDecimal("300.00"), "Row 6, Seat 8", "Customer request", 100, 10);
 
         mockServer.verify();
     }
@@ -216,7 +268,7 @@ class EmailServiceTest {
                 .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
 
         emailService.sendRefundEmail("customer@example.com", "BK-2024-003", "The Dark Knight", "2024-01-17 19:00",
-                "Hall B", new BigDecimal("300.00"), "Row 6, Seat 8", "Customer request");
+                "Hall B", new BigDecimal("300.00"), "Row 6, Seat 8", "Customer request", 0, 0);
 
         mockServer.verify();
     }
@@ -226,7 +278,7 @@ class EmailServiceTest {
         mockServer.expect(ExpectedCount.times(3), requestTo(BREVO_URL)).andRespond(withServerError());
 
         assertThatCode(() -> emailService.sendRefundEmail("customer@example.com", "BK-2024-003", "The Dark Knight",
-                "2024-01-17 19:00", "Hall B", new BigDecimal("300.00"), "Row 6, Seat 8", "Customer request"))
+                "2024-01-17 19:00", "Hall B", new BigDecimal("300.00"), "Row 6, Seat 8", "Customer request", 0, 0))
                 .doesNotThrowAnyException();
 
         mockServer.verify();
@@ -239,7 +291,7 @@ class EmailServiceTest {
                 .andExpect(jsonPath("$.subject").value("Email Address Changed"))
                 .andExpect(jsonPath("$.htmlContent", containsString("old@example.com")))
                 .andExpect(jsonPath("$.htmlContent", containsString("new@example.com")))
-                .andExpect(jsonPath("$.htmlContent", containsString("contact our support team immediately")))
+                .andExpect(jsonPath("$.htmlContent", containsString("mailto:support@example.com")))
                 .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
 
         emailService.sendEmailChangeNotification("old@example.com", "new@example.com");
@@ -262,8 +314,9 @@ class EmailServiceTest {
         mockServer.expect(requestTo(BREVO_URL))
                 .andExpect(jsonPath("$.to[0].email").value("test@example.com"))
                 .andExpect(jsonPath("$.subject").value("Your Password Was Changed"))
-                .andExpect(jsonPath("$.htmlContent", containsString("password was just changed")))
-                .andExpect(jsonPath("$.htmlContent", containsString("contact our support team immediately")))
+                .andExpect(jsonPath("$.htmlContent", containsString("password was changed on")))
+                .andExpect(jsonPath("$.htmlContent", containsString("http://localhost:5173/forgot-password")))
+                .andExpect(jsonPath("$.htmlContent", containsString("mailto:support@example.com")))
                 .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
 
         emailService.sendPasswordChangedNotification("test@example.com");

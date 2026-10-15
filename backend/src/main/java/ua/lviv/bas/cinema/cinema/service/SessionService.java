@@ -55,7 +55,7 @@ public class SessionService {
     private final SessionScheduleQueryService sessionScheduleQueryService;
     private final AuditService auditService;
 
-    @CacheEvict(value = {"sessions", "seatAvailability"}, allEntries = true)
+    @CacheEvict(value = {"sessions", "adminSessions", "seatAvailability"}, allEntries = true)
     @Transactional
     public SessionResponse createSession(SessionRequest request) {
         validateStartTime(request.startTime());
@@ -99,7 +99,7 @@ public class SessionService {
         return sessionRepository.findScheduleDates(CinemaTime.now(), movieId);
     }
 
-    @Cacheable(value = "sessions", key = "'admin:' + #hallId + ':' + #movieTitle + ':' + #status + ':' + #dateFrom + ':' + #dateTo + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort")
+    @Cacheable(value = "adminSessions", key = "'list:' + #hallId + ':' + #movieTitle + ':' + #status + ':' + #dateFrom + ':' + #dateTo + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort")
     public Page<SessionAdminResponse> getSessions(Long hallId, String movieTitle, CinemaSessionStatus status,
                                                   LocalDate dateFrom, LocalDate dateTo, Pageable pageable) {
 
@@ -122,7 +122,7 @@ public class SessionService {
                 .orElseThrow(() -> new EntityNotFoundException("Session", id));
     }
 
-    @CacheEvict(value = {"sessions", "seatAvailability"}, allEntries = true)
+    @CacheEvict(value = {"sessions", "adminSessions", "seatAvailability"}, allEntries = true)
     @Transactional
     public SessionResponse updateSession(Long id, SessionRequest request) {
         var session = sessionRepository.findByIdWithLock(id)
@@ -174,7 +174,7 @@ public class SessionService {
                 .put("movieId", session.getMovie().getId()).put("hallId", session.getHall().getId()).build();
     }
 
-    @CacheEvict(value = {"sessions", "seatAvailability"}, allEntries = true)
+    @CacheEvict(value = {"sessions", "adminSessions", "seatAvailability", "sessionIds"}, allEntries = true)
     @Transactional
     public void deleteSession(Long id) {
         var session = sessionRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Session", id));
@@ -188,7 +188,7 @@ public class SessionService {
         auditDelete(session);
     }
 
-    @CacheEvict(value = {"sessions", "seatAvailability"}, allEntries = true)
+    @CacheEvict(value = {"sessions", "adminSessions", "seatAvailability"}, allEntries = true)
     @Transactional
     public void cancelSession(Long sessionId) {
         var session = sessionRepository.findByIdWithLock(sessionId)
@@ -218,7 +218,7 @@ public class SessionService {
                 newDetails);
     }
 
-    @CacheEvict(value = {"sessions", "seatAvailability"}, allEntries = true)
+    @CacheEvict(value = {"sessions", "adminSessions", "seatAvailability"}, allEntries = true)
     @Transactional
     public void reactivateSession(Long sessionId) {
         var session = sessionRepository.findByIdWithLock(sessionId)

@@ -12,6 +12,9 @@ public record AdminRefundListResponse(
         @Schema(description = "Refund ID", example = "15")
         Long id,
 
+        @Schema(description = "Refund number shown to the customer", example = "RF-2026-000015")
+        String refundNumber,
+
         @Schema(description = "Refund status", example = "PROCESSING")
         RefundStatus status,
 

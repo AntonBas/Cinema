@@ -178,7 +178,7 @@ public class CinemaHallService {
     private void validateHallNameUniqueness(String name, Long excludeId) {
         UniquenessValidator.validate(excludeId, () -> hallRepository.existsByName(name),
                 id -> hallRepository.existsByNameAndIdNot(name, id),
-                () -> new DuplicateEntityException("CinemaHall", name));
+                () -> new DuplicateEntityException("Cinema hall", name));
     }
 
     private void validateHallHasNoFutureSessions(CinemaHall hall) {

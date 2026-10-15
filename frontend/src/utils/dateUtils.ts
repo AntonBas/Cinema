@@ -21,6 +21,29 @@ export const parseServerInstant = (dateTimeString: string): Date =>
       : `${dateTimeString}Z`,
   );
 
+const MILLIS_PER_MINUTE = 60_000;
+
+export const getMinutesUntil = (
+  dateTimeString: string,
+  now = Date.now(),
+): number =>
+  Math.max(
+    0,
+    Math.floor(
+      (parseServerInstant(dateTimeString).getTime() - now) / MILLIS_PER_MINUTE,
+    ),
+  );
+
+export const formatTimeLeft = (
+  dateTimeString: string,
+  now = Date.now(),
+): string => {
+  if (parseServerInstant(dateTimeString).getTime() <= now) return "Expired";
+  const minutes = getMinutesUntil(dateTimeString, now);
+  const hours = Math.floor(minutes / 60);
+  return hours > 0 ? `${hours}h ${minutes % 60}m` : `${minutes}m`;
+};
+
 const CINEMA_TIME_ZONE = "Europe/Kyiv";
 
 const cinemaDateFormatter = new Intl.DateTimeFormat("en-CA", {

@@ -27,6 +27,9 @@ public record TicketResponse(
         @Schema(description = "Final price", example = "225.00")
         BigDecimal price,
 
+        @Schema(description = "Bonus points used to pay for the whole booking this ticket belongs to", example = "100")
+        Integer bookingBonusPointsUsed,
+
         @Schema(description = "Ticket type", example = "Adult")
         String ticketType,
 

@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useAuthActions } from "@/hooks/features/auth/useAuthActions";
 import { Input } from "@/components/ui/Input/Input";
 import { Button } from "@/components/ui/Button/Button";
 import { AuthCard } from "@/components/auth/AuthCard/AuthCard";
 import { GoogleIcon } from "@/components/auth/GoogleIcon/GoogleIcon";
 import { isApiErrorException } from "@/utils/apiErrorHandler";
+import { validateEmail } from "@/utils/formValidation";
 import styles from "./LoginForm.module.css";
 
 const REDIRECT_ERROR_MESSAGES: Record<string, string> = {
@@ -14,6 +15,8 @@ const REDIRECT_ERROR_MESSAGES: Record<string, string> = {
 
 const REDIRECT_INFO_MESSAGES: Record<string, string> = {
   "email-changed": "Your email was changed. Please log in with your new email.",
+  "password-changed":
+    "Your password was changed and you were signed out everywhere. Please log in with your new password.",
 };
 
 export const LoginForm: React.FC = () => {
@@ -22,8 +25,15 @@ export const LoginForm: React.FC = () => {
     REDIRECT_ERROR_MESSAGES[searchParams.get("error") ?? ""];
   const redirectInfo = REDIRECT_INFO_MESSAGES[searchParams.get("reason") ?? ""];
 
-  const [email, setEmail] = useState("");
+  const location = useLocation();
+  const [email, setEmail] = useState<string>(
+    (location.state as { email?: string } | null)?.email ?? "",
+  );
   const [password, setPassword] = useState("");
+  const [formErrors, setFormErrors] = useState<{
+    email?: string;
+    password?: string;
+  }>({});
 
   const { loading, error, login, loginWithGoogle } = useAuthActions();
 
@@ -32,6 +42,12 @@ export const LoginForm: React.FC = () => {
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
+    const errors = {
+      email: validateEmail(email),
+      password: password ? undefined : "Password is required",
+    };
+    setFormErrors(errors);
+    if (errors.email || errors.password) return;
     try {
       await login({ email, password });
     } catch {
@@ -51,7 +67,7 @@ export const LoginForm: React.FC = () => {
         <Link to="/register">Register</Link>
       </div>
 
-      <form className={styles.loginForm} onSubmit={handleSubmit}>
+      <form className={styles.loginForm} onSubmit={handleSubmit} noValidate>
         {!error && redirectError && (
           <div className={styles.notification} data-type="error">
             {redirectError}
@@ -80,19 +96,25 @@ export const LoginForm: React.FC = () => {
         <Input
           type="email"
           value={email}
-          onChange={setEmail}
+          onChange={(value) => {
+            setEmail(value);
+            setFormErrors((prev) => ({ ...prev, email: undefined }));
+          }}
           placeholder="Email address"
           disabled={loading}
-          required
+          error={formErrors.email}
         />
 
         <Input
           type="password"
           value={password}
-          onChange={setPassword}
+          onChange={(value) => {
+            setPassword(value);
+            setFormErrors((prev) => ({ ...prev, password: undefined }));
+          }}
           placeholder="Password"
           disabled={loading}
-          required
+          error={formErrors.password}
         />
 
         <Button

@@ -48,6 +48,17 @@ export const formatDate = (value: DateInput): string =>
 export const formatShortDate = (value: DateInput): string =>
   format(value, { month: "short", day: "numeric" });
 
+export const formatDateRange = (start: DateInput, end: DateInput): string => {
+  const startYear = format(start, { year: "numeric" });
+  const endYear = format(end, { year: "numeric" });
+  const currentYear = String(new Date().getFullYear());
+  const formatBound =
+    startYear === endYear && startYear === currentYear
+      ? formatShortDate
+      : formatDate;
+  return `${formatBound(start)} – ${formatBound(end)}`;
+};
+
 export const formatWeekdayDate = (value: DateInput): string =>
   format(value, { weekday: "short", month: "short", day: "numeric" });
 
@@ -88,4 +99,14 @@ export const formatPrice = (
   const amount = typeof value === "string" ? parseFloat(value) : value;
   if (amount == null || isNaN(amount)) return EMPTY_VALUE;
   return `${amount.toFixed(2)} ₴`;
+};
+
+const UA_PHONE_PATTERN = /^\+?380(\d{2})(\d{3})(\d{2})(\d{2})$/;
+
+export const formatPhoneNumber = (value: string | null | undefined): string => {
+  if (!value) return EMPTY_VALUE;
+  const match = UA_PHONE_PATTERN.exec(value.trim());
+  if (!match) return value;
+  const [, operator, first, second, third] = match;
+  return `+380 (${operator}) ${first}-${second}-${third}`;
 };

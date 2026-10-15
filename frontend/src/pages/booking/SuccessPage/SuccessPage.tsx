@@ -17,6 +17,7 @@ import {
   type PaymentResponse,
 } from "@/types/payment";
 import { Layout } from "@/components/layout/Layout/Layout";
+import { formatFullDateTime, formatPrice } from "@/utils/formatters";
 import styles from "./SuccessPage.module.css";
 
 export const SuccessPage = () => {
@@ -189,6 +190,21 @@ export const SuccessPage = () => {
               {isLateRefund &&
                 "Your payment arrived after the booking had expired, so no tickets were issued. The full amount is being returned to your card."}
             </p>
+
+            {payment.bookingNumber && (
+              <dl className={styles.details}>
+                <dt>Booking</dt>
+                <dd>{payment.bookingNumber}</dd>
+                <dt>Movie</dt>
+                <dd>{payment.movieTitle}</dd>
+                <dt>Session</dt>
+                <dd>{formatFullDateTime(payment.sessionTime)}</dd>
+                <dt>Hall</dt>
+                <dd>{payment.hallName}</dd>
+                <dt>Amount</dt>
+                <dd>{formatPrice(payment.finalAmount)}</dd>
+              </dl>
+            )}
 
             {isProcessing && pollingRef.current && (
               <div className={styles.pollingInfo}>

@@ -13,6 +13,13 @@
   white-space: nowrap;
 }
 
+.changedBy {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .targetInfo {
   display: inline-block;
   word-break: break-word;

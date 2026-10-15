@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jpa.domain.Specification;
 import ua.lviv.bas.cinema.common.CinemaTime;
+import ua.lviv.bas.cinema.movie.mapper.PosterUrlMapper;
 import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.cinema.dto.session.response.SessionScheduleResponse;
 import ua.lviv.bas.cinema.cinema.mapper.SessionMapper;
@@ -35,6 +36,8 @@ public class SessionScheduleQueryServiceTest {
     private Specification<Session> specification;
     @Mock
     private SessionScheduleProjection projection;
+    @Mock
+    private PosterUrlMapper posterUrlMapper;
 
     @InjectMocks
     private SessionScheduleQueryService sessionScheduleQueryService;
@@ -66,10 +69,13 @@ public class SessionScheduleQueryServiceTest {
         when(projection.getId()).thenReturn(SESSION_ID);
         when(sessionRepository.findScheduleProjectionsByIds(anyList())).thenReturn(List.of(projection));
         when(sessionMapper.toSessionScheduleResponse(projection)).thenReturn(response);
+        when(projection.getMovieId()).thenReturn(7L);
+        when(projection.getMoviePosterFileName()).thenReturn("poster.jpg");
+        when(posterUrlMapper.toPosterUrl(7L, "poster.jpg")).thenReturn("/api/movies/7/poster");
 
         List<SessionScheduleResponse> result =
                 sessionScheduleQueryService.getScheduleWithoutAvailability(null, null, null);
 
-        assertThat(result).containsExactly(response);
+        assertThat(result).containsExactly(response.withMoviePosterUrl("/api/movies/7/poster"));
     }
 }

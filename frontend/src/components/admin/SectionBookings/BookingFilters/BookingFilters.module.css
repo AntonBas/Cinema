@@ -18,6 +18,10 @@
   width: 100%;
 }
 
+.search .searchInput {
+  max-width: none;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr)) auto;

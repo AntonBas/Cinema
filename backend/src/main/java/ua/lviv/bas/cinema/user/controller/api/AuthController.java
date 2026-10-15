@@ -1,7 +1,7 @@
 package ua.lviv.bas.cinema.user.controller.api;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.InsufficientAuthenticationException;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,6 +28,7 @@ import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
 import ua.lviv.bas.cinema.user.dto.request.OAuth2ExchangeRequest;
 import ua.lviv.bas.cinema.user.dto.request.PasswordResetRequest;
+import ua.lviv.bas.cinema.user.dto.request.PasswordResetTokenRequest;
 import ua.lviv.bas.cinema.user.dto.request.ResendVerificationRequest;
 import ua.lviv.bas.cinema.user.dto.request.UserLoginRequest;
 import ua.lviv.bas.cinema.user.dto.request.UserRegistrationRequest;
@@ -108,14 +109,14 @@ public class AuthController {
     @Operation(summary = "Get current user profile")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User profile retrieved successfully"),
-            @ApiResponse(responseCode = "401", description = "User not authenticated")
+            @ApiResponse(responseCode = "204", description = "No authenticated user")
     })
-    public UserResponse getCurrentUser(@AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<UserResponse> getCurrentUser(@AuthenticationPrincipal CustomUserDetails userDetails) {
         if (userDetails == null) {
-            throw new InsufficientAuthenticationException("Not authenticated");
+            return ResponseEntity.noContent().build();
         }
-        log.info("GET /api/auth/me - user: {}", userDetails.getUsername());
-        return userService.getUserResponse(userDetails.getUserId());
+        log.debug("GET /api/auth/me - user id: {}", userDetails.getUserId());
+        return ResponseEntity.ok(userService.getUserResponse(userDetails.getUserId()));
     }
 
     @RateLimit(value = 3, duration = 60)
@@ -146,13 +147,25 @@ public class AuthController {
         passwordResetService.reset(request.token(), request.newPassword());
     }
 
+    @RateLimit(value = 10, duration = 60)
+    @PostMapping("/password/reset/validate")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Check that a password reset token can still be used")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Token is valid"),
+            @ApiResponse(responseCode = "400", description = "Invalid, used or expired token")
+    })
+    @SecurityRequirements()
+    public void validateResetToken(@Valid @RequestBody PasswordResetTokenRequest request) {
+        passwordResetService.validateResetToken(request.token());
+    }
+
     @RateLimit(value = 5, duration = 900)
     @PostMapping("/resend-verification")
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Resend email verification")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Verification email sent, or silently ignored if email is unknown"),
-            @ApiResponse(responseCode = "400", description = "Email already verified"),
+            @ApiResponse(responseCode = "200", description = "Verification email sent, or silently ignored if email is unknown or already verified"),
             @ApiResponse(responseCode = "429", description = "Resend requested too soon")
     })
     @SecurityRequirements()

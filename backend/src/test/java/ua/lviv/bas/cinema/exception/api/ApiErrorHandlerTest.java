@@ -2,19 +2,27 @@ package ua.lviv.bas.cinema.exception.api;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.data.core.TypeInformation;
+import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import ua.lviv.bas.cinema.exception.domain.auth.ResendCooldownException;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -48,10 +56,22 @@ class ApiErrorHandlerTest {
             throw new ObjectOptimisticLockingFailureException("Payment", 1L);
         }
 
+        @GetMapping("/test/uuid/{sessionId}")
+        void triggerTypeMismatch(@PathVariable UUID sessionId) {
+        }
+
+        @PostMapping("/test/validated")
+        void triggerValidation(@Valid @RequestBody ValidatedRequest request) {
+        }
+
         @GetMapping("/test/invalid-sort")
         void triggerInvalidSort() {
             throw new PropertyReferenceException("unknownProperty", TypeInformation.of(Object.class), List.of());
         }
+    }
+
+    record ValidatedRequest(@Size(min = 2, max = 50, message = "City name must be between 2 and 50 characters")
+                            @NotBlank(message = "City is required") String city) {
     }
 
     private ApiErrorHandler apiErrorHandler;
@@ -116,6 +136,28 @@ class ApiErrorHandlerTest {
                 .andExpect(status().isTooManyRequests())
                 .andExpect(header().string("Retry-After", "42"))
                 .andExpect(jsonPath("$.message").value("Please wait before requesting another verification email"));
+    }
+
+    @Test
+    void handleTypeMismatchShouldNotEchoRawValue() throws Exception {
+        mockMvc.perform(get("/test/uuid/not-a-uuid"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid sessionId"));
+    }
+
+    @Test
+    void unknownPathShouldReturnGenericNotFound() throws Exception {
+        mockMvc.perform(post("/api/auth/unknown"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Resource not found"));
+    }
+
+    @Test
+    void validationShouldReportOnlyPresenceErrorForBlankField() throws Exception {
+        mockMvc.perform(post("/test/validated").contentType(MediaType.APPLICATION_JSON).content("{\"city\":\"\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.subErrors.length()").value(1))
+                .andExpect(jsonPath("$.subErrors[0].message").value("City is required"));
     }
 
     @Test

@@ -59,8 +59,9 @@ export const useTicket = () => {
   }, []);
 
   const getAdminByCode = useCallback(async (uniqueCode: string) => {
-    return cashierTicketApiRef.current.execute(() =>
-      ticketApi.admin.getByCode(uniqueCode),
+    return cashierTicketApiRef.current.execute(
+      () => ticketApi.admin.getByCode(uniqueCode),
+      { showErrorNotification: false },
     );
   }, []);
 

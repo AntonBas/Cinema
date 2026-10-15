@@ -110,17 +110,17 @@ export const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
             <colgroup>
               <col style={{ width: "17%" }} />
               <col style={{ width: "13%" }} />
-              <col style={{ width: "12%" }} />
+              <col style={{ width: "13%" }} />
               <col style={{ width: "14%" }} />
               <col style={{ width: "12%" }} />
               <col style={{ width: "10%" }} />
-              <col style={{ width: "22%" }} />
+              <col style={{ width: "21%" }} />
             </colgroup>
             <thead>
               <tr>
                 <th>Display Name</th>
                 <th>Category</th>
-                <th>Price Multiplier</th>
+                <th>Multiplier</th>
                 <th>Age Range</th>
                 <th>Document</th>
                 <th>Status</th>

@@ -76,7 +76,7 @@ public class MovieService {
         log.info("Creating movie: {}", request.getTitle());
 
         if (movieRepository.existsByTitle(request.getTitle())) {
-            throw new DuplicateEntityException("Movie", "title '" + request.getTitle() + "'");
+            throw new DuplicateEntityException("Movie", request.getTitle());
         }
 
         if (!request.getEndShowingDate().isAfter(request.getReleaseDate())) {
@@ -180,7 +180,7 @@ public class MovieService {
         String oldTitle = movie.getTitle();
 
         if (!request.getTitle().equals(oldTitle) && movieRepository.existsByTitle(request.getTitle())) {
-            throw new DuplicateEntityException("Movie", "title '" + request.getTitle() + "'");
+            throw new DuplicateEntityException("Movie", request.getTitle());
         }
 
         if (!request.getEndShowingDate().isAfter(request.getReleaseDate())) {

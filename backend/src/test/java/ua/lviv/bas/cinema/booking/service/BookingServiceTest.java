@@ -117,6 +117,7 @@ public class BookingServiceTest {
     void createBookingShouldPersistViaCreationServiceThenSpendBonusPoints() {
         when(bookingCreationService.createAndPersist(createRequest, testUser)).thenReturn(savedBooking);
         when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.of(savedBooking));
+        when(bookingRepository.findWithDetailsById(BOOKING_ID)).thenReturn(Optional.of(savedBooking));
         when(bookingMapper.toResponse(savedBooking)).thenReturn(bookingResponse);
 
         BookingResponse result = bookingService.createBooking(createRequest, testUser);
@@ -128,6 +129,7 @@ public class BookingServiceTest {
         inOrder.verify(bookingCreationService).createAndPersist(createRequest, testUser);
         inOrder.verify(bookingRepository).findById(BOOKING_ID);
         inOrder.verify(bonusLedgerService).spendPoints(USER_ID, BONUS_POINTS_USED, savedBooking);
+        inOrder.verify(bookingRepository).findWithDetailsById(BOOKING_ID);
     }
 
     @Test
@@ -139,7 +141,7 @@ public class BookingServiceTest {
                 List.of(new BookingCreateRequest.SeatSelectionRequest(SEAT_ID_1, TICKET_TYPE_ADULT_ID)), 0);
 
         when(bookingCreationService.createAndPersist(requestWithoutBonus, testUser)).thenReturn(bookingWithoutBonus);
-        when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.of(bookingWithoutBonus));
+        when(bookingRepository.findWithDetailsById(BOOKING_ID)).thenReturn(Optional.of(bookingWithoutBonus));
         when(bookingMapper.toResponse(bookingWithoutBonus)).thenReturn(bookingResponse);
 
         bookingService.createBooking(requestWithoutBonus, testUser);
@@ -284,6 +286,27 @@ public class BookingServiceTest {
         assertThat(booking.getSeatReservations().get(0).getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
         assertThat(booking.getSeatReservations().get(1).getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
         verify(seatReservationService).evictAvailabilityCache(SESSION_ID);
+    }
+
+    @Test
+    void markRefundedShouldMoveConfirmedBookingToRefunded() {
+        Booking booking = Booking.builder().id(BOOKING_ID).status(BookingStatus.CONFIRMED).build();
+        when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.of(booking));
+
+        bookingService.markRefunded(BOOKING_ID);
+
+        assertThat(booking.getStatus()).isEqualTo(BookingStatus.REFUNDED);
+        verify(bookingRepository).save(booking);
+    }
+
+    @Test
+    void markRefundedShouldIgnoreBookingThatIsNotConfirmed() {
+        Booking booking = Booking.builder().id(BOOKING_ID).status(BookingStatus.REFUNDED).build();
+        when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.of(booking));
+
+        bookingService.markRefunded(BOOKING_ID);
+
+        verify(bookingRepository, never()).save(any());
     }
 
     @Test

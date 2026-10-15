@@ -1,5 +1,7 @@
-import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { authApi } from "@/api/authApi";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { CheckCircle2 } from "lucide-react";
 import { useAuthActions } from "@/hooks/features/auth/useAuthActions";
 import { Input } from "@/components/ui/Input/Input";
@@ -50,6 +52,27 @@ export const ResetPasswordForm: React.FC = () => {
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [tokenError, setTokenError] = useState<string | null>(null);
+  const [tokenChecked, setTokenChecked] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    authApi
+      .validateResetToken(token ?? "")
+      .then(() => active && setTokenError(null))
+      .catch((err) => {
+        if (!active) return;
+        setTokenError(
+          isApiErrorException(err)
+            ? err.message
+            : "This password reset link is invalid or has expired.",
+        );
+      })
+      .finally(() => active && setTokenChecked(true));
+    return () => {
+      active = false;
+    };
+  }, [token]);
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -89,6 +112,29 @@ export const ResetPasswordForm: React.FC = () => {
       }
     }
   };
+
+  if (!tokenChecked) {
+    return <LoadingSpinner text="Checking your reset link..." />;
+  }
+
+  if (tokenError) {
+    return (
+      <AuthCard title="Reset Link Not Valid">
+        <div className={styles.notification} data-type="error">
+          {tokenError}
+        </div>
+        <p className={styles.instructionText}>
+          The link may have expired or already been used. Request a new one to
+          reset your password.
+        </p>
+        <Link to="/forgot-password">
+          <Button variant="primary" size="large" fullWidth>
+            Request New Link
+          </Button>
+        </Link>
+      </AuthCard>
+    );
+  }
 
   return (
     <>

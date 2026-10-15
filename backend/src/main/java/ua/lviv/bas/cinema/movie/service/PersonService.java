@@ -9,6 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import ua.lviv.bas.cinema.audit.domain.AuditAction;
+import ua.lviv.bas.cinema.audit.service.AuditDetails;
+import ua.lviv.bas.cinema.audit.service.AuditService;
 import ua.lviv.bas.cinema.movie.domain.Person;
 import ua.lviv.bas.cinema.movie.domain.enums.PersonRole;
 import ua.lviv.bas.cinema.movie.dto.request.PersonRequest;
@@ -32,6 +35,7 @@ public class PersonService {
     private final PersonRepository personRepository;
     private final MovieRepository movieRepository;
     private final PersonMapper personMapper;
+    private final AuditService auditService;
 
     @CacheEvict(value = "persons", allEntries = true)
     @Transactional
@@ -42,6 +46,8 @@ public class PersonService {
         var person = personMapper.toEntity(request);
         var saved = personRepository.save(person);
 
+        auditService.logChange("Person", saved.getId(), saved.getName(), AuditAction.CREATED, null,
+                AuditDetails.of().put("name", saved.getName()).put("role", saved.getRole()).build());
         log.debug("Person created with ID: {}", saved.getId());
         return personMapper.toPersonResponse(saved);
     }
@@ -62,9 +68,14 @@ public class PersonService {
 
         var person = personRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Person", id));
         validatePersonUniqueness(request.name(), request.role(), id);
+        var oldName = person.getName();
+        var oldRole = person.getRole();
 
         personMapper.updateEntity(request, person);
         var updated = personRepository.save(person);
+        auditService.logChange("Person", id, oldName, AuditAction.UPDATED,
+                AuditDetails.of().put("name", oldName).put("role", oldRole).build(),
+                AuditDetails.of().put("name", updated.getName()).put("role", updated.getRole()).build());
 
         log.debug("Person updated with ID: {}", updated.getId());
         return personMapper.toPersonResponse(updated);
@@ -78,6 +89,8 @@ public class PersonService {
         var person = personRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Person", id));
         checkPersonUsageInMovies(person);
         personRepository.delete(person);
+        auditService.logChange("Person", id, person.getName(), AuditAction.DELETED,
+                AuditDetails.of().put("deleted", person.getName()).build(), null);
 
         log.debug("Person deleted with ID: {}", id);
     }
@@ -85,7 +98,7 @@ public class PersonService {
     private void validatePersonUniqueness(String name, PersonRole role, Long excludeId) {
         UniquenessValidator.validate(excludeId, () -> personRepository.existsByNameAndRole(name, role),
                 id -> personRepository.existsByNameAndRoleAndIdNot(name, role, id),
-                () -> new DuplicateEntityException("Person", name + " (" + role + ")"));
+                () -> new DuplicateEntityException(String.format("Person \"%s\" with role %s already exists", name, role.name().toLowerCase())));
     }
 
     private void checkPersonUsageInMovies(Person person) {

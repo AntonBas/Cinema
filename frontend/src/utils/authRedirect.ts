@@ -1,10 +1,24 @@
 const REDIRECT_PARAM = "redirect";
 const OAUTH2_REDIRECT_STORAGE_KEY = "postLoginRedirect";
 const DEFAULT_REDIRECT = "/";
-const AUTH_PAGES = ["/login", "/register", "/oauth2/redirect"];
+const AUTH_PAGES = [
+  "/login",
+  "/register",
+  "/oauth2/redirect",
+  "/forgot-password",
+  "/reset-password",
+  "/check-email",
+  "/verify-email",
+  "/confirm-email-change",
+];
 
 const isAuthPage = (path: string): boolean =>
-  AUTH_PAGES.some((page) => path === page || path.startsWith(`${page}?`));
+  AUTH_PAGES.some(
+    (page) =>
+      path === page ||
+      path.startsWith(`${page}?`) ||
+      path.startsWith(`${page}/`),
+  );
 
 export const getSafeRedirect = (target: string | null | undefined): string => {
   if (

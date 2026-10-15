@@ -23,6 +23,7 @@ const BOOKING_STATUSES: BookingStatus[] = [
   "CONFIRMED",
   "CANCELLED",
   "EXPIRED",
+  "REFUNDED",
 ];
 
 const STATUS_OPTIONS: SelectOption[] = [
@@ -66,6 +67,7 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
           value={filters.query}
           onSearch={(query) => onChange({ query: query || undefined })}
           placeholder="Booking number, email, movie or LiqPay order..."
+          className={styles.searchInput}
           delay={500}
         />
       </div>

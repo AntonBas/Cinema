@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.config.security;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.health.actuate.endpoint.HealthEndpointGroups;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
@@ -18,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(properties = "management.server.port=")
@@ -28,6 +30,9 @@ class ActuatorAccessIntegrationTest {
 
     @Autowired
     private WebApplicationContext context;
+
+    @Autowired
+    private HealthEndpointGroups healthEndpointGroups;
 
     private MockMvc mockMvc;
 
@@ -41,6 +46,27 @@ class ActuatorAccessIntegrationTest {
         var status = mockMvc.perform(get("/actuator/health")).andReturn().getResponse().getStatus();
 
         assertThat(status).isNotIn(401, 403);
+    }
+
+    @Test
+    void livenessShouldBePublicAndUp() throws Exception {
+        mockMvc.perform(get("/actuator/health/liveness"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"));
+    }
+
+    @Test
+    void livenessShouldNotCheckTheDatabase() {
+        var liveness = healthEndpointGroups.get("liveness");
+
+        assertThat(liveness.isMember("livenessState")).isTrue();
+        assertThat(liveness.isMember("db")).isFalse();
+        assertThat(healthEndpointGroups.getPrimary().isMember("db")).isTrue();
+    }
+
+    @Test
+    void readinessShouldRequireAuthentication() throws Exception {
+        mockMvc.perform(get("/actuator/health/readiness")).andExpect(status().isUnauthorized());
     }
 
     @Test

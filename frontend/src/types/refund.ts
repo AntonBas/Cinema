@@ -55,7 +55,7 @@ export interface RefundResponse {
   refundNumber: string;
   status: string;
   totalAmount: string;
-  totalBonusPointsToRefund: number;
+  totalBonusPointsToDeduct: number;
   reason?: string;
   processedBy?: string;
   processedAt?: string;
@@ -100,6 +100,7 @@ export const RefundItemStatusDisplay: Record<string, string> = {
 
 export interface AdminRefundListResponse {
   id: number;
+  refundNumber: string;
   status: RefundStatus;
   createdDate: string;
   lastModifiedDate: string;

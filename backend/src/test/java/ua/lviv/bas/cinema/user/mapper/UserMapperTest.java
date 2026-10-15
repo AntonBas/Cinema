@@ -41,7 +41,6 @@ public class UserMapperTest {
         assertThat(user.isEmailVerified()).isFalse();
         assertThat(user.getId()).isNull();
         assertThat(user.getTickets()).isEmpty();
-        assertThat(user.getBonusCard()).isNull();
     }
 
     @Test

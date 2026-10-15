@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -60,29 +61,28 @@ public class PromotionControllerTest {
 
     @Test
     void getAvailablePromotionsWithAuthenticatedUserShouldReturnList() {
-        User user = createUser();
         List<PromotionResponse> promotions = List.of(createPromotionResponse(), createPromotionResponse());
 
-        when(customUserDetails.getUserId()).thenReturn(user.getId());
-        when(userService.getUser(user.getId())).thenReturn(user);
-        when(promotionService.getAvailablePromotions(user)).thenReturn(promotions);
+        when(customUserDetails.getUserId()).thenReturn(1L);
+        when(promotionService.getAvailablePromotions()).thenReturn(promotions);
 
         List<PromotionResponse> result = promotionController.getAvailablePromotions(customUserDetails);
 
         assertThat(result).hasSize(2);
-        verify(promotionService).getAvailablePromotions(user);
+        verify(promotionService).getAvailablePromotions();
+        verifyNoInteractions(userService);
     }
 
     @Test
     void getAvailablePromotionsWithAnonymousUserShouldReturnList() {
         List<PromotionResponse> promotions = List.of(createPromotionResponse());
 
-        when(promotionService.getAvailablePromotions(null)).thenReturn(promotions);
+        when(promotionService.getAvailablePromotions()).thenReturn(promotions);
 
         List<PromotionResponse> result = promotionController.getAvailablePromotions(null);
 
         assertThat(result).hasSize(1);
-        verify(promotionService).getAvailablePromotions(null);
+        verify(promotionService).getAvailablePromotions();
     }
 
     @Test

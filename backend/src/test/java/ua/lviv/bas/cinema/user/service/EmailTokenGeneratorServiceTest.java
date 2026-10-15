@@ -1,5 +1,7 @@
 package ua.lviv.bas.cinema.user.service;
 
+import java.time.Duration;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -38,7 +40,7 @@ public class EmailTokenGeneratorServiceTest {
 
         verify(tokenRepository).deleteByUserAndType(user, TokenType.VERIFICATION);
         verify(tokenRepository).save(any(EmailToken.class));
-        verify(emailService).sendVerificationEmail(eq(USER_EMAIL), any());
+        verify(emailService).sendVerificationEmail(eq(USER_EMAIL), any(), eq(Duration.ofHours(24)));
     }
 
     @Test
@@ -49,7 +51,7 @@ public class EmailTokenGeneratorServiceTest {
 
         verify(tokenRepository).deleteByUserAndType(user, TokenType.PASSWORD_RESET);
         verify(tokenRepository).save(any(EmailToken.class));
-        verify(emailService).sendPasswordResetEmail(eq(USER_EMAIL), any());
+        verify(emailService).sendPasswordResetEmail(eq(USER_EMAIL), any(), eq(Duration.ofMinutes(30)));
     }
 
     @Test
@@ -61,7 +63,7 @@ public class EmailTokenGeneratorServiceTest {
 
         verify(tokenRepository).deleteByUserAndType(user, TokenType.EMAIL_CHANGE);
         verify(tokenRepository).save(any(EmailToken.class));
-        verify(emailService).sendEmailChangeConfirmation(eq(NEW_EMAIL), any());
+        verify(emailService).sendEmailChangeConfirmation(eq(NEW_EMAIL), any(), eq(Duration.ofHours(24)));
     }
 
     @Test

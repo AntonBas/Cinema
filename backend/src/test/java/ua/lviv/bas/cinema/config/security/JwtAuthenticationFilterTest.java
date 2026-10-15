@@ -13,6 +13,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -48,9 +49,9 @@ class JwtAuthenticationFilterTest {
         when(jwtTokenProvider.validateToken(TOKEN)).thenReturn(true);
         when(jwtTokenProvider.getEmailFromToken(TOKEN)).thenReturn(EMAIL);
         when(jwtTokenProvider.getJtiFromToken(TOKEN)).thenReturn("jti");
-        when(userDetailsService.loadUserByUsername(EMAIL))
+        when(userDetailsService.loadTokenPrincipal(EMAIL))
                 .thenReturn(new CustomUserDetails(1L, EMAIL, "hash", true, true, "ROLE_USER", 0));
-        when(jwtTokenProvider.getTokenVersionFromToken(TOKEN)).thenReturn(0);
+        lenient().when(jwtTokenProvider.getTokenVersionFromToken(TOKEN)).thenReturn(0);
     }
 
     @AfterEach

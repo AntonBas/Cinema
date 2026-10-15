@@ -25,7 +25,6 @@ import ua.lviv.bas.cinema.user.dto.response.UserProfileResponse;
 import ua.lviv.bas.cinema.user.dto.response.UserResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyExistsException;
-import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyVerifiedException;
 import ua.lviv.bas.cinema.exception.domain.auth.InvalidCurrentPasswordException;
 import ua.lviv.bas.cinema.exception.domain.auth.PasswordMismatchException;
 import ua.lviv.bas.cinema.exception.domain.auth.ResendCooldownException;
@@ -135,7 +134,8 @@ public class UserService {
 
         var user = userOpt.get();
         if (user.isEmailVerified()) {
-            throw new EmailAlreadyVerifiedException();
+            log.info("Resend verification requested for already verified email: {}", email);
+            return (int) RESEND_COOLDOWN_SECONDS;
         }
 
         var lastSentAt = user.getLastVerificationEmailSentAt();

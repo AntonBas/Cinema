@@ -148,6 +148,11 @@ public class LocalFileStorageService implements FileStorageService {
         }
     }
 
+    @Override
+    public Optional<String> publicUrl(String fileName, int maxWidth) {
+        return Optional.empty();
+    }
+
     private String sanitize(String input) {
         if (input == null) {
             return "";

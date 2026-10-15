@@ -102,6 +102,7 @@ export const PersonForm: React.FC<PersonFormProps> = React.memo(
 
     const handleBlur = useCallback(
       (field: string) => {
+        if (field === "name" && !formData.name.trim()) return;
         setTouched((prev) => ({ ...prev, [field]: true }));
         if (field === "name") {
           const nameError = validateName(formData.name);

@@ -3,7 +3,6 @@ package ua.lviv.bas.cinema.user.repository;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -23,7 +22,6 @@ import java.util.Optional;
 @SuppressWarnings({"SqlResolve", "SqlNoDataSourceInspection"})
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    @EntityGraph(attributePaths = {"bonusCard"})
     @Query("SELECT u FROM User u WHERE lower(u.email) = lower(:email)")
     Optional<User> findByEmail(@Param("email") String email);
 
@@ -36,7 +34,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     int deleteAllByEmailVerifiedFalseAndCreatedDateBefore(Instant cutoff);
 
-    @EntityGraph(attributePaths = {"bonusCard"})
     @Override
     @NonNull
     @SuppressWarnings("deprecation")

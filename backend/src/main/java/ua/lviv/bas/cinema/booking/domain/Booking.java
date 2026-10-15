@@ -120,6 +120,9 @@ public class Booking extends AuditableEntity {
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
 
+    @Column(name = "tickets_email_sent_at")
+    private Instant ticketsEmailSentAt;
+
     @OneToOne(mappedBy = "booking", fetch = FetchType.LAZY)
     private Payment payment;
 }

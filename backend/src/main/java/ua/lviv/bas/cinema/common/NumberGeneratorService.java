@@ -36,6 +36,10 @@ public class NumberGeneratorService {
     }
 
     public String generateRefundNumber(Refund refund) {
+        return generateRefundNumberStatic(refund);
+    }
+
+    public static String generateRefundNumberStatic(Refund refund) {
         if (refund.getId() == null) {
             throw new IllegalStateException("Refund ID is required");
         }

@@ -39,6 +39,7 @@ import ua.lviv.bas.cinema.integration.QRCodeService;
 import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.time.Instant;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -62,12 +63,12 @@ public class TicketService {
     @Value("${app.frontend.url}")
     private String ticketBaseUrl;
 
-    @CacheEvict(value = "ticketList", allEntries = true)
+    @CacheEvict(value = {"ticketList", "adminSessions"}, allEntries = true)
     @Transactional
-    public void createTicketsForBooking(Booking booking, Payment payment) {
+    public List<Ticket> createTicketsForBooking(Booking booking, Payment payment) {
         if (ticketRepository.existsByBookingId(booking.getId())) {
             log.debug("Tickets already exist for booking {}, skipping creation", booking.getId());
-            return;
+            return ticketRepository.findByBookingId(booking.getId());
         }
 
         var tickets = booking.getSeatReservations().stream()
@@ -79,6 +80,7 @@ public class TicketService {
         for (var ticket : savedTickets) {
             auditCreate(ticket, booking.getId());
         }
+        return savedTickets;
     }
 
     private Ticket buildTicket(Booking booking, Payment payment, SeatReservation seatReservation) {
@@ -88,9 +90,13 @@ public class TicketService {
                 .status(TicketStatus.ACTIVE).purchaseTime(Instant.now()).build();
     }
 
-    public Ticket getActiveTicketForUser(Long ticketId, Long userId) {
-        return ticketRepository.findByIdAndUserIdAndStatus(ticketId, userId, TicketStatus.ACTIVE).orElseThrow(
-                () -> new TicketNotFoundException("Ticket not found or not active. Ticket ID: " + ticketId));
+    public boolean areAllTicketsRefunded(Long bookingId) {
+        return !ticketRepository.existsByBookingIdAndStatusNot(bookingId, TicketStatus.REFUNDED);
+    }
+
+    public Ticket getTicketForUser(Long ticketId, Long userId) {
+        return ticketRepository.findByIdAndUserId(ticketId, userId)
+                .orElseThrow(() -> new TicketNotFoundException("Ticket not found. Ticket ID: " + ticketId));
     }
 
     public Ticket getTicket(Long ticketId) {
@@ -152,8 +158,11 @@ public class TicketService {
             throw new TicketNotFoundException("Ticket " + ticketCode + " does not belong to user " + user.getId());
         }
 
-        var qrContent = ticketBaseUrl + "/cashier/scan/" + ticketCode;
-        return qrCodeService.generateQRCode(qrContent, qrCodeSize);
+        return generateQR(ticket);
+    }
+
+    public byte[] generateQR(Ticket ticket) {
+        return qrCodeService.generateQRCode(ticketBaseUrl + "/cashier/scan/" + ticket.getUniqueCode(), qrCodeSize);
     }
 
     private TicketResponse toTicketResponse(Ticket ticket) {
@@ -189,6 +198,7 @@ public class TicketService {
     @Caching(evict = {
             @CacheEvict(value = "ticket", key = "#ticket.uniqueCode + '-' + #ticket.user.id"),
             @CacheEvict(value = "ticketList", allEntries = true),
+            @CacheEvict(value = "adminSessions", allEntries = true),
             @CacheEvict(value = "seatAvailability", key = "#ticket.seatReservation.session.id")
     })
     @Transactional

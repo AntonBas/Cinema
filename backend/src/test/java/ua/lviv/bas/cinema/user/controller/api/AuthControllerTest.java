@@ -15,11 +15,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import jakarta.servlet.http.Cookie;
+import ua.lviv.bas.cinema.exception.domain.auth.InvalidTokenException;
 import ua.lviv.bas.cinema.config.ratelimit.InMemoryProxyManager;
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
@@ -46,6 +48,7 @@ import java.util.Optional;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -137,6 +140,21 @@ public class AuthControllerTest {
         user.setVerificationStatus(VerificationStatus.NOT_VERIFIED);
 
         userDetails = new CustomUserDetails(user);
+    }
+
+    @Test
+    void getCurrentUserShouldReturnNoContentForAnonymousUser() throws Exception {
+        mockMvc.perform(get("/api/auth/me"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void getCurrentUserShouldReturnProfileForAuthenticatedUser() throws Exception {
+        when(userService.getUserResponse(1L)).thenReturn(userResponse);
+
+        mockMvc.perform(get("/api/auth/me").with(SecurityMockMvcRequestPostProcessors.user(userDetails)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("anton@example.com"));
     }
 
     @Test
@@ -268,6 +286,24 @@ public class AuthControllerTest {
                 .andExpect(status().isOk());
 
         verify(passwordResetService).reset("token123", "newPass123");
+    }
+
+    @Test
+    void validateResetTokenShouldReturnNoContentForValidToken() throws Exception {
+        mockMvc.perform(post("/api/auth/password/reset/validate").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"token123\"}"))
+                .andExpect(status().isNoContent());
+
+        verify(passwordResetService).validateResetToken("token123");
+    }
+
+    @Test
+    void validateResetTokenShouldReturnBadRequestForInvalidToken() throws Exception {
+        doThrow(new InvalidTokenException("password-reset")).when(passwordResetService).validateResetToken("bad");
+
+        mockMvc.perform(post("/api/auth/password/reset/validate").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"bad\"}"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

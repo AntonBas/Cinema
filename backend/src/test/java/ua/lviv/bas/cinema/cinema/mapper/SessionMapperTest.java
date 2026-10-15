@@ -259,7 +259,7 @@ public class SessionMapperTest {
         assertThat(response.movieId()).isEqualTo(1L);
         assertThat(response.movieTitle()).isEqualTo("Schedule Movie");
         assertThat(response.movieSlug()).isEqualTo("schedule-movie");
-        assertThat(response.moviePosterFileName()).isEqualTo("poster.jpg");
+        assertThat(response.moviePosterUrl()).isNull();
         assertThat(response.movieAgeRating()).isEqualTo(AgeRating.PEGI_12.name());
         assertThat(response.movieDuration()).isEqualTo(90);
         assertThat(response.hallId()).isEqualTo(1L);

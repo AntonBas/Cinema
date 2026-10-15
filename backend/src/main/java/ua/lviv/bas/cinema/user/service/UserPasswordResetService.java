@@ -46,14 +46,16 @@ public class UserPasswordResetService {
         }
 
         var user = userOpt.get();
-        if (!user.isEmailVerified() || !user.isEnabled()) {
-            log.info("Password reset requested for unverified or blocked account: {}", email);
+        if (!user.isEnabled()) {
+            log.info("Password reset requested for blocked account: {}", email);
+            return;
+        }
+        if (!user.isEmailVerified()) {
+            sendVerificationInsteadOfReset(user);
             return;
         }
 
-        var lastSentAt = user.getLastPasswordResetSentAt();
-        if (lastSentAt != null && Duration.between(Instant.now(), lastSentAt.plusSeconds(RESET_COOLDOWN_SECONDS))
-                .isPositive()) {
+        if (isWithinCooldown(user.getLastPasswordResetSentAt())) {
             log.info("Password reset requested for {} within cooldown, skipping", email);
             return;
         }
@@ -63,6 +65,29 @@ public class UserPasswordResetService {
         userRepository.save(user);
         log.info("Password reset token generated for: {}", email);
         auditRequestReset(user);
+    }
+
+    private void sendVerificationInsteadOfReset(User user) {
+        if (isWithinCooldown(user.getLastVerificationEmailSentAt())) {
+            log.info("Password reset requested for unverified account {} within cooldown, skipping", user.getEmail());
+            return;
+        }
+        tokenGeneratorService.generateVerificationToken(user);
+        user.setLastVerificationEmailSentAt(Instant.now());
+        userRepository.save(user);
+        log.info("Password reset requested for unverified account, verification email sent to: {}", user.getEmail());
+    }
+
+    private static boolean isWithinCooldown(Instant lastSentAt) {
+        return lastSentAt != null
+                && Duration.between(Instant.now(), lastSentAt.plusSeconds(RESET_COOLDOWN_SECONDS)).isPositive();
+    }
+
+    @Transactional(readOnly = true)
+    public void validateResetToken(String token) {
+        var resetToken = tokenRepository.findByToken(token)
+                .orElseThrow(() -> new InvalidTokenException("password-reset"));
+        validateToken(resetToken);
     }
 
     @Transactional

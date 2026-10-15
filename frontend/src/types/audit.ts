@@ -24,6 +24,8 @@ export const EntityTypeDisplay: Record<string, string> = {
   Ticket: "Ticket",
   TicketType: "Ticket Type",
   Movie: "Movie",
+  Genre: "Genre",
+  Person: "Person",
   Session: "Session",
   CinemaHall: "Cinema Hall",
   Promotion: "Promotion",

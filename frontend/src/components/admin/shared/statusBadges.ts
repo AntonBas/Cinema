@@ -9,6 +9,7 @@ export const BOOKING_STATUS_VARIANT: Record<BookingStatus, BadgeVariant> = {
   CONFIRMED: "success",
   CANCELLED: "error",
   EXPIRED: "secondary",
+  REFUNDED: "info",
 };
 
 export const PAYMENT_STATUS_VARIANT: Record<PaymentStatus, BadgeVariant> = {

@@ -239,6 +239,16 @@
   color: var(--color-text-primary);
 }
 
+.status.refunded {
+  background: var(--color-info);
+  color: var(--color-text-primary);
+}
+
+.status.expired {
+  background: var(--color-bg-quaternary);
+  color: var(--color-text-secondary);
+}
+
 .timeLeft {
   color: var(--color-success);
   font-weight: 700;

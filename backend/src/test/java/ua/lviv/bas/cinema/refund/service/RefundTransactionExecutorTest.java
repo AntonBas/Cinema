@@ -19,10 +19,12 @@ import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.ticket.domain.TicketStatus;
 import ua.lviv.bas.cinema.ticket.domain.TicketType;
 import ua.lviv.bas.cinema.user.domain.User;
+import ua.lviv.bas.cinema.exception.domain.financial.refund.TicketAlreadyRefundedException;
 import ua.lviv.bas.cinema.exception.domain.financial.refund.TicketNotRefundableException;
 import ua.lviv.bas.cinema.payment.service.PaymentRefundService;
 import ua.lviv.bas.cinema.refund.repository.RefundRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
+import ua.lviv.bas.cinema.booking.service.BookingService;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 import ua.lviv.bas.cinema.ticket.service.TicketService;
 import ua.lviv.bas.cinema.support.CinemaTestFixtures;
@@ -60,6 +62,10 @@ public class RefundTransactionExecutorTest {
     private RefundCalculator refundCalculator;
     @Mock
     private AuditService auditService;
+    @Mock
+    private RefundConfirmationEmailSender refundConfirmationEmailSender;
+    @Mock
+    private BookingService bookingService;
 
     @InjectMocks
     private RefundTransactionExecutor refundTransactionExecutor;
@@ -107,7 +113,7 @@ public class RefundTransactionExecutorTest {
 
     @Test
     void createProcessingRefundShouldSucceed() {
-        when(ticketService.getActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
+        when(ticketService.getTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
         when(refundCalculator.validate(testTicket)).thenReturn(null);
         when(refundRepository.existsByItemsTicketIdAndStatus(TICKET_ID, RefundStatus.PROCESSING)).thenReturn(false);
         when(refundCalculator.calculate(testTicket))
@@ -135,8 +141,8 @@ public class RefundTransactionExecutorTest {
 
     @Test
     void createProcessingRefundWhenTicketNotRefundableShouldThrow() {
-        when(ticketService.getActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
-        when(refundCalculator.validate(testTicket)).thenReturn("Ticket is not active. Current status: REFUNDED");
+        when(ticketService.getTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
+        when(refundCalculator.validate(testTicket)).thenReturn("Ticket is not active. Current status: USED");
 
         assertThatThrownBy(() -> refundTransactionExecutor.createProcessingRefund(TICKET_ID, USER_ID, "Test reason"))
                 .isInstanceOf(TicketNotRefundableException.class);
@@ -145,8 +151,19 @@ public class RefundTransactionExecutorTest {
     }
 
     @Test
+    void createProcessingRefundWhenTicketAlreadyRefundedShouldThrowConflict() {
+        when(ticketService.getTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
+        when(refundCalculator.isAlreadyRefunded(testTicket)).thenReturn(true);
+
+        assertThatThrownBy(() -> refundTransactionExecutor.createProcessingRefund(TICKET_ID, USER_ID, "Test reason"))
+                .isInstanceOf(TicketAlreadyRefundedException.class);
+
+        verify(refundRepository, never()).save(any());
+    }
+
+    @Test
     void createProcessingRefundWhenAlreadyProcessingShouldThrowGuard() {
-        when(ticketService.getActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
+        when(ticketService.getTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
         when(refundCalculator.validate(testTicket)).thenReturn(null);
         when(refundRepository.existsByItemsTicketIdAndStatus(TICKET_ID, RefundStatus.PROCESSING)).thenReturn(true);
 
@@ -160,7 +177,7 @@ public class RefundTransactionExecutorTest {
 
     @Test
     void createProcessingRefundWhenConcurrentInsertViolatesConstraintShouldThrowGuard() {
-        when(ticketService.getActiveTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
+        when(ticketService.getTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
         when(refundCalculator.validate(testTicket)).thenReturn(null);
         when(refundRepository.existsByItemsTicketIdAndStatus(TICKET_ID, RefundStatus.PROCESSING)).thenReturn(false);
         when(refundCalculator.calculate(testTicket))
@@ -187,9 +204,25 @@ public class RefundTransactionExecutorTest {
         assertThat(result.getStatus()).isEqualTo(RefundStatus.PROCESSED);
         assertThat(testRefundItem.getStatus()).isEqualTo(RefundItemStatus.PROCESSED);
         verify(paymentRefundService).applyRefundSuccess(eq(testPayment), eq(REFUND_AMOUNT), eq(REFUND_AMOUNT),
-                any(String.class), eq(testTicket));
+                any(String.class));
+        verify(refundConfirmationEmailSender).send(testRefund, testTicket, BONUS_POINTS_TO_REFUND, 0);
+        verify(bookingService, never()).markRefunded(any());
         verify(bonusLedgerService).refundPointsForTicket(USER_ID, BONUS_POINTS_TO_REFUND, "REFUND_TICKET_" + TICKET_ID);
         verify(ticketService).markAsRefunded(testTicket, testRefund);
+    }
+
+    @Test
+    void applySuccessWhenLastTicketOfBookingRefundedShouldMarkBookingRefunded() {
+        when(refundRepository.findById(REFUND_ID)).thenReturn(Optional.of(testRefund));
+        when(ticketService.getTicket(TICKET_ID)).thenReturn(testTicket);
+        when(refundRepository.save(any(Refund.class))).thenAnswer(i -> i.getArgument(0));
+        when(refundRepository.sumAmountByPaymentIdAndStatus(testPayment.getId(), RefundStatus.PROCESSED))
+                .thenReturn(BigDecimal.ZERO);
+        when(ticketService.areAllTicketsRefunded(testTicket.getBooking().getId())).thenReturn(true);
+
+        refundTransactionExecutor.applySuccess(REFUND_ID, TICKET_ID);
+
+        verify(bookingService).markRefunded(testTicket.getBooking().getId());
     }
 
     @Test

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { getCinemaToday } from "@/utils/dateUtils";
 import styles from "./Calendar.module.css";
 
 interface CalendarProps {
@@ -31,7 +32,7 @@ export const Calendar: React.FC<CalendarProps> = ({
   onDateChange,
   highlightedDates = [],
 }) => {
-  const initialDate = selectedDate ? new Date(selectedDate) : new Date();
+  const initialDate = new Date(`${selectedDate ?? getCinemaToday()}T00:00:00`);
   const [currentMonth, setCurrentMonth] = useState(
     new Date(initialDate.getFullYear(), initialDate.getMonth(), 1),
   );
@@ -67,9 +68,7 @@ export const Calendar: React.FC<CalendarProps> = ({
   const month = currentMonth.getMonth();
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfMonth(year, month);
-  const today = formatDate(new Date());
-  const todayDate = new Date();
-  todayDate.setHours(0, 0, 0, 0);
+  const today = getCinemaToday();
 
   const days = [];
 
@@ -91,7 +90,7 @@ export const Calendar: React.FC<CalendarProps> = ({
     const isSelected = dateString === selectedDate;
     const isToday = dateString === today;
     const isHighlighted = highlightedSet.has(dateString);
-    const isPast = date < todayDate && !isToday;
+    const isPast = dateString < today;
 
     days.push(
       <button

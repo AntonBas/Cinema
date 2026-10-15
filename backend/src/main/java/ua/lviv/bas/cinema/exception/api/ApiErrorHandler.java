@@ -22,6 +22,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.authentication.LockedException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.ErrorResponse;
@@ -31,13 +32,18 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import ua.lviv.bas.cinema.exception.core.BusinessException;
 import ua.lviv.bas.cinema.exception.core.NotFoundException;
 import ua.lviv.bas.cinema.exception.domain.auth.ResendCooldownException;
 import ua.lviv.bas.cinema.exception.infrastructure.RateLimitExceededException;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.Optional;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
@@ -53,6 +59,8 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 @Slf4j
 @SuppressWarnings("unused")
 public class ApiErrorHandler extends ResponseEntityExceptionHandler {
+
+    private static final Set<String> PRESENCE_CONSTRAINTS = Set.of("NotNull", "NotBlank", "NotEmpty");
 
     @Value("${app.debug-errors:false}")
     private boolean debugErrorsEnabled;
@@ -72,7 +80,7 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
                                                                   @Nonnull HttpHeaders headers, @Nonnull HttpStatusCode status, @Nonnull WebRequest request) {
         ApiError apiError = new ApiError(BAD_REQUEST);
         apiError.setMessage("Validation error");
-        apiError.addValidationErrors(ex.getBindingResult().getFieldErrors());
+        apiError.addValidationErrors(firstErrorPerField(ex.getBindingResult().getFieldErrors()));
         apiError.addValidationError(ex.getBindingResult().getGlobalErrors());
 
         log.warn("Validation error: {} errors detected", ex.getBindingResult().getFieldErrors().size());
@@ -84,12 +92,20 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
     @Nonnull
     protected ResponseEntity<Object> handleNoHandlerFoundException(@Nonnull NoHandlerFoundException ex,
                                                                    @Nonnull HttpHeaders headers, @Nonnull HttpStatusCode status, @Nonnull WebRequest request) {
-        ApiError apiError = new ApiError(NOT_FOUND);
-        apiError.setMessage(
-                String.format("Could not find the %s method for URL %s", ex.getHttpMethod(), ex.getRequestURL()));
-        apiError.setDebugMessage(ex.getMessage());
+        ApiError apiError = new ApiError(NOT_FOUND, "Resource not found", ex);
 
-        log.warn("No handler found: {} {}", ex.getHttpMethod(), ex.getRequestURL());
+        log.debug("No handler found: {} {}", ex.getHttpMethod(), ex.getRequestURL());
+
+        return buildResponseEntity(apiError, request);
+    }
+
+    @Override
+    @Nullable
+    protected ResponseEntity<Object> handleNoResourceFoundException(@Nonnull NoResourceFoundException ex,
+                                                                    @Nonnull HttpHeaders headers, @Nonnull HttpStatusCode status, @Nonnull WebRequest request) {
+        ApiError apiError = new ApiError(NOT_FOUND, "Resource not found", ex);
+
+        log.debug("No resource found: {} {}", ex.getHttpMethod(), ex.getResourcePath());
 
         return buildResponseEntity(apiError, request);
     }
@@ -185,10 +201,7 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
                                                                       @Nonnull WebRequest request) {
         ApiError apiError = new ApiError(BAD_REQUEST);
 
-        String requiredType = Optional.ofNullable(ex.getRequiredType()).map(Class::getSimpleName).orElse("unknown");
-
-        apiError.setMessage(String.format("The parameter '%s' of value '%s' could not be converted to type '%s'",
-                ex.getName(), ex.getValue(), requiredType));
+        apiError.setMessage(String.format("Invalid %s", ex.getName()));
         apiError.setDebugMessage(ex.getMessage());
 
         log.warn("Type mismatch for parameter '{}': {}", ex.getName(), ex.getMessage());
@@ -267,7 +280,7 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleInsufficientAuthentication(@Nonnull InsufficientAuthenticationException ex,
                                                                        @Nonnull WebRequest request) {
         ApiError apiError = new ApiError(UNAUTHORIZED, "Not authenticated");
-        log.warn("Unauthenticated request: {}", ex.getMessage());
+        log.debug("Unauthenticated request: {}", ex.getMessage());
         return buildResponseEntity(apiError, request);
     }
 
@@ -298,6 +311,18 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
         ApiError apiError = new ApiError(INTERNAL_SERVER_ERROR, "Unexpected error occurred", ex);
         log.error("Unexpected error: ", ex);
         return buildResponseEntity(apiError, request);
+    }
+
+    @Nonnull
+    private static List<FieldError> firstErrorPerField(@Nonnull List<FieldError> fieldErrors) {
+        Map<String, FieldError> errorsByField = new LinkedHashMap<>();
+        fieldErrors.forEach(error -> errorsByField.merge(error.getField(), error,
+                (current, candidate) -> isPresenceCheck(candidate) && !isPresenceCheck(current) ? candidate : current));
+        return List.copyOf(errorsByField.values());
+    }
+
+    private static boolean isPresenceCheck(@Nonnull FieldError fieldError) {
+        return PRESENCE_CONSTRAINTS.contains(fieldError.getCode());
     }
 
     @Nonnull

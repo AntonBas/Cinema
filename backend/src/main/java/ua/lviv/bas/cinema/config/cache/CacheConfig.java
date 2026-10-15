@@ -11,6 +11,7 @@ import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.cache.RedisCacheWriter;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
+import org.springframework.data.redis.serializer.GenericToStringSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.RedisSerializer;
 
@@ -32,7 +33,7 @@ import java.util.Map;
 @EnableCaching
 public class CacheConfig {
 
-    private static final String CACHE_KEY_VERSION = "v2";
+    private static final String CACHE_KEY_VERSION = "v3";
 
     @Bean
     @ConditionalOnProperty(prefix = "spring.cache", name = "type", havingValue = "redis")
@@ -46,10 +47,14 @@ public class CacheConfig {
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
         cacheConfigurations.put("cinemaHalls", defaultConfig.entryTtl(Duration.ofHours(1)));
         cacheConfigurations.put("sessions", defaultConfig.entryTtl(Duration.ofMinutes(10)));
+        cacheConfigurations.put("adminSessions", defaultConfig.entryTtl(Duration.ofMinutes(10)));
         cacheConfigurations.put("genres", defaultConfig.entryTtl(Duration.ofHours(24)));
         cacheConfigurations.put("persons", defaultConfig.entryTtl(Duration.ofHours(24)));
         cacheConfigurations.put("singleMovies", defaultConfig.entryTtl(Duration.ofHours(24)));
         cacheConfigurations.put("movieLists", defaultConfig.entryTtl(Duration.ofHours(24)));
+        cacheConfigurations.put("sessionIds", defaultConfig.entryTtl(Duration.ofHours(24))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair
+                        .fromSerializer(new GenericToStringSerializer<>(Long.class))));
         cacheConfigurations.put("seatAvailability", defaultConfig.entryTtl(Duration.ofMinutes(5)));
         cacheConfigurations.put("ticket", defaultConfig.entryTtl(Duration.ofMinutes(30)));
         cacheConfigurations.put("ticketList", defaultConfig.entryTtl(Duration.ofMinutes(30)));

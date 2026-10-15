@@ -53,7 +53,7 @@ export const UpcomingMoviesPage: React.FC = () => {
       <MovieList
         movies={movies}
         pagination={pagination}
-        loading={loading}
+        loading={loading || (!pagination && !error)}
         error={error}
         emptyMessage="No upcoming movies"
         onRetry={handleRetry}

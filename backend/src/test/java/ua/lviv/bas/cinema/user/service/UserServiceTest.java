@@ -19,7 +19,6 @@ import ua.lviv.bas.cinema.user.dto.response.UserProfileResponse;
 import ua.lviv.bas.cinema.user.dto.response.UserResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyExistsException;
-import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyVerifiedException;
 import ua.lviv.bas.cinema.exception.domain.auth.InvalidCurrentPasswordException;
 import ua.lviv.bas.cinema.exception.domain.auth.PasswordMismatchException;
 import ua.lviv.bas.cinema.exception.domain.auth.ResendCooldownException;
@@ -385,13 +384,14 @@ public class UserServiceTest {
     }
 
     @Test
-    void resendVerificationEmailShouldThrowWhenAlreadyVerified() {
+    void resendVerificationEmailShouldReturnCooldownSilentlyWhenAlreadyVerified() {
         User user = User.builder().id(USER_ID).email(EMAIL).emailVerified(true).build();
 
         when(userRepository.findByEmailForUpdate(EMAIL)).thenReturn(Optional.of(user));
 
-        assertThatThrownBy(() -> userService.resendVerificationEmail(EMAIL))
-                .isInstanceOf(EmailAlreadyVerifiedException.class);
+        int cooldown = userService.resendVerificationEmail(EMAIL);
+
+        assertThat(cooldown).isEqualTo(60);
         verify(emailTokenGeneratorService, never()).generateVerificationToken(any());
     }
 

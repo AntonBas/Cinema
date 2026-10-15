@@ -15,6 +15,7 @@ public interface TicketMapper {
     @Mapping(target = "purchaseTime", source = "ticket.purchaseTime")
     @Mapping(target = "ticketCode", source = "ticket.uniqueCode")
     @Mapping(target = "price", source = "ticket.finalPrice")
+    @Mapping(target = "bookingBonusPointsUsed", source = "ticket.booking.bonusPointsUsed")
     @Mapping(target = "ticketType", source = "ticket.ticketType.displayName")
     @Mapping(target = "movieTitle", source = "ticket.booking.session.movie.title")
     @Mapping(target = "sessionTime", source = "ticket.booking.session.startTime")

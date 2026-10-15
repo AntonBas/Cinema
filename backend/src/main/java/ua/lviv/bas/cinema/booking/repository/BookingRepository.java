@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
 import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
@@ -51,4 +52,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
     int deleteByStatusInAndCreatedDateBefore(@Param("statuses") List<BookingStatus> statuses,
                                              @Param("cutoffDate") Instant cutoffDate,
                                              @Param("everPaidStatuses") List<PaymentStatus> everPaidStatuses);
+
+    @Query("SELECT b.id FROM Booking b WHERE b.status = :status AND b.ticketsEmailSentAt IS NULL "
+            + "AND b.lastModifiedDate >= :from AND b.lastModifiedDate < :to ORDER BY b.lastModifiedDate")
+    List<Long> findIdsAwaitingTicketsEmail(@Param("status") BookingStatus status, @Param("from") Instant from,
+                                           @Param("to") Instant to);
+
+    @Transactional
+    @Modifying
+    @Query("UPDATE Booking b SET b.ticketsEmailSentAt = :sentAt WHERE b.id = :id AND b.ticketsEmailSentAt IS NULL")
+    int markTicketsEmailSent(@Param("id") Long id, @Param("sentAt") Instant sentAt);
 }

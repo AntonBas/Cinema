@@ -64,6 +64,11 @@ export const RefundTable: React.FC<RefundTableProps> = ({
                 <tr key={refund.id}>
                   <td data-label="Created">
                     <div className={styles.stack}>
+                      <span
+                        className={`${styles.secondary} ${styles.mono} ${styles.nowrap}`}
+                      >
+                        {refund.refundNumber}
+                      </span>
                       <span className={`${styles.primary} ${styles.nowrap}`}>
                         {createdAt}
                       </span>

@@ -4,7 +4,13 @@ import { Button } from "@/components/ui/Button/Button";
 import { Modal } from "@/components/ui/Modal/Modal";
 import type { UserProfileResponse, UserUpdateRequest } from "@/types/user";
 import { isApiErrorException } from "@/utils/apiErrorHandler";
-import { validateName, validatePhoneNumber } from "@/utils/formValidation";
+import {
+  validateCity,
+  validateDateOfBirth,
+  validateName,
+  validatePhoneNumber,
+} from "@/utils/formValidation";
+import { useFocusFirstInvalidField } from "@/hooks/common/useFocusFirstInvalidField";
 import styles from "./ProfileEditForm.module.css";
 
 interface ProfileEditFormProps {
@@ -28,6 +34,7 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
     phoneNumber: user.phoneNumber || "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const { formRef, focusFirstInvalidField } = useFocusFirstInvalidField();
   const [showDateChangeWarning, setShowDateChangeWarning] = useState(false);
   const [originalDateOfBirth] = useState(user.dateOfBirth);
   const [dateChangeAcknowledged, setDateChangeAcknowledged] = useState(false);
@@ -54,7 +61,10 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
     if (firstNameError) errors.firstName = firstNameError;
     const lastNameError = validateName(formData.lastName ?? "", "Last name");
     if (lastNameError) errors.lastName = lastNameError;
-    if (!formData.dateOfBirth) errors.dateOfBirth = "Date of birth is required";
+    const dateOfBirthError = validateDateOfBirth(formData.dateOfBirth ?? "");
+    if (dateOfBirthError) errors.dateOfBirth = dateOfBirthError;
+    const cityError = validateCity(formData.city ?? "");
+    if (cityError) errors.city = cityError;
     const phoneError = validatePhoneNumber(formData.phoneNumber ?? "");
     if (phoneError) errors.phoneNumber = phoneError;
 
@@ -64,12 +74,16 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      focusFirstInvalidField();
+      return;
+    }
     try {
       await onSuccess(formData);
     } catch (err) {
       if (isApiErrorException(err) && err.isValidationError()) {
         setFormErrors(err.getValidationErrors());
+        focusFirstInvalidField();
       }
     }
   };
@@ -112,7 +126,12 @@ export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
         </div>
       </Modal>
 
-      <form onSubmit={handleSubmit} className={styles.form}>
+      <form
+        ref={formRef}
+        onSubmit={handleSubmit}
+        className={styles.form}
+        noValidate
+      >
         {user.verificationStatus && (
           <div
             className={`${styles.verificationAlert} ${styles[user.verificationStatus.toLowerCase()]}`}

@@ -53,13 +53,26 @@ public class SeatReservationService {
     @Value("${booking.temp-hold-minutes:5}")
     private int tempHoldMinutes;
 
+    @Cacheable(value = "sessionIds", key = "#publicId")
     public Long resolveSessionId(UUID publicId) {
         return sessionRepository.findByPublicId(publicId)
                 .orElseThrow(() -> new EntityNotFoundException("Session", publicId)).getId();
     }
 
-    @Cacheable(value = "seatAvailability", key = "#sessionId")
     public SeatReservationResponse getAvailability(Long sessionId) {
+        var availability = loadCachedAvailability(sessionId);
+        return availability.sessionTime().isAfter(CinemaTime.now()) ? availability : closedForBooking(availability);
+    }
+
+    private SeatReservationResponse loadCachedAvailability(Long sessionId) {
+        Cache cache = cacheManager.getCache("seatAvailability");
+        if (cache == null) {
+            return buildAvailability(sessionId);
+        }
+        return cache.get(sessionId, () -> buildAvailability(sessionId));
+    }
+
+    private SeatReservationResponse buildAvailability(Long sessionId) {
         log.debug("Fetching seat availability for session: {}", sessionId);
 
         var session = sessionRepository.findById(sessionId)
@@ -74,7 +87,7 @@ public class SeatReservationService {
         Map<Long, ReservationStatus> seatStatusMap = new HashMap<>();
         bookedSeatData.forEach(data -> seatStatusMap.put(data.seatId(), data.status()));
 
-        boolean sessionOpen = isOpenForBooking(session);
+        boolean sessionOpen = session.getStatus() == CinemaSessionStatus.SCHEDULED;
         var seatInfos = allSeats.stream()
                 .map(seat -> buildSeatInfo(seat, seatStatusMap, session, activeTicketTypes, sessionOpen))
                 .toList();
@@ -82,6 +95,16 @@ public class SeatReservationService {
         int availableSeatsCount = (int) seatInfos.stream().filter(SeatReservationResponse.SeatInfo::available).count();
 
         return seatReservationMapper.toResponse(session, seatInfos, availableSeatsCount);
+    }
+
+    private SeatReservationResponse closedForBooking(SeatReservationResponse availability) {
+        var seats = availability.seats().stream()
+                .map(seat -> new SeatReservationResponse.SeatInfo(seat.id(), seat.row(), seat.seatNumber(),
+                        seat.seatType(), seat.x(), seat.y(), false, seat.temporarilyReserved(), seat.active(),
+                        seat.ticketPrices()))
+                .toList();
+        return new SeatReservationResponse(availability.sessionId(), availability.movieTitle(),
+                availability.basePrice(), availability.hallName(), availability.sessionTime(), 0, seats);
     }
 
     @Transactional
@@ -100,11 +123,6 @@ public class SeatReservationService {
         return holdLockedSeat(session, seat, user);
     }
 
-    private boolean isOpenForBooking(Session session) {
-        return session.getStatus() == CinemaSessionStatus.SCHEDULED
-                && session.getStartTime().isAfter(CinemaTime.now());
-    }
-
     private void validateSessionOpenForHolds(Session session) {
         if (session.getStatus() != CinemaSessionStatus.SCHEDULED) {
             throw BookingValidationException.sessionNotAvailable();
@@ -119,16 +137,17 @@ public class SeatReservationService {
         log.info("Creating temporary hold for seat {} in session {} by user {}", seat.getId(), session.getId(),
                 user.getId());
 
-        validateSeat(seat, session);
-
-        var reservation = SeatReservation.builder().seat(seat).session(session).ticketType(null).seatPrice(null)
-                .status(ReservationStatus.PENDING).reservedUntil(Instant.now().plus(Duration.ofMinutes(tempHoldMinutes)))
-                .reservedByUser(user).build();
-
-        var saved = seatReservationRepository.save(reservation);
+        var saved = seatReservationRepository.save(newHold(session, seat, user));
         log.info("Temporary hold created for seat {} in session {} by user {}", seat.getId(), session.getId(),
                 user.getId());
         return saved;
+    }
+
+    public SeatReservation newHold(Session session, Seat seat, User user) {
+        validateSeat(seat, session);
+        return SeatReservation.builder().seat(seat).session(session).ticketType(null).seatPrice(null)
+                .status(ReservationStatus.PENDING).reservedUntil(Instant.now().plus(Duration.ofMinutes(tempHoldMinutes)))
+                .reservedByUser(user).build();
     }
 
     @CacheEvict(value = "seatAvailability", key = "#sessionId")

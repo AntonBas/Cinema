@@ -27,8 +27,6 @@ import { Button } from "@/components/ui/Button/Button";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import { SearchInput } from "@/components/ui/SearchInput/SearchInput";
 import { Pagination } from "@/components/ui/Pagination/Pagination";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
-import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
 import { movieApi } from "@/api/movieApi";
 import { Tabs, type TabItem } from "@/components/ui/Tabs/Tabs";
 import styles from "./MovieTab.module.css";
@@ -63,7 +61,6 @@ export const MovieTab: React.FC = () => {
     UPCOMING: { data: [], total: 0, pagination: null },
     ARCHIVED: { data: [], total: 0, pagination: null },
   });
-  const [loadingMovie, setLoadingMovie] = useState(false);
   const [tabLoading, setTabLoading] = useState(true);
 
   const { page, query, getParam, setParams, setPage, setSearch } =
@@ -75,10 +72,6 @@ export const MovieTab: React.FC = () => {
   );
   const { loading: moviesLoading, remove } = useMovie();
   const { showNotification } = useNotification();
-  const showLoading = useDelayedLoading(tabLoading || loadingMovie, {
-    delay: 150,
-    minDisplayTime: 300,
-  });
 
   const latestRequestRef = useRef<Record<MovieTabType, number>>({
     CURRENT: 0,
@@ -204,7 +197,6 @@ export const MovieTab: React.FC = () => {
 
   const handleEdit = useCallback(
     async (movie: MovieCardResponse) => {
-      setLoadingMovie(true);
       try {
         const response = await movieApi.admin.getById(movie.id);
         if (response?.data) {
@@ -216,8 +208,6 @@ export const MovieTab: React.FC = () => {
           isApiErrorException(error) ? error.message : "Failed to load movie",
           "error",
         );
-      } finally {
-        setLoadingMovie(false);
       }
     },
     [showNotification],
@@ -271,14 +261,6 @@ export const MovieTab: React.FC = () => {
     setEditingMovie(null);
     setIsModalOpen(true);
   }, []);
-
-  if (showLoading && !currentTabData.data.length && !query) {
-    return (
-      <div className={styles.loading}>
-        <LoadingSpinner text={`Loading ${activeTab.toLowerCase()} movies...`} />
-      </div>
-    );
-  }
 
   const tabCounts = {
     CURRENT: tabData.CURRENT.total,

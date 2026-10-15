@@ -44,7 +44,9 @@ public interface MovieRepository extends JpaRepository<Movie, Long>, JpaSpecific
     List<Session> findUpcomingSessionsByMovieSlug(@Param("slug") String slug, @Param("now") LocalDateTime now);
 
     @Query("SELECT m FROM Movie m WHERE " +
-            "(m.status = 'UPCOMING' AND m.releaseDate <= :today) OR " +
-            "(m.status = 'CURRENT' AND m.endShowingDate < :today)")
+            "(m.releaseDate > :today AND m.status <> 'UPCOMING') OR " +
+            "(m.releaseDate <= :today AND (m.endShowingDate IS NULL OR m.endShowingDate >= :today) " +
+            "AND m.status <> 'CURRENT') OR " +
+            "(m.releaseDate <= :today AND m.endShowingDate < :today AND m.status <> 'ARCHIVED')")
     List<Movie> findCandidatesForStatusUpdate(@Param("today") LocalDate today);
 }

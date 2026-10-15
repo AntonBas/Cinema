@@ -52,7 +52,7 @@ public class MovieScheduler {
             Stream.of("singleMovies", "movieLists").map(cacheManager::getCache).filter(Objects::nonNull)
                     .forEach(Cache::clear);
         }
-        log.info("Movie status summary - CURRENT: {}, UPCOMING: {}, ARCHIVED: {}", summary.currentCount(),
+        log.info("Movie status transitions - to CURRENT: {}, to UPCOMING: {}, to ARCHIVED: {}", summary.currentCount(),
                 summary.upcomingCount(), summary.archivedCount());
         log.info("Movie status update completed");
     }
@@ -66,9 +66,10 @@ public class MovieScheduler {
         for (Movie movie : movies) {
             MovieStatus newStatus = movieStatusCalculator.calculate(movie, referenceDate);
 
-            if (movie.getStatus() != newStatus && updateStatus(movie.getId(), newStatus)) {
-                updatedCount++;
+            if (movie.getStatus() == newStatus || !updateStatus(movie.getId(), newStatus)) {
+                continue;
             }
+            updatedCount++;
 
             switch (newStatus) {
             case CURRENT -> currentCount++;
