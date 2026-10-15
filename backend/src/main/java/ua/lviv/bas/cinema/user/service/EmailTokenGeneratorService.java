@@ -1,6 +1,5 @@
 package ua.lviv.bas.cinema.user.service;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -57,13 +56,7 @@ public class EmailTokenGeneratorService {
 
     private EmailToken buildEmailToken(String token, User user, TokenType tokenType, String newEmail) {
         EmailToken.EmailTokenBuilder builder = EmailToken.builder().token(token).user(user).type(tokenType)
-                .createdAt(Instant.now());
-
-        Instant expiresAt = switch (tokenType) {
-        case VERIFICATION, PASSWORD_RESET -> Instant.now().plus(Duration.ofMinutes(10));
-        case EMAIL_CHANGE -> Instant.now().plus(Duration.ofHours(24));
-        };
-        builder.expiresAt(expiresAt);
+                .createdAt(Instant.now()).expiresAt(Instant.now().plus(tokenType.getValidity()));
 
         if (tokenType == TokenType.EMAIL_CHANGE) {
             builder.newEmail(newEmail);
@@ -74,11 +67,11 @@ public class EmailTokenGeneratorService {
 
     private void sendEmail(String email, String token, TokenType tokenType, String newEmail) {
         switch (tokenType) {
-        case VERIFICATION -> emailService.sendVerificationEmail(email, token);
-        case PASSWORD_RESET -> emailService.sendPasswordResetEmail(email, token);
+        case VERIFICATION -> emailService.sendVerificationEmail(email, token, tokenType.getValidity());
+        case PASSWORD_RESET -> emailService.sendPasswordResetEmail(email, token, tokenType.getValidity());
         case EMAIL_CHANGE -> {
             if (newEmail != null) {
-                emailService.sendEmailChangeConfirmation(newEmail, token);
+                emailService.sendEmailChangeConfirmation(newEmail, token, tokenType.getValidity());
             } else {
                 log.error("New email is null for EMAIL_CHANGE token type");
             }

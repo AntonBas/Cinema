@@ -12,6 +12,7 @@ import ua.lviv.bas.cinema.exception.infrastructure.ExternalServiceException;
 import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,6 +35,12 @@ public class EmailService {
     @Value("${app.company.name:Cinema}")
     private String companyName;
 
+    @Value("${app.company.support-email:}")
+    private String supportEmail;
+
+    @Value("${app.refund-policy.processing-time:5-7 business days}")
+    private String refundProcessingTime;
+
     public EmailService(@Value("${app.mail.api-key:}") String apiKey,
                          @Value("${app.email.from:noreply@bascinema.com}") String fromEmail) {
         this.fromEmail = fromEmail;
@@ -44,23 +51,25 @@ public class EmailService {
     }
 
     @Async(AsyncConfig.EMAIL_EXECUTOR)
-    public void sendVerificationEmail(String toEmail, String token) {
+    public void sendVerificationEmail(String toEmail, String token, Duration linkValidity) {
         String link = frontendUrl + "/verify-email/" + token;
         String html = buildActionEmail("Confirm Your Email Address",
                 "Thank you for registering with " + companyName + "! To activate your account, click the button below.",
                 "Confirm Email", link,
-                "This link will expire in 10 minutes. If you didn't create an account, please ignore this email.");
+                "This link will expire in " + describe(linkValidity)
+                        + ". If you didn't create an account, please ignore this email.");
 
         sendCriticalEmail(toEmail, "Confirm Your Email Address", html);
     }
 
     @Async(AsyncConfig.EMAIL_EXECUTOR)
-    public void sendPasswordResetEmail(String toEmail, String token) {
+    public void sendPasswordResetEmail(String toEmail, String token, Duration linkValidity) {
         String link = frontendUrl + "/reset-password/" + token;
         String html = buildActionEmail("Password Reset Request",
                 "You have requested to reset your password for your " + companyName + " account.",
                 "Reset Password", link,
-                "This link will expire in 10 minutes. If you didn't request a password reset, please ignore this email.");
+                "This link will expire in " + describe(linkValidity)
+                        + ". If you didn't request a password reset, please ignore this email.");
 
         sendCriticalEmail(toEmail, "Password Reset Request", html);
     }
@@ -86,7 +95,7 @@ public class EmailService {
                         + "<li>QR codes available in your account</li></ul>",
                 "This is an automated email. Please do not reply.");
 
-        sendNonCriticalEmail(toEmail, "Your Tickets: " + movieTitle, html);
+        sendCriticalEmail(toEmail, "Your Tickets: " + movieTitle, html);
     }
 
     @Async(AsyncConfig.EMAIL_EXECUTOR)
@@ -115,7 +124,7 @@ public class EmailService {
         String html = buildDetailsEmail("Payment Refunded - " + movieTitle, details,
                 "Your payment arrived after the booking had already expired, so no tickets were issued. "
                         + "The full amount has been refunded to your original payment method and will arrive "
-                        + "within 3-5 business days.",
+                        + "within " + refundProcessingTime + ".",
                 "This is an automated email. Please do not reply.");
 
         sendNonCriticalEmail(toEmail, "Payment Refunded: " + movieTitle, html);
@@ -136,7 +145,7 @@ public class EmailService {
         String processedAt = CinemaTime.now().format(DATE_TIME_FORMATTER);
         String html = buildDetailsEmail("Refund Confirmation - " + movieTitle, details,
                 "Your refund request has been successfully processed. The refunded amount will be returned to your "
-                        + "original payment method within 3-5 business days.<br><br>"
+                        + "original payment method within " + refundProcessingTime + ".<br><br>"
                         + "<strong>Refund Summary:</strong><ul style=\"margin:8px 0;padding-left:20px\">"
                         + "<li>Ticket price refunded: " + refundAmount + " UAH</li>"
                         + "<li>Refund processed at: " + processedAt + "</li></ul>"
@@ -147,12 +156,13 @@ public class EmailService {
     }
 
     @Async(AsyncConfig.EMAIL_EXECUTOR)
-    public void sendEmailChangeConfirmation(String toEmail, String token) {
+    public void sendEmailChangeConfirmation(String toEmail, String token, Duration linkValidity) {
         String link = frontendUrl + "/confirm-email-change/" + token;
         String html = buildActionEmail("Confirm Your Email Change",
                 "You have requested to change your " + companyName + " account email address.",
                 "Confirm Email Change", link,
-                "This link will expire in 24 hours. If you didn't request this change, please ignore this email.");
+                "This link will expire in " + describe(linkValidity)
+                        + ". If you didn't request this change, please ignore this email.");
 
         sendCriticalEmail(toEmail, "Confirm Your Email Change", html);
     }
@@ -162,16 +172,19 @@ public class EmailService {
         String html = buildPlainEmail("Email Address Changed",
                 "Your " + companyName + " account email address has been successfully changed:<br><br>"
                         + "Old email: " + escape(oldEmail) + "<br>New email: " + escape(newEmail) + "<br><br>"
-                        + "If you didn't make this change, please contact our support team immediately.");
+                        + "If you didn't make this change, contact us at " + supportContact() + " immediately.");
 
         sendNonCriticalEmail(oldEmail, "Email Address Changed", html);
     }
 
     @Async(AsyncConfig.EMAIL_EXECUTOR)
     public void sendPasswordChangedNotification(String toEmail) {
+        String changedAt = CinemaTime.now().format(DATE_TIME_FORMATTER);
         String html = buildPlainEmail("Password Changed",
-                "Your " + companyName + " account password was just changed. If you didn't make this change, "
-                        + "please contact our support team immediately.");
+                "Your " + companyName + " account password was changed on " + changedAt + " (Kyiv time).<br><br>"
+                        + "If you didn't make this change, reset your password at "
+                        + "<a href=\"" + frontendUrl + "/forgot-password\">" + frontendUrl + "/forgot-password</a> "
+                        + "and contact us at " + supportContact() + " immediately.");
 
         sendNonCriticalEmail(toEmail, "Your Password Was Changed", html);
     }
@@ -290,6 +303,20 @@ public class EmailService {
                   </div>
                 </div>
                 """.formatted(companyName, escape(title), bodyHtml);
+    }
+
+    private String supportContact() {
+        String email = escape(supportEmail);
+        return "<a href=\"mailto:" + email + "\">" + email + "</a>";
+    }
+
+    private static String describe(Duration duration) {
+        long minutes = duration.toMinutes();
+        return minutes % 60 == 0 ? pluralize(minutes / 60, "hour") : pluralize(minutes, "minute");
+    }
+
+    private static String pluralize(long count, String unit) {
+        return count + " " + unit + (count == 1 ? "" : "s");
     }
 
     private String escape(String value) {

@@ -151,8 +151,7 @@ public class AuthController {
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Resend email verification")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Verification email sent, or silently ignored if email is unknown"),
-            @ApiResponse(responseCode = "400", description = "Email already verified"),
+            @ApiResponse(responseCode = "200", description = "Verification email sent, or silently ignored if email is unknown or already verified"),
             @ApiResponse(responseCode = "429", description = "Resend requested too soon")
     })
     @SecurityRequirements()

@@ -93,17 +93,36 @@ public class UserPasswordResetServiceTest {
     }
 
     @Test
-    void requestResetShouldSilentlyReturnWhenEmailNotVerified() {
+    void requestResetShouldSendVerificationEmailWhenEmailNotVerified() {
         String email = "test@example.com";
         User user = new User();
         user.setEmail(email);
         user.setEmailVerified(false);
+        user.setEnabled(true);
 
         when(userRepository.findByEmailForUpdate(email)).thenReturn(Optional.of(user));
 
         userPasswordResetService.requestReset(email);
 
         verify(tokenGeneratorService, never()).generatePasswordResetToken(any());
+        verify(tokenGeneratorService).generateVerificationToken(user);
+        assertThat(user.getLastVerificationEmailSentAt()).isNotNull();
+    }
+
+    @Test
+    void requestResetShouldSkipVerificationEmailForUnverifiedAccountWithinCooldown() {
+        String email = "test@example.com";
+        User user = new User();
+        user.setEmail(email);
+        user.setEmailVerified(false);
+        user.setEnabled(true);
+        user.setLastVerificationEmailSentAt(Instant.now().minusSeconds(10));
+
+        when(userRepository.findByEmailForUpdate(email)).thenReturn(Optional.of(user));
+
+        userPasswordResetService.requestReset(email);
+
+        verify(tokenGeneratorService, never()).generateVerificationToken(any());
     }
 
     @Test

@@ -79,6 +79,7 @@ app:
     format: PNG
   company:
     name: "Bas Cinema"
+    support-email: ${SUPPORT_EMAIL:basantonoleg@gmail.com}
   frontend:
     url: ${FRONTEND_URL:http://localhost:5173}
   cors:
@@ -91,7 +92,7 @@ app:
     dir: ${UPLOAD_DIR:uploads}
   refund-policy:
     processing-time: "5-7 business days"
-    contact-email: "support@bascinema.com"
+    contact-email: ${app.company.support-email}
     rules:
       - name: "Full Refund"
         description: "100% refund — 48+ hours before the session"
