@@ -5,6 +5,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
@@ -15,6 +17,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -22,6 +25,12 @@ class SessionStatusSchedulerTest {
 
     @Mock
     private SessionRepository sessionRepository;
+    @Mock
+    private CacheManager cacheManager;
+    @Mock
+    private Cache sessionsCache;
+    @Mock
+    private Cache adminSessionsCache;
 
     @InjectMocks
     private SessionStatusScheduler sessionStatusScheduler;
@@ -34,6 +43,7 @@ class SessionStatusSchedulerTest {
         sessionStatusScheduler.updateSessionStatuses();
 
         verify(sessionRepository, never()).updateStatusForIds(any(), any(), any());
+        verifyNoInteractions(cacheManager);
     }
 
     @Test
@@ -48,6 +58,8 @@ class SessionStatusSchedulerTest {
                 CinemaSessionStatus.ONGOING)).thenReturn(1);
         when(sessionRepository.updateStatusForIds(List.of(2L), CinemaSessionStatus.ONGOING,
                 CinemaSessionStatus.COMPLETED)).thenReturn(1);
+        when(cacheManager.getCache("sessions")).thenReturn(sessionsCache);
+        when(cacheManager.getCache("adminSessions")).thenReturn(adminSessionsCache);
 
         sessionStatusScheduler.updateSessionStatuses();
 
@@ -55,5 +67,7 @@ class SessionStatusSchedulerTest {
                 CinemaSessionStatus.ONGOING);
         verify(sessionRepository).updateStatusForIds(List.of(2L), CinemaSessionStatus.ONGOING,
                 CinemaSessionStatus.COMPLETED);
+        verify(sessionsCache).clear();
+        verify(adminSessionsCache).clear();
     }
 }

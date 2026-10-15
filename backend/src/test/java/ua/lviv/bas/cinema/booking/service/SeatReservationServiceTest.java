@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -37,10 +38,10 @@ import ua.lviv.bas.cinema.common.PriceCalculatorService;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -49,6 +50,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -267,6 +269,8 @@ public class SeatReservationServiceTest {
         when(seatReservationMapper.toSeatInfo(testSeat, false, false, List.of())).thenReturn(
                 new SeatReservationResponse.SeatInfo(SEAT_ID, 1, 1, SeatType.STANDARD, 0, 0, false, false, true,
                         List.of()));
+        when(seatReservationMapper.toResponse(eq(testSession), any(), eq(0))).thenReturn(new SeatReservationResponse(
+                SESSION_ID, "Test Movie", BASE_PRICE, "Hall A", testSession.getStartTime(), 0, List.of()));
 
         seatReservationService.getAvailability(SESSION_ID);
 
@@ -295,7 +299,7 @@ public class SeatReservationServiceTest {
         when(seatReservationMapper.toSeatInfo(testSeat, true, false, List.of(priceInfo))).thenReturn(seatInfo);
 
         SeatReservationResponse expected = new SeatReservationResponse(SESSION_ID, "Test Movie", BASE_PRICE, "Hall A",
-                LocalDateTime.of(2024, 1, 15, 18, 30), 1, List.of(seatInfo));
+                testSession.getStartTime(), 1, List.of(seatInfo));
         when(seatReservationMapper.toResponse(testSession, List.of(seatInfo), 1)).thenReturn(expected);
 
         SeatReservationResponse result = seatReservationService.getAvailability(SESSION_ID);
@@ -303,6 +307,35 @@ public class SeatReservationServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.sessionId()).isEqualTo(SESSION_ID);
         assertThat(result.availableSeats()).isEqualTo(1);
+    }
+
+    @Test
+    void getAvailabilityFromCacheAfterSessionStartShouldMarkSeatsUnavailable() {
+        var openSeat = new SeatReservationResponse.SeatInfo(SEAT_ID, 1, 1, SeatType.STANDARD, 0, 0, true, false, true,
+                List.of());
+        var cached = new SeatReservationResponse(SESSION_ID, "Test Movie", BASE_PRICE, "Hall A",
+                CinemaTime.now().minusMinutes(1), 1, List.of(openSeat));
+        when(cacheManager.getCache("seatAvailability")).thenReturn(cache);
+        when(cache.get(eq(SESSION_ID), ArgumentMatchers.<Callable<SeatReservationResponse>>any())).thenReturn(cached);
+
+        SeatReservationResponse result = seatReservationService.getAvailability(SESSION_ID);
+
+        assertThat(result.availableSeats()).isZero();
+        assertThat(result.seats()).singleElement().satisfies(seat -> {
+            assertThat(seat.available()).isFalse();
+            assertThat(seat.active()).isTrue();
+        });
+        verifyNoInteractions(sessionRepository);
+    }
+
+    @Test
+    void getAvailabilityFromCacheBeforeSessionStartShouldReturnCachedValue() {
+        var cached = new SeatReservationResponse(SESSION_ID, "Test Movie", BASE_PRICE, "Hall A",
+                CinemaTime.now().plusHours(1), 1, List.of());
+        when(cacheManager.getCache("seatAvailability")).thenReturn(cache);
+        when(cache.get(eq(SESSION_ID), ArgumentMatchers.<Callable<SeatReservationResponse>>any())).thenReturn(cached);
+
+        assertThat(seatReservationService.getAvailability(SESSION_ID)).isSameAs(cached);
     }
 
     @Test

@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.booking.domain.SeatReservation;
@@ -58,8 +57,20 @@ public class SeatReservationService {
                 .orElseThrow(() -> new EntityNotFoundException("Session", publicId)).getId();
     }
 
-    @Cacheable(value = "seatAvailability", key = "#sessionId")
     public SeatReservationResponse getAvailability(Long sessionId) {
+        var availability = loadCachedAvailability(sessionId);
+        return availability.sessionTime().isAfter(CinemaTime.now()) ? availability : closedForBooking(availability);
+    }
+
+    private SeatReservationResponse loadCachedAvailability(Long sessionId) {
+        Cache cache = cacheManager.getCache("seatAvailability");
+        if (cache == null) {
+            return buildAvailability(sessionId);
+        }
+        return cache.get(sessionId, () -> buildAvailability(sessionId));
+    }
+
+    private SeatReservationResponse buildAvailability(Long sessionId) {
         log.debug("Fetching seat availability for session: {}", sessionId);
 
         var session = sessionRepository.findById(sessionId)
@@ -74,7 +85,7 @@ public class SeatReservationService {
         Map<Long, ReservationStatus> seatStatusMap = new HashMap<>();
         bookedSeatData.forEach(data -> seatStatusMap.put(data.seatId(), data.status()));
 
-        boolean sessionOpen = isOpenForBooking(session);
+        boolean sessionOpen = session.getStatus() == CinemaSessionStatus.SCHEDULED;
         var seatInfos = allSeats.stream()
                 .map(seat -> buildSeatInfo(seat, seatStatusMap, session, activeTicketTypes, sessionOpen))
                 .toList();
@@ -82,6 +93,16 @@ public class SeatReservationService {
         int availableSeatsCount = (int) seatInfos.stream().filter(SeatReservationResponse.SeatInfo::available).count();
 
         return seatReservationMapper.toResponse(session, seatInfos, availableSeatsCount);
+    }
+
+    private SeatReservationResponse closedForBooking(SeatReservationResponse availability) {
+        var seats = availability.seats().stream()
+                .map(seat -> new SeatReservationResponse.SeatInfo(seat.id(), seat.row(), seat.seatNumber(),
+                        seat.seatType(), seat.x(), seat.y(), false, seat.temporarilyReserved(), seat.active(),
+                        seat.ticketPrices()))
+                .toList();
+        return new SeatReservationResponse(availability.sessionId(), availability.movieTitle(),
+                availability.basePrice(), availability.hallName(), availability.sessionTime(), 0, seats);
     }
 
     @Transactional
@@ -98,11 +119,6 @@ public class SeatReservationService {
         var seat = lockSeat(seatId);
 
         return holdLockedSeat(session, seat, user);
-    }
-
-    private boolean isOpenForBooking(Session session) {
-        return session.getStatus() == CinemaSessionStatus.SCHEDULED
-                && session.getStartTime().isAfter(CinemaTime.now());
     }
 
     private void validateSessionOpenForHolds(Session session) {

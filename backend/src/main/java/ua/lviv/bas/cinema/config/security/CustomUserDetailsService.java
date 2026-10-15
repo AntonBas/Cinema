@@ -21,9 +21,18 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 
     @Override
-    @Cacheable(value = "userDetails", key = "T(ua.lviv.bas.cinema.common.EmailNormalizer).normalize(#email)")
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        return new CustomUserDetails(findUser(email));
+    }
+
+    @Cacheable(value = "userDetails", key = "T(ua.lviv.bas.cinema.common.EmailNormalizer).normalize(#email)")
+    @Transactional(readOnly = true)
+    public CustomUserDetails loadTokenPrincipal(String email) throws UsernameNotFoundException {
+        return CustomUserDetails.withoutPassword(findUser(email));
+    }
+
+    private User findUser(String email) {
         log.debug("Attempting to load user by email: {}", email);
 
         User user = userRepository.findByEmail(email).orElseThrow(() -> {
@@ -37,7 +46,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         log.debug("User loaded successfully: {}, role: {}, enabled: {}", email, user.getUserRole(), user.isEnabled());
 
-        return new CustomUserDetails(user);
+        return user;
     }
 
     @CacheEvict(value = "userDetails", key = "T(ua.lviv.bas.cinema.common.EmailNormalizer).normalize(#email)")

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -47,19 +48,41 @@ class CustomUserDetailsServiceCacheIntegrationTest {
     private UserRepository userRepository;
     @Autowired
     private PlatformTransactionManager transactionManager;
+    @Autowired
+    private StringRedisTemplate redisTemplate;
 
     @Test
-    void loadUserByUsernameShouldBeServedFromCacheAfterFirstLoad() {
+    void cachedTokenPrincipalShouldNotContainPasswordHash() {
+        var saved = userRepository.save(buildUser("no.password@test.com", UserRole.ROLE_USER));
+
+        customUserDetailsService.loadTokenPrincipal(saved.getEmail());
+
+        var cachedJson = redisTemplate.opsForValue().get("v3::userDetails::" + saved.getEmail());
+        assertThat(cachedJson).isNotNull().doesNotContain("\"password\"").doesNotContain("hashed-password");
+        assertThat(customUserDetailsService.loadTokenPrincipal(saved.getEmail()).getPassword()).isNull();
+    }
+
+    @Test
+    void loadUserByUsernameShouldBypassCacheAndKeepPasswordForLogin() {
+        var saved = userRepository.save(buildUser("login@test.com", UserRole.ROLE_USER));
+        customUserDetailsService.loadTokenPrincipal(saved.getEmail());
+
+        assertThat(customUserDetailsService.loadUserByUsername(saved.getEmail()).getPassword())
+                .isEqualTo("hashed-password");
+    }
+
+    @Test
+    void loadTokenPrincipalShouldBeServedFromCacheAfterFirstLoad() {
         var saved = userRepository.save(buildUser("original@test.com", UserRole.ROLE_USER));
 
-        var firstLoad = (CustomUserDetails) customUserDetailsService.loadUserByUsername(saved.getEmail());
+        var firstLoad = customUserDetailsService.loadTokenPrincipal(saved.getEmail());
         assertThat(firstLoad.getRole()).isEqualTo(UserRole.ROLE_USER.name());
 
         var staleEntity = userRepository.findById(saved.getId()).orElseThrow();
         staleEntity.setUserRole(UserRole.ROLE_ADMIN);
         userRepository.save(staleEntity);
 
-        var cachedLoad = (CustomUserDetails) customUserDetailsService.loadUserByUsername(saved.getEmail());
+        var cachedLoad = customUserDetailsService.loadTokenPrincipal(saved.getEmail());
         assertThat(cachedLoad.getRole()).isEqualTo(UserRole.ROLE_USER.name());
     }
 
@@ -67,21 +90,21 @@ class CustomUserDetailsServiceCacheIntegrationTest {
     void evictShouldForceFreshLoadFromDatabase() {
         var saved = userRepository.save(buildUser("evict@test.com", UserRole.ROLE_USER));
 
-        customUserDetailsService.loadUserByUsername(saved.getEmail());
+        customUserDetailsService.loadTokenPrincipal(saved.getEmail());
 
         var updated = userRepository.findById(saved.getId()).orElseThrow();
         updated.setUserRole(UserRole.ROLE_ADMIN);
         userRepository.save(updated);
         customUserDetailsService.evict(saved.getEmail());
 
-        var freshLoad = (CustomUserDetails) customUserDetailsService.loadUserByUsername(saved.getEmail());
+        var freshLoad = customUserDetailsService.loadTokenPrincipal(saved.getEmail());
         assertThat(freshLoad.getRole()).isEqualTo(UserRole.ROLE_ADMIN.name());
     }
 
     @Test
     void evictInsideTransactionShouldNotLetConcurrentReaderCacheStaleValueBeforeCommit() throws Exception {
         var saved = userRepository.save(buildUser("tx.evict@test.com", UserRole.ROLE_USER));
-        customUserDetailsService.loadUserByUsername(saved.getEmail());
+        customUserDetailsService.loadTokenPrincipal(saved.getEmail());
         var transactionTemplate = new TransactionTemplate(transactionManager);
         var executor = Executors.newSingleThreadExecutor();
 
@@ -91,7 +114,7 @@ class CustomUserDetailsServiceCacheIntegrationTest {
             userRepository.saveAndFlush(user);
             customUserDetailsService.evict(saved.getEmail());
             try {
-                executor.submit(() -> customUserDetailsService.loadUserByUsername(saved.getEmail()))
+                executor.submit(() -> customUserDetailsService.loadTokenPrincipal(saved.getEmail()))
                         .get(10, TimeUnit.SECONDS);
             } catch (Exception e) {
                 throw new IllegalStateException(e);
@@ -99,7 +122,7 @@ class CustomUserDetailsServiceCacheIntegrationTest {
         });
         executor.shutdown();
 
-        var afterCommit = (CustomUserDetails) customUserDetailsService.loadUserByUsername(saved.getEmail());
+        var afterCommit = customUserDetailsService.loadTokenPrincipal(saved.getEmail());
         assertThat(afterCommit.getRole()).isEqualTo(UserRole.ROLE_ADMIN.name());
     }
 

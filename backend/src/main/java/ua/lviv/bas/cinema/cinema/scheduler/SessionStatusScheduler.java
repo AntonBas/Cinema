@@ -2,8 +2,11 @@ package ua.lviv.bas.cinema.cinema.scheduler;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
-import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,9 +24,9 @@ import ua.lviv.bas.cinema.common.CinemaTime;
 public class SessionStatusScheduler {
 
     private final SessionRepository sessionRepository;
+    private final CacheManager cacheManager;
 
     @Scheduled(cron = "${scheduler.session-status.cron:0 */5 * * * *}")
-    @CacheEvict(value = {"sessions", "adminSessions"}, allEntries = true)
     @Transactional
     public void updateSessionStatuses() {
         log.debug("Starting scheduled session status update");
@@ -35,6 +38,10 @@ public class SessionStatusScheduler {
                 CinemaSessionStatus.ONGOING, CinemaSessionStatus.COMPLETED);
 
         log.info("Session status update completed: {} started, {} completed", startedCount, completedCount);
+        if (startedCount + completedCount > 0) {
+            Stream.of("sessions", "adminSessions").map(cacheManager::getCache).filter(Objects::nonNull)
+                    .forEach(Cache::clear);
+        }
     }
 
     private int updateStatuses(List<Session> sessions, CinemaSessionStatus fromStatus, CinemaSessionStatus newStatus) {
