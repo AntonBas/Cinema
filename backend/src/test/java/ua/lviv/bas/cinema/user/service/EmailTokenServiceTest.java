@@ -68,7 +68,7 @@ public class EmailTokenServiceTest {
 
         String result = emailTokenService.confirmEmail(TOKEN);
 
-        assertThat(result).contains("successfully");
+        assertThat(result).isEqualTo(USER_EMAIL);
         assertThat(user.isEmailVerified()).isTrue();
         assertThat(emailToken.isConfirmed()).isTrue();
         verify(userRepository).save(user);

@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import jakarta.servlet.http.Cookie;
+import ua.lviv.bas.cinema.exception.domain.auth.InvalidTokenException;
 import ua.lviv.bas.cinema.config.ratelimit.InMemoryProxyManager;
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
@@ -47,6 +48,7 @@ import java.util.Optional;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -284,6 +286,24 @@ public class AuthControllerTest {
                 .andExpect(status().isOk());
 
         verify(passwordResetService).reset("token123", "newPass123");
+    }
+
+    @Test
+    void validateResetTokenShouldReturnNoContentForValidToken() throws Exception {
+        mockMvc.perform(post("/api/auth/password/reset/validate").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"token123\"}"))
+                .andExpect(status().isNoContent());
+
+        verify(passwordResetService).validateResetToken("token123");
+    }
+
+    @Test
+    void validateResetTokenShouldReturnBadRequestForInvalidToken() throws Exception {
+        doThrow(new InvalidTokenException("password-reset")).when(passwordResetService).validateResetToken("bad");
+
+        mockMvc.perform(post("/api/auth/password/reset/validate").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"bad\"}"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

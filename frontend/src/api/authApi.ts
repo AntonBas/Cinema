@@ -32,6 +32,8 @@ export const authApi = {
       params: { email },
     }),
 
+  validateResetToken: (token: string) =>
+    api.post<void>(`${API_URL}/password/reset/validate`, { token }),
   resetPassword: (token: string, newPassword: string) =>
     api.post<void>(`${API_URL}/password/reset`, { token, newPassword }),
 
@@ -52,7 +54,11 @@ export const authApi = {
     ),
 
   verifyEmail: (token: string) =>
-    api.post<void>(`${TOKENS_URL}/email/verify`, null, { params: { token } }),
+    api.post<{ message: string; email: string }>(
+      `${TOKENS_URL}/email/verify`,
+      null,
+      { params: { token } },
+    ),
 
   confirmEmailChange: (token: string) =>
     api.post<void>(`${TOKENS_URL}/email/change/confirm`, null, {

@@ -83,6 +83,13 @@ public class UserPasswordResetService {
                 && Duration.between(Instant.now(), lastSentAt.plusSeconds(RESET_COOLDOWN_SECONDS)).isPositive();
     }
 
+    @Transactional(readOnly = true)
+    public void validateResetToken(String token) {
+        var resetToken = tokenRepository.findByToken(token)
+                .orElseThrow(() -> new InvalidTokenException("password-reset"));
+        validateToken(resetToken);
+    }
+
     @Transactional
     public void reset(String token, String newPassword) {
         var resetToken = tokenRepository.findByToken(token)

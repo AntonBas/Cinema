@@ -46,8 +46,8 @@ public class TokenController {
             @Parameter(description = "Email verification token", required = true) @RequestParam @NotBlank String token) {
 
         log.info("Email verification attempt");
-        String message = emailTokenService.confirmEmail(token);
-        return ResponseEntity.ok(Map.of("message", message));
+        String email = emailTokenService.confirmEmail(token);
+        return ResponseEntity.ok(Map.of("message", "Email successfully verified! You can now log in.", "email", email));
     }
 
     @RateLimit

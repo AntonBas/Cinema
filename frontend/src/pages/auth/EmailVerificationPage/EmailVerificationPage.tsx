@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { XCircle, CheckCircle2 } from "lucide-react";
 import { authApi } from "@/api/authApi";
@@ -20,6 +20,7 @@ export const EmailVerificationPage: React.FC = () => {
   );
   const [errorMessage, setErrorMessage] = useState("");
   const [alreadyVerified, setAlreadyVerified] = useState(false);
+  const [verifiedEmail, setVerifiedEmail] = useState<string | null>(null);
   const requestedRef = useRef(false);
   const [email, setEmail] = useState(searchParams.get("email") || "");
   const { resend, cooldown, sending, message, messageType } =
@@ -39,7 +40,8 @@ export const EmailVerificationPage: React.FC = () => {
 
     const verifyEmail = async () => {
       try {
-        await authApi.verifyEmail(verificationToken);
+        const response = await authApi.verifyEmail(verificationToken);
+        setVerifiedEmail(response.data.email);
         setStatus("success");
       } catch (error) {
         if (isApiErrorException(error) && error.isConflict()) {
@@ -59,11 +61,20 @@ export const EmailVerificationPage: React.FC = () => {
     verifyEmail();
   }, [verificationToken]);
 
+  const goToLogin = useCallback(
+    () =>
+      navigate(
+        "/login",
+        verifiedEmail ? { state: { email: verifiedEmail } } : undefined,
+      ),
+    [navigate, verifiedEmail],
+  );
+
   useEffect(() => {
     if (status !== "success") return;
-    const timerId = setTimeout(() => navigate("/login"), 5000);
+    const timerId = setTimeout(goToLogin, 5000);
     return () => clearTimeout(timerId);
-  }, [status, navigate]);
+  }, [status, goToLogin]);
 
   if (status === "loading") {
     return (
@@ -145,7 +156,7 @@ export const EmailVerificationPage: React.FC = () => {
         <p className={styles.redirectText}>
           Redirecting to login page in 5 seconds...
         </p>
-        <Button variant="primary" onClick={() => navigate("/login")}>
+        <Button variant="primary" onClick={goToLogin}>
           Go to Login Now
         </Button>
       </AuthCard>

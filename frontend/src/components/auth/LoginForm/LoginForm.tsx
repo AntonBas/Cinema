@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useAuthActions } from "@/hooks/features/auth/useAuthActions";
 import { Input } from "@/components/ui/Input/Input";
 import { Button } from "@/components/ui/Button/Button";
@@ -23,7 +23,10 @@ export const LoginForm: React.FC = () => {
     REDIRECT_ERROR_MESSAGES[searchParams.get("error") ?? ""];
   const redirectInfo = REDIRECT_INFO_MESSAGES[searchParams.get("reason") ?? ""];
 
-  const [email, setEmail] = useState("");
+  const location = useLocation();
+  const [email, setEmail] = useState<string>(
+    (location.state as { email?: string } | null)?.email ?? "",
+  );
   const [password, setPassword] = useState("");
   const [formErrors, setFormErrors] = useState<{
     email?: string;

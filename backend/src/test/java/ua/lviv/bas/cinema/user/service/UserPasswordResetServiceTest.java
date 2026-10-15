@@ -24,6 +24,7 @@ import java.time.Instant;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
@@ -269,6 +270,37 @@ public class UserPasswordResetServiceTest {
                 .isInstanceOf(InvalidTokenException.class);
 
         verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void validateResetTokenShouldPassForUnusedToken() {
+        String token = "valid-token";
+        EmailToken resetToken = EmailToken.builder().token(token).type(TokenType.PASSWORD_RESET)
+                .expiresAt(Instant.now().plus(Duration.ofMinutes(30))).user(new User()).build();
+
+        when(tokenRepository.findByToken(token)).thenReturn(Optional.of(resetToken));
+
+        assertThatCode(() -> userPasswordResetService.validateResetToken(token)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateResetTokenShouldThrowForUsedToken() {
+        String token = "used-token";
+        EmailToken resetToken = EmailToken.builder().token(token).type(TokenType.PASSWORD_RESET)
+                .expiresAt(Instant.now().plus(Duration.ofMinutes(30))).user(new User()).confirmed(true).build();
+
+        when(tokenRepository.findByToken(token)).thenReturn(Optional.of(resetToken));
+
+        assertThatThrownBy(() -> userPasswordResetService.validateResetToken(token))
+                .isInstanceOf(InvalidTokenException.class);
+    }
+
+    @Test
+    void validateResetTokenShouldThrowForUnknownToken() {
+        when(tokenRepository.findByToken("unknown")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userPasswordResetService.validateResetToken("unknown"))
+                .isInstanceOf(InvalidTokenException.class);
     }
 
     @Test

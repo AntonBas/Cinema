@@ -28,6 +28,7 @@ import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
 import ua.lviv.bas.cinema.user.dto.request.OAuth2ExchangeRequest;
 import ua.lviv.bas.cinema.user.dto.request.PasswordResetRequest;
+import ua.lviv.bas.cinema.user.dto.request.PasswordResetTokenRequest;
 import ua.lviv.bas.cinema.user.dto.request.ResendVerificationRequest;
 import ua.lviv.bas.cinema.user.dto.request.UserLoginRequest;
 import ua.lviv.bas.cinema.user.dto.request.UserRegistrationRequest;
@@ -144,6 +145,19 @@ public class AuthController {
     public void resetPassword(@Valid @RequestBody PasswordResetRequest request) {
         log.info("POST /api/auth/password/reset");
         passwordResetService.reset(request.token(), request.newPassword());
+    }
+
+    @RateLimit(value = 10, duration = 60)
+    @PostMapping("/password/reset/validate")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Check that a password reset token can still be used")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Token is valid"),
+            @ApiResponse(responseCode = "400", description = "Invalid, used or expired token")
+    })
+    @SecurityRequirements()
+    public void validateResetToken(@Valid @RequestBody PasswordResetTokenRequest request) {
+        passwordResetService.validateResetToken(request.token());
     }
 
     @RateLimit(value = 5, duration = 900)
