@@ -43,6 +43,9 @@ export const Footer: React.FC = () => {
             <li>
               <Link to="/refund-policy">Refund Policy</Link>
             </li>
+            <li>
+              <Link to="/privacy">Privacy Policy</Link>
+            </li>
           </ul>
         </div>
       </div>

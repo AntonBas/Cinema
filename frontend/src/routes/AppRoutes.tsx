@@ -21,6 +21,7 @@ import { SecurityPage } from "@/pages/account/SecurityPage/SecurityPage";
 import { BonusPage } from "@/pages/account/BonusPage/BonusPage";
 import { TicketsPage } from "@/pages/account/TicketsPage/TicketsPage";
 import { RefundPolicyPage } from "@/pages/RefundPolicyPage/RefundPolicyPage";
+import { PrivacyPolicyPage } from "@/pages/PrivacyPolicyPage/PrivacyPolicyPage";
 import { NotFoundPage } from "@/pages/NotFoundPage/NotFoundPage";
 
 import { MoviesLayout } from "@/pages/movies/MoviesLayout/MoviesLayout";
@@ -162,6 +163,7 @@ export const AppRoutes: React.FC = () => {
       <Route path="/schedule" element={<SessionsPage />} />
 
       <Route path="/refund-policy" element={<RefundPolicyPage />} />
+      <Route path="/privacy" element={<PrivacyPolicyPage />} />
 
       <Route
         path="/account"
