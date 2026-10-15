@@ -83,8 +83,7 @@ public class PromotionService {
                 .orElseThrow(() -> new EntityNotFoundException("Promotion", id));
     }
 
-    public List<PromotionResponse> getAvailablePromotions(User user) {
-        log.debug("Getting available promotions for user: {}", user != null ? user.getEmail() : "anonymous");
+    public List<PromotionResponse> getAvailablePromotions() {
         return promotionRepository.findAllActivePromotions(CinemaTime.today()).stream().map(promotionMapper::toPromotionResponse)
                 .toList();
     }

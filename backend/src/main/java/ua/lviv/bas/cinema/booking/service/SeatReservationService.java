@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.booking.domain.SeatReservation;
@@ -52,6 +53,7 @@ public class SeatReservationService {
     @Value("${booking.temp-hold-minutes:5}")
     private int tempHoldMinutes;
 
+    @Cacheable(value = "sessionIds", key = "#publicId")
     public Long resolveSessionId(UUID publicId) {
         return sessionRepository.findByPublicId(publicId)
                 .orElseThrow(() -> new EntityNotFoundException("Session", publicId)).getId();
@@ -135,16 +137,17 @@ public class SeatReservationService {
         log.info("Creating temporary hold for seat {} in session {} by user {}", seat.getId(), session.getId(),
                 user.getId());
 
-        validateSeat(seat, session);
-
-        var reservation = SeatReservation.builder().seat(seat).session(session).ticketType(null).seatPrice(null)
-                .status(ReservationStatus.PENDING).reservedUntil(Instant.now().plus(Duration.ofMinutes(tempHoldMinutes)))
-                .reservedByUser(user).build();
-
-        var saved = seatReservationRepository.save(reservation);
+        var saved = seatReservationRepository.save(newHold(session, seat, user));
         log.info("Temporary hold created for seat {} in session {} by user {}", seat.getId(), session.getId(),
                 user.getId());
         return saved;
+    }
+
+    public SeatReservation newHold(Session session, Seat seat, User user) {
+        validateSeat(seat, session);
+        return SeatReservation.builder().seat(seat).session(session).ticketType(null).seatPrice(null)
+                .status(ReservationStatus.PENDING).reservedUntil(Instant.now().plus(Duration.ofMinutes(tempHoldMinutes)))
+                .reservedByUser(user).build();
     }
 
     @CacheEvict(value = "seatAvailability", key = "#sessionId")

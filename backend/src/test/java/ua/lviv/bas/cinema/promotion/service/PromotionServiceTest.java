@@ -233,7 +233,7 @@ public class PromotionServiceTest {
         when(promotionRepository.findAllActivePromotions(any(LocalDate.class))).thenReturn(projections);
         when(promotionMapper.toPromotionResponse(projection)).thenReturn(promotionResponse);
 
-        List<PromotionResponse> result = promotionService.getAvailablePromotions(user);
+        List<PromotionResponse> result = promotionService.getAvailablePromotions();
 
         assertThat(result).hasSize(1);
         assertThat(result.getFirst()).isEqualTo(promotionResponse);

@@ -174,7 +174,7 @@ public class SessionService {
                 .put("movieId", session.getMovie().getId()).put("hallId", session.getHall().getId()).build();
     }
 
-    @CacheEvict(value = {"sessions", "adminSessions", "seatAvailability"}, allEntries = true)
+    @CacheEvict(value = {"sessions", "adminSessions", "seatAvailability", "sessionIds"}, allEntries = true)
     @Transactional
     public void deleteSession(Long id) {
         var session = sessionRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Session", id));

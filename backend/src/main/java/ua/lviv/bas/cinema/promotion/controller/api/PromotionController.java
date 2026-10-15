@@ -45,9 +45,8 @@ public class PromotionController {
     @PreAuthorize("permitAll()")
     @SecurityRequirements()
     public List<PromotionResponse> getAvailablePromotions(@AuthenticationPrincipal CustomUserDetails currentUser) {
-        User user = currentUser != null ? userService.getUser(currentUser.getUserId()) : null;
-        log.info("GET /api/promotions - user: {}", user != null ? user.getId() : "anonymous");
-        return promotionService.getAvailablePromotions(user);
+        log.info("GET /api/promotions - user: {}", currentUser != null ? currentUser.getUserId() : "anonymous");
+        return promotionService.getAvailablePromotions();
     }
 
     @RateLimit(value = 3, duration = 1, key = "user")

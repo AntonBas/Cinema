@@ -11,6 +11,7 @@ import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.cache.RedisCacheWriter;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
+import org.springframework.data.redis.serializer.GenericToStringSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.RedisSerializer;
 
@@ -51,6 +52,9 @@ public class CacheConfig {
         cacheConfigurations.put("persons", defaultConfig.entryTtl(Duration.ofHours(24)));
         cacheConfigurations.put("singleMovies", defaultConfig.entryTtl(Duration.ofHours(24)));
         cacheConfigurations.put("movieLists", defaultConfig.entryTtl(Duration.ofHours(24)));
+        cacheConfigurations.put("sessionIds", defaultConfig.entryTtl(Duration.ofHours(24))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair
+                        .fromSerializer(new GenericToStringSerializer<>(Long.class))));
         cacheConfigurations.put("seatAvailability", defaultConfig.entryTtl(Duration.ofMinutes(5)));
         cacheConfigurations.put("ticket", defaultConfig.entryTtl(Duration.ofMinutes(30)));
         cacheConfigurations.put("ticketList", defaultConfig.entryTtl(Duration.ofMinutes(30)));

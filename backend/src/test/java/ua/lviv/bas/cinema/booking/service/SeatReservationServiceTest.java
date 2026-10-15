@@ -219,6 +219,27 @@ public class SeatReservationServiceTest {
     }
 
     @Test
+    void newHoldShouldBuildPendingReservationWithoutSaving() {
+        when(seatReservationRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, SEAT_ID,
+                ReservationStatus.ACTIVE_STATUSES)).thenReturn(false);
+
+        SeatReservation hold = seatReservationService.newHold(testSession, testSeat, testUser);
+
+        assertThat(hold.getId()).isNull();
+        assertThat(hold.getSeat()).isEqualTo(testSeat);
+        assertThat(hold.getStatus()).isEqualTo(ReservationStatus.PENDING);
+        verify(seatReservationRepository, never()).save(any());
+    }
+
+    @Test
+    void newHoldWhenSeatAlreadyReservedShouldThrowException() {
+        when(seatReservationRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, SEAT_ID,
+                ReservationStatus.ACTIVE_STATUSES)).thenReturn(true);
+        assertThatThrownBy(() -> seatReservationService.newHold(testSession, testSeat, testUser))
+                .isInstanceOf(SeatNotAvailableException.class);
+    }
+
+    @Test
     void holdLockedSeatWhenSeatAlreadyReservedShouldThrowException() {
         when(seatReservationRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, SEAT_ID,
                 ReservationStatus.ACTIVE_STATUSES)).thenReturn(true);

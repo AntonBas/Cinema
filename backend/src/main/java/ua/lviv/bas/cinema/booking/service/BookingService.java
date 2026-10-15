@@ -74,7 +74,8 @@ public class BookingService {
         }
 
         return transactionTemplate.execute(status -> {
-            var saved = findBooking(bookingId);
+            var saved = bookingRepository.findWithDetailsById(bookingId)
+                    .orElseThrow(() -> new EntityNotFoundException("Booking", bookingId));
             log.info("Created booking {} for user {} with {} bonus points used", saved.getId(), user.getId(),
                     saved.getBonusPointsUsed());
             auditCreate(saved, user);

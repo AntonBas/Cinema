@@ -170,7 +170,7 @@ class BookingCreationService {
             return reservation;
         }
 
-        return seatReservationService.holdLockedSeat(session, seat, user);
+        return seatReservationService.newHold(session, seat, user);
     }
 
     private void updateReservationWithTicketType(SeatReservation reservation,

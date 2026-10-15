@@ -196,8 +196,8 @@ class BookingCreationServiceTest {
                 ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.empty());
         when(seatReservationService.lockSeat(SEAT_ID_1)).thenReturn(testSeat1);
         when(seatReservationService.lockSeat(SEAT_ID_2)).thenReturn(testSeat2);
-        when(seatReservationService.holdLockedSeat(testSession, testSeat1, testUser)).thenReturn(newReservation1);
-        when(seatReservationService.holdLockedSeat(testSession, testSeat2, testUser)).thenReturn(newReservation2);
+        when(seatReservationService.newHold(testSession, testSeat1, testUser)).thenReturn(newReservation1);
+        when(seatReservationService.newHold(testSession, testSeat2, testUser)).thenReturn(newReservation2);
         when(ticketTypeRepository.findAllById(List.of(TICKET_TYPE_ADULT_ID, TICKET_TYPE_CHILD_ID)))
                 .thenReturn(List.of(adultTicketType, childTicketType));
         when(priceCalculator.calculateSeatPrice(testSession, testSeat1, adultTicketType)).thenReturn(SEAT_1_PRICE);
@@ -211,8 +211,8 @@ class BookingCreationServiceTest {
         Booking result = bookingCreationService.createAndPersist(createRequest, testUser);
 
         assertThat(result).isNotNull();
-        verify(seatReservationService).holdLockedSeat(testSession, testSeat1, testUser);
-        verify(seatReservationService).holdLockedSeat(testSession, testSeat2, testUser);
+        verify(seatReservationService).newHold(testSession, testSeat1, testUser);
+        verify(seatReservationService).newHold(testSession, testSeat2, testUser);
     }
 
     @Test
@@ -238,8 +238,8 @@ class BookingCreationServiceTest {
                 ReservationStatus.PENDING, USER_ID)).thenReturn(Optional.empty());
         when(seatReservationService.lockSeat(SEAT_ID_1)).thenReturn(testSeat1);
         when(seatReservationService.lockSeat(SEAT_ID_2)).thenReturn(testSeat2);
-        when(seatReservationService.holdLockedSeat(testSession, testSeat1, testUser)).thenReturn(newReservation1);
-        when(seatReservationService.holdLockedSeat(testSession, testSeat2, testUser)).thenReturn(newReservation2);
+        when(seatReservationService.newHold(testSession, testSeat1, testUser)).thenReturn(newReservation1);
+        when(seatReservationService.newHold(testSession, testSeat2, testUser)).thenReturn(newReservation2);
         when(ticketTypeRepository.findAllById(List.of(TICKET_TYPE_ADULT_ID, TICKET_TYPE_CHILD_ID)))
                 .thenReturn(List.of(adultTicketType, childTicketType));
         when(priceCalculator.calculateSeatPrice(testSession, testSeat1, adultTicketType)).thenReturn(SEAT_1_PRICE);
