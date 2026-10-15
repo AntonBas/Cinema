@@ -25,6 +25,8 @@ public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecif
 
     boolean existsByBookingId(Long bookingId);
 
+    boolean existsByBookingIdAndStatusNot(Long bookingId, TicketStatus status);
+
     Optional<Ticket> findByIdAndUserId(Long ticketId, Long userId);
 
     @Override

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
+import ua.lviv.bas.cinema.booking.service.BookingService;
 import ua.lviv.bas.cinema.refund.domain.Refund;
 import ua.lviv.bas.cinema.refund.domain.RefundItem;
 import ua.lviv.bas.cinema.refund.domain.status.RefundItemStatus;
@@ -39,6 +40,7 @@ public class RefundTransactionExecutor {
     private final RefundCalculator refundCalculator;
     private final AuditService auditService;
     private final RefundConfirmationEmailSender refundConfirmationEmailSender;
+    private final BookingService bookingService;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public RefundProcessingContext createProcessingRefund(Long ticketId, Long userId, String reason) {
@@ -134,6 +136,10 @@ public class RefundTransactionExecutor {
                 "REFUND_ACCRUAL_TICKET_" + ticket.getId());
 
         ticketService.markAsRefunded(ticket, refund);
+        var bookingId = ticket.getBooking().getId();
+        if (ticketService.areAllTicketsRefunded(bookingId)) {
+            bookingService.markRefunded(bookingId);
+        }
 
         refundItem.setStatus(RefundItemStatus.PROCESSED);
         refund.setStatus(RefundStatus.PROCESSED);

@@ -23,6 +23,7 @@ const BOOKING_STATUSES: BookingStatus[] = [
   "CONFIRMED",
   "CANCELLED",
   "EXPIRED",
+  "REFUNDED",
 ];
 
 const STATUS_OPTIONS: SelectOption[] = [

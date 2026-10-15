@@ -162,6 +162,21 @@ public class BookingService {
         auditConfirm(bookingId, oldStatus);
     }
 
+    public void markRefunded(Long bookingId) {
+        var booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new EntityNotFoundException("Booking", bookingId));
+        if (booking.getStatus() != BookingStatus.CONFIRMED) {
+            log.debug("Booking {} is {}, not marking as refunded", bookingId, booking.getStatus());
+            return;
+        }
+
+        var oldStatus = booking.getStatus();
+        booking.setStatus(BookingStatus.REFUNDED);
+        bookingRepository.save(booking);
+        log.info("Booking {} marked as refunded after all its tickets were refunded", bookingId);
+        auditRefunded(bookingId, oldStatus);
+    }
+
     private boolean canCancel(Booking booking) {
         return booking.getStatus() == BookingStatus.PENDING;
     }
@@ -183,6 +198,15 @@ public class BookingService {
         Map<String, Object> newDetails = new HashMap<>();
         newDetails.put("status", BookingStatus.CANCELLED);
         auditService.logChange("Booking", bookingId, "Booking #" + bookingId, AuditAction.CANCELLED, oldDetails,
+                newDetails);
+    }
+
+    private void auditRefunded(Long bookingId, BookingStatus oldStatus) {
+        Map<String, Object> oldDetails = new HashMap<>();
+        oldDetails.put("status", oldStatus);
+        Map<String, Object> newDetails = new HashMap<>();
+        newDetails.put("status", BookingStatus.REFUNDED);
+        auditService.logChange("Booking", bookingId, "Booking #" + bookingId, AuditAction.REFUND, oldDetails,
                 newDetails);
     }
 

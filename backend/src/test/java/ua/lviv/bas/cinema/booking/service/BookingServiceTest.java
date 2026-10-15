@@ -287,6 +287,27 @@ public class BookingServiceTest {
     }
 
     @Test
+    void markRefundedShouldMoveConfirmedBookingToRefunded() {
+        Booking booking = Booking.builder().id(BOOKING_ID).status(BookingStatus.CONFIRMED).build();
+        when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.of(booking));
+
+        bookingService.markRefunded(BOOKING_ID);
+
+        assertThat(booking.getStatus()).isEqualTo(BookingStatus.REFUNDED);
+        verify(bookingRepository).save(booking);
+    }
+
+    @Test
+    void markRefundedShouldIgnoreBookingThatIsNotConfirmed() {
+        Booking booking = Booking.builder().id(BOOKING_ID).status(BookingStatus.REFUNDED).build();
+        when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.of(booking));
+
+        bookingService.markRefunded(BOOKING_ID);
+
+        verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
     void confirmBookingWhenBookingNotFoundShouldThrowException() {
         when(bookingRepository.findById(BOOKING_ID)).thenReturn(Optional.empty());
 

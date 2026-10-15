@@ -90,6 +90,10 @@ public class TicketService {
                 .status(TicketStatus.ACTIVE).purchaseTime(Instant.now()).build();
     }
 
+    public boolean areAllTicketsRefunded(Long bookingId) {
+        return !ticketRepository.existsByBookingIdAndStatusNot(bookingId, TicketStatus.REFUNDED);
+    }
+
     public Ticket getTicketForUser(Long ticketId, Long userId) {
         return ticketRepository.findByIdAndUserId(ticketId, userId)
                 .orElseThrow(() -> new TicketNotFoundException("Ticket not found. Ticket ID: " + ticketId));

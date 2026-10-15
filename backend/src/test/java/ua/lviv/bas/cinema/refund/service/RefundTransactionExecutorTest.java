@@ -24,6 +24,7 @@ import ua.lviv.bas.cinema.exception.domain.financial.refund.TicketNotRefundableE
 import ua.lviv.bas.cinema.payment.service.PaymentRefundService;
 import ua.lviv.bas.cinema.refund.repository.RefundRepository;
 import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
+import ua.lviv.bas.cinema.booking.service.BookingService;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 import ua.lviv.bas.cinema.ticket.service.TicketService;
 import ua.lviv.bas.cinema.support.CinemaTestFixtures;
@@ -63,6 +64,8 @@ public class RefundTransactionExecutorTest {
     private AuditService auditService;
     @Mock
     private RefundConfirmationEmailSender refundConfirmationEmailSender;
+    @Mock
+    private BookingService bookingService;
 
     @InjectMocks
     private RefundTransactionExecutor refundTransactionExecutor;
@@ -203,8 +206,23 @@ public class RefundTransactionExecutorTest {
         verify(paymentRefundService).applyRefundSuccess(eq(testPayment), eq(REFUND_AMOUNT), eq(REFUND_AMOUNT),
                 any(String.class));
         verify(refundConfirmationEmailSender).send(testRefund, testTicket, BONUS_POINTS_TO_REFUND, 0);
+        verify(bookingService, never()).markRefunded(any());
         verify(bonusLedgerService).refundPointsForTicket(USER_ID, BONUS_POINTS_TO_REFUND, "REFUND_TICKET_" + TICKET_ID);
         verify(ticketService).markAsRefunded(testTicket, testRefund);
+    }
+
+    @Test
+    void applySuccessWhenLastTicketOfBookingRefundedShouldMarkBookingRefunded() {
+        when(refundRepository.findById(REFUND_ID)).thenReturn(Optional.of(testRefund));
+        when(ticketService.getTicket(TICKET_ID)).thenReturn(testTicket);
+        when(refundRepository.save(any(Refund.class))).thenAnswer(i -> i.getArgument(0));
+        when(refundRepository.sumAmountByPaymentIdAndStatus(testPayment.getId(), RefundStatus.PROCESSED))
+                .thenReturn(BigDecimal.ZERO);
+        when(ticketService.areAllTicketsRefunded(testTicket.getBooking().getId())).thenReturn(true);
+
+        refundTransactionExecutor.applySuccess(REFUND_ID, TICKET_ID);
+
+        verify(bookingService).markRefunded(testTicket.getBooking().getId());
     }
 
     @Test
