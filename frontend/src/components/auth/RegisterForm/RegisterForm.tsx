@@ -6,10 +6,15 @@ import { Button } from "@/components/ui/Button/Button";
 import type { RegisterRequest } from "@/types/auth";
 import { isApiErrorException } from "@/utils/apiErrorHandler";
 import {
+  validateCity,
+  validateDateOfBirth,
+  validateEmail,
   validateName,
+  validatePasswordConfirm,
   validatePhoneNumber,
   validatePassword,
 } from "@/utils/formValidation";
+import { useFocusFirstInvalidField } from "@/hooks/common/useFocusFirstInvalidField";
 import { AuthCard } from "@/components/auth/AuthCard/AuthCard";
 import styles from "./RegisterForm.module.css";
 
@@ -28,6 +33,7 @@ export const RegisterForm: React.FC = () => {
     passwordConfirm: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const { formRef, focusFirstInvalidField } = useFocusFirstInvalidField();
 
   const handleChange = (field: keyof RegisterRequest, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -43,15 +49,21 @@ export const RegisterForm: React.FC = () => {
     if (firstNameError) errors.firstName = firstNameError;
     const lastNameError = validateName(formData.lastName, "Last name");
     if (lastNameError) errors.lastName = lastNameError;
-    if (!formData.email) errors.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
-      errors.email = "Invalid email";
+    const dateOfBirthError = validateDateOfBirth(formData.dateOfBirth);
+    if (dateOfBirthError) errors.dateOfBirth = dateOfBirthError;
+    const cityError = validateCity(formData.city);
+    if (cityError) errors.city = cityError;
+    const emailError = validateEmail(formData.email);
+    if (emailError) errors.email = emailError;
     const phoneError = validatePhoneNumber(formData.phoneNumber);
     if (phoneError) errors.phoneNumber = phoneError;
     const passwordError = validatePassword(formData.password);
     if (passwordError) errors.password = passwordError;
-    if (formData.password !== formData.passwordConfirm)
-      errors.passwordConfirm = "Passwords do not match";
+    const passwordConfirmError = validatePasswordConfirm(
+      formData.password,
+      formData.passwordConfirm,
+    );
+    if (passwordConfirmError) errors.passwordConfirm = passwordConfirmError;
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -59,7 +71,10 @@ export const RegisterForm: React.FC = () => {
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      focusFirstInvalidField();
+      return;
+    }
 
     try {
       const result = await register(formData);
@@ -69,6 +84,7 @@ export const RegisterForm: React.FC = () => {
     } catch (err) {
       if (isApiErrorException(err) && err.isValidationError()) {
         setFormErrors(err.getValidationErrors());
+        focusFirstInvalidField();
       }
     }
   };
@@ -80,7 +96,12 @@ export const RegisterForm: React.FC = () => {
         <Link to="/login">Login</Link>
       </div>
 
-      <form className={styles.registrationForm} onSubmit={handleSubmit}>
+      <form
+        ref={formRef}
+        className={styles.registrationForm}
+        onSubmit={handleSubmit}
+        noValidate
+      >
         {error && (
           <div className={styles.notification} data-type="error">
             {error.message}

@@ -11,7 +11,7 @@
   color: var(--color-text-secondary);
 }
 
-.required {
+.requiredStar {
   color: var(--color-error);
   margin-left: 2px;
 }

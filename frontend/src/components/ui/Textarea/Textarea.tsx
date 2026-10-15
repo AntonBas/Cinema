@@ -68,10 +68,7 @@ export const Textarea: React.FC<TextareaProps> = ({
   return (
     <div className={styles.container}>
       {label && (
-        <label
-          htmlFor={textareaId}
-          className={clsx(styles.label, required && styles.required)}
-        >
+        <label htmlFor={textareaId} className={styles.label}>
           {label}
           {required && (
             <span className={styles.requiredStar} aria-hidden="true">

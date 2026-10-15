@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/Input/Input";
 import { Button } from "@/components/ui/Button/Button";
 import { Tooltip } from "@/components/ui/Tooltip/Tooltip";
 import { isApiErrorException } from "@/utils/apiErrorHandler";
+import { validateEmail } from "@/utils/formValidation";
 import styles from "./EmailChangeForm.module.css";
 
 export const EmailChangeForm: React.FC = () => {
@@ -21,11 +22,8 @@ export const EmailChangeForm: React.FC = () => {
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
 
-    if (!formData.newEmail) {
-      errors.newEmail = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.newEmail)) {
-      errors.newEmail = "Please enter a valid email address";
-    }
+    const emailError = validateEmail(formData.newEmail);
+    if (emailError) errors.newEmail = emailError;
 
     if (!formData.password) {
       errors.password = "Password is required";
@@ -59,7 +57,7 @@ export const EmailChangeForm: React.FC = () => {
         email.
       </p>
 
-      <form onSubmit={handleSubmit} className={styles.form}>
+      <form onSubmit={handleSubmit} className={styles.form} noValidate>
         <div className={styles.formSection}>
           <h2 className={styles.sectionTitle}>New Email Details</h2>
 

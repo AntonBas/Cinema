@@ -60,6 +60,47 @@ const BACKEND_TO_FORM_FIELD: Record<string, string> = {
   screenwriterIds: "selectedScreenwriters",
 };
 
+const DURATION_MAX_MINUTES = 300;
+const TRAILER_URL_PATTERN = /^https:\/\/\S+$/;
+
+const validateMovieForm = (
+  formData: MovieFormData,
+  isEdit: boolean,
+): Record<string, string> => {
+  const errors: Record<string, string> = {};
+  if (!formData.posterFile && (!isEdit || formData.removePoster))
+    errors.posterFile = "Poster is required";
+  if (!formData.title.trim()) errors.title = "Title is required";
+  if (!formData.trailerUrl.trim())
+    errors.trailerUrl = "Trailer URL is required";
+  else if (!TRAILER_URL_PATTERN.test(formData.trailerUrl.trim()))
+    errors.trailerUrl = "Trailer must be a valid https:// URL";
+  if (!formData.description.trim())
+    errors.description = "Description is required";
+  if (
+    formData.durationMinutes < 1 ||
+    formData.durationMinutes > DURATION_MAX_MINUTES
+  )
+    errors.durationMinutes = `Duration must be between 1 and ${DURATION_MAX_MINUTES} minutes`;
+  if (!formData.releaseDate) errors.releaseDate = "Release date is required";
+  if (!formData.endShowingDate)
+    errors.endShowingDate = "End showing date is required";
+  else if (
+    formData.releaseDate &&
+    formData.endShowingDate <= formData.releaseDate
+  )
+    errors.endShowingDate = "End showing date must be after release date";
+  if (formData.selectedGenres.length === 0)
+    errors.selectedGenres = "At least one genre is required";
+  if (formData.selectedActors.length === 0)
+    errors.selectedActors = "At least one cast member is required";
+  if (formData.selectedDirectors.length === 0)
+    errors.selectedDirectors = "At least one director is required";
+  if (formData.selectedScreenwriters.length === 0)
+    errors.selectedScreenwriters = "At least one screenwriter is required";
+  return errors;
+};
+
 export const MovieForm: React.FC<MovieFormProps> = React.memo(
   ({ movie, onSuccess, onCancel }) => {
     const { create, update, loading } = useMovie();
@@ -168,10 +209,9 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(
       async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!formData.posterFile && (!movie || formData.removePoster)) {
-          setErrors({ posterFile: "Poster is required" });
-          return;
-        }
+        const validationErrors = validateMovieForm(formData, !!movie);
+        setErrors(validationErrors);
+        if (Object.keys(validationErrors).length > 0) return;
 
         const baseRequest = {
           title: formData.title,
@@ -266,7 +306,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(
         title={movie ? "Edit Movie" : "Add New Movie"}
         size="large"
       >
-        <form onSubmit={handleSubmit} className={styles.form}>
+        <form onSubmit={handleSubmit} className={styles.form} noValidate>
           <div className={styles.formGroup}>
             <label htmlFor="movie-form-poster" className={styles.label}>
               Movie Poster{" "}
@@ -380,7 +420,7 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(
                   }))
                 }
                 min="1"
-                max="300"
+                max={DURATION_MAX_MINUTES}
                 placeholder="e.g., 120"
                 error={errors.durationMinutes}
               />

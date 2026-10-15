@@ -15,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -137,6 +138,21 @@ public class AuthControllerTest {
         user.setVerificationStatus(VerificationStatus.NOT_VERIFIED);
 
         userDetails = new CustomUserDetails(user);
+    }
+
+    @Test
+    void getCurrentUserShouldReturnNoContentForAnonymousUser() throws Exception {
+        mockMvc.perform(get("/api/auth/me"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void getCurrentUserShouldReturnProfileForAuthenticatedUser() throws Exception {
+        when(userService.getUserResponse(1L)).thenReturn(userResponse);
+
+        mockMvc.perform(get("/api/auth/me").with(SecurityMockMvcRequestPostProcessors.user(userDetails)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("anton@example.com"));
     }
 
     @Test

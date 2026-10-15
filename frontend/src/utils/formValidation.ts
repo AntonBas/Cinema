@@ -26,3 +26,36 @@ export const validatePassword = (value: string): string | undefined => {
     return "Password must be between 8 and 32 characters";
   return undefined;
 };
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export const validateEmail = (value: string): string | undefined => {
+  if (!value.trim()) return "Email is required";
+  if (!EMAIL_PATTERN.test(value.trim())) return "Invalid email";
+  return undefined;
+};
+
+export const validateCity = (value: string): string | undefined => {
+  const trimmed = value.trim();
+  if (!trimmed) return "City is required";
+  if (trimmed.length < 2 || trimmed.length > 50)
+    return "City name must be between 2 and 50 characters";
+  return undefined;
+};
+
+export const validateDateOfBirth = (value: string): string | undefined => {
+  if (!value) return "Date of birth is required";
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return "Invalid date of birth";
+  if (date >= new Date()) return "Date of birth must be in the past";
+  return undefined;
+};
+
+export const validatePasswordConfirm = (
+  password: string,
+  passwordConfirm: string,
+): string | undefined => {
+  if (!passwordConfirm) return "Password confirmation is required";
+  if (password !== passwordConfirm) return "Passwords do not match";
+  return undefined;
+};

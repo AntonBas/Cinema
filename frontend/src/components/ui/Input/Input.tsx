@@ -88,10 +88,7 @@ export const Input: React.FC<InputProps> = ({
   return (
     <div className={styles.container}>
       {label && (
-        <label
-          htmlFor={inputId}
-          className={clsx(styles.label, required && styles.required)}
-        >
+        <label htmlFor={inputId} className={styles.label}>
           {label}
           {required && (
             <span className={styles.requiredStar} aria-hidden="true">

@@ -69,7 +69,7 @@ api.interceptors.response.use(
 
       const stillAuthenticated = await api
         .get("/api/auth/me", { _sessionRechecked: true })
-        .then(() => true)
+        .then((response) => response.status === 200)
         .catch(() => false);
 
       if (stillAuthenticated) {
