@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   useParams,
   useNavigate,
@@ -6,6 +12,9 @@ import {
   Navigate,
 } from "react-router-dom";
 import { usePayment } from "@/hooks/features/payment/usePayment";
+import { useBooking } from "@/hooks/features/booking/useBooking";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import type { BookingResponse } from "@/types/booking";
 import { ProgressStepper } from "@/components/booking/ProgressStepper/ProgressStepper";
 import { BOOKING_STEPS } from "@/components/booking/ProgressStepper/bookingSteps";
 import { Badge } from "@/components/ui/Badge/Badge";
@@ -51,6 +60,23 @@ interface BookingData {
   }>;
 }
 
+const toBookingData = (booking: BookingResponse): BookingData => ({
+  id: booking.id,
+  bookingNumber: booking.bookingNumber,
+  movieTitle: booking.movieTitle,
+  hallName: booking.hallName,
+  sessionTime: booking.sessionTime,
+  totalPrice: booking.totalPrice,
+  finalPrice: booking.finalPrice,
+  bonusPointsUsed: booking.bonusPointsUsed,
+  bookedSeats: booking.seatReservations.map((seat) => ({
+    seatNumber: String(seat.seatNumber),
+    seatRow: seat.row,
+    ticketType: seat.ticketTypeName,
+    seatPrice: seat.seatPrice,
+  })),
+});
+
 type PaymentStep =
   "init" | "processing" | "ready" | "paying" | "success" | "failed";
 
@@ -59,7 +85,22 @@ export const PaymentPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const bookingData = location.state?.booking as BookingData;
+  const stateBooking = location.state?.booking as BookingResponse | undefined;
+  const { booking: loadedBooking, getById: getBookingById } = useBooking();
+  const [bookingLoadFailed, setBookingLoadFailed] = useState(false);
+
+  useEffect(() => {
+    if (stateBooking || !bookingId) return;
+    getBookingById(bookingId)
+      .then((result) => !result && setBookingLoadFailed(true))
+      .catch(() => setBookingLoadFailed(true));
+  }, [stateBooking, bookingId, getBookingById]);
+
+  const booking = stateBooking ?? loadedBooking;
+  const bookingData = useMemo(
+    () => (booking ? toBookingData(booking) : null),
+    [booking],
+  );
 
   const { create, getById, getLiqPayData, retry } = usePayment();
 
@@ -237,17 +278,24 @@ export const PaymentPage: React.FC = () => {
     }
   };
 
-  const handleBack = () =>
-    navigate(`/booking/summary/${bookingId}`, {
-      state: { booking: bookingData },
-    });
+  const handleBack = () => navigate(`/booking/summary/${bookingId}`);
 
-  if (!bookingData)
+  if (
+    bookingLoadFailed ||
+    (booking && booking.status !== "PENDING" && step === "init")
+  )
     return (
       <Navigate
         to={bookingId ? `/booking/summary/${bookingId}` : "/"}
         replace
       />
+    );
+
+  if (!bookingData)
+    return (
+      <Layout>
+        <LoadingSpinner text="Loading booking..." />
+      </Layout>
     );
 
   return (

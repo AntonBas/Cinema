@@ -253,7 +253,7 @@ public class TicketServiceTest {
         @Test
         void getTicketShouldSucceed() {
             TicketResponse mockResponse = new TicketResponse(1L, TICKET_CODE, "/qr", TicketStatus.ACTIVE,
-                    Instant.now(), BigDecimal.TEN, "Standard", "Test Movie",
+                    Instant.now(), BigDecimal.TEN, 0, "Standard", "Test Movie",
                     CinemaTime.now(), "Hall A", 5, 10, null);
 
             when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));

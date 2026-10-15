@@ -13,6 +13,7 @@ import ua.lviv.bas.cinema.common.CinemaTime;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -141,25 +142,35 @@ class EmailServiceTest {
                 .andExpect(jsonPath("$.htmlContent", containsString("Inception")))
                 .andExpect(jsonPath("$.htmlContent", containsString("2024-01-15 18:30")))
                 .andExpect(jsonPath("$.htmlContent", containsString("Hall A")))
+                .andExpect(jsonPath("$.htmlContent", containsString("550.00")))
+                .andExpect(jsonPath("$.htmlContent", containsString("100 points")))
                 .andExpect(jsonPath("$.htmlContent", containsString("450.00")))
-                .andExpect(jsonPath("$.htmlContent", containsString("Credit Card")))
+                .andExpect(jsonPath("$.htmlContent", containsString("TKT-AAA, TKT-BBB")))
                 .andExpect(jsonPath("$.htmlContent", containsString("Row 5, Seats 12-13")))
+                .andExpect(jsonPath("$.attachment[0].name").value("TKT-AAA.png"))
+                .andExpect(jsonPath("$.attachment[0].content").value("AQI="))
                 .andExpect(jsonPath("$.htmlContent", containsString("10-15 minutes")))
                 .andExpect(jsonPath("$.htmlContent", containsString("automated email")))
                 .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
 
-        emailService.sendTicketsEmail("customer@example.com", "BK-2024-001", "Inception", "2024-01-15 18:30",
-                "Hall A", new BigDecimal("450.00"), "Credit Card", "Row 5, Seats 12-13");
+        emailService.sendTicketsEmail(ticketsEmail());
 
         mockServer.verify();
+    }
+
+    private static TicketsEmail ticketsEmail() {
+        return new TicketsEmail("customer@example.com", "BK-2024-001", "Inception", "2024-01-15 18:30", "Hall A",
+                "Row 5, Seats 12-13", new BigDecimal("550.00"), 100, new BigDecimal("100.00"),
+                new BigDecimal("450.00"), List.of("TKT-AAA", "TKT-BBB"),
+                List.of(new EmailAttachment("TKT-AAA.png", new byte[]{1, 2}),
+                        new EmailAttachment("TKT-BBB.png", new byte[]{3})));
     }
 
     @Test
     void sendTicketsEmail_WhenAllAttemptsFail_ShouldThrowExternalServiceException() {
         mockServer.expect(ExpectedCount.times(3), requestTo(BREVO_URL)).andRespond(withServerError());
 
-        assertThatThrownBy(() -> emailService.sendTicketsEmail("customer@example.com", "BK-2024-001", "Inception",
-                "2024-01-15 18:30", "Hall A", new BigDecimal("450.00"), "Credit Card", "Row 5, Seats 12-13"))
+        assertThatThrownBy(() -> emailService.sendTicketsEmail(ticketsEmail()))
                 .isInstanceOf(ExternalServiceException.class);
 
         mockServer.verify();

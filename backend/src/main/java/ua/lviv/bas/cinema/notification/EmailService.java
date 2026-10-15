@@ -14,6 +14,7 @@ import ua.lviv.bas.cinema.common.CinemaTime;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.format.DateTimeFormatter;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,27 +76,32 @@ public class EmailService {
     }
 
     @Async(AsyncConfig.EMAIL_EXECUTOR)
-    public void sendTicketsEmail(String toEmail, String bookingNumber, String movieTitle, String sessionTime,
-                                 String hallName, BigDecimal amountPaid, String paymentMethod, String seatInfo) {
+    public void sendTicketsEmail(TicketsEmail email) {
         Map<String, String> details = new LinkedHashMap<>();
-        details.put("Booking Number", bookingNumber);
-        details.put("Movie", movieTitle);
-        details.put("Time", sessionTime);
-        details.put("Hall", hallName);
-        details.put("Seats", seatInfo);
-        details.put("Amount Paid", amountPaid + " UAH");
-        details.put("Payment Method", paymentMethod);
+        details.put("Booking Number", email.bookingNumber());
+        details.put("Movie", email.movieTitle());
+        details.put("Time", email.sessionTime());
+        details.put("Hall", email.hallName());
+        details.put("Seats", email.seatInfo());
+        details.put("Tickets", String.join(", ", email.ticketCodes()));
+        if (email.bonusPointsUsed() > 0) {
+            details.put("Ticket Price", email.totalPrice() + " UAH");
+            details.put("Paid with Bonus Points", email.bonusPointsUsed() + " points (−" + email.bonusDiscount()
+                    + " UAH)");
+        }
+        details.put("Amount Paid", email.amountPaid() + " UAH");
 
-        String html = buildDetailsEmail("Your Tickets - " + movieTitle, details,
+        String html = buildDetailsEmail("Your Tickets - " + email.movieTitle(), details,
                 "Your tickets are available in your account: " + frontendUrl + "/account/tickets<br><br>"
-                        + "Please present the QR codes at the cinema entrance. Arrive 10-15 minutes before the session.<br><br>"
+                        + "The QR code for each ticket is attached to this email. Present it at the cinema entrance. "
+                        + "Arrive 10-15 minutes before the session.<br><br>"
                         + "<strong>Important:</strong><ul style=\"margin:8px 0;padding-left:20px\">"
                         + "<li>Have your ID ready if required</li>"
                         + "<li>No refunds less than 2 hours before the session</li>"
                         + "<li>QR codes available in your account</li></ul>",
                 "This is an automated email. Please do not reply.");
 
-        sendCriticalEmail(toEmail, "Your Tickets: " + movieTitle, html);
+        sendCriticalEmail(email.toEmail(), "Your Tickets: " + email.movieTitle(), html, email.qrCodes());
     }
 
     @Async(AsyncConfig.EMAIL_EXECUTOR)
@@ -203,8 +209,12 @@ public class EmailService {
     }
 
     private void sendCriticalEmail(String toEmail, String subject, String html) {
+        sendCriticalEmail(toEmail, subject, html, List.of());
+    }
+
+    private void sendCriticalEmail(String toEmail, String subject, String html, List<EmailAttachment> attachments) {
         try {
-            deliver(toEmail, subject, html);
+            deliver(toEmail, subject, html, attachments);
             log.info("Critical email sent to: {}", toEmail);
         } catch (RestClientException e) {
             log.error("Failed to send critical email to: {}", toEmail, e);
@@ -214,20 +224,25 @@ public class EmailService {
 
     private void sendNonCriticalEmail(String toEmail, String subject, String html) {
         try {
-            deliver(toEmail, subject, html);
+            deliver(toEmail, subject, html, List.of());
             log.info("Non-critical email sent to: {}", toEmail);
         } catch (Exception e) {
             log.error("Failed to send non-critical email to: {}", toEmail, e);
         }
     }
 
-    private void deliver(String toEmail, String subject, String html) {
-        var payload = Map.of(
-                "sender", Map.of("name", companyName, "email", fromEmail),
-                "to", List.of(Map.of("email", toEmail)),
-                "subject", subject,
-                "htmlContent", html
-        );
+    private void deliver(String toEmail, String subject, String html, List<EmailAttachment> attachments) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("sender", Map.of("name", companyName, "email", fromEmail));
+        payload.put("to", List.of(Map.of("email", toEmail)));
+        payload.put("subject", subject);
+        payload.put("htmlContent", html);
+        if (!attachments.isEmpty()) {
+            payload.put("attachment", attachments.stream()
+                    .map(attachment -> Map.of("name", attachment.name(),
+                            "content", Base64.getEncoder().encodeToString(attachment.content())))
+                    .toList());
+        }
 
         RestClientException lastException = null;
         for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {

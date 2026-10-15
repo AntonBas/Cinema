@@ -15,9 +15,13 @@ import ua.lviv.bas.cinema.bonus.service.BonusQueryService;
 import ua.lviv.bas.cinema.common.DateTimeFormatterService;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.common.SeatInfoFormatter;
+import ua.lviv.bas.cinema.notification.EmailAttachment;
 import ua.lviv.bas.cinema.notification.EmailService;
+import ua.lviv.bas.cinema.notification.TicketsEmail;
+import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.ticket.service.TicketService;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -42,28 +46,33 @@ public class PaymentSuccessOrchestrator {
         var booking = payment.getBooking();
 
         bookingService.confirmBooking(booking.getId());
-        ticketService.createTicketsForBooking(booking, payment);
+        var tickets = ticketService.createTicketsForBooking(booking, payment);
 
         var pointsToAccrue = bonusQueryService.calculateAccrualPoints(booking.getFinalPrice());
         if (pointsToAccrue != null && pointsToAccrue > 0) {
             bonusLedgerService.accruePointsForPayment(booking.getUser().getId(), pointsToAccrue, booking, payment);
         }
 
-        sendSuccessEmail(payment, booking);
+        sendSuccessEmail(payment, booking, tickets);
 
         log.info("Payment {} completed successfully: booking {} confirmed, tickets issued, {} bonus points accrued",
                 paymentId, booking.getId(), pointsToAccrue == null ? 0 : pointsToAccrue);
     }
 
-    private void sendSuccessEmail(Payment payment, Booking booking) {
+    private void sendSuccessEmail(Payment payment, Booking booking, List<Ticket> tickets) {
         emailService.sendSafely("send payment success email", booking.getId(), () -> {
-            var sessionTime = dateTimeFormatter.formatStandard(booking.getSession().getStartTime());
-            var seatsInfo = extractSeatsInfo(booking);
-            var bookingNumber = numberGenerator.generateBookingNumber(booking);
+            var session = booking.getSession();
+            var ticketCodes = tickets.stream().map(Ticket::getUniqueCode).toList();
+            var qrCodes = tickets.stream()
+                    .map(ticket -> new EmailAttachment(ticket.getUniqueCode() + ".png", ticketService.generateQR(ticket)))
+                    .toList();
+            var bonusPointsUsed = booking.getBonusPointsUsed() == null ? 0 : booking.getBonusPointsUsed();
 
-            emailService.sendTicketsEmail(booking.getUser().getEmail(), bookingNumber,
-                    booking.getSession().getMovie().getTitle(), sessionTime, booking.getSession().getHall().getName(),
-                    payment.getAmount(), "Credit card", seatsInfo);
+            emailService.sendTicketsEmail(new TicketsEmail(booking.getUser().getEmail(),
+                    numberGenerator.generateBookingNumber(booking), session.getMovie().getTitle(),
+                    dateTimeFormatter.formatStandard(session.getStartTime()), session.getHall().getName(),
+                    extractSeatsInfo(booking), booking.getTotalPrice(), bonusPointsUsed,
+                    booking.getBonusDiscountAmount(), payment.getAmount(), ticketCodes, qrCodes));
 
             log.debug("Sent payment success email to {}", booking.getUser().getEmail());
         });

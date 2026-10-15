@@ -57,7 +57,7 @@ public class TicketControllerTest {
 
     private TicketResponse createTicketResponse() {
         return new TicketResponse(1L, "TKT-20240115-ABC123", "/api/tickets/code/" + "TKT-20240115-ABC123" + "/qr", TicketStatus.ACTIVE, Instant.now(),
-                new BigDecimal("250.00"), "Adult", "Inception", CinemaTime.now().plusDays(1), "Hall A", 1, 12, true);
+                new BigDecimal("250.00"), 0, "Adult", "Inception", CinemaTime.now().plusDays(1), "Hall A", 1, 12, true);
     }
 
     @Test

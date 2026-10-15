@@ -3,6 +3,7 @@ package ua.lviv.bas.cinema.payment.service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -21,7 +22,10 @@ import ua.lviv.bas.cinema.bonus.service.BonusQueryService;
 import ua.lviv.bas.cinema.common.DateTimeFormatterService;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.common.SeatInfoFormatter;
+import ua.lviv.bas.cinema.notification.EmailAttachment;
 import ua.lviv.bas.cinema.notification.EmailService;
+import ua.lviv.bas.cinema.notification.TicketsEmail;
+import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.ticket.service.TicketService;
 import ua.lviv.bas.cinema.support.CinemaTestFixtures;
 
@@ -30,8 +34,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -85,7 +91,7 @@ public class PaymentSuccessOrchestratorTest {
                 .status(ReservationStatus.CONFIRMED).build();
 
         testBooking = Booking.builder().id(BOOKING_ID).user(testUser).session(session).status(BookingStatus.PENDING)
-                .finalPrice(AMOUNT).expiresAt(Instant.now().plus(Duration.ofHours(1)))
+                .totalPrice(AMOUNT).finalPrice(AMOUNT).expiresAt(Instant.now().plus(Duration.ofHours(1)))
                 .seatReservations(Collections.singletonList(seatReservation)).build();
 
         testPayment = Payment.builder().id(PAYMENT_ID).booking(testBooking).amount(AMOUNT).status(PaymentStatus.SUCCESS)
@@ -102,6 +108,9 @@ public class PaymentSuccessOrchestratorTest {
 
     @Test
     void handleShouldConfirmBookingCreateTicketsAndAccruePoints() {
+        var ticket = Ticket.builder().uniqueCode("TKT-AAA").build();
+        when(ticketService.createTicketsForBooking(testBooking, testPayment)).thenReturn(List.of(ticket));
+        when(ticketService.generateQR(ticket)).thenReturn(new byte[]{1});
         when(bonusQueryService.calculateAccrualPoints(AMOUNT)).thenReturn(20);
         when(dateTimeFormatter.formatStandard(any(LocalDateTime.class))).thenReturn("2024-01-01 14:00");
         when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
@@ -111,8 +120,15 @@ public class PaymentSuccessOrchestratorTest {
         verify(bookingService).confirmBooking(BOOKING_ID);
         verify(ticketService).createTicketsForBooking(testBooking, testPayment);
         verify(bonusLedgerService).accruePointsForPayment(USER_ID, 20, testBooking, testPayment);
-        verify(emailService).sendTicketsEmail(testUser.getEmail(), "BK-2024-00001", "Test Movie", "2024-01-01 14:00",
-                "Hall A", AMOUNT, "Credit card", "Row 1, Seat 1");
+        var emailCaptor = ArgumentCaptor.forClass(TicketsEmail.class);
+        verify(emailService).sendTicketsEmail(emailCaptor.capture());
+        var email = emailCaptor.getValue();
+        assertThat(email.toEmail()).isEqualTo(testUser.getEmail());
+        assertThat(email.bookingNumber()).isEqualTo("BK-2024-00001");
+        assertThat(email.seatInfo()).isEqualTo("Row 1, Seat 1");
+        assertThat(email.amountPaid()).isEqualTo(AMOUNT);
+        assertThat(email.ticketCodes()).containsExactly("TKT-AAA");
+        assertThat(email.qrCodes()).extracting(EmailAttachment::name).containsExactly("TKT-AAA.png");
     }
 
     @Test

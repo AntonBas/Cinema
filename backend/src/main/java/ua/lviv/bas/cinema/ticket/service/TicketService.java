@@ -39,6 +39,7 @@ import ua.lviv.bas.cinema.integration.QRCodeService;
 import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.time.Instant;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -64,10 +65,10 @@ public class TicketService {
 
     @CacheEvict(value = "ticketList", allEntries = true)
     @Transactional
-    public void createTicketsForBooking(Booking booking, Payment payment) {
+    public List<Ticket> createTicketsForBooking(Booking booking, Payment payment) {
         if (ticketRepository.existsByBookingId(booking.getId())) {
             log.debug("Tickets already exist for booking {}, skipping creation", booking.getId());
-            return;
+            return ticketRepository.findByBookingId(booking.getId());
         }
 
         var tickets = booking.getSeatReservations().stream()
@@ -79,6 +80,7 @@ public class TicketService {
         for (var ticket : savedTickets) {
             auditCreate(ticket, booking.getId());
         }
+        return savedTickets;
     }
 
     private Ticket buildTicket(Booking booking, Payment payment, SeatReservation seatReservation) {
@@ -152,8 +154,11 @@ public class TicketService {
             throw new TicketNotFoundException("Ticket " + ticketCode + " does not belong to user " + user.getId());
         }
 
-        var qrContent = ticketBaseUrl + "/cashier/scan/" + ticketCode;
-        return qrCodeService.generateQRCode(qrContent, qrCodeSize);
+        return generateQR(ticket);
+    }
+
+    public byte[] generateQR(Ticket ticket) {
+        return qrCodeService.generateQRCode(ticketBaseUrl + "/cashier/scan/" + ticket.getUniqueCode(), qrCodeSize);
     }
 
     private TicketResponse toTicketResponse(Ticket ticket) {

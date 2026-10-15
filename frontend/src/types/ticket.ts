@@ -12,6 +12,7 @@ export interface TicketResponse {
   status: TicketStatus;
   purchaseTime: string;
   price: string;
+  bookingBonusPointsUsed: number | null;
   ticketType: string;
   movieTitle: string;
   sessionTime: string;
