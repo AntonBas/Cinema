@@ -8,15 +8,10 @@ import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.audit.domain.AuditAction;
 import ua.lviv.bas.cinema.audit.service.AuditDetails;
 import ua.lviv.bas.cinema.audit.service.AuditService;
-import ua.lviv.bas.cinema.common.DateTimeFormatterService;
-import ua.lviv.bas.cinema.common.NumberGeneratorService;
-import ua.lviv.bas.cinema.common.SeatInfoFormatter;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
-import ua.lviv.bas.cinema.notification.EmailService;
 import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
-import ua.lviv.bas.cinema.ticket.domain.Ticket;
 
 import java.math.BigDecimal;
 
@@ -28,10 +23,6 @@ public class PaymentRefundService {
     private final PaymentRepository paymentRepository;
     private final PaymentGatewayService paymentGatewayService;
     private final AuditService auditService;
-    private final EmailService emailService;
-    private final DateTimeFormatterService dateTimeFormatter;
-    private final NumberGeneratorService numberGenerator;
-    private final SeatInfoFormatter seatInfoFormatter;
 
     public void validateRefundEligibility(Payment payment, BigDecimal amount) {
         if (payment.getStatus() != PaymentStatus.SUCCESS && payment.getStatus() != PaymentStatus.PARTIALLY_REFUNDED) {
@@ -69,7 +60,7 @@ public class PaymentRefundService {
 
     @Transactional
     public void applyRefundSuccess(Payment payment, BigDecimal amount, BigDecimal totalRefundedAmount,
-                                   String description, Ticket ticket) {
+                                   String description) {
         var newStatus = totalRefundedAmount.compareTo(payment.getAmount()) >= 0 ? PaymentStatus.REFUNDED
                 : PaymentStatus.PARTIALLY_REFUNDED;
 
@@ -77,24 +68,7 @@ public class PaymentRefundService {
         payment.setStatus(newStatus);
         paymentRepository.save(payment);
 
-        sendRefundEmail(payment, amount, description, ticket);
         auditRefund(payment, oldStatus, newStatus, amount, description);
-    }
-
-    private void sendRefundEmail(Payment payment, BigDecimal amount, String description, Ticket ticket) {
-        emailService.sendSafely("send refund email", payment.getId(), () -> {
-            var booking = payment.getBooking();
-            var sessionTime = dateTimeFormatter.formatStandard(booking.getSession().getStartTime());
-            var seat = ticket.getSeatReservation().getSeat();
-            var seatsInfo = seatInfoFormatter.format(seat.getRow(), seat.getNumber());
-            var bookingNumber = numberGenerator.generateBookingNumber(booking);
-
-            emailService.sendRefundEmail(booking.getUser().getEmail(), bookingNumber,
-                    booking.getSession().getMovie().getTitle(), sessionTime, booking.getSession().getHall().getName(),
-                    amount, seatsInfo, description);
-
-            log.debug("Sent refund email to {}", booking.getUser().getEmail());
-        });
     }
 
     private void auditRefund(Payment payment, PaymentStatus oldStatus, PaymentStatus newStatus, BigDecimal amount,

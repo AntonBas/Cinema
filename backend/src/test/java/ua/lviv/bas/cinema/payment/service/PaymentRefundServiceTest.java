@@ -8,31 +8,21 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.payment.domain.Payment;
-import ua.lviv.bas.cinema.booking.domain.SeatReservation;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
-import ua.lviv.bas.cinema.cinema.domain.Seat;
-import ua.lviv.bas.cinema.ticket.domain.Ticket;
-import ua.lviv.bas.cinema.ticket.domain.TicketType;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
 import ua.lviv.bas.cinema.payment.repository.PaymentRepository;
-import ua.lviv.bas.cinema.common.DateTimeFormatterService;
-import ua.lviv.bas.cinema.common.NumberGeneratorService;
-import ua.lviv.bas.cinema.common.SeatInfoFormatter;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 import ua.lviv.bas.cinema.payment.service.PaymentGatewayService;
-import ua.lviv.bas.cinema.notification.EmailService;
 import ua.lviv.bas.cinema.support.CinemaTestFixtures;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.description;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -47,14 +37,6 @@ public class PaymentRefundServiceTest {
     private PaymentGatewayService paymentGatewayService;
     @Mock
     private AuditService auditService;
-    @Mock
-    private EmailService emailService;
-    @Mock
-    private DateTimeFormatterService dateTimeFormatter;
-    @Mock
-    private NumberGeneratorService numberGenerator;
-    @Mock
-    private SeatInfoFormatter seatInfoFormatter;
 
     @InjectMocks
     private PaymentRefundService paymentRefundService;
@@ -62,7 +44,6 @@ public class PaymentRefundServiceTest {
     private User testUser;
     private Booking testBooking;
     private Payment testPayment;
-    private Ticket testTicket;
 
     private static final BigDecimal AMOUNT = new BigDecimal("200.00");
 
@@ -74,23 +55,10 @@ public class PaymentRefundServiceTest {
         var hall = CinemaTestFixtures.hall();
         var session = CinemaTestFixtures.session(movie, hall);
 
-        Seat seat = Seat.builder().row(1).number(1).build();
-        SeatReservation seatReservation = SeatReservation.builder().seat(seat).build();
-
         testBooking = Booking.builder().id(2L).user(testUser).session(session).finalPrice(AMOUNT).build();
 
         testPayment = Payment.builder().id(3L).booking(testBooking).amount(AMOUNT).status(PaymentStatus.PENDING)
                 .liqpayOrderId("ORD_TEST123456789").build();
-
-        TicketType ticketType = TicketType.builder().displayName("Standard").build();
-        testTicket = Ticket.builder().id(1L).user(testUser).booking(testBooking).ticketType(ticketType)
-                .seatReservation(seatReservation).build();
-
-        lenient().doAnswer(invocation -> {
-            Runnable emailAction = invocation.getArgument(2);
-            emailAction.run();
-            return null;
-        }).when(emailService).sendSafely(any(String.class), any(), any());
     }
 
     @Test
@@ -132,10 +100,8 @@ public class PaymentRefundServiceTest {
         String description = "Test refund";
 
         when(paymentRepository.save(testPayment)).thenReturn(testPayment);
-        when(dateTimeFormatter.formatStandard(any(LocalDateTime.class))).thenReturn("2024-01-01 14:00");
-        when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
 
-        paymentRefundService.applyRefundSuccess(testPayment, refundAmount, refundAmount, description, testTicket);
+        paymentRefundService.applyRefundSuccess(testPayment, refundAmount, refundAmount, description);
 
         assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.PARTIALLY_REFUNDED);
         verify(paymentRepository).save(testPayment);
@@ -148,10 +114,8 @@ public class PaymentRefundServiceTest {
         String description = "Full refund";
 
         when(paymentRepository.save(testPayment)).thenReturn(testPayment);
-        when(dateTimeFormatter.formatStandard(any(LocalDateTime.class))).thenReturn("2024-01-01 14:00");
-        when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
 
-        paymentRefundService.applyRefundSuccess(testPayment, refundAmount, refundAmount, description, testTicket);
+        paymentRefundService.applyRefundSuccess(testPayment, refundAmount, refundAmount, description);
 
         assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.REFUNDED);
     }
@@ -163,10 +127,8 @@ public class PaymentRefundServiceTest {
         String description = "Second refund for multi-ticket booking";
 
         when(paymentRepository.save(testPayment)).thenReturn(testPayment);
-        when(dateTimeFormatter.formatStandard(any(LocalDateTime.class))).thenReturn("2024-01-01 14:00");
-        when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
 
-        paymentRefundService.applyRefundSuccess(testPayment, refundAmount, AMOUNT, description, testTicket);
+        paymentRefundService.applyRefundSuccess(testPayment, refundAmount, AMOUNT, description);
 
         assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.REFUNDED);
     }
@@ -178,11 +140,9 @@ public class PaymentRefundServiceTest {
         BigDecimal totalRefundedAmount = new BigDecimal("150.00");
 
         when(paymentRepository.save(testPayment)).thenReturn(testPayment);
-        when(dateTimeFormatter.formatStandard(any(LocalDateTime.class))).thenReturn("2024-01-01 14:00");
-        when(numberGenerator.generateBookingNumber(testBooking)).thenReturn("BK-2024-00001");
 
         paymentRefundService.applyRefundSuccess(testPayment, secondRefundAmount, totalRefundedAmount,
-                "Second partial refund", testTicket);
+                "Second partial refund");
 
         assertThat(testPayment.getStatus()).isEqualTo(PaymentStatus.PARTIALLY_REFUNDED);
         verify(paymentRepository).save(testPayment);

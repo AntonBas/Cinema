@@ -66,9 +66,10 @@ public class MovieScheduler {
         for (Movie movie : movies) {
             MovieStatus newStatus = movieStatusCalculator.calculate(movie, referenceDate);
 
-            if (movie.getStatus() != newStatus && updateStatus(movie.getId(), newStatus)) {
-                updatedCount++;
+            if (movie.getStatus() == newStatus || !updateStatus(movie.getId(), newStatus)) {
+                continue;
             }
+            updatedCount++;
 
             switch (newStatus) {
             case CURRENT -> currentCount++;

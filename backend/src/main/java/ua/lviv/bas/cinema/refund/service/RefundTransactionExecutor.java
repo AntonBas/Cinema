@@ -38,6 +38,7 @@ public class RefundTransactionExecutor {
     private final TicketService ticketService;
     private final RefundCalculator refundCalculator;
     private final AuditService auditService;
+    private final RefundConfirmationEmailSender refundConfirmationEmailSender;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public RefundProcessingContext createProcessingRefund(Long ticketId, Long userId, String reason) {
@@ -121,16 +122,15 @@ public class RefundTransactionExecutor {
         var alreadyProcessedAmount = refundRepository.sumAmountByPaymentIdAndStatus(refund.getPayment().getId(),
                 RefundStatus.PROCESSED);
         var totalRefundedAmount = alreadyProcessedAmount.add(amount);
-        paymentRefundService.applyRefundSuccess(refund.getPayment(), amount, totalRefundedAmount, description,
-                ticket);
+        paymentRefundService.applyRefundSuccess(refund.getPayment(), amount, totalRefundedAmount, description);
 
         if (bonusPointsToRefund != null && bonusPointsToRefund > 0) {
             bonusLedgerService.refundPointsForTicket(refund.getUser().getId(), bonusPointsToRefund,
                     "REFUND_TICKET_" + ticket.getId());
         }
 
-        bonusLedgerService.revokeAccruedPoints(refund.getUser().getId(),
-                refundCalculator.calculateEarnedPointsToRevoke(ticket, percentage),
+        var earnedPointsToRevoke = refundCalculator.calculateEarnedPointsToRevoke(ticket, percentage);
+        bonusLedgerService.revokeAccruedPoints(refund.getUser().getId(), earnedPointsToRevoke,
                 "REFUND_ACCRUAL_TICKET_" + ticket.getId());
 
         ticketService.markAsRefunded(ticket, refund);
@@ -139,6 +139,8 @@ public class RefundTransactionExecutor {
         refund.setStatus(RefundStatus.PROCESSED);
         refundRepository.save(refund);
 
+        refundConfirmationEmailSender.send(refund, ticket, bonusPointsToRefund == null ? 0 : bonusPointsToRefund,
+                earnedPointsToRevoke);
         auditProcessed(refund, ticket, amount, percentage, bonusPointsToRefund);
         log.info("Refund {} processed for ticket {}: amount={}, bonusPointsRefunded={}", refundId,
                 ticket.getUniqueCode(), amount, bonusPointsToRefund);

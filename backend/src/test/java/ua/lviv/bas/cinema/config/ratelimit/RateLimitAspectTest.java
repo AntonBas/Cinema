@@ -27,8 +27,7 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class RateLimitAspectTest {
 
-    private static final String SIGNATURE = "public String AuthController.login(UserLoginRequest)";
-    private static final String KEY_PREFIX = SIGNATURE + ":";
+    private static final String KEY_PREFIX = "Holder.login:";
 
     @Mock
     private RateLimitService rateLimitService;
@@ -48,7 +47,8 @@ class RateLimitAspectTest {
         ReflectionTestUtils.setField(rateLimitAspect, "rateLimitService", rateLimitService);
 
         lenient().when(joinPoint.getSignature()).thenReturn(signature);
-        lenient().when(signature.toLongString()).thenReturn(SIGNATURE);
+        lenient().doReturn(Holder.class).when(signature).getDeclaringType();
+        lenient().when(signature.getName()).thenReturn("login");
 
         request = new MockHttpServletRequest();
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request, new MockHttpServletResponse()));
@@ -129,15 +129,15 @@ class RateLimitAspectTest {
     @Test
     void checkRateLimitShouldUseSeparateBucketPerEndpoint() throws Throwable {
         request.setRemoteAddr("10.0.0.5");
-        when(signature.toLongString()).thenReturn("endpointA", "endpointB");
+        when(signature.getName()).thenReturn("endpointA", "endpointB");
         when(rateLimitService.tryConsume(anyString(), anyInt(), anyInt(), anyInt())).thenReturn(true);
         when(joinPoint.proceed()).thenReturn("ok");
 
         rateLimitAspect.checkRateLimit(joinPoint, ipRateLimit());
         rateLimitAspect.checkRateLimit(joinPoint, ipRateLimit());
 
-        verify(rateLimitService).tryConsume(eq("endpointA:10.0.0.5"), anyInt(), anyInt(), anyInt());
-        verify(rateLimitService).tryConsume(eq("endpointB:10.0.0.5"), anyInt(), anyInt(), anyInt());
+        verify(rateLimitService).tryConsume(eq("Holder.endpointA:10.0.0.5"), anyInt(), anyInt(), anyInt());
+        verify(rateLimitService).tryConsume(eq("Holder.endpointB:10.0.0.5"), anyInt(), anyInt(), anyInt());
     }
 
     private RateLimit ipRateLimit() {

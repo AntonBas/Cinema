@@ -13,7 +13,8 @@ public class GenreHasMoviesException extends BusinessException {
 
     public GenreHasMoviesException(Long genreId, String genreName, long totalMovieCount) {
         super(
-                String.format("Genre '%s' cannot be deleted", genreName),
+                String.format("Genre '%s' is used in %d %s and cannot be deleted", genreName, totalMovieCount,
+                        totalMovieCount == 1 ? "movie" : "movies"),
                 "GENRE_HAS_MOVIES",
                 HttpStatus.CONFLICT,
                 String.format("Genre '%s' (id: %d) is associated with %d movie(s) and cannot be deleted",

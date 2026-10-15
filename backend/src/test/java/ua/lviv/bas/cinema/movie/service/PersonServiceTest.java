@@ -10,6 +10,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import ua.lviv.bas.cinema.audit.domain.AuditAction;
+import ua.lviv.bas.cinema.audit.service.AuditService;
 import ua.lviv.bas.cinema.movie.domain.Person;
 import ua.lviv.bas.cinema.movie.domain.enums.PersonRole;
 import ua.lviv.bas.cinema.movie.dto.request.PersonRequest;
@@ -29,6 +31,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -42,6 +46,8 @@ public class PersonServiceTest {
     private MovieRepository movieRepository;
     @Mock
     private PersonMapper personMapper;
+    @Mock
+    private AuditService auditService;
 
     @InjectMocks
     private PersonService personService;
@@ -77,6 +83,8 @@ public class PersonServiceTest {
 
         assertThat(result).isEqualTo(personResponse);
         verify(personRepository).save(person);
+        verify(auditService).logChange(eq("Person"), any(), eq(PERSON_NAME), eq(AuditAction.CREATED), isNull(),
+                any());
     }
 
     @Test

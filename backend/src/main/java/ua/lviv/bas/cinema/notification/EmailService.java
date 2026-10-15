@@ -132,7 +132,8 @@ public class EmailService {
 
     @Async(AsyncConfig.EMAIL_EXECUTOR)
     public void sendRefundEmail(String toEmail, String bookingNumber, String movieTitle, String sessionTime,
-                                String hallName, BigDecimal refundAmount, String seatInfo, String refundReason) {
+                                String hallName, BigDecimal refundAmount, String seatInfo, String refundReason,
+                                int bonusPointsReturned, int earnedPointsRevoked) {
         Map<String, String> details = new LinkedHashMap<>();
         details.put("Booking Number", bookingNumber);
         details.put("Movie", movieTitle);
@@ -140,7 +141,9 @@ public class EmailService {
         details.put("Hall", hallName);
         details.put("Seats", seatInfo);
         details.put("Refund Amount", refundAmount + " UAH");
-        details.put("Reason", refundReason);
+        if (refundReason != null && !refundReason.isBlank()) {
+            details.put("Reason", refundReason);
+        }
 
         String processedAt = CinemaTime.now().format(DATE_TIME_FORMATTER);
         String html = buildDetailsEmail("Refund Confirmation - " + movieTitle, details,
@@ -148,6 +151,8 @@ public class EmailService {
                         + "original payment method within " + refundProcessingTime + ".<br><br>"
                         + "<strong>Refund Summary:</strong><ul style=\"margin:8px 0;padding-left:20px\">"
                         + "<li>Ticket price refunded: " + refundAmount + " UAH</li>"
+                        + bonusLine(bonusPointsReturned, "Bonus points returned to your card")
+                        + bonusLine(earnedPointsRevoked, "Bonus points earned from this purchase deducted")
                         + "<li>Refund processed at: " + processedAt + "</li></ul>"
                         + "If you have any questions about your refund, please contact our support team.",
                 "This is an automated email. Please do not reply.");
@@ -303,6 +308,10 @@ public class EmailService {
                   </div>
                 </div>
                 """.formatted(companyName, escape(title), bodyHtml);
+    }
+
+    private static String bonusLine(int points, String label) {
+        return points > 0 ? "<li>" + label + ": " + points + "</li>" : "";
     }
 
     private String supportContact() {

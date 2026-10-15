@@ -11,6 +11,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import ua.lviv.bas.cinema.audit.domain.AuditAction;
+import ua.lviv.bas.cinema.audit.service.AuditService;
 import ua.lviv.bas.cinema.movie.domain.Genre;
 import ua.lviv.bas.cinema.movie.dto.request.GenreRequest;
 import ua.lviv.bas.cinema.movie.dto.response.GenreListResponse;
@@ -29,6 +31,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -42,6 +46,8 @@ public class GenreServiceTest {
     private MovieRepository movieRepository;
     @Mock
     private GenreMapper genreMapper;
+    @Mock
+    private AuditService auditService;
     @InjectMocks
     private GenreService genreService;
 
@@ -67,6 +73,8 @@ public class GenreServiceTest {
         assertThat(result.id()).isEqualTo(GENRE_ID);
         assertThat(result.name()).isEqualTo(GENRE_NAME);
         verify(genreRepository).save(genre);
+        verify(auditService).logChange(eq("Genre"), eq(GENRE_ID), eq(GENRE_NAME), eq(AuditAction.CREATED),
+                isNull(), any());
     }
 
     @Test
@@ -175,6 +183,8 @@ public class GenreServiceTest {
         genreService.deleteGenre(GENRE_ID);
 
         verify(genreRepository).deleteById(GENRE_ID);
+        verify(auditService).logChange(eq("Genre"), eq(GENRE_ID), eq(GENRE_NAME), eq(AuditAction.DELETED),
+                any(), isNull());
     }
 
     @Test

@@ -25,7 +25,9 @@ public class RateLimitAspect {
 
     @Around("@annotation(rateLimit)")
     public Object checkRateLimit(ProceedingJoinPoint joinPoint, RateLimit rateLimit) throws Throwable {
-        String key = joinPoint.getSignature().toLongString() + ":" + resolveKey(rateLimit.key());
+        var signature = joinPoint.getSignature();
+        String key = signature.getDeclaringType().getSimpleName() + "." + signature.getName() + ":"
+                + resolveKey(rateLimit.key());
 
         if (!rateLimitService.tryConsume(key, 1, rateLimit.value(), rateLimit.duration())) {
             throw new RateLimitExceededException(rateLimit.value(), rateLimit.duration());

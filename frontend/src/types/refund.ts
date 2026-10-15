@@ -100,6 +100,7 @@ export const RefundItemStatusDisplay: Record<string, string> = {
 
 export interface AdminRefundListResponse {
   id: number;
+  refundNumber: string;
   status: RefundStatus;
   createdDate: string;
   lastModifiedDate: string;

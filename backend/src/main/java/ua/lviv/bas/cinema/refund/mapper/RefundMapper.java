@@ -26,6 +26,7 @@ public interface RefundMapper {
     @Mapping(target = "processedAt", ignore = true)
     RefundResponse toResponse(Refund refund, String refundNumber, String message, String estimatedRefundTime);
 
+    @Mapping(target = "refundNumber", expression = "java(NumberGeneratorService.generateRefundNumberStatic(refund))")
     @Mapping(target = "userId", source = "user.id")
     @Mapping(target = "userEmail", source = "user.email")
     @Mapping(target = "bookingId", source = "payment.booking.id")

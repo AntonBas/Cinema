@@ -61,6 +61,8 @@ public class RefundTransactionExecutorTest {
     private RefundCalculator refundCalculator;
     @Mock
     private AuditService auditService;
+    @Mock
+    private RefundConfirmationEmailSender refundConfirmationEmailSender;
 
     @InjectMocks
     private RefundTransactionExecutor refundTransactionExecutor;
@@ -199,7 +201,8 @@ public class RefundTransactionExecutorTest {
         assertThat(result.getStatus()).isEqualTo(RefundStatus.PROCESSED);
         assertThat(testRefundItem.getStatus()).isEqualTo(RefundItemStatus.PROCESSED);
         verify(paymentRefundService).applyRefundSuccess(eq(testPayment), eq(REFUND_AMOUNT), eq(REFUND_AMOUNT),
-                any(String.class), eq(testTicket));
+                any(String.class));
+        verify(refundConfirmationEmailSender).send(testRefund, testTicket, BONUS_POINTS_TO_REFUND, 0);
         verify(bonusLedgerService).refundPointsForTicket(USER_ID, BONUS_POINTS_TO_REFUND, "REFUND_TICKET_" + TICKET_ID);
         verify(ticketService).markAsRefunded(testTicket, testRefund);
     }

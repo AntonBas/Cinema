@@ -200,12 +200,14 @@ class EmailServiceTest {
                 .andExpect(jsonPath("$.htmlContent", containsString("300.00")))
                 .andExpect(jsonPath("$.htmlContent", containsString("Row 6, Seat 8")))
                 .andExpect(jsonPath("$.htmlContent", containsString("Customer request")))
+                .andExpect(jsonPath("$.htmlContent", containsString("Bonus points returned to your card: 100")))
+                .andExpect(jsonPath("$.htmlContent", containsString("earned from this purchase deducted: 10")))
                 .andExpect(jsonPath("$.htmlContent", containsString("5-7 business days")))
                 .andExpect(jsonPath("$.htmlContent", containsString("automated email")))
                 .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
 
         emailService.sendRefundEmail("customer@example.com", "BK-2024-003", "The Dark Knight", "2024-01-17 19:00",
-                "Hall B", new BigDecimal("300.00"), "Row 6, Seat 8", "Customer request");
+                "Hall B", new BigDecimal("300.00"), "Row 6, Seat 8", "Customer request", 100, 10);
 
         mockServer.verify();
     }
@@ -219,7 +221,7 @@ class EmailServiceTest {
                 .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
 
         emailService.sendRefundEmail("customer@example.com", "BK-2024-003", "The Dark Knight", "2024-01-17 19:00",
-                "Hall B", new BigDecimal("300.00"), "Row 6, Seat 8", "Customer request");
+                "Hall B", new BigDecimal("300.00"), "Row 6, Seat 8", "Customer request", 0, 0);
 
         mockServer.verify();
     }
@@ -229,7 +231,7 @@ class EmailServiceTest {
         mockServer.expect(ExpectedCount.times(3), requestTo(BREVO_URL)).andRespond(withServerError());
 
         assertThatCode(() -> emailService.sendRefundEmail("customer@example.com", "BK-2024-003", "The Dark Knight",
-                "2024-01-17 19:00", "Hall B", new BigDecimal("300.00"), "Row 6, Seat 8", "Customer request"))
+                "2024-01-17 19:00", "Hall B", new BigDecimal("300.00"), "Row 6, Seat 8", "Customer request", 0, 0))
                 .doesNotThrowAnyException();
 
         mockServer.verify();

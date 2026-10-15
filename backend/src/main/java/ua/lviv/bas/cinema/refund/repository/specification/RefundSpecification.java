@@ -25,6 +25,8 @@ public class RefundSpecification {
 
     private static final Pattern BOOKING_NUMBER = Pattern.compile("^BK-\\d{4}-0*(\\d{1,18})$",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern REFUND_NUMBER = Pattern.compile("^RF-\\d{4}-0*(\\d{1,18})$",
+            Pattern.CASE_INSENSITIVE);
 
     public Specification<Refund> forAdmin(String search, RefundStatus status, boolean needsAttention, Long userId,
                                           LocalDate dateFrom, LocalDate dateTo) {
@@ -65,6 +67,10 @@ public class RefundSpecification {
         Matcher bookingNumber = BOOKING_NUMBER.matcher(search);
         if (bookingNumber.matches()) {
             return cb.equal(root.get("payment").get("booking").get("id"), Long.parseLong(bookingNumber.group(1)));
+        }
+        Matcher refundNumber = REFUND_NUMBER.matcher(search);
+        if (refundNumber.matches()) {
+            return cb.equal(root.get("id"), Long.parseLong(refundNumber.group(1)));
         }
 
         String pattern = "%" + search.toLowerCase() + "%";

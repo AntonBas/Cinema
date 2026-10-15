@@ -13,7 +13,8 @@ public class MovieHasSessionsException extends BusinessException {
 
     public MovieHasSessionsException(String movieTitle, long totalSessionCount) {
         super(
-                String.format("Movie '%s' cannot be deleted", movieTitle),
+                String.format("Movie '%s' has %d %s and cannot be deleted", movieTitle, totalSessionCount,
+                        totalSessionCount == 1 ? "session" : "sessions"),
                 "MOVIE_HAS_SESSIONS",
                 HttpStatus.CONFLICT,
                 String.format("Movie '%s' is associated with %d session(s) and cannot be deleted",
