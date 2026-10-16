@@ -13,10 +13,10 @@ import org.springframework.test.context.ActiveProfiles;
 import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.config.NoOpCacheTestConfig;
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
-import ua.lviv.bas.cinema.movie.movie.Movie;
-import ua.lviv.bas.cinema.movie.movie.AgeRating;
-import ua.lviv.bas.cinema.movie.movie.MovieStatus;
-import ua.lviv.bas.cinema.movie.movie.MovieRepository;
+import ua.lviv.bas.cinema.movie.Movie;
+import ua.lviv.bas.cinema.movie.AgeRating;
+import ua.lviv.bas.cinema.movie.MovieStatus;
+import ua.lviv.bas.cinema.movie.MovieRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

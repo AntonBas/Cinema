@@ -17,7 +17,7 @@ import ua.lviv.bas.cinema.booking.reservation.ReservationStatus;
 import ua.lviv.bas.cinema.booking.BookingRepository;
 import ua.lviv.bas.cinema.booking.reservation.SeatReservationRepository;
 import ua.lviv.bas.cinema.bonus.BonusLedgerService;
-import ua.lviv.bas.cinema.cinema.session.Session;
+import ua.lviv.bas.cinema.cinema.Session;
 import ua.lviv.bas.cinema.payment.gateway.PaymentGatewayCheckResult;
 import ua.lviv.bas.cinema.payment.gateway.PaymentGatewayService;
 import ua.lviv.bas.cinema.payment.gateway.PaymentGatewayStatus;

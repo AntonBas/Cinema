@@ -7,7 +7,7 @@ import org.springframework.util.StringUtils;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Order;
-import ua.lviv.bas.cinema.cinema.session.CinemaSessionStatus;
+import ua.lviv.bas.cinema.cinema.CinemaSessionStatus;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

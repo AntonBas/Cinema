@@ -6,7 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ua.lviv.bas.cinema.cinema.session.Session;
+import ua.lviv.bas.cinema.cinema.Session;
 import ua.lviv.bas.cinema.cinema.hall.dto.CinemaHallRequest;
 import ua.lviv.bas.cinema.cinema.hall.dto.HallLayoutRequest;
 import ua.lviv.bas.cinema.cinema.hall.dto.SeatLayoutItemRequest;

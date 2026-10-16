@@ -18,7 +18,7 @@ import ua.lviv.bas.cinema.movie.person.dto.PersonResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.movie.exception.PersonHasMoviesException;
-import ua.lviv.bas.cinema.movie.movie.MovieRepository;
+import ua.lviv.bas.cinema.movie.MovieRepository;
 import ua.lviv.bas.cinema.common.UniquenessValidator;
 import ua.lviv.bas.cinema.common.FixedOrderPageable;
 

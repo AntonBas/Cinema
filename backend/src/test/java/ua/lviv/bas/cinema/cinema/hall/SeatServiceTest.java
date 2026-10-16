@@ -6,9 +6,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ua.lviv.bas.cinema.cinema.session.CinemaSessionStatus;
+import ua.lviv.bas.cinema.cinema.CinemaSessionStatus;
 import ua.lviv.bas.cinema.cinema.hall.dto.SeatResponse;
-import ua.lviv.bas.cinema.cinema.session.SessionRepository;
+import ua.lviv.bas.cinema.cinema.SessionRepository;
 import ua.lviv.bas.cinema.cinema.exception.CinemaHallHasSessionsException;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 

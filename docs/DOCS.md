@@ -633,14 +633,14 @@ domain); `notification/`, `integration/` and `common/` are shared infrastructure
     ├── notification/              # outbound email (Brevo HTTP API + templates)
     ├── integration/               # file storage (local disk / Cloudinary); posters live in movie/poster, QR codes in ticket/
     ├── migration/                 # Java-based Flyway migrations (V22, V24)
-    └── common/                    # cross-cutting utilities (PageResponse, price/number/date formatting, uniqueness checks)
+    └── common/                    # cross-cutting utilities (PageResponse, number/date formatting, uniqueness checks)
 
 **Domain packages:**
 
 | Package         | Responsibility                                                          |
 | ---------------- | ------------------------------------------------------------------------ |
-| `movie/`         | Movies, genres, cast (actors/directors/screenwriters), split into `movie/`, `genre/`, `person/` sub-packages |
-| `cinema/`        | Cinema halls, seats, sessions, split into `hall/` and `session/` sub-packages |
+| `movie/`         | Movies, genres, cast (actors/directors/screenwriters); movie at the root, `genre/`, `person/`, `poster/` sub-packages |
+| `cinema/`        | Cinema sessions at the root, halls and seats in `hall/` |
 | `user/`          | Users, authentication, email verification tokens                        |
 | `booking/`       | Booking creation, seat reservation (two-stage locking)                  |
 | `payment/`       | Payment processing, LiqPay gateway integration and callback handling    |
@@ -655,7 +655,7 @@ domain); `notification/`, `integration/` and `common/` are shared infrastructure
 
 The 10 packages above `audit/` are the actual business domains, each owning its own decisions.
 `notification/`, `integration/`, and `common/` are shared infrastructure: they're called *by* a
-domain (e.g. `movie/movie/SlugService` decides how a movie's slug is generated; `integration/`
+domain (e.g. `movie/SlugService` decides how a movie's slug is generated; `integration/`
 only holds the technical file-storage adapters, while poster handling and QR generation sit in
 `movie/poster/` and `ticket/` next to the domain that uses them) rather than making business
 decisions themselves.

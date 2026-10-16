@@ -61,7 +61,7 @@ Full feature breakdown for every role: [docs/DOCS.md#features](docs/DOCS.md#feat
 
 ## Architecture
 
-**Package by Feature + Layer:** each business domain (`booking/`, `payment/`, `refund/`, `bonus/`, `movie/`, `cinema/`, `user/`, `ticket/`, `promotion/`, `audit/`) is a self-contained package with its own entity, repository, service, mapper, controllers and `dto/` (larger domains are split further into sub-packages by subject, e.g. `movie/{movie,genre,person}`, `cinema/{hall,session}`, `user/{auth,admin}`; each keeps its entity, repository, service, mapper, controllers and `dto/` together), instead of one global layer shared by the whole app. `notification/`, `integration/`, and `common/` are shared infrastructure packages (mail sending, file/QR handling, stateless utilities) — they never own a business decision, only get called by the domain that does. `config/` and `exception/` stay global across every domain.
+**Package by Feature + Layer:** each business domain (`booking/`, `payment/`, `refund/`, `bonus/`, `movie/`, `cinema/`, `user/`, `ticket/`, `promotion/`, `audit/`) is a self-contained package with its own entity, repository, service, mapper, controllers and `dto/` (secondary subjects get their own sub-package, e.g. `movie/{genre,person}`, `cinema/hall`, `user/{auth,admin}`; each keeps its entity, repository, service, mapper, controllers and `dto/` together), instead of one global layer shared by the whole app. `notification/`, `integration/`, and `common/` are shared infrastructure packages (mail sending, file/QR handling, stateless utilities) — they never own a business decision, only get called by the domain that does. `config/` and `exception/` stay global across every domain.
 
 ```mermaid
 flowchart TD

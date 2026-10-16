@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ua.lviv.bas.cinema.bonus.BonusQueryService;
 import ua.lviv.bas.cinema.booking.Booking;
-import ua.lviv.bas.cinema.cinema.session.CinemaSessionStatus;
+import ua.lviv.bas.cinema.cinema.CinemaSessionStatus;
 import ua.lviv.bas.cinema.config.properties.RefundRules;
 import ua.lviv.bas.cinema.payment.PaymentStatus;
 import ua.lviv.bas.cinema.ticket.Ticket;

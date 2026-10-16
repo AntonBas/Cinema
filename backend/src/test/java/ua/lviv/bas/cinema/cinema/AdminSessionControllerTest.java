@@ -1,0 +1,228 @@
+package ua.lviv.bas.cinema.cinema;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import ua.lviv.bas.cinema.common.PageResponse;
+import ua.lviv.bas.cinema.cinema.dto.SessionRequest;
+import ua.lviv.bas.cinema.cinema.dto.SessionAdminResponse;
+import ua.lviv.bas.cinema.cinema.dto.SessionResponse;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
+import ua.lviv.bas.cinema.cinema.exception.SessionTimeConflictException;
+import ua.lviv.bas.cinema.common.CinemaTime;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+public class AdminSessionControllerTest {
+
+    @Mock
+    private SessionService sessionService;
+
+    @InjectMocks
+    private AdminSessionController adminSessionController;
+
+    private SessionResponse createSessionResponse(BigDecimal basePrice) {
+        return new SessionResponse(1L, CinemaTime.now().plusHours(2), CinemaTime.now().plusHours(4), basePrice,
+                CinemaSessionStatus.SCHEDULED, 1L, "Test Movie", 120, 1L, "Hall 1");
+    }
+
+    private SessionAdminResponse createSessionAdminResponse(BigDecimal basePrice) {
+        return new SessionAdminResponse(1L, CinemaTime.now().plusHours(2), CinemaTime.now().plusHours(4),
+                basePrice, CinemaSessionStatus.SCHEDULED, 1L, "Test Movie", 120, 1L, "Hall 1", 100, 0, BigDecimal.ZERO);
+    }
+
+    @Test
+    void createSessionShouldCreateSuccessfully() {
+        LocalDateTime startTime = CinemaTime.now().plusHours(2);
+        BigDecimal price = BigDecimal.valueOf(250);
+        SessionRequest request = new SessionRequest(startTime, price, 1L, 1L);
+
+        SessionResponse response = createSessionResponse(price);
+
+        when(sessionService.createSession(request)).thenReturn(response);
+
+        SessionResponse result = adminSessionController.createSession(request);
+
+        assertThat(result).isNotNull();
+        assertThat(result.id()).isEqualTo(1L);
+        assertThat(result.basePrice()).isEqualTo(price);
+        verify(sessionService).createSession(request);
+    }
+
+    @Test
+    void createSessionWhenTimeConflictShouldThrowException() {
+        LocalDateTime startTime = CinemaTime.now().plusHours(2);
+        SessionRequest request = new SessionRequest(startTime, BigDecimal.valueOf(250), 1L, 1L);
+
+        when(sessionService.createSession(request))
+                .thenThrow(new SessionTimeConflictException("Hall 1", request.startTime()));
+
+        assertThrows(SessionTimeConflictException.class, () -> adminSessionController.createSession(request));
+        verify(sessionService).createSession(request);
+    }
+
+    @Test
+    void getSessionShouldReturnSession() {
+        BigDecimal price = BigDecimal.valueOf(250);
+        SessionResponse response = createSessionResponse(price);
+
+        when(sessionService.getSession(1L)).thenReturn(response);
+
+        SessionResponse result = adminSessionController.getSessionById(1L);
+
+        assertThat(result).isNotNull();
+        assertThat(result.id()).isEqualTo(1L);
+        assertThat(result.basePrice()).isEqualTo(price);
+        verify(sessionService).getSession(1L);
+    }
+
+    @Test
+    void getSessionWhenNotFoundShouldThrowException() {
+        when(sessionService.getSession(999L)).thenThrow(new EntityNotFoundException("Session", 999L));
+
+        assertThrows(EntityNotFoundException.class, () -> adminSessionController.getSessionById(999L));
+        verify(sessionService).getSession(999L);
+    }
+
+    @Test
+    void getSessionsShouldReturnSessions() {
+        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "startTime"));
+        Long hallId = 1L;
+        String movieTitle = "Test";
+        CinemaSessionStatus status = CinemaSessionStatus.SCHEDULED;
+        LocalDate dateFrom = CinemaTime.today();
+        LocalDate dateTo = CinemaTime.today().plusDays(7);
+        BigDecimal price = BigDecimal.valueOf(250);
+
+        SessionAdminResponse response = createSessionAdminResponse(price);
+        Page<SessionAdminResponse> page = new PageImpl<>(List.of(response), pageable, 1);
+
+        when(sessionService.getSessions(hallId, movieTitle, status, dateFrom, dateTo, pageable)).thenReturn(page);
+
+        PageResponse<SessionAdminResponse> result = adminSessionController.getSessions(hallId, movieTitle, status,
+                dateFrom, dateTo, pageable);
+
+        assertThat(result).isNotNull();
+        assertThat(result.content()).hasSize(1);
+        assertThat(result.number()).isZero();
+        assertThat(result.size()).isEqualTo(10);
+        assertThat(result.totalElements()).isEqualTo(1);
+        verify(sessionService).getSessions(hallId, movieTitle, status, dateFrom, dateTo, pageable);
+    }
+
+    @Test
+    void getSessionsWithNullFiltersShouldReturnAllSessions() {
+        Pageable pageable = PageRequest.of(0, 10);
+        SessionAdminResponse response = createSessionAdminResponse(BigDecimal.valueOf(250));
+        Page<SessionAdminResponse> page = new PageImpl<>(List.of(response), pageable, 1);
+
+        when(sessionService.getSessions(null, null, null, null, null, pageable)).thenReturn(page);
+
+        PageResponse<SessionAdminResponse> result = adminSessionController.getSessions(null, null, null, null, null,
+                pageable);
+
+        assertThat(result).isNotNull();
+        assertThat(result.content()).hasSize(1);
+        verify(sessionService).getSessions(null, null, null, null, null, pageable);
+    }
+
+    @Test
+    void updateSessionShouldUpdateSuccessfully() {
+        BigDecimal newPrice = BigDecimal.valueOf(300);
+        SessionRequest request = new SessionRequest(null, newPrice, null, null);
+
+        SessionResponse response = createSessionResponse(newPrice);
+
+        when(sessionService.updateSession(1L, request)).thenReturn(response);
+
+        SessionResponse result = adminSessionController.updateSession(1L, request);
+
+        assertThat(result).isNotNull();
+        assertThat(result.basePrice()).isEqualTo(newPrice);
+        verify(sessionService).updateSession(1L, request);
+    }
+
+    @Test
+    void updateSessionWhenNotFoundShouldThrowException() {
+        SessionRequest request = new SessionRequest(null, BigDecimal.valueOf(300), null, null);
+
+        when(sessionService.updateSession(999L, request)).thenThrow(new EntityNotFoundException("Session", 999L));
+
+        assertThrows(EntityNotFoundException.class, () -> adminSessionController.updateSession(999L, request));
+        verify(sessionService).updateSession(999L, request);
+    }
+
+    @Test
+    void updateSessionWhenTimeConflictShouldThrowException() {
+        LocalDateTime newStartTime = CinemaTime.now().plusHours(3);
+        SessionRequest request = new SessionRequest(newStartTime, null, null, null);
+
+        when(sessionService.updateSession(1L, request))
+                .thenThrow(new SessionTimeConflictException("Hall 1", request.startTime()));
+
+        assertThrows(SessionTimeConflictException.class, () -> adminSessionController.updateSession(1L, request));
+        verify(sessionService).updateSession(1L, request);
+    }
+
+    @Test
+    void cancelSessionShouldCancelSuccessfully() {
+        adminSessionController.cancelSession(1L);
+
+        verify(sessionService).cancelSession(1L);
+    }
+
+    @Test
+    void cancelSessionWhenNotFoundShouldThrowException() {
+        doThrow(new EntityNotFoundException("Session", 1L)).when(sessionService).cancelSession(1L);
+
+        assertThrows(EntityNotFoundException.class, () -> adminSessionController.cancelSession(1L));
+        verify(sessionService).cancelSession(1L);
+    }
+
+    @Test
+    void reactivateSessionShouldReactivateSuccessfully() {
+        adminSessionController.reactivateSession(1L);
+
+        verify(sessionService).reactivateSession(1L);
+    }
+
+    @Test
+    void reactivateSessionWhenNotFoundShouldThrowException() {
+        doThrow(new EntityNotFoundException("Session", 1L)).when(sessionService).reactivateSession(1L);
+
+        assertThrows(EntityNotFoundException.class, () -> adminSessionController.reactivateSession(1L));
+        verify(sessionService).reactivateSession(1L);
+    }
+
+    @Test
+    void deleteSessionShouldDeleteSuccessfully() {
+        adminSessionController.deleteSession(1L);
+
+        verify(sessionService).deleteSession(1L);
+    }
+
+    @Test
+    void deleteSessionWhenNotFoundShouldThrowException() {
+        doThrow(new EntityNotFoundException("Session", 1L)).when(sessionService).deleteSession(1L);
+
+        assertThrows(EntityNotFoundException.class, () -> adminSessionController.deleteSession(1L));
+        verify(sessionService).deleteSession(1L);
+    }
+}

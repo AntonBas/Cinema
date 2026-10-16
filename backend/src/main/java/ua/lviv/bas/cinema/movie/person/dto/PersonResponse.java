@@ -1,7 +1,7 @@
 package ua.lviv.bas.cinema.movie.person.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import ua.lviv.bas.cinema.movie.movie.Movie;
+import ua.lviv.bas.cinema.movie.Movie;
 import ua.lviv.bas.cinema.movie.person.PersonRole;
 
 @Schema(description = "Movie person details")

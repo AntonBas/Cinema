@@ -16,7 +16,7 @@ import ua.lviv.bas.cinema.booking.BookingStatus;
 import ua.lviv.bas.cinema.booking.reservation.ReservationStatus;
 import ua.lviv.bas.cinema.cinema.hall.Seat;
 import ua.lviv.bas.cinema.payment.exception.PaymentProcessingException;
-import ua.lviv.bas.cinema.cinema.session.CinemaSessionStatus;
+import ua.lviv.bas.cinema.cinema.CinemaSessionStatus;
 import ua.lviv.bas.cinema.user.User;
 import ua.lviv.bas.cinema.payment.dto.PaymentCreateRequest;
 import ua.lviv.bas.cinema.payment.dto.PaymentResponse;

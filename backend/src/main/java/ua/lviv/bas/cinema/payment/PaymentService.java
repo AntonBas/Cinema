@@ -10,7 +10,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import ua.lviv.bas.cinema.audit.AuditAction;
 import ua.lviv.bas.cinema.booking.Booking;
 import ua.lviv.bas.cinema.booking.BookingStatus;
-import ua.lviv.bas.cinema.cinema.session.CinemaSessionStatus;
+import ua.lviv.bas.cinema.cinema.CinemaSessionStatus;
 import ua.lviv.bas.cinema.booking.reservation.ReservationStatus;
 import ua.lviv.bas.cinema.user.User;
 import ua.lviv.bas.cinema.payment.dto.PaymentCreateRequest;

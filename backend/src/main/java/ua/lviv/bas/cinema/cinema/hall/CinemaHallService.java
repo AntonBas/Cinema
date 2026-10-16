@@ -7,7 +7,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.audit.AuditAction;
-import ua.lviv.bas.cinema.cinema.session.CinemaSessionStatus;
+import ua.lviv.bas.cinema.cinema.CinemaSessionStatus;
 import ua.lviv.bas.cinema.cinema.hall.dto.CinemaHallRequest;
 import ua.lviv.bas.cinema.cinema.hall.dto.HallLayoutRequest;
 import ua.lviv.bas.cinema.cinema.hall.dto.SeatLayoutItemRequest;

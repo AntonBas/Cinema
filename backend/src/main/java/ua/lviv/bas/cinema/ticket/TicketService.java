@@ -21,7 +21,7 @@ import ua.lviv.bas.cinema.refund.Refund;
 import ua.lviv.bas.cinema.refund.RefundCalculator;
 import ua.lviv.bas.cinema.booking.reservation.SeatReservation;
 import ua.lviv.bas.cinema.booking.reservation.ReservationStatus;
-import ua.lviv.bas.cinema.cinema.session.CinemaSessionStatus;
+import ua.lviv.bas.cinema.cinema.CinemaSessionStatus;
 import ua.lviv.bas.cinema.user.User;
 import ua.lviv.bas.cinema.ticket.dto.TicketCashierResponse;
 import ua.lviv.bas.cinema.ticket.dto.TicketResponse;

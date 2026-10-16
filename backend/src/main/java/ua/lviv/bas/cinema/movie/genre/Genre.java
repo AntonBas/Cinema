@@ -1,6 +1,6 @@
 package ua.lviv.bas.cinema.movie.genre;
 
-import ua.lviv.bas.cinema.movie.movie.Movie;
+import ua.lviv.bas.cinema.movie.Movie;
 
 import java.util.HashSet;
 import java.util.Set;

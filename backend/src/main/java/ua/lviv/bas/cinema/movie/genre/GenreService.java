@@ -20,7 +20,7 @@ import ua.lviv.bas.cinema.movie.genre.dto.GenreResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.movie.exception.GenreHasMoviesException;
-import ua.lviv.bas.cinema.movie.movie.MovieRepository;
+import ua.lviv.bas.cinema.movie.MovieRepository;
 import ua.lviv.bas.cinema.common.UniquenessValidator;
 import ua.lviv.bas.cinema.common.FixedOrderPageable;
 

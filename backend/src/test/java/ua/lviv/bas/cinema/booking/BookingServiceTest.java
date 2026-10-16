@@ -15,7 +15,7 @@ import ua.lviv.bas.cinema.booking.dto.BookingResponse;
 import ua.lviv.bas.cinema.booking.reservation.ReservationStatus;
 import ua.lviv.bas.cinema.booking.reservation.SeatReservation;
 import ua.lviv.bas.cinema.booking.reservation.SeatReservationService;
-import ua.lviv.bas.cinema.cinema.session.Session;
+import ua.lviv.bas.cinema.cinema.Session;
 import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.booking.exception.BookingConcurrentModificationException;

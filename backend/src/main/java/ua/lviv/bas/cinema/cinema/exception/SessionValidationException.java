@@ -1,6 +1,6 @@
 package ua.lviv.bas.cinema.cinema.exception;
 
-import ua.lviv.bas.cinema.movie.movie.Movie;
+import ua.lviv.bas.cinema.movie.Movie;
 import ua.lviv.bas.cinema.exception.core.ValidationException;
 
 import java.io.Serial;

@@ -14,7 +14,7 @@ import ua.lviv.bas.cinema.payment.Payment;
 import ua.lviv.bas.cinema.booking.reservation.SeatReservation;
 import ua.lviv.bas.cinema.payment.PaymentStatus;
 import ua.lviv.bas.cinema.cinema.hall.Seat;
-import ua.lviv.bas.cinema.cinema.session.Session;
+import ua.lviv.bas.cinema.cinema.Session;
 import ua.lviv.bas.cinema.ticket.Ticket;
 import ua.lviv.bas.cinema.ticket.TicketStatus;
 import ua.lviv.bas.cinema.ticket.type.TicketType;

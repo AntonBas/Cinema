@@ -6,12 +6,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.cinema.session.CinemaSessionStatus;
+import ua.lviv.bas.cinema.cinema.CinemaSessionStatus;
 import ua.lviv.bas.cinema.cinema.hall.dto.SeatResponse;
 import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
 import ua.lviv.bas.cinema.cinema.exception.CinemaHallHasSessionsException;
-import ua.lviv.bas.cinema.cinema.session.SessionRepository;
+import ua.lviv.bas.cinema.cinema.SessionRepository;
 
 @Slf4j
 @Service
