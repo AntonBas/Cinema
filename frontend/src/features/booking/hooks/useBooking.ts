@@ -1,0 +1,54 @@
+import { useCallback, useRef } from "react";
+import { bookingApi } from "@/features/booking/api/bookingApi";
+import type {
+  BookingResponse,
+  BookingCreateRequest,
+} from "@/features/booking/types/booking";
+import { useApi } from "@/hooks/common/useApi";
+import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
+
+export const useBooking = () => {
+  const bookingApiHook = useApi<BookingResponse>();
+  const mutationApi = useApi<BookingResponse | void>();
+
+  const bookingApiRef = useRef(bookingApiHook);
+  const mutationApiRef = useRef(mutationApi);
+
+  bookingApiRef.current = bookingApiHook;
+  mutationApiRef.current = mutationApi;
+
+  const loading = useDelayedLoading(
+    bookingApiHook.loading || mutationApi.loading,
+    { delay: 150, minDisplayTime: 300 },
+  );
+
+  const create = useCallback(async (request: BookingCreateRequest) => {
+    return mutationApiRef.current.execute(() => bookingApi.create(request), {
+      dedupeKey: "create",
+    });
+  }, []);
+
+  const getById = useCallback(async (bookingId: string) => {
+    return bookingApiRef.current.execute(() => bookingApi.getById(bookingId));
+  }, []);
+
+  const cancel = useCallback(async (bookingId: string) => {
+    return mutationApiRef.current.execute(() => bookingApi.cancel(bookingId), {
+      successMessage: "Booking cancelled successfully",
+      dedupeKey: `cancel:${bookingId}`,
+    });
+  }, []);
+
+  return {
+    booking: bookingApiHook.data,
+    loading,
+    error: bookingApiHook.error || mutationApi.error,
+    create,
+    getById,
+    cancel,
+    reset: () => {
+      bookingApiHook.reset();
+      mutationApi.reset();
+    },
+  };
+};

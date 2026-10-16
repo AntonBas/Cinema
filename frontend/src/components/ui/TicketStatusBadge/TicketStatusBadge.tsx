@@ -1,8 +1,8 @@
 import React from "react";
 import { Badge } from "@/components/ui/Badge/Badge";
 import type { BadgeVariant } from "@/components/ui/Badge/Badge";
-import { TicketStatusDisplay } from "@/types/ticket";
-import type { TicketStatus } from "@/types/ticket";
+import { TicketStatusDisplay } from "@/features/ticket/types/ticket";
+import type { TicketStatus } from "@/features/ticket/types/ticket";
 
 interface TicketStatusBadgeProps {
   status: TicketStatus;

@@ -7,8 +7,8 @@ import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import ua.lviv.bas.cinema.user.domain.User;
-import ua.lviv.bas.cinema.user.domain.UserRole;
+import ua.lviv.bas.cinema.user.User;
+import ua.lviv.bas.cinema.user.UserRole;
 
 import java.io.Serial;
 import java.util.Collection;

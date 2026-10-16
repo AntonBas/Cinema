@@ -1,0 +1,89 @@
+package ua.lviv.bas.cinema.booking;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
+import ua.lviv.bas.cinema.booking.dto.BookingCreateRequest;
+import ua.lviv.bas.cinema.cinema.hall.CinemaHall;
+import ua.lviv.bas.cinema.cinema.hall.CinemaHallRepository;
+import ua.lviv.bas.cinema.cinema.hall.Seat;
+import ua.lviv.bas.cinema.cinema.hall.SeatRepository;
+import ua.lviv.bas.cinema.cinema.Session;
+import ua.lviv.bas.cinema.cinema.SessionRepository;
+import ua.lviv.bas.cinema.common.CinemaTime;
+import ua.lviv.bas.cinema.config.TestcontainersConfig;
+import ua.lviv.bas.cinema.booking.exception.SeatNotAvailableException;
+import ua.lviv.bas.cinema.movie.AgeRating;
+import ua.lviv.bas.cinema.movie.Movie;
+import ua.lviv.bas.cinema.movie.MovieRepository;
+import ua.lviv.bas.cinema.movie.MovieStatus;
+import ua.lviv.bas.cinema.ticket.type.TicketType;
+import ua.lviv.bas.cinema.ticket.type.TicketTypeRepository;
+import ua.lviv.bas.cinema.user.User;
+import ua.lviv.bas.cinema.user.UserRepository;
+import ua.lviv.bas.cinema.user.UserRole;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@SpringBootTest
+@ActiveProfiles("ci")
+@Import(TestcontainersConfig.class)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+class BookingCrossHallSeatVerificationTest {
+
+    @Autowired
+    private BookingCreationService bookingCreationService;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private MovieRepository movieRepository;
+    @Autowired
+    private CinemaHallRepository cinemaHallRepository;
+    @Autowired
+    private SeatRepository seatRepository;
+    @Autowired
+    private SessionRepository sessionRepository;
+    @Autowired
+    private TicketTypeRepository ticketTypeRepository;
+
+    @Test
+    void createAndPersistShouldRejectASeatFromADifferentHallThanTheSession() {
+        var user = userRepository.save(User.builder().email("cross.hall.seat@test.com").firstName("Test")
+                .lastName("User").dateOfBirth(LocalDate.of(1995, 1, 1)).city("Lviv").phoneNumber("+380000000077")
+                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).build());
+
+        var movie = movieRepository.save(Movie.builder().title("Cross Hall Test Movie")
+                .slug("cross-hall-test-movie").trailerUrl("https://example.com/trailer")
+                .description("Test movie for cross-hall seat verification").durationMinutes(120)
+                .releaseDate(CinemaTime.today().minusDays(1)).endShowingDate(CinemaTime.today().plusMonths(1))
+                .status(MovieStatus.CURRENT).posterFileName("poster.jpg").ageRating(AgeRating.PEGI_12).build());
+
+        var sessionHall = cinemaHallRepository.save(CinemaHall.builder().name("Session Hall").build());
+        var otherHall = cinemaHallRepository.save(CinemaHall.builder().name("Different Hall").build());
+
+        var seatInOtherHall = seatRepository.save(Seat.builder().hall(otherHall).row(1).number(1).x(0).y(0).build());
+
+        var session = sessionRepository.save(Session.builder().movie(movie).hall(sessionHall)
+                .startTime(CinemaTime.now().plusDays(1)).basePrice(new BigDecimal("200.00")).build());
+        var ticketType = ticketTypeRepository
+                .save(TicketType.builder().displayName("Adult").priceMultiplier(BigDecimal.ONE).build());
+
+        var request = new BookingCreateRequest(session.getPublicId(),
+                List.of(new BookingCreateRequest.SeatSelectionRequest(seatInOtherHall.getId(), ticketType.getId())),
+                0);
+
+        assertThat(session.getHall().getId()).isNotEqualTo(otherHall.getId());
+
+        assertThatThrownBy(() -> bookingCreationService.createAndPersist(request, user))
+                .isInstanceOf(SeatNotAvailableException.class);
+    }
+}

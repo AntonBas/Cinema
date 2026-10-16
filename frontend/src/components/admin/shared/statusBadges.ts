@@ -1,8 +1,8 @@
 import type { BadgeVariant } from "@/components/ui/Badge/Badge";
-import type { BookingStatus } from "@/types/booking";
-import type { PaymentStatus } from "@/types/payment";
-import type { RefundStatus } from "@/types/refund";
-import type { TicketStatus } from "@/types/ticket";
+import type { BookingStatus } from "@/features/booking/types/booking";
+import type { PaymentStatus } from "@/features/payment/types/payment";
+import type { RefundStatus } from "@/features/refund/types/refund";
+import type { TicketStatus } from "@/features/ticket/types/ticket";
 
 export const BOOKING_STATUS_VARIANT: Record<BookingStatus, BadgeVariant> = {
   PENDING: "warning",

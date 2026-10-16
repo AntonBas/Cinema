@@ -1,0 +1,153 @@
+package ua.lviv.bas.cinema.refund;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ua.lviv.bas.cinema.config.properties.RefundPolicyConfig;
+import ua.lviv.bas.cinema.config.properties.RefundRules;
+import ua.lviv.bas.cinema.ticket.Ticket;
+import ua.lviv.bas.cinema.refund.dto.RefundPreviewRequest;
+import ua.lviv.bas.cinema.refund.dto.RefundRequest;
+import ua.lviv.bas.cinema.refund.dto.RefundPolicyResponse;
+import ua.lviv.bas.cinema.refund.dto.RefundPreviewResponse;
+import ua.lviv.bas.cinema.refund.dto.RefundResponse;
+import ua.lviv.bas.cinema.bonus.exception.BonusCardConcurrentModificationException;
+import ua.lviv.bas.cinema.payment.exception.PaymentProcessingException;
+import ua.lviv.bas.cinema.refund.exception.RefundProcessingException;
+import ua.lviv.bas.cinema.payment.gateway.PaymentRefundService;
+import ua.lviv.bas.cinema.common.NumberGeneratorService;
+import ua.lviv.bas.cinema.common.SeatInfoFormatter;
+import ua.lviv.bas.cinema.ticket.TicketService;
+import ua.lviv.bas.cinema.common.CinemaTime;
+
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class RefundService {
+
+    private static final int MAX_APPLY_SUCCESS_ATTEMPTS = 2;
+    private static final String CANCELLED_SESSION_POLICY_NAME = "Session Cancelled";
+    private static final String CANCELLED_SESSION_POLICY_DESCRIPTION =
+            "100% refund — the session was cancelled by the cinema";
+
+    private final TicketService ticketService;
+    private final PaymentRefundService paymentRefundService;
+    private final RefundCalculator refundCalculator;
+    private final RefundTransactionExecutor refundTransactionExecutor;
+    private final RefundRules refundRules;
+    private final RefundMapper refundMapper;
+    private final NumberGeneratorService numberGenerator;
+    private final SeatInfoFormatter seatInfoFormatter;
+    private final RefundPolicyConfig refundPolicyConfig;
+
+    @Transactional(readOnly = true)
+    public RefundPreviewResponse getPreview(RefundPreviewRequest request, Long userId) {
+        var ticket = ticketService.getTicketForUser(request.ticketId(), userId);
+        var validationError = refundCalculator.validate(ticket);
+
+        if (validationError != null) {
+            return createNonRefundablePreview(ticket, validationError);
+        }
+        return createPreview(ticket);
+    }
+
+    public RefundResponse refund(RefundRequest request, Long userId) {
+        var context = refundTransactionExecutor.createProcessingRefund(request.ticketId(), userId, request.reason());
+        var description = "Refund for ticket #" + context.ticketUniqueCode();
+
+        try {
+            paymentRefundService.callLiqPayRefund(context.liqpayPaymentId(), context.liqpayOrderId(),
+                    context.refundAmount(), description);
+        } catch (PaymentProcessingException e) {
+            refundTransactionExecutor.markFailed(context.refundId(), e);
+            throw new RefundProcessingException("Refund was rejected by the payment provider", e);
+        } catch (Exception e) {
+            log.error("LiqPay refund outcome could not be confirmed for refund {} (ticket {}): {}",
+                    context.refundId(), context.ticketId(), e.getMessage(), e);
+            throw new RefundProcessingException(
+                    "Refund could not be confirmed and is pending review, please contact support", e);
+        }
+
+        var refund = applySuccessWithRetry(context.refundId(), context.ticketId());
+        return buildResponse(refund);
+    }
+
+    private Refund applySuccessWithRetry(Long refundId, Long ticketId) {
+        RuntimeException lastError = null;
+        for (int attempt = 1; attempt <= MAX_APPLY_SUCCESS_ATTEMPTS; attempt++) {
+            try {
+                return refundTransactionExecutor.applySuccess(refundId, ticketId);
+            } catch (OptimisticLockingFailureException | BonusCardConcurrentModificationException e) {
+                lastError = e;
+                log.error("Attempt {}/{} to finalize refund {} failed due to a concurrent update", attempt,
+                        MAX_APPLY_SUCCESS_ATTEMPTS, refundId, e);
+            }
+        }
+        log.error("Refund {} left in PROCESSING after {} failed attempts; RefundScheduler will retry", refundId,
+                MAX_APPLY_SUCCESS_ATTEMPTS);
+        throw new RefundProcessingException("Refund is still being finalized, please check back shortly", lastError);
+    }
+
+    private String formatRemainingTime(LocalDateTime sessionTime) {
+        var hours = ChronoUnit.HOURS.between(CinemaTime.now(), sessionTime);
+        var minutes = ChronoUnit.MINUTES.between(CinemaTime.now(), sessionTime) % 60;
+
+        if (hours > 0 && minutes > 0)
+            return String.format("%d hours %d minutes", hours, minutes);
+        if (hours > 0)
+            return String.format("%d hours", hours);
+        if (minutes > 0)
+            return String.format("%d minutes", minutes);
+        return "Less than a minute";
+    }
+
+    private RefundPreviewResponse createPreview(Ticket ticket) {
+        var sessionTime = ticket.getBooking().getSession().getStartTime();
+        var calculation = refundCalculator.calculate(ticket);
+
+        var ticketSeat = ticket.getSeatReservation().getSeat();
+        var seatInfo = seatInfoFormatter.format(ticketSeat.getRow(), ticketSeat.getNumber());
+
+        return refundMapper.toPreview(ticket, calculation, seatInfo, policyName(ticket, sessionTime),
+                policyDescription(ticket, sessionTime), refundRules.getRefundDeadline(sessionTime),
+                formatRemainingTime(sessionTime));
+    }
+
+    private String policyName(Ticket ticket, LocalDateTime sessionTime) {
+        return refundCalculator.isSessionCancelled(ticket) ? CANCELLED_SESSION_POLICY_NAME
+                : refundRules.getPolicyName(sessionTime);
+    }
+
+    private String policyDescription(Ticket ticket, LocalDateTime sessionTime) {
+        return refundCalculator.isSessionCancelled(ticket) ? CANCELLED_SESSION_POLICY_DESCRIPTION
+                : refundRules.getPolicyDescription(sessionTime);
+    }
+
+    private RefundPreviewResponse createNonRefundablePreview(Ticket ticket, String reason) {
+        return refundMapper.toNonRefundablePreview(ticket, reason);
+    }
+
+    public RefundPolicyResponse getPolicy() {
+        return new RefundPolicyResponse(refundMapper.toPolicyRules(refundRules.getTiers()),
+                refundPolicyConfig.getProcessingTime(), refundPolicyConfig.getContactEmail());
+    }
+
+    private RefundResponse buildResponse(Refund refund) {
+        return refundMapper.toResponse(refund, numberGenerator.generateRefundNumber(refund),
+                statusMessage(refund.getStatus()),
+                refund.getStatus() == RefundStatus.REJECTED ? null : refundPolicyConfig.getProcessingTime());
+    }
+
+    private String statusMessage(RefundStatus status) {
+        return switch (status) {
+            case PROCESSED -> "Refund processed successfully";
+            case REJECTED -> "Refund was rejected by the payment provider";
+            default -> "Refund is being processed";
+        };
+    }
+}

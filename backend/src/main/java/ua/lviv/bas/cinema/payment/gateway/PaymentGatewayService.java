@@ -1,0 +1,311 @@
+package ua.lviv.bas.cinema.payment.gateway;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+import ua.lviv.bas.cinema.common.DateTimeFormatterService;
+import ua.lviv.bas.cinema.payment.Payment;
+import ua.lviv.bas.cinema.payment.gateway.dto.PaymentLiqPayDataResponse;
+import ua.lviv.bas.cinema.payment.exception.PaymentGatewayUnavailableException;
+import ua.lviv.bas.cinema.payment.exception.PaymentProcessingException;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class PaymentGatewayService {
+
+    @Value("${payment.liqpay.public_key}")
+    private String liqpayPublicKey;
+
+    @Value("${payment.liqpay.private_key}")
+    private String liqpayPrivateKey;
+
+    @Value("${payment.liqpay.callback_url}")
+    private String liqpayCallbackUrl;
+
+    @Value("${payment.liqpay.sandbox_mode:true}")
+    private boolean sandboxMode;
+
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
+
+    @Value("${payment.liqpay.api_url:https://www.liqpay.ua/api/}")
+    private String liqpayApiUrl;
+
+    private static final DateTimeFormatter EXPIRED_DATE_FORMATTER = DateTimeFormatter
+            .ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneOffset.UTC);
+
+    private final RestTemplate restTemplate;
+
+    public PaymentLiqPayDataResponse prepareLiqPayPaymentData(Payment payment) {
+        try {
+            var params = buildPaymentParams(payment);
+            var data = LiqPayDecoder.encodeToBase64(params);
+            var signature = LiqPayDecoder.generateSignature(data, liqpayPrivateKey);
+            var paymentUrl = buildCheckoutUrl(data, signature);
+
+            return new PaymentLiqPayDataResponse(data, signature, paymentUrl, payment.getLiqpayOrderId());
+        } catch (Exception e) {
+            throw new PaymentProcessingException("Failed to prepare payment data: " + e.getMessage());
+        }
+    }
+
+    private String buildCheckoutUrl(String data, String signature) {
+        try {
+            return liqpayApiUrl + "3/checkout?data=" + URLEncoder.encode(data, StandardCharsets.UTF_8) + "&signature="
+                    + URLEncoder.encode(signature, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            throw new PaymentProcessingException("Failed to create payment URL");
+        }
+    }
+
+    public Map<String, String> processCallback(String data, String signature) {
+        var calculatedSignature = LiqPayDecoder.generateSignature(data, liqpayPrivateKey);
+        if (!MessageDigest.isEqual(calculatedSignature.getBytes(StandardCharsets.UTF_8),
+                signature.getBytes(StandardCharsets.UTF_8))) {
+            log.error("Invalid LiqPay signature");
+            throw new PaymentProcessingException("Invalid LiqPay signature");
+        }
+        return LiqPayDecoder.decodeCallback(data);
+    }
+
+    public String prepareRefundData(String originalLiqpayPaymentId, String originalOrderId, BigDecimal amount,
+                                    String description) {
+        try {
+            Map<String, Object> refundParams = new LinkedHashMap<>();
+            refundParams.put("public_key", liqpayPublicKey);
+            refundParams.put("version", "3");
+            refundParams.put("action", "refund");
+            refundParams.put("amount", amount.setScale(2, RoundingMode.HALF_UP).toString());
+            refundParams.put("currency", "UAH");
+            refundParams.put("description", description);
+            refundParams.put("order_id", originalOrderId);
+
+            if (originalLiqpayPaymentId != null && !originalLiqpayPaymentId.trim().isEmpty()) {
+                refundParams.put("payment_id", originalLiqpayPaymentId);
+            }
+
+            if (sandboxMode) {
+                refundParams.put("sandbox", "1");
+            }
+
+            return LiqPayDecoder.encodeToBase64(refundParams);
+        } catch (Exception e) {
+            throw new PaymentProcessingException("Failed to prepare refund data");
+        }
+    }
+
+    public void processRefund(String refundData) {
+        if (sandboxMode) {
+            processSandboxRefund(refundData);
+            return;
+        }
+
+        var response = sendApiRequest(refundData);
+        var responseBody = extractResponseBody(response);
+        var responseMap = decodeRefundResponse(responseBody);
+        checkRefundResult(responseMap);
+    }
+
+    public RefundGatewayStatus checkRefundStatus(String orderId, BigDecimal expectedRefundedTotal,
+                                                 BigDecimal paymentAmount) {
+        if (sandboxMode) {
+            log.debug("Sandbox mode - treating refund for order {} as confirmed by gateway", orderId);
+            return RefundGatewayStatus.CONFIRMED;
+        }
+        try {
+            var response = fetchOrderStatus(orderId);
+            var status = (String) response.get("status");
+
+            if ("failure".equals(status) || "error".equals(status)) {
+                return RefundGatewayStatus.NOT_CONFIRMED;
+            }
+            var gatewayRefundedTotal = parseAmount(response.get("refund_amount"));
+            boolean confirmed = gatewayRefundedTotal != null
+                    ? gatewayRefundedTotal.compareTo(expectedRefundedTotal) >= 0
+                    : "reversed".equals(status) && expectedRefundedTotal.compareTo(paymentAmount) >= 0;
+            if (confirmed) {
+                return RefundGatewayStatus.CONFIRMED;
+            }
+            log.warn("LiqPay status '{}' (refunded {}) for order {} does not prove a refund total of {}", status,
+                    gatewayRefundedTotal, orderId, expectedRefundedTotal);
+            return RefundGatewayStatus.UNKNOWN;
+        } catch (Exception e) {
+            log.warn("Failed to check LiqPay refund status for order {}", orderId, e);
+            return RefundGatewayStatus.UNKNOWN;
+        }
+    }
+
+    private BigDecimal parseAmount(Object value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return new BigDecimal(value.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    public PaymentGatewayCheckResult checkPaymentStatus(String orderId) {
+        if (sandboxMode) {
+            log.debug("Sandbox mode - payment status for order {} cannot be reconciled automatically", orderId);
+            return new PaymentGatewayCheckResult(PaymentGatewayStatus.UNKNOWN, Map.of());
+        }
+        try {
+            var responseMap = fetchOrderStatus(orderId);
+            var status = (String) responseMap.get("status");
+            return new PaymentGatewayCheckResult(mapPaymentStatus(status), toStringMap(responseMap));
+        } catch (Exception e) {
+            log.warn("Failed to check LiqPay payment status for order {}", orderId, e);
+            return new PaymentGatewayCheckResult(PaymentGatewayStatus.UNKNOWN, Map.of());
+        }
+    }
+
+    private PaymentGatewayStatus mapPaymentStatus(String status) {
+        if (status == null) {
+            return PaymentGatewayStatus.UNKNOWN;
+        }
+        return switch (status) {
+            case "success", "sandbox" -> PaymentGatewayStatus.SUCCESS;
+            case "failure", "error" -> PaymentGatewayStatus.FAILED;
+            case "processing", "prepared", "cash_wait", "hold_wait", "invoice_wait" ->
+                    PaymentGatewayStatus.STILL_PROCESSING;
+            default -> status.startsWith("wait_") || status.endsWith("_verify") ? PaymentGatewayStatus.STILL_PROCESSING
+                    : PaymentGatewayStatus.UNKNOWN;
+        };
+    }
+
+    private Map<String, String> toStringMap(Map<String, Object> raw) {
+        Map<String, String> result = new LinkedHashMap<>();
+        raw.forEach((key, value) -> result.put(key, value != null ? value.toString() : null));
+        return result;
+    }
+
+    private Map<String, Object> fetchOrderStatus(String orderId) {
+        Map<String, Object> statusParams = new LinkedHashMap<>();
+        statusParams.put("public_key", liqpayPublicKey);
+        statusParams.put("version", "3");
+        statusParams.put("action", "status");
+        statusParams.put("order_id", orderId);
+
+        var data = LiqPayDecoder.encodeToBase64(statusParams);
+        var response = sendApiRequest(data);
+        var responseBody = extractResponseBody(response);
+        return decodeRefundResponse(responseBody);
+    }
+
+    private ResponseEntity<String> sendApiRequest(String data) {
+        try {
+            var signature = LiqPayDecoder.generateSignature(data, liqpayPrivateKey);
+            var requestBody = "data=" + URLEncoder.encode(data, StandardCharsets.UTF_8) + "&signature="
+                    + URLEncoder.encode(signature, StandardCharsets.UTF_8);
+
+            var headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+
+            HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
+            return restTemplate.postForEntity(liqpayApiUrl + "request", request, String.class);
+        } catch (RestClientException e) {
+            throw new PaymentGatewayUnavailableException("Network error during LiqPay API request: " + e.getMessage(),
+                    e);
+        }
+    }
+
+    private String extractResponseBody(ResponseEntity<String> response) {
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new PaymentGatewayUnavailableException(
+                    "LiqPay API request failed with status " + response.getStatusCode(), null);
+        }
+
+        var responseBody = response.getBody();
+        if (responseBody == null) {
+            throw new PaymentGatewayUnavailableException("Empty response from LiqPay API", null);
+        }
+
+        return responseBody;
+    }
+
+    private Map<String, Object> decodeRefundResponse(String responseBody) {
+        try {
+            return LiqPayDecoder.decodeToMap(responseBody);
+        } catch (Exception e) {
+            throw new PaymentGatewayUnavailableException("Failed to decode LiqPay response: " + e.getMessage(), e);
+        }
+    }
+
+    private void checkRefundResult(Map<String, Object> responseMap) {
+        var result = (String) responseMap.get("result");
+        var status = (String) responseMap.get("status");
+        var isSuccess = "ok".equals(result) || "success".equals(status);
+
+        if (!isSuccess) {
+            var errorCode = (String) responseMap.get("err_code");
+            var errorDescription = (String) responseMap.get("err_description");
+            throw new PaymentProcessingException(
+                    String.format("LiqPay refund failed: %s - %s - %s", result, errorCode, errorDescription));
+        }
+    }
+
+    private void processSandboxRefund(String refundData) {
+        try {
+            Map<String, Object> params = LiqPayDecoder.decodeToMap(refundData);
+            log.info("Sandbox refund: orderId={}, amount={}", params.get("order_id"), params.get("amount"));
+        } catch (Exception e) {
+            log.error("Sandbox refund error", e);
+            throw new PaymentProcessingException("Sandbox refund failed: " + e.getMessage());
+        }
+    }
+
+    private Map<String, Object> buildPaymentParams(Payment payment) {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("public_key", liqpayPublicKey);
+        params.put("version", "3");
+        params.put("action", "pay");
+        params.put("amount", payment.getAmount().setScale(2, RoundingMode.HALF_UP).toString());
+        params.put("currency", "UAH");
+        params.put("description", buildPaymentDescription(payment));
+        params.put("order_id", payment.getLiqpayOrderId());
+        params.put("result_url", buildResultUrl(payment));
+        params.put("server_url", liqpayCallbackUrl);
+        params.put("language", "uk");
+        params.put("email", payment.getBooking().getUser().getEmail());
+        params.put("expired_date", EXPIRED_DATE_FORMATTER.format(payment.getBooking().getExpiresAt()));
+
+        if (sandboxMode) {
+            params.put("sandbox", "1");
+        }
+
+        return params;
+    }
+
+    private String buildPaymentDescription(Payment payment) {
+        return String.format("Tickets for %s, hall %s, %s", payment.getBooking().getSession().getMovie().getTitle(),
+                payment.getBooking().getSession().getHall().getName(),
+                payment.getBooking().getSession().getStartTime().format(DateTimeFormatterService.STANDARD_FORMATTER));
+    }
+
+    private String buildResultUrl(Payment payment) {
+        return frontendUrl + "/booking/success?bookingId=" + payment.getBooking().getPublicId() + "&paymentId="
+                + payment.getId();
+    }
+}

@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
-import ua.lviv.bas.cinema.exception.domain.auth.ResendCooldownException;
+import ua.lviv.bas.cinema.user.exception.ResendCooldownException;
 
 import java.util.List;
 import java.util.UUID;

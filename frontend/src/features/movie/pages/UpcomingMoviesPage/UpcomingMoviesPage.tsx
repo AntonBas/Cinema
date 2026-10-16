@@ -1,0 +1,65 @@
+import React, { useEffect, useState, useCallback } from "react";
+import { useMovie } from "@/features/movie/hooks/useMovie";
+import { MovieList } from "@/features/movie/components/MovieList/MovieList";
+import { DEFAULT_PAGE_SIZE } from "@/utils/paginationUtils";
+import type { MovieCardResponse } from "@/features/movie/types/movie";
+import type { PageResponse } from "@/types/pagination";
+import styles from "./UpcomingMoviesPage.module.css";
+
+export const UpcomingMoviesPage: React.FC = () => {
+  const [movies, setMovies] = useState<MovieCardResponse[]>([]);
+  const [pagination, setPagination] = useState<
+    PageResponse<MovieCardResponse> | undefined
+  >(undefined);
+  const [error, setError] = useState<Error | null>(null);
+
+  const { getUpcoming, loading } = useMovie();
+
+  const loadMovies = useCallback(
+    async (page: number) => {
+      setError(null);
+
+      try {
+        const response = await getUpcoming({ page, size: DEFAULT_PAGE_SIZE });
+        if (response) {
+          setMovies((prev) =>
+            page === 0 ? response.content : [...prev, ...response.content],
+          );
+          setPagination(response);
+        }
+      } catch (err) {
+        setError(err as Error);
+      }
+    },
+    [getUpcoming],
+  );
+
+  useEffect(() => {
+    loadMovies(0);
+  }, [loadMovies]);
+
+  const handleLoadMore = useCallback(() => {
+    if (pagination && pagination.number < pagination.totalPages - 1) {
+      loadMovies(pagination.number + 1);
+    }
+  }, [pagination, loadMovies]);
+
+  const handleRetry = useCallback(() => {
+    loadMovies(0);
+  }, [loadMovies]);
+
+  return (
+    <div className={styles.page}>
+      <MovieList
+        movies={movies}
+        pagination={pagination}
+        loading={loading || (!pagination && !error)}
+        error={error}
+        emptyMessage="No upcoming movies"
+        onRetry={handleRetry}
+        onLoadMore={handleLoadMore}
+        variant="load-more"
+      />
+    </div>
+  );
+};

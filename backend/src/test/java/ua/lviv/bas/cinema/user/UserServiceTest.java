@@ -1,0 +1,458 @@
+package ua.lviv.bas.cinema.user;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import ua.lviv.bas.cinema.audit.AuditService;
+import ua.lviv.bas.cinema.config.security.CustomUserDetailsService;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
+import ua.lviv.bas.cinema.user.exception.EmailAlreadyExistsException;
+import ua.lviv.bas.cinema.user.exception.InvalidCurrentPasswordException;
+import ua.lviv.bas.cinema.user.exception.PasswordMismatchException;
+import ua.lviv.bas.cinema.user.exception.ResendCooldownException;
+import ua.lviv.bas.cinema.user.exception.SameEmailException;
+import ua.lviv.bas.cinema.user.exception.SamePasswordException;
+import ua.lviv.bas.cinema.notification.EmailService;
+import ua.lviv.bas.cinema.user.auth.EmailTokenGeneratorService;
+import ua.lviv.bas.cinema.user.auth.dto.UserRegistrationRequest;
+import ua.lviv.bas.cinema.user.dto.UserPasswordUpdateRequest;
+import ua.lviv.bas.cinema.user.dto.UserProfileResponse;
+import ua.lviv.bas.cinema.user.dto.UserResponse;
+import ua.lviv.bas.cinema.user.dto.UserUpdateRequest;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+public class UserServiceTest {
+
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private PasswordEncoder passwordEncoder;
+    @Mock
+    private UserMapper userMapper;
+    @Mock
+    private EmailTokenGeneratorService emailTokenGeneratorService;
+    @Mock
+    private AuditService auditService;
+    @Mock
+    private CustomUserDetailsService customUserDetailsService;
+    @Mock
+    private EmailService emailService;
+    @InjectMocks
+    private UserService userService;
+
+    private final Long USER_ID = 1L;
+    private final String EMAIL = "test@example.com";
+    private final String PASSWORD = "password123";
+    private final String ENCODED_PASSWORD = "encodedPassword";
+    private final LocalDate DATE_OF_BIRTH = LocalDate.of(1990, 1, 1);
+    private final String CITY = "Kyiv";
+    private final String PHONE = "+380501234567";
+
+    @BeforeEach
+    void setUp() {
+        lenient().doNothing().when(auditService).logChange(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void registerShouldSucceed() {
+        UserRegistrationRequest request = new UserRegistrationRequest(EMAIL, "John", "Doe", DATE_OF_BIRTH, CITY, PHONE,
+                PASSWORD, PASSWORD);
+
+        User user = new User();
+        user.setEmail(EMAIL);
+
+        User savedUser = new User();
+        savedUser.setId(USER_ID);
+        savedUser.setEmail(EMAIL);
+        savedUser.setFirstName("John");
+        savedUser.setLastName("Doe");
+        savedUser.setDateOfBirth(DATE_OF_BIRTH);
+        savedUser.setCity(CITY);
+        savedUser.setPhoneNumber(PHONE);
+        savedUser.setUserRole(UserRole.ROLE_USER);
+        savedUser.setEmailVerified(false);
+        savedUser.setVerificationStatus(VerificationStatus.NOT_VERIFIED);
+
+        UserResponse response = new UserResponse(USER_ID, EMAIL, "John", "Doe", DATE_OF_BIRTH, CITY, PHONE,
+                UserRole.ROLE_USER, false, VerificationStatus.NOT_VERIFIED);
+
+        when(userRepository.existsByEmail(EMAIL)).thenReturn(false);
+        when(userMapper.toEntity(request)).thenReturn(user);
+        when(passwordEncoder.encode(PASSWORD)).thenReturn(ENCODED_PASSWORD);
+        when(userRepository.save(user)).thenReturn(savedUser);
+        when(userMapper.toUserResponse(savedUser)).thenReturn(response);
+
+        UserResponse result = userService.register(request);
+
+        assertThat(result).isEqualTo(response);
+        verify(userRepository).save(user);
+        verify(emailTokenGeneratorService).generateVerificationToken(savedUser);
+        assertThat(savedUser.getLastVerificationEmailSentAt()).isNotNull();
+    }
+
+    @Test
+    void registerShouldThrowExceptionWhenPasswordsDontMatch() {
+        UserRegistrationRequest request = new UserRegistrationRequest(EMAIL, "John", "Doe", DATE_OF_BIRTH, CITY, PHONE,
+                "pass1", "pass2");
+
+        assertThatThrownBy(() -> userService.register(request)).isInstanceOf(PasswordMismatchException.class);
+    }
+
+    @Test
+    void registerShouldThrowExceptionWhenEmailExists() {
+        UserRegistrationRequest request = new UserRegistrationRequest(EMAIL, "John", "Doe", DATE_OF_BIRTH, CITY, PHONE,
+                PASSWORD, PASSWORD);
+
+        when(userRepository.existsByEmail(EMAIL)).thenReturn(true);
+
+        assertThatThrownBy(() -> userService.register(request)).isInstanceOf(EmailAlreadyExistsException.class);
+    }
+
+    @Test
+    void getUserByIdShouldSucceed() {
+        User user = new User();
+        user.setId(USER_ID);
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+
+        User result = userService.getUser(USER_ID);
+
+        assertThat(result).isEqualTo(user);
+    }
+
+    @Test
+    void getUserByIdShouldThrowExceptionWhenNotFound() {
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.getUser(USER_ID)).isInstanceOf(EntityNotFoundException.class);
+    }
+
+    @Test
+    void getUserByEmailShouldSucceed() {
+        User user = new User();
+        user.setEmail(EMAIL);
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+
+        User result = userService.getUser(EMAIL);
+
+        assertThat(result).isEqualTo(user);
+    }
+
+    @Test
+    void getUserByEmailShouldThrowExceptionWhenNotFound() {
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.getUser(EMAIL)).isInstanceOf(EntityNotFoundException.class);
+    }
+
+    @Test
+    void updateShouldSucceed() {
+        User user = User.builder().id(USER_ID).firstName("Old").lastName("User").dateOfBirth(DATE_OF_BIRTH)
+                .city("Old City").phoneNumber(PHONE).verificationStatus(VerificationStatus.NOT_VERIFIED).build();
+
+        LocalDate newDateOfBirth = LocalDate.of(1995, 5, 5);
+        UserUpdateRequest request = new UserUpdateRequest("John", "Doe", newDateOfBirth, "Kyiv", "+380502345678");
+
+        UserProfileResponse profileResponse = new UserProfileResponse(USER_ID, EMAIL, "John", "Doe", newDateOfBirth,
+                "Kyiv", "+380502345678", VerificationStatus.NOT_VERIFIED);
+
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+        when(userMapper.toUserProfileResponse(user)).thenReturn(profileResponse);
+
+        UserProfileResponse result = userService.update(USER_ID, request);
+
+        assertThat(result).isEqualTo(profileResponse);
+        verify(userMapper).updateEntity(request, user);
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void updateWhenDateOfBirthChangedShouldRevokeVerification() {
+        User user = User.builder().id(USER_ID).firstName("John").lastName("Doe").dateOfBirth(DATE_OF_BIRTH).city(CITY)
+                .phoneNumber(PHONE).verificationStatus(VerificationStatus.VERIFIED).verifiedAt(Instant.now())
+                .build();
+
+        LocalDate newDateOfBirth = LocalDate.of(1995, 5, 5);
+        UserUpdateRequest request = new UserUpdateRequest("John", "Doe", newDateOfBirth, CITY, PHONE);
+
+        UserProfileResponse profileResponse = new UserProfileResponse(USER_ID, EMAIL, "John", "Doe", newDateOfBirth,
+                CITY, PHONE, VerificationStatus.NOT_VERIFIED);
+
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        doAnswer(invocation -> {
+            user.setDateOfBirth(request.dateOfBirth());
+            return null;
+        }).when(userMapper).updateEntity(request, user);
+        when(userRepository.save(user)).thenReturn(user);
+        when(userMapper.toUserProfileResponse(user)).thenReturn(profileResponse);
+
+        UserProfileResponse result = userService.update(USER_ID, request);
+
+        assertThat(result).isEqualTo(profileResponse);
+        assertThat(user.getVerificationStatus()).isEqualTo(VerificationStatus.NOT_VERIFIED);
+        assertThat(user.getVerifiedAt()).isNull();
+    }
+
+    @Test
+    void updateWhenDateOfBirthUnchangedShouldKeepVerification() {
+        Instant verifiedAt = Instant.now();
+        User user = User.builder().id(USER_ID).firstName("John").lastName("Doe").dateOfBirth(DATE_OF_BIRTH).city(CITY)
+                .phoneNumber(PHONE).verificationStatus(VerificationStatus.VERIFIED).verifiedAt(verifiedAt).build();
+        UserUpdateRequest request = new UserUpdateRequest("Johnny", "Doe", DATE_OF_BIRTH, CITY, PHONE);
+
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        doAnswer(invocation -> {
+            user.setDateOfBirth(request.dateOfBirth());
+            return null;
+        }).when(userMapper).updateEntity(request, user);
+        when(userRepository.save(user)).thenReturn(user);
+
+        userService.update(USER_ID, request);
+
+        assertThat(user.getVerificationStatus()).isEqualTo(VerificationStatus.VERIFIED);
+        assertThat(user.getVerifiedAt()).isEqualTo(verifiedAt);
+    }
+
+    @Test
+    void getProfileShouldSucceed() {
+        User user = User.builder().id(USER_ID).email(EMAIL).firstName("John").lastName("Doe").dateOfBirth(DATE_OF_BIRTH)
+                .city(CITY).phoneNumber(PHONE).verificationStatus(VerificationStatus.NOT_VERIFIED).build();
+
+        UserProfileResponse profileResponse = new UserProfileResponse(USER_ID, EMAIL, "John", "Doe", DATE_OF_BIRTH,
+                CITY, PHONE, VerificationStatus.NOT_VERIFIED);
+
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(userMapper.toUserProfileResponse(user)).thenReturn(profileResponse);
+
+        UserProfileResponse result = userService.getProfile(USER_ID);
+
+        assertThat(result).isEqualTo(profileResponse);
+    }
+
+    @Test
+    void emailExistsShouldReturnTrue() {
+        when(userRepository.existsByEmail(EMAIL)).thenReturn(true);
+
+        boolean result = userService.emailExists(EMAIL);
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void emailExistsShouldReturnFalse() {
+        when(userRepository.existsByEmail(EMAIL)).thenReturn(false);
+
+        boolean result = userService.emailExists(EMAIL);
+
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    void updatePasswordShouldSucceed() {
+        User user = User.builder().id(USER_ID).email(EMAIL).password(ENCODED_PASSWORD).build();
+        int originalTokenVersion = user.getTokenVersion();
+
+        UserPasswordUpdateRequest request = new UserPasswordUpdateRequest("oldPassword", "newPassword123",
+                "newPassword123");
+
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("oldPassword", ENCODED_PASSWORD)).thenReturn(true);
+        when(passwordEncoder.matches("newPassword123", ENCODED_PASSWORD)).thenReturn(false);
+        when(passwordEncoder.encode("newPassword123")).thenReturn("newEncodedPassword");
+
+        userService.updatePassword(USER_ID, request);
+
+        verify(userRepository).save(user);
+        verify(emailService).sendPasswordChangedNotification(EMAIL);
+        assertThat(user.getPassword()).isEqualTo("newEncodedPassword");
+        assertThat(user.getTokenVersion()).isEqualTo(originalTokenVersion + 1);
+    }
+
+    @Test
+    void updatePasswordShouldThrowExceptionWhenPasswordsDontMatch() {
+        User user = User.builder().id(USER_ID).password(ENCODED_PASSWORD).build();
+
+        UserPasswordUpdateRequest request = new UserPasswordUpdateRequest("oldPassword", "newPassword",
+                "differentPassword");
+
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> userService.updatePassword(USER_ID, request))
+                .isInstanceOf(PasswordMismatchException.class);
+    }
+
+    @Test
+    void updatePasswordShouldThrowExceptionWhenCurrentPasswordInvalid() {
+        User user = User.builder().id(USER_ID).password(ENCODED_PASSWORD).build();
+
+        UserPasswordUpdateRequest request = new UserPasswordUpdateRequest("wrongPassword", "newPassword",
+                "newPassword");
+
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("wrongPassword", ENCODED_PASSWORD)).thenReturn(false);
+
+        assertThatThrownBy(() -> userService.updatePassword(USER_ID, request))
+                .isInstanceOf(InvalidCurrentPasswordException.class);
+    }
+
+    @Test
+    void updatePasswordShouldThrowExceptionWhenNewPasswordSameAsOld() {
+        User user = User.builder().id(USER_ID).password(ENCODED_PASSWORD).build();
+
+        UserPasswordUpdateRequest request = new UserPasswordUpdateRequest("oldPassword", "samePassword",
+                "samePassword");
+
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("oldPassword", ENCODED_PASSWORD)).thenReturn(true);
+        when(passwordEncoder.matches("samePassword", ENCODED_PASSWORD)).thenReturn(true);
+
+        assertThatThrownBy(() -> userService.updatePassword(USER_ID, request))
+                .isInstanceOf(SamePasswordException.class);
+    }
+
+    @Test
+    void requestEmailChangeShouldSucceed() {
+        User user = User.builder().id(USER_ID).email(EMAIL).password(ENCODED_PASSWORD).build();
+
+        String newEmail = "newemail@example.com";
+
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("currentPassword", ENCODED_PASSWORD)).thenReturn(true);
+        when(userRepository.existsByEmail(newEmail)).thenReturn(false);
+
+        userService.requestEmailChange(USER_ID, "currentPassword", newEmail);
+
+        verify(emailTokenGeneratorService).generateEmailChangeToken(user, newEmail);
+    }
+
+    @Test
+    void requestEmailChangeShouldThrowExceptionWhenSameEmail() {
+        User user = User.builder().id(USER_ID).email(EMAIL).password(ENCODED_PASSWORD).build();
+
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("currentPassword", ENCODED_PASSWORD)).thenReturn(true);
+
+        assertThatThrownBy(() -> userService.requestEmailChange(USER_ID, "currentPassword", EMAIL))
+                .isInstanceOf(SameEmailException.class);
+    }
+
+    @Test
+    void resendVerificationEmailShouldGenerateNewTokenWhenNotVerifiedAndNoCooldown() {
+        User user = User.builder().id(USER_ID).email(EMAIL).emailVerified(false).build();
+
+        when(userRepository.findByEmailForUpdate(EMAIL)).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+
+        int cooldown = userService.resendVerificationEmail(EMAIL);
+
+        assertThat(cooldown).isEqualTo(60);
+        assertThat(user.getLastVerificationEmailSentAt()).isNotNull();
+        verify(emailTokenGeneratorService).generateVerificationToken(user);
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void resendVerificationEmailShouldReturnCooldownSilentlyWhenEmailUnknown() {
+        when(userRepository.findByEmailForUpdate("unknown@example.com")).thenReturn(Optional.empty());
+
+        int cooldown = userService.resendVerificationEmail("unknown@example.com");
+
+        assertThat(cooldown).isEqualTo(60);
+        verify(emailTokenGeneratorService, never()).generateVerificationToken(any());
+    }
+
+    @Test
+    void resendVerificationEmailShouldReturnCooldownSilentlyWhenAlreadyVerified() {
+        User user = User.builder().id(USER_ID).email(EMAIL).emailVerified(true).build();
+
+        when(userRepository.findByEmailForUpdate(EMAIL)).thenReturn(Optional.of(user));
+
+        int cooldown = userService.resendVerificationEmail(EMAIL);
+
+        assertThat(cooldown).isEqualTo(60);
+        verify(emailTokenGeneratorService, never()).generateVerificationToken(any());
+    }
+
+    @Test
+    void resendVerificationEmailShouldThrowResendCooldownExceptionWhenRequestedTooSoon() {
+        User user = User.builder().id(USER_ID).email(EMAIL).emailVerified(false)
+                .lastVerificationEmailSentAt(Instant.now().minus(Duration.ofSeconds(10))).build();
+
+        when(userRepository.findByEmailForUpdate(EMAIL)).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> userService.resendVerificationEmail(EMAIL))
+                .isInstanceOf(ResendCooldownException.class);
+        verify(emailTokenGeneratorService, never()).generateVerificationToken(any());
+    }
+
+    @Test
+    void resendVerificationEmailShouldSucceedWhenCooldownAlreadyExpired() {
+        User user = User.builder().id(USER_ID).email(EMAIL).emailVerified(false)
+                .lastVerificationEmailSentAt(Instant.now().minus(Duration.ofSeconds(61))).build();
+
+        when(userRepository.findByEmailForUpdate(EMAIL)).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+
+        int cooldown = userService.resendVerificationEmail(EMAIL);
+
+        assertThat(cooldown).isEqualTo(60);
+        verify(emailTokenGeneratorService).generateVerificationToken(user);
+    }
+
+    @Test
+    void getResendCooldownStatusShouldReturnZeroWhenUserNotFound() {
+        when(userRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
+
+        assertThat(userService.getResendCooldownStatus("unknown@example.com")).isZero();
+    }
+
+    @Test
+    void getResendCooldownStatusShouldReturnZeroWhenAlreadyVerified() {
+        User user = User.builder().email(EMAIL).emailVerified(true)
+                .lastVerificationEmailSentAt(Instant.now()).build();
+
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+
+        assertThat(userService.getResendCooldownStatus(EMAIL)).isZero();
+    }
+
+    @Test
+    void getResendCooldownStatusShouldReturnRemainingSecondsWithinCooldown() {
+        User user = User.builder().email(EMAIL).emailVerified(false)
+                .lastVerificationEmailSentAt(Instant.now().minus(Duration.ofSeconds(20))).build();
+
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+
+        int remaining = userService.getResendCooldownStatus(EMAIL);
+
+        assertThat(remaining).isPositive().isLessThanOrEqualTo(40);
+    }
+
+    @Test
+    void getResendCooldownStatusShouldReturnZeroWhenCooldownExpired() {
+        User user = User.builder().email(EMAIL).emailVerified(false)
+                .lastVerificationEmailSentAt(Instant.now().minus(Duration.ofSeconds(120))).build();
+
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+
+        assertThat(userService.getResendCooldownStatus(EMAIL)).isZero();
+    }
+}

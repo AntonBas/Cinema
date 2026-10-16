@@ -3,8 +3,8 @@ import { Layout } from "@/components/layout/Layout/Layout";
 import { HeroSection } from "@/components/home/HeroSection/HeroSection";
 import { MovieRail } from "@/components/home/MovieRail/MovieRail";
 import { Promotions } from "@/components/home/Promotions/Promotions";
-import { useMovie } from "@/hooks/features/movie/useMovie";
-import { usePromotion } from "@/hooks/features/promotion/usePromotion";
+import { useMovie } from "@/features/movie/hooks/useMovie";
+import { usePromotion } from "@/features/promotion/hooks/usePromotion";
 import { useAuth } from "@/context/AuthContext";
 
 export const HomePage: React.FC = () => {

@@ -1,0 +1,94 @@
+import { useCallback, useRef } from "react";
+import { bonusApi } from "@/features/bonus/api/bonusApi";
+import type {
+  BonusBalanceResponse,
+  BonusTransactionResponse,
+  BonusRulesResponse,
+  BonusRulesRequest,
+  BonusTransactionType,
+} from "@/features/bonus/types/bonus";
+import type { PageResponse, SearchParams } from "@/types/pagination";
+import { useApi, type UseApiOptions } from "@/hooks/common/useApi";
+import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
+
+export const useBonus = () => {
+  const balanceApi = useApi<BonusBalanceResponse>();
+  const transactionsApi = useApi<PageResponse<BonusTransactionResponse>>();
+  const rulesApi = useApi<BonusRulesResponse[]>();
+  const updateRuleApi = useApi<BonusRulesResponse>();
+  const resetRuleApi = useApi<BonusRulesResponse>();
+
+  const balanceApiRef = useRef(balanceApi);
+  const transactionsApiRef = useRef(transactionsApi);
+  const rulesApiRef = useRef(rulesApi);
+  const updateRuleApiRef = useRef(updateRuleApi);
+  const resetRuleApiRef = useRef(resetRuleApi);
+
+  balanceApiRef.current = balanceApi;
+  transactionsApiRef.current = transactionsApi;
+  rulesApiRef.current = rulesApi;
+  updateRuleApiRef.current = updateRuleApi;
+  resetRuleApiRef.current = resetRuleApi;
+
+  const loading = useDelayedLoading(
+    balanceApi.loading ||
+      transactionsApi.loading ||
+      rulesApi.loading ||
+      updateRuleApi.loading ||
+      resetRuleApi.loading,
+    { delay: 150, minDisplayTime: 300 },
+  );
+
+  const getBalance = useCallback(
+    async (options?: UseApiOptions<BonusBalanceResponse>) => {
+      return balanceApiRef.current.execute(
+        () => bonusApi.public.getBalance(),
+        options,
+      );
+    },
+    [],
+  );
+
+  const getTransactions = useCallback(async (params?: SearchParams) => {
+    return transactionsApiRef.current.execute(() =>
+      bonusApi.public.getTransactions(params),
+    );
+  }, []);
+
+  const getRules = useCallback(async () => {
+    return rulesApiRef.current.execute(() => bonusApi.admin.getRules());
+  }, []);
+
+  const updateRule = useCallback(
+    async (type: BonusTransactionType, request: BonusRulesRequest) => {
+      return updateRuleApiRef.current.execute(
+        () => bonusApi.admin.updateRule(type, request),
+        { dedupeKey: `updateRule:${type}` },
+      );
+    },
+    [],
+  );
+
+  const resetRule = useCallback(async (type: BonusTransactionType) => {
+    return resetRuleApiRef.current.execute(
+      () => bonusApi.admin.resetRule(type),
+      { dedupeKey: `resetRule:${type}` },
+    );
+  }, []);
+
+  return {
+    balance: balanceApi.data,
+    transactions: transactionsApi.data?.content || [],
+    transactionsPagination: transactionsApi.data,
+    rules: rulesApi.data || [],
+    loading,
+    balanceError: balanceApi.error,
+    transactionsError: transactionsApi.error,
+    rulesError: rulesApi.error,
+    getBalance,
+    getTransactions,
+    getRules,
+    updateRule,
+    resetRule,
+  };
+};

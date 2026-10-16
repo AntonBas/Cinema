@@ -1,0 +1,96 @@
+import { useCallback, useRef } from "react";
+import { useApi } from "@/hooks/common/useApi";
+import { userApi } from "@/features/user/api/userApi";
+import type {
+  UserProfileResponse,
+  UserUpdateRequest,
+  UserPasswordUpdateRequest,
+  UserEmailChangeRequest,
+} from "@/features/user/types/user";
+import { useDelayedLoading } from "@/hooks/common/useDelayedLoading";
+
+export const useUser = () => {
+  const profileApi = useApi<UserProfileResponse>();
+  const updateProfileApi = useApi<UserProfileResponse>();
+  const passwordApi = useApi<{ message: string }>();
+  const emailApi = useApi<{ message: string }>();
+
+  const profileApiRef = useRef(profileApi);
+  const updateProfileApiRef = useRef(updateProfileApi);
+  const passwordApiRef = useRef(passwordApi);
+  const emailApiRef = useRef(emailApi);
+
+  profileApiRef.current = profileApi;
+  updateProfileApiRef.current = updateProfileApi;
+  passwordApiRef.current = passwordApi;
+  emailApiRef.current = emailApi;
+
+  const loading = useDelayedLoading(
+    profileApi.loading ||
+      updateProfileApi.loading ||
+      passwordApi.loading ||
+      emailApi.loading,
+    { delay: 150, minDisplayTime: 300 },
+  );
+
+  const getProfile = useCallback(async () => {
+    return profileApiRef.current.execute(() => userApi.public.getProfile());
+  }, []);
+
+  const updateProfile = useCallback(async (data: UserUpdateRequest) => {
+    const response = await updateProfileApiRef.current.execute(
+      () => userApi.public.updateProfile(data),
+      {
+        successMessage: "Profile updated successfully",
+        dedupeKey: "updateProfile",
+        suppressValidationToast: true,
+      },
+    );
+    if (response) {
+      profileApiRef.current.setData(response);
+    }
+    return response;
+  }, []);
+
+  const updatePassword = useCallback(
+    async (data: UserPasswordUpdateRequest) => {
+      return passwordApiRef.current.execute(
+        () => userApi.public.updatePassword(data),
+        {
+          successMessage: "Password updated successfully",
+          dedupeKey: "updatePassword",
+          suppressValidationToast: true,
+        },
+      );
+    },
+    [],
+  );
+
+  const requestEmailChange = useCallback(
+    async (newEmail: string, password: string) => {
+      const request: UserEmailChangeRequest = { newEmail, password };
+      return emailApiRef.current.execute(
+        () => userApi.public.requestEmailChange(request),
+        {
+          successMessage: "Confirmation email sent to your new address",
+          dedupeKey: "requestEmailChange",
+          suppressValidationToast: true,
+        },
+      );
+    },
+    [],
+  );
+
+  return {
+    profile: profileApi.data,
+    loading,
+    profileError: profileApi.error,
+    updateError: updateProfileApi.error,
+    passwordError: passwordApi.error,
+    emailError: emailApi.error,
+    getProfile,
+    updateProfile,
+    updatePassword,
+    requestEmailChange,
+  };
+};

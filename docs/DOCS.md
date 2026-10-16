@@ -54,10 +54,10 @@ cd Cinema
 **2. Configure environment variables**
 
 ```bash
-cp .env.docker.example .env
+cp .env.example .env
 ```
 
-Fill in the required values. See [.env.docker.example](https://github.com/AntonBas/Cinema/blob/develop/.env.docker.example) for all available variables.
+Fill in the required values. See [.env.example](https://github.com/AntonBas/Cinema/blob/develop/.env.example) for all available variables. The same root `.env` is used for local development (Option 2).
 
 **3. Start all services**
 
@@ -98,19 +98,15 @@ Run backend and frontend separately for faster development.
 
 #### Backend Setup
 
-```bash
-cd backend
-cp .env.local.example .env
-```
-
-Edit `.env` with your local values. See [backend/.env.local.example](https://github.com/AntonBas/Cinema/blob/develop/backend/.env.local.example) for all available variables.
+Use the same root `.env` as for Docker (`cp .env.example .env` if you don't have one yet). `spring-boot:run` runs from the repository root, so the backend reads that `.env` directly; Docker Compose overrides the database and Redis hosts (and `UPLOAD_DIR`) for the containerized backend. Because the working directory is the repository root, `UPLOAD_DIR=backend/uploads` must be set in `.env` for local runs, otherwise posters are looked up in a non-existent `./uploads`.
 
 ```bash
-cd ..
 docker compose up -d postgres redis
 cd backend
 ./mvnw spring-boot:run
 ```
+
+In IntelliJ, set the run configuration's working directory to the repository root. The `local` profile is active by default.
 
 Backend will be available at: http://localhost:8080
 
@@ -162,7 +158,7 @@ of a same-origin proxy.
 | Movie posters   | Cloudinary (free tier) — Render's disk is wiped on every redeploy, so `prod` uploads go to Cloudinary instead of local disk (`docker`/`local` still use local disk) |
 
 On Render, set `SPRING_PROFILES_ACTIVE=prod` plus the "prod only" variables
-from [`.env.docker.example`](../.env.docker.example), alongside the ones
+from [`.env.example`](../.env.example), alongside the ones
 required everywhere (`JWT_SECRET`, `BREVO_API_KEY`, `EMAIL_FROM`,
 `GOOGLE_CLIENT_ID`/`SECRET`, `LIQPAY_*`, `FRONTEND_URL`). On Vercel, set
 `VITE_API_URL` to the Render backend's URL as a project environment
@@ -633,18 +629,18 @@ domain); `notification/`, `integration/` and `common/` are shared infrastructure
     │   ├── mapper/                # MapStruct entity <-> DTO mapping
     │   └── scheduler/             # self-healing / status-update jobs
     ├── config/                    # global — security, cache, jackson, ratelimit, scheduling, async, audit, api, http, properties
-    ├── exception/                 # global — api/, core/, domain/<domain>/, infrastructure/
+    ├── exception/                 # global — api/, core/, infrastructure/ (domain exceptions live in <domain>/exception/)
     ├── notification/              # outbound email (Brevo HTTP API + templates)
-    ├── integration/               # file storage (local disk / Cloudinary), posters, QR codes
+    ├── integration/               # file storage (local disk / Cloudinary); posters live in movie/poster, QR codes in ticket/
     ├── migration/                 # Java-based Flyway migrations (V22, V24)
-    └── common/                    # cross-cutting utilities (PageResponse, price/number/date formatting, uniqueness checks)
+    └── common/                    # cross-cutting utilities (PageResponse, number/date formatting, uniqueness checks)
 
 **Domain packages:**
 
 | Package         | Responsibility                                                          |
 | ---------------- | ------------------------------------------------------------------------ |
-| `movie/`         | Movies, genres, cast (actors/directors/screenwriters)                   |
-| `cinema/`        | Cinema halls, seats, sessions                                            |
+| `movie/`         | Movies, genres, cast (actors/directors/screenwriters); movie at the root, `genre/`, `person/`, `poster/` sub-packages |
+| `cinema/`        | Cinema sessions at the root, halls and seats in `hall/` |
 | `user/`          | Users, authentication, email verification tokens                        |
 | `booking/`       | Booking creation, seat reservation (two-stage locking)                  |
 | `payment/`       | Payment processing, LiqPay gateway integration and callback handling    |
@@ -654,14 +650,15 @@ domain); `notification/`, `integration/` and `common/` are shared infrastructure
 | `promotion/`     | Promotions, promo claims                                                 |
 | `audit/`         | Admin change audit log (write path + query/history)                     |
 | `notification/`  | Outbound email sending (templates + Brevo HTTP API)                     |
-| `integration/`   | File storage, poster images, QR code generation                         |
+| `integration/`   | File storage (local disk / Cloudinary)                                  |
 | `common/`        | Stateless cross-cutting utilities shared across every domain             |
 
 The 10 packages above `audit/` are the actual business domains, each owning its own decisions.
 `notification/`, `integration/`, and `common/` are shared infrastructure: they're called *by* a
-domain (e.g. `movie/service/SlugService` decides how a movie's slug is generated and calls
-nothing in `integration/` for it; `integration/` only holds technical adapters like file storage,
-poster handling, and QR generation) rather than making business decisions themselves.
+domain (e.g. `movie/SlugService` decides how a movie's slug is generated; `integration/`
+only holds the technical file-storage adapters, while poster handling and QR generation sit in
+`movie/poster/` and `ticket/` next to the domain that uses them) rather than making business
+decisions themselves.
 
 A scheduled job in each domain that needs one (`booking/`, `payment/`, `refund/`, `bonus/`,
 `movie/`, `cinema/`, `ticket/`, `user/`) handles self-healing recovery — releasing expired seat
@@ -671,4 +668,4 @@ updating session/movie statuses, awarding birthday bonuses, cleaning up expired 
 
 ### Frontend (React)
 
-`frontend/src/` mirrors the backend domains: one API client per domain in `api/`, one hook folder per feature in `hooks/features/`, and matching `pages/` and `components/` folders (admin sections live under `components/admin/`).
+`frontend/src/` mirrors the backend domains: each domain lives in `features/<domain>/` (`movie`, `cinema`, `booking`, `ticket`, `payment`, `refund`, `bonus`, `promotion`, `user`, `auth`, `audit`) with its own `api/`, `types/`, `hooks/`, `components/`, `pages/` and `admin/` (admin sections). Shared UI primitives, layout, common hooks, contexts and utilities stay in `components/`, `hooks/common/`, `context/` and `utils/`.

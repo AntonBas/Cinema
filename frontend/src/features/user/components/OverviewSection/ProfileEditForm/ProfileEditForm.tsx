@@ -1,0 +1,250 @@
+import React, { useState } from "react";
+import { Input } from "@/components/ui/Input/Input";
+import { Button } from "@/components/ui/Button/Button";
+import { Modal } from "@/components/ui/Modal/Modal";
+import type {
+  UserProfileResponse,
+  UserUpdateRequest,
+} from "@/features/user/types/user";
+import { isApiErrorException } from "@/utils/apiErrorHandler";
+import {
+  validateCity,
+  validateDateOfBirth,
+  validateName,
+  validatePhoneNumber,
+} from "@/utils/formValidation";
+import { useFocusFirstInvalidField } from "@/hooks/common/useFocusFirstInvalidField";
+import styles from "./ProfileEditForm.module.css";
+
+interface ProfileEditFormProps {
+  user: UserProfileResponse;
+  onCancel: () => void;
+  onSuccess: (data: UserUpdateRequest) => Promise<void>;
+  loading?: boolean;
+}
+
+export const ProfileEditForm: React.FC<ProfileEditFormProps> = ({
+  user,
+  onCancel,
+  onSuccess,
+  loading = false,
+}) => {
+  const [formData, setFormData] = useState<UserUpdateRequest>({
+    firstName: user.firstName,
+    lastName: user.lastName,
+    dateOfBirth: user.dateOfBirth,
+    city: user.city || "",
+    phoneNumber: user.phoneNumber || "",
+  });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const { formRef, focusFirstInvalidField } = useFocusFirstInvalidField();
+  const [showDateChangeWarning, setShowDateChangeWarning] = useState(false);
+  const [originalDateOfBirth] = useState(user.dateOfBirth);
+  const [dateChangeAcknowledged, setDateChangeAcknowledged] = useState(false);
+
+  const handleChange = (field: keyof UserUpdateRequest, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (
+      field === "dateOfBirth" &&
+      value !== originalDateOfBirth &&
+      user.verificationStatus === "VERIFIED" &&
+      !dateChangeAcknowledged
+    ) {
+      setShowDateChangeWarning(true);
+    }
+    if (formErrors[field]) {
+      setFormErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    const firstNameError = validateName(formData.firstName ?? "", "First name");
+    if (firstNameError) errors.firstName = firstNameError;
+    const lastNameError = validateName(formData.lastName ?? "", "Last name");
+    if (lastNameError) errors.lastName = lastNameError;
+    const dateOfBirthError = validateDateOfBirth(formData.dateOfBirth ?? "");
+    if (dateOfBirthError) errors.dateOfBirth = dateOfBirthError;
+    const cityError = validateCity(formData.city ?? "");
+    if (cityError) errors.city = cityError;
+    const phoneError = validatePhoneNumber(formData.phoneNumber ?? "");
+    if (phoneError) errors.phoneNumber = phoneError;
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) {
+      focusFirstInvalidField();
+      return;
+    }
+    try {
+      await onSuccess(formData);
+    } catch (err) {
+      if (isApiErrorException(err) && err.isValidationError()) {
+        setFormErrors(err.getValidationErrors());
+        focusFirstInvalidField();
+      }
+    }
+  };
+
+  const handleDateChangeContinue = () => {
+    setDateChangeAcknowledged(true);
+    setShowDateChangeWarning(false);
+  };
+
+  const handleDateChangeCancel = () => {
+    setFormData((prev) => ({ ...prev, dateOfBirth: originalDateOfBirth }));
+    setShowDateChangeWarning(false);
+  };
+
+  return (
+    <div className={styles.profileForm}>
+      <Modal
+        isOpen={showDateChangeWarning}
+        onClose={handleDateChangeCancel}
+        title="Date of Birth Change Warning"
+        size="small"
+      >
+        <div className={styles.modalContent}>
+          <p className={styles.warningText}>
+            <strong>Attention!</strong> You are about to change your verified
+            date of birth.
+          </p>
+          <p className={styles.modalDescription}>
+            After changing your date of birth, you will need to verify it again
+            at the cinema cash desk to access bonus for birthday.
+          </p>
+          <div className={styles.modalActions}>
+            <Button variant="secondary" onClick={handleDateChangeCancel}>
+              Keep Original Date
+            </Button>
+            <Button variant="primary" onClick={handleDateChangeContinue}>
+              Continue with Change
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <form
+        ref={formRef}
+        onSubmit={handleSubmit}
+        className={styles.form}
+        noValidate
+      >
+        {user.verificationStatus && (
+          <div
+            className={`${styles.verificationAlert} ${styles[user.verificationStatus.toLowerCase()]}`}
+          >
+            <div className={styles.alertContent}>
+              <p className={styles.alertTitle}>
+                Date of Birth:{" "}
+                {user.verificationStatus === "VERIFIED"
+                  ? "Verified"
+                  : "Not Verified"}
+              </p>
+              <p className={styles.alertMessage}>
+                {user.verificationStatus === "VERIFIED"
+                  ? "Your date of birth is verified. If you change it, verification will be required again."
+                  : "Your date of birth needs verification at the cinema cash desk for age-restricted content access."}
+              </p>
+              {user.verificationStatus === "NOT_VERIFIED" && (
+                <p className={styles.alertNote}>
+                  To verify, visit any cinema cash desk with your ID document.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className={styles.formSection}>
+          <h2 className={styles.sectionTitle}>Personal Information</h2>
+
+          <div className={styles.formRow}>
+            <Input
+              type="text"
+              placeholder="Enter your first name"
+              value={formData.firstName || ""}
+              onChange={(value) => handleChange("firstName", value)}
+              disabled={loading}
+              error={formErrors.firstName}
+              label="First Name"
+            />
+            <Input
+              type="text"
+              placeholder="Enter your last name"
+              value={formData.lastName || ""}
+              onChange={(value) => handleChange("lastName", value)}
+              disabled={loading}
+              error={formErrors.lastName}
+              label="Last Name"
+            />
+          </div>
+
+          <div className={styles.dateOfBirthField}>
+            <Input
+              type="date"
+              value={formData.dateOfBirth || ""}
+              onChange={(value) => handleChange("dateOfBirth", value)}
+              disabled={loading}
+              error={formErrors.dateOfBirth}
+              label="Date of Birth"
+            />
+            {user.verificationStatus === "VERIFIED" &&
+              formData.dateOfBirth !== originalDateOfBirth && (
+                <div className={styles.dateChangeNote}>
+                  Changing this date will require re-verification
+                </div>
+              )}
+          </div>
+        </div>
+
+        <div className={styles.formSection}>
+          <h2 className={styles.sectionTitle}>Contact Information</h2>
+
+          <Input
+            type="text"
+            placeholder="Enter your phone number"
+            value={formData.phoneNumber || ""}
+            onChange={(value) => handleChange("phoneNumber", value)}
+            disabled={loading}
+            error={formErrors.phoneNumber}
+            label="Phone Number"
+          />
+
+          <Input
+            type="text"
+            placeholder="Enter your city"
+            value={formData.city || ""}
+            onChange={(value) => handleChange("city", value)}
+            disabled={loading}
+            error={formErrors.city}
+            label="City"
+          />
+        </div>
+
+        <div className={styles.formActions}>
+          <Button
+            type="button"
+            variant="cancel"
+            onClick={onCancel}
+            disabled={loading}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            loading={loading}
+            disabled={loading}
+          >
+            Save Changes
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+};

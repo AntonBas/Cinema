@@ -1,0 +1,315 @@
+package ua.lviv.bas.cinema.refund;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import ua.lviv.bas.cinema.bonus.BonusQueryService;
+import ua.lviv.bas.cinema.config.properties.RefundRules;
+import ua.lviv.bas.cinema.booking.Booking;
+import ua.lviv.bas.cinema.payment.Payment;
+import ua.lviv.bas.cinema.booking.reservation.SeatReservation;
+import ua.lviv.bas.cinema.payment.PaymentStatus;
+import ua.lviv.bas.cinema.cinema.hall.Seat;
+import ua.lviv.bas.cinema.cinema.Session;
+import ua.lviv.bas.cinema.ticket.Ticket;
+import ua.lviv.bas.cinema.ticket.TicketStatus;
+import ua.lviv.bas.cinema.ticket.type.TicketType;
+import ua.lviv.bas.cinema.user.User;
+import ua.lviv.bas.cinema.refund.dto.RefundPreviewRequest;
+import ua.lviv.bas.cinema.refund.dto.RefundRequest;
+import ua.lviv.bas.cinema.refund.dto.RefundPreviewResponse;
+import ua.lviv.bas.cinema.refund.dto.RefundResponse;
+import ua.lviv.bas.cinema.payment.exception.PaymentGatewayUnavailableException;
+import ua.lviv.bas.cinema.payment.exception.PaymentProcessingException;
+import ua.lviv.bas.cinema.refund.exception.RefundProcessingException;
+import ua.lviv.bas.cinema.refund.exception.TicketNotRefundableException;
+import ua.lviv.bas.cinema.ticket.exception.TicketNotFoundException;
+import ua.lviv.bas.cinema.config.properties.RefundPolicyConfig;
+import ua.lviv.bas.cinema.payment.gateway.PaymentRefundService;
+import ua.lviv.bas.cinema.common.NumberGeneratorService;
+import ua.lviv.bas.cinema.common.SeatInfoFormatter;
+import ua.lviv.bas.cinema.ticket.TicketService;
+import ua.lviv.bas.cinema.support.CinemaTestFixtures;
+
+import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
+
+@ExtendWith(MockitoExtension.class)
+public class RefundServiceTest {
+
+    @Mock
+    private TicketService ticketService;
+    @Mock
+    private PaymentRefundService paymentRefundService;
+    @Mock
+    private RefundTransactionExecutor refundTransactionExecutor;
+    @Mock
+    private RefundRules refundRules;
+    @Mock
+    private RefundPolicyConfig refundPolicyConfig;
+    @Mock
+    private NumberGeneratorService numberGenerator;
+    @Mock
+    private SeatInfoFormatter seatInfoFormatter;
+    @Mock
+    private BonusQueryService bonusQueryService;
+
+    private RefundCalculator refundCalculator;
+    private RefundMapper refundMapper;
+    private RefundService refundService;
+
+    private User testUser;
+    private Ticket testTicket;
+    private Payment testPayment;
+    private Session testSession;
+    private RefundPreviewRequest previewRequest;
+    private Refund testRefund;
+
+    private static final Long USER_ID = 1L;
+    private static final Long TICKET_ID = 2L;
+    private static final Long REFUND_ID = 1L;
+    private static final BigDecimal TICKET_PRICE = new BigDecimal("100.00");
+    private static final BigDecimal REFUND_AMOUNT = new BigDecimal("70.00");
+    private static final BigDecimal PERCENTAGE = new BigDecimal("70.00");
+    private static final Integer BONUS_POINTS_USED = 50;
+    private static final Integer BONUS_POINTS_TO_REFUND = 35;
+
+    @BeforeEach
+    void setUp() {
+        refundCalculator = new RefundCalculator(refundRules, bonusQueryService);
+        refundMapper = spy(Mappers.getMapper(RefundMapper.class));
+        refundService = new RefundService(ticketService, paymentRefundService, refundCalculator,
+                refundTransactionExecutor, refundRules, refundMapper, numberGenerator, seatInfoFormatter,
+                refundPolicyConfig);
+
+        testUser = User.builder().id(USER_ID).email("test@example.com").build();
+        var movie = CinemaTestFixtures.movie();
+        var hall = CinemaTestFixtures.hall();
+        testSession = CinemaTestFixtures.session(movie, hall);
+        Seat seat = Seat.builder().row(5).number(10).build();
+        SeatReservation seatReservation = SeatReservation.builder().seat(seat).build();
+        Booking booking = Booking.builder()
+                .session(testSession)
+                .seatReservations(List.of(seatReservation))
+                .totalPrice(TICKET_PRICE)
+                .bonusPointsUsed(BONUS_POINTS_USED)
+                .build();
+        testPayment = Payment.builder().id(1L).amount(TICKET_PRICE).liqpayPaymentId("PAY123")
+                .liqpayOrderId("ORD_123").status(PaymentStatus.SUCCESS).build();
+        TicketType ticketType = TicketType.builder().displayName("Standard").build();
+        testTicket = Ticket.builder().id(TICKET_ID).user(testUser).booking(booking).ticketType(ticketType)
+                .finalPrice(TICKET_PRICE).originalPrice(TICKET_PRICE).uniqueCode("TKT-123456")
+                .status(TicketStatus.ACTIVE).payment(testPayment)
+                .purchaseTime(Instant.now().minus(Duration.ofHours(1))).seatReservation(seatReservation).build();
+        testRefund = Refund.builder().id(REFUND_ID).user(testUser).payment(testPayment).totalAmount(REFUND_AMOUNT)
+                .totalBonusPointsToDeduct(BONUS_POINTS_TO_REFUND).build();
+        previewRequest = new RefundPreviewRequest(TICKET_ID);
+    }
+
+    @Test
+    void getPreviewShouldSucceed() {
+        var expectedDeadline = testSession.getStartTime().minusHours(2);
+        when(ticketService.getTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
+        when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(true);
+        when(refundRules.getRefundPercentage(testSession.getStartTime())).thenReturn(PERCENTAGE);
+        when(refundRules.getPolicyName(testSession.getStartTime())).thenReturn("Standard Refund");
+        when(refundRules.getPolicyDescription(testSession.getStartTime())).thenReturn("70% refund before 3 hours");
+        when(refundRules.getRefundDeadline(testSession.getStartTime())).thenReturn(expectedDeadline);
+
+        RefundPreviewResponse response = refundService.getPreview(previewRequest, USER_ID);
+
+        assertThat(response).isNotNull();
+        assertThat(response.ticketId()).isEqualTo(TICKET_ID);
+        assertThat(response.isRefundable()).isTrue();
+        assertThat(response.refundAmount()).isEqualTo(REFUND_AMOUNT);
+        assertThat(response.bonusPointsToRefund()).isEqualTo(BONUS_POINTS_TO_REFUND);
+        assertThat(response.refundDeadline()).isEqualTo(expectedDeadline);
+    }
+
+    @Test
+    void getPreviewWhenPaymentNotSuccessShouldReturnNonRefundable() {
+        testPayment.setStatus(PaymentStatus.PENDING);
+        when(ticketService.getTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
+        when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(true);
+
+        RefundPreviewResponse response = refundService.getPreview(previewRequest, USER_ID);
+
+        assertThat(response).isNotNull();
+        assertThat(response.isRefundable()).isFalse();
+        assertThat(response.nonRefundableReason()).contains("Payment cannot be refunded via API");
+    }
+
+    @Test
+    void getPreviewWhenTicketNotActiveShouldReturnNonRefundable() {
+        testTicket.setStatus(TicketStatus.USED);
+        when(ticketService.getTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
+
+        RefundPreviewResponse response = refundService.getPreview(previewRequest, USER_ID);
+
+        assertThat(response).isNotNull();
+        assertThat(response.isRefundable()).isFalse();
+        assertThat(response.nonRefundableReason()).contains("Ticket is not active");
+    }
+
+    @Test
+    void getPreviewWhenRefundNotAvailableShouldReturnNonRefundable() {
+        when(ticketService.getTicketForUser(TICKET_ID, USER_ID)).thenReturn(testTicket);
+        when(refundRules.isRefundable(testSession.getStartTime())).thenReturn(false);
+
+        RefundPreviewResponse response = refundService.getPreview(previewRequest, USER_ID);
+
+        assertThat(response).isNotNull();
+        assertThat(response.isRefundable()).isFalse();
+        assertThat(response.nonRefundableReason()).contains("Refund is not available for this session");
+    }
+
+    @Test
+    void getPreviewWhenTicketNotFoundShouldThrowException() {
+        when(ticketService.getTicketForUser(TICKET_ID, USER_ID))
+                .thenThrow(new TicketNotFoundException("Ticket not found or not active. Ticket ID: " + TICKET_ID));
+
+        assertThatThrownBy(() -> refundService.getPreview(previewRequest, USER_ID))
+                .isInstanceOf(TicketNotFoundException.class);
+    }
+
+    private RefundTransactionExecutor.RefundProcessingContext defaultContext() {
+        return new RefundTransactionExecutor.RefundProcessingContext(REFUND_ID, TICKET_ID, "TKT-123456", "PAY123",
+                "ORD_123", REFUND_AMOUNT);
+    }
+
+    @Test
+    void refundShouldSucceed() {
+        RefundRequest refundRequest = new RefundRequest(TICKET_ID, "Test reason");
+
+        when(refundTransactionExecutor.createProcessingRefund(TICKET_ID, USER_ID, "Test reason"))
+                .thenReturn(defaultContext());
+        when(refundTransactionExecutor.applySuccess(REFUND_ID, TICKET_ID)).thenReturn(testRefund);
+        when(numberGenerator.generateRefundNumber(testRefund)).thenReturn("RF-2024-00001");
+
+        RefundResponse mockResponse = new RefundResponse(1L, "RF-2024-00001", "PROCESSED", REFUND_AMOUNT,
+                BONUS_POINTS_TO_REFUND, "Test reason", "System", Instant.now(), Instant.now(), 1L, "CARD",
+                null, "Refund processed successfully", "3-5 business days");
+        doReturn(mockResponse).when(refundMapper).toResponse(eq(testRefund), eq("RF-2024-00001"), any(), any());
+
+        RefundResponse response = refundService.refund(refundRequest, USER_ID);
+
+        assertThat(response).isNotNull();
+        assertThat(response.id()).isEqualTo(1L);
+        verify(paymentRefundService).callLiqPayRefund(eq("PAY123"), eq("ORD_123"), eq(REFUND_AMOUNT), any(String.class));
+        verify(refundTransactionExecutor).applySuccess(REFUND_ID, TICKET_ID);
+        verify(refundTransactionExecutor, never()).markFailed(any(), any());
+    }
+
+    @Test
+    void refundWhenTicketNotRefundableShouldThrowException() {
+        RefundRequest refundRequest = new RefundRequest(TICKET_ID, "Test reason");
+
+        when(refundTransactionExecutor.createProcessingRefund(TICKET_ID, USER_ID, "Test reason"))
+                .thenThrow(new TicketNotRefundableException("Ticket is not active. Current status: REFUNDED"));
+
+        assertThatThrownBy(() -> refundService.refund(refundRequest, USER_ID))
+                .isInstanceOf(TicketNotRefundableException.class);
+
+        verify(paymentRefundService, never()).callLiqPayRefund(any(), any(), any(), any());
+    }
+
+    @Test
+    void refundWhenLiqPayExplicitlyRejectsShouldMarkFailedAndNotApplySuccess() {
+        RefundRequest refundRequest = new RefundRequest(TICKET_ID, "Test reason");
+
+        when(refundTransactionExecutor.createProcessingRefund(TICKET_ID, USER_ID, "Test reason"))
+                .thenReturn(defaultContext());
+        doThrow(new PaymentProcessingException("LiqPay refund failed: error - 1 - insufficient funds"))
+                .when(paymentRefundService).callLiqPayRefund(eq("PAY123"), eq("ORD_123"), eq(REFUND_AMOUNT), any());
+
+        assertThatThrownBy(() -> refundService.refund(refundRequest, USER_ID))
+                .isInstanceOf(RefundProcessingException.class);
+
+        verify(refundTransactionExecutor).markFailed(eq(REFUND_ID), any(PaymentProcessingException.class));
+        verify(refundTransactionExecutor, never()).applySuccess(any(), any());
+    }
+
+    @Test
+    void refundWhenLiqPayOutcomeIsAmbiguousShouldNotMarkFailedAndLeaveProcessing() {
+        RefundRequest refundRequest = new RefundRequest(TICKET_ID, "Test reason");
+
+        when(refundTransactionExecutor.createProcessingRefund(TICKET_ID, USER_ID, "Test reason"))
+                .thenReturn(defaultContext());
+        doThrow(new PaymentGatewayUnavailableException("Network error during refund: timeout", null))
+                .when(paymentRefundService).callLiqPayRefund(eq("PAY123"), eq("ORD_123"), eq(REFUND_AMOUNT), any());
+
+        assertThatThrownBy(() -> refundService.refund(refundRequest, USER_ID))
+                .isInstanceOf(RefundProcessingException.class);
+
+        verify(refundTransactionExecutor, never()).markFailed(any(), any());
+        verify(refundTransactionExecutor, never()).applySuccess(any(), any());
+    }
+
+    @Test
+    void refundWhenApplySuccessFailsWithConcurrentUpdateShouldRetryOnceThenLeaveProcessing() {
+        RefundRequest refundRequest = new RefundRequest(TICKET_ID, "Test reason");
+
+        when(refundTransactionExecutor.createProcessingRefund(TICKET_ID, USER_ID, "Test reason"))
+                .thenReturn(defaultContext());
+        when(refundTransactionExecutor.applySuccess(REFUND_ID, TICKET_ID))
+                .thenThrow(new ObjectOptimisticLockingFailureException(Refund.class, REFUND_ID));
+
+        assertThatThrownBy(() -> refundService.refund(refundRequest, USER_ID))
+                .isInstanceOf(RefundProcessingException.class);
+
+        verify(paymentRefundService, times(1)).callLiqPayRefund(eq("PAY123"), eq("ORD_123"), eq(REFUND_AMOUNT), any());
+        verify(refundTransactionExecutor, times(2)).applySuccess(REFUND_ID, TICKET_ID);
+        verify(refundTransactionExecutor, never()).markFailed(any(), any());
+    }
+
+    @Test
+    void refundWhenApplySuccessFailsWithProgrammingErrorShouldPropagateImmediatelyWithoutRetry() {
+        RefundRequest refundRequest = new RefundRequest(TICKET_ID, "Test reason");
+
+        when(refundTransactionExecutor.createProcessingRefund(TICKET_ID, USER_ID, "Test reason"))
+                .thenReturn(defaultContext());
+        when(refundTransactionExecutor.applySuccess(REFUND_ID, TICKET_ID))
+                .thenThrow(new IllegalStateException("Unexpected refund state"));
+
+        assertThatThrownBy(() -> refundService.refund(refundRequest, USER_ID))
+                .isInstanceOf(IllegalStateException.class);
+
+        verify(refundTransactionExecutor, times(1)).applySuccess(REFUND_ID, TICKET_ID);
+        verify(refundTransactionExecutor, never()).markFailed(any(), any());
+    }
+
+    @Test
+    void getPolicyShouldExposeRefundTiersAndConfig() {
+        when(refundRules.getTiers()).thenReturn(List.of(new RefundRules.Tier("Full Refund", "100% refund",
+                "More than 48 hours before session start", new BigDecimal("100.00"), 2880)));
+        when(refundPolicyConfig.getProcessingTime()).thenReturn("5-7 business days");
+        when(refundPolicyConfig.getContactEmail()).thenReturn("support@example.com");
+
+        var policy = refundService.getPolicy();
+
+        assertThat(policy.rules()).singleElement().satisfies(rule -> {
+            assertThat(rule.name()).isEqualTo("Full Refund");
+            assertThat(rule.percentage()).isEqualTo(100);
+        });
+        assertThat(policy.processingTime()).isEqualTo("5-7 business days");
+        assertThat(policy.contactEmail()).isEqualTo("support@example.com");
+    }
+}

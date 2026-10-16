@@ -1,0 +1,162 @@
+package ua.lviv.bas.cinema.refund;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
+import ua.lviv.bas.cinema.booking.Booking;
+import ua.lviv.bas.cinema.booking.BookingStatus;
+import ua.lviv.bas.cinema.booking.BookingRepository;
+import ua.lviv.bas.cinema.cinema.hall.CinemaHall;
+import ua.lviv.bas.cinema.cinema.Session;
+import ua.lviv.bas.cinema.cinema.hall.CinemaHallRepository;
+import ua.lviv.bas.cinema.cinema.SessionRepository;
+import ua.lviv.bas.cinema.config.TestcontainersConfig;
+import ua.lviv.bas.cinema.refund.exception.TicketNotRefundableException;
+import ua.lviv.bas.cinema.movie.Movie;
+import ua.lviv.bas.cinema.movie.AgeRating;
+import ua.lviv.bas.cinema.movie.MovieStatus;
+import ua.lviv.bas.cinema.movie.MovieRepository;
+import ua.lviv.bas.cinema.payment.Payment;
+import ua.lviv.bas.cinema.payment.PaymentStatus;
+import ua.lviv.bas.cinema.payment.PaymentRepository;
+import ua.lviv.bas.cinema.ticket.Ticket;
+import ua.lviv.bas.cinema.ticket.TicketStatus;
+import ua.lviv.bas.cinema.ticket.type.TicketType;
+import ua.lviv.bas.cinema.ticket.TicketRepository;
+import ua.lviv.bas.cinema.ticket.type.TicketTypeRepository;
+import ua.lviv.bas.cinema.user.User;
+import ua.lviv.bas.cinema.user.UserRole;
+import ua.lviv.bas.cinema.user.UserRepository;
+import ua.lviv.bas.cinema.common.CinemaTime;
+
+import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.Objects;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@SpringBootTest
+@ActiveProfiles("ci")
+@Import(TestcontainersConfig.class)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+class RefundCreationConcurrencyTest {
+
+    private static final String TICKET_CODE = "TKT-REFUND-CONC";
+
+    @Autowired
+    private RefundTransactionExecutor refundTransactionExecutor;
+    @Autowired
+    private RefundRepository refundRepository;
+    @Autowired
+    private TicketRepository ticketRepository;
+    @Autowired
+    private PaymentRepository paymentRepository;
+    @Autowired
+    private BookingRepository bookingRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private MovieRepository movieRepository;
+    @Autowired
+    private CinemaHallRepository cinemaHallRepository;
+    @Autowired
+    private SessionRepository sessionRepository;
+    @Autowired
+    private TicketTypeRepository ticketTypeRepository;
+
+    private Long ticketId;
+    private Long userId;
+
+    @BeforeEach
+    void setUp() {
+        var user = userRepository.save(buildUser("refund.creation.concurrency@test.com"));
+        userId = user.getId();
+        var movie = movieRepository.save(buildMovie());
+        var hall = cinemaHallRepository.save(CinemaHall.builder().name("Refund Concur Hall").build());
+        var session = sessionRepository.save(Session.builder().movie(movie).hall(hall)
+                .startTime(CinemaTime.now().plusDays(3)).basePrice(new BigDecimal("100.00")).build());
+        var ticketType = ticketTypeRepository.save(TicketType.builder().displayName("Standard").build());
+
+        var booking = bookingRepository.save(Booking.builder().user(user).session(session)
+                .status(BookingStatus.CONFIRMED).totalPrice(new BigDecimal("100.00"))
+                .finalPrice(new BigDecimal("100.00")).expiresAt(Instant.now().plus(Duration.ofMinutes(20))).build());
+
+        var payment = paymentRepository.save(Payment.builder().booking(booking).amount(new BigDecimal("100.00"))
+                .status(PaymentStatus.SUCCESS).liqpayOrderId("ORD_REFUND_CONCURRENCY")
+                .liqpayPaymentId("PAY_REFUND_CONCURRENCY").build());
+
+        var ticket = ticketRepository.save(Ticket.builder().booking(booking).user(user).ticketType(ticketType)
+                .payment(payment).purchaseTime(Instant.now().minus(Duration.ofHours(1)))
+                .originalPrice(new BigDecimal("100.00")).finalPrice(new BigDecimal("100.00")).uniqueCode(TICKET_CODE)
+                .status(TicketStatus.ACTIVE).build());
+        ticketId = ticket.getId();
+    }
+
+    @Test
+    void concurrentRefundRequestsOnlyOneShouldCreateProcessingRefund() throws Exception {
+        var readyLatch = new CountDownLatch(2);
+        var startLatch = new CountDownLatch(1);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+
+        Callable<Exception> attempt = () -> attemptCreateRefund(readyLatch, startLatch);
+
+        Future<Exception> resultA = executor.submit(attempt);
+        Future<Exception> resultB = executor.submit(attempt);
+
+        readyLatch.await(5, TimeUnit.SECONDS);
+        startLatch.countDown();
+
+        Exception outcomeA = resultA.get(10, TimeUnit.SECONDS);
+        Exception outcomeB = resultB.get(10, TimeUnit.SECONDS);
+        executor.shutdown();
+
+        long successCount = Stream.of(outcomeA, outcomeB).filter(Objects::isNull).count();
+        long alreadyProcessingCount = Stream.of(outcomeA, outcomeB)
+                .filter(e -> e instanceof TicketNotRefundableException).count();
+
+        assertThat(successCount).isEqualTo(1);
+        assertThat(alreadyProcessingCount).isEqualTo(1);
+
+        var processingRefunds = refundRepository.findByUserIdOrderByCreatedDateDesc(userId).stream()
+                .filter(refund -> refund.getStatus() == RefundStatus.PROCESSING).toList();
+        assertThat(processingRefunds).hasSize(1);
+    }
+
+    private Exception attemptCreateRefund(CountDownLatch readyLatch, CountDownLatch startLatch) {
+        try {
+            readyLatch.countDown();
+            startLatch.await();
+            refundTransactionExecutor.createProcessingRefund(ticketId, userId, "Concurrency test reason");
+            return null;
+        } catch (Exception e) {
+            return e;
+        }
+    }
+
+    private User buildUser(String email) {
+        return User.builder().email(email).firstName("Test").lastName("User")
+                .dateOfBirth(LocalDate.of(1995, 1, 1)).city("Lviv").phoneNumber("+380000000014")
+                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).build();
+    }
+
+    private Movie buildMovie() {
+        return Movie.builder().title("Refund Concurrency Test Movie").slug("refund-concurrency-test-movie")
+                .trailerUrl("https://example.com/trailer").description("Test movie for refund creation concurrency")
+                .durationMinutes(120).releaseDate(CinemaTime.today().minusDays(1))
+                .endShowingDate(CinemaTime.today().plusMonths(1)).status(MovieStatus.CURRENT)
+                .posterFileName("poster.jpg").ageRating(AgeRating.PEGI_12).build();
+    }
+}

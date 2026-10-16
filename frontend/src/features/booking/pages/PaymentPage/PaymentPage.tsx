@@ -1,0 +1,539 @@
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
+import {
+  useParams,
+  useNavigate,
+  useLocation,
+  Navigate,
+} from "react-router-dom";
+import { usePayment } from "@/features/payment/hooks/usePayment";
+import { useBooking } from "@/features/booking/hooks/useBooking";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
+import type { BookingResponse } from "@/features/booking/types/booking";
+import { ProgressStepper } from "@/features/booking/components/ProgressStepper/ProgressStepper";
+import { BOOKING_STEPS } from "@/features/booking/components/ProgressStepper/bookingSteps";
+import { Badge } from "@/components/ui/Badge/Badge";
+import { Button } from "@/components/ui/Button/Button";
+import { Layout } from "@/components/layout/Layout/Layout";
+import {
+  Loader2,
+  CreditCard,
+  AlertCircle,
+  CheckCircle2,
+  ArrowLeft,
+  Ticket,
+  Home,
+  RefreshCw,
+} from "lucide-react";
+import type { PaymentResponse } from "@/features/payment/types/payment";
+import {
+  FINAL_PAYMENT_STATUSES,
+  LATE_PAYMENT_REFUND_STATUSES,
+  REFUNDED_PAYMENT_STATUSES,
+  PaymentStatusDisplay,
+} from "@/features/payment/types/payment";
+import { formatTimeLeft } from "@/utils/dateUtils";
+import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
+import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
+import { formatFullDateTime, formatPrice } from "@/utils/formatters";
+import styles from "./PaymentPage.module.css";
+
+interface BookingData {
+  id: number;
+  bookingNumber: string;
+  movieTitle: string;
+  hallName: string;
+  sessionTime: string;
+  totalPrice: string;
+  finalPrice: string;
+  bonusPointsUsed: number;
+  bookedSeats: Array<{
+    seatNumber: string;
+    seatRow: number;
+    ticketType: string;
+    seatPrice: string;
+  }>;
+}
+
+const toBookingData = (booking: BookingResponse): BookingData => ({
+  id: booking.id,
+  bookingNumber: booking.bookingNumber,
+  movieTitle: booking.movieTitle,
+  hallName: booking.hallName,
+  sessionTime: booking.sessionTime,
+  totalPrice: booking.totalPrice,
+  finalPrice: booking.finalPrice,
+  bonusPointsUsed: booking.bonusPointsUsed,
+  bookedSeats: booking.seatReservations.map((seat) => ({
+    seatNumber: String(seat.seatNumber),
+    seatRow: seat.row,
+    ticketType: seat.ticketTypeName,
+    seatPrice: seat.seatPrice,
+  })),
+});
+
+type PaymentStep =
+  "init" | "processing" | "ready" | "paying" | "success" | "failed";
+
+export const PaymentPage: React.FC = () => {
+  const { bookingId } = useParams<{ bookingId: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const stateBooking = location.state?.booking as BookingResponse | undefined;
+  const { booking: loadedBooking, getById: getBookingById } = useBooking();
+  const [bookingLoadFailed, setBookingLoadFailed] = useState(false);
+
+  useEffect(() => {
+    if (stateBooking || !bookingId) return;
+    getBookingById(bookingId)
+      .then((result) => !result && setBookingLoadFailed(true))
+      .catch(() => setBookingLoadFailed(true));
+  }, [stateBooking, bookingId, getBookingById]);
+
+  const booking = stateBooking ?? loadedBooking;
+  const bookingData = useMemo(
+    () => (booking ? toBookingData(booking) : null),
+    [booking],
+  );
+
+  const { create, getById, getLiqPayData, retry } = usePayment();
+
+  const [step, setStep] = useState<PaymentStep>("init");
+  const [selectedMethod, setSelectedMethod] = useState<"liqpay" | null>(
+    "liqpay",
+  );
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [currentPayment, setCurrentPayment] = useState<PaymentResponse | null>(
+    null,
+  );
+  const [paymentTimeLeft, setPaymentTimeLeft] = useState<string>("");
+
+  const isCreatingRef = useRef(false);
+  const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
+
+  const stopPolling = useCallback(() => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+  }, []);
+
+  const startPolling = useCallback(
+    (paymentId: number) => {
+      stopPolling();
+      const interval = setInterval(async () => {
+        try {
+          const payment = await getById(paymentId, {
+            showErrorNotification: false,
+          });
+          if (payment) {
+            setCurrentPayment(payment);
+            if (FINAL_PAYMENT_STATUSES.includes(payment.status)) {
+              stopPolling();
+            }
+            if (payment.expiresAt) {
+              setPaymentTimeLeft(formatTimeLeft(payment.expiresAt));
+            }
+          }
+        } catch {
+          return;
+        }
+      }, 3000);
+      pollingIntervalRef.current = interval;
+    },
+    [getById, stopPolling],
+  );
+
+  const initPayment = useCallback(async () => {
+    if (!bookingId || isCreatingRef.current) return;
+
+    isCreatingRef.current = true;
+    setStep("processing");
+    setErrorMessage(null);
+
+    try {
+      const payment = await create({ bookingId });
+      if (payment?.id) {
+        setCurrentPayment(payment);
+        startPolling(payment.id);
+        if (payment.status === "PROCESSING") return;
+        const liqPayData = await getLiqPayData(payment.id);
+        setStep(liqPayData?.paymentUrl ? "ready" : "failed");
+        if (!liqPayData?.paymentUrl)
+          setErrorMessage("Failed to initialize payment gateway");
+      } else {
+        setStep("failed");
+        setErrorMessage("Failed to create payment");
+      }
+    } catch (error) {
+      setStep("failed");
+      setErrorMessage(
+        error instanceof Error ? error.message : "Failed to create payment",
+      );
+    } finally {
+      isCreatingRef.current = false;
+    }
+  }, [bookingId, create, getLiqPayData, startPolling]);
+
+  useEffect(() => {
+    if (bookingId && bookingData && step === "init") initPayment();
+  }, [bookingId, bookingData, step, initPayment]);
+
+  useEffect(() => stopPolling, [stopPolling]);
+
+  useEffect(() => {
+    if (!currentPayment) return;
+    if (currentPayment.status === "SUCCESS") {
+      setStep("success");
+      stopPolling();
+    } else if (LATE_PAYMENT_REFUND_STATUSES.includes(currentPayment.status)) {
+      setStep("failed");
+      setErrorMessage(
+        "Your payment arrived after the booking had expired. The full amount is being refunded to your card.",
+      );
+      stopPolling();
+    } else if (REFUNDED_PAYMENT_STATUSES.includes(currentPayment.status)) {
+      setStep("failed");
+      setErrorMessage("This payment has been refunded to your card.");
+      stopPolling();
+    } else if (
+      ["FAILED", "CANCELLED", "EXPIRED"].includes(currentPayment.status)
+    ) {
+      setStep("failed");
+      setErrorMessage(currentPayment.errorDescription || "Payment failed");
+      stopPolling();
+    } else if (currentPayment.status === "PROCESSING" && step !== "paying")
+      setStep("paying");
+  }, [currentPayment, step, stopPolling]);
+
+  const isAwaitingConfirmation = currentPayment?.status === "PROCESSING";
+
+  const isRefundedPayment =
+    !!currentPayment &&
+    [...LATE_PAYMENT_REFUND_STATUSES, ...REFUNDED_PAYMENT_STATUSES].includes(
+      currentPayment.status,
+    );
+
+  const handlePay = async () => {
+    if (!currentPayment?.id) return;
+    setStep("paying");
+    try {
+      const liqPayData = await getLiqPayData(currentPayment.id);
+      if (liqPayData?.paymentUrl) {
+        window.location.href = liqPayData.paymentUrl;
+        return;
+      }
+      setErrorMessage("Payment data not available");
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Payment data not available",
+      );
+    }
+    setStep("failed");
+  };
+
+  const handleRetry = async () => {
+    stopPolling();
+    if (currentPayment?.status !== "FAILED") {
+      await initPayment();
+      return;
+    }
+
+    try {
+      setStep("processing");
+      const retriedPayment = await retry(currentPayment.id);
+      if (!retriedPayment?.id) {
+        setStep("failed");
+        setErrorMessage("Failed to retry payment");
+        return;
+      }
+      setCurrentPayment(retriedPayment);
+      startPolling(retriedPayment.id);
+      const liqPayData = await getLiqPayData(retriedPayment.id);
+      setStep(liqPayData?.paymentUrl ? "ready" : "failed");
+      if (!liqPayData?.paymentUrl)
+        setErrorMessage("Failed to initialize payment gateway");
+    } catch (error) {
+      setStep("failed");
+      setErrorMessage(
+        error instanceof Error ? error.message : "Failed to retry payment",
+      );
+    }
+  };
+
+  const handleBack = () => navigate(`/booking/summary/${bookingId}`);
+
+  if (
+    bookingLoadFailed ||
+    (booking && booking.status !== "PENDING" && step === "init")
+  )
+    return (
+      <Navigate
+        to={bookingId ? `/booking/summary/${bookingId}` : "/"}
+        replace
+      />
+    );
+
+  if (!bookingData)
+    return (
+      <Layout>
+        <LoadingSpinner text="Loading booking..." />
+      </Layout>
+    );
+
+  return (
+    <Layout>
+      <PageContainer>
+        <ProgressStepper
+          steps={BOOKING_STEPS}
+          currentStep={3}
+          className={styles.stepper}
+        />
+        <PageHeader
+          align="center"
+          divider
+          title="Payment"
+          subtitle="Complete your booking by making a secure payment"
+        />
+        <div className={styles.content}>
+          <div className={styles.paymentCard}>
+            <div className={styles.paymentHeader}>
+              <h3 className={styles.paymentTitle}>Payment Details</h3>
+              <p className={styles.paymentDescription}>
+                {step === "ready" && "Select payment method and proceed"}
+                {step === "paying" &&
+                  (isAwaitingConfirmation
+                    ? "Waiting for payment confirmation"
+                    : "Redirecting to payment page")}
+                {step === "success" && "Payment completed successfully"}
+                {step === "failed" && "Payment processing failed"}
+                {step === "processing" && "Setting up your payment"}
+              </p>
+            </div>
+            <div className={styles.paymentBody}>
+              {(step === "init" || step === "processing") && (
+                <div className={styles.loadingContainer}>
+                  <Loader2 className={styles.loadingSpinner} size={48} />
+                  <h3 className={styles.statusTitle}>Preparing Payment</h3>
+                  <p className={styles.statusMessage}>
+                    Please wait while we set up your payment
+                  </p>
+                </div>
+              )}
+              {step === "ready" && (
+                <div className={styles.statusContainer}>
+                  <CreditCard className={styles.infoIcon} size={64} />
+                  <h3 className={styles.statusTitle}>Ready to Pay</h3>
+                  <p className={styles.statusMessage}>
+                    Choose your payment method and continue
+                  </p>
+                  <div className={styles.paymentMethods}>
+                    <h4 className={styles.methodsTitle}>Payment Method</h4>
+                    <div className={styles.methodsList}>
+                      <div
+                        className={`${styles.methodItem} ${selectedMethod === "liqpay" ? styles.active : ""}`}
+                        onClick={() => setSelectedMethod("liqpay")}
+                      >
+                        <CreditCard className={styles.methodIcon} size={20} />
+                        <span className={styles.methodName}>Card Payment</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className={styles.actions}>
+                    <Button
+                      onClick={handleBack}
+                      variant="secondary"
+                      className={styles.secondaryButton}
+                    >
+                      <ArrowLeft size={20} />
+                      Back
+                    </Button>
+                    <Button
+                      onClick={handlePay}
+                      variant="primary"
+                      className={styles.primaryButton}
+                      disabled={!selectedMethod}
+                    >
+                      <CreditCard size={20} />
+                      Pay with Card
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {step === "paying" && (
+                <div className={styles.statusContainer}>
+                  <Loader2 className={styles.loadingSpinner} size={64} />
+                  <h3 className={styles.statusTitle}>
+                    {isAwaitingConfirmation
+                      ? "Payment Processing"
+                      : "Redirecting to Payment"}
+                  </h3>
+                  <p className={styles.statusMessage}>
+                    {isAwaitingConfirmation
+                      ? "Your bank is confirming the payment, this page will update automatically"
+                      : "You will be redirected to the payment page"}
+                  </p>
+                  {paymentTimeLeft && (
+                    <p className={styles.statusMessage}>
+                      Time left: {paymentTimeLeft}
+                    </p>
+                  )}
+                  <div className={styles.alertContainer}>
+                    <AlertCircle size={16} />
+                    <p>
+                      {isAwaitingConfirmation
+                        ? "Please do not pay again while the payment is processing"
+                        : "Please complete the payment on the next page"}
+                    </p>
+                  </div>
+                </div>
+              )}
+              {step === "success" && (
+                <div className={styles.statusContainer}>
+                  <CheckCircle2 className={styles.successIcon} size={64} />
+                  <h3 className={styles.statusTitle}>Payment Successful!</h3>
+                  <p className={styles.statusMessage}>
+                    Your tickets have been successfully paid and booked
+                  </p>
+                  {currentPayment?.senderCardMask && (
+                    <div className={styles.paymentNumber}>
+                      Card: {currentPayment.senderCardMask}
+                    </div>
+                  )}
+                  {currentPayment?.status && (
+                    <Badge variant="success" className={styles.badge}>
+                      <CheckCircle2 size={12} />
+                      {PaymentStatusDisplay[currentPayment.status]}
+                    </Badge>
+                  )}
+                  <div className={styles.actions}>
+                    <Button
+                      onClick={() => navigate("/account/tickets")}
+                      variant="primary"
+                      className={styles.primaryButton}
+                    >
+                      <Ticket size={20} />
+                      View My Tickets
+                    </Button>
+                    <Button
+                      onClick={() => navigate("/")}
+                      variant="secondary"
+                      className={styles.secondaryButton}
+                    >
+                      <Home size={20} />
+                      Home Page
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {step === "failed" && (
+                <div className={styles.statusContainer}>
+                  <AlertCircle className={styles.errorIcon} size={64} />
+                  <h3 className={styles.statusTitle}>
+                    {isRefundedPayment ? "Payment Refunded" : "Payment Failed"}
+                  </h3>
+                  <p className={styles.statusMessage}>
+                    {errorMessage ||
+                      "There was an issue processing your payment"}
+                  </p>
+                  {currentPayment?.status && (
+                    <Badge variant="error" className={styles.badge}>
+                      <AlertCircle size={12} />
+                      {PaymentStatusDisplay[currentPayment.status]}
+                    </Badge>
+                  )}
+                  <div className={styles.actions}>
+                    <Button
+                      onClick={handleBack}
+                      variant="secondary"
+                      className={styles.secondaryButton}
+                    >
+                      <ArrowLeft size={20} />
+                      Back to Summary
+                    </Button>
+                    {!isRefundedPayment && (
+                      <Button
+                        onClick={handleRetry}
+                        variant="primary"
+                        className={styles.primaryButton}
+                      >
+                        <RefreshCw size={20} />
+                        Try Again
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className={styles.summaryCard}>
+            <div className={styles.summaryHeader}>
+              <h3 className={styles.summaryTitle}>Booking Summary</h3>
+            </div>
+            <div className={styles.summaryBody}>
+              <div className={styles.movieInfo}>
+                <h3 className={styles.movieTitle}>{bookingData.movieTitle}</h3>
+                <p className={styles.movieDetails}>
+                  {bookingData.hallName} •{" "}
+                  {formatFullDateTime(bookingData.sessionTime)}
+                </p>
+                <Badge variant="primary" className={styles.badge}>
+                  {bookingData.bookingNumber}
+                </Badge>
+              </div>
+              <div className={styles.divider}></div>
+              <div className={styles.seatsList}>
+                <h4 className={styles.seatsTitle}>Selected Seats</h4>
+                {bookingData.bookedSeats.map((seat, index) => (
+                  <div key={index} className={styles.seatItem}>
+                    <span className={styles.seatLabel}>
+                      Row {seat.seatRow}, Seat {seat.seatNumber}
+                    </span>
+                    <div>
+                      <span className={styles.seatType}>{seat.ticketType}</span>
+                      <span className={styles.seatLabel}>
+                        {" "}
+                        • {formatPrice(seat.seatPrice)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className={styles.divider}></div>
+              {bookingData.bonusPointsUsed > 0 && (
+                <>
+                  <div className={styles.detailRow}>
+                    <span className={styles.detailLabel}>Total price:</span>
+                    <span className={styles.detailValue}>
+                      {formatPrice(bookingData.totalPrice)}
+                    </span>
+                  </div>
+                  <div className={styles.detailRow}>
+                    <span className={styles.detailLabel}>
+                      Bonus points used:
+                    </span>
+                    <span className={styles.detailValue}>
+                      {bookingData.bonusPointsUsed} points
+                    </span>
+                  </div>
+                </>
+              )}
+              <div className={styles.totalRow}>
+                <span>Final amount:</span>
+                <span>{formatPrice(bookingData.finalPrice)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </PageContainer>
+    </Layout>
+  );
+};
