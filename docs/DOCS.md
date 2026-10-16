@@ -54,10 +54,10 @@ cd Cinema
 **2. Configure environment variables**
 
 ```bash
-cp .env.docker.example .env
+cp .env.example .env
 ```
 
-Fill in the required values. See [.env.docker.example](https://github.com/AntonBas/Cinema/blob/develop/.env.docker.example) for all available variables.
+Fill in the required values. See [.env.example](https://github.com/AntonBas/Cinema/blob/develop/.env.example) for all available variables. The same root `.env` is used for local development (Option 2).
 
 **3. Start all services**
 
@@ -98,19 +98,15 @@ Run backend and frontend separately for faster development.
 
 #### Backend Setup
 
-```bash
-cd backend
-cp .env.local.example .env
-```
-
-Edit `.env` with your local values. See [backend/.env.local.example](https://github.com/AntonBas/Cinema/blob/develop/backend/.env.local.example) for all available variables.
+Use the same root `.env` as for Docker (`cp .env.example .env` if you don't have one yet). `spring-boot:run` runs from the repository root, so the backend reads that `.env` directly; Docker Compose overrides the database and Redis hosts (and `UPLOAD_DIR`) for the containerized backend. Because the working directory is the repository root, `UPLOAD_DIR=backend/uploads` must be set in `.env` for local runs, otherwise posters are looked up in a non-existent `./uploads`.
 
 ```bash
-cd ..
 docker compose up -d postgres redis
 cd backend
 ./mvnw spring-boot:run
 ```
+
+In IntelliJ, set the run configuration's working directory to the repository root. The `local` profile is active by default.
 
 Backend will be available at: http://localhost:8080
 
@@ -162,7 +158,7 @@ of a same-origin proxy.
 | Movie posters   | Cloudinary (free tier) — Render's disk is wiped on every redeploy, so `prod` uploads go to Cloudinary instead of local disk (`docker`/`local` still use local disk) |
 
 On Render, set `SPRING_PROFILES_ACTIVE=prod` plus the "prod only" variables
-from [`.env.docker.example`](../.env.docker.example), alongside the ones
+from [`.env.example`](../.env.example), alongside the ones
 required everywhere (`JWT_SECRET`, `BREVO_API_KEY`, `EMAIL_FROM`,
 `GOOGLE_CLIENT_ID`/`SECRET`, `LIQPAY_*`, `FRONTEND_URL`). On Vercel, set
 `VITE_API_URL` to the Render backend's URL as a project environment

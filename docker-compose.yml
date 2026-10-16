@@ -63,6 +63,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       SERVER_PORT: 8080
+      UPLOAD_DIR: uploads
       SPRING_PROFILES_ACTIVE: docker
       JWT_SECRET: ${JWT_SECRET}
       BREVO_API_KEY: ${BREVO_API_KEY}
