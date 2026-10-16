@@ -10,7 +10,7 @@ import ua.lviv.bas.cinema.cinema.dto.session.response.SessionScheduleResponse;
 import ua.lviv.bas.cinema.cinema.mapper.SessionMapper;
 import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
 import ua.lviv.bas.cinema.cinema.repository.projection.SessionScheduleProjection;
-import ua.lviv.bas.cinema.movie.mapper.PosterUrlMapper;
+import ua.lviv.bas.cinema.movie.movie.PosterUrlMapper;
 import ua.lviv.bas.cinema.cinema.repository.specification.SessionSpecification;
 import ua.lviv.bas.cinema.common.CacheableList;
 

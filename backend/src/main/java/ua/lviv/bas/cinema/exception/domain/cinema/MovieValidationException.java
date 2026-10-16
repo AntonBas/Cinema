@@ -1,7 +1,7 @@
 package ua.lviv.bas.cinema.exception.domain.cinema;
 
 import ua.lviv.bas.cinema.exception.core.ValidationException;
-import ua.lviv.bas.cinema.movie.domain.enums.PersonRole;
+import ua.lviv.bas.cinema.movie.person.PersonRole;
 
 import java.io.Serial;
 import java.time.LocalDate;

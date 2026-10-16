@@ -8,7 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jpa.domain.Specification;
 import ua.lviv.bas.cinema.common.CinemaTime;
-import ua.lviv.bas.cinema.movie.mapper.PosterUrlMapper;
+import ua.lviv.bas.cinema.movie.movie.PosterUrlMapper;
 import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.cinema.dto.session.response.SessionScheduleResponse;
 import ua.lviv.bas.cinema.cinema.mapper.SessionMapper;

@@ -639,7 +639,7 @@ domain); `notification/`, `integration/` and `common/` are shared infrastructure
 
 | Package         | Responsibility                                                          |
 | ---------------- | ------------------------------------------------------------------------ |
-| `movie/`         | Movies, genres, cast (actors/directors/screenwriters)                   |
+| `movie/`         | Movies, genres, cast (actors/directors/screenwriters), split into `movie/`, `genre/`, `person/` sub-packages |
 | `cinema/`        | Cinema halls, seats, sessions                                            |
 | `user/`          | Users, authentication, email verification tokens                        |
 | `booking/`       | Booking creation, seat reservation (two-stage locking)                  |
@@ -655,7 +655,7 @@ domain); `notification/`, `integration/` and `common/` are shared infrastructure
 
 The 10 packages above `audit/` are the actual business domains, each owning its own decisions.
 `notification/`, `integration/`, and `common/` are shared infrastructure: they're called *by* a
-domain (e.g. `movie/service/SlugService` decides how a movie's slug is generated and calls
+domain (e.g. `movie/movie/SlugService` decides how a movie's slug is generated and calls
 nothing in `integration/` for it; `integration/` only holds technical adapters like file storage,
 poster handling, and QR generation) rather than making business decisions themselves.
 

@@ -1,7 +1,7 @@
 package ua.lviv.bas.cinema.support;
 
 import ua.lviv.bas.cinema.cinema.domain.CinemaHall;
-import ua.lviv.bas.cinema.movie.domain.Movie;
+import ua.lviv.bas.cinema.movie.movie.Movie;
 import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.common.CinemaTime;
 

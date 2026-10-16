@@ -5,7 +5,7 @@ import org.mapstruct.factory.Mappers;
 import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.booking.domain.SeatReservation;
 import ua.lviv.bas.cinema.cinema.domain.CinemaHall;
-import ua.lviv.bas.cinema.movie.domain.Movie;
+import ua.lviv.bas.cinema.movie.movie.Movie;
 import ua.lviv.bas.cinema.cinema.domain.Seat;
 import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;

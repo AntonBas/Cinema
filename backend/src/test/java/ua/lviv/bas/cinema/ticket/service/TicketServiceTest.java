@@ -17,7 +17,7 @@ import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.refund.domain.Refund;
 import ua.lviv.bas.cinema.refund.service.RefundCalculator;
 import ua.lviv.bas.cinema.cinema.domain.CinemaHall;
-import ua.lviv.bas.cinema.movie.domain.Movie;
+import ua.lviv.bas.cinema.movie.movie.Movie;
 import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;

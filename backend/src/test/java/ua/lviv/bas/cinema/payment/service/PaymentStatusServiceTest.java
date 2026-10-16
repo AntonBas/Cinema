@@ -16,7 +16,7 @@ import ua.lviv.bas.cinema.booking.domain.Booking;
 import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.payment.domain.status.PaymentStatus;
 import ua.lviv.bas.cinema.cinema.domain.CinemaHall;
-import ua.lviv.bas.cinema.movie.domain.Movie;
+import ua.lviv.bas.cinema.movie.movie.Movie;
 import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.user.domain.User;
 import ua.lviv.bas.cinema.payment.dto.response.PaymentLiqPayDataResponse;

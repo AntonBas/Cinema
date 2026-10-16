@@ -7,7 +7,7 @@ import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.booking.domain.SeatReservation;
 import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
 import ua.lviv.bas.cinema.cinema.domain.CinemaHall;
-import ua.lviv.bas.cinema.movie.domain.Movie;
+import ua.lviv.bas.cinema.movie.movie.Movie;
 import ua.lviv.bas.cinema.cinema.domain.Seat;
 import ua.lviv.bas.cinema.cinema.domain.Session;
 import ua.lviv.bas.cinema.ticket.domain.TicketType;
