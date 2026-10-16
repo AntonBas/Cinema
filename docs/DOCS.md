@@ -612,22 +612,24 @@ Four configurable rules control the loyalty program:
 
 ### Backend (Spring Boot)
 
-**Package by Feature + Layer.** Each business domain is a self-contained package with its own
-`controller/`, `service/`, `repository/`, `domain/`, `dto/`, `mapper/`, `scheduler/` — only the
-layers that domain actually needs. `config/` and `exception/` stay global (shared by every
-domain); `notification/`, `integration/` and `common/` are shared infrastructure.
+**Package by Feature + Layer.** Each business domain is a self-contained package that keeps its
+entity, repository, service, MapStruct mapper, scheduler and controllers flat in the domain
+folder, with `dto/` and `exception/` sub-folders and sub-packages for secondary subjects
+(`movie/{genre,person,poster}`, `cinema/hall`, `user/{auth,admin}`, `booking/{reservation,admin}`,
+`refund/{item,admin}`, `ticket/{type,email}`, `bonus/rules`, `payment/gateway`). `config/` and
+`exception/` stay global (shared by every domain); `notification/`, `integration/` and `common/`
+are shared infrastructure.
 
     backend/src/main/java/ua/lviv/bas/cinema/
     ├── <domain>/                  # one package per business domain, see table below
-    │   ├── controller/
-    │   │   ├── admin/             # role-gated endpoints
-    │   │   └── api/               # public / user-facing endpoints
-    │   ├── service/
-    │   ├── repository/
-    │   ├── domain/                # JPA entities, enums, statuses
+    │   ├── *Controller            # user-facing endpoints
+    │   ├── Admin*Controller       # role-gated endpoints
+    │   ├── *Service, *Repository  # business logic and persistence
+    │   ├── *Mapper                # MapStruct entity <-> DTO mapping
+    │   ├── *Scheduler             # self-healing / status-update jobs
     │   ├── dto/                   # request/response payloads
-    │   ├── mapper/                # MapStruct entity <-> DTO mapping
-    │   └── scheduler/             # self-healing / status-update jobs
+    │   ├── exception/             # domain-specific exceptions
+    │   └── <subject>/             # sub-packages for secondary subjects
     ├── config/                    # global — security, cache, jackson, ratelimit, scheduling, async, audit, api, http, properties
     ├── exception/                 # global — api/, core/, infrastructure/ (domain exceptions live in <domain>/exception/)
     ├── notification/              # outbound email (Brevo HTTP API + templates)
@@ -653,7 +655,7 @@ domain); `notification/`, `integration/` and `common/` are shared infrastructure
 | `integration/`   | File storage (local disk / Cloudinary)                                  |
 | `common/`        | Stateless cross-cutting utilities shared across every domain             |
 
-The 10 packages above `audit/` are the actual business domains, each owning its own decisions.
+The 10 packages from `movie/` to `audit/` are the actual business domains, each owning its own decisions.
 `notification/`, `integration/`, and `common/` are shared infrastructure: they're called *by* a
 domain (e.g. `movie/SlugService` decides how a movie's slug is generated; `integration/`
 only holds the technical file-storage adapters, while poster handling and QR generation sit in
