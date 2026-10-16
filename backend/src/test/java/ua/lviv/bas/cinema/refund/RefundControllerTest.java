@@ -11,7 +11,6 @@ import ua.lviv.bas.cinema.refund.dto.RefundPreviewRequest;
 import ua.lviv.bas.cinema.refund.dto.RefundRequest;
 import ua.lviv.bas.cinema.refund.dto.RefundPreviewResponse;
 import ua.lviv.bas.cinema.refund.dto.RefundResponse;
-import ua.lviv.bas.cinema.refund.RefundService;
 import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;

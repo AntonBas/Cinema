@@ -13,17 +13,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import ua.lviv.bas.cinema.audit.AuditAction;
 import ua.lviv.bas.cinema.audit.AuditService;
-import ua.lviv.bas.cinema.movie.genre.Genre;
 import ua.lviv.bas.cinema.movie.genre.dto.GenreRequest;
 import ua.lviv.bas.cinema.movie.genre.dto.GenreListResponse;
 import ua.lviv.bas.cinema.movie.genre.dto.GenreResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.exception.domain.cinema.GenreHasMoviesException;
-import ua.lviv.bas.cinema.movie.genre.GenreMapper;
-import ua.lviv.bas.cinema.movie.genre.GenreRepository;
+import ua.lviv.bas.cinema.movie.exception.GenreHasMoviesException;
 import ua.lviv.bas.cinema.movie.movie.MovieRepository;
-import ua.lviv.bas.cinema.movie.genre.GenreListProjection;
 
 import java.util.List;
 import java.util.Optional;

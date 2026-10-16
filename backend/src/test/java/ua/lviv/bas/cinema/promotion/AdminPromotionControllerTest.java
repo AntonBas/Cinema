@@ -12,12 +12,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.common.PageResponse;
-import ua.lviv.bas.cinema.promotion.PromotionStatus;
 import ua.lviv.bas.cinema.promotion.dto.PromotionRequest;
 import ua.lviv.bas.cinema.promotion.dto.PromotionListResponse;
 import ua.lviv.bas.cinema.promotion.dto.PromotionResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.promotion.PromotionService;
 
 import java.util.List;
 

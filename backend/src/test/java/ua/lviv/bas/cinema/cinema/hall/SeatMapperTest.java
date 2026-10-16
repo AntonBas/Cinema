@@ -2,8 +2,6 @@ package ua.lviv.bas.cinema.cinema.hall;
 
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
-import ua.lviv.bas.cinema.cinema.hall.Seat;
-import ua.lviv.bas.cinema.cinema.hall.SeatType;
 import ua.lviv.bas.cinema.cinema.hall.dto.SeatResponse;
 
 import java.util.Arrays;

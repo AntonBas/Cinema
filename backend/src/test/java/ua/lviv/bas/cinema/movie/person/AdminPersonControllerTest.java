@@ -10,14 +10,12 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import ua.lviv.bas.cinema.movie.person.PersonRole;
 import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.movie.person.dto.PersonRequest;
 import ua.lviv.bas.cinema.movie.person.dto.PersonListResponse;
 import ua.lviv.bas.cinema.movie.person.dto.PersonResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.movie.person.PersonService;
 
 import java.util.List;
 

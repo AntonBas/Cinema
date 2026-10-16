@@ -11,7 +11,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
-import ua.lviv.bas.cinema.ticket.email.TicketsEmailService;
 
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.never;

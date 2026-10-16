@@ -8,15 +8,11 @@ import org.mapstruct.Named;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
-import ua.lviv.bas.cinema.cinema.session.Session;
-import ua.lviv.bas.cinema.cinema.session.CinemaSessionStatus;
 import ua.lviv.bas.cinema.cinema.session.dto.SessionRequest;
 import ua.lviv.bas.cinema.cinema.session.dto.SessionAdminResponse;
 import ua.lviv.bas.cinema.cinema.session.dto.SessionMovieInfoResponse;
 import ua.lviv.bas.cinema.cinema.session.dto.SessionResponse;
 import ua.lviv.bas.cinema.cinema.session.dto.SessionScheduleResponse;
-import ua.lviv.bas.cinema.cinema.session.SessionAdminProjection;
-import ua.lviv.bas.cinema.cinema.session.SessionScheduleProjection;
 
 import java.time.LocalDateTime;
 

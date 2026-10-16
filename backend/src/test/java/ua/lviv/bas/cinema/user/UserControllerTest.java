@@ -7,15 +7,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
-import ua.lviv.bas.cinema.user.User;
-import ua.lviv.bas.cinema.user.UserRole;
-import ua.lviv.bas.cinema.user.VerificationStatus;
 import ua.lviv.bas.cinema.user.dto.UserEmailChangeRequest;
 import ua.lviv.bas.cinema.user.dto.UserPasswordUpdateRequest;
 import ua.lviv.bas.cinema.user.dto.UserUpdateRequest;
 import ua.lviv.bas.cinema.user.dto.UserProfileResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.user.UserService;
 
 import java.time.LocalDate;
 import java.util.Map;

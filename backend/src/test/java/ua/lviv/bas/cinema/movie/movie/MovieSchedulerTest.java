@@ -8,10 +8,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.cache.CacheManager;
 import org.springframework.transaction.PlatformTransactionManager;
-import ua.lviv.bas.cinema.movie.movie.Movie;
-import ua.lviv.bas.cinema.movie.movie.MovieStatus;
-import ua.lviv.bas.cinema.movie.movie.MovieRepository;
-import ua.lviv.bas.cinema.movie.movie.MovieStatusCalculator;
 
 import java.time.LocalDate;
 import java.util.List;

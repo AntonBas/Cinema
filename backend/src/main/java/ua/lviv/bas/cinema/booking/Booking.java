@@ -28,7 +28,6 @@ import lombok.Setter;
 import lombok.ToString;
 import ua.lviv.bas.cinema.audit.AuditableEntity;
 import ua.lviv.bas.cinema.bonus.BonusTransaction;
-import ua.lviv.bas.cinema.booking.BookingStatus;
 import ua.lviv.bas.cinema.booking.reservation.SeatReservation;
 import ua.lviv.bas.cinema.cinema.session.Session;
 import ua.lviv.bas.cinema.payment.Payment;

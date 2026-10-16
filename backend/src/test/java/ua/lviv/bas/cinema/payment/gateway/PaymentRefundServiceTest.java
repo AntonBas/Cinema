@@ -10,10 +10,9 @@ import ua.lviv.bas.cinema.booking.Booking;
 import ua.lviv.bas.cinema.payment.Payment;
 import ua.lviv.bas.cinema.payment.PaymentStatus;
 import ua.lviv.bas.cinema.user.User;
-import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
+import ua.lviv.bas.cinema.payment.exception.PaymentProcessingException;
 import ua.lviv.bas.cinema.payment.PaymentRepository;
 import ua.lviv.bas.cinema.audit.AuditService;
-import ua.lviv.bas.cinema.payment.gateway.PaymentGatewayService;
 import ua.lviv.bas.cinema.support.CinemaTestFixtures;
 
 import java.math.BigDecimal;

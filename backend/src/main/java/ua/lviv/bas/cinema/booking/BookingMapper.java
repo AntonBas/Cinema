@@ -4,7 +4,6 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 
-import ua.lviv.bas.cinema.booking.Booking;
 import ua.lviv.bas.cinema.booking.reservation.SeatReservation;
 import ua.lviv.bas.cinema.booking.admin.dto.AdminBookingDetailsResponse;
 import ua.lviv.bas.cinema.booking.admin.dto.AdminBookingListResponse;

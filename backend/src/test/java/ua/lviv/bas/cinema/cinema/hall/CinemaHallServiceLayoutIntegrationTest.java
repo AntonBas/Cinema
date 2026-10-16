@@ -7,13 +7,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
-import ua.lviv.bas.cinema.cinema.hall.CinemaHall;
-import ua.lviv.bas.cinema.cinema.hall.Seat;
-import ua.lviv.bas.cinema.cinema.hall.SeatType;
 import ua.lviv.bas.cinema.cinema.hall.dto.HallLayoutRequest;
 import ua.lviv.bas.cinema.cinema.hall.dto.SeatLayoutItemRequest;
-import ua.lviv.bas.cinema.cinema.hall.CinemaHallRepository;
-import ua.lviv.bas.cinema.cinema.hall.SeatRepository;
 import ua.lviv.bas.cinema.config.NoOpCacheTestConfig;
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
 

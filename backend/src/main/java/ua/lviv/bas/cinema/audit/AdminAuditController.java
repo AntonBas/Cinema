@@ -17,12 +17,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import ua.lviv.bas.cinema.audit.AuditAction;
-import ua.lviv.bas.cinema.audit.AuditLog;
 import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.audit.dto.AuditLogResponse;
-import ua.lviv.bas.cinema.audit.AuditLogMapper;
-import ua.lviv.bas.cinema.audit.AuditQueryService;
 
 import java.util.List;
 

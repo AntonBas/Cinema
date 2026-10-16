@@ -14,8 +14,6 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import ua.lviv.bas.cinema.common.CinemaTime;
-import ua.lviv.bas.cinema.refund.Refund;
-import ua.lviv.bas.cinema.refund.RefundStatus;
 
 @Component
 public class RefundSpecification {

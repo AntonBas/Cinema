@@ -20,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.refund.RefundStatus;
 import ua.lviv.bas.cinema.refund.admin.dto.AdminRefundListResponse;
-import ua.lviv.bas.cinema.refund.admin.AdminRefundService;
 
 @RestController
 @RequestMapping("/api/admin/refunds")

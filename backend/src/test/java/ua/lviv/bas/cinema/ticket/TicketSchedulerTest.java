@@ -8,10 +8,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.jpa.domain.Specification;
 import ua.lviv.bas.cinema.cinema.session.CinemaSessionStatus;
-import ua.lviv.bas.cinema.ticket.Ticket;
-import ua.lviv.bas.cinema.ticket.TicketStatus;
-import ua.lviv.bas.cinema.ticket.TicketRepository;
-import ua.lviv.bas.cinema.ticket.TicketSpecification;
 
 import java.util.List;
 

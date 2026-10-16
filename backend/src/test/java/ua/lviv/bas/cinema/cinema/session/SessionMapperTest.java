@@ -5,16 +5,12 @@ import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
 import ua.lviv.bas.cinema.cinema.hall.CinemaHall;
 import ua.lviv.bas.cinema.movie.movie.Movie;
-import ua.lviv.bas.cinema.cinema.session.Session;
 import ua.lviv.bas.cinema.movie.movie.AgeRating;
-import ua.lviv.bas.cinema.cinema.session.CinemaSessionStatus;
 import ua.lviv.bas.cinema.cinema.session.dto.SessionRequest;
 import ua.lviv.bas.cinema.cinema.session.dto.SessionAdminResponse;
 import ua.lviv.bas.cinema.cinema.session.dto.SessionMovieInfoResponse;
 import ua.lviv.bas.cinema.cinema.session.dto.SessionResponse;
 import ua.lviv.bas.cinema.cinema.session.dto.SessionScheduleResponse;
-import ua.lviv.bas.cinema.cinema.session.SessionAdminProjection;
-import ua.lviv.bas.cinema.cinema.session.SessionScheduleProjection;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

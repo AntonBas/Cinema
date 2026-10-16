@@ -21,12 +21,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
-import ua.lviv.bas.cinema.movie.movie.MovieStatus;
 import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.movie.movie.dto.MovieCardResponse;
 import ua.lviv.bas.cinema.movie.movie.dto.MovieDetailResponse;
 import ua.lviv.bas.cinema.movie.movie.dto.MovieSessionSearchResponse;
-import ua.lviv.bas.cinema.movie.movie.MovieService;
 
 import java.time.LocalDate;
 import java.util.List;

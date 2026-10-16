@@ -14,7 +14,6 @@ import ua.lviv.bas.cinema.cinema.session.Session;
 import ua.lviv.bas.cinema.config.properties.RefundRules;
 import ua.lviv.bas.cinema.payment.Payment;
 import ua.lviv.bas.cinema.payment.PaymentStatus;
-import ua.lviv.bas.cinema.refund.Refund;
 import ua.lviv.bas.cinema.support.CinemaTestFixtures;
 import ua.lviv.bas.cinema.ticket.Ticket;
 import ua.lviv.bas.cinema.ticket.TicketStatus;

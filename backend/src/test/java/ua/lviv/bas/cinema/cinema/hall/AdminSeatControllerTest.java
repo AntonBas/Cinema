@@ -5,10 +5,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ua.lviv.bas.cinema.cinema.hall.SeatType;
 import ua.lviv.bas.cinema.cinema.hall.dto.SeatResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.cinema.hall.SeatService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;

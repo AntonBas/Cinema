@@ -2,8 +2,6 @@ package ua.lviv.bas.cinema.movie.movie;
 
 import org.junit.jupiter.api.Test;
 import ua.lviv.bas.cinema.common.CinemaTime;
-import ua.lviv.bas.cinema.movie.movie.Movie;
-import ua.lviv.bas.cinema.movie.movie.MovieStatus;
 
 import java.time.LocalDate;
 

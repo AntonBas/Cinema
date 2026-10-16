@@ -24,7 +24,6 @@ import ua.lviv.bas.cinema.cinema.hall.dto.HallLayoutRequest;
 import ua.lviv.bas.cinema.cinema.hall.dto.CinemaHallListResponse;
 import ua.lviv.bas.cinema.cinema.hall.dto.CinemaHallResponse;
 import ua.lviv.bas.cinema.cinema.hall.dto.HallLayoutResponse;
-import ua.lviv.bas.cinema.cinema.hall.CinemaHallService;
 
 import java.util.List;
 

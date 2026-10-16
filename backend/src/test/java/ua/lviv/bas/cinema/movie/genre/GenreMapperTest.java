@@ -2,11 +2,9 @@ package ua.lviv.bas.cinema.movie.genre;
 
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
-import ua.lviv.bas.cinema.movie.genre.Genre;
 import ua.lviv.bas.cinema.movie.genre.dto.GenreRequest;
 import ua.lviv.bas.cinema.movie.genre.dto.GenreListResponse;
 import ua.lviv.bas.cinema.movie.genre.dto.GenreResponse;
-import ua.lviv.bas.cinema.movie.genre.GenreListProjection;
 
 import java.util.HashSet;
 

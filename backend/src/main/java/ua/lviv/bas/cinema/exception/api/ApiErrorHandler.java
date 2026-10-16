@@ -36,7 +36,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import ua.lviv.bas.cinema.exception.core.BusinessException;
 import ua.lviv.bas.cinema.exception.core.NotFoundException;
-import ua.lviv.bas.cinema.exception.domain.auth.ResendCooldownException;
+import ua.lviv.bas.cinema.user.exception.ResendCooldownException;
 import ua.lviv.bas.cinema.exception.infrastructure.RateLimitExceededException;
 
 import java.util.LinkedHashMap;

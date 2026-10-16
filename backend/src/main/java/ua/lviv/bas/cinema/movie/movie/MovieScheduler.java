@@ -14,10 +14,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.movie.movie.Movie;
-import ua.lviv.bas.cinema.movie.movie.MovieStatus;
-import ua.lviv.bas.cinema.movie.movie.MovieRepository;
-import ua.lviv.bas.cinema.movie.movie.MovieStatusCalculator;
 import ua.lviv.bas.cinema.common.CinemaTime;
 
 @Slf4j

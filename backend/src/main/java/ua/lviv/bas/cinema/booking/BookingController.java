@@ -24,7 +24,6 @@ import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
 import ua.lviv.bas.cinema.booking.dto.BookingCreateRequest;
 import ua.lviv.bas.cinema.booking.dto.BookingResponse;
-import ua.lviv.bas.cinema.booking.BookingService;
 import ua.lviv.bas.cinema.user.UserService;
 
 import java.util.UUID;

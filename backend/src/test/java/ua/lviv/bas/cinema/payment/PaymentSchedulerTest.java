@@ -18,15 +18,9 @@ import ua.lviv.bas.cinema.booking.BookingRepository;
 import ua.lviv.bas.cinema.booking.reservation.SeatReservationRepository;
 import ua.lviv.bas.cinema.bonus.BonusLedgerService;
 import ua.lviv.bas.cinema.cinema.session.Session;
-import ua.lviv.bas.cinema.payment.Payment;
-import ua.lviv.bas.cinema.payment.PaymentStatus;
-import ua.lviv.bas.cinema.payment.PaymentRepository;
-import ua.lviv.bas.cinema.payment.LatePaymentRefundService;
 import ua.lviv.bas.cinema.payment.gateway.PaymentGatewayCheckResult;
 import ua.lviv.bas.cinema.payment.gateway.PaymentGatewayService;
 import ua.lviv.bas.cinema.payment.gateway.PaymentGatewayStatus;
-import ua.lviv.bas.cinema.payment.PaymentService;
-import ua.lviv.bas.cinema.payment.PaymentSuccessOrchestrator;
 
 import java.time.Duration;
 import java.time.Instant;

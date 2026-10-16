@@ -5,11 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ua.lviv.bas.cinema.promotion.Promotion;
-import ua.lviv.bas.cinema.promotion.PromotionStatus;
 import ua.lviv.bas.cinema.promotion.dto.PromotionRequest;
-import ua.lviv.bas.cinema.promotion.PromotionListProjection;
-import ua.lviv.bas.cinema.promotion.PromotionResponseProjection;
 
 import java.time.LocalDate;
 

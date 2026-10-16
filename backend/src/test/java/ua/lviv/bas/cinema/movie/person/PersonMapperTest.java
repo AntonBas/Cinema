@@ -2,10 +2,7 @@ package ua.lviv.bas.cinema.movie.person;
 
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
-import ua.lviv.bas.cinema.movie.person.Person;
-import ua.lviv.bas.cinema.movie.person.PersonRole;
 import ua.lviv.bas.cinema.movie.person.dto.PersonRequest;
-import ua.lviv.bas.cinema.movie.person.PersonListProjection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

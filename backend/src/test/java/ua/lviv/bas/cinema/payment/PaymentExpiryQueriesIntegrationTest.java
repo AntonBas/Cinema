@@ -27,8 +27,6 @@ import ua.lviv.bas.cinema.movie.movie.Movie;
 import ua.lviv.bas.cinema.movie.movie.AgeRating;
 import ua.lviv.bas.cinema.movie.movie.MovieStatus;
 import ua.lviv.bas.cinema.movie.movie.MovieRepository;
-import ua.lviv.bas.cinema.payment.Payment;
-import ua.lviv.bas.cinema.payment.PaymentStatus;
 import ua.lviv.bas.cinema.user.User;
 import ua.lviv.bas.cinema.user.UserRole;
 import ua.lviv.bas.cinema.user.UserRepository;

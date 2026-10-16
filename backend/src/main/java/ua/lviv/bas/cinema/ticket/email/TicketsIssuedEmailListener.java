@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import ua.lviv.bas.cinema.config.async.AsyncConfig;
-import ua.lviv.bas.cinema.ticket.email.TicketsEmailService;
 
 @Slf4j
 @Component

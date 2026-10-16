@@ -7,9 +7,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import ua.lviv.bas.cinema.movie.person.Person;
-import ua.lviv.bas.cinema.movie.person.PersonRole;
-import ua.lviv.bas.cinema.movie.person.PersonListProjection;
 
 @Repository
 @SuppressWarnings({"SqlResolve", "SqlNoDataSourceInspection"})

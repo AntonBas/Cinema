@@ -7,9 +7,6 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ua.lviv.bas.cinema.audit.AuditAction;
-import ua.lviv.bas.cinema.audit.AuditLog;
-import ua.lviv.bas.cinema.audit.AuditLogRepository;
 
 import java.time.Instant;
 import java.util.Map;

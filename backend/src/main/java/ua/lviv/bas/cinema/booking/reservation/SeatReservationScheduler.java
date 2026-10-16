@@ -16,9 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.booking.reservation.SeatReservation;
-import ua.lviv.bas.cinema.booking.reservation.ReservationStatus;
-import ua.lviv.bas.cinema.booking.reservation.SeatReservationRepository;
 
 @Slf4j
 @Component

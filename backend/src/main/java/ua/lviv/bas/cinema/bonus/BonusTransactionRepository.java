@@ -5,9 +5,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import ua.lviv.bas.cinema.bonus.BonusTransaction;
-import ua.lviv.bas.cinema.bonus.BonusTransactionType;
-import ua.lviv.bas.cinema.bonus.BonusTransactionProjection;
 
 @SuppressWarnings({"SqlResolve", "SqlNoDataSourceInspection"})
 public interface BonusTransactionRepository extends JpaRepository<BonusTransaction, Long> {

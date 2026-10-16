@@ -19,12 +19,11 @@ import ua.lviv.bas.cinema.user.UserRole;
 import ua.lviv.bas.cinema.user.VerificationStatus;
 import ua.lviv.bas.cinema.user.admin.dto.AdminUserListResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.exception.domain.user.LastAdminException;
-import ua.lviv.bas.cinema.exception.domain.user.SelfBlockException;
-import ua.lviv.bas.cinema.exception.domain.user.SelfRoleChangeException;
+import ua.lviv.bas.cinema.user.exception.LastAdminException;
+import ua.lviv.bas.cinema.user.exception.SelfBlockException;
+import ua.lviv.bas.cinema.user.exception.SelfRoleChangeException;
 import ua.lviv.bas.cinema.user.UserMapper;
 import ua.lviv.bas.cinema.user.UserRepository;
-import ua.lviv.bas.cinema.user.admin.AdminUserProjection;
 import ua.lviv.bas.cinema.audit.AuditService;
 
 import java.time.Duration;

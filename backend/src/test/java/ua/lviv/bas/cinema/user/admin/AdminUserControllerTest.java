@@ -16,7 +16,6 @@ import ua.lviv.bas.cinema.user.admin.dto.UserRoleUpdateRequest;
 import ua.lviv.bas.cinema.user.admin.dto.UserStatusUpdateRequest;
 import ua.lviv.bas.cinema.user.auth.dto.VerificationBirthDateRequest;
 import ua.lviv.bas.cinema.user.admin.dto.AdminUserListResponse;
-import ua.lviv.bas.cinema.user.admin.AdminUserService;
 
 import java.util.List;
 

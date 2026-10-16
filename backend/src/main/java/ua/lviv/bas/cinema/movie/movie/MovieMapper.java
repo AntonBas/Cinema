@@ -8,7 +8,6 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 import ua.lviv.bas.cinema.cinema.session.SessionMapper;
 import ua.lviv.bas.cinema.movie.genre.GenreMapper;
-import ua.lviv.bas.cinema.movie.movie.Movie;
 import ua.lviv.bas.cinema.movie.movie.dto.MovieAdminResponse;
 import ua.lviv.bas.cinema.movie.movie.dto.MovieCardResponse;
 import ua.lviv.bas.cinema.movie.movie.dto.MovieCreateRequest;

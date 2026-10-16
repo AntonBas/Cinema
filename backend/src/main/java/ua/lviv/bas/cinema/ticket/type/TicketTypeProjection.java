@@ -1,6 +1,5 @@
 package ua.lviv.bas.cinema.ticket.type;
 
-import ua.lviv.bas.cinema.ticket.type.TicketTypeCategory;
 
 import java.math.BigDecimal;
 

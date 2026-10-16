@@ -9,12 +9,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import ua.lviv.bas.cinema.bonus.BonusTransactionType;
 import ua.lviv.bas.cinema.bonus.dto.BonusBalanceResponse;
 import ua.lviv.bas.cinema.bonus.dto.BonusTransactionResponse;
 import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.bonus.BonusQueryService;
 
 import java.math.BigDecimal;
 import java.time.Instant;

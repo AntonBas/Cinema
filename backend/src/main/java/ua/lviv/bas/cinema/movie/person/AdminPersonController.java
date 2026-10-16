@@ -23,12 +23,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.movie.person.PersonRole;
 import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.movie.person.dto.PersonRequest;
 import ua.lviv.bas.cinema.movie.person.dto.PersonListResponse;
 import ua.lviv.bas.cinema.movie.person.dto.PersonResponse;
-import ua.lviv.bas.cinema.movie.person.PersonService;
 
 @Slf4j
 @RestController

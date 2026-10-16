@@ -21,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 import ua.lviv.bas.cinema.booking.BookingStatus;
 import ua.lviv.bas.cinema.booking.admin.dto.AdminBookingDetailsResponse;
 import ua.lviv.bas.cinema.booking.admin.dto.AdminBookingListResponse;
-import ua.lviv.bas.cinema.booking.admin.AdminBookingService;
 import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.payment.PaymentStatus;
 

@@ -6,8 +6,6 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import ua.lviv.bas.cinema.cinema.hall.CinemaHall;
-import ua.lviv.bas.cinema.cinema.hall.CinemaHallListProjection;
 
 import java.util.List;
 import java.util.Optional;

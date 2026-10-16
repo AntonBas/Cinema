@@ -8,10 +8,6 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import ua.lviv.bas.cinema.cinema.session.Session;
-import ua.lviv.bas.cinema.cinema.session.CinemaSessionStatus;
-import ua.lviv.bas.cinema.cinema.session.SessionAdminProjection;
-import ua.lviv.bas.cinema.cinema.session.SessionScheduleProjection;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

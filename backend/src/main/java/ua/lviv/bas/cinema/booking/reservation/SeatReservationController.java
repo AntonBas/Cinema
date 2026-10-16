@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
 import ua.lviv.bas.cinema.booking.reservation.dto.SeatReservationResponse;
-import ua.lviv.bas.cinema.booking.reservation.SeatReservationService;
 import ua.lviv.bas.cinema.user.UserService;
 
 import java.util.UUID;

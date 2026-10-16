@@ -10,14 +10,12 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import ua.lviv.bas.cinema.cinema.session.CinemaSessionStatus;
 import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.cinema.session.dto.SessionRequest;
 import ua.lviv.bas.cinema.cinema.session.dto.SessionAdminResponse;
 import ua.lviv.bas.cinema.cinema.session.dto.SessionResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.exception.domain.cinema.SessionTimeConflictException;
-import ua.lviv.bas.cinema.cinema.session.SessionService;
+import ua.lviv.bas.cinema.cinema.exception.SessionTimeConflictException;
 import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;

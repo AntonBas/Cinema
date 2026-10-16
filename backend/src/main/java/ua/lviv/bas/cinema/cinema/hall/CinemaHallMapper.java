@@ -5,13 +5,10 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 import org.mapstruct.ReportingPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
-import ua.lviv.bas.cinema.cinema.hall.CinemaHall;
-import ua.lviv.bas.cinema.cinema.hall.Seat;
 import ua.lviv.bas.cinema.cinema.hall.dto.CinemaHallRequest;
 import ua.lviv.bas.cinema.cinema.hall.dto.CinemaHallListResponse;
 import ua.lviv.bas.cinema.cinema.hall.dto.CinemaHallResponse;
 import ua.lviv.bas.cinema.cinema.hall.dto.HallLayoutResponse;
-import ua.lviv.bas.cinema.cinema.hall.CinemaHallListProjection;
 
 import java.util.Comparator;
 import java.util.List;

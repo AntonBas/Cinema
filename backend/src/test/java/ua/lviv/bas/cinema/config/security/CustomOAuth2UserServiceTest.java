@@ -10,7 +10,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-import ua.lviv.bas.cinema.config.security.CustomOAuth2UserService;
 import ua.lviv.bas.cinema.user.User;
 import ua.lviv.bas.cinema.user.UserRole;
 import ua.lviv.bas.cinema.user.VerificationStatus;

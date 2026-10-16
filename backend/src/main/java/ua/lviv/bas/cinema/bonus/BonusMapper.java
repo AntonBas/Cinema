@@ -10,7 +10,6 @@ import ua.lviv.bas.cinema.bonus.rules.BonusRules;
 import ua.lviv.bas.cinema.bonus.rules.dto.BonusRulesRequest;
 import ua.lviv.bas.cinema.bonus.rules.dto.BonusRulesResponse;
 import ua.lviv.bas.cinema.bonus.dto.BonusTransactionResponse;
-import ua.lviv.bas.cinema.bonus.BonusTransactionProjection;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN, imports = BonusRuleSpec.class)
 public interface BonusMapper {

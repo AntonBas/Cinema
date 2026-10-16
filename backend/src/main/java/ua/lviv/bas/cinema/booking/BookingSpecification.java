@@ -13,8 +13,6 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
-import ua.lviv.bas.cinema.booking.Booking;
-import ua.lviv.bas.cinema.booking.BookingStatus;
 import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.payment.PaymentStatus;
 

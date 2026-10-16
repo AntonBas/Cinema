@@ -6,11 +6,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
-import ua.lviv.bas.cinema.booking.BookingStatus;
 import ua.lviv.bas.cinema.user.User;
 import ua.lviv.bas.cinema.booking.dto.BookingCreateRequest;
 import ua.lviv.bas.cinema.booking.dto.BookingResponse;
-import ua.lviv.bas.cinema.booking.BookingService;
 import ua.lviv.bas.cinema.user.UserService;
 import ua.lviv.bas.cinema.common.CinemaTime;
 

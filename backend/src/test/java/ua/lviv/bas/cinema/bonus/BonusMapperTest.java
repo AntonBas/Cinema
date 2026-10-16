@@ -5,9 +5,7 @@ import org.mapstruct.factory.Mappers;
 import org.mockito.Mockito;
 import ua.lviv.bas.cinema.bonus.rules.BonusRuleField;
 import ua.lviv.bas.cinema.bonus.rules.BonusRules;
-import ua.lviv.bas.cinema.bonus.BonusTransactionType;
 import ua.lviv.bas.cinema.bonus.rules.dto.BonusRulesRequest;
-import ua.lviv.bas.cinema.bonus.BonusTransactionProjection;
 
 import java.math.BigDecimal;
 import java.time.Instant;

@@ -14,12 +14,9 @@ import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.config.NoOpCacheTestConfig;
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
 import ua.lviv.bas.cinema.movie.movie.Movie;
-import ua.lviv.bas.cinema.movie.person.Person;
 import ua.lviv.bas.cinema.movie.movie.AgeRating;
-import ua.lviv.bas.cinema.movie.person.PersonRole;
 import ua.lviv.bas.cinema.movie.movie.MovieStatus;
 import ua.lviv.bas.cinema.movie.movie.MovieRepository;
-import ua.lviv.bas.cinema.movie.person.PersonRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

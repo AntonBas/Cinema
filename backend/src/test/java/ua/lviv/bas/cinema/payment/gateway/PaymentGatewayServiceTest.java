@@ -21,8 +21,8 @@ import ua.lviv.bas.cinema.movie.movie.Movie;
 import ua.lviv.bas.cinema.cinema.session.Session;
 import ua.lviv.bas.cinema.user.User;
 import ua.lviv.bas.cinema.payment.gateway.dto.PaymentLiqPayDataResponse;
-import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentGatewayUnavailableException;
-import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
+import ua.lviv.bas.cinema.payment.exception.PaymentGatewayUnavailableException;
+import ua.lviv.bas.cinema.payment.exception.PaymentProcessingException;
 import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;

@@ -10,7 +10,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import ua.lviv.bas.cinema.booking.BookingStatus;
 import ua.lviv.bas.cinema.booking.BookingRepository;
 import ua.lviv.bas.cinema.exception.infrastructure.ExternalServiceException;
-import ua.lviv.bas.cinema.ticket.email.TicketsEmailService;
 
 import java.time.Duration;
 import java.time.Instant;

@@ -12,12 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
-import ua.lviv.bas.cinema.bonus.BonusCard;
-import ua.lviv.bas.cinema.bonus.BonusTransaction;
-import ua.lviv.bas.cinema.bonus.BonusTransactionType;
 import ua.lviv.bas.cinema.bonus.dto.BonusTransactionResponse;
-import ua.lviv.bas.cinema.bonus.BonusCardRepository;
-import ua.lviv.bas.cinema.bonus.BonusTransactionRepository;
 import ua.lviv.bas.cinema.config.NoOpCacheTestConfig;
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
 import ua.lviv.bas.cinema.user.User;

@@ -2,10 +2,8 @@ package ua.lviv.bas.cinema.booking;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import ua.lviv.bas.cinema.booking.Booking;
 import ua.lviv.bas.cinema.payment.Payment;
 import ua.lviv.bas.cinema.booking.reservation.SeatReservation;
-import ua.lviv.bas.cinema.booking.BookingStatus;
 import ua.lviv.bas.cinema.cinema.hall.CinemaHall;
 import ua.lviv.bas.cinema.movie.movie.Movie;
 import ua.lviv.bas.cinema.cinema.hall.Seat;

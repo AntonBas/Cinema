@@ -8,8 +8,6 @@ import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Order;
 import ua.lviv.bas.cinema.cinema.session.CinemaSessionStatus;
-import ua.lviv.bas.cinema.ticket.Ticket;
-import ua.lviv.bas.cinema.ticket.TicketStatus;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

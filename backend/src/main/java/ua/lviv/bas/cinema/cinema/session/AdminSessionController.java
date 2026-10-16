@@ -24,12 +24,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import ua.lviv.bas.cinema.cinema.session.CinemaSessionStatus;
 import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.cinema.session.dto.SessionRequest;
 import ua.lviv.bas.cinema.cinema.session.dto.SessionAdminResponse;
 import ua.lviv.bas.cinema.cinema.session.dto.SessionResponse;
-import ua.lviv.bas.cinema.cinema.session.SessionService;
 
 import java.time.LocalDate;
 

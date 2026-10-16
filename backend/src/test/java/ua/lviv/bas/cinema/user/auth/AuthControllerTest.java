@@ -21,7 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import jakarta.servlet.http.Cookie;
-import ua.lviv.bas.cinema.exception.domain.auth.InvalidTokenException;
+import ua.lviv.bas.cinema.user.exception.InvalidTokenException;
 import ua.lviv.bas.cinema.config.ratelimit.InMemoryProxyManager;
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
@@ -37,7 +37,6 @@ import ua.lviv.bas.cinema.user.auth.dto.UserLoginRequest;
 import ua.lviv.bas.cinema.user.auth.dto.UserRegistrationRequest;
 import ua.lviv.bas.cinema.user.dto.UserResponse;
 import ua.lviv.bas.cinema.user.UserMapper;
-import ua.lviv.bas.cinema.user.auth.UserPasswordResetService;
 import ua.lviv.bas.cinema.user.UserService;
 
 import java.time.Duration;

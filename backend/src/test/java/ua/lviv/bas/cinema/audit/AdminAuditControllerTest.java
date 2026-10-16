@@ -10,12 +10,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import ua.lviv.bas.cinema.audit.AuditAction;
-import ua.lviv.bas.cinema.audit.AuditLog;
 import ua.lviv.bas.cinema.audit.dto.AuditLogResponse;
 import ua.lviv.bas.cinema.common.PageResponse;
-import ua.lviv.bas.cinema.audit.AuditLogMapper;
-import ua.lviv.bas.cinema.audit.AuditQueryService;
 
 import java.time.Instant;
 import java.util.List;

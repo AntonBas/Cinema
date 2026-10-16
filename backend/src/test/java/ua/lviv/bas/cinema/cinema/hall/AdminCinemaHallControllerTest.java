@@ -5,7 +5,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ua.lviv.bas.cinema.cinema.hall.SeatType;
 import ua.lviv.bas.cinema.cinema.hall.dto.CinemaHallRequest;
 import ua.lviv.bas.cinema.cinema.hall.dto.HallLayoutRequest;
 import ua.lviv.bas.cinema.cinema.hall.dto.SeatLayoutItemRequest;
@@ -14,8 +13,7 @@ import ua.lviv.bas.cinema.cinema.hall.dto.CinemaHallResponse;
 import ua.lviv.bas.cinema.cinema.hall.dto.HallLayoutResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.exception.domain.hall.SeatHasTicketsException;
-import ua.lviv.bas.cinema.cinema.hall.CinemaHallService;
+import ua.lviv.bas.cinema.cinema.exception.SeatHasTicketsException;
 
 import java.util.List;
 

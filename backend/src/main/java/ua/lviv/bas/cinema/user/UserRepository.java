@@ -9,9 +9,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
-import ua.lviv.bas.cinema.user.User;
-import ua.lviv.bas.cinema.user.UserRole;
-import ua.lviv.bas.cinema.user.VerificationStatus;
 import ua.lviv.bas.cinema.user.admin.AdminUserProjection;
 
 import java.time.Instant;

@@ -15,15 +15,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import ua.lviv.bas.cinema.ticket.type.TicketTypeCategory;
 import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.ticket.type.dto.TicketTypeRequest;
 import ua.lviv.bas.cinema.ticket.type.dto.TicketTypeResponse;
 import ua.lviv.bas.cinema.exception.api.ApiErrorHandler;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeDuplicateException;
-import ua.lviv.bas.cinema.exception.domain.ticket.TicketTypeInUseException;
-import ua.lviv.bas.cinema.ticket.type.TicketTypeService;
+import ua.lviv.bas.cinema.ticket.exception.TicketTypeDuplicateException;
+import ua.lviv.bas.cinema.ticket.exception.TicketTypeInUseException;
 
 import java.math.BigDecimal;
 import java.util.List;

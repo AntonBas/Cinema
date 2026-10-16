@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.booking.BookingService;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.payment.PaymentRepository;
 import ua.lviv.bas.cinema.bonus.BonusLedgerService;
 import ua.lviv.bas.cinema.bonus.BonusQueryService;
 import ua.lviv.bas.cinema.ticket.email.TicketsIssuedEvent;

@@ -4,8 +4,6 @@ import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
-import ua.lviv.bas.cinema.cinema.session.Session;
-import ua.lviv.bas.cinema.cinema.session.CinemaSessionStatus;
 import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.time.LocalDate;

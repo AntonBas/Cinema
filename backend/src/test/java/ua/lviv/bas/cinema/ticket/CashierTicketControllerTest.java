@@ -7,10 +7,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import ua.lviv.bas.cinema.ticket.TicketStatus;
 import ua.lviv.bas.cinema.ticket.dto.TicketCashierResponse;
-import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;
-import ua.lviv.bas.cinema.ticket.TicketService;
+import ua.lviv.bas.cinema.ticket.exception.TicketNotFoundException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

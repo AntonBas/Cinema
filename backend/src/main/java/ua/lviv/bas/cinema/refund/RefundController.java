@@ -23,7 +23,6 @@ import ua.lviv.bas.cinema.refund.dto.RefundRequest;
 import ua.lviv.bas.cinema.refund.dto.RefundPolicyResponse;
 import ua.lviv.bas.cinema.refund.dto.RefundPreviewResponse;
 import ua.lviv.bas.cinema.refund.dto.RefundResponse;
-import ua.lviv.bas.cinema.refund.RefundService;
 
 
 @Slf4j

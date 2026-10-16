@@ -3,7 +3,6 @@ package ua.lviv.bas.cinema.ticket;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
-import ua.lviv.bas.cinema.ticket.Ticket;
 import ua.lviv.bas.cinema.ticket.dto.TicketCashierResponse;
 import ua.lviv.bas.cinema.ticket.dto.TicketResponse;
 

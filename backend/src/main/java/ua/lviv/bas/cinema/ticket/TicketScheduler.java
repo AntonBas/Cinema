@@ -9,10 +9,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.cinema.session.CinemaSessionStatus;
-import ua.lviv.bas.cinema.ticket.Ticket;
-import ua.lviv.bas.cinema.ticket.TicketStatus;
-import ua.lviv.bas.cinema.ticket.TicketRepository;
-import ua.lviv.bas.cinema.ticket.TicketSpecification;
 
 import java.util.List;
 import java.util.Objects;

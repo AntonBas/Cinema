@@ -3,8 +3,6 @@ package ua.lviv.bas.cinema.movie.movie;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
-import ua.lviv.bas.cinema.movie.movie.Movie;
-import ua.lviv.bas.cinema.movie.movie.MovieStatus;
 import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.time.LocalDate;

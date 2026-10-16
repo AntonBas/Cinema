@@ -36,8 +36,6 @@ import lombok.ToString;
 import ua.lviv.bas.cinema.audit.AuditableEntity;
 import ua.lviv.bas.cinema.cinema.session.Session;
 import ua.lviv.bas.cinema.movie.genre.Genre;
-import ua.lviv.bas.cinema.movie.movie.AgeRating;
-import ua.lviv.bas.cinema.movie.movie.MovieStatus;
 import ua.lviv.bas.cinema.movie.person.Person;
 
 @Entity

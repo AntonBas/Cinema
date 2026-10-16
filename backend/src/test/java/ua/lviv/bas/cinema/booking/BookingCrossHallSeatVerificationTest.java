@@ -15,7 +15,7 @@ import ua.lviv.bas.cinema.cinema.session.Session;
 import ua.lviv.bas.cinema.cinema.session.SessionRepository;
 import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
-import ua.lviv.bas.cinema.exception.domain.booking.SeatNotAvailableException;
+import ua.lviv.bas.cinema.booking.exception.SeatNotAvailableException;
 import ua.lviv.bas.cinema.movie.movie.AgeRating;
 import ua.lviv.bas.cinema.movie.movie.Movie;
 import ua.lviv.bas.cinema.movie.movie.MovieRepository;

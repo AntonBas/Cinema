@@ -8,7 +8,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import ua.lviv.bas.cinema.audit.AuditAction;
 
 import java.time.Instant;
 import java.util.Map;

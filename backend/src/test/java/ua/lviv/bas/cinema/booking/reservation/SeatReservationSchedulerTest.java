@@ -8,10 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.transaction.PlatformTransactionManager;
-import ua.lviv.bas.cinema.booking.reservation.SeatReservation;
-import ua.lviv.bas.cinema.booking.reservation.ReservationStatus;
 import ua.lviv.bas.cinema.cinema.session.Session;
-import ua.lviv.bas.cinema.booking.reservation.SeatReservationRepository;
 
 import java.time.Instant;
 import java.util.List;

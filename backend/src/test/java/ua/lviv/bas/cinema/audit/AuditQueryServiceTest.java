@@ -8,9 +8,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import ua.lviv.bas.cinema.audit.AuditAction;
-import ua.lviv.bas.cinema.audit.AuditLog;
-import ua.lviv.bas.cinema.audit.AuditLogRepository;
 
 import java.util.List;
 

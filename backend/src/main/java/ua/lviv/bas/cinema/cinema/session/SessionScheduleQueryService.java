@@ -5,13 +5,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ua.lviv.bas.cinema.cinema.session.Session;
 import ua.lviv.bas.cinema.cinema.session.dto.SessionScheduleResponse;
-import ua.lviv.bas.cinema.cinema.session.SessionMapper;
-import ua.lviv.bas.cinema.cinema.session.SessionRepository;
-import ua.lviv.bas.cinema.cinema.session.SessionScheduleProjection;
 import ua.lviv.bas.cinema.movie.movie.PosterUrlMapper;
-import ua.lviv.bas.cinema.cinema.session.SessionSpecification;
 import ua.lviv.bas.cinema.common.CacheableList;
 
 import java.time.LocalDate;

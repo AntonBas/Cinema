@@ -13,8 +13,8 @@ import org.springframework.web.client.RestTemplate;
 import ua.lviv.bas.cinema.common.DateTimeFormatterService;
 import ua.lviv.bas.cinema.payment.Payment;
 import ua.lviv.bas.cinema.payment.gateway.dto.PaymentLiqPayDataResponse;
-import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentGatewayUnavailableException;
-import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
+import ua.lviv.bas.cinema.payment.exception.PaymentGatewayUnavailableException;
+import ua.lviv.bas.cinema.payment.exception.PaymentProcessingException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

@@ -6,8 +6,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ua.lviv.bas.cinema.booking.BookingStatus;
-import ua.lviv.bas.cinema.payment.Payment;
-import ua.lviv.bas.cinema.payment.PaymentStatus;
 
 import java.time.Instant;
 import java.util.List;

@@ -12,15 +12,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.mock.web.MockMultipartFile;
 import ua.lviv.bas.cinema.common.CinemaTime;
-import ua.lviv.bas.cinema.movie.movie.AgeRating;
-import ua.lviv.bas.cinema.movie.movie.MovieStatus;
 import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.movie.movie.dto.MovieCreateRequest;
 import ua.lviv.bas.cinema.movie.movie.dto.MovieUpdateRequest;
 import ua.lviv.bas.cinema.movie.movie.dto.MovieAdminResponse;
 import ua.lviv.bas.cinema.movie.movie.dto.MovieCardResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.movie.movie.MovieService;
 
 import java.util.List;
 

@@ -7,7 +7,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import ua.lviv.bas.cinema.booking.BookingStatus;
 import ua.lviv.bas.cinema.booking.BookingRepository;
-import ua.lviv.bas.cinema.ticket.email.TicketsEmailService;
 
 import java.time.Duration;
 import java.time.Instant;

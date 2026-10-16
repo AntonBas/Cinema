@@ -8,7 +8,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.user.User;
 import ua.lviv.bas.cinema.user.VerificationStatus;
 import ua.lviv.bas.cinema.user.UserRepository;
-import ua.lviv.bas.cinema.bonus.BonusLedgerService;
 
 import java.util.List;
 

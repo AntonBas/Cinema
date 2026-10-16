@@ -8,8 +8,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import ua.lviv.bas.cinema.common.CinemaTime;
-import ua.lviv.bas.cinema.bonus.BonusCard;
-import ua.lviv.bas.cinema.bonus.BonusCardRepository;
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
 import ua.lviv.bas.cinema.user.User;
 import ua.lviv.bas.cinema.user.UserRole;

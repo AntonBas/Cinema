@@ -4,8 +4,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import ua.lviv.bas.cinema.user.auth.EmailToken;
-import ua.lviv.bas.cinema.user.auth.TokenType;
 import ua.lviv.bas.cinema.user.User;
 
 import java.time.Instant;

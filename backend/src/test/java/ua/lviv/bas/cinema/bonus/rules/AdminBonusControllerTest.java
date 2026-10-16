@@ -7,11 +7,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import ua.lviv.bas.cinema.bonus.rules.BonusRuleField;
 import ua.lviv.bas.cinema.bonus.BonusTransactionType;
 import ua.lviv.bas.cinema.bonus.rules.dto.BonusRulesRequest;
 import ua.lviv.bas.cinema.bonus.rules.dto.BonusRulesResponse;
-import ua.lviv.bas.cinema.bonus.rules.AdminBonusService;
 import ua.lviv.bas.cinema.bonus.BonusQueryService;
 
 import java.util.Collections;

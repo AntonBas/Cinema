@@ -7,17 +7,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.PlatformTransactionManager;
-import ua.lviv.bas.cinema.booking.Booking;
 import ua.lviv.bas.cinema.booking.reservation.SeatReservation;
-import ua.lviv.bas.cinema.booking.BookingStatus;
 import ua.lviv.bas.cinema.payment.PaymentStatus;
 import ua.lviv.bas.cinema.booking.reservation.ReservationStatus;
 import ua.lviv.bas.cinema.cinema.session.Session;
 import ua.lviv.bas.cinema.cinema.session.CinemaSessionStatus;
-import ua.lviv.bas.cinema.booking.BookingRepository;
 import ua.lviv.bas.cinema.booking.reservation.SeatReservationService;
 import ua.lviv.bas.cinema.bonus.BonusLedgerService;
-import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusCardConcurrentModificationException;
+import ua.lviv.bas.cinema.bonus.exception.BonusCardConcurrentModificationException;
 
 import java.time.Instant;
 import java.util.List;

@@ -7,8 +7,6 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
 
-import ua.lviv.bas.cinema.cinema.hall.CinemaHall;
-import ua.lviv.bas.cinema.cinema.hall.Seat;
 import ua.lviv.bas.cinema.cinema.hall.dto.SeatLayoutItemRequest;
 import ua.lviv.bas.cinema.cinema.hall.dto.SeatResponse;
 

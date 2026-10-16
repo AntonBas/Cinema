@@ -12,11 +12,8 @@ import org.springframework.test.context.ActiveProfiles;
 
 import ua.lviv.bas.cinema.config.NoOpCacheTestConfig;
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
-import ua.lviv.bas.cinema.exception.domain.auth.EmailAlreadyExistsException;
-import ua.lviv.bas.cinema.user.User;
-import ua.lviv.bas.cinema.user.UserRole;
+import ua.lviv.bas.cinema.user.exception.EmailAlreadyExistsException;
 import ua.lviv.bas.cinema.user.auth.dto.UserRegistrationRequest;
-import ua.lviv.bas.cinema.user.UserRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

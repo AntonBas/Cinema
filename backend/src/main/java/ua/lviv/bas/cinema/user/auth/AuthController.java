@@ -35,8 +35,6 @@ import ua.lviv.bas.cinema.user.auth.dto.UserRegistrationRequest;
 import ua.lviv.bas.cinema.user.auth.dto.AuthResponse;
 import ua.lviv.bas.cinema.user.auth.dto.ResendVerificationResponse;
 import ua.lviv.bas.cinema.user.dto.UserResponse;
-import ua.lviv.bas.cinema.user.auth.AuthService;
-import ua.lviv.bas.cinema.user.auth.UserPasswordResetService;
 import ua.lviv.bas.cinema.user.UserService;
 
 @Slf4j

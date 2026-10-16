@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.cinema.session.dto.SessionScheduleResponse;
-import ua.lviv.bas.cinema.cinema.session.SessionService;
 
 import java.time.LocalDate;
 import java.util.List;

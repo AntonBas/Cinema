@@ -9,10 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.notification.EmailService;
-import ua.lviv.bas.cinema.user.auth.EmailToken;
-import ua.lviv.bas.cinema.user.auth.TokenType;
 import ua.lviv.bas.cinema.user.User;
-import ua.lviv.bas.cinema.user.auth.EmailTokenRepository;
 
 @Slf4j
 @Service

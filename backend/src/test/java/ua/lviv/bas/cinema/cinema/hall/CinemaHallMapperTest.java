@@ -5,10 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import ua.lviv.bas.cinema.cinema.hall.CinemaHall;
-import ua.lviv.bas.cinema.cinema.hall.Seat;
 import ua.lviv.bas.cinema.cinema.hall.dto.CinemaHallListResponse;
-import ua.lviv.bas.cinema.cinema.hall.CinemaHallListProjection;
 
 import java.util.ArrayList;
 import java.util.Arrays;

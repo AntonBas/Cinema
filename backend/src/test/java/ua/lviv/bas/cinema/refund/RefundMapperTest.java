@@ -2,8 +2,6 @@ package ua.lviv.bas.cinema.refund;
 
 import org.junit.jupiter.api.Test;
 import ua.lviv.bas.cinema.payment.Payment;
-import ua.lviv.bas.cinema.refund.Refund;
-import ua.lviv.bas.cinema.refund.RefundStatus;
 import ua.lviv.bas.cinema.user.User;
 
 import java.math.BigDecimal;

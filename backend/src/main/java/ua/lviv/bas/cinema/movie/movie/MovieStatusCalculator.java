@@ -1,8 +1,6 @@
 package ua.lviv.bas.cinema.movie.movie;
 
 import org.springframework.stereotype.Component;
-import ua.lviv.bas.cinema.movie.movie.Movie;
-import ua.lviv.bas.cinema.movie.movie.MovieStatus;
 
 import java.time.LocalDate;
 

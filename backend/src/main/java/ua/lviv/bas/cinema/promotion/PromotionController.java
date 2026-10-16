@@ -21,7 +21,6 @@ import ua.lviv.bas.cinema.config.security.CustomUserDetails;
 import ua.lviv.bas.cinema.user.User;
 import ua.lviv.bas.cinema.promotion.dto.ClaimPromotionRequest;
 import ua.lviv.bas.cinema.promotion.dto.PromotionResponse;
-import ua.lviv.bas.cinema.promotion.PromotionService;
 import ua.lviv.bas.cinema.user.UserService;
 
 import java.util.List;

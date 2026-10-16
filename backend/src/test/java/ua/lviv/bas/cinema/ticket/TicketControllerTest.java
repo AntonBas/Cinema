@@ -10,11 +10,9 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
-import ua.lviv.bas.cinema.ticket.TicketStatus;
 import ua.lviv.bas.cinema.user.User;
 import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.ticket.dto.TicketResponse;
-import ua.lviv.bas.cinema.ticket.TicketService;
 import ua.lviv.bas.cinema.user.UserService;
 import ua.lviv.bas.cinema.common.CinemaTime;
 

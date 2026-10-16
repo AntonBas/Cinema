@@ -2,9 +2,7 @@ package ua.lviv.bas.cinema.movie.movie;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ua.lviv.bas.cinema.movie.movie.Movie;
-import ua.lviv.bas.cinema.exception.domain.technical.SlugGenerationException;
-import ua.lviv.bas.cinema.movie.movie.MovieRepository;
+import ua.lviv.bas.cinema.movie.exception.SlugGenerationException;
 
 import java.text.Normalizer;
 import java.util.Map;

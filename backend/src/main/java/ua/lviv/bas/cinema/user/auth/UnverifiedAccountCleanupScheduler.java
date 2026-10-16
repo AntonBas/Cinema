@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.user.auth.EmailTokenRepository;
 import ua.lviv.bas.cinema.user.UserRepository;
 
 @Slf4j

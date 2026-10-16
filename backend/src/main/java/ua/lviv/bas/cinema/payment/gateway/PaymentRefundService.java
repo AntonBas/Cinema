@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ua.lviv.bas.cinema.audit.AuditAction;
 import ua.lviv.bas.cinema.audit.AuditDetails;
 import ua.lviv.bas.cinema.audit.AuditService;
-import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
+import ua.lviv.bas.cinema.payment.exception.PaymentProcessingException;
 import ua.lviv.bas.cinema.payment.Payment;
 import ua.lviv.bas.cinema.payment.PaymentStatus;
 import ua.lviv.bas.cinema.payment.PaymentRepository;

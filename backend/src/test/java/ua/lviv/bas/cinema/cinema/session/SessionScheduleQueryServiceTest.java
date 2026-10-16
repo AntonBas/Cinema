@@ -9,12 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jpa.domain.Specification;
 import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.movie.movie.PosterUrlMapper;
-import ua.lviv.bas.cinema.cinema.session.Session;
 import ua.lviv.bas.cinema.cinema.session.dto.SessionScheduleResponse;
-import ua.lviv.bas.cinema.cinema.session.SessionMapper;
-import ua.lviv.bas.cinema.cinema.session.SessionRepository;
-import ua.lviv.bas.cinema.cinema.session.SessionScheduleProjection;
-import ua.lviv.bas.cinema.cinema.session.SessionSpecification;
 
 import java.util.List;
 

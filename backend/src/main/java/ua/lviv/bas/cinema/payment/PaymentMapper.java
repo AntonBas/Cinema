@@ -4,7 +4,6 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
-import ua.lviv.bas.cinema.payment.Payment;
 import ua.lviv.bas.cinema.payment.dto.PaymentResponse;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN,

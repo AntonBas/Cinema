@@ -25,7 +25,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ua.lviv.bas.cinema.audit.AuditableEntity;
 import ua.lviv.bas.cinema.refund.Refund;
-import ua.lviv.bas.cinema.refund.item.RefundItemStatus;
 import ua.lviv.bas.cinema.ticket.Ticket;
 
 @Entity

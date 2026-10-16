@@ -8,8 +8,6 @@ import ua.lviv.bas.cinema.cinema.hall.CinemaHall;
 import ua.lviv.bas.cinema.movie.movie.Movie;
 import ua.lviv.bas.cinema.cinema.hall.Seat;
 import ua.lviv.bas.cinema.cinema.session.Session;
-import ua.lviv.bas.cinema.ticket.Ticket;
-import ua.lviv.bas.cinema.ticket.TicketStatus;
 import ua.lviv.bas.cinema.ticket.type.TicketType;
 import ua.lviv.bas.cinema.user.User;
 import ua.lviv.bas.cinema.ticket.dto.TicketCashierResponse;

@@ -21,7 +21,6 @@ import ua.lviv.bas.cinema.bonus.rules.dto.BonusRulesRequest;
 import ua.lviv.bas.cinema.bonus.dto.BonusBalanceResponse;
 import ua.lviv.bas.cinema.bonus.rules.dto.BonusRulesResponse;
 import ua.lviv.bas.cinema.bonus.dto.BonusTransactionResponse;
-import ua.lviv.bas.cinema.bonus.rules.AdminBonusService;
 import ua.lviv.bas.cinema.bonus.BonusQueryService;
 import ua.lviv.bas.cinema.common.PageResponse;
 

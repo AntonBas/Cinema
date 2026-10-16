@@ -5,8 +5,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import ua.lviv.bas.cinema.promotion.Promotion;
-import ua.lviv.bas.cinema.promotion.UserPromotion;
 import ua.lviv.bas.cinema.user.User;
 
 @Repository

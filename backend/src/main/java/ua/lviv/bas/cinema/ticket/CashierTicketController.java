@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.ticket.dto.TicketCashierResponse;
-import ua.lviv.bas.cinema.ticket.TicketService;
 
 @Slf4j
 @RestController

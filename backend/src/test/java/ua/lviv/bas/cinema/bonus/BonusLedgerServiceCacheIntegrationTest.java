@@ -14,11 +14,6 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
-import ua.lviv.bas.cinema.bonus.BonusCard;
-import ua.lviv.bas.cinema.bonus.BonusTransaction;
-import ua.lviv.bas.cinema.bonus.BonusTransactionType;
-import ua.lviv.bas.cinema.bonus.BonusCardRepository;
-import ua.lviv.bas.cinema.bonus.BonusTransactionRepository;
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
 import ua.lviv.bas.cinema.user.User;
 import ua.lviv.bas.cinema.user.UserRole;

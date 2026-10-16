@@ -6,16 +6,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.config.properties.BonusProperties;
-import ua.lviv.bas.cinema.bonus.BonusCard;
 import ua.lviv.bas.cinema.bonus.rules.BonusRules;
-import ua.lviv.bas.cinema.bonus.BonusTransactionType;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.exception.domain.financial.bonus.BonusValidationException;
-import ua.lviv.bas.cinema.exception.domain.financial.bonus.InsufficientPointsException;
-import ua.lviv.bas.cinema.bonus.BonusMapper;
-import ua.lviv.bas.cinema.bonus.BonusCardRepository;
+import ua.lviv.bas.cinema.bonus.exception.BonusValidationException;
+import ua.lviv.bas.cinema.bonus.exception.InsufficientPointsException;
 import ua.lviv.bas.cinema.bonus.rules.BonusRulesRepository;
-import ua.lviv.bas.cinema.bonus.BonusTransactionRepository;
 
 import java.math.BigDecimal;
 import java.util.Optional;

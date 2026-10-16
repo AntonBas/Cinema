@@ -28,7 +28,6 @@ import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.movie.genre.dto.GenreRequest;
 import ua.lviv.bas.cinema.movie.genre.dto.GenreListResponse;
 import ua.lviv.bas.cinema.movie.genre.dto.GenreResponse;
-import ua.lviv.bas.cinema.movie.genre.GenreService;
 
 import java.util.List;
 

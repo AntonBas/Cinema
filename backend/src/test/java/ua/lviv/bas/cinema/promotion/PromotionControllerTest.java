@@ -8,12 +8,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.common.CinemaTime;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
 import ua.lviv.bas.cinema.user.User;
-import ua.lviv.bas.cinema.promotion.PromotionStatus;
 import ua.lviv.bas.cinema.promotion.dto.ClaimPromotionRequest;
 import ua.lviv.bas.cinema.promotion.dto.PromotionResponse;
-import ua.lviv.bas.cinema.exception.domain.financial.promotion.AlreadyClaimedException;
-import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionNotActiveException;
-import ua.lviv.bas.cinema.promotion.PromotionService;
+import ua.lviv.bas.cinema.promotion.exception.AlreadyClaimedException;
+import ua.lviv.bas.cinema.promotion.exception.PromotionNotActiveException;
 import ua.lviv.bas.cinema.user.UserService;
 
 import java.util.List;

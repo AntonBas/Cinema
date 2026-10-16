@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.user.User;
 import ua.lviv.bas.cinema.user.VerificationStatus;
 import ua.lviv.bas.cinema.user.UserRepository;
-import ua.lviv.bas.cinema.bonus.BonusLedgerService;
 import ua.lviv.bas.cinema.common.CinemaTime;
 
 @Slf4j

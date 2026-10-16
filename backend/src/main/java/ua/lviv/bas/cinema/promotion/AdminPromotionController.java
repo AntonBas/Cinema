@@ -27,7 +27,6 @@ import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.promotion.dto.PromotionRequest;
 import ua.lviv.bas.cinema.promotion.dto.PromotionListResponse;
 import ua.lviv.bas.cinema.promotion.dto.PromotionResponse;
-import ua.lviv.bas.cinema.promotion.PromotionService;
 
 @Slf4j
 @RestController

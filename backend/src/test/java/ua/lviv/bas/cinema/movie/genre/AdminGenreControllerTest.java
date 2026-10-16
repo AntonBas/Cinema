@@ -15,7 +15,6 @@ import ua.lviv.bas.cinema.movie.genre.dto.GenreListResponse;
 import ua.lviv.bas.cinema.movie.genre.dto.GenreResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.movie.genre.GenreService;
 
 import java.util.List;
 

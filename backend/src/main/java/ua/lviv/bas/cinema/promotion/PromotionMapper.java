@@ -7,13 +7,9 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
-import ua.lviv.bas.cinema.promotion.Promotion;
-import ua.lviv.bas.cinema.promotion.PromotionStatus;
 import ua.lviv.bas.cinema.promotion.dto.PromotionRequest;
 import ua.lviv.bas.cinema.promotion.dto.PromotionListResponse;
 import ua.lviv.bas.cinema.promotion.dto.PromotionResponse;
-import ua.lviv.bas.cinema.promotion.PromotionListProjection;
-import ua.lviv.bas.cinema.promotion.PromotionResponseProjection;
 
 import java.time.LocalDate;
 

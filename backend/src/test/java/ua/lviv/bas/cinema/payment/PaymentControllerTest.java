@@ -7,13 +7,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
-import ua.lviv.bas.cinema.payment.PaymentStatus;
 import ua.lviv.bas.cinema.user.User;
 import ua.lviv.bas.cinema.payment.dto.PaymentCreateRequest;
 import ua.lviv.bas.cinema.payment.gateway.dto.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.payment.dto.PaymentResponse;
-import ua.lviv.bas.cinema.payment.PaymentService;
-import ua.lviv.bas.cinema.payment.PaymentStatusService;
 import ua.lviv.bas.cinema.user.UserService;
 import ua.lviv.bas.cinema.common.CinemaTime;
 

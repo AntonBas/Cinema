@@ -34,7 +34,6 @@ import ua.lviv.bas.cinema.audit.AuditableEntity;
 import ua.lviv.bas.cinema.booking.Booking;
 import ua.lviv.bas.cinema.booking.reservation.SeatReservation;
 import ua.lviv.bas.cinema.cinema.hall.CinemaHall;
-import ua.lviv.bas.cinema.cinema.session.CinemaSessionStatus;
 import ua.lviv.bas.cinema.movie.movie.Movie;
 
 @Entity

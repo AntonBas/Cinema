@@ -7,7 +7,6 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
-import ua.lviv.bas.cinema.user.User;
 import ua.lviv.bas.cinema.user.auth.dto.UserRegistrationRequest;
 import ua.lviv.bas.cinema.user.dto.UserUpdateRequest;
 import ua.lviv.bas.cinema.user.admin.dto.AdminUserListResponse;

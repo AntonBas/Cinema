@@ -629,9 +629,9 @@ domain); `notification/`, `integration/` and `common/` are shared infrastructure
     │   ├── mapper/                # MapStruct entity <-> DTO mapping
     │   └── scheduler/             # self-healing / status-update jobs
     ├── config/                    # global — security, cache, jackson, ratelimit, scheduling, async, audit, api, http, properties
-    ├── exception/                 # global — api/, core/, domain/<domain>/, infrastructure/
+    ├── exception/                 # global — api/, core/, infrastructure/ (domain exceptions live in <domain>/exception/)
     ├── notification/              # outbound email (Brevo HTTP API + templates)
-    ├── integration/               # file storage (local disk / Cloudinary), posters, QR codes
+    ├── integration/               # file storage (local disk / Cloudinary); posters live in movie/poster, QR codes in ticket/
     ├── migration/                 # Java-based Flyway migrations (V22, V24)
     └── common/                    # cross-cutting utilities (PageResponse, price/number/date formatting, uniqueness checks)
 
@@ -650,14 +650,15 @@ domain); `notification/`, `integration/` and `common/` are shared infrastructure
 | `promotion/`     | Promotions, promo claims                                                 |
 | `audit/`         | Admin change audit log (write path + query/history)                     |
 | `notification/`  | Outbound email sending (templates + Brevo HTTP API)                     |
-| `integration/`   | File storage, poster images, QR code generation                         |
+| `integration/`   | File storage (local disk / Cloudinary)                                  |
 | `common/`        | Stateless cross-cutting utilities shared across every domain             |
 
 The 10 packages above `audit/` are the actual business domains, each owning its own decisions.
 `notification/`, `integration/`, and `common/` are shared infrastructure: they're called *by* a
-domain (e.g. `movie/movie/SlugService` decides how a movie's slug is generated and calls
-nothing in `integration/` for it; `integration/` only holds technical adapters like file storage,
-poster handling, and QR generation) rather than making business decisions themselves.
+domain (e.g. `movie/movie/SlugService` decides how a movie's slug is generated; `integration/`
+only holds the technical file-storage adapters, while poster handling and QR generation sit in
+`movie/poster/` and `ticket/` next to the domain that uses them) rather than making business
+decisions themselves.
 
 A scheduled job in each domain that needs one (`booking/`, `payment/`, `refund/`, `bonus/`,
 `movie/`, `cinema/`, `ticket/`, `user/`) handles self-healing recovery — releasing expired seat

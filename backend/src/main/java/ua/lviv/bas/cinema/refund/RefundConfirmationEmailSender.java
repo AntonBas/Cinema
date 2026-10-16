@@ -6,7 +6,6 @@ import ua.lviv.bas.cinema.common.DateTimeFormatterService;
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.common.SeatInfoFormatter;
 import ua.lviv.bas.cinema.notification.EmailService;
-import ua.lviv.bas.cinema.refund.Refund;
 import ua.lviv.bas.cinema.ticket.Ticket;
 
 @Component

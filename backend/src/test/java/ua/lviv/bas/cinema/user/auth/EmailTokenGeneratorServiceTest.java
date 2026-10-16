@@ -8,10 +8,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.notification.EmailService;
-import ua.lviv.bas.cinema.user.auth.EmailToken;
-import ua.lviv.bas.cinema.user.auth.TokenType;
 import ua.lviv.bas.cinema.user.User;
-import ua.lviv.bas.cinema.user.auth.EmailTokenRepository;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;

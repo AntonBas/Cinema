@@ -32,7 +32,6 @@ import lombok.Setter;
 import lombok.ToString;
 import ua.lviv.bas.cinema.audit.AuditableEntity;
 import ua.lviv.bas.cinema.payment.Payment;
-import ua.lviv.bas.cinema.refund.RefundStatus;
 import ua.lviv.bas.cinema.refund.item.RefundItem;
 import ua.lviv.bas.cinema.ticket.Ticket;
 import ua.lviv.bas.cinema.user.User;

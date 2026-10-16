@@ -15,9 +15,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.cinema.hall.SeatType;
 import ua.lviv.bas.cinema.cinema.hall.dto.SeatResponse;
-import ua.lviv.bas.cinema.cinema.hall.SeatService;
 
 @Slf4j
 @RestController

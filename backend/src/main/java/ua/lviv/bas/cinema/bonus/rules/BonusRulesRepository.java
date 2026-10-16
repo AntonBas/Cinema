@@ -2,7 +2,6 @@ package ua.lviv.bas.cinema.bonus.rules;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import ua.lviv.bas.cinema.bonus.rules.BonusRules;
 import ua.lviv.bas.cinema.bonus.BonusTransactionType;
 
 import java.util.Optional;

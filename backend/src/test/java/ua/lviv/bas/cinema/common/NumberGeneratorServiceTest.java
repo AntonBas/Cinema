@@ -6,7 +6,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ua.lviv.bas.cinema.booking.Booking;
 import ua.lviv.bas.cinema.refund.Refund;
-import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.time.Instant;
 

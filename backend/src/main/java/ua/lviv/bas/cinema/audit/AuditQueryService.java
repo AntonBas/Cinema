@@ -5,9 +5,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ua.lviv.bas.cinema.audit.AuditAction;
-import ua.lviv.bas.cinema.audit.AuditLog;
-import ua.lviv.bas.cinema.audit.AuditLogRepository;
 import ua.lviv.bas.cinema.common.FixedOrderPageable;
 
 import java.util.List;

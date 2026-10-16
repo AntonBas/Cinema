@@ -1,8 +1,7 @@
 package ua.lviv.bas.cinema.movie.movie;
 
 import org.junit.jupiter.api.Test;
-import ua.lviv.bas.cinema.integration.PosterService;
-import ua.lviv.bas.cinema.movie.movie.Movie;
+import ua.lviv.bas.cinema.movie.poster.PosterService;
 
 import java.util.Optional;
 

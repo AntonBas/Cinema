@@ -24,11 +24,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.ticket.type.TicketTypeCategory;
 import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.ticket.type.dto.TicketTypeRequest;
 import ua.lviv.bas.cinema.ticket.type.dto.TicketTypeResponse;
-import ua.lviv.bas.cinema.ticket.type.TicketTypeService;
 
 @Slf4j
 @RestController

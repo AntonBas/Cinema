@@ -27,13 +27,11 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.movie.movie.MovieStatus;
 import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.movie.movie.dto.MovieCreateRequest;
 import ua.lviv.bas.cinema.movie.movie.dto.MovieUpdateRequest;
 import ua.lviv.bas.cinema.movie.movie.dto.MovieAdminResponse;
 import ua.lviv.bas.cinema.movie.movie.dto.MovieCardResponse;
-import ua.lviv.bas.cinema.movie.movie.MovieService;
 
 @Slf4j
 @RestController

@@ -8,10 +8,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import ua.lviv.bas.cinema.payment.gateway.PaymentGatewayService;
 import ua.lviv.bas.cinema.payment.gateway.RefundGatewayStatus;
-import ua.lviv.bas.cinema.refund.RefundStatus;
-import ua.lviv.bas.cinema.refund.RefundRepository;
-import ua.lviv.bas.cinema.refund.StuckRefundProjection;
-import ua.lviv.bas.cinema.refund.RefundTransactionExecutor;
 
 import java.math.BigDecimal;
 import java.time.Duration;

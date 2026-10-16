@@ -12,15 +12,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import ua.lviv.bas.cinema.common.CinemaTime;
-import ua.lviv.bas.cinema.movie.movie.AgeRating;
-import ua.lviv.bas.cinema.movie.movie.MovieStatus;
 import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.movie.movie.dto.MovieCardResponse;
 import ua.lviv.bas.cinema.movie.movie.dto.MovieDetailResponse;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.movie.movie.MovieService;
 import org.springframework.http.MediaType;
-import ua.lviv.bas.cinema.integration.PosterImage;
+import ua.lviv.bas.cinema.movie.poster.PosterImage;
 import java.util.Optional;
 
 import java.util.List;

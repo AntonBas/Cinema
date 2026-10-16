@@ -2,8 +2,6 @@ package ua.lviv.bas.cinema.refund.item;
 
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
-import ua.lviv.bas.cinema.refund.item.RefundItem;
-import ua.lviv.bas.cinema.refund.item.RefundItemStatus;
 import ua.lviv.bas.cinema.ticket.Ticket;
 
 import java.math.BigDecimal;

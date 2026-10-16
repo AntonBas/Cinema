@@ -19,7 +19,6 @@ import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.bonus.dto.BonusBalanceResponse;
 import ua.lviv.bas.cinema.bonus.dto.BonusTransactionResponse;
-import ua.lviv.bas.cinema.bonus.BonusQueryService;
 
 @RestController
 @RequestMapping("/api/bonus")

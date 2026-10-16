@@ -2,11 +2,8 @@ package ua.lviv.bas.cinema.ticket.type;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import ua.lviv.bas.cinema.ticket.type.TicketType;
-import ua.lviv.bas.cinema.ticket.type.TicketTypeCategory;
 import ua.lviv.bas.cinema.ticket.type.dto.TicketTypeRequest;
 import ua.lviv.bas.cinema.ticket.type.dto.TicketTypeResponse;
-import ua.lviv.bas.cinema.ticket.type.TicketTypeProjection;
 
 import java.math.BigDecimal;
 

@@ -9,9 +9,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import ua.lviv.bas.cinema.ticket.type.TicketType;
-import ua.lviv.bas.cinema.ticket.type.TicketTypeCategory;
-import ua.lviv.bas.cinema.ticket.type.TicketTypeProjection;
 
 @Repository
 public interface TicketTypeRepository extends JpaRepository<TicketType, Long> {

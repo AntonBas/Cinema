@@ -9,12 +9,8 @@ import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.exception.domain.financial.payment.PaymentProcessingException;
+import ua.lviv.bas.cinema.payment.exception.PaymentProcessingException;
 import ua.lviv.bas.cinema.payment.gateway.PaymentGatewayService;
-import ua.lviv.bas.cinema.refund.RefundStatus;
-import ua.lviv.bas.cinema.refund.RefundRepository;
-import ua.lviv.bas.cinema.refund.StuckRefundProjection;
-import ua.lviv.bas.cinema.refund.RefundTransactionExecutor;
 
 @Slf4j
 @Component

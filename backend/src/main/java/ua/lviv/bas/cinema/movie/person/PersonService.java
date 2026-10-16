@@ -12,17 +12,13 @@ import lombok.extern.slf4j.Slf4j;
 import ua.lviv.bas.cinema.audit.AuditAction;
 import ua.lviv.bas.cinema.audit.AuditDetails;
 import ua.lviv.bas.cinema.audit.AuditService;
-import ua.lviv.bas.cinema.movie.person.Person;
-import ua.lviv.bas.cinema.movie.person.PersonRole;
 import ua.lviv.bas.cinema.movie.person.dto.PersonRequest;
 import ua.lviv.bas.cinema.movie.person.dto.PersonListResponse;
 import ua.lviv.bas.cinema.movie.person.dto.PersonResponse;
 import ua.lviv.bas.cinema.exception.core.DuplicateEntityException;
 import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
-import ua.lviv.bas.cinema.exception.domain.cinema.PersonHasMoviesException;
-import ua.lviv.bas.cinema.movie.person.PersonMapper;
+import ua.lviv.bas.cinema.movie.exception.PersonHasMoviesException;
 import ua.lviv.bas.cinema.movie.movie.MovieRepository;
-import ua.lviv.bas.cinema.movie.person.PersonRepository;
 import ua.lviv.bas.cinema.common.UniquenessValidator;
 import ua.lviv.bas.cinema.common.FixedOrderPageable;
 

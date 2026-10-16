@@ -7,12 +7,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
-import ua.lviv.bas.cinema.bonus.BonusCard;
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
 import ua.lviv.bas.cinema.user.User;
 import ua.lviv.bas.cinema.user.UserRole;
-import ua.lviv.bas.cinema.bonus.BonusCardRepository;
-import ua.lviv.bas.cinema.bonus.BonusTransactionRepository;
 import ua.lviv.bas.cinema.user.UserRepository;
 
 import java.time.LocalDate;

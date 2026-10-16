@@ -6,8 +6,6 @@ import org.mapstruct.ReportingPolicy;
 
 import ua.lviv.bas.cinema.common.NumberGeneratorService;
 import ua.lviv.bas.cinema.config.properties.RefundRules;
-import ua.lviv.bas.cinema.refund.Refund;
-import ua.lviv.bas.cinema.refund.RefundCalculator;
 import ua.lviv.bas.cinema.refund.admin.dto.AdminRefundListResponse;
 import ua.lviv.bas.cinema.refund.dto.RefundPolicyRuleResponse;
 import ua.lviv.bas.cinema.refund.dto.RefundPreviewResponse;

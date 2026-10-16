@@ -2,9 +2,6 @@ package ua.lviv.bas.cinema.user;
 
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
-import ua.lviv.bas.cinema.user.User;
-import ua.lviv.bas.cinema.user.UserRole;
-import ua.lviv.bas.cinema.user.VerificationStatus;
 import ua.lviv.bas.cinema.user.auth.dto.UserRegistrationRequest;
 import ua.lviv.bas.cinema.user.dto.UserUpdateRequest;
 import ua.lviv.bas.cinema.user.admin.dto.AdminUserListResponse;

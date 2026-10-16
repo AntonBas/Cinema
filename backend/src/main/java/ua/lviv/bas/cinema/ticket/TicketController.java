@@ -18,10 +18,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.config.security.CustomUserDetails;
-import ua.lviv.bas.cinema.ticket.TicketStatus;
 import ua.lviv.bas.cinema.common.PageResponse;
 import ua.lviv.bas.cinema.ticket.dto.TicketResponse;
-import ua.lviv.bas.cinema.ticket.TicketService;
 import ua.lviv.bas.cinema.user.UserService;
 
 @Slf4j

@@ -9,7 +9,6 @@ import ua.lviv.bas.cinema.config.security.CustomUserDetails;
 import ua.lviv.bas.cinema.cinema.hall.SeatType;
 import ua.lviv.bas.cinema.user.User;
 import ua.lviv.bas.cinema.booking.reservation.dto.SeatReservationResponse;
-import ua.lviv.bas.cinema.booking.reservation.SeatReservationService;
 import ua.lviv.bas.cinema.user.UserService;
 
 import java.math.BigDecimal;

@@ -9,13 +9,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import ua.lviv.bas.cinema.config.security.CustomUserDetailsService;
 import ua.lviv.bas.cinema.notification.EmailService;
-import ua.lviv.bas.cinema.user.auth.EmailToken;
-import ua.lviv.bas.cinema.user.auth.TokenType;
 import ua.lviv.bas.cinema.user.User;
-import ua.lviv.bas.cinema.exception.domain.auth.InvalidTokenException;
-import ua.lviv.bas.cinema.exception.domain.auth.SamePasswordException;
-import ua.lviv.bas.cinema.exception.domain.auth.TokenExpiredException;
-import ua.lviv.bas.cinema.user.auth.EmailTokenRepository;
+import ua.lviv.bas.cinema.user.exception.InvalidTokenException;
+import ua.lviv.bas.cinema.user.exception.SamePasswordException;
+import ua.lviv.bas.cinema.user.exception.TokenExpiredException;
 import ua.lviv.bas.cinema.user.UserRepository;
 import ua.lviv.bas.cinema.audit.AuditService;
 

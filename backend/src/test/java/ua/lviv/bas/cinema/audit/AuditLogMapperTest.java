@@ -2,9 +2,6 @@ package ua.lviv.bas.cinema.audit;
 
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
-import ua.lviv.bas.cinema.audit.AuditAction;
-import ua.lviv.bas.cinema.audit.AuditLog;
-import ua.lviv.bas.cinema.audit.AuditLogDetail;
 import ua.lviv.bas.cinema.audit.dto.AuditLogResponse;
 
 import java.time.Instant;

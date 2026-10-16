@@ -19,7 +19,6 @@ import ua.lviv.bas.cinema.config.ratelimit.RateLimit;
 import ua.lviv.bas.cinema.user.User;
 import ua.lviv.bas.cinema.user.dto.UserResponse;
 import ua.lviv.bas.cinema.user.UserMapper;
-import ua.lviv.bas.cinema.user.auth.EmailTokenService;
 
 import java.util.Map;
 

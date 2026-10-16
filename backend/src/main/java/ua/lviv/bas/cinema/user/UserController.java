@@ -25,7 +25,6 @@ import ua.lviv.bas.cinema.user.dto.UserEmailChangeRequest;
 import ua.lviv.bas.cinema.user.dto.UserPasswordUpdateRequest;
 import ua.lviv.bas.cinema.user.dto.UserUpdateRequest;
 import ua.lviv.bas.cinema.user.dto.UserProfileResponse;
-import ua.lviv.bas.cinema.user.UserService;
 
 import java.util.Map;
 
