@@ -1,0 +1,80 @@
+package ua.lviv.bas.cinema.cinema.hall;
+
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
+import org.mapstruct.ReportingPolicy;
+import org.springframework.beans.factory.annotation.Autowired;
+import ua.lviv.bas.cinema.cinema.hall.CinemaHall;
+import ua.lviv.bas.cinema.cinema.hall.Seat;
+import ua.lviv.bas.cinema.cinema.hall.dto.CinemaHallRequest;
+import ua.lviv.bas.cinema.cinema.hall.dto.CinemaHallListResponse;
+import ua.lviv.bas.cinema.cinema.hall.dto.CinemaHallResponse;
+import ua.lviv.bas.cinema.cinema.hall.dto.HallLayoutResponse;
+import ua.lviv.bas.cinema.cinema.hall.CinemaHallListProjection;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN, uses = SeatMapper.class)
+public abstract class CinemaHallMapper {
+
+    @Autowired
+    protected SeatMapper seatMapper;
+
+    @Named("calculateCapacity")
+    protected int calculateCapacity(CinemaHall hall) {
+        return hall.getSeats() != null ? hall.getSeats().size() : 0;
+    }
+
+    @Named("calculateTotalRows")
+    protected int calculateTotalRows(CinemaHall hall) {
+        if (hall.getSeats() == null || hall.getSeats().isEmpty()) {
+            return 0;
+        }
+        return hall.getSeats().stream().mapToInt(Seat::getRow).max().orElse(0);
+    }
+
+    @Named("calculateMaxSeatsPerRow")
+    protected int calculateMaxSeatsPerRow(CinemaHall hall) {
+        if (hall.getSeats() == null || hall.getSeats().isEmpty()) {
+            return 0;
+        }
+        return hall.getSeats().stream().collect(Collectors.groupingBy(Seat::getRow, Collectors.counting())).values()
+                .stream().mapToInt(Long::intValue).max().orElse(0);
+    }
+
+    @Mapping(target = "capacity", source = "hall", qualifiedByName = "calculateCapacity")
+    public abstract CinemaHallListResponse toCinemaHallListResponse(CinemaHall hall);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "sessions", ignore = true)
+    @Mapping(target = "seats", ignore = true)
+    public abstract CinemaHall toEntity(CinemaHallRequest request);
+
+    @Mapping(target = "capacity", source = "seatsCount")
+    public abstract CinemaHallListResponse toCinemaHallListResponse(CinemaHallListProjection projection);
+
+    @Mapping(target = "capacity", source = "hall", qualifiedByName = "calculateCapacity")
+    public abstract CinemaHallResponse toCinemaHallResponse(CinemaHall hall);
+
+    @Mapping(target = "hallId", source = "id")
+    @Mapping(target = "hallName", source = "name")
+    @Mapping(target = "totalRows", source = "hall", qualifiedByName = "calculateTotalRows")
+    @Mapping(target = "maxSeatsPerRow", source = "hall", qualifiedByName = "calculateMaxSeatsPerRow")
+    @Mapping(target = "totalSeats", source = "hall", qualifiedByName = "calculateCapacity")
+    @Mapping(target = "rows", source = "seats")
+    public abstract HallLayoutResponse toHallLayoutResponse(CinemaHall hall);
+
+    protected List<HallLayoutResponse.SeatRowResponse> mapSeatsToRows(List<Seat> seats) {
+        if (seats == null) {
+            return List.of();
+        }
+        return seats.stream().collect(Collectors.groupingBy(Seat::getRow)).entrySet().stream()
+                .map(entry -> new HallLayoutResponse.SeatRowResponse(entry.getKey(), entry.getValue().size(),
+                        seatMapper.toResponseList(entry.getValue())))
+                .sorted(Comparator.comparingInt(HallLayoutResponse.SeatRowResponse::rowNumber)).toList();
+    }
+
+}

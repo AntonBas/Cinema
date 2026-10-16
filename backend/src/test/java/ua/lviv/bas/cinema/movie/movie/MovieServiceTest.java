@@ -33,7 +33,7 @@ import ua.lviv.bas.cinema.movie.movie.MovieMapper;
 import ua.lviv.bas.cinema.movie.genre.GenreRepository;
 import ua.lviv.bas.cinema.movie.movie.MovieRepository;
 import ua.lviv.bas.cinema.movie.person.PersonRepository;
-import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
+import ua.lviv.bas.cinema.cinema.session.SessionRepository;
 import ua.lviv.bas.cinema.movie.movie.MovieSpecification;
 import ua.lviv.bas.cinema.audit.service.AuditService;
 import ua.lviv.bas.cinema.integration.PosterService;

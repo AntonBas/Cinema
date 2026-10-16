@@ -1,7 +1,7 @@
 package ua.lviv.bas.cinema.booking.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import ua.lviv.bas.cinema.cinema.domain.enums.SeatType;
+import ua.lviv.bas.cinema.cinema.hall.SeatType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

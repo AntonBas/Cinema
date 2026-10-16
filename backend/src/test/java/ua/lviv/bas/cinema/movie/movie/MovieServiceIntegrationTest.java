@@ -10,12 +10,12 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
-import ua.lviv.bas.cinema.cinema.domain.CinemaHall;
-import ua.lviv.bas.cinema.cinema.domain.Session;
-import ua.lviv.bas.cinema.cinema.domain.status.CinemaSessionStatus;
-import ua.lviv.bas.cinema.cinema.dto.session.response.SessionMovieInfoResponse;
-import ua.lviv.bas.cinema.cinema.repository.CinemaHallRepository;
-import ua.lviv.bas.cinema.cinema.repository.SessionRepository;
+import ua.lviv.bas.cinema.cinema.hall.CinemaHall;
+import ua.lviv.bas.cinema.cinema.session.Session;
+import ua.lviv.bas.cinema.cinema.session.CinemaSessionStatus;
+import ua.lviv.bas.cinema.cinema.session.dto.SessionMovieInfoResponse;
+import ua.lviv.bas.cinema.cinema.hall.CinemaHallRepository;
+import ua.lviv.bas.cinema.cinema.session.SessionRepository;
 import ua.lviv.bas.cinema.config.NoOpCacheTestConfig;
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
 import ua.lviv.bas.cinema.movie.movie.Movie;

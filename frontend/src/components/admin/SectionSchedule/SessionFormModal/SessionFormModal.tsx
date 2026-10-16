@@ -5,14 +5,14 @@ import React, {
   useMemo,
   useRef,
 } from "react";
-import { useMovie } from "@/hooks/features/movie/useMovie";
+import { useMovie } from "@/features/movie/hooks/useMovie";
 import { Input } from "@/components/ui/Input/Input";
 import { Select } from "@/components/ui/Select/Select";
 import { Button } from "@/components/ui/Button/Button";
 import { Modal } from "@/components/ui/Modal/Modal";
 import { isApiErrorException } from "@/utils/apiErrorHandler";
 import type { SessionAdminResponse, SessionRequest } from "@/types/session";
-import type { MovieSessionSearchResponse } from "@/types/movie";
+import type { MovieSessionSearchResponse } from "@/features/movie/types/movie";
 import type { CinemaHallListResponse } from "@/types/cinemaHall";
 import { getCinemaDateTimeLocal } from "@/utils/dateUtils";
 import styles from "./SessionFormModal.module.css";

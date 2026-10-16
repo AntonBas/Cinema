@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { movieApi } from "@/api/movieApi";
+import { movieApi } from "@/features/movie/api/movieApi";
 import { Check } from "lucide-react";
-import type { MovieSessionSearchResponse } from "@/types/movie";
+import type { MovieSessionSearchResponse } from "@/features/movie/types/movie";
 import styles from "./MovieFilter.module.css";
 
 interface MovieFilterProps {

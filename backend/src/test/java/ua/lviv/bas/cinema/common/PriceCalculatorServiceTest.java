@@ -5,9 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import ua.lviv.bas.cinema.cinema.domain.Seat;
-import ua.lviv.bas.cinema.cinema.domain.Session;
-import ua.lviv.bas.cinema.cinema.domain.enums.SeatType;
+import ua.lviv.bas.cinema.cinema.hall.Seat;
+import ua.lviv.bas.cinema.cinema.session.Session;
+import ua.lviv.bas.cinema.cinema.hall.SeatType;
 import ua.lviv.bas.cinema.config.properties.BonusProperties;
 import ua.lviv.bas.cinema.ticket.domain.TicketType;
 

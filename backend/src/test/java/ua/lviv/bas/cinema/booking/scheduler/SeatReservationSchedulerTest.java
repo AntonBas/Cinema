@@ -10,7 +10,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import ua.lviv.bas.cinema.booking.domain.SeatReservation;
 import ua.lviv.bas.cinema.booking.domain.status.ReservationStatus;
-import ua.lviv.bas.cinema.cinema.domain.Session;
+import ua.lviv.bas.cinema.cinema.session.Session;
 import ua.lviv.bas.cinema.booking.repository.SeatReservationRepository;
 
 import java.time.Instant;

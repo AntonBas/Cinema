@@ -24,10 +24,10 @@ import { RefundPolicyPage } from "@/pages/RefundPolicyPage/RefundPolicyPage";
 import { PrivacyPolicyPage } from "@/pages/PrivacyPolicyPage/PrivacyPolicyPage";
 import { NotFoundPage } from "@/pages/NotFoundPage/NotFoundPage";
 
-import { MoviesLayout } from "@/pages/movies/MoviesLayout/MoviesLayout";
-import { CurrentMoviesPage } from "@/pages/movies/CurrentMoviesPage/CurrentMoviesPage";
-import { UpcomingMoviesPage } from "@/pages/movies/UpcomingMoviesPage/UpcomingMoviesPage";
-import { MovieDetailPage } from "@/pages/movies/MovieDetailPage/MovieDetailPage";
+import { MoviesLayout } from "@/features/movie/pages/MoviesLayout/MoviesLayout";
+import { CurrentMoviesPage } from "@/features/movie/pages/CurrentMoviesPage/CurrentMoviesPage";
+import { UpcomingMoviesPage } from "@/features/movie/pages/UpcomingMoviesPage/UpcomingMoviesPage";
+import { MovieDetailPage } from "@/features/movie/pages/MovieDetailPage/MovieDetailPage";
 
 import { SessionsPage } from "@/pages/sessions/SessionsPage";
 import { BookingPage } from "@/pages/booking/BookingPage/BookingPage";
@@ -41,7 +41,7 @@ const AdminLayout = lazy(() =>
   })),
 );
 const SectionMovies = lazy(() =>
-  import("@/components/admin/SectionMovies/SectionMovies").then((m) => ({
+  import("@/features/movie/admin/SectionMovies/SectionMovies").then((m) => ({
     default: m.SectionMovies,
   })),
 );

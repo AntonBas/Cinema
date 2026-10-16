@@ -29,7 +29,7 @@ import lombok.ToString;
 import ua.lviv.bas.cinema.audit.domain.AuditableEntity;
 import ua.lviv.bas.cinema.bonus.domain.BonusTransaction;
 import ua.lviv.bas.cinema.booking.domain.status.BookingStatus;
-import ua.lviv.bas.cinema.cinema.domain.Session;
+import ua.lviv.bas.cinema.cinema.session.Session;
 import ua.lviv.bas.cinema.payment.domain.Payment;
 import ua.lviv.bas.cinema.ticket.domain.Ticket;
 import ua.lviv.bas.cinema.user.domain.User;

@@ -6,7 +6,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
-import ua.lviv.bas.cinema.cinema.mapper.SessionMapper;
+import ua.lviv.bas.cinema.cinema.session.SessionMapper;
 import ua.lviv.bas.cinema.movie.genre.GenreMapper;
 import ua.lviv.bas.cinema.movie.movie.Movie;
 import ua.lviv.bas.cinema.movie.movie.dto.MovieAdminResponse;

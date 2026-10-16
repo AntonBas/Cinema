@@ -640,7 +640,7 @@ domain); `notification/`, `integration/` and `common/` are shared infrastructure
 | Package         | Responsibility                                                          |
 | ---------------- | ------------------------------------------------------------------------ |
 | `movie/`         | Movies, genres, cast (actors/directors/screenwriters), split into `movie/`, `genre/`, `person/` sub-packages |
-| `cinema/`        | Cinema halls, seats, sessions                                            |
+| `cinema/`        | Cinema halls, seats, sessions, split into `hall/` and `session/` sub-packages |
 | `user/`          | Users, authentication, email verification tokens                        |
 | `booking/`       | Booking creation, seat reservation (two-stage locking)                  |
 | `payment/`       | Payment processing, LiqPay gateway integration and callback handling    |
@@ -667,4 +667,4 @@ updating session/movie statuses, awarding birthday bonuses, cleaning up expired 
 
 ### Frontend (React)
 
-`frontend/src/` mirrors the backend domains: one API client per domain in `api/`, one hook folder per feature in `hooks/features/`, and matching `pages/` and `components/` folders (admin sections live under `components/admin/`).
+`frontend/src/` mirrors the backend domains: one API client per domain in `api/`, one hook folder per feature in `hooks/features/`, and matching `pages/` and `components/` folders (admin sections live under `components/admin/`). The movie domain is the exception: all of its frontend code (API clients, types, hooks, components, pages and admin section) is grouped in `features/movie/`.

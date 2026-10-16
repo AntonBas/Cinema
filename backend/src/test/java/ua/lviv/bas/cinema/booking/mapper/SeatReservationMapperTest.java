@@ -2,11 +2,11 @@ package ua.lviv.bas.cinema.booking.mapper;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import ua.lviv.bas.cinema.cinema.domain.CinemaHall;
+import ua.lviv.bas.cinema.cinema.hall.CinemaHall;
 import ua.lviv.bas.cinema.movie.movie.Movie;
-import ua.lviv.bas.cinema.cinema.domain.Seat;
-import ua.lviv.bas.cinema.cinema.domain.Session;
-import ua.lviv.bas.cinema.cinema.domain.enums.SeatType;
+import ua.lviv.bas.cinema.cinema.hall.Seat;
+import ua.lviv.bas.cinema.cinema.session.Session;
+import ua.lviv.bas.cinema.cinema.hall.SeatType;
 import ua.lviv.bas.cinema.ticket.domain.TicketType;
 import ua.lviv.bas.cinema.booking.dto.response.SeatReservationResponse;
 

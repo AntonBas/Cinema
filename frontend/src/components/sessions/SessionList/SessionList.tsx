@@ -1,10 +1,16 @@
 import React, { useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import type { SessionScheduleResponse } from "@/types/session";
-import { AgeRatingDisplay, AgeRatingDescription } from "@/types/movie";
+import {
+  AgeRatingDisplay,
+  AgeRatingDescription,
+} from "@/features/movie/types/movie";
 import { Button } from "@/components/ui/Button/Button";
 import { Tooltip } from "@/components/ui/Tooltip/Tooltip";
-import { DEFAULT_POSTER_URL, resolvePosterUrl } from "@/utils/posterUrl";
+import {
+  DEFAULT_POSTER_URL,
+  resolvePosterUrl,
+} from "@/features/movie/utils/posterUrl";
 import { formatPrice, formatTime } from "@/utils/formatters";
 import styles from "./SessionList.module.css";
 

@@ -1,7 +1,7 @@
 package ua.lviv.bas.cinema.movie.movie.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import ua.lviv.bas.cinema.cinema.dto.session.response.SessionMovieInfoResponse;
+import ua.lviv.bas.cinema.cinema.session.dto.SessionMovieInfoResponse;
 import ua.lviv.bas.cinema.movie.genre.dto.GenreResponse;
 import ua.lviv.bas.cinema.movie.movie.AgeRating;
 import ua.lviv.bas.cinema.movie.movie.Movie;

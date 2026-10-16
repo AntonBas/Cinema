@@ -8,10 +8,10 @@ import React, {
 import { Input } from "@/components/ui/Input/Input";
 import { Select } from "@/components/ui/Select/Select";
 import { Button } from "@/components/ui/Button/Button";
-import { useMovie } from "@/hooks/features/movie/useMovie";
+import { useMovie } from "@/features/movie/hooks/useMovie";
 import type { CinemaSessionStatus } from "@/types/session";
 import type { CinemaHallListResponse } from "@/types/cinemaHall";
-import type { MovieSessionSearchResponse } from "@/types/movie";
+import type { MovieSessionSearchResponse } from "@/features/movie/types/movie";
 import type { SelectOption } from "@/components/ui/Select/Select";
 import styles from "./SessionFilters.module.css";
 
