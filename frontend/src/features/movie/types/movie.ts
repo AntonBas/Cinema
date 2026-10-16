@@ -1,6 +1,6 @@
 import type { GenreResponse } from "./genre";
 import type { PersonResponse } from "./person";
-import type { SessionMovieInfoResponse } from "@/types/session";
+import type { SessionMovieInfoResponse } from "@/features/cinema/types/session";
 
 export type MovieStatus = "UPCOMING" | "CURRENT" | "ARCHIVED" | "UNKNOWN";
 

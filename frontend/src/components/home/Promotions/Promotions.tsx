@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/Button/Button";
 import { useAuth } from "@/context/AuthContext";
-import type { PromotionResponse } from "@/types/promotion";
+import type { PromotionResponse } from "@/features/promotion/types/promotion";
 import { formatDateRange } from "@/utils/formatters";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { buildLoginPath } from "@/utils/authRedirect";

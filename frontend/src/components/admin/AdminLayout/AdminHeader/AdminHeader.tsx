@@ -1,6 +1,6 @@
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
-import { UserRoleDisplay } from "@/types/user";
+import { UserRoleDisplay } from "@/features/user/types/user";
 import styles from "./AdminHeader.module.css";
 
 interface AdminHeaderProps {

@@ -35,7 +35,7 @@ import ua.lviv.bas.cinema.movie.movie.MovieRepository;
 import ua.lviv.bas.cinema.movie.person.PersonRepository;
 import ua.lviv.bas.cinema.cinema.session.SessionRepository;
 import ua.lviv.bas.cinema.movie.movie.MovieSpecification;
-import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.audit.AuditService;
 import ua.lviv.bas.cinema.integration.PosterService;
 import org.springframework.http.MediaType;
 import ua.lviv.bas.cinema.integration.PosterImage;

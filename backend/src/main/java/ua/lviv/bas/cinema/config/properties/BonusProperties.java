@@ -3,7 +3,7 @@ package ua.lviv.bas.cinema.config.properties;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
-import ua.lviv.bas.cinema.bonus.domain.BonusTransactionType;
+import ua.lviv.bas.cinema.bonus.BonusTransactionType;
 
 import java.math.BigDecimal;
 import java.util.Map;

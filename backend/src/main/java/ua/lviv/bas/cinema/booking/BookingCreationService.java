@@ -1,0 +1,196 @@
+package ua.lviv.bas.cinema.booking;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import ua.lviv.bas.cinema.bonus.BonusQueryService;
+import ua.lviv.bas.cinema.booking.Booking;
+import ua.lviv.bas.cinema.booking.BookingRepository;
+import ua.lviv.bas.cinema.booking.BookingStatus;
+import ua.lviv.bas.cinema.booking.dto.BookingCreateRequest;
+import ua.lviv.bas.cinema.booking.reservation.ReservationStatus;
+import ua.lviv.bas.cinema.booking.reservation.SeatReservation;
+import ua.lviv.bas.cinema.booking.reservation.SeatReservationRepository;
+import ua.lviv.bas.cinema.booking.reservation.SeatReservationService;
+import ua.lviv.bas.cinema.cinema.session.CinemaSessionStatus;
+import ua.lviv.bas.cinema.cinema.session.Session;
+import ua.lviv.bas.cinema.cinema.session.SessionRepository;
+import ua.lviv.bas.cinema.common.CinemaTime;
+import ua.lviv.bas.cinema.common.PriceCalculatorService;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.booking.BookingValidationException;
+import ua.lviv.bas.cinema.ticket.type.TicketType;
+import ua.lviv.bas.cinema.ticket.type.TicketTypeRepository;
+import ua.lviv.bas.cinema.user.User;
+
+import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+class BookingCreationService {
+
+    private final BookingRepository bookingRepository;
+    private final SessionRepository sessionRepository;
+    private final TicketTypeRepository ticketTypeRepository;
+    private final SeatReservationRepository seatReservationRepository;
+    private final BonusQueryService bonusQueryService;
+    private final PriceCalculatorService priceCalculator;
+    private final SeatReservationService seatReservationService;
+
+    @Value("${booking.expiration-minutes:20}")
+    private int expirationMinutes;
+
+    @Value("${booking.temp-hold-minutes:5}")
+    private int tempHoldMinutes;
+
+    @Value("${booking.session-too-close-minutes:30}")
+    private int sessionTooCloseMinutes;
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Booking createAndPersist(BookingCreateRequest request, User user) {
+        var session = sessionRepository.findByPublicId(request.sessionId())
+                .orElseThrow(() -> new EntityNotFoundException("Session", request.sessionId()));
+
+        validateSession(session);
+
+        var seatReservations = buildSeatReservations(session, user, request.seats());
+        var totalPrice = seatReservations.stream().map(SeatReservation::getSeatPrice).reduce(BigDecimal.ZERO,
+                BigDecimal::add);
+
+        var priceResult = calculateFinalPrice(totalPrice, request.bonusPointsToUse(), user.getId());
+        var expiresAt = Instant.now().plus(Duration.ofMinutes(expirationMinutes));
+        var booking = createBookingEntity(user, session, seatReservations, priceResult, expiresAt);
+        return confirmSeatsAndSaveBooking(booking, seatReservations, expiresAt);
+    }
+
+    private List<SeatReservation> buildSeatReservations(Session session, User user,
+                                                        List<BookingCreateRequest.SeatSelectionRequest> seatSelections) {
+        List<SeatReservation> seatReservations = new ArrayList<>();
+
+        var orderedSeatSelections = seatSelections.stream()
+                .sorted(Comparator.comparing(BookingCreateRequest.SeatSelectionRequest::seatId)).toList();
+
+        var distinctSeatIdCount = orderedSeatSelections.stream()
+                .map(BookingCreateRequest.SeatSelectionRequest::seatId).distinct().count();
+        if (distinctSeatIdCount != orderedSeatSelections.size()) {
+            throw BookingValidationException.duplicateSeatSelection();
+        }
+
+        var ticketTypesById = findTicketTypesByIds(orderedSeatSelections);
+
+        for (var seatSelection : orderedSeatSelections) {
+            var reservation = findOrCreateReservation(session, user, seatSelection);
+            updateReservationWithTicketType(reservation, seatSelection, ticketTypesById);
+            seatReservations.add(reservation);
+        }
+
+        return seatReservations;
+    }
+
+    private Map<Long, TicketType> findTicketTypesByIds(
+            List<BookingCreateRequest.SeatSelectionRequest> seatSelections) {
+        var distinctIds = seatSelections.stream().map(BookingCreateRequest.SeatSelectionRequest::ticketTypeId)
+                .distinct().toList();
+        var ticketTypes = ticketTypeRepository.findAllById(distinctIds);
+        ticketTypes.stream().filter(ticketType -> !ticketType.isActive()).findFirst().ifPresent(ticketType -> {
+            throw BookingValidationException.ticketTypeNotAvailable(ticketType.getDisplayName());
+        });
+        return ticketTypes.stream().collect(Collectors.toMap(TicketType::getId, Function.identity()));
+    }
+
+    private Booking confirmSeatsAndSaveBooking(Booking booking, List<SeatReservation> seatReservations,
+                                               Instant expiresAt) {
+        seatReservations.forEach(sr -> {
+            sr.setBooking(booking);
+            sr.setStatus(ReservationStatus.CONFIRMED);
+            sr.setReservedUntil(expiresAt);
+        });
+
+        var saved = bookingRepository.save(booking);
+        seatReservationRepository.saveAll(seatReservations);
+        return saved;
+    }
+
+    private BookingPriceResult calculateFinalPrice(BigDecimal totalPrice, Integer bonusPointsToUse, Long userId) {
+        BigDecimal bonusDiscount = BigDecimal.ZERO;
+        Integer bonusPointsUsed = 0;
+
+        if (bonusPointsToUse != null && bonusPointsToUse > 0) {
+            bonusQueryService.validatePointsForBooking(userId, bonusPointsToUse, totalPrice);
+            bonusDiscount = priceCalculator.calculateBonusDiscount(bonusPointsToUse);
+            bonusPointsUsed = bonusPointsToUse;
+        }
+
+        var finalPrice = totalPrice.subtract(bonusDiscount).max(BigDecimal.ZERO);
+        return new BookingPriceResult(totalPrice, bonusPointsUsed, bonusDiscount, finalPrice);
+    }
+
+    private record BookingPriceResult(BigDecimal totalPrice, Integer bonusPointsUsed, BigDecimal bonusDiscount,
+                                      BigDecimal finalPrice) {
+    }
+
+    private void validateSession(Session session) {
+        if (session.getStatus() != CinemaSessionStatus.SCHEDULED) {
+            throw BookingValidationException.sessionNotAvailable();
+        }
+        if (session.getStartTime().isBefore(CinemaTime.now())) {
+            throw BookingValidationException.sessionAlreadyStarted();
+        }
+        if (session.getStartTime().isBefore(CinemaTime.now().plusMinutes(sessionTooCloseMinutes))) {
+            throw BookingValidationException.sessionTooClose();
+        }
+    }
+
+    private SeatReservation findOrCreateReservation(Session session, User user,
+                                                    BookingCreateRequest.SeatSelectionRequest seatSelection) {
+        var seatId = seatSelection.seatId();
+
+        var seat = seatReservationService.lockSeat(seatId);
+
+        Optional<SeatReservation> existingReservation = seatReservationRepository
+                .findBySessionIdAndSeatIdAndStatusAndReservedByUserId(session.getId(), seatId,
+                        ReservationStatus.PENDING, user.getId());
+
+        if (existingReservation.isPresent()) {
+            var reservation = existingReservation.get();
+            if (reservation.getReservedUntil().isBefore(Instant.now())) {
+                reservation.setReservedUntil(Instant.now().plus(Duration.ofMinutes(tempHoldMinutes)));
+                return seatReservationRepository.save(reservation);
+            }
+            return reservation;
+        }
+
+        return seatReservationService.newHold(session, seat, user);
+    }
+
+    private void updateReservationWithTicketType(SeatReservation reservation,
+                                                 BookingCreateRequest.SeatSelectionRequest seatSelection,
+                                                 Map<Long, TicketType> ticketTypesById) {
+        var ticketType = Optional.ofNullable(ticketTypesById.get(seatSelection.ticketTypeId()))
+                .orElseThrow(() -> new EntityNotFoundException("Ticket type", seatSelection.ticketTypeId()));
+
+        var seatPrice = priceCalculator.calculateSeatPrice(reservation.getSession(), reservation.getSeat(), ticketType);
+
+        reservation.setTicketType(ticketType);
+        reservation.setSeatPrice(seatPrice);
+    }
+
+    private Booking createBookingEntity(User user, Session session, List<SeatReservation> seatReservations,
+                                        BookingPriceResult priceResult, Instant expiresAt) {
+        return Booking.builder().user(user).session(session).status(BookingStatus.PENDING)
+                .totalPrice(priceResult.totalPrice()).bonusPointsUsed(priceResult.bonusPointsUsed())
+                .bonusDiscountAmount(priceResult.bonusDiscount()).finalPrice(priceResult.finalPrice())
+                .expiresAt(expiresAt).seatReservations(seatReservations).build();
+    }
+}

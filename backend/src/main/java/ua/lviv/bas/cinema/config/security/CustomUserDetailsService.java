@@ -10,8 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.user.domain.User;
-import ua.lviv.bas.cinema.user.repository.UserRepository;
+import ua.lviv.bas.cinema.user.User;
+import ua.lviv.bas.cinema.user.UserRepository;
 
 @Slf4j
 @Service

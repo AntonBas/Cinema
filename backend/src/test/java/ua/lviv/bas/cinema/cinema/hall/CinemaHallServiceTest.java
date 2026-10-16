@@ -27,7 +27,7 @@ import ua.lviv.bas.cinema.cinema.hall.SeatMapperImpl;
 import ua.lviv.bas.cinema.cinema.hall.CinemaHallRepository;
 import ua.lviv.bas.cinema.cinema.hall.SeatRepository;
 import ua.lviv.bas.cinema.cinema.hall.CinemaHallListProjection;
-import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.audit.AuditService;
 import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.util.ArrayList;

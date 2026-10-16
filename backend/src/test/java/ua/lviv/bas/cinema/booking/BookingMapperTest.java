@@ -1,0 +1,147 @@
+package ua.lviv.bas.cinema.booking;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import ua.lviv.bas.cinema.booking.Booking;
+import ua.lviv.bas.cinema.payment.Payment;
+import ua.lviv.bas.cinema.booking.reservation.SeatReservation;
+import ua.lviv.bas.cinema.booking.BookingStatus;
+import ua.lviv.bas.cinema.cinema.hall.CinemaHall;
+import ua.lviv.bas.cinema.movie.movie.Movie;
+import ua.lviv.bas.cinema.cinema.hall.Seat;
+import ua.lviv.bas.cinema.cinema.session.Session;
+import ua.lviv.bas.cinema.ticket.type.TicketType;
+import ua.lviv.bas.cinema.user.User;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+public class BookingMapperTest {
+
+    private static final Instant EXPIRES_AT = Instant.parse("2024-01-15T14:50:00Z");
+    private static final UUID SESSION_PUBLIC_ID = UUID.fromString("3fa85f64-5717-4562-b3fc-2c963f66afa6");
+
+    private final BookingMapper bookingMapper = new BookingMapperImpl();
+    private Booking booking;
+
+    @BeforeEach
+    void setUp() {
+        var user = User.builder().id(1L).build();
+        var movie = Movie.builder().id(1L).title("Inception").build();
+        var cinemaHall = CinemaHall.builder().id(1L).name("Hall A").build();
+        var session = Session.builder().id(1L).publicId(SESSION_PUBLIC_ID).movie(movie).hall(cinemaHall)
+                .startTime(LocalDateTime.of(2024, 1, 15, 18, 30)).build();
+        var payment = Payment.builder().liqpayOrderId("ORDER_ABC123").build();
+        var seat = Seat.builder().id(1L).row(5).number(12).build();
+        var ticketType = TicketType.builder().displayName("Adult").build();
+        var seatReservation = SeatReservation.builder().id(1L).seat(seat).ticketType(ticketType)
+                .seatPrice(new BigDecimal("250.00")).build();
+
+        booking = Booking.builder().id(123L).user(user).session(session).status(BookingStatus.PENDING)
+                .totalPrice(new BigDecimal("500.00")).bonusPointsUsed(50).bonusDiscountAmount(new BigDecimal("25.00"))
+                .finalPrice(new BigDecimal("475.00")).payment(payment).seatReservations(List.of(seatReservation))
+                .expiresAt(EXPIRES_AT).build();
+
+        booking.setCreatedDate(Instant.parse("2024-01-15T14:30:00Z"));
+    }
+
+    @Test
+    void toResponse() {
+        var response = bookingMapper.toResponse(booking);
+
+        assertThat(response.id()).isEqualTo(123L);
+        assertThat(response.bookingNumber()).isEqualTo("BK-2024-00123");
+        assertThat(response.sessionId()).isEqualTo(1L);
+        assertThat(response.sessionPublicId()).isEqualTo(SESSION_PUBLIC_ID);
+        assertThat(response.expiresAt()).isEqualTo(EXPIRES_AT);
+        assertThat(response.movieTitle()).isEqualTo("Inception");
+        assertThat(response.hallName()).isEqualTo("Hall A");
+        assertThat(response.liqpayOrderId()).isEqualTo("ORDER_ABC123");
+        assertThat(response.totalPrice()).isEqualTo(new BigDecimal("500.00"));
+        assertThat(response.bonusPointsUsed()).isEqualTo(50);
+        assertThat(response.bonusDiscountAmount()).isEqualTo(new BigDecimal("25.00"));
+        assertThat(response.finalPrice()).isEqualTo(new BigDecimal("475.00"));
+        assertThat(response.status()).isEqualTo(BookingStatus.PENDING);
+    }
+
+    @Test
+    void toResponseWithNullSession() {
+        booking.setSession(null);
+        var response = bookingMapper.toResponse(booking);
+
+        assertThat(response.id()).isEqualTo(123L);
+        assertThat(response.bookingNumber()).isEqualTo("BK-2024-00123");
+        assertThat(response.sessionId()).isNull();
+        assertThat(response.sessionPublicId()).isNull();
+        assertThat(response.movieTitle()).isNull();
+        assertThat(response.hallName()).isNull();
+        assertThat(response.sessionTime()).isNull();
+    }
+
+    @Test
+    void toResponseWithNullPayment() {
+        booking.setPayment(null);
+        var response = bookingMapper.toResponse(booking);
+
+        assertThat(response.id()).isEqualTo(123L);
+        assertThat(response.bookingNumber()).isEqualTo("BK-2024-00123");
+        assertThat(response.liqpayOrderId()).isNull();
+    }
+
+    @Test
+    void toResponseWithEmptySeats() {
+        booking.setSeatReservations(List.of());
+        var response = bookingMapper.toResponse(booking);
+
+        assertThat(response.id()).isEqualTo(123L);
+        assertThat(response.bookingNumber()).isEqualTo("BK-2024-00123");
+        assertThat(response.seatReservations()).isEmpty();
+    }
+
+    @Test
+    void toResponseWithNull() {
+        var response = bookingMapper.toResponse(null);
+        assertThat(response).isNull();
+    }
+
+    @Test
+    void toSeatReservationInfo() {
+        var seat = Seat.builder().id(1L).row(5).number(12).build();
+        var ticketType = TicketType.builder().displayName("Adult").build();
+        var seatReservation = SeatReservation.builder().id(1L).seat(seat).ticketType(ticketType)
+                .seatPrice(new BigDecimal("250.00")).build();
+
+        var info = bookingMapper.toSeatReservationInfo(seatReservation);
+
+        assertThat(info.seatId()).isEqualTo(1L);
+        assertThat(info.row()).isEqualTo(5);
+        assertThat(info.seatNumber()).isEqualTo(12);
+        assertThat(info.ticketTypeName()).isEqualTo("Adult");
+        assertThat(info.seatPrice()).isEqualTo(new BigDecimal("250.00"));
+    }
+
+    @Test
+    void toSeatReservationInfoWithNullSeat() {
+        var ticketType = TicketType.builder().displayName("Adult").build();
+        var seatReservation = SeatReservation.builder().id(1L).seat(null).ticketType(ticketType)
+                .seatPrice(new BigDecimal("250.00")).build();
+
+        var info = bookingMapper.toSeatReservationInfo(seatReservation);
+
+        assertThat(info.seatId()).isNull();
+        assertThat(info.row()).isNull();
+        assertThat(info.seatNumber()).isNull();
+        assertThat(info.ticketTypeName()).isEqualTo("Adult");
+    }
+
+    @Test
+    void toSeatReservationInfoWithNull() {
+        var info = bookingMapper.toSeatReservationInfo(null);
+        assertThat(info).isNull();
+    }
+}

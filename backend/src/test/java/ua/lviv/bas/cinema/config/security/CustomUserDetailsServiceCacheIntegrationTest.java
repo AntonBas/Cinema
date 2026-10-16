@@ -19,9 +19,9 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import ua.lviv.bas.cinema.config.TestcontainersConfig;
-import ua.lviv.bas.cinema.user.domain.User;
-import ua.lviv.bas.cinema.user.domain.UserRole;
-import ua.lviv.bas.cinema.user.repository.UserRepository;
+import ua.lviv.bas.cinema.user.User;
+import ua.lviv.bas.cinema.user.UserRole;
+import ua.lviv.bas.cinema.user.UserRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

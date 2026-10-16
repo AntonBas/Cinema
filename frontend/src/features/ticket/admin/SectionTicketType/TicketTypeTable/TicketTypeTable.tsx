@@ -1,0 +1,231 @@
+import React, { useState } from "react";
+import { Pencil, Trash2, Power } from "lucide-react";
+import { Badge } from "@/components/ui/Badge/Badge";
+import type { BadgeVariant } from "@/components/ui/Badge/Badge";
+import { Tooltip } from "@/components/ui/Tooltip/Tooltip";
+import { DeleteConfirmModal } from "@/components/ui/DeleteConfirmModal/DeleteConfirmModal";
+import type {
+  TicketTypeResponse,
+  TicketTypeCategory,
+} from "@/features/ticket/types/ticketType";
+import { TicketTypeCategoryDisplay } from "@/features/ticket/types/ticketType";
+import { ActionIconButton } from "@/components/admin/shared/ActionIconButton/ActionIconButton";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
+import tableStyles from "@/components/admin/shared/AdminTable/AdminTable.module.css";
+import styles from "./TicketTypeTable.module.css";
+
+interface TicketTypeTableProps {
+  ticketTypes: TicketTypeResponse[];
+  onEdit: (ticketType: TicketTypeResponse) => void;
+  onDelete: (id: number) => Promise<void>;
+  onToggleActive: (id: number) => Promise<void>;
+  loading?: boolean;
+}
+
+export const TicketTypeTable: React.FC<TicketTypeTableProps> = ({
+  ticketTypes,
+  onEdit,
+  onDelete,
+  onToggleActive,
+  loading = false,
+}) => {
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedTicketType, setSelectedTicketType] =
+    useState<TicketTypeResponse | null>(null);
+  const [togglingId, setTogglingId] = useState<number | null>(null);
+
+  const handleDeleteClick = (ticketType: TicketTypeResponse) => {
+    setSelectedTicketType(ticketType);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedTicketType) return;
+    try {
+      await onDelete(selectedTicketType.id);
+    } catch {
+      return;
+    } finally {
+      setDeleteModalOpen(false);
+      setSelectedTicketType(null);
+    }
+  };
+
+  const handleToggleActive = async (id: number) => {
+    setTogglingId(id);
+    try {
+      await onToggleActive(id);
+    } catch {
+      return;
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const formatAgeRange = (ticketType: TicketTypeResponse) => {
+    const hasMinAge = ticketType.minAge != null;
+    const hasMaxAge = ticketType.maxAge != null;
+    if (hasMinAge && hasMaxAge)
+      return `${ticketType.minAge}-${ticketType.maxAge} years`;
+    if (hasMinAge) return `≥ ${ticketType.minAge} years`;
+    if (hasMaxAge) return `≤ ${ticketType.maxAge} years`;
+    return "Any age";
+  };
+
+  const getCategoryVariant = (
+    category: TicketTypeCategory | undefined,
+  ): BadgeVariant => {
+    switch (category) {
+      case "STANDARD":
+        return "primary";
+      case "CHILD":
+        return "secondary";
+      case "STUDENT":
+        return "info";
+      case "DISABLED":
+        return "warning";
+      case "MILITARY":
+        return "error";
+      case "SENIOR":
+        return "success";
+      default:
+        return "outline";
+    }
+  };
+
+  if (ticketTypes.length === 0) {
+    return (
+      <EmptyState
+        title="No Ticket Types Found"
+        message="Create your first ticket type to get started!"
+      />
+    );
+  }
+
+  return (
+    <>
+      <div className={tableStyles.wrapper}>
+        <div className={tableStyles.container}>
+          <table className={tableStyles.table}>
+            <colgroup>
+              <col style={{ width: "17%" }} />
+              <col style={{ width: "13%" }} />
+              <col style={{ width: "13%" }} />
+              <col style={{ width: "14%" }} />
+              <col style={{ width: "12%" }} />
+              <col style={{ width: "10%" }} />
+              <col style={{ width: "21%" }} />
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Display Name</th>
+                <th>Category</th>
+                <th>Multiplier</th>
+                <th>Age Range</th>
+                <th>Document</th>
+                <th>Status</th>
+                <th className={tableStyles.actionsCol}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ticketTypes.map((ticketType) => {
+                const category = ticketType.category;
+                const categoryDisplay = category
+                  ? TicketTypeCategoryDisplay[category]
+                  : "Unknown";
+
+                return (
+                  <tr key={ticketType.id}>
+                    <td data-label="Display Name">
+                      <span className={styles.displayName}>
+                        {ticketType.displayName}
+                      </span>
+                    </td>
+                    <td data-label="Category">
+                      <Badge variant={getCategoryVariant(category)}>
+                        {categoryDisplay}
+                      </Badge>
+                    </td>
+                    <td data-label="Price Multiplier">
+                      <span className={styles.price}>
+                        × {ticketType.priceMultiplier}
+                      </span>
+                    </td>
+                    <td data-label="Age Range">
+                      <span className={styles.ageRange}>
+                        {formatAgeRange(ticketType)}
+                      </span>
+                    </td>
+                    <td data-label="Document">
+                      {ticketType.requiresDocument ? (
+                        <Tooltip
+                          content={
+                            ticketType.documentType || "Document required"
+                          }
+                        >
+                          <Badge variant="warning">Required</Badge>
+                        </Tooltip>
+                      ) : (
+                        <Badge variant="outline">Not required</Badge>
+                      )}
+                    </td>
+                    <td data-label="Status">
+                      <Badge
+                        variant={ticketType.active ? "success" : "secondary"}
+                      >
+                        {ticketType.active ? "Active" : "Inactive"}
+                      </Badge>
+                    </td>
+                    <td data-label="Actions">
+                      <div className={tableStyles.actions}>
+                        <ActionIconButton
+                          icon={<Power />}
+                          label={
+                            ticketType.active
+                              ? "Deactivate ticket type"
+                              : "Activate ticket type"
+                          }
+                          variant={ticketType.active ? "secondary" : "success"}
+                          onClick={() => handleToggleActive(ticketType.id)}
+                          loading={togglingId === ticketType.id}
+                          disabled={loading}
+                        />
+                        <ActionIconButton
+                          icon={<Pencil />}
+                          label="Edit ticket type"
+                          variant="success"
+                          onClick={() => onEdit(ticketType)}
+                        />
+                        <ActionIconButton
+                          icon={<Trash2 />}
+                          label="Delete ticket type"
+                          variant="error"
+                          onClick={() => handleDeleteClick(ticketType)}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <DeleteConfirmModal
+        isOpen={deleteModalOpen}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setDeleteModalOpen(false);
+          setSelectedTicketType(null);
+        }}
+        itemName={selectedTicketType?.displayName || ""}
+        itemType="ticket type"
+        isDeleting={loading}
+        title="Delete Ticket Type"
+        message="Are you sure you want to delete this ticket type?"
+        confirmText="Delete Ticket Type"
+      />
+    </>
+  );
+};

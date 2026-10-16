@@ -13,8 +13,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.test.util.ReflectionTestUtils;
-import ua.lviv.bas.cinema.user.domain.User;
-import ua.lviv.bas.cinema.user.repository.UserRepository;
+import ua.lviv.bas.cinema.user.User;
+import ua.lviv.bas.cinema.user.UserRepository;
 
 import java.io.IOException;
 import java.util.Map;

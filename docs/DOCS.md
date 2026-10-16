@@ -667,4 +667,4 @@ updating session/movie statuses, awarding birthday bonuses, cleaning up expired 
 
 ### Frontend (React)
 
-`frontend/src/` mirrors the backend domains: one API client per domain in `api/`, one hook folder per feature in `hooks/features/`, and matching `pages/` and `components/` folders (admin sections live under `components/admin/`). The movie domain is the exception: all of its frontend code (API clients, types, hooks, components, pages and admin section) is grouped in `features/movie/`.
+`frontend/src/` mirrors the backend domains: each domain lives in `features/<domain>/` (`movie`, `cinema`, `booking`, `ticket`, `payment`, `refund`, `bonus`, `promotion`, `user`, `auth`, `audit`) with its own `api/`, `types/`, `hooks/`, `components/`, `pages/` and `admin/` (admin sections). Shared UI primitives, layout, common hooks, contexts and utilities stay in `components/`, `hooks/common/`, `context/` and `utils/`.

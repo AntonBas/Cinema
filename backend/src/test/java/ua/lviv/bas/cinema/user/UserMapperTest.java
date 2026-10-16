@@ -1,0 +1,248 @@
+package ua.lviv.bas.cinema.user;
+
+import org.junit.jupiter.api.Test;
+import org.mapstruct.factory.Mappers;
+import ua.lviv.bas.cinema.user.User;
+import ua.lviv.bas.cinema.user.UserRole;
+import ua.lviv.bas.cinema.user.VerificationStatus;
+import ua.lviv.bas.cinema.user.auth.dto.UserRegistrationRequest;
+import ua.lviv.bas.cinema.user.dto.UserUpdateRequest;
+import ua.lviv.bas.cinema.user.admin.dto.AdminUserListResponse;
+import ua.lviv.bas.cinema.user.dto.UserProfileResponse;
+import ua.lviv.bas.cinema.user.dto.UserResponse;
+import ua.lviv.bas.cinema.user.admin.AdminUserProjection;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.ArrayList;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+public class UserMapperTest {
+
+    private final UserMapper userMapper = Mappers.getMapper(UserMapper.class);
+
+    @Test
+    void toEntity_ShouldMapRegistrationRequest() {
+        UserRegistrationRequest request = new UserRegistrationRequest("test@example.com", "John", "Doe",
+                LocalDate.of(1990, 1, 1), "Kyiv", "+380501234567", "password", "password");
+
+        User user = userMapper.toEntity(request);
+
+        assertThat(user.getEmail()).isEqualTo("test@example.com");
+        assertThat(user.getFirstName()).isEqualTo("John");
+        assertThat(user.getLastName()).isEqualTo("Doe");
+        assertThat(user.getDateOfBirth()).isEqualTo(LocalDate.of(1990, 1, 1));
+        assertThat(user.getCity()).isEqualTo("Kyiv");
+        assertThat(user.getPhoneNumber()).isEqualTo("+380501234567");
+        assertThat(user.getUserRole()).isEqualTo(UserRole.ROLE_USER);
+        assertThat(user.getVerificationStatus()).isEqualTo(VerificationStatus.NOT_VERIFIED);
+        assertThat(user.isEnabled()).isTrue();
+        assertThat(user.isEmailVerified()).isFalse();
+        assertThat(user.getId()).isNull();
+        assertThat(user.getTickets()).isEmpty();
+    }
+
+    @Test
+    void toUserResponse_ShouldMapUser() {
+        User user = User.builder().id(1L).email("test@example.com").firstName("John").lastName("Doe")
+                .dateOfBirth(LocalDate.of(1990, 1, 1)).city("Kyiv").phoneNumber("+380501234567")
+                .userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).verificationStatus(VerificationStatus.VERIFIED).build();
+
+        UserResponse response = userMapper.toUserResponse(user);
+
+        assertThat(response.id()).isEqualTo(1L);
+        assertThat(response.email()).isEqualTo("test@example.com");
+        assertThat(response.firstName()).isEqualTo("John");
+        assertThat(response.lastName()).isEqualTo("Doe");
+        assertThat(response.dateOfBirth()).isEqualTo(LocalDate.of(1990, 1, 1));
+        assertThat(response.city()).isEqualTo("Kyiv");
+        assertThat(response.phoneNumber()).isEqualTo("+380501234567");
+        assertThat(response.userRole()).isEqualTo(UserRole.ROLE_USER);
+        assertThat(response.enabled()).isTrue();
+        assertThat(response.verificationStatus()).isEqualTo(VerificationStatus.VERIFIED);
+    }
+
+    @Test
+    void toUserProfileResponse_ShouldMapUser() {
+        User user = User.builder().id(1L).email("test@example.com").firstName("John").lastName("Doe")
+                .dateOfBirth(LocalDate.of(1990, 1, 1)).city("Kyiv").phoneNumber("+380501234567")
+                .verificationStatus(VerificationStatus.VERIFIED).build();
+
+        UserProfileResponse response = userMapper.toUserProfileResponse(user);
+
+        assertThat(response.id()).isEqualTo(1L);
+        assertThat(response.email()).isEqualTo("test@example.com");
+        assertThat(response.firstName()).isEqualTo("John");
+        assertThat(response.lastName()).isEqualTo("Doe");
+        assertThat(response.dateOfBirth()).isEqualTo(LocalDate.of(1990, 1, 1));
+        assertThat(response.city()).isEqualTo("Kyiv");
+        assertThat(response.phoneNumber()).isEqualTo("+380501234567");
+        assertThat(response.verificationStatus()).isEqualTo(VerificationStatus.VERIFIED);
+    }
+
+    @Test
+    void updateEntity_ShouldUpdateFields() {
+        User user = User.builder().firstName("Old").lastName("User").dateOfBirth(LocalDate.of(1990, 1, 1))
+                .city("Old City").phoneNumber("+380501234567").build();
+
+        UserUpdateRequest request = new UserUpdateRequest("New", "Name", LocalDate.of(1995, 5, 5), "Lviv",
+                "+380502345678");
+
+        userMapper.updateEntity(request, user);
+
+        assertThat(user.getFirstName()).isEqualTo("New");
+        assertThat(user.getLastName()).isEqualTo("Name");
+        assertThat(user.getDateOfBirth()).isEqualTo(LocalDate.of(1995, 5, 5));
+        assertThat(user.getCity()).isEqualTo("Lviv");
+        assertThat(user.getPhoneNumber()).isEqualTo("+380502345678");
+    }
+
+    @Test
+    void updateEntity_WithNullValues_ShouldIgnoreNull() {
+        User user = User.builder().firstName("Old").lastName("User").dateOfBirth(LocalDate.of(1990, 1, 1))
+                .city("Old City").phoneNumber("+380501234567").build();
+
+        UserUpdateRequest request = new UserUpdateRequest(null, null, null, null, null);
+
+        userMapper.updateEntity(request, user);
+
+        assertThat(user.getFirstName()).isEqualTo("Old");
+        assertThat(user.getLastName()).isEqualTo("User");
+        assertThat(user.getDateOfBirth()).isEqualTo(LocalDate.of(1990, 1, 1));
+        assertThat(user.getCity()).isEqualTo("Old City");
+        assertThat(user.getPhoneNumber()).isEqualTo("+380501234567");
+    }
+
+    @Test
+    void toAdminUserListResponse_FromProjection_ShouldMapAllFields() {
+        AdminUserProjection projection = new AdminUserProjection() {
+            @Override
+            public Long getId() {
+                return 1L;
+            }
+
+            @Override
+            public String getEmail() {
+                return "test@example.com";
+            }
+
+            @Override
+            public String getFirstName() {
+                return "John";
+            }
+
+            @Override
+            public String getLastName() {
+                return "Doe";
+            }
+
+            @Override
+            public UserRole getUserRole() {
+                return UserRole.ROLE_USER;
+            }
+
+            @Override
+            public boolean isEnabled() {
+                return true;
+            }
+
+            @Override
+            public VerificationStatus getVerificationStatus() {
+                return VerificationStatus.VERIFIED;
+            }
+
+            @Override
+            public Instant getVerifiedAt() {
+                return Instant.parse("2024-01-15T10:30:00Z");
+            }
+
+            @Override
+            public Long getTicketsCount() {
+                return 5L;
+            }
+
+            @Override
+            public Instant getLastActivity() {
+                return Instant.parse("2024-01-20T14:00:00Z");
+            }
+        };
+
+        AdminUserListResponse response = userMapper.toAdminUserListResponse(projection);
+
+        assertThat(response.id()).isEqualTo(1L);
+        assertThat(response.email()).isEqualTo("test@example.com");
+        assertThat(response.firstName()).isEqualTo("John");
+        assertThat(response.lastName()).isEqualTo("Doe");
+        assertThat(response.userRole()).isEqualTo(UserRole.ROLE_USER);
+        assertThat(response.enabled()).isTrue();
+        assertThat(response.verificationStatus()).isEqualTo(VerificationStatus.VERIFIED);
+        assertThat(response.verifiedAt()).isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
+        assertThat(response.ticketsCount()).isEqualTo(5L);
+        assertThat(response.lastActivity()).isEqualTo(Instant.parse("2024-01-20T14:00:00Z"));
+    }
+
+    @Test
+    void toAdminUserListResponse_FromUser_ShouldMapAllFields() {
+        User user = User.builder().id(1L).email("test@example.com").firstName("John").lastName("Doe")
+                .userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).verificationStatus(VerificationStatus.VERIFIED)
+                .verifiedAt(Instant.parse("2024-01-15T10:30:00Z")).tickets(new ArrayList<>()).build();
+
+        user.getTickets().add(null);
+        user.getTickets().add(null);
+
+        AdminUserListResponse response = userMapper.toAdminUserListResponse(user);
+
+        assertThat(response.id()).isEqualTo(1L);
+        assertThat(response.email()).isEqualTo("test@example.com");
+        assertThat(response.firstName()).isEqualTo("John");
+        assertThat(response.lastName()).isEqualTo("Doe");
+        assertThat(response.userRole()).isEqualTo(UserRole.ROLE_USER);
+        assertThat(response.enabled()).isTrue();
+        assertThat(response.verificationStatus()).isEqualTo(VerificationStatus.VERIFIED);
+        assertThat(response.verifiedAt()).isEqualTo(Instant.parse("2024-01-15T10:30:00Z"));
+        assertThat(response.ticketsCount()).isEqualTo(2L);
+        assertThat(response.lastActivity()).isNull();
+    }
+
+    @Test
+    void toAdminUserListResponse_FromUser_WithNullTickets_ShouldReturnZeroCount() {
+        User user = User.builder().id(1L).email("test@example.com").firstName("John").lastName("Doe")
+                .userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).verificationStatus(VerificationStatus.VERIFIED)
+                .tickets(null).build();
+
+        AdminUserListResponse response = userMapper.toAdminUserListResponse(user);
+
+        assertThat(response.ticketsCount()).isEqualTo(0L);
+    }
+
+    @Test
+    void toEntity_WithNullRequest_ShouldReturnNull() {
+        User user = userMapper.toEntity(null);
+        assertThat(user).isNull();
+    }
+
+    @Test
+    void toUserResponse_WithNullUser_ShouldReturnNull() {
+        UserResponse response = userMapper.toUserResponse(null);
+        assertThat(response).isNull();
+    }
+
+    @Test
+    void toUserProfileResponse_WithNullUser_ShouldReturnNull() {
+        UserProfileResponse response = userMapper.toUserProfileResponse(null);
+        assertThat(response).isNull();
+    }
+
+    @Test
+    void toAdminUserListResponse_WithNullProjection_ShouldReturnNull() {
+        AdminUserListResponse response = userMapper.toAdminUserListResponse((AdminUserProjection) null);
+        assertThat(response).isNull();
+    }
+
+    @Test
+    void toAdminUserListResponse_WithNullUser_ShouldReturnNull() {
+        AdminUserListResponse response = userMapper.toAdminUserListResponse((User) null);
+        assertThat(response).isNull();
+    }
+}

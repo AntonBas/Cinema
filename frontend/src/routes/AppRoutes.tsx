@@ -6,21 +6,21 @@ import { AdminRoute } from "./AdminRoute";
 import { AdminIndexRedirect } from "./AdminIndexRedirect";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 
-import { LoginPage } from "@/pages/auth/LoginPage/LoginPage";
-import { RegisterPage } from "@/pages/auth/RegisterPage/RegisterPage";
-import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage/ForgotPasswordPage";
-import { ResetPasswordPage } from "@/pages/auth/ResetPasswordPage/ResetPasswordPage";
-import { EmailVerificationPage } from "@/pages/auth/EmailVerificationPage/EmailVerificationPage";
-import { CheckEmailPage } from "@/pages/auth/CheckEmailPage/CheckEmailPage";
-import { ConfirmEmailChangePage } from "@/pages/auth/ConfirmEmailChangePage/ConfirmEmailChangePage";
-import { OAuth2Redirect } from "@/components/auth/OAuth2Redirect/OAuth2Redirect";
+import { LoginPage } from "@/features/auth/pages/LoginPage/LoginPage";
+import { RegisterPage } from "@/features/auth/pages/RegisterPage/RegisterPage";
+import { ForgotPasswordPage } from "@/features/auth/pages/ForgotPasswordPage/ForgotPasswordPage";
+import { ResetPasswordPage } from "@/features/auth/pages/ResetPasswordPage/ResetPasswordPage";
+import { EmailVerificationPage } from "@/features/auth/pages/EmailVerificationPage/EmailVerificationPage";
+import { CheckEmailPage } from "@/features/auth/pages/CheckEmailPage/CheckEmailPage";
+import { ConfirmEmailChangePage } from "@/features/auth/pages/ConfirmEmailChangePage/ConfirmEmailChangePage";
+import { OAuth2Redirect } from "@/features/auth/components/OAuth2Redirect/OAuth2Redirect";
 
 import { HomePage } from "@/pages/home/HomePage";
-import { ProfilePage } from "@/pages/account/ProfilePage/ProfilePage";
-import { SecurityPage } from "@/pages/account/SecurityPage/SecurityPage";
-import { BonusPage } from "@/pages/account/BonusPage/BonusPage";
-import { TicketsPage } from "@/pages/account/TicketsPage/TicketsPage";
-import { RefundPolicyPage } from "@/pages/RefundPolicyPage/RefundPolicyPage";
+import { ProfilePage } from "@/features/user/pages/ProfilePage/ProfilePage";
+import { SecurityPage } from "@/features/user/pages/SecurityPage/SecurityPage";
+import { BonusPage } from "@/features/bonus/pages/BonusPage/BonusPage";
+import { TicketsPage } from "@/features/ticket/pages/TicketsPage/TicketsPage";
+import { RefundPolicyPage } from "@/features/refund/pages/RefundPolicyPage/RefundPolicyPage";
 import { PrivacyPolicyPage } from "@/pages/PrivacyPolicyPage/PrivacyPolicyPage";
 import { NotFoundPage } from "@/pages/NotFoundPage/NotFoundPage";
 
@@ -29,11 +29,11 @@ import { CurrentMoviesPage } from "@/features/movie/pages/CurrentMoviesPage/Curr
 import { UpcomingMoviesPage } from "@/features/movie/pages/UpcomingMoviesPage/UpcomingMoviesPage";
 import { MovieDetailPage } from "@/features/movie/pages/MovieDetailPage/MovieDetailPage";
 
-import { SessionsPage } from "@/pages/sessions/SessionsPage";
-import { BookingPage } from "@/pages/booking/BookingPage/BookingPage";
-import { BookingSummaryPage } from "@/pages/booking/BookingSummaryPage/BookingSummaryPage";
-import { PaymentPage } from "@/pages/booking/PaymentPage/PaymentPage";
-import { SuccessPage } from "@/pages/booking/SuccessPage/SuccessPage";
+import { SessionsPage } from "@/features/cinema/pages/SessionsPage";
+import { BookingPage } from "@/features/booking/pages/BookingPage/BookingPage";
+import { BookingSummaryPage } from "@/features/booking/pages/BookingSummaryPage/BookingSummaryPage";
+import { PaymentPage } from "@/features/booking/pages/PaymentPage/PaymentPage";
+import { SuccessPage } from "@/features/booking/pages/SuccessPage/SuccessPage";
 
 const AdminLayout = lazy(() =>
   import("@/components/admin/AdminLayout/AdminLayout").then((m) => ({
@@ -46,53 +46,61 @@ const SectionMovies = lazy(() =>
   })),
 );
 const SectionHalls = lazy(() =>
-  import("@/components/admin/SectionHalls/SectionHalls").then((m) => ({
+  import("@/features/cinema/admin/SectionHalls/SectionHalls").then((m) => ({
     default: m.SectionHalls,
   })),
 );
 const SectionSchedule = lazy(() =>
-  import("@/components/admin/SectionSchedule/SectionSchedule").then((m) => ({
-    default: m.SectionSchedule,
-  })),
+  import("@/features/cinema/admin/SectionSchedule/SectionSchedule").then(
+    (m) => ({
+      default: m.SectionSchedule,
+    }),
+  ),
 );
 const SectionUsers = lazy(() =>
-  import("@/components/admin/SectionUsers/SectionUsers").then((m) => ({
+  import("@/features/user/admin/SectionUsers/SectionUsers").then((m) => ({
     default: m.SectionUsers,
   })),
 );
 const SectionBonus = lazy(() =>
-  import("@/components/admin/SectionBonus/SectionBonus").then((m) => ({
+  import("@/features/bonus/admin/SectionBonus/SectionBonus").then((m) => ({
     default: m.SectionBonus,
   })),
 );
 const SectionPromotion = lazy(() =>
-  import("@/components/admin/SectionPromotion/SectionPromotion").then((m) => ({
-    default: m.SectionPromotion,
-  })),
+  import("@/features/promotion/admin/SectionPromotion/SectionPromotion").then(
+    (m) => ({
+      default: m.SectionPromotion,
+    }),
+  ),
 );
 const SectionTicketType = lazy(() =>
-  import("@/components/admin/SectionTicketType/SectionTicketType").then(
+  import("@/features/ticket/admin/SectionTicketType/SectionTicketType").then(
     (m) => ({ default: m.SectionTicketType }),
   ),
 );
 const SectionBookings = lazy(() =>
-  import("@/components/admin/SectionBookings/SectionBookings").then((m) => ({
-    default: m.SectionBookings,
-  })),
+  import("@/features/booking/admin/SectionBookings/SectionBookings").then(
+    (m) => ({
+      default: m.SectionBookings,
+    }),
+  ),
 );
 const SectionRefunds = lazy(() =>
-  import("@/components/admin/SectionRefunds/SectionRefunds").then((m) => ({
+  import("@/features/refund/admin/SectionRefunds/SectionRefunds").then((m) => ({
     default: m.SectionRefunds,
   })),
 );
 const SectionAuditLogs = lazy(() =>
-  import("@/components/admin/SectionAuditLogs/SectionAuditLogs").then((m) => ({
-    default: m.SectionAuditLogs,
-  })),
+  import("@/features/audit/admin/SectionAuditLogs/SectionAuditLogs").then(
+    (m) => ({
+      default: m.SectionAuditLogs,
+    }),
+  ),
 );
 
 const CashierScanPage = lazy(() =>
-  import("@/pages/cashier/CashierScanPage").then((m) => ({
+  import("@/features/ticket/pages/CashierScanPage").then((m) => ({
     default: m.CashierScanPage,
   })),
 );

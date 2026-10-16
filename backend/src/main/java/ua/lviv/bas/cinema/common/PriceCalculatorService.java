@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import ua.lviv.bas.cinema.cinema.hall.Seat;
 import ua.lviv.bas.cinema.cinema.session.Session;
 import ua.lviv.bas.cinema.config.properties.BonusProperties;
-import ua.lviv.bas.cinema.ticket.domain.TicketType;
+import ua.lviv.bas.cinema.ticket.type.TicketType;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

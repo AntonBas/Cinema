@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import type { SessionMovieInfoResponse } from "@/types/session";
+import type { SessionMovieInfoResponse } from "@/features/cinema/types/session";
 import { formatPrice, formatTime } from "@/utils/formatters";
 import { addDaysToIsoDate, getCinemaToday } from "@/utils/dateUtils";
 import styles from "./SessionSection.module.css";

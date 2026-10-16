@@ -23,7 +23,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import ua.lviv.bas.cinema.audit.domain.AuditableEntity;
+import ua.lviv.bas.cinema.audit.AuditableEntity;
 import ua.lviv.bas.cinema.cinema.session.Session;
 
 @Entity

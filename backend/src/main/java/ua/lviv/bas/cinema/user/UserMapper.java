@@ -1,0 +1,66 @@
+package ua.lviv.bas.cinema.user;
+
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.ReportingPolicy;
+
+import ua.lviv.bas.cinema.user.User;
+import ua.lviv.bas.cinema.user.auth.dto.UserRegistrationRequest;
+import ua.lviv.bas.cinema.user.dto.UserUpdateRequest;
+import ua.lviv.bas.cinema.user.admin.dto.AdminUserListResponse;
+import ua.lviv.bas.cinema.user.dto.UserProfileResponse;
+import ua.lviv.bas.cinema.user.dto.UserResponse;
+import ua.lviv.bas.cinema.user.admin.AdminUserProjection;
+
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.WARN)
+public interface UserMapper {
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "tickets", ignore = true)
+    @Mapping(target = "bookings", ignore = true)
+    @Mapping(target = "redeemedPromotions", ignore = true)
+    @Mapping(target = "enabled", constant = "true")
+    @Mapping(target = "emailVerified", constant = "false")
+    @Mapping(target = "userRole", constant = "ROLE_USER")
+    @Mapping(target = "verificationStatus", constant = "NOT_VERIFIED")
+    @Mapping(target = "verifiedAt", ignore = true)
+    @Mapping(target = "password", ignore = true)
+    @Mapping(target = "lastVerificationEmailSentAt", ignore = true)
+    @Mapping(target = "lastPasswordResetSentAt", ignore = true)
+    @Mapping(target = "tokenVersion", ignore = true)
+    User toEntity(UserRegistrationRequest request);
+
+    UserResponse toUserResponse(User user);
+
+    UserProfileResponse toUserProfileResponse(User user);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "email", ignore = true)
+    @Mapping(target = "password", ignore = true)
+    @Mapping(target = "tickets", ignore = true)
+    @Mapping(target = "bookings", ignore = true)
+    @Mapping(target = "redeemedPromotions", ignore = true)
+    @Mapping(target = "enabled", ignore = true)
+    @Mapping(target = "userRole", ignore = true)
+    @Mapping(target = "verificationStatus", ignore = true)
+    @Mapping(target = "verifiedAt", ignore = true)
+    @Mapping(target = "emailVerified", ignore = true)
+    @Mapping(target = "lastVerificationEmailSentAt", ignore = true)
+    @Mapping(target = "lastPasswordResetSentAt", ignore = true)
+    @Mapping(target = "tokenVersion", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "createdDate", ignore = true)
+    @Mapping(target = "lastModifiedBy", ignore = true)
+    @Mapping(target = "lastModifiedDate", ignore = true)
+    void updateEntity(UserUpdateRequest request, @MappingTarget User user);
+
+    AdminUserListResponse toAdminUserListResponse(AdminUserProjection projection);
+
+    @Mapping(target = "ticketsCount", expression = "java(user.getTickets() != null ? (long) user.getTickets().size() : 0L)")
+    @Mapping(target = "lastActivity", ignore = true)
+    AdminUserListResponse toAdminUserListResponse(User user);
+}

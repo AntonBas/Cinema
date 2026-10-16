@@ -1,0 +1,65 @@
+package ua.lviv.bas.cinema.ticket;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.CacheManager;
+import org.springframework.data.jpa.domain.Specification;
+import ua.lviv.bas.cinema.cinema.session.CinemaSessionStatus;
+import ua.lviv.bas.cinema.ticket.Ticket;
+import ua.lviv.bas.cinema.ticket.TicketStatus;
+import ua.lviv.bas.cinema.ticket.TicketRepository;
+import ua.lviv.bas.cinema.ticket.TicketSpecification;
+
+import java.util.List;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class TicketSchedulerTest {
+
+    @Mock
+    private TicketRepository ticketRepository;
+    @Mock
+    private TicketSpecification ticketSpecification;
+    @Mock
+    private CacheManager cacheManager;
+
+    @InjectMocks
+    private TicketScheduler ticketScheduler;
+
+    private static final Specification<Ticket> NOOP_SPEC = (root, query, cb) -> null;
+
+    @Test
+    void markTicketsAsExpiredAfterSessionWhenNoneFoundShouldNotUpdate() {
+        when(ticketSpecification.hasStatus(TicketStatus.ACTIVE)).thenReturn(NOOP_SPEC);
+        when(ticketSpecification.hasSessionStatus(CinemaSessionStatus.COMPLETED)).thenReturn(NOOP_SPEC);
+        when(ticketRepository.findAll(any(Specification.class))).thenReturn(List.of());
+
+        ticketScheduler.markTicketsAsExpiredAfterSession();
+
+        verify(ticketRepository, never()).updateStatusIfCurrentForIds(any(), any(), any());
+    }
+
+    @Test
+    void markTicketsAsExpiredAfterSessionShouldBulkUpdateFoundTickets() {
+        var ticket1 = Ticket.builder().id(1L).status(TicketStatus.ACTIVE).build();
+        var ticket2 = Ticket.builder().id(2L).status(TicketStatus.ACTIVE).build();
+
+        when(ticketSpecification.hasStatus(TicketStatus.ACTIVE)).thenReturn(NOOP_SPEC);
+        when(ticketSpecification.hasSessionStatus(CinemaSessionStatus.COMPLETED)).thenReturn(NOOP_SPEC);
+        when(ticketRepository.findAll(any(Specification.class))).thenReturn(List.of(ticket1, ticket2));
+        when(ticketRepository.updateStatusIfCurrentForIds(List.of(1L, 2L), TicketStatus.ACTIVE, TicketStatus.EXPIRED))
+                .thenReturn(2);
+
+        ticketScheduler.markTicketsAsExpiredAfterSession();
+
+        verify(ticketRepository).updateStatusIfCurrentForIds(List.of(1L, 2L), TicketStatus.ACTIVE,
+                TicketStatus.EXPIRED);
+    }
+}

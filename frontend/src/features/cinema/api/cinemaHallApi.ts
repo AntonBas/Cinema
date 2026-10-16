@@ -1,0 +1,26 @@
+import { api } from "@/services/api";
+import type {
+  CinemaHallListResponse,
+  CinemaHallResponse,
+  CinemaHallRequest,
+  HallLayoutRequest,
+  HallLayoutResponse,
+} from "@/features/cinema/types/cinemaHall";
+
+const BASE_URL = "/api/admin/cinema-halls";
+
+export const cinemaHallApi = {
+  admin: {
+    getAll: () => api.get<CinemaHallListResponse[]>(BASE_URL),
+    getById: (id: number) => api.get<CinemaHallResponse>(`${BASE_URL}/${id}`),
+    create: (request: CinemaHallRequest) =>
+      api.post<CinemaHallResponse>(BASE_URL, request),
+    update: (id: number, request: CinemaHallRequest) =>
+      api.put<CinemaHallResponse>(`${BASE_URL}/${id}`, request),
+    delete: (id: number) => api.delete<void>(`${BASE_URL}/${id}`),
+    getLayout: (id: number) =>
+      api.get<HallLayoutResponse>(`${BASE_URL}/${id}/layout`),
+    updateLayout: (id: number, request: HallLayoutRequest) =>
+      api.put<HallLayoutResponse>(`${BASE_URL}/${id}/layout`, request),
+  },
+};

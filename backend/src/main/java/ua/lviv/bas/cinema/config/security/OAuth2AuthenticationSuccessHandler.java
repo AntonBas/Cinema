@@ -10,7 +10,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
-import ua.lviv.bas.cinema.user.repository.UserRepository;
+import ua.lviv.bas.cinema.user.UserRepository;
 
 import java.io.IOException;
 

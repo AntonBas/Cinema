@@ -1,0 +1,411 @@
+package ua.lviv.bas.cinema.ticket;
+
+import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.CacheManager;
+import org.springframework.test.util.ReflectionTestUtils;
+import ua.lviv.bas.cinema.booking.Booking;
+import ua.lviv.bas.cinema.booking.reservation.SeatReservation;
+import ua.lviv.bas.cinema.cinema.hall.Seat;
+import ua.lviv.bas.cinema.payment.Payment;
+import ua.lviv.bas.cinema.refund.Refund;
+import ua.lviv.bas.cinema.refund.RefundCalculator;
+import ua.lviv.bas.cinema.cinema.hall.CinemaHall;
+import ua.lviv.bas.cinema.movie.movie.Movie;
+import ua.lviv.bas.cinema.cinema.session.Session;
+import ua.lviv.bas.cinema.cinema.session.CinemaSessionStatus;
+import ua.lviv.bas.cinema.ticket.Ticket;
+import ua.lviv.bas.cinema.ticket.TicketStatus;
+import ua.lviv.bas.cinema.user.User;
+import ua.lviv.bas.cinema.ticket.dto.TicketCashierResponse;
+import ua.lviv.bas.cinema.ticket.dto.TicketResponse;
+import ua.lviv.bas.cinema.exception.domain.ticket.TicketNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.ticket.TicketValidationException;
+import ua.lviv.bas.cinema.ticket.TicketMapper;
+import ua.lviv.bas.cinema.ticket.TicketRepository;
+import ua.lviv.bas.cinema.audit.AuditService;
+import ua.lviv.bas.cinema.common.NumberGeneratorService;
+import ua.lviv.bas.cinema.integration.QRCodeService;
+import ua.lviv.bas.cinema.common.CinemaTime;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyList;
+
+@ExtendWith(MockitoExtension.class)
+public class TicketServiceTest {
+
+    @Mock
+    private TicketRepository ticketRepository;
+    @Mock
+    private TicketMapper ticketMapper;
+    @Mock
+    private RefundCalculator refundCalculator;
+    @Mock
+    private AuditService auditService;
+    @Mock
+    private QRCodeService qrCodeService;
+    @Mock
+    private NumberGeneratorService numberGenerator;
+    @Mock
+    private CacheManager cacheManager;
+    @Mock
+    private EntityManager entityManager;
+
+    @InjectMocks
+    private TicketService ticketService;
+
+    private static final String TICKET_CODE = "TKT-TEST123";
+    private static final Long USER_ID = 1L;
+
+    private Ticket testTicket;
+    private User testUser;
+    private Session testSession;
+    private TicketCashierResponse cashierResponse;
+
+    @BeforeEach
+    void setUp() {
+        testUser = new User();
+        testUser.setId(USER_ID);
+
+        testSession = new Session();
+        testSession.setId(69L);
+        testSession.setStartTime(CinemaTime.now().minusMinutes(30));
+        testSession.setStatus(CinemaSessionStatus.ONGOING);
+
+        CinemaHall hall = new CinemaHall();
+        hall.setId(1L);
+        hall.setName("Hall A");
+        testSession.setHall(hall);
+
+        Movie movie = new Movie();
+        movie.setId(1L);
+        movie.setTitle("Test Movie");
+        testSession.setMovie(movie);
+
+        Booking testBooking = new Booking();
+        testBooking.setId(72L);
+        testBooking.setSession(testSession);
+        testBooking.setUser(testUser);
+
+        testTicket = new Ticket();
+        testTicket.setId(1L);
+        testTicket.setUniqueCode(TICKET_CODE);
+        testTicket.setStatus(TicketStatus.ACTIVE);
+        testTicket.setBooking(testBooking);
+        testTicket.setUser(testUser);
+
+        cashierResponse = new TicketCashierResponse(
+                1L, TICKET_CODE, TicketStatus.USED, "Test Movie",
+                CinemaTime.now(), "Hall A", "5", 10, "Standard",
+                false, null, "test@email.com", BigDecimal.ZERO
+        );
+
+        lenient().doNothing().when(auditService).logChange(any(), any(), any(), any(), any(), any());
+        ReflectionTestUtils.setField(ticketService, "ticketBaseUrl", "http://localhost:5173");
+        ReflectionTestUtils.setField(ticketService, "qrCodeSize", 200);
+    }
+
+    @Nested
+    class ValidateTests {
+
+        @Test
+        void validateShouldSucceed() {
+            when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
+            when(ticketRepository.updateStatusIfCurrent(eq(1L), eq(TicketStatus.ACTIVE), eq(TicketStatus.USED)))
+                    .thenReturn(1);
+            when(ticketMapper.toTicketCashierResponse(any())).thenReturn(cashierResponse);
+
+            TicketCashierResponse result = ticketService.validate(TICKET_CODE);
+
+            assertThat(result).isEqualTo(cashierResponse);
+            verify(entityManager).refresh(testTicket);
+            verify(ticketRepository, never()).save(any());
+        }
+
+        @Test
+        void validateWhenNotFoundShouldThrowException() {
+            when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> ticketService.validate(TICKET_CODE))
+                    .isInstanceOf(TicketNotFoundException.class);
+        }
+
+        @Test
+        void validateWhenAlreadyUsedShouldThrowException() {
+            testTicket.setStatus(TicketStatus.USED);
+            when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
+
+            assertThatThrownBy(() -> ticketService.validate(TICKET_CODE))
+                    .isInstanceOf(TicketValidationException.class)
+                    .hasMessageContaining("already been used");
+
+            verify(ticketRepository, never()).save(any());
+        }
+
+        @Test
+        void validateWhenRefundedShouldThrowException() {
+            testTicket.setStatus(TicketStatus.REFUNDED);
+            when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
+
+            assertThatThrownBy(() -> ticketService.validate(TICKET_CODE))
+                    .isInstanceOf(TicketValidationException.class)
+                    .hasMessageContaining("refunded");
+
+            verify(ticketRepository, never()).save(any());
+        }
+
+        @Test
+        void validateWhenExpiredShouldThrowException() {
+            testTicket.setStatus(TicketStatus.EXPIRED);
+            when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
+
+            assertThatThrownBy(() -> ticketService.validate(TICKET_CODE))
+                    .isInstanceOf(TicketValidationException.class)
+                    .hasMessageContaining("not active");
+
+            verify(ticketRepository, never()).save(any());
+        }
+
+        @Test
+        void validateWhenTooEarlyShouldThrowException() {
+            testSession.setStartTime(CinemaTime.now().plusHours(2));
+            testTicket.setStatus(TicketStatus.ACTIVE);
+
+            when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
+
+            assertThatThrownBy(() -> ticketService.validate(TICKET_CODE))
+                    .isInstanceOf(TicketValidationException.class)
+                    .hasMessageContaining("Too early");
+
+            verify(ticketRepository, never()).save(any());
+        }
+
+        @Test
+        void validateWithin1HourBeforeSessionShouldSucceed() {
+            testSession.setStartTime(CinemaTime.now().plusMinutes(30));
+            testSession.setStatus(CinemaSessionStatus.SCHEDULED);
+            testTicket.setStatus(TicketStatus.ACTIVE);
+
+            when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
+            when(ticketRepository.updateStatusIfCurrent(eq(1L), eq(TicketStatus.ACTIVE), eq(TicketStatus.USED)))
+                    .thenReturn(1);
+            when(ticketMapper.toTicketCashierResponse(any())).thenReturn(cashierResponse);
+
+            TicketCashierResponse result = ticketService.validate(TICKET_CODE);
+
+            assertThat(result).isEqualTo(cashierResponse);
+            verify(entityManager).refresh(testTicket);
+        }
+
+        @Test
+        void validateWhenSessionEndedMoreThan2HoursAgoShouldThrowException() {
+            testSession.setStartTime(CinemaTime.now().minusHours(3));
+            testTicket.setStatus(TicketStatus.ACTIVE);
+
+            when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
+
+            assertThatThrownBy(() -> ticketService.validate(TICKET_CODE))
+                    .isInstanceOf(TicketValidationException.class)
+                    .hasMessageContaining("ended more than 2 hours ago");
+
+            verify(ticketRepository, never()).save(any());
+        }
+
+        @Test
+        void validateWhenSessionCancelledShouldThrowException() {
+            testSession.setStartTime(CinemaTime.now().minusMinutes(10));
+            testSession.setStatus(CinemaSessionStatus.CANCELLED);
+            testTicket.setStatus(TicketStatus.ACTIVE);
+
+            when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
+
+            assertThatThrownBy(() -> ticketService.validate(TICKET_CODE))
+                    .isInstanceOf(TicketValidationException.class)
+                    .hasMessageContaining("cancelled");
+
+            verify(ticketRepository, never()).save(any());
+        }
+    }
+
+    @Nested
+    class GetTicketTests {
+
+        @Test
+        void getTicketShouldSucceed() {
+            TicketResponse mockResponse = new TicketResponse(1L, TICKET_CODE, "/qr", TicketStatus.ACTIVE,
+                    Instant.now(), BigDecimal.TEN, 0, "Standard", "Test Movie",
+                    CinemaTime.now(), "Hall A", 5, 10, null);
+
+            when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
+            when(ticketMapper.toTicketResponse(testTicket, "/api/tickets/code/" + TICKET_CODE + "/qr", true))
+                    .thenReturn(mockResponse);
+            when(refundCalculator.validate(testTicket)).thenReturn(null);
+
+            var result = ticketService.getTicket(TICKET_CODE, testUser);
+
+            assertThat(result).isNotNull();
+            assertThat(result.id()).isEqualTo(1L);
+        }
+
+        @Test
+        void getTicketWhenNotFoundShouldThrowException() {
+            when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> ticketService.getTicket(TICKET_CODE, testUser))
+                    .isInstanceOf(TicketNotFoundException.class);
+        }
+
+        @Test
+        void getTicketWhenWrongUserShouldThrowException() {
+            User otherUser = new User();
+            otherUser.setId(999L);
+
+            when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
+
+            assertThatThrownBy(() -> ticketService.getTicket(TICKET_CODE, otherUser))
+                    .isInstanceOf(TicketNotFoundException.class);
+        }
+    }
+
+    @Nested
+    class GenerateQRTests {
+
+        @Test
+        void generateQRShouldSucceed() {
+            byte[] qrCode = new byte[]{1, 2, 3, 4, 5};
+
+            when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
+            when(qrCodeService.generateQRCode(anyString(), eq(200))).thenReturn(qrCode);
+
+            var result = ticketService.generateQR(TICKET_CODE, testUser);
+
+            assertThat(result).isEqualTo(qrCode);
+        }
+
+        @Test
+        void generateQRWhenNotFoundShouldThrowException() {
+            when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> ticketService.generateQR(TICKET_CODE, testUser))
+                    .isInstanceOf(TicketNotFoundException.class);
+        }
+
+        @Test
+        void generateQRWhenWrongUserShouldThrowException() {
+            User otherUser = new User();
+            otherUser.setId(999L);
+
+            when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
+
+            assertThatThrownBy(() -> ticketService.generateQR(TICKET_CODE, otherUser))
+                    .isInstanceOf(TicketNotFoundException.class);
+
+            verify(qrCodeService, never()).generateQRCode(anyString(), anyInt());
+        }
+    }
+
+    @Nested
+    class GetTicketForCashierTests {
+
+        @Test
+        void getTicketForCashierShouldSucceed() {
+            when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.of(testTicket));
+            when(ticketMapper.toTicketCashierResponse(testTicket)).thenReturn(cashierResponse);
+
+            var result = ticketService.getTicketForCashier(TICKET_CODE);
+
+            assertThat(result).isEqualTo(cashierResponse);
+        }
+
+        @Test
+        void getTicketForCashierWhenNotFoundShouldThrowException() {
+            when(ticketRepository.findByUniqueCode(TICKET_CODE)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> ticketService.getTicketForCashier(TICKET_CODE))
+                    .isInstanceOf(TicketNotFoundException.class);
+        }
+    }
+
+    @Nested
+    class MarkAsRefundedTests {
+
+        @Test
+        void markAsRefundedShouldSetStatusAndRefund() {
+            var refund = Refund.builder().id(5L).build();
+
+            ticketService.markAsRefunded(testTicket, refund);
+
+            assertThat(testTicket.getStatus()).isEqualTo(TicketStatus.REFUNDED);
+            assertThat(testTicket.getRefund()).isEqualTo(refund);
+            verify(ticketRepository).save(testTicket);
+        }
+
+        @Test
+        void markAsRefundedWhenAlreadyRefundedShouldSkip() {
+            testTicket.setStatus(TicketStatus.REFUNDED);
+            var refund = Refund.builder().id(5L).build();
+
+            ticketService.markAsRefunded(testTicket, refund);
+
+            assertThat(testTicket.getRefund()).isNull();
+            verify(ticketRepository, never()).save(any());
+        }
+    }
+
+    @Nested
+    class CreateTicketsForBookingTests {
+
+        @Test
+        void createTicketsForBookingShouldCreateOneTicketPerSeatReservation() {
+            var booking = new Booking();
+            booking.setId(72L);
+            booking.setUser(testUser);
+            var payment = Payment.builder().id(5L).build();
+            var seat = Seat.builder().id(1L).row(3).number(4).build();
+            var seatReservation = SeatReservation.builder().id(1L).seat(seat).seatPrice(new BigDecimal("100.00"))
+                    .build();
+            booking.setSeatReservations(List.of(seatReservation));
+
+            when(ticketRepository.existsByBookingId(72L)).thenReturn(false);
+            when(numberGenerator.generateTicketCode()).thenReturn("TKT-NEW1");
+            when(ticketRepository.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+
+            ticketService.createTicketsForBooking(booking, payment);
+
+            verify(ticketRepository).saveAll(anyList());
+        }
+
+        @Test
+        void createTicketsForBookingWhenTicketsAlreadyExistShouldSkip() {
+            var booking = new Booking();
+            booking.setId(72L);
+
+            when(ticketRepository.existsByBookingId(72L)).thenReturn(true);
+
+            ticketService.createTicketsForBooking(booking, Payment.builder().id(5L).build());
+
+            verify(ticketRepository, never()).saveAll(any());
+            verify(numberGenerator, never()).generateTicketCode();
+        }
+    }
+}

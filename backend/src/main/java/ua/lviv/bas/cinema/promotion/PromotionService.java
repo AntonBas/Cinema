@@ -1,0 +1,232 @@
+package ua.lviv.bas.cinema.promotion;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ua.lviv.bas.cinema.audit.AuditAction;
+import ua.lviv.bas.cinema.common.UniquenessValidator;
+import ua.lviv.bas.cinema.promotion.Promotion;
+import ua.lviv.bas.cinema.promotion.PromotionStatus;
+import ua.lviv.bas.cinema.promotion.UserPromotion;
+import ua.lviv.bas.cinema.user.User;
+import ua.lviv.bas.cinema.promotion.dto.ClaimPromotionRequest;
+import ua.lviv.bas.cinema.promotion.dto.PromotionRequest;
+import ua.lviv.bas.cinema.promotion.dto.PromotionListResponse;
+import ua.lviv.bas.cinema.promotion.dto.PromotionResponse;
+import ua.lviv.bas.cinema.exception.core.EntityNotFoundException;
+import ua.lviv.bas.cinema.exception.domain.financial.promotion.AlreadyClaimedException;
+import ua.lviv.bas.cinema.exception.domain.financial.promotion.InvalidPromotionDateRangeException;
+import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionAlreadyExistsException;
+import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionHasRedemptionsException;
+import ua.lviv.bas.cinema.exception.domain.financial.promotion.PromotionNotActiveException;
+import ua.lviv.bas.cinema.promotion.PromotionMapper;
+import ua.lviv.bas.cinema.promotion.PromotionRepository;
+import ua.lviv.bas.cinema.promotion.UserPromotionRepository;
+import ua.lviv.bas.cinema.bonus.BonusLedgerService;
+import ua.lviv.bas.cinema.audit.AuditDetails;
+import ua.lviv.bas.cinema.audit.AuditService;
+import ua.lviv.bas.cinema.common.FixedOrderPageable;
+import ua.lviv.bas.cinema.common.CinemaTime;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class PromotionService {
+
+    private final PromotionRepository promotionRepository;
+    private final UserPromotionRepository userPromotionRepository;
+    private final PromotionMapper promotionMapper;
+    private final BonusLedgerService bonusLedgerService;
+    private final AuditService auditService;
+
+    @CacheEvict(value = "promotions", allEntries = true)
+    @Transactional
+    public PromotionResponse createPromotion(PromotionRequest request) {
+        log.info("Creating new promotion: {}", request.title());
+
+        validateTitleUniqueness(request.title(), null);
+        validateNotInPast("startDate", request.startDate());
+        validateNotInPast("endDate", request.endDate());
+        validateDateRange(request.startDate(), request.endDate());
+
+        var promotion = promotionMapper.toEntity(request);
+        var saved = promotionRepository.save(promotion);
+
+        log.info("Promotion created with ID: {}", saved.getId());
+        auditCreate(saved);
+
+        return promotionMapper.toPromotionResponse(saved);
+    }
+
+    @Cacheable(value = "promotions", key = "'list-' + #query + '-' + #pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
+    public Page<PromotionListResponse> getPromotions(String query, Pageable pageable) {
+        log.info("Getting promotions: query='{}', page={}, size={}", query, pageable.getPageNumber(),
+                pageable.getPageSize());
+        return promotionRepository.findAllAdminProjections(query, FixedOrderPageable.of(pageable))
+                .map(promotionMapper::toPromotionListResponse);
+    }
+
+    public PromotionResponse getPromotion(Long id) {
+        return promotionRepository.findById(id).map(promotionMapper::toPromotionResponse)
+                .orElseThrow(() -> new EntityNotFoundException("Promotion", id));
+    }
+
+    public List<PromotionResponse> getAvailablePromotions() {
+        return promotionRepository.findAllActivePromotions(CinemaTime.today()).stream().map(promotionMapper::toPromotionResponse)
+                .toList();
+    }
+
+    public List<PromotionResponse> getClaimedPromotions(User user) {
+        log.debug("Getting claimed promotions for user: {}", user.getEmail());
+        return promotionRepository.findClaimedPromotionsByUser(user).stream().map(promotionMapper::toPromotionResponse)
+                .toList();
+    }
+
+    @CacheEvict(value = "promotions", allEntries = true)
+    @Transactional
+    public PromotionResponse updatePromotion(Long id, PromotionRequest request) {
+        log.info("Updating promotion with ID: {}", id);
+
+        validateTitleUniqueness(request.title(), id);
+
+        var promotion = findByIdOrThrow(id);
+        String oldTitle = promotion.getTitle();
+        validateDatesForUpdate(request, promotion);
+        var oldDetails = captureDetails(promotion);
+
+        promotionMapper.updateEntity(request, promotion);
+        var updated = promotionRepository.save(promotion);
+
+        log.info("Promotion updated with ID: {}", updated.getId());
+        auditService.logChange("Promotion", id, oldTitle, AuditAction.UPDATED, oldDetails, captureDetails(updated));
+
+        return promotionMapper.toPromotionResponse(updated);
+    }
+
+    @CacheEvict(value = "promotions", allEntries = true)
+    @Transactional
+    public void deletePromotion(Long id) {
+        log.info("Deleting promotion with ID: {}", id);
+
+        var promotion = findByIdOrThrow(id);
+
+        if (!promotion.getUserRedemptions().isEmpty()) {
+            int redemptionCount = promotion.getUserRedemptions().size();
+            throw new PromotionHasRedemptionsException(id, promotion.getTitle(), redemptionCount);
+        }
+
+        String promotionTitle = promotion.getTitle();
+        promotionRepository.delete(promotion);
+        log.info("Promotion with ID: {} has been deleted", id);
+        auditDelete(id, promotionTitle);
+    }
+
+    @CacheEvict(value = "promotions", allEntries = true)
+    @Transactional
+    public PromotionResponse claimPromotion(ClaimPromotionRequest request, User user) {
+        log.info("User {} claiming promotion {}", user.getEmail(), request.promotionId());
+
+        var promotion = findByIdOrThrow(request.promotionId());
+
+        if (!isPromotionActive(promotion)) {
+            throw new PromotionNotActiveException(promotion.getTitle());
+        }
+
+        if (hasUserClaimedPromotion(user, promotion.getId())) {
+            throw new AlreadyClaimedException(promotion.getTitle());
+        }
+
+        var userPromotion = UserPromotion.builder().user(user).promotion(promotion).redeemedAt(Instant.now())
+                .pointsAwarded(promotion.getBonusPoints()).build();
+
+        userPromotionRepository.save(userPromotion);
+        bonusLedgerService.addPromotionPoints(user, promotion.getId(), promotion.getBonusPoints(),
+                promotion.getTitle());
+
+        log.info("Promotion claimed successfully. User received {} points", promotion.getBonusPoints());
+        auditClaim(promotion, user);
+
+        return promotionMapper.toPromotionResponse(promotion);
+    }
+
+    public boolean hasUserClaimedPromotion(User user, Long promotionId) {
+        return userPromotionRepository.existsByUserAndPromotionId(user, promotionId);
+    }
+
+    private Promotion findByIdOrThrow(Long id) {
+        return promotionRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Promotion", id));
+    }
+
+    private void validateTitleUniqueness(String title, Long excludeId) {
+        UniquenessValidator.validate(excludeId, () -> promotionRepository.existsByTitle(title),
+                id -> promotionRepository.existsByTitleAndIdNot(title, id),
+                () -> PromotionAlreadyExistsException.forTitle(title));
+    }
+
+    private void validateDatesForUpdate(PromotionRequest request, Promotion promotion) {
+        if (!Objects.equals(request.startDate(), promotion.getStartDate())) {
+            validateNotInPast("startDate", request.startDate());
+        }
+        if (!Objects.equals(request.endDate(), promotion.getEndDate())) {
+            validateNotInPast("endDate", request.endDate());
+        }
+        var startDate = request.startDate() != null ? request.startDate() : promotion.getStartDate();
+        var endDate = request.endDate() != null ? request.endDate() : promotion.getEndDate();
+        validateDateRange(startDate, endDate);
+    }
+
+    private void validateNotInPast(String field, LocalDate date) {
+        if (date != null && date.isBefore(CinemaTime.today())) {
+            throw InvalidPromotionDateRangeException.inPast(field, date);
+        }
+    }
+
+    private void validateDateRange(LocalDate startDate, LocalDate endDate) {
+        if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
+            throw new InvalidPromotionDateRangeException(startDate, endDate);
+        }
+    }
+
+    private boolean isPromotionActive(Promotion promotion) {
+        return PromotionStatus.of(promotion.isActive(), promotion.getStartDate(), promotion.getEndDate())
+                == PromotionStatus.ACTIVE;
+    }
+
+    private void auditCreate(Promotion promotion) {
+        var details = AuditDetails.of().put("title", promotion.getTitle())
+                .put("bonusPoints", promotion.getBonusPoints()).build();
+        auditService.logChange("Promotion", promotion.getId(), promotion.getTitle(), AuditAction.CREATED, null,
+                details);
+    }
+
+    private Map<String, Object> captureDetails(Promotion promotion) {
+        return AuditDetails.of().put("title", promotion.getTitle()).put("bonusPoints", promotion.getBonusPoints())
+                .put("startDate", promotion.getStartDate()).put("endDate", promotion.getEndDate())
+                .put("active", promotion.isActive()).build();
+    }
+
+    private void auditDelete(Long id, String title) {
+        var details = AuditDetails.of().put("deleted", title).build();
+        auditService.logChange("Promotion", id, title, AuditAction.DELETED, details, null);
+    }
+
+    private void auditClaim(Promotion promotion, User user) {
+        var details = AuditDetails.of().put("userId", user.getId()).put("userEmail", user.getEmail())
+                .put("promotionId", promotion.getId()).put("promotionTitle", promotion.getTitle())
+                .put("pointsAwarded", promotion.getBonusPoints()).build();
+        auditService.logChange("Promotion", promotion.getId(), promotion.getTitle(), AuditAction.CLAIMED, null,
+                details);
+    }
+}

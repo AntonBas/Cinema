@@ -1,8 +1,8 @@
 package ua.lviv.bas.cinema.config.security;
 
 import org.junit.jupiter.api.Test;
-import ua.lviv.bas.cinema.user.domain.User;
-import ua.lviv.bas.cinema.user.domain.UserRole;
+import ua.lviv.bas.cinema.user.User;
+import ua.lviv.bas.cinema.user.UserRole;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -1,0 +1,338 @@
+import React, { useEffect, useState } from "react";
+import { Modal } from "@/components/ui/Modal/Modal";
+import { Button } from "@/components/ui/Button/Button";
+import { useRefund } from "@/features/refund/hooks/useRefund";
+import { AlertTriangle } from "lucide-react";
+import type { TicketResponse } from "@/features/ticket/types/ticket";
+import { formatFullDateTime, formatPrice } from "@/utils/formatters";
+import { RefundReasonDisplay } from "@/features/refund/types/refund";
+import styles from "./TicketRefundModal.module.css";
+
+interface TicketRefundModalProps {
+  ticket: TicketResponse | null;
+  onClose: () => void;
+  onRefundSuccess?: () => void;
+}
+
+const REFUND_REASONS = Object.entries(RefundReasonDisplay).map(
+  ([value, label]) => ({ value, label }),
+);
+
+export const TicketRefundModal: React.FC<TicketRefundModalProps> = ({
+  ticket,
+  onClose,
+  onRefundSuccess,
+}) => {
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [selectedReason, setSelectedReason] = useState<string>("");
+  const {
+    create,
+    loading,
+    refundResult,
+    getPreview,
+    previewResult,
+    previewLoading,
+    getPolicy,
+    policy,
+  } = useRefund();
+
+  useEffect(() => {
+    if (ticket) {
+      getPreview({ ticketId: ticket.id }).catch(() => {});
+    }
+  }, [ticket, getPreview]);
+
+  useEffect(() => {
+    getPolicy().catch(() => {});
+  }, [getPolicy]);
+
+  if (!ticket) return null;
+
+  const canRequestRefund =
+    previewLoading || !previewResult
+      ? ticket.refundable
+      : previewResult.isRefundable;
+
+  const handleSubmit = async () => {
+    if (!selectedReason || !acceptedTerms) return;
+
+    try {
+      const result = await create({
+        ticketId: ticket.id,
+        reason: selectedReason,
+      });
+
+      if (result) {
+        onRefundSuccess?.();
+      }
+    } catch {
+      return;
+    }
+  };
+
+  if (!canRequestRefund) {
+    return (
+      <Modal
+        isOpen={true}
+        onClose={onClose}
+        title="Refund Not Available"
+        size="large"
+      >
+        <div className={styles.modalBody}>
+          <div className={styles.errorMessage}>
+            <AlertTriangle size={20} />
+            <div>
+              <h4>Refund Not Available</h4>
+              <p>
+                {previewResult?.nonRefundableReason ??
+                  (ticket.status !== "ACTIVE"
+                    ? "Only active tickets can be refunded"
+                    : "This ticket can no longer be refunded")}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className={styles.modalFooter}>
+          <Button variant="primary" onClick={onClose}>
+            Close
+          </Button>
+        </div>
+      </Modal>
+    );
+  }
+
+  if (refundResult) {
+    return (
+      <Modal
+        isOpen={true}
+        onClose={onClose}
+        title="Refund Submitted"
+        size="large"
+      >
+        <div className={styles.modalBody}>
+          <div className={styles.successMessage}>
+            <h4>Refund Request Submitted</h4>
+            <div className={styles.refundDetails}>
+              <div className={styles.detailItem}>
+                <span className={styles.detailLabel}>Refund Number</span>
+                <span className={styles.detailValue}>
+                  {refundResult.refundNumber}
+                </span>
+              </div>
+              <div className={styles.detailItem}>
+                <span className={styles.detailLabel}>Status</span>
+                <span className={`${styles.detailValue} ${styles.status}`}>
+                  {refundResult.status}
+                </span>
+              </div>
+              <div className={styles.detailItem}>
+                <span className={styles.detailLabel}>Amount</span>
+                <span className={`${styles.detailValue} ${styles.amount}`}>
+                  {formatPrice(refundResult.totalAmount)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className={styles.modalFooter}>
+          <Button variant="primary" onClick={onClose}>
+            Close
+          </Button>
+        </div>
+      </Modal>
+    );
+  }
+
+  return (
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      title="Request Ticket Refund"
+      size="medium"
+    >
+      <div className={styles.modalBody}>
+        <div className={styles.ticketInfo}>
+          <h4>Ticket Information</h4>
+          <div className={styles.infoGrid}>
+            <div className={styles.infoItem}>
+              <span className={styles.infoLabel}>Movie</span>
+              <span className={styles.infoValue}>{ticket.movieTitle}</span>
+            </div>
+            <div className={styles.infoItem}>
+              <span className={styles.infoLabel}>Session</span>
+              <span className={styles.infoValue}>
+                {formatFullDateTime(ticket.sessionTime)}
+              </span>
+            </div>
+            <div className={styles.infoItem}>
+              <span className={styles.infoLabel}>Hall</span>
+              <span className={styles.infoValue}>{ticket.hallName}</span>
+            </div>
+            <div className={styles.infoItem}>
+              <span className={styles.infoLabel}>Seat</span>
+              <span className={styles.infoValue}>
+                Row {ticket.row}, Seat {ticket.seatNumber}
+              </span>
+            </div>
+            <div className={styles.infoItem}>
+              <span className={styles.infoLabel}>Price</span>
+              <span className={styles.infoValue}>
+                {formatPrice(ticket.price)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.refundEstimate}>
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <div>
+            <span className={styles.estimateLabel}>Estimated Refund</span>
+            {previewLoading || !previewResult ? (
+              <span className={styles.estimateValue}>Calculating...</span>
+            ) : (
+              <>
+                <span className={styles.estimateValue}>
+                  {formatPrice(previewResult.refundAmount)} (
+                  {previewResult.refundPercentage}%)
+                </span>
+                <span className={styles.estimateNote}>
+                  {previewResult.policyName}: fee{" "}
+                  {formatPrice(previewResult.feeAmount)} (
+                  {previewResult.feePercentage}%)
+                </span>
+                {previewResult.bonusPointsToRefund > 0 && (
+                  <span className={styles.estimateNote}>
+                    {previewResult.bonusPointsToRefund} bonus points used for
+                    this ticket will be returned
+                  </span>
+                )}
+                {!!previewResult.earnedPointsToRevoke && (
+                  <span className={styles.estimateNote}>
+                    {previewResult.earnedPointsToRevoke} bonus points earned
+                    from this purchase will be deducted
+                  </span>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className={styles.timeWarning}>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          <span>
+            {previewResult?.remainingTime
+              ? `${previewResult.remainingTime} until session starts`
+              : "Calculating time until session…"}
+          </span>
+        </div>
+
+        <div className={styles.reasonSelection}>
+          <h4>Select Refund Reason</h4>
+          <div className={styles.reasonOptions}>
+            {REFUND_REASONS.map((reason) => (
+              <label key={reason.value} className={styles.reasonOption}>
+                <input
+                  type="radio"
+                  name="refundReason"
+                  value={reason.value}
+                  checked={selectedReason === reason.value}
+                  onChange={(e) => setSelectedReason(e.target.value)}
+                  className={styles.reasonInput}
+                />
+                <span className={styles.reasonLabel}>{reason.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.termsSection}>
+          <div className={styles.termsHeader}>
+            <h4>Refund Policy</h4>
+            <a
+              href="/refund-policy"
+              className={styles.policyLink}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Full policy
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
+            </a>
+          </div>
+          <div className={styles.termsContent}>
+            <ul className={styles.termsList}>
+              {policy?.rules.map((rule) => (
+                <li key={rule.name}>{rule.description}</li>
+              ))}
+              {policy && (
+                <li>Refunds processed within {policy.processingTime}</li>
+              )}
+            </ul>
+          </div>
+          <label className={styles.termsAgreement}>
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              className={styles.termsCheckbox}
+            />
+            <span className={styles.termsText}>
+              I agree to the refund policy terms
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div className={styles.modalFooter}>
+        <Button variant="cancel" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button
+          variant="primary"
+          onClick={handleSubmit}
+          loading={loading}
+          disabled={!selectedReason || !acceptedTerms || loading}
+        >
+          Submit Refund Request
+        </Button>
+      </div>
+    </Modal>
+  );
+};

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useMovie } from "@/features/movie/hooks/useMovie";
-import type { SessionMovieInfoResponse } from "@/types/session";
+import type { SessionMovieInfoResponse } from "@/features/cinema/types/session";
 import {
   AgeRatingDisplay,
   AgeRatingDescription,

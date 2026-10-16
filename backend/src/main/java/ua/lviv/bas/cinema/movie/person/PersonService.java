@@ -9,9 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ua.lviv.bas.cinema.audit.domain.AuditAction;
-import ua.lviv.bas.cinema.audit.service.AuditDetails;
-import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.audit.AuditAction;
+import ua.lviv.bas.cinema.audit.AuditDetails;
+import ua.lviv.bas.cinema.audit.AuditService;
 import ua.lviv.bas.cinema.movie.person.Person;
 import ua.lviv.bas.cinema.movie.person.PersonRole;
 import ua.lviv.bas.cinema.movie.person.dto.PersonRequest;

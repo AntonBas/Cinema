@@ -11,12 +11,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import ua.lviv.bas.cinema.config.security.CustomOAuth2UserService;
-import ua.lviv.bas.cinema.user.domain.User;
-import ua.lviv.bas.cinema.user.domain.UserRole;
-import ua.lviv.bas.cinema.user.domain.VerificationStatus;
-import ua.lviv.bas.cinema.user.repository.UserRepository;
-import ua.lviv.bas.cinema.bonus.service.BonusLedgerService;
-import ua.lviv.bas.cinema.audit.service.AuditService;
+import ua.lviv.bas.cinema.user.User;
+import ua.lviv.bas.cinema.user.UserRole;
+import ua.lviv.bas.cinema.user.VerificationStatus;
+import ua.lviv.bas.cinema.user.UserRepository;
+import ua.lviv.bas.cinema.bonus.BonusLedgerService;
+import ua.lviv.bas.cinema.audit.AuditService;
 
 import java.lang.reflect.Method;
 import java.util.Map;

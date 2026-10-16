@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { authApi } from "@/api/authApi";
+import { authApi } from "@/features/auth/api/authApi";
 import { setUnauthorizedHandler } from "@/services/api";
-import type { UserResponse } from "@/types/user";
+import type { UserResponse } from "@/features/user/types/user";
 import { AuthContext } from "./AuthContext";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({

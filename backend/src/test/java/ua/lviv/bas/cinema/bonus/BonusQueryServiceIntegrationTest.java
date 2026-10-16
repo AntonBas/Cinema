@@ -1,0 +1,79 @@
+package ua.lviv.bas.cinema.bonus;
+
+import java.time.LocalDate;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
+
+import ua.lviv.bas.cinema.bonus.BonusCard;
+import ua.lviv.bas.cinema.bonus.BonusTransaction;
+import ua.lviv.bas.cinema.bonus.BonusTransactionType;
+import ua.lviv.bas.cinema.bonus.dto.BonusTransactionResponse;
+import ua.lviv.bas.cinema.bonus.BonusCardRepository;
+import ua.lviv.bas.cinema.bonus.BonusTransactionRepository;
+import ua.lviv.bas.cinema.config.NoOpCacheTestConfig;
+import ua.lviv.bas.cinema.config.TestcontainersConfig;
+import ua.lviv.bas.cinema.user.User;
+import ua.lviv.bas.cinema.user.UserRole;
+import ua.lviv.bas.cinema.user.UserRepository;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@SpringBootTest
+@ActiveProfiles("ci")
+@Import({TestcontainersConfig.class, NoOpCacheTestConfig.class})
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+class BonusQueryServiceIntegrationTest {
+
+    @Autowired
+    private BonusQueryService bonusQueryService;
+    @Autowired
+    private BonusCardRepository bonusCardRepository;
+    @Autowired
+    private BonusTransactionRepository bonusTransactionRepository;
+    @Autowired
+    private UserRepository userRepository;
+
+    @Test
+    void getTransactionsShouldReturnCorrectRunningBalancePerTransaction() {
+        var user = userRepository.save(buildUser());
+        var bonusCard = bonusCardRepository.save(BonusCard.builder().user(user).pointsBalance(140).build());
+
+        var tx1 = bonusTransactionRepository
+                .save(buildTransaction(bonusCard, BonusTransactionType.WELCOME_BONUS, 100, 100));
+        var tx2 = bonusTransactionRepository
+                .save(buildTransaction(bonusCard, BonusTransactionType.PAYMENT_ACCRUAL, 50, 150));
+        var tx3 = bonusTransactionRepository
+                .save(buildTransaction(bonusCard, BonusTransactionType.BOOKING_SPEND, -30, 120));
+        var tx4 = bonusTransactionRepository
+                .save(buildTransaction(bonusCard, BonusTransactionType.PAYMENT_ACCRUAL, 20, 140));
+
+        var page = bonusQueryService.getTransactions(user.getId(), PageRequest.of(0, 10));
+        Map<Long, Integer> newBalanceById = page.getContent().stream()
+                .collect(Collectors.toMap(BonusTransactionResponse::id, BonusTransactionResponse::newBalance));
+
+        assertThat(newBalanceById.get(tx1.getId())).isEqualTo(100);
+        assertThat(newBalanceById.get(tx2.getId())).isEqualTo(150);
+        assertThat(newBalanceById.get(tx3.getId())).isEqualTo(120);
+        assertThat(newBalanceById.get(tx4.getId())).isEqualTo(140);
+    }
+
+    private User buildUser() {
+        return User.builder().email("zztest.bonus@test.com").firstName("Test").lastName("User")
+                .dateOfBirth(LocalDate.of(1995, 1, 1)).city("Lviv").phoneNumber("+380000000016")
+                .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).build();
+    }
+
+    private BonusTransaction buildTransaction(BonusCard bonusCard, BonusTransactionType type, int pointsChange,
+            int balanceAfter) {
+        return BonusTransaction.builder().bonusCard(bonusCard).type(type).pointsChange(pointsChange)
+                .balanceAfter(balanceAfter).build();
+    }
+}
