@@ -6,11 +6,10 @@ Full-stack cinema booking platform: seat reservation, LiqPay payments, refunds, 
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.1.1-green)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)
 ![React](https://img.shields.io/badge/React-19-61DAFB)
-![Docker](https://img.shields.io/badge/Docker-✓-blue)
 ![CI](https://github.com/AntonBas/Cinema/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-**[Live demo](https://bas-cinema.vercel.app)** — hosted on free tiers, so the first request may take up to a minute while the backend wakes up. Sign in with Google to try a booking.
+**[Live demo](https://bas-cinema.vercel.app)** — hosted on free tiers, so the first request may take up to a minute while the backend wakes up. Sign in with Google to try a booking. Admin / Content Manager / Cashier access is available on request; the admin panel is also shown in the demo videos.
 
 **[Full Documentation](docs/DOCS.md)** — complete feature descriptions, technical details, and project structure.
 
@@ -91,7 +90,7 @@ flowchart TD
 
 ### Key engineering decisions
 
-- **Two-stage seat locking:** 5-min pessimistic hold (`SELECT ... FOR UPDATE`) on selection, then a 20-min reservation window before payment. `@Version` optimistic locking everywhere else conflicts are rare. No global locks — only individual seats, only temporarily.
+- **Two-stage seat locking:** 5-min pessimistic hold (`SELECT ... FOR UPDATE`) on selection, then a 20-min reservation window before payment. `@Version` optimistic locking everywhere else, where conflicts are rare. No global locks — only individual seats, only temporarily.
 - **Idempotent payment callbacks:** conditional updates (`UPDATE ... WHERE status IN ('PENDING', 'PROCESSING')`) make duplicate LiqPay callbacks safe to ignore; `PaymentScheduler` reconciles payments stuck mid-flow.
 - **Refund state machine:** `PROCESSING → PROCESSED/REJECTED`, with the `PROCESSING` row committed *before* the gateway call so a crash never loses a refund record; `RefundScheduler` reconciles anything still stuck.
 - **Database-level guarantee:** a partial unique index on `seat_reservations (session_id, seat_id) WHERE status IN ('PENDING', 'CONFIRMED')` is the last line of defense — even a bug in the application cannot create a double booking.
