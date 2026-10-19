@@ -148,8 +148,10 @@ export const TicketCard: React.FC<TicketCardProps> = ({
 
       <div className={styles.cardFooter}>
         <div className={styles.priceSection}>
-          <div className={styles.priceLabel}>Price</div>
-          <div className={styles.priceValue}>{formatPrice(ticket.price)}</div>
+          <div className={styles.priceRow}>
+            <div className={styles.priceLabel}>Price</div>
+            <div className={styles.priceValue}>{formatPrice(ticket.price)}</div>
+          </div>
           {!!ticket.bookingBonusPointsUsed && (
             <div className={styles.priceNote}>
               Booking partly paid with {ticket.bookingBonusPointsUsed} bonus

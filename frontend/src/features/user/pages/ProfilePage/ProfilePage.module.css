@@ -12,12 +12,7 @@
 }
 
 .profileSection {
-  background: var(--color-bg-primary);
-  border-radius: var(--radius-lg);
-  padding: var(--space-8);
-  box-shadow: var(--shadow-md);
   margin-bottom: var(--space-8);
-  border: 1px solid var(--color-border);
 }
 
 .loading {
@@ -40,28 +35,14 @@
   }
 }
 
-@media (max-width: 1024px) {
-  .profileSection {
-    padding: var(--space-6);
-  }
-}
-
 @media (max-width: 768px) {
   .verificationBanner {
-    padding: var(--space-4);
-  }
-
-  .profileSection {
     padding: var(--space-4);
   }
 }
 
 @media (max-width: 480px) {
   .verificationBanner {
-    padding: var(--space-3);
-  }
-
-  .profileSection {
     padding: var(--space-3);
   }
 }

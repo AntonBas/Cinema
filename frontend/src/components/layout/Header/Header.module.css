@@ -368,7 +368,7 @@
 
 @media (max-width: 480px) {
   .headerNavbar {
-    padding: 0 var(--space-2);
+    padding: 0 var(--space-4);
     height: 60px;
   }
 

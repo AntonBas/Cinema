@@ -55,6 +55,7 @@ export const ForgotPasswordForm: React.FC = () => {
 
           <Input
             type="email"
+            label="Email"
             placeholder="Email address"
             value={email}
             onChange={(value) => {

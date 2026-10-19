@@ -64,3 +64,14 @@
     font-size: var(--font-size-sm);
   }
 }
+
+@media (max-width: 480px) {
+  .tabs {
+    gap: var(--space-1);
+  }
+
+  .tab {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-sm);
+  }
+}

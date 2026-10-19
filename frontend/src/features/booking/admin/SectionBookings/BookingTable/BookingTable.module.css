@@ -26,15 +26,15 @@
 }
 
 .colBooking {
-  width: 18%;
+  width: 16%;
 }
 
 .colCustomer {
-  width: 25%;
+  width: 22%;
 }
 
 .colSession {
-  width: 19%;
+  width: 20%;
 }
 
 .colAmount {
@@ -42,11 +42,11 @@
 }
 
 .colStatus {
-  width: 12%;
+  width: 13%;
 }
 
 .colPayment {
-  width: 17%;
+  width: 20%;
 }
 
 .nowrap {

@@ -83,7 +83,6 @@
 @media (max-width: 768px) {
   .section {
     padding: var(--space-4);
-    min-height: calc(100vh - 2rem);
   }
 
   .content > div:first-child {

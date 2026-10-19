@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { ImagePlus } from "lucide-react";
 import type {
   MovieAdminResponse,
   AgeRating,
@@ -335,7 +336,9 @@ export const MovieForm: React.FC<MovieFormProps> = React.memo(
                 </div>
               ) : (
                 <div className={styles.uploadPlaceholder}>
-                  <span>📷</span>
+                  <span>
+                    <ImagePlus size={48} aria-hidden="true" />
+                  </span>
                   <p>Click to upload poster</p>
                   <small>Recommended: 800x1200px, JPG/PNG/WebP</small>
                 </div>

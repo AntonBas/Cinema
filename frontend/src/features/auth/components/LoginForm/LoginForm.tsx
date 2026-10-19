@@ -100,6 +100,7 @@ export const LoginForm: React.FC = () => {
             setEmail(value);
             setFormErrors((prev) => ({ ...prev, email: undefined }));
           }}
+          label="Email"
           placeholder="Email address"
           disabled={loading}
           error={formErrors.email}
@@ -112,6 +113,7 @@ export const LoginForm: React.FC = () => {
             setPassword(value);
             setFormErrors((prev) => ({ ...prev, password: undefined }));
           }}
+          label="Password"
           placeholder="Password"
           disabled={loading}
           error={formErrors.password}

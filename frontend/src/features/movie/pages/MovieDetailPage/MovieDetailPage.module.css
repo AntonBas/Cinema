@@ -23,6 +23,12 @@
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-8);
   }
+
+  .leftColumn {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+  }
 }
 
 .leftColumn {

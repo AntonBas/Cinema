@@ -35,6 +35,7 @@
   object-fit: cover;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
+  background: var(--color-bg-tertiary);
 }
 
 .movieInfo {
@@ -116,7 +117,7 @@
 
 .sessionsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: var(--space-4);
 }
 
@@ -227,19 +228,25 @@
 
 @media (max-width: 768px) {
   .movieHeader {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-4);
+  }
+
+  .poster {
+    width: 72px;
+    height: 108px;
+  }
+
+  .movieInfo {
+    justify-content: flex-start;
+    min-width: 0;
   }
 
   .movieHeaderRow {
     flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-
-  .movieMeta {
-    justify-content: center;
+    align-items: flex-start;
+    gap: var(--space-2);
   }
 }
 

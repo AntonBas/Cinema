@@ -13,6 +13,7 @@ import type { CinemaSessionStatus } from "@/features/cinema/types/session";
 import type { CinemaHallListResponse } from "@/features/cinema/types/cinemaHall";
 import type { MovieSessionSearchResponse } from "@/features/movie/types/movie";
 import type { SelectOption } from "@/components/ui/Select/Select";
+import { FilterPanel } from "@/components/admin/shared/FilterPanel/FilterPanel";
 import styles from "./SessionFilters.module.css";
 
 interface SessionFiltersProps {
@@ -178,146 +179,150 @@ export const SessionFilters: React.FC<SessionFiltersProps> = ({
   ].filter(Boolean).length;
 
   return (
-    <div className={styles.filters}>
-      <div className={styles.filterGrid}>
-        <div className={styles.filterGroup}>
-          <label htmlFor="dateFrom" className={styles.label}>
-            Date From
-          </label>
-          <Input
-            id="dateFrom"
-            type="date"
-            value={filters.dateFrom || ""}
-            onChange={(value) => onDateFromChange(value || undefined)}
-          />
+    <FilterPanel activeCount={activeFilterCount}>
+      <div className={styles.filters}>
+        <div className={styles.filterGrid}>
+          <div className={styles.filterGroup}>
+            <label htmlFor="dateFrom" className={styles.label}>
+              Date From
+            </label>
+            <Input
+              id="dateFrom"
+              type="date"
+              value={filters.dateFrom || ""}
+              onChange={(value) => onDateFromChange(value || undefined)}
+            />
+          </div>
+
+          <div className={styles.filterGroup}>
+            <label htmlFor="dateTo" className={styles.label}>
+              Date To
+            </label>
+            <Input
+              id="dateTo"
+              type="date"
+              value={filters.dateTo || ""}
+              onChange={(value) => onDateToChange(value || undefined)}
+              min={filters.dateFrom}
+            />
+          </div>
+
+          <div className={styles.filterGroup}>
+            <label htmlFor="hall" className={styles.label}>
+              Hall
+            </label>
+            <Select
+              value={filters.hallId?.toString() || ""}
+              onChange={(value) =>
+                onHallChange(value ? Number(value) : undefined)
+              }
+              options={hallOptions}
+            />
+          </div>
+
+          <div className={styles.filterGroup}>
+            <label htmlFor="status" className={styles.label}>
+              Status
+            </label>
+            <Select
+              value={filters.status || ""}
+              onChange={(value) =>
+                onStatusChange((value as CinemaSessionStatus) || undefined)
+              }
+              options={STATUS_OPTIONS}
+            />
+          </div>
+
+          <div className={styles.filterGroup}>
+            <label htmlFor="sort" className={styles.label}>
+              Sort by
+            </label>
+            <Select
+              value={sort || ""}
+              onChange={(value) => onSortChange(String(value))}
+              options={SORT_OPTIONS}
+            />
+          </div>
         </div>
 
-        <div className={styles.filterGroup}>
-          <label htmlFor="dateTo" className={styles.label}>
-            Date To
-          </label>
-          <Input
-            id="dateTo"
-            type="date"
-            value={filters.dateTo || ""}
-            onChange={(value) => onDateToChange(value || undefined)}
-            min={filters.dateFrom}
-          />
-        </div>
-
-        <div className={styles.filterGroup}>
-          <label htmlFor="hall" className={styles.label}>
-            Hall
-          </label>
-          <Select
-            value={filters.hallId?.toString() || ""}
-            onChange={(value) =>
-              onHallChange(value ? Number(value) : undefined)
-            }
-            options={hallOptions}
-          />
-        </div>
-
-        <div className={styles.filterGroup}>
-          <label htmlFor="status" className={styles.label}>
-            Status
-          </label>
-          <Select
-            value={filters.status || ""}
-            onChange={(value) =>
-              onStatusChange((value as CinemaSessionStatus) || undefined)
-            }
-            options={STATUS_OPTIONS}
-          />
-        </div>
-
-        <div className={styles.filterGroup}>
-          <label htmlFor="sort" className={styles.label}>
-            Sort by
-          </label>
-          <Select
-            value={sort || ""}
-            onChange={(value) => onSortChange(String(value))}
-            options={SORT_OPTIONS}
-          />
-        </div>
-      </div>
-
-      <div className={styles.movieFilterRow}>
-        <div className={styles.movieFilterGroup}>
-          <label htmlFor="movieTitle" className={styles.label}>
-            Movie Title
-          </label>
-          <div className={styles.movieSearch} ref={movieSearchRef}>
-            <div className={styles.movieInputWrapper}>
-              <Input
-                id="movieTitle"
-                type="text"
-                value={movieInput}
-                onChange={handleMovieInputChange}
-                onClick={handleMovieInputClick}
-                placeholder="Search by movie title..."
-                className={styles.movieInput}
-              />
-              {movieInput && (
-                <Button
-                  variant="error"
-                  size="small"
-                  onClick={handleClearMovie}
-                  className={styles.clearMovieButton}
-                  aria-label="Clear movie filter"
-                >
-                  ×
-                </Button>
-              )}
-            </div>
-
-            {showMovieResults && (
-              <div className={styles.movieResults}>
-                {isSearching ? (
-                  <div className={styles.loadingResults}>Loading movies...</div>
-                ) : filteredMovies.length > 0 ? (
-                  filteredMovies.map((movie) => (
-                    <div
-                      key={movie.id}
-                      className={`${styles.movieOption} ${filters.movieTitle === movie.title ? styles.selected : ""}`}
-                      onClick={() => handleMovieSelect(movie.title)}
-                    >
-                      <div className={styles.movieTitle}>{movie.title}</div>
-                      <div className={styles.movieDetails}>
-                        {movie.durationMinutes} min
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className={styles.noResults}>
-                    {movieInput.trim()
-                      ? `No movies found for "${movieInput}"`
-                      : "Type to search movies"}
-                  </div>
+        <div className={styles.movieFilterRow}>
+          <div className={styles.movieFilterGroup}>
+            <label htmlFor="movieTitle" className={styles.label}>
+              Movie Title
+            </label>
+            <div className={styles.movieSearch} ref={movieSearchRef}>
+              <div className={styles.movieInputWrapper}>
+                <Input
+                  id="movieTitle"
+                  type="text"
+                  value={movieInput}
+                  onChange={handleMovieInputChange}
+                  onClick={handleMovieInputClick}
+                  placeholder="Search by movie title..."
+                  className={styles.movieInput}
+                />
+                {movieInput && (
+                  <Button
+                    variant="error"
+                    size="small"
+                    onClick={handleClearMovie}
+                    className={styles.clearMovieButton}
+                    aria-label="Clear movie filter"
+                  >
+                    ×
+                  </Button>
                 )}
               </div>
-            )}
-          </div>
-        </div>
-      </div>
 
-      {hasActiveFilters && (
-        <div className={styles.clearFiltersContainer}>
-          <div className={styles.filterInfo}>
-            <span className={styles.countBadge}>{activeFilterCount}</span>
-            active filter{activeFilterCount !== 1 ? "s" : ""}
-            <Button
-              variant="error"
-              size="small"
-              onClick={onClearFilters}
-              className={styles.clearButton}
-            >
-              Clear All
-            </Button>
+              {showMovieResults && (
+                <div className={styles.movieResults}>
+                  {isSearching ? (
+                    <div className={styles.loadingResults}>
+                      Loading movies...
+                    </div>
+                  ) : filteredMovies.length > 0 ? (
+                    filteredMovies.map((movie) => (
+                      <div
+                        key={movie.id}
+                        className={`${styles.movieOption} ${filters.movieTitle === movie.title ? styles.selected : ""}`}
+                        onClick={() => handleMovieSelect(movie.title)}
+                      >
+                        <div className={styles.movieTitle}>{movie.title}</div>
+                        <div className={styles.movieDetails}>
+                          {movie.durationMinutes} min
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className={styles.noResults}>
+                      {movieInput.trim()
+                        ? `No movies found for "${movieInput}"`
+                        : "Type to search movies"}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      )}
-    </div>
+
+        {hasActiveFilters && (
+          <div className={styles.clearFiltersContainer}>
+            <div className={styles.filterInfo}>
+              <span className={styles.countBadge}>{activeFilterCount}</span>
+              active filter{activeFilterCount !== 1 ? "s" : ""}
+              <Button
+                variant="error"
+                size="small"
+                onClick={onClearFilters}
+                className={styles.clearButton}
+              >
+                Clear All
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </FilterPanel>
   );
 };

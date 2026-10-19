@@ -16,11 +16,12 @@ import {
 } from "@/utils/formValidation";
 import { useFocusFirstInvalidField } from "@/hooks/common/useFocusFirstInvalidField";
 import { AuthCard } from "@/features/auth/components/AuthCard/AuthCard";
+import { GoogleIcon } from "@/features/auth/components/GoogleIcon/GoogleIcon";
 import styles from "./RegisterForm.module.css";
 
 export const RegisterForm: React.FC = () => {
   const navigate = useNavigate();
-  const { loading, error, register } = useAuthActions();
+  const { loading, error, register, loginWithGoogle } = useAuthActions();
 
   const [formData, setFormData] = useState<RegisterRequest>({
     firstName: "",
@@ -89,6 +90,11 @@ export const RegisterForm: React.FC = () => {
     }
   };
 
+  const handleGoogleSignUp = (e: React.MouseEvent) => {
+    e.preventDefault();
+    loginWithGoogle();
+  };
+
   return (
     <AuthCard title="Create an Account" wide>
       <div className={styles.registrationTop}>
@@ -112,6 +118,7 @@ export const RegisterForm: React.FC = () => {
           <h2 className={styles.sectionTitle}>Personal Information</h2>
           <div className={styles.inputGroup}>
             <Input
+              label="First name"
               placeholder="First Name"
               value={formData.firstName}
               onChange={(v) => handleChange("firstName", v)}
@@ -119,6 +126,7 @@ export const RegisterForm: React.FC = () => {
               error={formErrors.firstName}
             />
             <Input
+              label="Last name"
               placeholder="Last Name"
               value={formData.lastName}
               onChange={(v) => handleChange("lastName", v)}
@@ -129,6 +137,7 @@ export const RegisterForm: React.FC = () => {
           <div className={styles.inputGroup}>
             <Input
               type="date"
+              label="Date of birth"
               placeholder="Date of Birth"
               value={formData.dateOfBirth}
               onChange={(v) => handleChange("dateOfBirth", v)}
@@ -136,6 +145,7 @@ export const RegisterForm: React.FC = () => {
               error={formErrors.dateOfBirth}
             />
             <Input
+              label="City"
               placeholder="Your City"
               value={formData.city}
               onChange={(v) => handleChange("city", v)}
@@ -149,6 +159,7 @@ export const RegisterForm: React.FC = () => {
           <h2 className={styles.sectionTitle}>Contact Information</h2>
           <Input
             type="email"
+            label="Email"
             placeholder="E-mail"
             value={formData.email}
             onChange={(v) => handleChange("email", v)}
@@ -156,6 +167,7 @@ export const RegisterForm: React.FC = () => {
             error={formErrors.email}
           />
           <Input
+            label="Phone number"
             placeholder="Phone number"
             value={formData.phoneNumber}
             onChange={(v) => handleChange("phoneNumber", v)}
@@ -168,14 +180,17 @@ export const RegisterForm: React.FC = () => {
           <h2 className={styles.sectionTitle}>Create a Password</h2>
           <Input
             type="password"
+            label="Password"
             placeholder="Enter Password"
             value={formData.password}
             onChange={(v) => handleChange("password", v)}
             disabled={loading}
             error={formErrors.password}
           />
+          <p className={styles.hint}>Use 8 to 32 characters.</p>
           <Input
             type="password"
+            label="Confirm password"
             placeholder="Confirm Password"
             value={formData.passwordConfirm}
             onChange={(v) => handleChange("passwordConfirm", v)}
@@ -196,6 +211,22 @@ export const RegisterForm: React.FC = () => {
           {loading ? "Creating account..." : "Sign Up"}
         </Button>
       </form>
+
+      <div className={styles.divider}>
+        <span className={styles.dividerText}>or</span>
+      </div>
+
+      <Button
+        type="button"
+        variant="outline"
+        size="large"
+        onClick={handleGoogleSignUp}
+        disabled={loading}
+        fullWidth
+      >
+        <GoogleIcon size={20} />
+        Continue with Google
+      </Button>
     </AuthCard>
   );
 };

@@ -43,7 +43,6 @@
 @media (max-width: 768px) {
   .container {
     padding: var(--space-4);
-    min-height: calc(100vh - 2.5rem);
   }
 }
 
