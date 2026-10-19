@@ -7,6 +7,7 @@ import {
   getActionDisplay,
   getEntityTypeDisplay,
 } from "@/features/audit/types/audit";
+import { FilterPanel } from "@/components/admin/shared/FilterPanel/FilterPanel";
 import styles from "./AuditLogsFilters.module.css";
 
 interface AuditLogsFiltersProps {
@@ -48,55 +49,62 @@ export const AuditLogsFilters: React.FC<AuditLogsFiltersProps> = ({
     ...actions.map((act) => ({ value: act, label: getActionDisplay(act) })),
   ];
 
+  const activeCount = [entityType, action, changedBy].filter(Boolean).length;
+
   return (
-    <div className={styles.filtersContainer}>
-      <div className={styles.filterItem}>
-        <label htmlFor="audit-logs-filters-type" className={styles.label}>
-          Type
-        </label>
-        <Select
-          id="audit-logs-filters-type"
-          options={entityTypeOptions}
-          value={entityType}
-          onChange={(value) => onEntityTypeChange(value.toString())}
-          placeholder="Select type"
-        />
-      </div>
+    <FilterPanel activeCount={activeCount}>
+      <div className={styles.filtersContainer}>
+        <div className={styles.filterItem}>
+          <label htmlFor="audit-logs-filters-type" className={styles.label}>
+            Type
+          </label>
+          <Select
+            id="audit-logs-filters-type"
+            options={entityTypeOptions}
+            value={entityType}
+            onChange={(value) => onEntityTypeChange(value.toString())}
+            placeholder="Select type"
+          />
+        </div>
 
-      <div className={styles.filterItem}>
-        <label htmlFor="audit-logs-filters-action" className={styles.label}>
-          Action
-        </label>
-        <Select
-          id="audit-logs-filters-action"
-          options={actionOptions}
-          value={action}
-          onChange={(value) => onActionChange(value.toString())}
-          placeholder="Select action"
-        />
-      </div>
+        <div className={styles.filterItem}>
+          <label htmlFor="audit-logs-filters-action" className={styles.label}>
+            Action
+          </label>
+          <Select
+            id="audit-logs-filters-action"
+            options={actionOptions}
+            value={action}
+            onChange={(value) => onActionChange(value.toString())}
+            placeholder="Select action"
+          />
+        </div>
 
-      <div className={styles.filterItem}>
-        <label htmlFor="audit-logs-filters-changed-by" className={styles.label}>
-          Changed By
-        </label>
-        <SearchInput
-          id="audit-logs-filters-changed-by"
-          value={changedBy}
-          onSearch={onChangedByChange}
-          placeholder="User email"
-        />
-      </div>
+        <div className={styles.filterItem}>
+          <label
+            htmlFor="audit-logs-filters-changed-by"
+            className={styles.label}
+          >
+            Changed By
+          </label>
+          <SearchInput
+            id="audit-logs-filters-changed-by"
+            value={changedBy}
+            onSearch={onChangedByChange}
+            placeholder="User email"
+          />
+        </div>
 
-      {hasActiveFilters && (
-        <Button
-          variant="secondary"
-          onClick={onClear}
-          className={styles.clearButton}
-        >
-          Clear
-        </Button>
-      )}
-    </div>
+        {hasActiveFilters && (
+          <Button
+            variant="secondary"
+            onClick={onClear}
+            className={styles.clearButton}
+          >
+            Clear
+          </Button>
+        )}
+      </div>
+    </FilterPanel>
   );
 };

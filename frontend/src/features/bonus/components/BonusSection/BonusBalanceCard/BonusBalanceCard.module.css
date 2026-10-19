@@ -200,6 +200,17 @@
   .limitsGrid {
     grid-template-columns: 1fr;
   }
+
+  .usageLimits {
+    background: none;
+    border: none;
+    padding: 0;
+  }
+
+  .limitsTitle {
+    margin-bottom: var(--space-3);
+    font-size: var(--font-size-md);
+  }
 }
 
 @media (max-width: 480px) {

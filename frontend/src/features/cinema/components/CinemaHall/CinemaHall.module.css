@@ -63,12 +63,13 @@
 .canvasViewport {
   width: 100%;
   display: flex;
-  justify-content: center;
+  overflow-x: auto;
 }
 
 .canvasSizer {
-  position: relative;
+  margin: 0 auto;
   flex-shrink: 0;
+  position: relative;
 }
 
 .canvas {

@@ -68,6 +68,7 @@
 @media (max-width: 480px) {
   .tabs {
     gap: var(--space-1);
+    mask-image: linear-gradient(to right, black calc(100% - 24px), transparent);
   }
 
   .tab {

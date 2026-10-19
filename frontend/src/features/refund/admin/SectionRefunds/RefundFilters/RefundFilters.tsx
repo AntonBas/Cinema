@@ -9,6 +9,7 @@ import type {
   RefundStatus,
 } from "@/features/refund/types/refund";
 import { RefundStatusDisplay } from "@/features/refund/types/refund";
+import { FilterPanel } from "@/components/admin/shared/FilterPanel/FilterPanel";
 import styles from "@/features/booking/admin/SectionBookings/BookingFilters/BookingFilters.module.css";
 
 interface RefundFiltersProps {
@@ -60,78 +61,83 @@ export const RefundFilters: React.FC<RefundFiltersProps> = ({
     });
   };
 
+  const activeCount =
+    Object.values(filters).filter(Boolean).length + (sort ? 1 : 0);
+
   return (
-    <div className={styles.filters}>
-      <div className={styles.search}>
-        <SearchInput
-          value={filters.query}
-          onSearch={(query) => onChange({ query: query || undefined })}
-          placeholder="Refund or booking number, email, ticket code or LiqPay order..."
-          className={styles.searchInput}
-          delay={500}
-        />
+    <FilterPanel activeCount={activeCount}>
+      <div className={styles.filters}>
+        <div className={styles.search}>
+          <SearchInput
+            value={filters.query}
+            onSearch={(query) => onChange({ query: query || undefined })}
+            placeholder="Refund or booking number, email, ticket code or LiqPay order..."
+            className={styles.searchInput}
+            delay={500}
+          />
+        </div>
+
+        <div className={styles.grid}>
+          <div className={styles.filterItem}>
+            <label htmlFor="refund-filters-status" className={styles.label}>
+              Status
+            </label>
+            <Select
+              id="refund-filters-status"
+              value={toStatusValue(filters)}
+              onChange={(value) => handleStatusChange(String(value))}
+              options={STATUS_OPTIONS}
+            />
+          </div>
+
+          <div className={styles.filterItem}>
+            <label htmlFor="refundDateFrom" className={styles.label}>
+              Created from
+            </label>
+            <Input
+              id="refundDateFrom"
+              type="date"
+              value={filters.dateFrom || ""}
+              onChange={(value) => onChange({ dateFrom: value || undefined })}
+            />
+          </div>
+
+          <div className={styles.filterItem}>
+            <label htmlFor="refundDateTo" className={styles.label}>
+              Created to
+            </label>
+            <Input
+              id="refundDateTo"
+              type="date"
+              value={filters.dateTo || ""}
+              onChange={(value) => onChange({ dateTo: value || undefined })}
+              min={filters.dateFrom}
+            />
+          </div>
+
+          <div className={styles.filterItem}>
+            <label htmlFor="refund-filters-sort-by" className={styles.label}>
+              Sort by
+            </label>
+            <Select
+              id="refund-filters-sort-by"
+              value={sort || ""}
+              onChange={(value) => onSortChange(String(value))}
+              options={SORT_OPTIONS}
+            />
+          </div>
+
+          {hasActiveFilters && (
+            <Button
+              variant="secondary"
+              onClick={onClear}
+              className={styles.clearButton}
+            >
+              Clear
+            </Button>
+          )}
+        </div>
       </div>
-
-      <div className={styles.grid}>
-        <div className={styles.filterItem}>
-          <label htmlFor="refund-filters-status" className={styles.label}>
-            Status
-          </label>
-          <Select
-            id="refund-filters-status"
-            value={toStatusValue(filters)}
-            onChange={(value) => handleStatusChange(String(value))}
-            options={STATUS_OPTIONS}
-          />
-        </div>
-
-        <div className={styles.filterItem}>
-          <label htmlFor="refundDateFrom" className={styles.label}>
-            Created from
-          </label>
-          <Input
-            id="refundDateFrom"
-            type="date"
-            value={filters.dateFrom || ""}
-            onChange={(value) => onChange({ dateFrom: value || undefined })}
-          />
-        </div>
-
-        <div className={styles.filterItem}>
-          <label htmlFor="refundDateTo" className={styles.label}>
-            Created to
-          </label>
-          <Input
-            id="refundDateTo"
-            type="date"
-            value={filters.dateTo || ""}
-            onChange={(value) => onChange({ dateTo: value || undefined })}
-            min={filters.dateFrom}
-          />
-        </div>
-
-        <div className={styles.filterItem}>
-          <label htmlFor="refund-filters-sort-by" className={styles.label}>
-            Sort by
-          </label>
-          <Select
-            id="refund-filters-sort-by"
-            value={sort || ""}
-            onChange={(value) => onSortChange(String(value))}
-            options={SORT_OPTIONS}
-          />
-        </div>
-
-        {hasActiveFilters && (
-          <Button
-            variant="secondary"
-            onClick={onClear}
-            className={styles.clearButton}
-          >
-            Clear
-          </Button>
-        )}
-      </div>
-    </div>
+    </FilterPanel>
   );
 };
