@@ -210,6 +210,8 @@ public class SeatReservationService {
             throw SeatNotAvailableException.seatNotInSessionHall(seat.getId(), session.getId());
         }
 
+        seatReservationRepository.deleteExpiredHolds(session.getId(), seat.getId());
+
         if (isReserved(session.getId(), seat.getId())) {
             throw SeatNotAvailableException.forSeatAndSession(seat.getId(), session.getId());
         }

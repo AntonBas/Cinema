@@ -25,7 +25,9 @@ import ua.lviv.bas.cinema.user.UserRepository;
 import ua.lviv.bas.cinema.common.CinemaTime;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -64,11 +66,12 @@ class SeatReservationConcurrencyTest {
 
     @BeforeEach
     void setUp() {
-        userA = userRepository.save(buildUser("concurrency.a@test.com"));
-        userB = userRepository.save(buildUser("concurrency.b@test.com"));
+        var suffix = UUID.randomUUID().toString().substring(0, 8);
+        userA = userRepository.save(buildUser("concurrency.a." + suffix + "@test.com"));
+        userB = userRepository.save(buildUser("concurrency.b." + suffix + "@test.com"));
 
-        var movie = movieRepository.save(buildMovie());
-        var hall = cinemaHallRepository.save(CinemaHall.builder().name("Concurrency Hall").build());
+        var movie = movieRepository.save(buildMovie(suffix));
+        var hall = cinemaHallRepository.save(CinemaHall.builder().name("Concurrency Hall " + suffix).build());
         var seat = seatRepository.save(Seat.builder().row(1).number(1).x(0).y(0).hall(hall).build());
         var session = sessionRepository.save(Session.builder().movie(movie).hall(hall)
                 .startTime(CinemaTime.now().plusDays(1)).basePrice(new BigDecimal("100.00")).build());
@@ -108,6 +111,24 @@ class SeatReservationConcurrencyTest {
         assertThat(reservations.getFirst().getSeat().getId()).isEqualTo(seatId);
     }
 
+    @Test
+    void holdShouldSucceedWhenPreviousHoldExpiredButSchedulerHasNotRunYet() {
+        var seat = seatRepository.findById(seatId).orElseThrow();
+        var session = sessionRepository.findById(sessionId).orElseThrow();
+        seatReservationRepository.save(SeatReservation.builder().seat(seat).session(session)
+                .status(ReservationStatus.PENDING).reservedUntil(Instant.now().minusSeconds(60))
+                .reservedByUser(userA).build());
+
+        var availability = seatReservationService.getAvailability(sessionId);
+        assertThat(availability.seats()).singleElement().satisfies(info -> assertThat(info.available()).isTrue());
+
+        seatReservationService.hold(sessionId, seatId, userB);
+
+        var reservations = seatReservationRepository.findBySessionIdAndSeatId(sessionId, seatId);
+        assertThat(reservations).hasSize(1);
+        assertThat(reservations.getFirst().getReservedByUser().getId()).isEqualTo(userB.getId());
+    }
+
     private Exception attemptHold(CountDownLatch readyLatch, CountDownLatch startLatch, User user) {
         try {
             readyLatch.countDown();
@@ -125,8 +146,8 @@ class SeatReservationConcurrencyTest {
                 .password("hashed-password").userRole(UserRole.ROLE_USER).enabled(true).emailVerified(true).build();
     }
 
-    private Movie buildMovie() {
-        return Movie.builder().title("Concurrency Test Movie").slug("concurrency-test-movie")
+    private Movie buildMovie(String suffix) {
+        return Movie.builder().title("Concurrency Test Movie " + suffix).slug("concurrency-test-movie-" + suffix)
                 .trailerUrl("https://example.com/trailer").description("Test movie for concurrency testing")
                 .durationMinutes(120).releaseDate(CinemaTime.today().minusDays(1))
                 .endShowingDate(CinemaTime.today().plusMonths(1)).status(MovieStatus.CURRENT)
