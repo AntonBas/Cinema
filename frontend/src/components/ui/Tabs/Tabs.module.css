@@ -64,3 +64,15 @@
     font-size: var(--font-size-sm);
   }
 }
+
+@media (max-width: 480px) {
+  .tabs {
+    gap: var(--space-1);
+    mask-image: linear-gradient(to right, black calc(100% - 24px), transparent);
+  }
+
+  .tab {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-sm);
+  }
+}

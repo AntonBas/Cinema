@@ -79,7 +79,7 @@ app:
     format: PNG
   company:
     name: "Bas Cinema"
-    support-email: ${SUPPORT_EMAIL:basantonoleg@gmail.com}
+    support-email: ${SUPPORT_EMAIL:antonbas21@gmail.com}
   frontend:
     url: ${FRONTEND_URL:http://localhost:5173}
   cors:
@@ -98,7 +98,6 @@ booking:
   expiration-minutes: 20
   temp-hold-minutes: 5
   session-too-close-minutes: 30
-  max-seats-per-booking: 10
 
 payment:
   liqpay:

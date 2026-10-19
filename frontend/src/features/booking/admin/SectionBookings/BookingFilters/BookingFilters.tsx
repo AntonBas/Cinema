@@ -11,6 +11,7 @@ import type {
 import { BookingStatusDisplay } from "@/features/booking/types/booking";
 import type { PaymentStatus } from "@/features/payment/types/payment";
 import { PaymentStatusDisplay } from "@/features/payment/types/payment";
+import { FilterPanel } from "@/components/admin/shared/FilterPanel/FilterPanel";
 import styles from "./BookingFilters.module.css";
 
 interface BookingFiltersProps {
@@ -61,98 +62,102 @@ export const BookingFilters: React.FC<BookingFiltersProps> = ({
   onSortChange,
   onClear,
 }) => {
-  const hasActiveFilters = Object.values(filters).some(Boolean) || !!sort;
+  const activeCount =
+    Object.values(filters).filter(Boolean).length + (sort ? 1 : 0);
+  const hasActiveFilters = activeCount > 0;
 
   return (
-    <div className={styles.filters}>
-      <div className={styles.search}>
-        <SearchInput
-          value={filters.query}
-          onSearch={(query) => onChange({ query: query || undefined })}
-          placeholder="Booking number, email, movie or LiqPay order..."
-          className={styles.searchInput}
-          delay={500}
-        />
+    <FilterPanel activeCount={activeCount}>
+      <div className={styles.filters}>
+        <div className={styles.search}>
+          <SearchInput
+            value={filters.query}
+            onSearch={(query) => onChange({ query: query || undefined })}
+            placeholder="Booking number, email, movie or LiqPay order..."
+            className={styles.searchInput}
+            delay={500}
+          />
+        </div>
+
+        <div className={styles.grid}>
+          <div className={styles.filterItem}>
+            <label htmlFor="booking-filters-status" className={styles.label}>
+              Status
+            </label>
+            <Select
+              id="booking-filters-status"
+              value={filters.status || ""}
+              onChange={(value) =>
+                onChange({ status: (value as BookingStatus) || undefined })
+              }
+              options={STATUS_OPTIONS}
+            />
+          </div>
+
+          <div className={styles.filterItem}>
+            <label htmlFor="booking-filters-payment" className={styles.label}>
+              Payment
+            </label>
+            <Select
+              id="booking-filters-payment"
+              value={filters.paymentStatus || ""}
+              onChange={(value) =>
+                onChange({
+                  paymentStatus: (value as PaymentStatus) || undefined,
+                })
+              }
+              options={PAYMENT_STATUS_OPTIONS}
+            />
+          </div>
+
+          <div className={styles.filterItem}>
+            <label htmlFor="bookingDateFrom" className={styles.label}>
+              Created from
+            </label>
+            <Input
+              id="bookingDateFrom"
+              type="date"
+              value={filters.dateFrom || ""}
+              onChange={(value) => onChange({ dateFrom: value || undefined })}
+            />
+          </div>
+
+          <div className={styles.filterItem}>
+            <label htmlFor="bookingDateTo" className={styles.label}>
+              Created to
+            </label>
+            <Input
+              id="bookingDateTo"
+              type="date"
+              value={filters.dateTo || ""}
+              onChange={(value) => onChange({ dateTo: value || undefined })}
+              min={filters.dateFrom}
+            />
+          </div>
+
+          <div className={styles.filterItem}>
+            <label htmlFor="booking-filters-sort-by" className={styles.label}>
+              Sort by
+            </label>
+            <Select
+              id="booking-filters-sort-by"
+              value={sort || ""}
+              onChange={(value) => onSortChange(String(value))}
+              options={SORT_OPTIONS}
+            />
+          </div>
+
+          {hasActiveFilters && (
+            <Button
+              variant="secondary"
+              onClick={onClear}
+              className={styles.clearButton}
+            >
+              Clear
+            </Button>
+          )}
+        </div>
       </div>
-
-      <div className={styles.grid}>
-        <div className={styles.filterItem}>
-          <label htmlFor="booking-filters-status" className={styles.label}>
-            Status
-          </label>
-          <Select
-            id="booking-filters-status"
-            value={filters.status || ""}
-            onChange={(value) =>
-              onChange({ status: (value as BookingStatus) || undefined })
-            }
-            options={STATUS_OPTIONS}
-          />
-        </div>
-
-        <div className={styles.filterItem}>
-          <label htmlFor="booking-filters-payment" className={styles.label}>
-            Payment
-          </label>
-          <Select
-            id="booking-filters-payment"
-            value={filters.paymentStatus || ""}
-            onChange={(value) =>
-              onChange({
-                paymentStatus: (value as PaymentStatus) || undefined,
-              })
-            }
-            options={PAYMENT_STATUS_OPTIONS}
-          />
-        </div>
-
-        <div className={styles.filterItem}>
-          <label htmlFor="bookingDateFrom" className={styles.label}>
-            Created from
-          </label>
-          <Input
-            id="bookingDateFrom"
-            type="date"
-            value={filters.dateFrom || ""}
-            onChange={(value) => onChange({ dateFrom: value || undefined })}
-          />
-        </div>
-
-        <div className={styles.filterItem}>
-          <label htmlFor="bookingDateTo" className={styles.label}>
-            Created to
-          </label>
-          <Input
-            id="bookingDateTo"
-            type="date"
-            value={filters.dateTo || ""}
-            onChange={(value) => onChange({ dateTo: value || undefined })}
-            min={filters.dateFrom}
-          />
-        </div>
-
-        <div className={styles.filterItem}>
-          <label htmlFor="booking-filters-sort-by" className={styles.label}>
-            Sort by
-          </label>
-          <Select
-            id="booking-filters-sort-by"
-            value={sort || ""}
-            onChange={(value) => onSortChange(String(value))}
-            options={SORT_OPTIONS}
-          />
-        </div>
-
-        {hasActiveFilters && (
-          <Button
-            variant="secondary"
-            onClick={onClear}
-            className={styles.clearButton}
-          >
-            Clear
-          </Button>
-        )}
-      </div>
-    </div>
+    </FilterPanel>
   );
 };

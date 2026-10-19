@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import java.math.BigDecimal;
 import java.time.Instant;
 import ua.lviv.bas.cinema.payment.exception.PaymentProcessingException;
 import ua.lviv.bas.cinema.payment.exception.InvalidPaymentStatusException;
@@ -140,6 +141,56 @@ public class PaymentStatusServiceTest {
         paymentStatusService.handleCallback(data, signature);
 
         verify(paymentService).processSuccess(testPayment, decodedData);
+    }
+
+    @Test
+    void handleCallbackWithMatchingAmountShouldSucceed() {
+        testPayment.setAmount(new BigDecimal("150.00"));
+        Map<String, String> decodedData = new HashMap<>();
+        decodedData.put("order_id", ORDER_ID);
+        decodedData.put("status", "success");
+        decodedData.put("amount", "150");
+        decodedData.put("currency", "UAH");
+
+        when(paymentGatewayService.processCallback("data", "sig")).thenReturn(decodedData);
+        when(paymentRepository.findByLiqpayOrderId(ORDER_ID)).thenReturn(Optional.of(testPayment));
+
+        paymentStatusService.handleCallback("data", "sig");
+
+        verify(paymentService).processSuccess(testPayment, decodedData);
+    }
+
+    @Test
+    void handleCallbackWithAmountMismatchShouldNotProcessSuccess() {
+        testPayment.setAmount(new BigDecimal("150.00"));
+        Map<String, String> decodedData = new HashMap<>();
+        decodedData.put("order_id", ORDER_ID);
+        decodedData.put("status", "success");
+        decodedData.put("amount", "1");
+
+        when(paymentGatewayService.processCallback("data", "sig")).thenReturn(decodedData);
+        when(paymentRepository.findByLiqpayOrderId(ORDER_ID)).thenReturn(Optional.of(testPayment));
+
+        assertThatThrownBy(() -> paymentStatusService.handleCallback("data", "sig"))
+                .isInstanceOf(PaymentProcessingException.class);
+        verify(paymentService, never()).processSuccess(any(), any());
+    }
+
+    @Test
+    void handleCallbackWithCurrencyMismatchShouldNotProcessSuccess() {
+        testPayment.setAmount(new BigDecimal("150.00"));
+        Map<String, String> decodedData = new HashMap<>();
+        decodedData.put("order_id", ORDER_ID);
+        decodedData.put("status", "success");
+        decodedData.put("amount", "150");
+        decodedData.put("currency", "USD");
+
+        when(paymentGatewayService.processCallback("data", "sig")).thenReturn(decodedData);
+        when(paymentRepository.findByLiqpayOrderId(ORDER_ID)).thenReturn(Optional.of(testPayment));
+
+        assertThatThrownBy(() -> paymentStatusService.handleCallback("data", "sig"))
+                .isInstanceOf(PaymentProcessingException.class);
+        verify(paymentService, never()).processSuccess(any(), any());
     }
 
     @Test

@@ -99,54 +99,6 @@
   color: var(--color-text-primary);
 }
 
-.paymentMethods {
-  margin-top: var(--space-6);
-}
-
-.methodsTitle {
-  font-size: var(--font-size-md);
-  font-weight: 600;
-  margin-bottom: var(--space-4);
-  color: var(--color-text-primary);
-}
-
-.methodsList {
-  display: flex;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-}
-
-.methodItem {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  background: var(--color-bg-tertiary);
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  color: var(--color-text-primary);
-}
-
-.methodItem:hover {
-  border-color: var(--color-primary);
-}
-
-.methodItem.active {
-  border-color: var(--color-primary);
-  background: rgba(var(--color-primary-rgb), var(--opacity-low));
-}
-
-.methodIcon {
-  color: var(--color-text-secondary);
-}
-
-.methodName {
-  font-weight: 500;
-  font-size: var(--font-size-sm);
-}
-
 .actions {
   margin-top: var(--space-8);
   display: flex;

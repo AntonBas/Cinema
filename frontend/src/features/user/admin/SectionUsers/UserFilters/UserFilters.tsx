@@ -5,6 +5,7 @@ import {
   UserRoleDisplay,
   VerificationStatusDisplay,
 } from "@/features/user/types/user";
+import { FilterPanel } from "@/components/admin/shared/FilterPanel/FilterPanel";
 import styles from "./UserFilters.module.css";
 
 interface UserFiltersProps {
@@ -69,50 +70,60 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
     [],
   );
 
+  const activeCount = [
+    searchValue,
+    roleFilter,
+    verificationStatusFilter,
+    enabledFilter,
+    sort,
+  ].filter(Boolean).length;
+
   return (
-    <div className={styles.filters}>
-      <div className={styles.search}>
-        <SearchInput
-          value={searchValue}
-          onSearch={onSearchChange}
-          placeholder="Search by email or name..."
-          delay={500}
-        />
+    <FilterPanel activeCount={activeCount}>
+      <div className={styles.filters}>
+        <div className={styles.search}>
+          <SearchInput
+            value={searchValue}
+            onSearch={onSearchChange}
+            placeholder="Search by email or name..."
+            delay={500}
+          />
+        </div>
+
+        <div className={styles.selectors}>
+          <Select
+            value={roleFilter}
+            onChange={(value) => onRoleFilterChange(String(value))}
+            options={roleOptions}
+            placeholder="All Roles"
+            className={styles.select}
+          />
+
+          <Select
+            value={verificationStatusFilter}
+            onChange={(value) => onVerificationStatusChange(String(value))}
+            options={verificationStatusOptions}
+            placeholder="Verification Status"
+            className={styles.select}
+          />
+
+          <Select
+            value={enabledFilter}
+            onChange={(value) => onEnabledFilterChange(String(value))}
+            options={ENABLED_OPTIONS}
+            placeholder="Account Status"
+            className={styles.select}
+          />
+
+          <Select
+            value={sort}
+            onChange={(value) => onSortChange(String(value))}
+            options={SORT_OPTIONS}
+            placeholder="Sort by"
+            className={styles.select}
+          />
+        </div>
       </div>
-
-      <div className={styles.selectors}>
-        <Select
-          value={roleFilter}
-          onChange={(value) => onRoleFilterChange(String(value))}
-          options={roleOptions}
-          placeholder="All Roles"
-          className={styles.select}
-        />
-
-        <Select
-          value={verificationStatusFilter}
-          onChange={(value) => onVerificationStatusChange(String(value))}
-          options={verificationStatusOptions}
-          placeholder="Verification Status"
-          className={styles.select}
-        />
-
-        <Select
-          value={enabledFilter}
-          onChange={(value) => onEnabledFilterChange(String(value))}
-          options={ENABLED_OPTIONS}
-          placeholder="Account Status"
-          className={styles.select}
-        />
-
-        <Select
-          value={sort}
-          onChange={(value) => onSortChange(String(value))}
-          options={SORT_OPTIONS}
-          placeholder="Sort by"
-          className={styles.select}
-        />
-      </div>
-    </div>
+    </FilterPanel>
   );
 };

@@ -31,14 +31,14 @@
 
 .sessionDetails {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--space-6);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-4) var(--space-6);
 }
 
 .detailItem {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-1);
 }
 
 .detailLabel {
@@ -51,10 +51,6 @@
   font-size: var(--font-size-lg);
   color: var(--color-text-primary);
   font-weight: 600;
-  padding: var(--space-2) var(--space-3);
-  background: var(--color-bg-tertiary);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
 }
 
 .seatsInfo {
@@ -113,7 +109,7 @@
 
 .seatPrice {
   font-weight: 700;
-  color: var(--color-success);
+  color: var(--color-primary);
   font-size: var(--font-size-xl);
   min-width: 80px;
   text-align: right;
@@ -282,6 +278,13 @@
 
   .sessionDetails {
     grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+
+  .detailItem {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: baseline;
   }
 
   .actionButtons {

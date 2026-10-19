@@ -13,12 +13,16 @@ import ua.lviv.bas.cinema.payment.gateway.PaymentGatewayService;
 import ua.lviv.bas.cinema.payment.gateway.dto.PaymentLiqPayDataResponse;
 import ua.lviv.bas.cinema.user.User;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Map;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentStatusService {
+
+    private static final String EXPECTED_CURRENCY = "UAH";
 
     private final PaymentRepository paymentRepository;
     private final PaymentService paymentService;
@@ -61,13 +65,38 @@ public class PaymentStatusService {
         }
 
         switch (status.toLowerCase()) {
-            case "success", "sandbox" -> paymentService.processSuccess(payment, decodedData);
+            case "success", "sandbox" -> {
+                validateGatewayAmount(payment, decodedData);
+                paymentService.processSuccess(payment, decodedData);
+            }
             case "failure", "error" -> paymentService.processFailure(payment, decodedData);
             default -> {
                 log.info("LiqPay reported intermediate status {} for payment {}, marking it PROCESSING", status,
                         payment.getId());
                 paymentService.markProcessing(payment);
             }
+        }
+    }
+
+    private void validateGatewayAmount(Payment payment, Map<String, String> callbackData) {
+        var currency = callbackData.get("currency");
+        if (currency != null && !EXPECTED_CURRENCY.equalsIgnoreCase(currency)) {
+            log.error("LiqPay callback for payment {} reported currency {} instead of {}", payment.getId(), currency,
+                    EXPECTED_CURRENCY);
+            throw new PaymentProcessingException("LiqPay callback currency does not match the payment");
+        }
+        var amount = callbackData.get("amount");
+        if (amount == null || amount.isBlank()) {
+            return;
+        }
+        try {
+            if (new BigDecimal(amount).compareTo(payment.getAmount()) != 0) {
+                log.error("LiqPay callback for payment {} reported amount {} instead of {}", payment.getId(), amount,
+                        payment.getAmount());
+                throw new PaymentProcessingException("LiqPay callback amount does not match the payment");
+            }
+        } catch (NumberFormatException e) {
+            throw new PaymentProcessingException("LiqPay callback amount is not a number");
         }
     }
 }

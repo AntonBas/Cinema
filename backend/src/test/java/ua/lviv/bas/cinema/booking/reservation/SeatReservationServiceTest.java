@@ -45,6 +45,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -103,6 +104,22 @@ public class SeatReservationServiceTest {
                 .hall(otherHall).build();
         testUser = User.builder().id(USER_ID).build();
         ticketType = TicketType.builder().id(1L).displayName("Adult").active(true).build();
+    }
+
+    @Test
+    void holdShouldClearExpiredHoldsBeforeCheckingAvailability() {
+        when(sessionRepository.findById(SESSION_ID)).thenReturn(Optional.of(testSession));
+        when(seatRepository.findByIdWithLock(SEAT_ID)).thenReturn(Optional.of(testSeat));
+        when(seatReservationRepository.existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, SEAT_ID,
+                ReservationStatus.ACTIVE_STATUSES)).thenReturn(false);
+
+        seatReservationService.hold(SESSION_ID, SEAT_ID, testUser);
+
+        var order = inOrder(seatReservationRepository);
+        order.verify(seatReservationRepository).deleteExpiredHolds(SESSION_ID, SEAT_ID);
+        order.verify(seatReservationRepository).existsBySessionIdAndSeatIdAndStatusIn(SESSION_ID, SEAT_ID,
+                ReservationStatus.ACTIVE_STATUSES);
+        order.verify(seatReservationRepository).save(any());
     }
 
     @Test

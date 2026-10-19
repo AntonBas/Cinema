@@ -4,7 +4,7 @@ import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import styles from "./PrivacyPolicyPage.module.css";
 
-const CONTACT_EMAIL = "basantonoleg@gmail.com";
+const CONTACT_EMAIL = "antonbas21@gmail.com";
 
 interface PolicySection {
   title: string;

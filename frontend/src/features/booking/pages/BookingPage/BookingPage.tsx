@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSeatReservation } from "@/features/booking/hooks/useSeatReservation";
 import { useBonus } from "@/features/bonus/hooks/useBonus";
@@ -12,6 +12,7 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { useNotification } from "@/context/NotificationContext";
 import { useAuth } from "@/context/AuthContext";
 import type { SeatInfo } from "@/features/booking/types/seatReservation";
+import { Button } from "@/components/ui/Button/Button";
 import { PageContainer } from "@/components/ui/PageContainer/PageContainer";
 import { PageHeader } from "@/components/ui/PageHeader/PageHeader";
 import { formatFullDate, formatPrice, formatTime } from "@/utils/formatters";
@@ -25,6 +26,7 @@ export const BookingPage: React.FC = () => {
 
   const { showNotification } = useNotification();
   const { isAuthenticated } = useAuth();
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   const {
     data: seatData,
@@ -110,6 +112,10 @@ export const BookingPage: React.FC = () => {
     ],
   );
 
+  const scrollToSidebar = useCallback(() => {
+    sidebarRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
   if (loading || !settled) {
     return (
       <Layout>{loading && <LoadingSpinner text="Loading seats..." />}</Layout>
@@ -160,7 +166,7 @@ export const BookingPage: React.FC = () => {
             />
           </div>
 
-          <div className={styles.sidebarSection}>
+          <div ref={sidebarRef} className={styles.sidebarSection}>
             <BookingSidebar
               selectedSeats={selectedSeats}
               totalPrice={totalPrice}
@@ -170,6 +176,21 @@ export const BookingPage: React.FC = () => {
             />
           </div>
         </div>
+
+        {selectedSeats.length > 0 && (
+          <div className={styles.summaryBar}>
+            <div className={styles.summaryText}>
+              <span>
+                {selectedSeats.length}{" "}
+                {selectedSeats.length === 1 ? "seat" : "seats"}
+              </span>
+              <strong>{formatPrice(totalPrice)}</strong>
+            </div>
+            <Button variant="primary" size="medium" onClick={scrollToSidebar}>
+              Continue
+            </Button>
+          </div>
+        )}
       </PageContainer>
     </Layout>
   );

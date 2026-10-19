@@ -63,12 +63,13 @@
 .canvasViewport {
   width: 100%;
   display: flex;
-  justify-content: center;
+  overflow-x: auto;
 }
 
 .canvasSizer {
-  position: relative;
+  margin: 0 auto;
   flex-shrink: 0;
+  position: relative;
 }
 
 .canvas {
@@ -97,18 +98,30 @@
 }
 
 .seatButton.standard {
-  background-color: var(--color-seat-standard);
-  border-color: var(--color-seat-standard-border);
+  background-color: color-mix(
+    in srgb,
+    var(--color-seat-standard) 25%,
+    var(--color-bg-secondary)
+  );
+  border-color: var(--color-seat-standard);
 }
 
 .seatButton.vip {
-  background-color: var(--color-seat-vip);
-  border-color: var(--color-seat-vip-border);
+  background-color: color-mix(
+    in srgb,
+    var(--color-seat-vip) 25%,
+    var(--color-bg-secondary)
+  );
+  border-color: var(--color-seat-vip);
 }
 
 .seatButton.couple {
-  background-color: var(--color-seat-couple);
-  border-color: var(--color-seat-couple-border);
+  background-color: color-mix(
+    in srgb,
+    var(--color-seat-couple) 25%,
+    var(--color-bg-secondary)
+  );
+  border-color: var(--color-seat-couple);
 }
 
 .seatButton.selected {
@@ -117,8 +130,8 @@
   box-shadow:
     0 8px 20px rgba(var(--color-black-rgb), 0.5),
     inset 0 1px 0 rgba(var(--color-white-rgb), 0.3);
-  background-color: var(--color-seat-selected);
-  border-color: var(--color-seat-selected);
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 .seatButton.booked {
@@ -174,7 +187,7 @@
 }
 
 .seatNumber {
-  font-size: var(--font-size-2xs);
+  font-size: var(--font-size-md);
   font-weight: 600;
   color: var(--color-text-primary);
   text-shadow: 0 1px 1px rgba(var(--color-black-rgb), 0.5);
@@ -228,15 +241,30 @@
 }
 
 .legendColor.standard {
-  background-color: var(--color-seat-standard);
+  background-color: color-mix(
+    in srgb,
+    var(--color-seat-standard) 25%,
+    var(--color-bg-secondary)
+  );
+  border-color: var(--color-seat-standard);
 }
 
 .legendColor.vip {
-  background-color: var(--color-seat-vip);
+  background-color: color-mix(
+    in srgb,
+    var(--color-seat-vip) 25%,
+    var(--color-bg-secondary)
+  );
+  border-color: var(--color-seat-vip);
 }
 
 .legendColor.couple {
-  background-color: var(--color-seat-couple);
+  background-color: color-mix(
+    in srgb,
+    var(--color-seat-couple) 25%,
+    var(--color-bg-secondary)
+  );
+  border-color: var(--color-seat-couple);
 }
 
 @keyframes pulse {

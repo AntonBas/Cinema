@@ -12,6 +12,7 @@ import { useViewportHeight } from "@/hooks/common/useViewportHeight";
 
 const SEAT_INSET = 8;
 const TARGET_HALL_WIDTH = 560;
+const MIN_TOUCH_SCALE = 0.7;
 const HALL_CHROME_HEIGHT = 260;
 const MIN_CANVAS_HEIGHT = 200;
 
@@ -52,7 +53,10 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
   );
   const scale =
     viewportWidth > 0
-      ? Math.min(compactScale, viewportWidth / canvasSize.width)
+      ? Math.max(
+          MIN_TOUCH_SCALE,
+          Math.min(compactScale, viewportWidth / canvasSize.width),
+        )
       : compactScale;
   const hallWidth = Math.max(360, canvasSize.width * compactScale + 48);
 

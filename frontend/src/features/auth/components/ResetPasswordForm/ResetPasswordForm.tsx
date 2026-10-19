@@ -152,6 +152,7 @@ export const ResetPasswordForm: React.FC = () => {
 
           <Input
             type="password"
+            label="New password"
             placeholder="New password"
             value={formData.newPassword}
             onChange={(v) => handleChange("newPassword", v)}
@@ -161,6 +162,7 @@ export const ResetPasswordForm: React.FC = () => {
 
           <Input
             type="password"
+            label="Confirm new password"
             placeholder="Confirm new password"
             value={formData.confirmPassword}
             onChange={(v) => handleChange("confirmPassword", v)}

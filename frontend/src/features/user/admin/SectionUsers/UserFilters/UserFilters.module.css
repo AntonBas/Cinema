@@ -16,21 +16,20 @@
 }
 
 .search {
-  flex: 1 1 260px;
+  flex: 1 1 220px;
   min-width: 0;
 }
 
 .selectors {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-4);
   flex: 3 1 auto;
   min-width: 0;
 }
 
 .select {
-  flex: 1 1 170px;
-  min-width: 170px;
+  min-width: 0;
 }
 
 @keyframes fadeIn {
@@ -57,12 +56,8 @@
 
   .selectors {
     flex: 1 1 100%;
-    flex-wrap: wrap;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: var(--space-4);
-  }
-
-  .select {
-    flex: 1 1 calc(33.333% - var(--space-3));
   }
 }
 
@@ -75,7 +70,7 @@
   }
 
   .selectors {
-    flex-direction: column;
+    grid-template-columns: 1fr;
     gap: var(--space-3);
     width: 100%;
   }

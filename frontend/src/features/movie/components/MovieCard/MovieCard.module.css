@@ -155,10 +155,11 @@
 }
 
 .content {
-  padding: var(--space-4);
+  padding: var(--space-3) var(--space-4);
   flex-grow: 1;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   background: var(--color-bg-secondary);
   text-align: center;
 }
@@ -203,7 +204,7 @@
   }
 
   .content {
-    padding: var(--space-4);
+    padding: var(--space-3);
   }
 
   .title {

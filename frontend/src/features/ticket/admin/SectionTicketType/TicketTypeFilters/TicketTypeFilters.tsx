@@ -3,6 +3,7 @@ import { SearchInput } from "@/components/ui/SearchInput/SearchInput";
 import { Select } from "@/components/ui/Select/Select";
 import type { TicketTypeCategory } from "@/features/ticket/types/ticketType";
 import { TicketTypeCategoryDisplay } from "@/features/ticket/types/ticketType";
+import { FilterPanel } from "@/components/admin/shared/FilterPanel/FilterPanel";
 import styles from "./TicketTypeFilters.module.css";
 
 interface TicketTypeFiltersProps {
@@ -36,45 +37,53 @@ export const TicketTypeFilters: React.FC<TicketTypeFiltersProps> = ({
     })),
   ];
 
+  const activeCount = [
+    searchValue,
+    statusFilter !== "all",
+    categoryFilter !== "all",
+  ].filter(Boolean).length;
+
   return (
-    <div className={styles.filters}>
-      <div className={styles.search}>
-        <SearchInput
-          value={searchValue}
-          onSearch={onSearchChange}
-          placeholder="Search ticket types..."
-          delay={300}
-          className={styles.searchInput}
-        />
-      </div>
-
-      <div className={styles.selectFilters}>
-        <div className={styles.filterGroup}>
-          <Select
-            options={statusOptions}
-            value={statusFilter}
-            onChange={(value) =>
-              onStatusChange(value as "all" | "active" | "inactive")
-            }
-            placeholder="Status"
-            className={styles.select}
+    <FilterPanel activeCount={activeCount}>
+      <div className={styles.filters}>
+        <div className={styles.search}>
+          <SearchInput
+            value={searchValue}
+            onSearch={onSearchChange}
+            placeholder="Search ticket types..."
+            delay={300}
+            className={styles.searchInput}
           />
         </div>
 
-        <div className={styles.filterGroup}>
-          <Select
-            options={categoryOptions}
-            value={categoryFilter}
-            onChange={(value) =>
-              onCategoryChange(
-                value === "all" ? "all" : (value as TicketTypeCategory),
-              )
-            }
-            placeholder="Category"
-            className={styles.select}
-          />
+        <div className={styles.selectFilters}>
+          <div className={styles.filterGroup}>
+            <Select
+              options={statusOptions}
+              value={statusFilter}
+              onChange={(value) =>
+                onStatusChange(value as "all" | "active" | "inactive")
+              }
+              placeholder="Status"
+              className={styles.select}
+            />
+          </div>
+
+          <div className={styles.filterGroup}>
+            <Select
+              options={categoryOptions}
+              value={categoryFilter}
+              onChange={(value) =>
+                onCategoryChange(
+                  value === "all" ? "all" : (value as TicketTypeCategory),
+                )
+              }
+              placeholder="Category"
+              className={styles.select}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </FilterPanel>
   );
 };

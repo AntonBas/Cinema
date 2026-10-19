@@ -68,6 +68,12 @@
   padding: 0 var(--space-6) var(--space-12);
 }
 
+@media (min-width: 1600px) {
+  .content {
+    max-width: 1600px;
+  }
+}
+
 @media (max-width: 768px) {
   .header {
     padding: 0 var(--space-4);

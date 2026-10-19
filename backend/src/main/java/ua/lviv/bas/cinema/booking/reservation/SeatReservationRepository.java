@@ -14,7 +14,8 @@ import java.util.Optional;
 @Repository
 public interface SeatReservationRepository extends JpaRepository<SeatReservation, Long> {
 
-    @Query("SELECT COUNT(sr) > 0 FROM SeatReservation sr WHERE sr.session.id = :sessionId AND sr.seat.id = :seatId AND sr.status IN :statuses")
+    @Query("SELECT COUNT(sr) > 0 FROM SeatReservation sr WHERE sr.session.id = :sessionId AND sr.seat.id = :seatId AND sr.status IN :statuses "
+            + "AND (sr.status <> ua.lviv.bas.cinema.booking.reservation.ReservationStatus.PENDING OR sr.reservedUntil > CURRENT_TIMESTAMP)")
     boolean existsBySessionIdAndSeatIdAndStatusIn(@Param("sessionId") Long sessionId, @Param("seatId") Long seatId,
                                                   @Param("statuses") List<ReservationStatus> statuses);
 
@@ -29,6 +30,12 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
     int deleteByIdIfStillExpired(@Param("id") Long id, @Param("status") ReservationStatus status,
                                  @Param("cutoff") Instant cutoff);
 
+    @Modifying
+    @Query("DELETE FROM SeatReservation sr WHERE sr.session.id = :sessionId AND sr.seat.id = :seatId "
+            + "AND sr.status = ua.lviv.bas.cinema.booking.reservation.ReservationStatus.PENDING "
+            + "AND sr.reservedUntil < CURRENT_TIMESTAMP")
+    int deleteExpiredHolds(@Param("sessionId") Long sessionId, @Param("seatId") Long seatId);
+
     Optional<SeatReservation> findBySessionIdAndSeatIdAndStatusAndReservedByUserId(Long sessionId, Long seatId,
                                                                                    ReservationStatus status, Long userId);
 
@@ -38,6 +45,7 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
             SELECT new ua.lviv.bas.cinema.booking.reservation.dto.SeatStatusResponse(s.id, sr.status)
             FROM Seat s
             LEFT JOIN SeatReservation sr ON sr.seat.id = s.id AND sr.session.id = :sessionId AND sr.status IN :statuses
+                AND (sr.status <> ua.lviv.bas.cinema.booking.reservation.ReservationStatus.PENDING OR sr.reservedUntil > CURRENT_TIMESTAMP)
             WHERE s.hall.id = :hallId
             """)
     List<SeatStatusResponse> findBookedSeatStatuses(@Param("hallId") Long hallId,
@@ -50,6 +58,7 @@ public interface SeatReservationRepository extends JpaRepository<SeatReservation
 
     @Query("SELECT sr.session.id, COUNT(sr) FROM SeatReservation sr " +
             "WHERE sr.session.id IN :sessionIds AND sr.status IN :statuses " +
+            "AND (sr.status <> ua.lviv.bas.cinema.booking.reservation.ReservationStatus.PENDING OR sr.reservedUntil > CURRENT_TIMESTAMP) " +
             "GROUP BY sr.session.id")
     List<Object[]> findBookedCountBySessionIds(@Param("sessionIds") List<Long> sessionIds,
                                                @Param("statuses") List<ReservationStatus> statuses);

@@ -105,9 +105,6 @@ export const PaymentPage: React.FC = () => {
   const { create, getById, getLiqPayData, retry } = usePayment();
 
   const [step, setStep] = useState<PaymentStep>("init");
-  const [selectedMethod, setSelectedMethod] = useState<"liqpay" | null>(
-    "liqpay",
-  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [currentPayment, setCurrentPayment] = useState<PaymentResponse | null>(
     null,
@@ -333,20 +330,8 @@ export const PaymentPage: React.FC = () => {
                   <CreditCard className={styles.infoIcon} size={64} />
                   <h3 className={styles.statusTitle}>Ready to Pay</h3>
                   <p className={styles.statusMessage}>
-                    Choose your payment method and continue
+                    Pay by card on the secure LiqPay page
                   </p>
-                  <div className={styles.paymentMethods}>
-                    <h4 className={styles.methodsTitle}>Payment Method</h4>
-                    <div className={styles.methodsList}>
-                      <div
-                        className={`${styles.methodItem} ${selectedMethod === "liqpay" ? styles.active : ""}`}
-                        onClick={() => setSelectedMethod("liqpay")}
-                      >
-                        <CreditCard className={styles.methodIcon} size={20} />
-                        <span className={styles.methodName}>Card Payment</span>
-                      </div>
-                    </div>
-                  </div>
                   <div className={styles.actions}>
                     <Button
                       onClick={handleBack}
@@ -360,7 +345,6 @@ export const PaymentPage: React.FC = () => {
                       onClick={handlePay}
                       variant="primary"
                       className={styles.primaryButton}
-                      disabled={!selectedMethod}
                     >
                       <CreditCard size={20} />
                       Pay with Card

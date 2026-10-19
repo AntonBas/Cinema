@@ -1,8 +1,5 @@
 .tabContent {
-  background: var(--color-bg-primary);
-  border-radius: var(--radius-lg);
-  padding: var(--space-6);
-  box-shadow: var(--shadow-md);
+  width: 100%;
 }
 
 .balanceContent {
@@ -13,16 +10,4 @@
 
 .transactionsContent {
   width: 100%;
-}
-
-@media (max-width: 768px) {
-  .tabContent {
-    padding: var(--space-4);
-  }
-}
-
-@media (max-width: 480px) {
-  .tabContent {
-    padding: var(--space-3);
-  }
 }
