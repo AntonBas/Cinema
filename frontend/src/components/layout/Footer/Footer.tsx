@@ -31,7 +31,7 @@ export const Footer: React.FC = () => {
         <div className={styles.footerSection}>
           <h4>Contact</h4>
           <ul>
-            <li>basantonoleg@gmail.com</li>
+            <li>antonbas21@gmail.com</li>
             <li>+380 (96) 179-41-51</li>
             <li>Lviv, Ukraine</li>
           </ul>
