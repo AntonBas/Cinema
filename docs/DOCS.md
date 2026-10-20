@@ -544,7 +544,7 @@ push/PR to `master`/`develop`.
 
 The seat booking system uses a two-stage reservation protocol with mixed locking strategies:
 
-- **Stage 1 (5-minute pessimistic lock):** When a user selects a seat, a row-level lock (`SELECT ... FOR UPDATE`) is acquired. Other users immediately see the seat as taken and cannot select it.
+- **Stage 1 (5-minute temporary hold):** When a user selects a seat, the seat row is locked (`SELECT ... FOR UPDATE`) for the duration of the transaction and a `PENDING` reservation valid for 5 minutes is created. Other users immediately see the seat as taken and cannot select it; the partial unique index on active reservations backs this up at the database level.
 - **Stage 2 (20-minute reservation):** After confirming the booking, seats are reserved for payment. If unpaid, they are released automatically.
 - **Optimistic locking (`@Version`)** is used for Booking, BonusCard, and other entities where conflicts are rare.
 - **Cleanup:** A scheduled job releases expired locks, cancels unpaid bookings, and updates session statuses.
