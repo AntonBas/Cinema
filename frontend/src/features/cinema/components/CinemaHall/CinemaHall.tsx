@@ -58,7 +58,10 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
           Math.min(compactScale, viewportWidth / canvasSize.width),
         )
       : compactScale;
-  const hallWidth = Math.max(360, canvasSize.width * compactScale + 48);
+  const hallWidth = Math.max(
+    360,
+    canvasSize.width * Math.max(compactScale, MIN_TOUCH_SCALE) + 48,
+  );
 
   const getSeatInfo = (seat: SeatInfo) => {
     const status = !seat.active
