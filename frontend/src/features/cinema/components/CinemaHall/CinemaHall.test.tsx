@@ -44,29 +44,30 @@ describe("CinemaHall", () => {
     expect(seatButton(5)).toBeEnabled();
   });
 
-  it("describes seat type and status for each seat", () => {
+  it("describes seat type and status in a tooltip on hover", async () => {
+    const user = userEvent.setup();
     render(
       <CinemaHall seats={seats} selectedSeats={[1]} onSeatClick={vi.fn()} />,
     );
 
-    expect(
-      screen.getByText("Row 1, Seat 1 (Standard) - Selected"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Row 1, Seat 2 (Standard) - Booked"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Row 1, Seat 3 (Standard) - Temporarily reserved"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Row 1, Seat 4 (Standard) - Unavailable"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Row 1, Seat 5 (VIP) - Available"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Row 1, Seat 6 (Couple) - Available"),
-    ).toBeInTheDocument();
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+
+    const descriptions: Array<[number, string]> = [
+      [1, "Row 1, Seat 1 (Standard) - Selected"],
+      [2, "Row 1, Seat 2 (Standard) - Booked"],
+      [3, "Row 1, Seat 3 (Standard) - Temporarily reserved"],
+      [4, "Row 1, Seat 4 (Standard) - Unavailable"],
+      [5, "Row 1, Seat 5 (VIP) - Available"],
+      [6, "Row 1, Seat 6 (Couple) - Available"],
+    ];
+
+    for (const [seatNumber, description] of descriptions) {
+      const seat = seatButton(seatNumber);
+      await user.hover(seat);
+      expect(await screen.findByRole("tooltip")).toHaveTextContent(description);
+      await user.unhover(seat);
+      expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+    }
   });
 
   it("renders couple seats twice as wide as standard seats", () => {

@@ -68,15 +68,16 @@ export const Tooltip: React.FC<TooltipProps> = ({
       >
         {children}
       </div>
-      <div
-        id={tooltipId}
-        role="tooltip"
-        className={`${styles.tooltip} ${styles[position]} ${align === "end" ? styles.alignEnd : ""} ${isVisible ? styles.visible : ""}`}
-        aria-hidden={!isVisible}
-      >
-        {content}
-        <div className={styles.tooltipArrow} aria-hidden="true" />
-      </div>
+      {isVisible && (
+        <div
+          id={tooltipId}
+          role="tooltip"
+          className={`${styles.tooltip} ${styles[position]} ${align === "end" ? styles.alignEnd : ""} ${styles.visible}`}
+        >
+          {content}
+          <div className={styles.tooltipArrow} aria-hidden="true" />
+        </div>
+      )}
     </div>
   );
 };

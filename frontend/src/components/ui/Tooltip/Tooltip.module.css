@@ -30,6 +30,7 @@
 
 .tooltip.visible {
   opacity: 1;
+  animation: tooltipFadeIn 160ms ease;
 }
 
 .tooltipArrow {
@@ -152,5 +153,11 @@
 @media (prefers-reduced-motion: reduce) {
   .tooltip {
     transition: none;
+  }
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
   }
 }
