@@ -5,7 +5,7 @@ export interface TooltipProps {
   content: string;
   children: React.ReactNode;
   position?: "top" | "bottom" | "left" | "right";
-  align?: "center" | "end";
+  align?: "start" | "center" | "end";
   className?: string;
   style?: React.CSSProperties;
   id?: string;
@@ -72,7 +72,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
         <div
           id={tooltipId}
           role="tooltip"
-          className={`${styles.tooltip} ${styles[position]} ${align === "end" ? styles.alignEnd : ""} ${styles.visible}`}
+          className={`${styles.tooltip} ${styles[position]} ${align === "end" ? styles.alignEnd : ""} ${align === "start" ? styles.alignStart : ""} ${styles.visible}`}
         >
           {content}
           <div className={styles.tooltipArrow} aria-hidden="true" />

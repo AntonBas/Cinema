@@ -76,6 +76,20 @@
   transform: translateY(-50%) rotate(45deg);
 }
 
+.tooltip.top.alignStart {
+  left: 0;
+  transform: translateY(6px) scale(0.96);
+}
+
+.tooltip.top.alignStart.visible {
+  transform: translateY(0) scale(1);
+}
+
+.tooltip.top.alignStart .tooltipArrow {
+  left: 12px;
+  transform: translateY(-50%) rotate(45deg);
+}
+
 .tooltip.bottom {
   top: 100%;
   left: 50%;
@@ -108,6 +122,20 @@
 .tooltip.bottom.alignEnd .tooltipArrow {
   left: auto;
   right: 12px;
+  transform: translateY(50%) rotate(45deg);
+}
+
+.tooltip.bottom.alignStart {
+  left: 0;
+  transform: translateY(-6px) scale(0.96);
+}
+
+.tooltip.bottom.alignStart.visible {
+  transform: translateY(0) scale(1);
+}
+
+.tooltip.bottom.alignStart .tooltipArrow {
+  left: 12px;
   transform: translateY(50%) rotate(45deg);
 }
 

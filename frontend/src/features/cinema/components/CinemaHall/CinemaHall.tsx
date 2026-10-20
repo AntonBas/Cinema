@@ -11,13 +11,20 @@ import { useElementWidth } from "@/hooks/common/useElementWidth";
 import { useViewportHeight } from "@/hooks/common/useViewportHeight";
 
 const SEAT_INSET = 8;
-
-const seatCells = (seat: SeatInfo) => (seat.seatType === "COUPLE" ? 2 : 1);
 const TARGET_HALL_WIDTH = 560;
 const MIN_TOUCH_SCALE = 0.7;
-const TOOLTIP_EDGE_OFFSET = 125;
 const HALL_CHROME_HEIGHT = 260;
 const MIN_CANVAS_HEIGHT = 200;
+const TOOLTIP_EDGE_OFFSET = 125;
+
+const seatCells = (seat: SeatInfo) => (seat.seatType === "COUPLE" ? 2 : 1);
+
+const tooltipAlign = (seat: SeatInfo, canvasWidth: number, scale: number) => {
+  const edge = TOOLTIP_EDGE_OFFSET / scale;
+  if (seat.x < edge) return "start";
+  if (seat.x + seatCells(seat) * CELL_WIDTH > canvasWidth - edge) return "end";
+  return "center";
+};
 
 interface CinemaHallProps {
   seats: SeatInfo[];
@@ -153,12 +160,7 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
                     key={`seat-${seat.id}`}
                     content={title}
                     position={seat.row === 1 ? "bottom" : "top"}
-                    align={
-                      seat.x + seatCells(seat) * CELL_WIDTH >
-                      canvasSize.width - TOOLTIP_EDGE_OFFSET
-                        ? "end"
-                        : "center"
-                    }
+                    align={tooltipAlign(seat, canvasSize.width, scale)}
                     style={{
                       position: "absolute",
                       left: seat.x + SEAT_INSET,
