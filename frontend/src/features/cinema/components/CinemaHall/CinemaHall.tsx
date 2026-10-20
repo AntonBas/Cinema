@@ -15,6 +15,16 @@ const TARGET_HALL_WIDTH = 560;
 const MIN_TOUCH_SCALE = 0.7;
 const HALL_CHROME_HEIGHT = 260;
 const MIN_CANVAS_HEIGHT = 200;
+const TOOLTIP_EDGE_OFFSET = 125;
+
+const seatCells = (seat: SeatInfo) => (seat.seatType === "COUPLE" ? 2 : 1);
+
+const tooltipAlign = (seat: SeatInfo, canvasWidth: number, scale: number) => {
+  const edge = TOOLTIP_EDGE_OFFSET / scale;
+  if (seat.x < edge) return "start";
+  if (seat.x + seatCells(seat) * CELL_WIDTH > canvasWidth - edge) return "end";
+  return "center";
+};
 
 interface CinemaHallProps {
   seats: SeatInfo[];
@@ -34,10 +44,13 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
   const viewportHeight = useViewportHeight();
 
   const canvasSize = useMemo(() => {
-    const maxX = seats.reduce((max, seat) => Math.max(max, seat.x), 0);
+    const maxRight = seats.reduce(
+      (max, seat) => Math.max(max, seat.x + seatCells(seat) * CELL_WIDTH),
+      0,
+    );
     const maxY = seats.reduce((max, seat) => Math.max(max, seat.y), 0);
     return {
-      width: maxX + CELL_WIDTH,
+      width: maxRight,
       height: maxY + CELL_HEIGHT,
     };
   }, [seats]);
@@ -127,10 +140,7 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
                   status === "temporary" ||
                   isLoading;
 
-                const width =
-                  seat.seatType === "COUPLE"
-                    ? CELL_WIDTH * 2 - SEAT_INSET * 2
-                    : CELL_WIDTH - SEAT_INSET * 2;
+                const width = seatCells(seat) * CELL_WIDTH - SEAT_INSET * 2;
                 const seatClass = `${styles.seatButton} ${styles[seat.seatType.toLowerCase()]} ${
                   status === "inactive"
                     ? styles.inactive
@@ -150,6 +160,7 @@ export const CinemaHall: React.FC<CinemaHallProps> = ({
                     key={`seat-${seat.id}`}
                     content={title}
                     position={seat.row === 1 ? "bottom" : "top"}
+                    align={tooltipAlign(seat, canvasSize.width, scale)}
                     style={{
                       position: "absolute",
                       left: seat.x + SEAT_INSET,
