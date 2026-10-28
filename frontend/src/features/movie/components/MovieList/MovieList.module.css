@@ -1,7 +1,24 @@
+.container {
+  --grid-gap: var(--space-8);
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: var(--space-8);
+  gap: var(--grid-gap);
+}
+
+.lastRow {
+  display: flex;
+  justify-content: center;
+  gap: var(--grid-gap);
+  margin-top: var(--grid-gap);
+}
+
+.lastRowItem {
+  flex: 0 0
+    calc((100% - (var(--columns) - 1) * var(--grid-gap)) / var(--columns));
+  min-width: 0;
 }
 
 .loading {
@@ -13,14 +30,17 @@
 }
 
 @media (max-width: 768px) {
-  .grid {
-    gap: var(--space-6);
+  .container {
+    --grid-gap: var(--space-6);
   }
 }
 
 @media (max-width: 480px) {
+  .container {
+    --grid-gap: var(--space-4);
+  }
+
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-4);
   }
 }

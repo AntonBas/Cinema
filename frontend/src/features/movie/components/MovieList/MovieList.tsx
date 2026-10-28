@@ -6,6 +6,7 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner/LoadingSpinner";
 import { Button } from "@/components/ui/Button/Button";
 import { Pagination } from "@/components/ui/Pagination/Pagination";
 import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
+import { useGridColumns } from "@/hooks/common/useGridColumns";
 import styles from "./MovieList.module.css";
 
 interface MovieListProps {
@@ -32,6 +33,8 @@ export const MovieList: React.FC<MovieListProps> = React.memo(
     onLoadMore,
     variant = "pages",
   }) => {
+    const { ref: gridRef, columns } = useGridColumns<HTMLDivElement>();
+
     if (error) {
       return (
         <EmptyState
@@ -66,13 +69,37 @@ export const MovieList: React.FC<MovieListProps> = React.memo(
       );
     }
 
+    const hasMore =
+      variant === "load-more" &&
+      !!pagination &&
+      pagination.number < pagination.totalPages - 1;
+    const fullRowsCount =
+      columns > 0 ? Math.floor(movies.length / columns) * columns : 0;
+    const showAllInGrid = columns === 0 || (fullRowsCount === 0 && hasMore);
+    const gridMovies = showAllInGrid ? movies : movies.slice(0, fullRowsCount);
+    const lastRowMovies =
+      hasMore || showAllInGrid ? [] : movies.slice(fullRowsCount);
+
     return (
       <div className={styles.container}>
-        <div className={styles.grid}>
-          {movies.map((movie) => (
+        <div ref={gridRef} className={styles.grid}>
+          {gridMovies.map((movie) => (
             <MovieCard key={movie.id} movie={movie} />
           ))}
         </div>
+
+        {lastRowMovies.length > 0 && (
+          <div
+            className={styles.lastRow}
+            style={{ "--columns": columns } as React.CSSProperties}
+          >
+            {lastRowMovies.map((movie) => (
+              <div key={movie.id} className={styles.lastRowItem}>
+                <MovieCard movie={movie} />
+              </div>
+            ))}
+          </div>
+        )}
 
         {loading && movies.length > 0 && (
           <div className={styles.loadingMore}>
